@@ -14,14 +14,16 @@
   ~ limitations under the License.
   -->
 <chapter id='overview' xmlns:xi="http://www.w3.org/2001/XInclude">
-    <title>Overview</title>
+    <title>概要</title>
     <section id='sec:special_feature_of_gradle'>
-        <title>Features</title>
+        <title>特長</title>
         <para>Here is a list of some of Gradle's features.
         </para>
+        <para>Gradleの特長は以下の通りです。</para>
         <variablelist>
             <varlistentry>
                 <term>Declarative builds and build-by-convention</term>
+                <term>宣言的なビルド記述と規約によるビルド</term>
                 <listitem>
                     <para>At the heart of Gradle lies a rich extensible Domain Specific Language (DSL) based on Groovy.
                         Gradle pushes declarative builds to the next level by providing declarative language elements
@@ -29,6 +31,13 @@
                         Java, Groovy, OSGi, Web and Scala projects. Even more, this declarative language is extensible.
                         Add your own new language elements or enhance the existing ones. Thus providing concise,
                         maintainable and comprehensible builds.
+                    </para>
+                    <para>
+                    Gradleのもっとも重要な特長は、Groovyをベースにした拡張可能なDSL(ドメイン特化言語)にあります。
+                    Gradleは、従来の宣言的なビルド記述を次の段階へ推し進めます。宣言的に使用できるビルド記述用の言語要素を提供しており、それらを好きなように組み合わせて使用できるのです。
+                    これらの言語要素を使って、JavaやGroovy、OSGi、WebそしてScalaなどのプロジェクトを一般的な規約に従ってビルドすることができます。
+                    さらに、これらの言語要素は拡張性豊富で、新しい言語要素を追加したり、既存のものを拡張したりできます。
+                    つまり、簡潔でメンテナンス性の良い、分かりやすいビルドシステムを記述できると言うことです。
                     </para>
                 </listitem>
             </varlistentry>
@@ -42,6 +51,7 @@
             </varlistentry>
             <varlistentry>
                 <term>Structure your build</term>
+                <term>構造化されたビルドシステム</term>
                 <listitem>
                     <para>The suppleness and richness of Gradle finally allows you to apply common design principles to your build.
                         For example, it is very easy to compose your build from reusable
@@ -49,29 +59,43 @@
                         forced to tear apart what belongs together (e.g. in your project hierarchy). Thus avoiding smells
                         like shotgun changes or divergent change that turn your build into a maintenance nightmare.
                         At last you can create a well structured, easily maintained, comprehensible build.</para>
+                        
+                        <para>
+                        Gradleは柔軟性があり機能が豊富なので、ビルドシステムを記述する際に一般的な設計の原則を適用できるようになります。
+                        たとえば、ビルド用のロジックを利用可能な単位に細かく分割し、そのロジックを組み立ててビルドシステムを作成することも簡単にできます。変更が発散したり分岐したりして、ビルドシステムのメンテナンスが悪夢に変わり果てるのを防ぎ、よく構造化されたメンテナンスせいの良い分かりやすいビルドシステムを記述できます。
+                        </para>
                 </listitem>
             </varlistentry>
             <varlistentry>
                 <term>Deep API</term>
+                <term>深いAPI</term>
                 <listitem>
                     <para>From being a pleasure to be used embedded to its many hooks over the whole lifecycle of build
                         execution, Gradle allows you to monitor and customize its configuration and execution behavior
                         to its very core.
                     </para>
+                    <para>
+                    ビルド実行のライフサイクル全体にわたって埋め込まれたフックを使って、ビルドシステムを監視しカスタマイズすることができます。
+                    </para>
                 </listitem>
             </varlistentry>
             <varlistentry>
                 <term>Gradle scales</term>
+                <term>Gradleスケーラビリティ</term>
                 <listitem>
                     <para>Gradle scales very well. It significantly increases your productivity,
                         from simple single project builds up to huge enterprise multi-project builds. This is true
                         for structuring the build. With the state-of-art incremental build function, this is also true for
                         tackling the performance pain many large enterprise builds suffer from.
                     </para>
+                <para>
+                Gradleはビルドシステムの規模が増大しても容易に適応できます。シングルプロジェクトのビルドを、大きなマルチプロジェクトのビルドにスケールアップさせていくことができ、生産性が大きく向上します。現在のインクリメンタルビルドの技術水準だと、たくさんの大きなビルドがあるとビルドの効率は大きく落ちてしまいます。
+                </para>
                 </listitem>
             </varlistentry>
             <varlistentry>
                 <term>Multi-project builds</term>
+                <term>マルチプロジェクトのビルド</term>
                 <listitem>
                     <para>Gradle's support for multi-project build is outstanding. Project dependencies are first class
                         citizens. We allow you to model the project relationships in a multi-project build as they really
