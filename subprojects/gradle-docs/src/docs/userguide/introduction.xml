@@ -15,66 +15,80 @@
   -->
 
 <chapter id="introduction">
-    <title>Introduction</title>
+    <title>はじめに</title>
     <para>We would like to introduce Gradle to you, a build system that we think is a quantum leap for build technology
         in the Java (JVM) world. Gradle provides:
+    </para>
+    <para>Gradleは、Java(JVM)環境におけるビルドシステムであり、従来のビルド技術を大躍進させると考えています。Gradleは以下のものを提供します。
     </para>
     <itemizedlist>
         <listitem>
             <para>A very flexible general purpose build tool like Ant.
             </para>
+            <para>Antのような、あらゆる目的に使用できる汎用ビルドツール</para>
         </listitem>
         <listitem>
             <para>Switchable, build-by-convention frameworks a la Maven. But we never lock you in!
             </para>
+            <para>その一方で、Mavenのような規約によるビルドフレームワーク。ただし規約でがんじがらめにすることはありません。</para>
         </listitem>
         <listitem>
             <para>Very powerful support for multi-project builds.
             </para>
+            <para>強力なマルチプロジェクトのサポート</para>
         </listitem>
         <listitem>
             <para>Very powerful dependency management (based on Apache Ivy).
             </para>
+            <para>強力な依存性管理 (Apache Ivyをベースにしています)</para>
         </listitem>
         <listitem>
             <para>Full support for your existing Maven or Ivy repository infrastructure.
             </para>
+            <para>Maven/Ivyリポジトリの完全なサポート</para>
         </listitem>
         <listitem>
             <para>Support for transitive dependency management without the need for remote repositories or
                 <literal>pom.xml</literal> and <literal>ivy.xml</literal>
                 files.
             </para>
+            <para>リモートリポジトリや<literal>pom.xml</literal>、<literal>ivy.xml</literal>を必要としない他動的な依存性管理のサポート</para>
         </listitem>
         <listitem>
             <para>Ant tasks and builds as first class citizens.
             </para>
+            <para>組み込みのAntタスク</para>
         </listitem>
         <listitem>
             <para>
                 <emphasis>Groovy</emphasis> build scripts.
             </para>
+            <para><emphasis>Groovy</emphasis>ビルドスクリプト</para>
         </listitem>
         <listitem>
             <para>A rich domain model for describing your build.
             </para>
+            <para>あなたのビルドを表す、リッチなドメインモデル</para>
         </listitem>
     </itemizedlist>
     <para>
         In <xref linkend='overview'/> you will find a detailed overview of Gradle. Otherwise, the
         <link linkend="tutorials">tutorials</link> are waiting, have fun :)
     </para>
+    <para><xref linkend="overview"/>でGradleの概要について記述しています。<link linkend="overview">チュートリアル</link>も用意しているので楽しんでいってください(^^)</para>
     <section>
-        <title>About this user guide</title>
+        <title>このユーザーガイドについて</title>
         <para>This user guide, like Gradle itself, is under very active development. Some parts of Gradle aren't
             documented as completely as they need to be. Some of the content presented won't be entirely clear or
             will assume that you know more about Gradle than you do. We need your help to improve this user
             guide. You can find out more about contributing to the documentation at the
             <ulink url="website:contributing.html">Gradle web site</ulink>.
         </para>
+        <para>このユーザーガイドは、Gradle同様、現在活発に更新されているところです。まだGradleについて必要な部分がすべてドキュメント化されているわけではありません。また、記載内容には明確でない部分やGradleについて読者が知っている以上の知識を要求する部分があるかもしれません。このガイドを改良していくため、力を貸してください。ドキュメンテーションへ参加、貢献していただける方は<ulink url="website:contributing.html">Gradleのウェブサイト</ulink>をご参照ください。</para>
         <para>You can find more examples, and some additions to this user guide, on the
             <ulink url="http://docs.codehaus.org/display/GRADLE/User+guide">wiki</ulink>.
             You can also contribute your own examples and extra content there.
         </para>
+        <para><ulink url="http://docs.codehaus.org/display/GRADLE/User+guide">wiki</ulink>には多くの例やこのユーザーガイドの付加情報が記載されています。このwikiに新たな例や内容を投稿することができます。</para>
     </section>
 </chapter>
