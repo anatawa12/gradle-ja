@@ -15,71 +15,80 @@
   -->
 
 <chapter id="installation">
-<title>Installing Gradle</title>
+    <title>Gradleのインストール / Installing Gradle</title>
 
 <section>
-    <title>Prerequisites</title>
+    <title>必要環境 / Prerequisites</title>
 
     <para>Gradle requires a Java JDK to be installed. Gradle requires a JDK 1.5 or higher. Gradle ships with its own
         Groovy library, therefore no Groovy needs to be installed. Any existing Groovy installation is ignored by Gradle.
     </para>
+    <para>Gradleを使用するには、Java JDKの1.5以上のバージョンがインストールされている必要があります。GradleにはGroovyライブラリが同梱されているので、別途Groovyをインストールする必要はありません。すでにインストールされていたとしても、Gradleからはそれら既存のGroovyは無視されます。</para>
 
     <para>Gradle uses whichever JDK it finds in your path (to check, use <userinput>java -version</userinput>).
         Alternatively, you can set the <envar>JAVA_HOME</envar> environment variable to point to the install directory
         of the desired JDK.
     </para>
+    <para>Gradleは、システムのパス上にあるJDKを使用します(<userinput>java -version</userinput>でチェックできます)。パス上のJDKの代わりに、環境変数<envar>JAVA_HOME</envar>にJDKをインストールしたディレクトリをセットして、使用したいJDKを指定することもできます。</para>
 </section>
 
 <section>
-    <title>Download</title>
+    <title>ダウンロード / Download</title>
     <para>You can download one of the Gradle distributions from the <ulink url="website:downloads.html">Gradle web site</ulink>.</para>
+    <para>Gradleは<ulink url="website:downloads.html">Gradle web site</ulink>からダウンロードできます。</para>
 </section>
 
 <section>
-<title>Unpacking</title>
+    <title>解凍 / Unpacking</title>
 
 <para>The Gradle distribution comes packaged as a ZIP. The full distribution contains:</para>
+<para>Gradleの配布物はZIPで圧縮されています。Gradleのフルパッケージには以下のものが含まれています。</para>
 
 <itemizedlist>
-    <listitem><para>The Gradle binaries.</para></listitem>
-    <listitem><para>The user guide (HTML and PDF).</para></listitem>
-    <listitem><para>The API documentation (Javadoc and Groovydoc).</para></listitem>
+    <listitem><para>Gradleのバイナリ</para><para>The Gradle binaries.</para></listitem>
+    <listitem><para>ユーザーガイド(HTMLとPDF)</para><para>The user guide (HTML and PDF).</para></listitem>
+    <listitem><para>APIドキュメント(JavadocとGroovydoc)</para><para>The API documentation (Javadoc and Groovydoc).</para></listitem>
     <listitem>
         <para>Extensive samples, including the examples referenced in the user guide, along with some complete and more
             complex builds you can use the starting point for your own build.
         </para>
+        <para>ユーザーガイドから参照されているサンプルを含め、大量のサンプルが同梱されています。複雑なビルドのサンプルが完全な形で置かれており、自分自身のビルドを記述するためのとっかかりとすることができます。</para>
     </listitem>
     <listitem>
         <para>The binary sources. This is for reference only. If you want to build Gradle you need to download the source distribution
             or checkout the sources from the source repository. See the <ulink url="website:build.html">Gradle web site</ulink> for details).
         </para>
+        Gradleバイナリのソースコード。これは参照専用のものです。Gradleをビルドするには、ソースを別途ダウンロードするかリポジトリからチェックアウトする必要があります。詳しくは<ulink url="website:build.html">GradleのWebサイト</ulink>を参照してください。 
     </listitem>
 </itemizedlist>
 
 <note>
-<title>For Un*x users</title>
+    <title>Un*xユーザーへ / For Un*x users</title>
 
 <para>You need a GNU compatible tool to unzip Gradle, if you want the file permissions to be properly set. We mention this as
 some zip front ends for Mac OS X don't restore the file permissions properly.
 </para>
+<para>ファイルパーミッションを正しく復元したい場合は、GNU conpatibleのunzipを使用してください。Mac OS Xのいくつかのzipフロントエンドはパーミッションを正しく復元しないものがあるので、念のため書いておきます。</para>
 </note>
 </section>
 
 <section>
-<title>Environment variables</title>
+    <title>環境変数 / Environment variables</title>
 
 <para>For running Gradle, add <filename><replaceable>GRADLE_HOME</replaceable>/bin</filename> to your <envar>PATH</envar>
     environment variable. Usually, this is sufficient to run Gradle. Optionally, you may also want to set the
     <envar>GRADLE_HOME</envar> environment variable to point to the root directory of your Gradle installation.
 </para>
+<para>Gradleを実行するために、<filename><replaceable>GRADLE_HOME</replaceable>/bin</filename>を環境変数<envar>PATH</envar>に追加してください。普通はこれで十分ですが、任意で<envar>GRADLE_HOME</envar>環境変数にGradleをインストールしたディレクトリをセットすることもできます。</para>
 </section>
 
 <section>
-<title>Running and testing your installation</title>
+    <title>正しくインストールされたことをテストする / Running and testing your installation</title>
 
 <para>You run Gradle via the <command>gradle</command> command. To check if Gradle is properly installed just type
 <command>gradle -v</command> and you should get an output like:
 </para>
+Gradleは、<command>gradle</command>コマンドを使って実行されます。Gradleが正しくインストールされていることを確認するには、<command>gradle -v</command>と入力してください。以下のような出力になれば大丈夫です。
 
 <screen>
 ------------------------------------------------------------
@@ -97,7 +106,7 @@ OS: Linux 2.6.35-22-generic amd64
 </section>
 
 <section>
-<title>JVM options</title>
+    <title>JVMオプション / JVM options</title>
 
 <para>JVM options for running Gradle can be set via environment variables. You can use <envar>GRADLE_OPTS</envar>
 or <envar>JAVA_OPTS</envar>. Those variables can be used together. <envar>JAVA_OPTS</envar> is by convention an environment
@@ -105,6 +114,7 @@ variable shared by many Java applications. A typical use case would be to set th
 and the memory options in <envar>GRADLE_OPTS</envar>. Those variables can also be set at the beginning
 of the <command>gradle</command> or <command>gradlew</command> script.
 </para>
+<para>Gradle実行時に引き渡すJVMオプションは、環境変数<envar>GRADLE_OPTS</envar>と<envar>JAVA_OPTS</envar>で設定します。両方一緒に使うこともできます。<envar>JAVA_OPTS</envar>に設定したオプションは慣習により多くのJavaアプリケーションで共有されるものです。典型的な例で言えば、HTTPプロキシは<envar>JAVA_OPTS</envar>に設定し、使用メモリに関する設定は<envar>GRADLE_OPTS</envar>にセットする、といった使い分けが考えられるでしょう。これらの設定は<command>gradle</command>や<command>gradlew</command>スクリプトの頭に記述することもできます。</para>
 
 </section>
 
