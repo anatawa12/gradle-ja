@@ -14,12 +14,12 @@
   ~ limitations under the License.
   -->
 <chapter id="tutorial_gradle_command_line">
-    <title>Using the Gradle Command-Line</title>
+    <title>コマンドラインでGradleを使用する</title>
     <para>This chapter introduces the basics of the Gradle command-line. You run a build using the
         <command>gradle</command> command, which you have already seen in action in previous chapters.</para>
-
+    <para>本章では、Gradleのコマンドラインインターフェースについて基本的なところを見ていきます。<command>gradle</command>コマンドを使用すれば、前章までに出てきたビルドを実際に実行してみることができます。</para>
     <section>
-        <title>Executing multiple tasks</title>
+        <title>複数のタスクを実行する</title>
         <para>You can execute multiple tasks in a single build by listing each of the tasks on the command-line. For example,
             the command <userinput>gradle compile test</userinput> will execute the <literal>compile</literal> and
             <literal>test</literal> tasks. Gradle will execute the tasks in the order that they are listed on the
@@ -27,11 +27,17 @@
             regardless of how it came to be included in the build: whether it was specified on the command-line, or it a
             dependency of another task, or both. Let's look at an example.</para>
         <para>
+        一回のビルドで、複数のタスクを実行することができます。ビルド実行の際に、それぞれのタスクを列挙して指定するだけです。たとえば、<userinput>gradle compile test</userinput>というコマンドを実行すれば、<literal>compile</literal>タスクと<literal>test</literal>タスクが実行されます。Gradleはタスクを列挙された順に実行し、それぞれのタスクに依存タスクがあればそれも実行します。各タスクは、明示的に指定されるにしろ別タスクに依存しているにしろ、またその両方で指定されているにしろ、ただ一度だけ実行されます。
+        </para>
+        <para>
             Below four tasks are defined. Both <literal>dist</literal> and <literal>test</literal> depend on the
             <literal>compile</literal> task. Running <userinput>gradle dist test</userinput> for this build script
             results in the <literal>compile</literal> task being executed only once.</para>
+        <para>
+        以下の例では、四つのタスクが定義されており、<literal>dist</literal>と<literal>test</literal>はどちらも<literal>compile</literal>タスクに依存しています。このビルドスクリプトを<userinput>gradle dist test</userinput>と実行しても、実行された二つのタスクから依存されている<literal>compile</literal>タスクは一度だけしか実行されません。
+        </para>
         <figure>
-            <title>Task dependencies</title>
+            <title>Task間の依存関係</title>
             <imageobject>
                 <imagedata fileref="img/commandLineTutorialTasks.png"/>
             </imageobject>
@@ -43,12 +49,14 @@
         <para>
             Because each task is executed once only, executing <userinput>gradle test test</userinput> is exactly the same
             as executing <userinput>gradle test</userinput>.</para>
+        <para><userinput>gradle test test</userinput>と打ち込んでも<userinput>gradle test</userinput>と打ち込んでも、実行される処理内容は同じだということです。</para>
     </section>
 
     <section id="sec:excluding_tasks_from_the_command_line">
-        <title>Excluding tasks</title>
+        <title>排他的なタスク実行</title>
         <para>You can exclude a task from being executed using the <option>-x</option> command-line option and providing
             the name of the task to exclude. Let's try this with the sample build file above.</para>
+        <para><option>-x</option>オプションでタスクの名前を指定すれば、そのタスクを実行することができます。先ほどのサンプルを実行してみてください。</para>
         <sample id="excludeTask" dir="userguide/tutorial/excludeTasks" title="Excluding tasks">
             <output args="dist -x test"/>
         </sample>
@@ -57,6 +65,8 @@
             <literal>test</literal> task's dependencies, such as <literal>compileTest</literal>
             are not executed either. Those dependencies of <literal>test</literal> that are required by another task, such as
             <literal>compile</literal>, are still executed.</para>
+        <literal>test</literal>タスクは<literal>dist</literal>に依存しているわけですが、この例では<literal>dist</literal>タスクは実行されていないことが分かると思います。
+        また、testタスクはcompileTestタスクにも依存していますが、やはり実行されていません。
     </section>
 
     <section>

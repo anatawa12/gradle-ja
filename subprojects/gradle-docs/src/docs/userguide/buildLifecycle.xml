@@ -14,7 +14,7 @@
   ~ limitations under the License.
   -->
 <chapter id='build_lifecycle' xmlns:xi="http://www.w3.org/2001/XInclude">
-    <title>The Build Lifecycle</title>
+    <title>ビルドのライフサイクル / The Build Lifecycle</title>
     <para>We said earlier, that the core of Gradle is a language for dependency based programming. In Gradle terms this
         means that you can define tasks and dependencies between tasks. Gradle guarantees that these tasks are executed
         in the order of their dependencies, and that each task is executed only once. Those tasks form a
@@ -23,49 +23,56 @@
         dependency graph <emphasis>before</emphasis> any task is executed. This lies at the heart of Gradle and makes
         many things possible which would not be possible otherwise.
     </para>
+    <para>前述の通り、Gradleというのは言ってしまえば依存性を記述する言語です。Gradleの用語でいえば、タスクとタスク間の依存関係を定義できる言語だということです。Gradleは、定義したタスクが定義した依存性に従って順に、またそれぞれ一回のみ実行されることを保証します。Gradleのタスクは、お互いの依存性により<ulink url="http://en.wikipedia.org/wiki/Directed_acyclic_graph">無閉路有向グラフ(DAG)</ulink>を構築するのです。タスクを実行するときにこのようなタスクグラフを組み立てるビルドツールもありますが、Gradleではまずタスクグラフを完全に構築してからタスクを実行していきます。このことはGradleのもっとも重要な概念であり、このメカニズムによりたくさんのことを可能にしているのです。</para>
     <para>Your build scripts configure this dependency graph. Therefore they are strictly speaking <emphasis>build
         configuration scripts</emphasis>.
     </para>
+    ビルドスクリプトというのは、このタスクグラフを設定するものです。したがって、ビルドスクリプトとは、厳密には<emphasis>ビルド設定スクリプト</emphasis>だと言えます。
     <section id='sec:build_phases'>
-        <title>Build phases</title>
+        <title>ビルドフェーズ / Build phases</title>
         <para>A Gradle build has three distinct phases.
         </para>
+        <para>Gradleには、独立した三つのビルドフェーズがあります。</para>
         <variablelist>
             <varlistentry>
-                <term>Initialization</term>
+                <term>初期化 / Initialization</term>
                 <listitem>
                     <para>Gradle supports single and multi-project builds. During the initialization phase, Gradle
                         determines which projects are going to take part in the build, and creates a
                         <apilink class="org.gradle.api.Project"/> instance for each of these projects.
                     </para>
+                    <para>Gradleはシングルプロジェクト、マルチプロジェクトの双方をサポートします。初期化フェーズでは、どのプロジェクトがビルドに参加しているのか決定し、<apilink class="org.gradle.api.Project">Project</apilink>インスタンスを生成します。</para>
                 </listitem>
             </varlistentry>
             <varlistentry>
-                <term>Configuration</term>
+                <term>設定 / Configuration</term>
                 <listitem>
                     <para>The build scripts of <emphasis>all</emphasis> projects which are part of the build are
                         executed. This configures the project objects.
                     </para>
+                    <para>ビルドに参加している<emphasis>すべて</emphasis>のプロジェクトのビルドスクリプトを実行します。初期化フェーズで生成したProjectインスタンスは、このフェーズでビルドスクリプトの記述通りに設定されるのです。</para>
                 </listitem>
             </varlistentry>
             <varlistentry>
-                <term>Execution</term>
+                <term>実行 / Execution</term>
                 <listitem>
                     <para>Gradle determines the subset of the tasks, created and configured during the configuration
                         phase, to be executed. The subset is determined by the task name arguments passed to the
                         <command>gradle</command> command and the current directory. Gradle then executes each of the
                         selected tasks.
                     </para>
+                    <para>設定フェーズで初期化と設定が完了したタスクのうち、実行するべきタスクを抽出して実行します。実行するタスクは、<command>gradle</command>コマンドに引き渡されたタスク名と、コマンドの実行ディレクトリから決定されます。</para>
                 </listitem>
             </varlistentry>
         </variablelist>
     </section>
     <section id='sec:settings_file'>
-        <title>Settings file</title>
+        <title>設定ファイル / Settings file</title>
         <para>Beside the build script files, Gradle defines a settings file. The settings file is determined by Gradle
             via a naming convention. The default name for this file is <filename>settings.gradle</filename>. Later in
             this chapter we explain, how Gradle looks for a settings file.
         </para>
+        <para>ビルドスクリプトの他、Gradleではビルドの「設定ファイル」を作成することができます。設定ファイルの場所はGradleの規約により決定され、デフォルトではプロジェクトディレクトリの<filename>settings.gradle</filename>です。この設定ファイルをGradleがどのように探すのかについては、後ほど解説します。</para>
         <para>The settings file gets executed during the initialization phase. A multiproject build must have a
             <filename>settings.gradle</filename>
             file in the root project of the multiproject hierarchy. It is required because in the
@@ -75,7 +82,8 @@
                     linkend='organizing_build_logic'/>). Let's first do some introspection with a single project
             build:
         </para>
-        <sample id="buildlifecycle" dir="userguide/buildlifecycle/basic" title="Single project build">
+        <para>設定ファイルは、初期化フェーズで使用されます。マルチプロジェクトの場合、<filename>settings.gradle</filename>ファイルは必須です。ルートとなるプロジェクトに必ず配置しなければなりません。この設定ファイルにより、どのプロジェクトがビルドに参加するか決定するからです(<xref linkend='multi_project_builds'/>参照)。シングルプロジェクトの場合は設定ファイルはなくてもかまいません。ビルドスクリプトのクラスパスにライブラリを追加する場合などにこの設定ファイルが必要になるでしょう(<xref linkend='organizing_build_logic'/>参照)。設定ファイルの読み込み、フェーズ実行の内部動作を、シングルプロジェクトの例を使って見てみます。</para>
+        <sample id="buildlifecycle" dir="userguide/buildlifecycle/basic" title="シングルプロジェクトのビルド / Single project build">
             <sourcefile file="settings.gradle"/>
             <sourcefile file="build.gradle"/>
             <output args="test"/>
@@ -84,16 +92,18 @@
             property access and method calls within the settings file is delegated to a settings object. Have a look at
             <apilink class='org.gradle.api.initialization.Settings'/>.
         </para>
+        <para>ビルドスクリプト内でのプロパティアクセスやメソッド呼び出しは、Projectインスタンスに委譲されますが、それと同様に設定ファイル内でのプロパティアクセス、メソッド呼び出しはsettingsインスタンスに委譲されます。<apilink class='org.gradle.api.initialization.Settings'>Settings</apilink>をご参照ください。</para>
     </section>
     <section id='sec:multi_project_builds'>
-        <title>Multi-project builds</title>
+        <title>マルチプロジェクトのビルド / Multi-project builds</title>
         <para>A multi-project build is a build where you build more than one project during a single execution of
             Gradle. You have to declare the projects taking part in the multiproject build in the settings file. There
             is much more to say about multi-project builds in the chapter dedicated to this topic (see <xref
                     linkend='multi_project_builds'/>).
         </para>
+        <para>マルチプロジェクトとは、ある一つのプロジェクトをビルドしているときに、関連する別のプロジェクトも呼び出されてビルドされるよう構成されたプロジェクトの集まりです。マルチプロジェクトのビルドにプロジェクトを参加させるには、設定ファイルでそのことを宣言しなくてはなりません。マルチプロジェクトについては、専用の章をもうけて詳しく説明します(<xref linkend="multi_project_builds"/>参照)。</para>
         <section id='sub:project_locations'>
-            <title>Project locations</title>
+            <title>プロジェクトの配置 / Project locations</title>
             <para>Multi-project builds are always represented by a tree with a single root. Each element in the tree
                 represent a project. A project has a virtual and a physical path. The virtual path denotes the position
                 of the project in the multi-project build tree. The project tree is created in the
@@ -101,15 +111,17 @@
                 file is also the location of the root project. But you can redefine the location of the root project
                 in the settings file.
             </para>
+            <para>マルチプロジェクトは、ある一つのプロジェクトをルートにしたツリー構造で表すことができます。ツリー構造の要素一つ一つがプロジェクトになっているわけです。マルチプロジェクト・ツリーを構成するそれぞれのプロジェクトは、ツリー内で自分をアドレスする仮想的なパスと、実際にプロジェクトが置かれているファイルシステム上のパスを持っています。プロジェクトのツリー構造は設定ファイルで定義します。デフォルトではその設定ファイルがあるプロジェクトがルートプロジェクトになっていますが、どのプロジェクトをツリーのルートプロジェクトとするかは設定ファイルで再定義することができます。</para>
         </section>
         <section id='sub:building_the_tree'>
-            <title>Building the tree</title>
+            <title>プロジェクト・ツリーの構築 / Building the tree</title>
             <para>In the settings file you can use a set of methods to build the project tree. Hierarchical and flat
                 physical layouts get special support.
             </para>
+            <para>設定ファイル内では、プロジェクト・ツリーを構築するためのメソッドを使用できます。これらのメソッドでは、プロジェクトを実際に配置するレイアウトとして、階層構造とフラットな構造の二つをサポートしています。</para>
             <section>
-                <title>Hierarchical layouts</title>
-                <sample id="standardLayouts" dir="userguide/multiproject/standardLayouts" title="Hierarchical layout">
+                <title>階層構造のレイアウト / Hierarchical layouts</title>
+                <sample id="standardLayouts" dir="userguide/multiproject/standardLayouts" title="階層構造のレイアウト / Hierarchical layout">
                     <sourcefile file="settings.gradle" snippet="hierarchical-layout"/>
                 </sample>
                 <para>The <literal>include</literal> method takes as an argument a relative virtual path to the root
@@ -118,66 +130,77 @@
                     the leaf project is assumed to be another subproject which obeys to the physical path assumption
                     described above.
                 </para>
+                <para><literal>include</literal>メソッドに引き渡されている引数は、ルートプロジェクトを基点とした相対的な仮想パスです。この仮想パスは、ファイルシステム上の実際のパスと対応しています。仮想パスで示されるディレクトリが、ツリーを構成するサブプロジェクトとして設定されると言うことです。実際には<literal>include</literal>メソッドで指定する必要があるのはプロジェクト・ツリーの末端となるプロジェクトのみであり、そこに到達するまでのパスにあるすべてのディレクトリは自動的にサブプロジェクトとして設定されます。</para>
             </section>
             <section>
-                <title>Flat layouts</title>
-                <sample id="standardLayouts" dir="userguide/multiproject/standardLayouts" title="Flat layout">
+                <title>フラットなレイアウト / Flat layouts</title>
+                <sample id="standardLayouts" dir="userguide/multiproject/standardLayouts" title="フラットなレイアウト / Flat layout">
                     <sourcefile file="settings.gradle" snippet="flat-layout"/>
                 </sample>
                 <para>The <literal>includeFlat</literal> method takes directory names as an argument. Those directories
                     need to exist at the same level as the root project directory. The location of those directories
                     are considered as child projects of the root project in the virtual multi-project tree.
                 </para>
+                <para><literal>includeFlat</literal>メソッドは、ディレクトリ名を引数にとります。これらのディレクトリはルートプロジェクトのディレクトリと同じディレクトリになければなりませんが、マルチプロジェクト・ツリーの仮想的なパス上においてはルートプロジェクトの子プロジェクトに設定されます。</para>
             </section>
         </section>
         <section id='sub:modifying_element_of_the_project_tree'>
-            <title>Modifying elements of the project tree</title>
+            <title>プロジェクト・ツリーの属性を変更する / Modifying elements of the project tree</title>
             <para>The multi-project tree created in the settings file is made up of so called <firstterm>project descriptors</firstterm>.
                 You can modify these descriptors in the settings file at any time. To access a descriptor you can do:
             </para>
-            <sample id="customLayout" dir="userguide/multiproject/customLayout" title="Modification of elements of the project tree">
+            <para>このように、マルチプロジェクト・ツリーは設定ファイルで定義されますが、ここで定義したマルチプロジェクト・ツリーは、<firstterm>プロジェクトディスクリプタ</firstterm>と呼ばれる属性を持っています。これらの属性は設定ファイルの中でいつでも変更することができます。ディスクリプタには、以下のようにしてアクセスできます。</para>
+            <sample id="customLayout" dir="userguide/multiproject/customLayout" title="プロジェクト・ツリーの属性を変更する / Modification of elements of the project tree">
                 <sourcefile file="settings.gradle" snippet="lookup-project"/>
             </sample>
             <para>Using this descriptor you can change the name, project directory and build file of a project.
             </para>
-            <sample id="customLayout" dir="userguide/multiproject/customLayout" title="Modification of elements of the project tree">
+            <para>ディスクリプタを使用して、プロジェクト名やプロジェクトディレクトリ、プロジェクトのビルドスクリプト名を変更できます。</para>
+            <sample id="customLayout" dir="userguide/multiproject/customLayout" title="プロジェクトツリーの属性を変更する / Modification of elements of the project tree">
                 <sourcefile file="settings.gradle" snippet="change-project"/>
             </sample>
             <para>Have a look at <apilink class="org.gradle.api.initialization.ProjectDescriptor"/> for more details.</para>
+            詳細については<apilink class="ogr.gradle.api.iniialization.ProjectDescriptor"/>をご参照ください。
         </section>
     </section>
     <section id='sec:initialization'>
-        <title>Initialization</title>
+        <title>初期化 / Initialization</title>
         <para>How does Gradle know whether to do a single or multiproject build? If you trigger a multiproject build
             from the directory where the settings file is, things are easy. But Gradle also allows you to execute the
             build from within any subproject taking part in the build.
             <footnote>
                 <para>Gradle supports partial multiproject builds (see <xref linkend='multi_project_builds'/>).
                 </para>
+                Gradleは、マルチプロジェクトに含まれる一部のプロジェクトのみ部分的にビルドできる(<xref linkend="multi_project_builds"/>参照)
             </footnote>
             If you execute Gradle from within a project that has no <filename>settings.gradle</filename> file,
             Gradle does the following:
         </para>
+        Gradleは、現在ビルドしているものがマルチプロジェクトかシングルプロジェクトか、どうやって知るのでしょう。マルチプロジェクトのビルドを、設定ファイルのあるディレクトリから起動しているなら話は簡単ですが、Gradleはサブプロジェクトのディレクトリからビルドを実行することもできるようになっています。Gradleは、<filename>settings.gradle</filename>のないディレクトリで実行された場合、以下のように動作します。
         <itemizedlist>
             <listitem>
                 <para>It searches for a <filename>settings.gradle</filename> in a directory called <filename>master</filename>
                     which has the same nesting level as the current dir.
                 </para>
+                <para>カレントディレクトリと同階層のディレクトリから<filename>master</filename>という名前のディレクトリを探し、<filename>settings.gradle</filename>があるかどうか確認する。</para>
             </listitem>
             <listitem>
                 <para>If no <filename>settings.gradle</filename> is found, it searches the parent directories for the existence of a
                     <filename>settings.gradle</filename> file.
                 </para>
+                <para><filename>settings.gradle</filename>が見つからなければ、親階層のディレクトリに<filename>settings.gradle</filename>がないか確認する。</para>
             </listitem>
             <listitem>
                 <para>If no <filename>settings.gradle</filename> file is found, the build is executed as a single project build.
                 </para>
+                <para><filename>settings.gradle</filename>が見つからなければ、シングルプロジェクトとしてビルドする。</para>
             </listitem>
             <listitem>
                 <para>If a <filename>settings.gradle</filename> file is found, Gradle checks if the current project is part of the
                     multiproject hierarchy defined in the found <filename>settings.gradle</filename> file. If not, the build is executed as a
                     single project build. Otherwise a multiproject build is executed.
                 </para>
+                <para><filename>settings.gradle</filename>が見つかれば、Gradleはビルドを実行したプロジェクトがマルチプロジェクトに参加するよう宣言されているかどうか確認する。宣言が確認できればマルチプロジェクトとしてビルドするが、確認できなければ、現在のプロジェクトをシングルプロジェクトとしてビルドする。</para>
             </listitem>
         </itemizedlist>
         <para>What is the purpose of this behavior? Somehow Gradle has to find out, whether the project you are into, is
@@ -188,14 +211,17 @@
             current project is then always build as a single project build. If the current project contains a
             <filename>settings.gradle</filename> file, the <option>-u</option> option has no meaning. Such a build is always executed as:
         </para>
+        <para>なんのためにこのような振る舞いをするのでしょう。Gradleは、何とかして今からビルドするプロジェクトがマルチプロジェクトのうちの一サブプロジェクトなのか単なるシングルプロジェクトなのか決定しなくてはなりません。サブプロジェクトだった場合、ビルドするのがそのサブプロジェクトと依存するプロジェクトのみだったとしても、Gradleはマルチプロジェクト・ツリー全体の設定情報を作成する必要があります(<xref linkend="multi_project_builds"/>参照)。<option>-u</option>オプションをつけてGradleを実行すれば、親階層をたどって<filename>settings.gradle</filename>を探しに行くことはありません。つまり、(settings.gradleのない)現在ビルドしているプロジェクトは、常にシングルプロジェクトだと認識されるわけです。現在のプロジェクトに<filename>settings.gradle</filename>がある場合は、<option>-u</option>をつけても意味はありません。settings.gradleをもつプロジェクトは以下のように処理されます。</para>
         <itemizedlist>
             <listitem>
                 <para>a single project build, if the <filename>settings.gradle</filename> file does not define a multiproject hierarchy
                 </para>
+                <para><filename>settings.gradle</filename>がマルチプロジェクト・ツリーを定義していない場合はシングルプロジェクトとしてビルド</para>
             </listitem>
             <listitem>
                 <para>a multiproject build, if the <filename>settings.gradle</filename> file does define a multiproject hierarchy.
                 </para>
+                <para><filename>settings.gradle</filename>がマルチプロジェクト・ツリーを定義している場合は、マルチプロジェクトとしてビルド</para>
             </listitem>
         </itemizedlist>
         <para>The auto search for a settings file does only work for multi-project builds with a physical hierarchical
@@ -209,89 +235,104 @@
             Settings object (plus the root project). Each project object has by default a name equals to the name of its
             top level directory. Every project except the root project has a parent project and might have child projects.
         </para>
+        <para>このような設定ファイルの探索処理を使用するためには、プロジェクトを配置するレイアウトとして、前述した階層レイアウトとフラットレイアウトのどちらかを使わなければなりません。さらに、フラットなレイアウトを採用した場合は、前述したような命名規約(settings.gradleをmasterディレクトリに配置する)に従う必要があります。Gradleでは、任意のディレクトリ構造からマルチプロジェクト・ツリーを構築できます。しかし、そのような自由なディレクトリ構成を使用するためには、設定ファイルがあるディレクトリでGradleを実行しなければなりません。ルートプロジェクトから、一部のプロジェクトのビルドのみ実行する方法は<xref linkend="sec:running_partial_build_from_the_root"/>を参照してください。次のリリースでは、コマンドラインから設定ファイルの場所を指定してやることで、サブプロジェクトからの部分ビルドをサポートする予定です。さて、Gradleは、ビルドの初期化処理で、ビルドに参加しているすべてのプロジェクトについてProjectオブジェクトを生成します。シングルプロジェクトの場合はひとつだけ、マルチプロジェクトの場合は、Settingsオブジェクトで指定されているすべてのプロジェクトに加えて、ルートプロジェクトのProjectオブジェクトが生成されるのです。Projectオブジェクトは、そのプロジェクトがあるディレクトリの名前をデフォルトのプロジェクト名としています。ルートプロジェクトをのぞく全てのプロジェクトは親プロジェクトを持っていますし、子プロジェクトもあるかもしれません。</para>
     </section>
     <section id='sec:configuration_and_execution_of_a_single_project_build'>
-        <title>Configuration and execution of a single project build</title>
+        <title>シングルプロジェクトの設定と実行 / Configuration and execution of a single project build</title>
         <para>For a single project build, the workflow of the <emphasis>after initialization</emphasis>
             phases are pretty simple. The build script is executed against the project object that was created during
             the initialization phase. Then Gradle looks for tasks with names equal to those passed as command line
             arguments. If these task names exist, they are executed as a separate build in the order you have passed
             them. The configuration and execution for multi-project builds is discussed in <xref linkend='multi_project_builds'/>.
         </para>
+        <para>シングルプロジェクトだと、初期化フェーズ以降の処理の流れは非常にシンプルです。まず、ビルドスクリプトが初期化フェーズで生成されたProjectオブジェクトに対して実行されます。それから、Gradleはコマンドライン引数に渡されたタスクを探し、それが見つかればコマンドライン引数の順に別々に実行されます。マルチプロジェクトにおける設定と実行については、<xref linkend="multi_project_builds"/>を参照してください。</para>
     </section>
     <section id="build_lifecycle_events">
-        <title>Responding to the lifecycle in the build script</title>
+        <title>ライフサイクルからの通知に応答する / Responding to the lifecycle in the build script</title>
 
         <para>Your build script can receive notifications as the build progresses through its lifecyle. These
             notifications generally take 2 forms: You can either implement a particular listener interface, or you can
             provide a closure to execute when the notification is fired. The examples below use closures. For details on
             how to use the listener interfaces, refer to the API documentation.
         </para>
-
+        <para>ビルドスクリプト内では、ビルドがそのライフサイクルに従って進行していくなかで、さまざまな通知を受けとって処理できます。この通知を受けとるには大きく分けて二つの方法があります。ひとつは、あるリスナーインターフェースを実装する方法、もうひとつは通知を受け取ったときに実行されるクロージャを作成する方法です。ここでは、クロージャを使用する方法について例を見ていきたいと思います。リスナーインターフェースを実装する方法についてはAPIドキュメントをご参照ください。</para>
         <section>
-            <title>Project evaluation</title>
+            <title>プロジェクトの評価 / Project evaluation</title>
             <para>You can receive a notification immediately before and after a project is evaluated. This can be used
                 to do things like performing additional configuration once all the definitions in a build script have
                 been applied, or for some custom logging or profiling.
             </para>
+            <para>プロジェクトが評価される前またはされた後すぐに通知を受け取ることができます。これは、ビルドスクリプトが一通り評価された後、さらに追加の設定処理を行ったり、ロギング処理のカスタマイズやプロファイリングなどで使用されます。</para>
             <para>Below is an example which adds a <literal>test</literal> task to each project with the
                 <literal>hasTests</literal> property set to true.
             </para>
-            <sample id="projectEvaluateEvents" dir="userguide/buildlifecycle/projectEvaluateEvents" title="Adding of test task to each project which has certain property set">
+            <para>以下の例は、<literal>test</literal>タスクを、<literal>hasTests</literal>プロパティを持つすべてのプロジェクトに追加するものです。</para>
+            <sample id="projectEvaluateEvents" dir="userguide/buildlifecycle/projectEvaluateEvents" title="特定プロパティを持つプロジェクトにタスクを追加する / Adding of test task to each project which has certain property set">
                 <sourcefile file="build.gradle" snippet="after-evaluate"/>
                 <sourcefile file="projectA.gradle"/>
                 <output args="-q test"/>
             </sample>
             <para>This example uses method <literal>Project.afterEvaluate()</literal> to add a closure which is executed
                 after the project is evaluated.</para>
+            <para>この例では、<literal>Project.afterEvaluate()</literal>を使用して、プロジェクト評価後に実装されるクロージャを追加しています。</para>
             <para>It is also possible to receive notifications when any project is evaluated. This example performs
                 some custom logging of project evaluation. Notice that the <literal>afterProject</literal> notification
                 is received regardless of whether the project evaluates successfully or fails with an exception.
             </para>
-            <sample id="buildProjectEvaluateEvents" dir="userguide/buildlifecycle/buildProjectEvaluateEvents" title="Notifications">
+            <para>プロジェクト評価時の通知は、どんなプロジェクトに対しても受け取ることができます。この例では、カスタムロギング処理をプロジェクト評価時に実行しています。<literal>afterProject</literal>が、プロジェクトの評価に成功しても例外で失敗しても通知される点に注目してください。</para>
+            <sample id="buildProjectEvaluateEvents" dir="userguide/buildlifecycle/buildProjectEvaluateEvents" title="通知 / Notifications">
                 <sourcefile file="build.gradle" snippet="evaluate-events"/>
                 <output args="-q test"/>
             </sample>
             <para>You can also add a <apilink class="org.gradle.api.ProjectEvaluationListener"/> to the
                 <apilink class="org.gradle.api.invocation.Gradle"/> to receive these events.
             </para>
+            <para><apilink class="org.gradle.api.ProjectEvaluationListener"/>を<apilink class="org.gradle.api.invocation.Gradle"/>に追加することでも同様の処理を実現できます。</para>
         </section>
 
         <section>
-            <title>Task creation</title>
+            <title>タスク作成 / Task creation</title>
             <para>You can receive a notification immediately after a task is added to a project. This can be used
                 to set some default values or add behaviour before the task is made available in the build file.</para>
             <para>The following example sets the <literal>srcDir</literal> property of each task as it is created.</para>
-            <sample id="taskCreationEvents" dir="userguide/buildlifecycle/taskCreationEvents" title="Setting of certain property to all tasks">
+            <para>プロジェクトにタスクが作成されたときに通知を受け取ることができます。この通知は、タスクが使用される前にデフォルト値を設定したり、振る舞いを追加したりするのに使用することができます。</para>
+            <sample id="taskCreationEvents" dir="userguide/buildlifecycle/taskCreationEvents" title="すべてのタスクにプロパティ値を設定する / Setting of certain property to all tasks">
                 <sourcefile file="build.gradle"/>
                 <output args="-q a"/>
             </sample>
             <para>You can also add an <apilink class="org.gradle.api.Action"/> to a
                 <apilink class="org.gradle.api.tasks.TaskContainer"/> to receive these events.</para>
+            <para><apilink class="org.gradle.api.Action"/>を<apilink class="org.gradle.api.tasks.TaskContainer"/>に追加することでも同様の処理を実現できます。</para>
         </section>
 
         <section>
-            <title>Task execution graph ready</title>
+            <title>タスク実行グラフの準備 / Task execution graph ready</title>
             <para>You can receive a notification immediately after the task execution graph has been populated. We
                 have seen this already in <xref linkend="configure-by-dag"/>.
             </para>
+            <para>タスクの実行グラフが用意できたときに通知を受け取ることができます。この例については、<xref linkend="configure-by-dag"/>で紹介しました。</para>
             <para>You can also add a <apilink class="org.gradle.api.execution.TaskExecutionGraphListener"/> to the
                 <apilink class="org.gradle.api.execution.TaskExecutionGraph"/> to receive these events.
             </para>
+            <para><apilink class="org.gradle.api.execution.TaskExecutionGraphListener"/>を<apilink class="org.gradle.api.execution.TaskExecutionGraph"/>に追加することでも同様の処理を実現できます。</para>
         </section>
 
         <section>
-            <title>Task execution</title>
+            <title>タスクの実行 / Task execution</title>
             <para>You can receive a notification immediately before and after any task is executed.</para>
+            <para>タスクが実行される前または実行された後に通知を受け取ることができます。</para>
             <para>The following example logs the start and end of each task execution. Notice that the
                 <literal>afterTask</literal> notification is received regardless of whether the task completes
                 successfully or fails with an exception.</para>
-            <sample id="taskExecutionEvents" dir="userguide/buildlifecycle/taskExecutionEvents" title="Logging of start and end of each task execution">
+            <para>次の例では、タスクの実行が開始されたときと終わったときにそれぞれロギングを追加しています。<literal>afterTask</literal>が、タスクの実行に成功しても例外で失敗しても通知されていることに注目してください。</para>
+            <sample id="taskExecutionEvents" dir="userguide/buildlifecycle/taskExecutionEvents" title="タスク実行の開始時および終了時にロギングを行う / Logging of start and end of each task execution">
                 <sourcefile file="build.gradle"/>
                 <output args="-q broken"/>
             </sample>
             <para>You can also use a <apilink class="org.gradle.api.execution.TaskExecutionListener"/> to the
                 <apilink class="org.gradle.api.execution.TaskExecutionGraph"/> to receive these events.
+            </para>
+            <para><apilink class="org.gradle.api.execution.TaskExecutionListener"/>を<apilink class="org.gradle.api.execution.TaskExecutionGraph"/>に追加することでも同様の処理を実現できます。
             </para>
         </section>
     </section>
