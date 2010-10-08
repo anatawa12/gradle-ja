@@ -15,7 +15,7 @@
   -->
 
 <chapter id="introduction">
-    <title>はじめに</title>
+    <title>はじめに / Introduction</title>
     <para>We would like to introduce Gradle to you, a build system that we think is a quantum leap for build technology
         in the Java (JVM) world. Gradle provides:
     </para>
@@ -77,7 +77,7 @@
     </para>
     <para><xref linkend="overview"/>でGradleの概要について記述しています。<link linkend="overview">チュートリアル</link>も用意しているので楽しんでいってください(^^)</para>
     <section>
-        <title>このユーザーガイドについて</title>
+        <title>このユーザーガイドについて / About this user guide</title>
         <para>This user guide, like Gradle itself, is under very active development. Some parts of Gradle aren't
             documented as completely as they need to be. Some of the content presented won't be entirely clear or
             will assume that you know more about Gradle than you do. We need your help to improve this user
