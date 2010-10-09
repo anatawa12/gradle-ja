@@ -14,12 +14,12 @@
   ~ limitations under the License.
   -->
 <chapter id="tutorial_gradle_command_line">
-    <title>コマンドラインでGradleを使用する</title>
+    <title>コマンドラインでGradleを使用する / Using the Gradle Command-Line</title>
     <para>This chapter introduces the basics of the Gradle command-line. You run a build using the
         <command>gradle</command> command, which you have already seen in action in previous chapters.</para>
-    <para>本章では、Gradleのコマンドラインインターフェースについて基本的なところを見ていきます。<command>gradle</command>コマンドを使用すれば、前章までに出てきたビルドを実際に実行してみることができます。</para>
+    <para>本章では、Gradleのコマンドラインインターフェースについて基本的なところを見ていきます。前回までの章で既に動作をみてきましたが、Gradleのビルドは<command>gradle</command>コマンドで実行します。</para>
     <section>
-        <title>複数のタスクを実行する</title>
+        <title>複数のタスクを実行する / Executing multiple tasks</title>
         <para>You can execute multiple tasks in a single build by listing each of the tasks on the command-line. For example,
             the command <userinput>gradle compile test</userinput> will execute the <literal>compile</literal> and
             <literal>test</literal> tasks. Gradle will execute the tasks in the order that they are listed on the
@@ -27,7 +27,7 @@
             regardless of how it came to be included in the build: whether it was specified on the command-line, or it a
             dependency of another task, or both. Let's look at an example.</para>
         <para>
-        一回のビルドで、複数のタスクを実行することができます。ビルド実行の際に、それぞれのタスクを列挙して指定するだけです。たとえば、<userinput>gradle compile test</userinput>というコマンドを実行すれば、<literal>compile</literal>タスクと<literal>test</literal>タスクが実行されます。Gradleはタスクを列挙された順に実行し、それぞれのタスクに依存タスクがあればそれも実行します。各タスクは、明示的に指定されるにしろ別タスクに依存しているにしろ、またその両方で指定されているにしろ、ただ一度だけ実行されます。
+        一回のビルドで、複数のタスクを実行することができます。ビルド実行の際に、それぞれのタスクを列挙して指定するだけです。たとえば、<userinput>gradle compile test</userinput>というコマンドを実行すれば、<literal>compile</literal>タスクと<literal>test</literal>タスクが実行されます。Gradleはタスクを列挙された順に実行し、それぞれのタスクに依存タスクがあればそれも実行します。各タスクは、明示的に指定されるにしろ別タスクに依存しているにしろ、またその両方で指定されているにしろ、ただ一度だけ実行されます。次の例を見てください。
         </para>
         <para>
             Below four tasks are defined. Both <literal>dist</literal> and <literal>test</literal> depend on the
@@ -37,7 +37,7 @@
         以下の例では、四つのタスクが定義されており、<literal>dist</literal>と<literal>test</literal>はどちらも<literal>compile</literal>タスクに依存しています。このビルドスクリプトを<userinput>gradle dist test</userinput>と実行しても、実行された二つのタスクから依存されている<literal>compile</literal>タスクは一度だけしか実行されません。
         </para>
         <figure>
-            <title>Task間の依存関係</title>
+            <title>Task間の依存関係 / Task dependencies</title>
             <imageobject>
                 <imagedata fileref="img/commandLineTutorialTasks.png"/>
             </imageobject>
@@ -53,11 +53,11 @@
     </section>
 
     <section id="sec:excluding_tasks_from_the_command_line">
-        <title>排他的なタスク実行</title>
+        <title>タスクを除外してビルドする / Excluding tasks</title>
         <para>You can exclude a task from being executed using the <option>-x</option> command-line option and providing
             the name of the task to exclude. Let's try this with the sample build file above.</para>
-        <para><option>-x</option>オプションでタスクの名前を指定すれば、そのタスクを実行することができます。先ほどのサンプルを実行してみてください。</para>
-        <sample id="excludeTask" dir="userguide/tutorial/excludeTasks" title="Excluding tasks">
+        <para><option>-x</option>オプションでタスクの名前を指定することで、そのタスクを除外してビルドを実行することができます。先ほどのサンプルで試してみましょう。</para>
+        <sample id="excludeTask" dir="userguide/tutorial/excludeTasks" title="タスクの除外 / Excluding tasks">
             <output args="dist -x test"/>
         </sample>
         <para>You can see from the output of this example, that the <literal>test</literal> task is not executed, even
@@ -65,43 +65,47 @@
             <literal>test</literal> task's dependencies, such as <literal>compileTest</literal>
             are not executed either. Those dependencies of <literal>test</literal> that are required by another task, such as
             <literal>compile</literal>, are still executed.</para>
-        <literal>test</literal>タスクは<literal>dist</literal>に依存しているわけですが、この例では<literal>dist</literal>タスクは実行されていないことが分かると思います。
-        また、testタスクはcompileTestタスクにも依存していますが、やはり実行されていません。
+        <para><literal>dist</literal>タスクは<literal>test</literal>に依存しているわけですが、この例では<literal>test</literal>タスクは実行されていないことが分かると思います。また、<literal>test</literal>タスクが依存しているタスク、たとえば<literal>compileTest</literal>タスクもやはり実行されていません。しかし、<literal>test</literal>タスクが依存しているタスクのうち、<literal>test</literal>以外からも依存されているタスク、つまり<literal>compile</literal>タスクは実行されているのです。</para>
     </section>
 
     <section>
-        <title>Task name abbreviation</title>
+        <title>タスク名の省略 / Task name abbreviation</title>
         <para>When you specify tasks on the command-line, you don't have to provide the full name of the task. You only need to provide enough of the
             task name to uniquely identify the task. For example, in the sample build above, you can execute task
             <literal>dist</literal> by running <userinput>gradle d</userinput>:</para>
-        <sample id="abbreviateTaskName" dir="userguide/tutorial/excludeTasks" title="Abbreviated task name">
+        <para>タスク名をコマンドラインで指定するとき、タスク名をすべて入力する必要はありません。タスク名を一つに決定できるだけの文字を入力すればよいのです。先ほどの例で言えば、<userinput>gradle d</userinput>と入力すれば<literal>dist</literal>を実行できるわけです。</para>
+        <sample id="abbreviateTaskName" dir="userguide/tutorial/excludeTasks" title="タスク名の省略 / Abbreviated task name">
             <output args="di"/>
         </sample>
         <para>You can also abbreviate each word in a camel case task name. For example, you can execute task <literal>compileTest</literal>
             by running <userinput>gradle compTest</userinput> or even <userinput>gradle cT</userinput></para>
-        <sample id="abbreviateCamelCaseTaskName" dir="userguide/tutorial/excludeTasks" title="Abbreviated camel case task name">
+        <para>キャメルケースで分割されたそれぞれの単語を省略することもできます。たとえば、<literal>compileTest</literal>というタスクだと、<userinput>gradle compTest</userinput>と入力したり、<userinput>gradle cT</userinput>と入力したりすることで実行することができます。</para>
+        <sample id="abbreviateCamelCaseTaskName" dir="userguide/tutorial/excludeTasks" title="キャメルケースのタスク名を省略 / Abbreviated camel case task name">
             <output args="cT"/>
         </sample>
         <para>You can also use these abbreviations with the <option>-x</option> command-line option.</para>
+        <para>タスク名の省略は<option>-x</option>オプションでも使うことができます。</para>
     </section>
 
     <section id="sec:selecting_build">
-        <title>Selecting which build to execute</title>
+        <title>ビルドスクリプトを指定して実行する / Selecting which build to execute</title>
         <para>When you run the <command>gradle</command> command, it looks for a build file in the current directory.
             You can use the <option>-b</option> option to select another build file. For example:
         </para>
-        <sample id="selectProjectUsingBuildFile" dir="userguide/tutorial/selectProject" title="Selecting the project using a build file">
+        <para><command>gradle</command>コマンドは、デフォルトではカレントディレクトリにあるビルドスクリプトを探して実行しますが、<option>-b</option>オプションを使えば別のビルドスクリプトを指定することもできます。</para>
+        <sample id="selectProjectUsingBuildFile" dir="userguide/tutorial/selectProject" title="ビルドスクリプトを指定してビルドするプロジェクトを選択する / Selecting the project using a build file">
             <sourcefile file="subdir/myproject.gradle"/>
             <output args="-q -b subdir/myproject.gradle hello"/>
         </sample>
         <para>Alternatively, you can use the <option>-p</option> option to specify the project directory to use:</para>
-        <sample id="selectProjectUsingProjectDir" dir="userguide/tutorial/selectProject" title="Selecting the project using project directory">
+        <para>また、<option>-p</option>オプションでプロジェクトのディレクトリを指定してビルドすることもできます。</para>
+        <sample id="selectProjectUsingProjectDir" dir="userguide/tutorial/selectProject" title="ディレクトリを指定してビルドするプロジェクトを選択する / Selecting the project using project directory">
             <output args="-q -p subdir hello"/>
         </sample>
     </section>
 
     <section id="sec:obtaining_information_about_your_build">
-        <title>Obtaining information about your build</title>
+        <title>ビルドに関する情報を取得する / Obtaining information about your build</title>
         <para>Gradle provides several built-in tasks which show particular details of your build. This can be
             useful for understanding the structure and dependencies of your build, and for debugging problems.
         </para>
@@ -125,46 +129,51 @@
             </sample>
         </section>
         <section id="sec:listing_tasks">
-            <title>Listing tasks</title>
+            <title>タスクの一覧 / Listing tasks</title>
             <para>Running <userinput>gradle tasks</userinput> gives you a list of the main tasks of the
                 selected project. This report shows the default tasks for the project, if any, and a description for
                 each task. Below is an example of this report:
             </para>
-            <sample id="taskListReport" dir="userguide/tutorial/projectReports" title="Obtaining information about tasks">
+            <userinput>gradle --tasks</userinput>または<userinput>gradle -t</userinput>は、プロジェクトに設定されているメインタスクのリストを表示します。デフォルトタスクを表示し、もしあればそれぞれのタスクに関する説明も表示します。レポート表示例をご覧ください。
+            <sample id="taskListReport" dir="userguide/tutorial/projectReports" title="タスクに関する情報を取得する / Obtaining information about tasks">
                 <output args="-q tasks"/>
             </sample>
             <para>By default, this report shows only those tasks which have been assigned to a task group. You can do this
                 by setting the <literal>group</literal> property for the task. You can also set the <literal>description</literal>
                 property, to provide a description to be included in the report.
             </para>
-            <sample id="taskListReport" dir="userguide/tutorial/projectReports" title="Changing the content of the task report">
+            <para>デフォルトでは、このレポートは何らかのタスクグループに属しているタスクしか表示されません。タスクの<literal>group</literal>プロパティを設定することでタスクにグループを割り当てることができます。また、このレポートでタスクに関する説明書きを表示させるには、タスクの<literal>description</literal>プロパティに説明書きを設定してください。</para>
+            <sample id="taskListReport" dir="userguide/tutorial/projectReports" title="タスクレポートの内容を変更する / Changing the content of the task report">
                 <sourcefile file="build.gradle" snippet="add-task-to-report"/>
             </sample>
             <para>You can obtain more information in the task listing using the <option>--all</option> option. With
                 this option, the task report lists all tasks in the project, grouped by main task, and the dependencies
                 for each task. Here is an example:
             </para>
-            <sample id="taskListAllReport" dir="userguide/tutorial/projectReports" title="Obtaining more information about tasks">
+            <para><option>--all</option>オプションを追加すると、タスクリストについてもっと多くの情報を取得できます。プロジェクトにあるすべてのタスクがメインタスクによってグループ化され、さらにタスク間の依存関係も含めて表示されます。</para>
+            <sample id="taskListAllReport" dir="userguide/tutorial/projectReports" title="タスクに関するより多くの情報を取得する / Obtaining more information about tasks">
                 <output args="-q tasks --all"/>
             </sample>
         </section>
         <section id="sec:listing_dependencies">
-            <title>Listing project dependencies</title>
+            <title>プロジェクトの依存関係一覧 / Listing project dependencies</title>
             <para id="para:commandline_dependency_report">Running <userinput>gradle dependencies</userinput>
                 gives you a list of the dependencies of the selected project, broken down by configuration.  For each
                 configuration, the direct and transitive dependencies of that configuration are shown in a tree. Below
                 is an example of this report:
             </para>
-            <sample id="dependencyListReport" dir="userguide/tutorial/projectReports" title="Obtaining information about dependencies">
+            <para><userinput>gradle --dependencies</userinput>はプロジェクトの依存関係を一覧表示します。プロジェクトに直接設定されている依存関係と推移的な依存関係をツリーで表します。</para>
+            <sample id="dependencyListReport" dir="userguide/tutorial/projectReports" title="依存関係の情報を取得する / Obtaining information about dependencies">
                 <output args="-q dependencies api:dependencies webapp:dependencies"/>
             </sample>
         </section>
         <section id="sec:listing_properties">
-            <title>Listing project properties</title>
+            <title>プロジェクトのプロパティ一覧 / Listing project properties</title>
             <para>Running <userinput>gradle properties</userinput> gives you a list of the properties of the selected
                 project. This is a snippet from the output:
             </para>
-            <sample id="propertyListReport" dir="userguide/tutorial/projectReports" title="Information about properties">
+            <para><userinput>gradle --properties</userinput>はプロジェクトのプロパティを一覧表示します。出力例の一部を以下に示します。</para>
+            <sample id="propertyListReport" dir="userguide/tutorial/projectReports" title="プロパティに関する情報 / Information about properties">
                 <output args="-q api:properties" ignoreExtraLines="true"/>
             </sample>
         </section>
@@ -190,7 +199,7 @@
     </section>
 
     <section>
-        <title>Dry Run</title>
+        <title>ドライ・ラン / Dry Run</title>
         <para>Sometimes you are interested in which tasks are executed in which order for a given set of tasks specified on the
             command line, but you don't want the tasks to be executed. You can use the <option>-m</option> option for this.
             For example <userinput>gradle -m clean compile</userinput> shows you all tasks to be executed as
@@ -198,11 +207,13 @@
             This is complementary to the <option>tasks</option> task, which shows you the tasks which are available for
             execution.
         </para>
+        <para>コマンドラインにタスク名を並べて実行したときに、どのタスクがどの順番で実行されるのか知りたくなることがあります。しかしそのために実際にタスクを実行したくはありません。このような場合、<option>-m</option>オプションをつけて実行してください。たとえば、<userinput>gradle -m clean compile</userinput>と実行すれば、cleanタスクとcompileタスクの実行にあたって実際に実行されるすべてのタスクが実行順に表示されます。このレポートは、実行可能なタスクの一覧を表示する<option>-t</option>オプションのレポートとお互い補い合って使うことができます。</para>
     </section>
 
     <section>
-        <title>Summary</title>
+        <title>まとめ / Summary</title>
         <para>In this chapter, you have seen some of the things you can do with Gradle from the command-line. You can
             find out more about the <command>gradle</command> command in <xref linkend="gradle_command_line"/>.</para>
+        <para>この章では、コマンドラインで使えるGradleの機能をいくつか見てきました。<literal>gradle</literal>コマンドについては<xref linkend="gradle_command_line"/>にも記載してあります。</para>
     </section>
 </chapter>
