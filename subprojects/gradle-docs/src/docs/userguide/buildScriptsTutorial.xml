@@ -14,9 +14,10 @@
   ~ limitations under the License.
   -->
 <chapter id='tutorial_using_tasks' xmlns:xi="http://www.w3.org/2001/XInclude">
-    <title>Build Script Basics</title>
-    <section><title>Projects and tasks</title>
+    <title>ビルドスクリプトの基本 / Build Script Basics</title>
+    <section><title>プロジェクトとタスク / Projects and tasks</title>
     <para>Everything in Gradle sits on top of two basic concepts: <firstterm>projects</firstterm> and <firstterm>tasks</firstterm>.</para>
+    <para>Gradleのすべては、二つの基本的な概念の上に成り立っています。<firstterm>プロジェクト</firstterm>と<firstterm>タスク</firstterm>です。</para>
     <para>
         Every Gradle build is made up of one or more <firstterm>projects</firstterm>. A project represents
         some component of your software which can be built. What this means exactly depends on what it is that you are
@@ -26,37 +27,44 @@
         production environments. Don't worry if this seems a little vague for now. Gradle's build-by-convention support adds
         a more concrete definition for what a project is.
     </para>
+    <para>Gradleによるすべてのビルドは、一つ以上の<firstterm>プロジェクト</firstterm>から構成されています。プロジェクトとは、ソフトウェアのコンポーネントであり、「ビルドできる」なにかを表す概念です。ビルドするものが何かによって、この意味は変わってきます。たとえば、あるプロジェクトはライブラリjarやWebアプリケーションをビルドするものかもしれません。または、別のプロジェクトによってビルドされたjarを集めた配布用のzipファイルを作成するものかもしれません。別に何か具体的なものをビルドする必要もなく、アプリケーションを本番環境にステージするというプロジェクトもありえます。プロジェクトとは結局なんなのか、あいまいな印象を受けられたかもしれませんが、気にする必要はありません。Gradleは規約によるビルドをサポートしており、プロジェクトの定義についても規定されています。</para>
     <para>Each project is made up of one or more <firstterm>tasks</firstterm>. A task represents some atomic piece
         of work which a build performs. This might be compiling some classes, creating a JAR, generating javadoc,
         or publishing some archives to a repository.</para>
+    <para>それぞれのプロジェクトは、一つ以上の<firstterm>タスク</firstterm>から構成されます。タスクとは、ビルド実行時における分割不能な何らかの作業単位を表す概念です。たとえば、クラスをコンパイルしたり、JARファイルを作成したり、アーカイブをリポジトリにパブリッシュしたりするタスクが考えられます。</para>
+
     <para>For now, we will look at defining some simple tasks in a build with one project. Later chapters will look at
         working with multiple projects and more about working with projects and tasks.</para>
+    <para>これから、例としてあるプロジェクト上でいくつかの簡単なタスクを実際に定義してみます。マルチプロジェクトでのビルド例やプロジェクト/タスクの詳細についても後の章で紹介しています。</para>
     </section>
     <section>
         <title>Hello world</title>
         <para>You run a Gradle build using the <command>gradle</command> command. The <command>gradle</command> command
             looks for a file called <filename>build.gradle</filename> in the current directory.
-            <footnote><para>There are command line switches to change this behavior. See <xref linkend='gradle_command_line'/>)</para></footnote>
+            <footnote><para>There are command line switches to change this behavior. See <xref linkend='gradle_command_line'/>)</para><para>この動作はコマンドラインスイッチを使用して変更できます。<xref linkend='gradle_command_line'/>を参照してください。</para></footnote>
             We call this <filename>build.gradle</filename> file a <firstterm>build script</firstterm>, although strictly speaking it is
             a build configuration script, as we will see later. The build script defines a project and its tasks.
         </para>
+        <para>Gradleのビルドは、<command>gradle</command>コマンドで実行します。<command>gradle</command>コマンドはカレントディレクトリの<filename>build.gradle</filename>ファイルを参照してビルドを行います。このファイルは、後述しますが正確には「ビルドの設定を行うスクリプト」です。しかし、一般的には<firstterm>ビルドスクリプト</firstterm>と呼ばれます。</para>
         <para>To try this out, create the following build script named <filename>build.gradle</filename>.
         </para>
-        <sample id="hello" dir="userguide/tutorial/hello" title="The first build script">
+        <sample id="hello" dir="userguide/tutorial/hello" title="初めてのビルドスクリプト / The first build script">
             <sourcefile file="build.gradle"/>
         </sample>
         <para>In a command-line shell, enter into the containing directory and execute the build script by running
             <userinput>gradle -q hello</userinput>:
         </para>
+        <para>コンソールを開いてこの<filename>build.gradle</filename>のあるディレクトリに移動して、<userinput>gradle -q hello</userinput>と打ち込んでください。ビルドスクリプトが実行され、以下のように出力されるはずです。</para>
         <tip>
-            <title>What does <option>-q</option> do?</title>
+            <title><option>-q</option>オプションって何? / What does <option>-q</option> do?</title>
             <para>Most of the examples in this user guide are run with the <option>-q</option> command-line option.
                 This suppresses Gradle's log messages, so that only the output of the tasks is shown. This keeps the example
                 output in this user guide a little clearer. You don't need to use this option if you don't want.
                 See <xref linkend="logging"/> for more details about the command-line options which affect Gradle's output.
             </para>
+            <para>このユーザーガイドでは、ほぼすべての例で<option>-q</option>をつけてコマンドを実行しています。このオプションはGradleのログメッセージを抑制するもので、タスクによる出力のみが表示されるようになります。おかげでユーザーガイドの出力例はちょっとすっきりしていますが、もちろん使いたくなければこのオプションを使う必要はありません。Gradleの出力に関係するオプションについては、<xref linkend="logging"/>にもっと詳しく記載されています。</para>
         </tip>
-        <sample id="hello" dir="userguide/tutorial/hello" title="Execution of a build script">
+        <sample id="hello" dir="userguide/tutorial/hello" title="ビルドスクリプトの実行 / Execution of a build script">
             <output args="-q hello"/>
         </sample>
         <para>What's going on here? This build script defines a single task, called <literal>hello</literal>, and
@@ -64,6 +72,7 @@
             <literal>hello</literal> task, which in turn executes the action you've provided. The action is simply a
             closure containing some Groovy code to execute.
         </para>
+        <para>何が起こったのでしょう。ビルドスクリプトは、<literal>hello</literal>というタスクを一つ定義していて、このタスクにアクションを一つ追加しています。<userinput>gradle hello</userinput>と入力することで、Gradleがこの<literal>hello</literal>を実行し、<literal>hello</literal>に追加したアクションが実行されたのです。アクションはGroovyコードを含む単なるクロージャです。</para>
         <para>If you think this looks similar to Ant's targets, well, you are right. Gradle tasks are the equivalent to
             Ant targets. But as you will see, they are much more powerful. We have used a different terminology than Ant
             as we think the word <emphasis>task</emphasis> is more expressive than the word <emphasis>target</emphasis>.
@@ -72,6 +81,7 @@
             we <emphasis>always</emphasis> mean Gradle tasks, which are the equivalent to Ant's targets. If we talk
             about Ant tasks (Ant commands), we explicitly say <emphasis>ant task</emphasis>.
         </para>
+        <para>Antのtargetに似ているなと思われたかもしれません。実際、GradleのtaskはAntでいえばtargetに相当するものです。ただ、これから見ていきますがGradleのtaskはAntのtargetよりもずっと強力なものです。Gradleではtaskという、Antとは異なる用語を採用しました。これは<emphasis>task</emphasis>という言葉が、<emphasis>target</emphasis>という言葉に比べて表現力があると考えたためです。しかし、残念ながら<emphasis>task</emphasis>という用語はAntでも<literal>copy</literal>や<literal>javac</literal>といったコマンドを示すものとして使われており、Gradleのtaskと競合してしまいます。このため、Antのtaskについて述べるときには常に<emphasis>ant task</emphasis>と明示的にいい、単にtaskとしたときはGradleのタスクのことを示すものとします。</para>
     </section>
     <section>
         <title>A shortcut task definition</title>
