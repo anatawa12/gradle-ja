@@ -25,7 +25,7 @@
             <emphasis>dependsOn</emphasis>
             relationship):
         </para>
-        あるディレクトリが存在していることを前提にして、様々なタスクを作成することはよくあると思います。もちろんそういったタスクのはじめにいちいち<emphasis>mkdir</emphasis>を呼び出してもいいのですが、それではやはり冗長です。ディレクトリを作成するためのタスクを別に作成して、そのタスクに依存するように宣言するほうがいいでしょう。
+        <para>あるディレクトリが存在していることを前提にして、様々なタスクを作成することはよくあると思います。もちろんそういったタスクのはじめにいちいち<emphasis>mkdir</emphasis>を呼び出してもいいのですが、それではやはり冗長です。ディレクトリを作成するためのタスクを別に作成して、そのタスクに依存するように宣言するほうがいいでしょう。</para>
         <sample id="makeDirectory" dir="userguide/tutorial/makeDirectory" title="mkdirでディレクトリを作成する / Directory creation with mkdir">
             <sourcefile file="build.gradle"/>
             <output args="-q compile"/>
