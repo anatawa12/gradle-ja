@@ -14,40 +14,46 @@
   ~ limitations under the License.
   -->
 <chapter id='writing_build_scripts' xmlns:xi="http://www.w3.org/2001/XInclude">
-    <title>Writing Build Scripts</title>
+    <title>ビルドスクリプトの記述 / Writing Build Scripts</title>
     <para>This chapter looks at some of the details of writing a build script.</para>
+    <para>本章では、ビルドスクリプトの記述についてもう少し詳しく見ていきます。</para>
 
     <section id='sec:project_api'>
-        <title>Project API</title>
+        <title>プロジェクトAPI / Project API</title>
         <para>In the tutorial in <xref linkend='tutorial_java_projects'/> we used, for example, the
             <literal>apply()</literal> method. Where does this method come from? We said earlier that the build script
             defines a project in Gradle. For each project in the build creates an instance of type
             <apilink class='org.gradle.api.Project'/> and associates this <classname>Project</classname> object with
             the build script. As the build script executes, it configures this <classname>Project</classname> object:
         </para>
+        <para>ここでは例として、<xref linkend='tutorial_java_projects'/>のチュートリアルで使用した<literal>apply()</literal>メソッドを取り上げます。このメソッドはどこから来たのでしょうか。前述のように、ビルドスクリプトはGradleプロジェクトを定義するものです。<classname>Project</classname>型のインスタンスが生成され、ビルドスクリプトに割り当てられます。ビルドスクリプトでは、プロジェクトオブジェクトは以下のように振る舞います。</para>
         <tip>
-            <title>Getting help writing build scripts</title>
+            <title>ビルドスクリプトを書くときのヘルプは？ / Getting help writing build scripts</title>
             <para>Don't forget that your build script is simply Groovy code that drives the Gradle API. And the
                 <apilink class='org.gradle.api.Project'/> interface is your starting point for accessing everything
                 in the Gradle API. So, if you're wondering what 'tags' are available in your build script, you can
                 start with the javadocs for the <classname>Project</classname> interface.
             </para>
+            <para>ビルドスクリプトは、GradleのAPIを呼び出しているだけの単なるGroovyスクリプトだということを忘れないでください。<apilink class='org.gradle.api.Project'/>インターフェースが、GradleのAPIを呼び出すときのスタートポイントです。なので、ビルドスクリプトでどんな「文言」が使えるか分からないときは<classname>Project</classname>インターフェースのjavadocsを見ることから始めるのもいいでしょう。</para>
         </tip>
         <itemizedlist>
             <listitem>
                 <para>Any method you call in your build script, which <emphasis>is not defined</emphasis>
                     in the build script, is delegated to the <classname>Project</classname> object.
                 </para>
+                <para>ビルドスクリプトで呼び出されたメソッドのうち、そのスクリプトで<emphasis>定義されていない</emphasis>ものは<classname>Project</classname>オブジェクトに委譲されます。</para>
             </listitem>
             <listitem>
                 <para>Any property you access in your build script, which <emphasis>is not defined</emphasis>
                     in the build script, is delegated to the <classname>Project</classname> object.
                 </para>
+                <para>ビルドスクリプトでのプロパティアクセスも、そのスクリプトで<emphasis>定義されていない</emphasis>プロパティについては<classname>Project</classname>オブジェクトに委譲されます。</para>
             </listitem>
         </itemizedlist>
         <para>Let's try this out and try to access the <literal>name</literal> property of the
             <classname>Project</classname> object.
         </para>
+        <para>プロジェクトオブジェクトの<literal>name</literal>プロパティにアクセスして試してみましょう。</para>
         <sample id="projectApi" dir="userguide/tutorial/projectApi" title="Accessing property of the Project object">
             <sourcefile file="build.gradle"/>
             <output args="-q check"/>
@@ -59,34 +65,36 @@
             same name as a member of the <classname>Project</classname> object, you need to use the <literal>project</literal>
             property.
         </para>
+        <para>どちらの<literal>println</literal>も出力結果は同じです。はじめのprintlnはビルドスクリプトで定義されていないプロパティへのアクセスを暗黙のうちにプロジェクトオブジェクトに委譲しています。もう一方の例では、プロジェクトオブジェクトを返す<literal>project</literal>プロパティを使って<literal>name</literal>にアクセスしています。<literal>project</literal>プロパティはビルドスクリプト内でいつでもアクセスすることができます。プロジェクトオブジェクトのメンバーと同じ名前のプロパティやメソッドをビルドスクリプトに定義している場合は、<literal>project</literal>プロパティを使ってそれらのメンバーにアクセスすることになるでしょう。</para>
         <section>
-            <title>Standard project properties</title>
+            <title>標準のプロジェクトプロパティ / Standard project properties</title>
             <para>The <classname>Project</classname> object provides some standard properties, which are available in
                 your build script. The following table lists a few of the commonly used ones.
             </para>
+            <para>プロジェクトオブジェクトは標準でいくつかのプロパティを提供しており、ビルドスクリプトでこれらのプロパティにアクセスできます。次の表によく使うプロパティを少しですが載せてみました。</para>
             <table>
-                <title>Project Properties</title>
+                <title>プロジェクトプロパティ / Project Properties</title>
                 <thead>
                     <tr>
-                        <td>Name</td>
-                        <td>Type</td>
-                        <td>Default Value</td>
+                        <td>プロパティ名 / Name</td>
+                        <td>型 / Type</td>
+                        <td>デフォルト値 / Default Value</td>
                     </tr>
                 </thead>
                 <tr>
                     <td><literal>project</literal></td>
                     <td><apilink class='org.gradle.api.Project'/></td>
-                    <td>The <classname>Project</classname> instance</td>
+                    <td><classname>Project</classname>インスタンス / The <classname>Project</classname> instance</td>
                 </tr>
                 <tr>
                     <td><literal>name</literal></td>
                     <td><classname>String</classname></td>
-                    <td>The name of the directory containing the build script.</td>
+                    <td>ビルドスクリプトのあるディレクトリの名前 / The name of the directory containing the build script.</td>
                 </tr>
                 <tr>
                     <td><literal>path</literal></td>
                     <td><classname>String</classname></td>
-                    <td>The absolute path of the project.</td>
+                    <td>プロジェクトの絶対パス / The absolute path of the project.</td>
                 </tr>
                 <tr>
                     <td><literal>description</literal></td>
@@ -96,12 +104,12 @@
                 <tr>
                     <td><literal>buildFile</literal></td>
                     <td><classname>File</classname></td>
-                    <td>The build script.</td>
+                    <td>ビルドスクリプトファイル / The build script.</td>
                 </tr>
                 <tr>
                     <td><literal>projectDir</literal></td>
                     <td><classname>File</classname></td>
-                    <td>The directory containing the build script.</td>
+                    <td>ビルドスクリプトのあるディレクトリ / The directory containing the build script.</td>
                 </tr>
                 <tr>
                     <td><literal>buildDirName</literal></td>
@@ -116,22 +124,23 @@
                 <tr>
                     <td><literal>group</literal></td>
                     <td><classname>Object</classname></td>
-                    <td><literal>unspecified</literal></td>
+                    <td><literal>未設定</literal> / <literal>unspecified</literal></td>
                 </tr>
                 <tr>
                     <td><literal>version</literal></td>
                     <td><classname>Object</classname></td>
-                    <td><literal>unspecified</literal></td>
+                    <td><literal>未設定</literal> / <literal>unspecified</literal></td>
                 </tr>
                 <tr>
                     <td><literal>ant</literal></td>
                     <td><apilink class="org.gradle.api.AntBuilder"/></td>
-                    <td>An <classname>AntBuilder</classname> instance</td>
+                    <td><classname>AntBuilder</classname>インスタンス / An <classname>AntBuilder</classname> instance</td>
                 </tr>
             </table>
 
             <para>Below is a sample build which demonstrates some of these properties.</para>
-            <sample id="projectCoreProperties" dir="userguide/tutorial/projectCoreProperties" title="Project properties">
+            <para>次のサンプルは、これらのプロパティを使用したデモです。</para>
+            <sample id="projectCoreProperties" dir="userguide/tutorial/projectCoreProperties" title="プロジェクトプロパティ / Project properties">
                 <layout>
                     build.gradle
                     subProject
@@ -143,8 +152,9 @@
         </section>
     </section>
     <section>
-        <title>Script API</title>
+        <title>スクリプトAPI / Script API</title>
         <para>When Gradle executes a script, it compiles the script into a class which implements <apilink class="org.gradle.api.Script"/>.</para>
+        <para>ビルドスクリプトは、実行時には<apilink class="org.gradle.api.Script"/>を実装したクラスとしてコンパイルされます。</para>
     </section>
 
 </chapter>

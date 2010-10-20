@@ -82,7 +82,7 @@
                     linkend='organizing_build_logic'/>). Let's first do some introspection with a single project
             build:
         </para>
-        <para>設定ファイルは、初期化フェーズで使用されます。マルチプロジェクトの場合、<filename>settings.gradle</filename>ファイルは必須です。ルートとなるプロジェクトに必ず配置しなければなりません。この設定ファイルにより、どのプロジェクトがビルドに参加するか決定するからです(<xref linkend='multi_project_builds'/>参照)。シングルプロジェクトの場合は設定ファイルはなくてもかまいません。ビルドスクリプトのクラスパスにライブラリを追加する場合などにこの設定ファイルが必要になるでしょう(<xref linkend='organizing_build_logic'/>参照)。設定ファイルの読み込み、フェーズ実行の内部動作を、シングルプロジェクトの例を使って見てみます。</para>
+        <para>設定ファイルは、初期化フェーズで使用されます。マルチプロジェクトの場合、<filename>settings.gradle</filename>ファイルは必須です。ルートとなるプロジェクトに必ず配置しなければなりません。この設定ファイルにより、どのプロジェクトがビルドに参加するか決定するからです(<xref linkend='multi_project_builds'/>参照)。シングルプロジェクトの場合は設定ファイルはなくてもかまいません。ビルドスクリプトのクラスパスにライブラリを追加するときなどはこの設定ファイルを使うこともあるでしょう(<xref linkend='organizing_build_logic'/>参照)。設定ファイルの読み込み、フェーズ実行の内部動作を、シングルプロジェクトの例を使って見てみます。</para>
         <sample id="buildlifecycle" dir="userguide/buildlifecycle/basic" title="シングルプロジェクトのビルド / Single project build">
             <sourcefile file="settings.gradle"/>
             <sourcefile file="build.gradle"/>
