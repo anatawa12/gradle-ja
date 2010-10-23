@@ -18,7 +18,7 @@
     <para>The powerful support for multi-project builds is one of Gradle's unique selling points. This topic is also the
         most intellectually challenging.
     </para>
-    <para>マルチプロジェクトの強力なサポートは、Gradleのユニークなセールスポイントの一つです。また、マルチプロジェクト自体もっとも頭を使うやりがいのあるテーマでもあります。</para>
+    <para>マルチプロジェクトはビルドツールの知恵の絞りどころであり、とてもやりがいのあるテーマです。Gradleはマルチプロジェクトを強力にサポートしていて、ユニークなセールスポイントの一つとなっています。</para>
     <section id='sec:cross_project_configuration'>
         <title>プロジェクト間にまたがる共通設定 / Cross project configuration</title>
         <para>Let's start with a very simple multi-project build. After all Gradle is a general purpose build tool at

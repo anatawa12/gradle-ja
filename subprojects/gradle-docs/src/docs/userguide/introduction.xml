@@ -19,28 +19,28 @@
     <para>We would like to introduce Gradle to you, a build system that we think is a quantum leap for build technology
         in the Java (JVM) world. Gradle provides:
     </para>
-    <para>Gradleは、Java(JVM)環境におけるビルドシステムであり、従来のビルド技術を大躍進させると考えています。Gradleは以下のものを提供します。
+    <para>Gradleは、Java(JVM)環境におけるビルドシステムで、従来のビルド技術を大躍進させるツールです。Gradleが提供している機能、特長には以下のようなものがあります。
     </para>
     <itemizedlist>
         <listitem>
             <para>A very flexible general purpose build tool like Ant.
             </para>
-            <para>Antのような、あらゆる目的に使用できる汎用ビルドツール</para>
+            <para>あらゆる目的に使用できる汎用ビルドツールです。GradleはAntと同じような目的で使うことができます。</para>
         </listitem>
         <listitem>
             <para>Switchable, build-by-convention frameworks a la Maven. But we never lock you in!
             </para>
-            <para>その一方で、Mavenのような規約によるビルドフレームワーク。ただし規約でがんじがらめにすることはありません。</para>
+            <para>その一方でMavenのような規約によるビルドフレームワークを提供します。その規約も、気に入らないところは変更可能です。</para>
         </listitem>
         <listitem>
             <para>Very powerful support for multi-project builds.
             </para>
-            <para>強力なマルチプロジェクトのサポート</para>
+            <para>マルチプロジェクトの強力なサポート</para>
         </listitem>
         <listitem>
             <para>Very powerful dependency management (based on Apache Ivy).
             </para>
-            <para>強力な依存性管理 (Apache Ivyをベースにしています)</para>
+            <para>強力な依存関係管理 (Apache Ivyをベースにしています)</para>
         </listitem>
         <listitem>
             <para>Full support for your existing Maven or Ivy repository infrastructure.
@@ -52,7 +52,7 @@
                 <literal>pom.xml</literal> and <literal>ivy.xml</literal>
                 files.
             </para>
-            <para>リモートリポジトリや<literal>pom.xml</literal>、<literal>ivy.xml</literal>を必要としない他動的な依存性管理のサポート</para>
+            <para>リモートリポジトリや<literal>pom.xml</literal>、<literal>ivy.xml</literal>を必要としない推移的な依存関係のサポート</para>
         </listitem>
         <listitem>
             <para>Ant tasks and builds as first class citizens.
@@ -68,7 +68,7 @@
         <listitem>
             <para>A rich domain model for describing your build.
             </para>
-            <para>あなたのビルドを表す、リッチなドメインモデル</para>
+            <para>ビルドを記述する際、オブジェクト指向のリッチなドメインモデルを使用可能</para>
         </listitem>
     </itemizedlist>
     <para>
