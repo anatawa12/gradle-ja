@@ -14,10 +14,11 @@
   ~ limitations under the License.
   -->
 <chapter id="tutorials">
-    <title>Tutorials</title>
+    <title>チュートリアル / Tutorials</title>
     <section>
-        <title>Getting Started</title>
+        <title>始めてみよう / Getting Started</title>
         <para>The following tutorials introduce some of the basics of Gradle, to help you get started.</para>
+        <para>次のチュートリアルはGradleの基本を紹介しているものです。Gradleを始める手助けになるでしょう。</para>
         <variablelist>
             <varlistentry>
                 <term>
@@ -25,6 +26,7 @@
                 </term>
                 <listitem>
                     <para>Describes how to install Gradle.</para>
+                    <para>インストール方法について</para>
                 </listitem>
             </varlistentry>
             <varlistentry>
@@ -37,6 +39,7 @@
                         and
                         <firstterm>tasks</firstterm>.
                     </para>
+                    <para>ビルドスクリプトを構成する基本要素、<firstterm>プロジェクト</firstterm>と<firstterm>タスク</firstterm>について</para>
                 </listitem>
             </varlistentry>
             <varlistentry>
@@ -45,6 +48,7 @@
                 </term>
                 <listitem>
                     <para>Shows how to start using Gradle's build-by-convention support for Java projects.</para>
+                    <para>Gradleの規約によるビルドでJavaプロジェクトを取り扱う方法について</para>
                 </listitem>
             </varlistentry>
             <varlistentry>
@@ -53,6 +57,7 @@
                 </term>
                 <listitem>
                     <para>Using Gradle's build-by-convention support for Groovy projects.</para>
+                    <para>Gradleの規約によるビルドでGroovyプロジェクトを取り扱う方法について</para>
                 </listitem>
             </varlistentry>
             <varlistentry>
@@ -61,12 +66,14 @@
                 </term>
                 <listitem>
                     <para>Using Gradle's build-by-convention support for Web applications.</para>
+                    <para>Gradleの規約によるビルドでWebアプリケーションプロジェクトを取り扱う方法について</para>
                 </listitem>
             </varlistentry>
         </variablelist>
     </section>
     <section condition="website">
-        <title>Where to next?</title>
+        <title>次に何をするべき? / Where to next?</title>
         <para>There are more tutorials and plenty of reference material in the <ulink url="website:userguide.html">user guide</ulink>.</para>
+        <para>さらに多くのチュートリアルやリファレンスが<ulink url="website:userguide.html">ユーザーガイド</ulink>にあります。</para>
     </section>
 </chapter>

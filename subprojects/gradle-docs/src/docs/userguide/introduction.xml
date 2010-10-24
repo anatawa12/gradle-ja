@@ -19,7 +19,7 @@
     <para>We would like to introduce Gradle to you, a build system that we think is a quantum leap for build technology
         in the Java (JVM) world. Gradle provides:
     </para>
-    <para>Gradleは、Java(JVM)環境におけるビルドシステムで、従来のビルド技術を大躍進させるツールです。Gradleが提供している機能、特長には以下のようなものがあります。
+    <para>Gradleは、Java(JVM)環境におけるビルドシステムであり、従来のビルド技術を大きく躍進させるものです。Gradleが提供している機能、特長には以下のようなものがあります。
     </para>
     <itemizedlist>
         <listitem>
@@ -35,40 +35,40 @@
         <listitem>
             <para>Very powerful support for multi-project builds.
             </para>
-            <para>マルチプロジェクトの強力なサポート</para>
+            <para>マルチプロジェクトを強力にサポートします。</para>
         </listitem>
         <listitem>
             <para>Very powerful dependency management (based on Apache Ivy).
             </para>
-            <para>強力な依存関係管理 (Apache Ivyをベースにしています)</para>
+            <para>強力な依存関係管理 (Apache Ivy ベース)を提供します。</para>
         </listitem>
         <listitem>
             <para>Full support for your existing Maven or Ivy repository infrastructure.
             </para>
-            <para>Maven/Ivyリポジトリの完全なサポート</para>
+            <para>Maven/Ivyリポジトリを完全にサポートします。</para>
         </listitem>
         <listitem>
             <para>Support for transitive dependency management without the need for remote repositories or
                 <literal>pom.xml</literal> and <literal>ivy.xml</literal>
                 files.
             </para>
-            <para>リモートリポジトリや<literal>pom.xml</literal>、<literal>ivy.xml</literal>を必要としない推移的な依存関係のサポート</para>
+            <para>リモートリポジトリや<literal>pom.xml</literal>、<literal>ivy.xml</literal>を使用しなくても推移的な依存関係を管理できます。</para>
         </listitem>
         <listitem>
             <para>Ant tasks and builds as first class citizens.
             </para>
-            <para>組み込みのAntタスク</para>
+            <para>Antのタスクとプロジェクトがファーストクラス・オブジェクトとして組み込まれており、デフォルトで使用可能です。</para>
         </listitem>
         <listitem>
             <para>
                 <emphasis>Groovy</emphasis> build scripts.
             </para>
-            <para><emphasis>Groovy</emphasis>ビルドスクリプト</para>
+            <para><emphasis>Groovy</emphasis>でビルドスクリプトを記述します。</para>
         </listitem>
         <listitem>
             <para>A rich domain model for describing your build.
             </para>
-            <para>ビルドを記述する際、オブジェクト指向のリッチなドメインモデルを使用可能</para>
+            <para>ビルドを記述する際、オブジェクト指向のリッチなドメインモデルを使用可能です。</para>
         </listitem>
     </itemizedlist>
     <para>
