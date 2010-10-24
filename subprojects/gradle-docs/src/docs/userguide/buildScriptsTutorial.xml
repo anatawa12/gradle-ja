@@ -27,7 +27,7 @@
         production environments. Don't worry if this seems a little vague for now. Gradle's build-by-convention support adds
         a more concrete definition for what a project is.
     </para>
-    <para>Gradleによるすべてのビルドは、一つ以上の<firstterm>プロジェクト</firstterm>から構成されています。プロジェクトとは、ソフトウェアのコンポーネントであり、「ビルドできる」なにかを表す概念です。ビルドするものが何かによって、この意味は変わってきます。たとえば、あるプロジェクトはライブラリjarやWebアプリケーションをビルドするものかもしれません。または、別のプロジェクトによってビルドされたjarを集めた配布用のzipファイルを作成するものかもしれません。別に何か具体的なものをビルドする必要もなく、アプリケーションを本番環境にステージするというプロジェクトもありえます。プロジェクトとは結局なんなのか、あいまいな印象を受けられたかもしれませんが、気にする必要はありません。Gradleは規約によるビルドをサポートしており、プロジェクトの定義についても規定されています。</para>
+    <para>Gradleによるすべてのビルドは、一つ以上の<firstterm>プロジェクト</firstterm>から構成されています。プロジェクトとは、ソフトウェアのコンポーネントであり、「ビルドできる」なにかを表す概念です。ビルドするものが何かによって、この意味は変わってきます。たとえば、あるプロジェクトはライブラリjarやWebアプリケーションをビルドするものかもしれません。または、別のプロジェクトによってビルドされたjarを集めた配布用のzipファイルを作成するものかもしれません。別に何か具体的なものをビルドする必要もなく、アプリケーションを本番環境にステージするというプロジェクトもありえます。それでは、プロジェクトとは結局なんなんでしょう。あいまいな印象を受けられたかもしれませんが、心配する必要はありません。Gradleは規約によるビルドをサポートしており、プロジェクトの定義についても明確に規定されています。</para>
     <para>Each project is made up of one or more <firstterm>tasks</firstterm>. A task represents some atomic piece
         of work which a build performs. This might be compiling some classes, creating a JAR, generating javadoc,
         or publishing some archives to a repository.</para>
@@ -35,7 +35,7 @@
 
     <para>For now, we will look at defining some simple tasks in a build with one project. Later chapters will look at
         working with multiple projects and more about working with projects and tasks.</para>
-    <para>これから、例としてあるプロジェクト上でいくつかの簡単なタスクを実際に定義してみます。マルチプロジェクトでのビルド例やプロジェクト/タスクの詳細についても後の章で紹介しています。</para>
+    <para>これから、あるプロジェクト上でいくつかの簡単なタスクを定義してみます。マルチプロジェクトでのビルド例やプロジェクト/タスクの詳細については後の章で紹介しています。</para>
     </section>
     <section>
         <title>Hello world</title>
@@ -48,6 +48,7 @@
         <para>Gradleのビルドは、<command>gradle</command>コマンドで実行します。<command>gradle</command>コマンドはカレントディレクトリの<filename>build.gradle</filename>ファイルを参照してビルドを行います。このファイルは、後述しますが正確には「ビルドの設定を行うスクリプト」です。しかし、一般的には<firstterm>ビルドスクリプト</firstterm>と呼ばれます。</para>
         <para>To try this out, create the following build script named <filename>build.gradle</filename>.
         </para>
+        <para>次のようなスクリプトを、<filename>build.gradle</filename>という名前で作成して試してみてください。</para>
         <sample id="hello" dir="userguide/tutorial/hello" title="初めてのビルドスクリプト / The first build script">
             <sourcefile file="build.gradle"/>
         </sample>
@@ -84,39 +85,44 @@
         <para>Antのtargetに似ているなと思われたかもしれません。実際、GradleのtaskはAntでいえばtargetに相当するものです。ただ、これから見ていきますがGradleのtaskはAntのtargetよりもずっと強力なものです。Gradleではtaskという、Antとは異なる用語を採用しました。これは<emphasis>task</emphasis>という言葉が、<emphasis>target</emphasis>という言葉に比べて表現力があると考えたためです。しかし、残念ながら<emphasis>task</emphasis>という用語はAntでも<literal>copy</literal>や<literal>javac</literal>といったコマンドを示すものとして使われており、Gradleのtaskと競合してしまいます。このため、Antのtaskについて述べるときには常に<emphasis>ant task</emphasis>と明示的にいい、単にtaskとしたときはGradleのタスクのことを示すものとします。</para>
     </section>
     <section>
-        <title>A shortcut task definition</title>
+        <title>タスク定義のショートカット / A shortcut task definition</title>
         <para>There is a shorthand way to define a task like our <literal>hello</literal> task above, which is more
             concise.</para>
-        <sample id="helloShortcut" dir="userguide/tutorial/helloShortcut" title="A task definition shortcut">
+        <para>タスク定義は、実際にはもっと短く書けます。先ほどの<literal>hello</literal>タスクも、次のように簡潔に書くことができます。</para>
+        <sample id="helloShortcut" dir="userguide/tutorial/helloShortcut" title="タスク定義のショートカット / A task definition shortcut">
             <sourcefile file="build.gradle"/>
         </sample>
         <para>Again, this defines a task called <literal>hello</literal> with a single closure to execute.
             We will use this task definition style throughout the user guide.</para>
+        <para>この例も先ほどと同様、実行するクロージャを一つだけもった<literal>hello</literal>を定義するものです。このユーザーガイドではこちらの方法を使用します。</para>
     </section>
     <section>
-        <title>Build scripts are code</title>
+        <title>ビルドスクリプトはコードです / Build scripts are code</title>
         <para>Gradle's build scripts expose to you the full power of Groovy. As an appetizer, have a look at this:
         </para>
-        <sample id="upper" dir="userguide/tutorial/upper" title="Using Groovy in Gradle's tasks">
+        <para>GradleのビルドスクリプトではGroovyの機能をすべて使うことができます。手始めに次の例をご覧ください。</para>
+        <sample id="upper" dir="userguide/tutorial/upper" title="GradleタスクでGroovyを使う / Using Groovy in Gradle's tasks">
             <sourcefile file="build.gradle"/>
             <output args="-q upper"/>
         </sample>
-        <para>or</para>
-        <sample id="count" dir="userguide/tutorial/count" title="Using Groovy in Gradle's tasks">
+        <para>または</para>
+        <sample id="count" dir="userguide/tutorial/count" title="GradleタスクでGroovyを使う / Using Groovy in Gradle's tasks">
             <sourcefile file="build.gradle"/>
             <output args="-q count"/>
         </sample>
     </section>
     <section id='sec:task_dependencies'>
-        <title>Task dependencies</title>
+        <title>タスクの依存関係 / Task dependencies</title>
         <para>As you probably have guessed, you can declare dependencies between your tasks.
         </para>
-        <sample id="intro" dir="userguide/tutorial/intro" title="Declaration of dependencies between tasks">
+        <para>ご想像の通り、タスク間の依存関係を宣言できます。</para>
+        <sample id="intro" dir="userguide/tutorial/intro" title="タスク間の依存関係を宣言する / Declaration of dependencies between tasks">
             <sourcefile file="build.gradle"/>
             <output args="-q intro"/>
         </sample>
         <para>To add a dependency, the corresponding task does not need to exist.</para>
-        <sample id="lazyDependsOn" dir="userguide/tutorial/lazyDependsOn" title="Lazy dependsOn - the other task does not exist (yet)">
+        <para>依存関係にタスクを追加するとき、そのタスクがその時点で存在していなくてもかまいません。</para>
+        <sample id="lazyDependsOn" dir="userguide/tutorial/lazyDependsOn" title="Lazy dependsOn - タスクがまだ存在していない場合 / Lazy dependsOn - the other task does not exist (yet)">
             <sourcefile file="build.gradle"/>
             <output args="-q taskX"/>
         </sample>
@@ -124,10 +130,12 @@
             <literal>taskY</literal> is defined. This is very important for multi-project builds. Task dependencies are
             discussed in more detail in <xref linkend='sec:adding_dependencies_to_tasks'/>.
         </para>
+        <para><literal>taskX</literal>が<literal>taskY</literal>に依存していることが宣言されていますが、宣言した時点では<literal>taskY</literal>の定義文はありません。このことは、マルチプロジェクトのビルドで非常に重要になってきます。タスク間の依存関係については、<xref linkend='sec:adding_dependencies_to_tasks'/>でさらに詳しく述べられています。</para>
         <para>Please notice, that you can't use a shortcut notation (see <xref linkend='sec:shortcut_notations' />) when referring to task, which is not defined yet.</para>
+        <para>なお注意点ですが、未定義のタスクを参照する場合、略記法(<xref linkend='sec:shortcut_notations' />参照)は使えません。</para>
     </section>
     <section>
-        <title>Dynamic tasks</title>
+        <title>動的なタスク / Dynamic tasks</title>
         <para>The power of Groovy can be used for more than defining what a task does. For example, you can also use it
             to dynamically create tasks.
         </para>
