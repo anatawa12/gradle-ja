@@ -32,16 +32,18 @@
                         Add your own new language elements or enhance the existing ones. Thus providing concise,
                         maintainable and comprehensible builds.
                     </para>
-                    <para>Gradleの重要な特長は、Groovyをベースにした拡張可能なDSL(ドメイン特化言語)でビルドを記述できる点です。Gradleは、従来の宣言的なビルドの記述をさらに上の段階へ推し進めます。GradleのDSLで使用する言語要素は宣言的に使用できるだけでなく、組み合わせ方も柔軟です。また、JavaやGroovy、OSGi、WebそしてScalaなどのプロジェクトを一般的な方法に従ってビルドできるような言語要素も提供しています。さらに、これらの言語要素は拡張性豊富で、新しい言語要素を追加したり、既存のものを拡張したりすることもできます。 簡潔でメンテナンス性の良い、分かりやすいビルドを記述できるということです。
+                    <para>Gradleの重要な特長は、Groovyをベースにした拡張可能なドメイン特化言語(DSL)でビルドを記述できる点です。Gradleは、従来の宣言的なビルドの記述をさらに上の段階へ推し進めます。GradleのDSLで使用する言語要素は宣言的に使用できるだけでなく、組み合わせ方も柔軟です。また、JavaやGroovy、OSGi、WebそしてScalaなどのプロジェクトを一般的な方法に従ってビルドできるような言語要素も提供しています。さらに、これらの言語要素は拡張性豊富で、新しい言語要素を追加したり、既存のものを拡張したりすることもできます。 簡潔でメンテナンス性の良い、分かりやすいビルドを記述できるということです。
                     </para>
                 </listitem>
             </varlistentry>
             <varlistentry>
+                <term>依存関係ベースのプログラミング</term>
                 <term>Language for dependency based programming</term>
                 <listitem>
                     <para>The declarative language lies on top of a general purpose task graph, which you can fully
                         leverage in your builds. It provides utmost flexibility to adapt Gradle to your unique needs. 
                     </para>
+                    <para>前述の宣言的な言語要素は、汎用のタスクグラフをベースにして成り立っていて、ビルドを記述するときにいつでも利用可能です。これにより、Gradleはさまざまな独自のビルドに適合できる大きな柔軟性を得ているのです。</para>
                 </listitem>
             </varlistentry>
             <varlistentry>
@@ -56,8 +58,7 @@
                         At last you can create a well structured, easily maintained, comprehensible build.</para>
                         
                         <para>
-                        Gradleは柔軟性があり機能が豊富なので、ビルドシステムを記述する際に一般的な設計の原則を適用できるようになります。
-                        たとえば、ビルド用のロジックを利用可能な単位に細かく分割し、そのロジックを組み立ててビルドシステムを作成することも簡単にできます。変更が発散したり分岐したりして、ビルドシステムのメンテナンスが悪夢に変わり果てるのを防ぎ、よく構造化されたメンテナンスせいの良い分かりやすいビルドシステムを記述できます。
+                        Gradleは柔軟性があり機能が豊富なので、ビルドを記述する際にプログラミングにおける一般的な設計の原則を適用できます。たとえば、ビルド用のロジックを利用可能な単位に細かく分割し、そのロジックを組み立ててビルドを構築することも簡単にできます。あまりに複雑になってきたときはインライン化しましょう。同じプロジェクト階層に属しているなど、本来一カ所にあるべきロジックを、無理にいろんなところに書く必要もありません。変更が発散したり分岐したりして、ビルドのメンテナンスが悪夢に変わり果てるのを防ぎ、構造化されたメンテナンス性の良い分かりやすいビルドを記述できます。
                         </para>
                 </listitem>
             </varlistentry>
@@ -71,15 +72,15 @@
                 </listitem>
             </varlistentry>
             <varlistentry>
+                <term>ビルドの分割</term>
                 <term>Gradle scales</term>
-                <term>スケーラビリティ</term>
                 <listitem>
                     <para>Gradle scales very well. It significantly increases your productivity,
                         from simple single project builds up to huge enterprise multi-project builds. This is true
                         for structuring the build. With the state-of-art incremental build function, this is also true for
                         tackling the performance pain many large enterprise builds suffer from.
                     </para>
-                    <para>Gradleでは、簡単にビルドをスケールできます。このことは、単純なシングルプロジェクトでもエンタープライズレベルの巨大なマルチプロジェクトでも生産性の大きな向上につながります。ビルドを構造化できますし、最先端のインクリメンタルビルドで、たくさんの大きなプロジェクトをビルドするときのパフォーマンスを改善することもできるのです。
+                    <para>Gradleでは、ビルドの分割を強力にサポートしています。このことは、単純なシングルプロジェクトでもエンタープライズレベルの巨大なマルチプロジェクトでも生産性の大きな向上につながります。ビルドを構造化できますし、最先端のインクリメンタルビルドで、たくさんの大きなプロジェクトをビルドするときのパフォーマンスを改善することもできるからです。
                     </para>
                 </listitem>
             </varlistentry>
@@ -91,20 +92,23 @@
                         citizens. We allow you to model the project relationships in a multi-project build as they really
                         are for your problem domain. Gradle follows your layout not vice versa.
                     </para>
+                    <para>Gradleは突出したマルチプロジェクトのサポートが特長です。プロジェクト間の依存関係はGradleのファーストクラス・オブジェクトであり、ごく普通に取り扱うことができます。世の中にはいろいろなビルドがありますが、Gradleではそれぞれのビルドに特有の問題点、課題にしたがってマルチプロジェクト、またプロジェクトの関係をモデリングできます。つまり、Gradleがあなたのプロジェクト構造に従うのであって、その逆ではありません。</para>
                     <para>Gradle provides partial builds. If you build a single subproject Gradle takes care of building
                         all the subprojects that subproject 
                         depends on. You can also choose to rebuild the subprojects that depend on a particular subproject.
                         Together with incremental builds this is a big time saver for larger builds.
                     </para>
+                    <para>Gradleでは部分ビルドが可能です。一つのサブプロジェクトをビルドすれば、Gradleはそのプロジェクトに依存しているすべてのプロジェクトもビルドします。また、依存しているプロジェクトのうち、どのプロジェクトを再ビルドするか選択することもできます。大きなプロジェクトの場合、これはインクリメンタルビルドと同様、大きな時間の節約になるでしょう。</para>
                 </listitem>
             </varlistentry>
             <varlistentry>
-                <term>依存性を管理するための多くの手段</term>
+                <term>依存関係を管理する多くの方法</term>
                 <term>Many ways to manage your dependencies</term>
                 <listitem>
                     <para>Different teams prefer different ways to manage their external dependencies.
                         Gradle provides convenient support for any strategy. From transitive dependency 
                         management with remote maven and ivy repositories to jars or dirs on the local file system.</para>
+                    <para>外部ライブラリの解決には、チームごとにさまざまな方法があるものです。リモートのmavenやivyのリポジトリを使った推移的な依存関係の管理から、ローカルファイルシステム上のjarやディレクトリまで、どのような方法をとるにせよGradleはそれらを強力にサポートします。</para>
                 </listitem>
             </varlistentry>
             <varlistentry>
@@ -115,9 +119,11 @@
                         Gradle provides a deep import for any Ant project, turning Ant targets into native Gradle tasks at runtime.
                         You can depend on them from Gradle, you can enhance them from Gradle, you can even declare dependencies on
                         Gradle tasks in your build.xml. The same integration is provided for properties, paths, etc ...</para>
+                    <para>Gradleでは、Antのタスクはファーストクラス・オブジェクトです。さらにおもしろいことに、Antのプロジェクトもまたファーストクラス・オブジェクトなのです。Gradleでは、Antプロジェクトをインポートして、実行時にAntのターゲットをGradleネイティブのタスクへ変換できます。もちろんインポートしたタスクへの依存関係を定義できますし、拡張もできます。それどころか、build.xmlの中でGradleのタスクへの依存関係を宣言することさえ可能です。プロパティやパス、その他諸々についても同じレベルで統合されています。</para>
                     <para>Gradle fully supports your existing Maven or Ivy repository infrastructure for publishing and retrieving
                         dependencies. Gradle also provides a converter for turning a Maven pom.xml into a Gradle script.
                         Runtime imports of Maven projects will come soon.</para>
+                    <para>Gradleは、既存のMaven/Ivyリポジトリのインフラ、依存関係の定義や解決といった機能を完全にサポートしています。さらに、Mavenのpom.xmlをGradleのスクリプトに変換するコンバーターも用意されています。実行時にその変換を行う機能も近いうちに提供される予定です。</para>
                 </listitem>
             </varlistentry>
             <varlistentry>
@@ -130,6 +136,7 @@
                         That way migration is as less disruptive and as reliable as possible. This is following the best-practices
                         for refactoring by applying baby steps.
                     </para>
+                    <para>Gradleは、どんな構造のプロジェクトにも適用できます。なので、今製品のビルドを行っているブランチがあるなら、それと同じブランチ上で平行してGradleのビルドを開発していくことができます。私たちは常より、成果物を作成するときには、いつもと同様のものができているか確認するようなテストを書くことを推奨していました。この方法で移行すれば、既存のものを破壊するような可能性は少ないし、可能な限りの安全性を確保できます。これは、小さな変更を積み重ねていくという、リファクタリング上のベストプラクティスなのです。</para>
                 </listitem>
             </varlistentry>
             <varlistentry>
@@ -144,6 +151,7 @@
                         build systems. Our Groovy support is also not just some simple coating sugar layer. The whole Gradle API
                         is fully groovynized. Only by that using Groovy is the fun and productivity gain it can be.
                     </para>
+                    <para>GradleのビルドスクリプトはXMLではなくGroovyで記述します。しかし、それは単純に動的言語のスクリプト機能を生で使わせるということではありません。それではビルドのメンテナンスがむやみに難しくなるだけです。Gradleは、硬直したフレームワークとしてではなく、一つの言語として使用されることを想定してデザインされています。Groovyは、Gradle(またはあなた自身)が提供する抽象性と個々のビルドがもつ独自の筋書きとをくっつける接着剤となっているのです。Gradleでは、いくつかの標準的なビルドの筋書きを用意していますが、それら筋書きが何かの特別な扱いを受けているというわけではありません。別のビルドシステムと比較したとき、このことはGradleの主な特徴の一つになると考えています。GradleのGroovyサポートはただの構文糖衣ではありません。すべてのAPIは完全にGroovy化されていて、楽にGroovyを使うことができ、生産性を向上させています。</para>
                 </listitem>
             </varlistentry>
             <varlistentry>
@@ -156,6 +164,7 @@
                         very interesting for the enterprise. It is a zero administration approach for the client machines.
                         It also enforces the usage of a particular Gradle version thus minimizing support issues. 
                     </para>
+                    <para>Gradleラッパーを使うと、Gradleをインストールしていないマシンでビルドを実行できます。たとえば、CIサーバー上でビルドしたり、オープンソースプロジェクトを簡単にビルドできるようにしたりするのに便利でしょう。このラッパーはエンタープライズ向けとしても非常に興味深いものです。これはつまり、クライアントマシンに対する「zero administration」のアプローチです。使用させるGradleのバージョンを固定し、サポートしなければならないような問題の発生を最小限にすることもできます。</para>
                 </listitem>
             </varlistentry>
             <varlistentry>
@@ -163,6 +172,7 @@
                 <term>Free and open source</term>
                 <listitem>
                     <para>Gradle is an open source project, and is licensed under the <ulink url="website:license.html">ASL</ulink>.
+                        <para>Gradleはオープンソースプロジェクトであり、<ulink url="website:license.html">ASL</ulink>のもとで公開されています。</para>
                     </para>
                 </listitem>
             </varlistentry>
@@ -177,6 +187,7 @@
             In such projects obviously the team members know Java. We think a build
             should be as transparent as possible to <emphasis>all</emphasis> team members.
         </para>
+        <para><emphasis>ビルドスクリプト</emphasis>を記述するということを考えたとき、XMLに対する内部DSL(動的言語ベース)のアドバンテージというのは途方もなく大きいものです。ただ、動的な言語はいくつかあるのに、なぜGroovyなのでしょうか。その答えは、Gradleが想定しているシチュエーション、環境にあります。Gradleは本質的に言えば一般的な利用が可能な汎用のビルドツールですが、メインとしてフォーカスしているのはJavaのプロジェクトです。そのようなプロジェクトの場合、チームのメンバーがJavaに習熟しているのは明らかでしょう。私たちは、ビルドは<emphasis>すべての</emphasis>チームメンバーに対してできるだけ分かりやすいものであるべきだと考えています。</para>
         <para>You might argue why not using Java then as the language for build scripts. We think this is a valid
             question. It would have the highest transparency for your team and the lowest learning curve. But due to
             limitations of Java such a build language would not be as nice, expressive and powerful as it could be.
@@ -186,15 +197,18 @@
                     you find an interesting article comparing Ant, XML, Java and Lisp. It's funny that the 'if Java had
                     that syntax' syntax in this article is actually the Groovy syntax.
                 </para>
+                <para><ulink url='http://www.defmacro.org/ramblings/lisp.html'/>に、AntとXML、Java、Lispを比較している興味深い記事が載っています。「もしJavaがこの文法を持っていたら」という前提で書かれている構文が、まさにGroovyの文法になっているのが面白いところです。</para>
             </footnote>
             Languages like Python, Groovy or Ruby do a much better job here. We have chosen Groovy as it offers by far
             the greatest transparency for Java people. Its base syntax is the same as Java's as well as its type system,
             its package structure and other things. Groovy builds a lot on top of that. But on a common ground with Java.
         </para>
+        <para>それならGroovyでなくJavaを使えばいいのにと思われるかもしれません。それはもっともな疑問です。ビルド用の言語にJavaを使えば、開発チームにとって最高に分かりやすく、学習曲線が最小限緩やかなビルドとなるでしょう。しかし、Javaはビルド用の言語として使うには表現力や機能に限界があるのです。このような用途には、PythonやGroovy、Rubyのような言語の方が向いています。私たちは、Java世界の住人にとって断然飛び抜けた分かりやすさを提供するGroovyを選択しました。Groovyの文法は、型システム、パッケージ構造、その他諸々についてJavaをベースにしています。Groovyはその上に様々な機能を構築していますが、土台はJavaと同じなのです。</para>
         <para>For Java teams which share also Python or Ruby knowledge or are happy to learn it, the above arguments
             don't apply. The Gradle design is well-suited for creating another build script engine in JRuby or Jython.
             It just doesn't have the highest priority for us at the moment. We happily support any community effort
             to create additional build script engines.
         </para>
+        <para>Javaの開発チームであっても、PythonやRubyの知識をチームで共有していたり、それらを楽しく学んでいるのなら上記の議論は当てはまりません。Gradleはビルドスクリプト・エンジンとしてJRubyやJythonを使えるよう適切にデザインされています。私たちは、そういった追加のビルドスクリプトエンジンを作っていただけるあらゆるコミュニティを喜んでサポートします。</para>
     </section>
 </chapter>
