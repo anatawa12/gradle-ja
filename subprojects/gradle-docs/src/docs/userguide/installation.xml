@@ -45,9 +45,9 @@
 <para>Gradleの配布物はZIPで圧縮されています。Gradleのフルパッケージには以下のものが含まれています。</para>
 
 <itemizedlist>
-    <listitem><para>Gradleのバイナリ</para><para>The Gradle binaries.</para></listitem>
-    <listitem><para>ユーザーガイド(HTMLとPDF)</para><para>The user guide (HTML and PDF).</para></listitem>
-    <listitem><para>APIドキュメント(JavadocとGroovydoc)</para><para>The API documentation (Javadoc and Groovydoc).</para></listitem>
+    <listitem><para>The Gradle binaries.</para><para>Gradleのバイナリ</para></listitem>
+    <listitem><para>The user guide (HTML and PDF).</para><para>ユーザーガイド(HTMLとPDF)</para></listitem>
+    <listitem><para>The API documentation (Javadoc and Groovydoc).</para><para>APIドキュメント(JavadocとGroovydoc)</para></listitem>
     <listitem>
         <para>Extensive samples, including the examples referenced in the user guide, along with some complete and more
             complex builds you can use the starting point for your own build.
@@ -58,7 +58,7 @@
         <para>The binary sources. This is for reference only. If you want to build Gradle you need to download the source distribution
             or checkout the sources from the source repository. See the <ulink url="website:build.html">Gradle web site</ulink> for details).
         </para>
-        Gradleバイナリのソースコード。これは参照専用のものです。Gradleをビルドするには、ソースを別途ダウンロードするかリポジトリからチェックアウトする必要があります。詳しくは<ulink url="website:build.html">GradleのWebサイト</ulink>を参照してください。 
+        <para>Gradleバイナリのソースコード。これは参照専用のものです。Gradleをビルドするには、ソースを別途ダウンロードするかリポジトリからチェックアウトする必要があります。詳しくは<ulink url="website:build.html">GradleのWebサイト</ulink>を参照してください。</para> 
     </listitem>
 </itemizedlist>
 
@@ -79,7 +79,7 @@ some zip front ends for Mac OS X don't restore the file permissions properly.
     environment variable. Usually, this is sufficient to run Gradle. Optionally, you may also want to set the
     <envar>GRADLE_HOME</envar> environment variable to point to the root directory of your Gradle installation.
 </para>
-<para>Gradleを実行するために、<filename><replaceable>GRADLE_HOME</replaceable>/bin</filename>を環境変数<envar>PATH</envar>に追加してください。普通はこれで十分ですが、任意で<envar>GRADLE_HOME</envar>環境変数にGradleをインストールしたディレクトリをセットすることもできます。</para>
+<para>Gradleを実行するために、<filename><replaceable>GRADLE_HOME</replaceable>/bin</filename>を環境変数<envar>PATH</envar>に追加してください。普通はこれで十分ですが、何かのために<envar>GRADLE_HOME</envar>環境変数にGradleをインストールしたディレクトリをセットすることもできます。</para>
 </section>
 
 <section>
