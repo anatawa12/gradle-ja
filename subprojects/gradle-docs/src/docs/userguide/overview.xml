@@ -197,13 +197,16 @@
                     you find an interesting article comparing Ant, XML, Java and Lisp. It's funny that the 'if Java had
                     that syntax' syntax in this article is actually the Groovy syntax.
                 </para>
-                <para><ulink url='http://www.defmacro.org/ramblings/lisp.html'/>に、AntとXML、Java、Lispを比較している興味深い記事が載っています。「もしJavaがこの文法を持っていたら」という前提で書かれている構文が、まさにGroovyの文法になっているのが面白いところです。</para>
             </footnote>
             Languages like Python, Groovy or Ruby do a much better job here. We have chosen Groovy as it offers by far
             the greatest transparency for Java people. Its base syntax is the same as Java's as well as its type system,
             its package structure and other things. Groovy builds a lot on top of that. But on a common ground with Java.
         </para>
-        <para>それならGroovyでなくJavaを使えばいいのにと思われるかもしれません。それはもっともな疑問です。ビルド用の言語にJavaを使えば、開発チームにとって最高に分かりやすく、学習曲線が最小限緩やかなビルドとなるでしょう。しかし、Javaはビルド用の言語として使うには表現力や機能に限界があるのです。このような用途には、PythonやGroovy、Rubyのような言語の方が向いています。私たちは、Java世界の住人にとって断然飛び抜けた分かりやすさを提供するGroovyを選択しました。Groovyの文法は、型システム、パッケージ構造、その他諸々についてJavaをベースにしています。Groovyはその上に様々な機能を構築していますが、土台はJavaと同じなのです。</para>
+        <para>それならGroovyでなくJavaを使えばいいのにと思われるかもしれません。それはもっともな疑問です。ビルド用の言語にJavaを使えば、開発チームにとって最高に分かりやすく、学習曲線が最小限緩やかなビルドとなるでしょう。しかし、Javaはビルド用の言語として使うには表現力や機能に限界があるのです。
+            <footnote>
+               <para><ulink url='http://www.defmacro.org/ramblings/lisp.html'/>に、AntとXML、Java、Lispを比較している興味深い記事が載っています。「もしJavaがこの文法を持っていたら」という前提で書かれている構文が、まさにGroovyの文法になっているのが面白いところです。</para>
+            </footnote>
+このような用途には、PythonやGroovy、Rubyのような言語の方が向いています。私たちは、Java世界の住人にとって断然飛び抜けた分かりやすさを提供するGroovyを選択しました。Groovyの文法は、型システム、パッケージ構造、その他諸々についてJavaをベースにしています。Groovyはその上に様々な機能を構築していますが、土台はJavaと同じなのです。</para>
         <para>For Java teams which share also Python or Ruby knowledge or are happy to learn it, the above arguments
             don't apply. The Gradle design is well-suited for creating another build script engine in JRuby or Jython.
             It just doesn't have the highest priority for us at the moment. We happily support any community effort

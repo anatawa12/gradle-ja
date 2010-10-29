@@ -121,7 +121,7 @@
             <xref linkend='sec:gradle_properties_and_system_properties'/>. Your gradle.properties file could look like
             this:
         </para>
-        <para>Webにアクセスする(依存関係に含まれるライブラリをダウンロードするときなど)ためのプロキシの設定は簡単にできます。Gradle自身がこのために特別な機能を用意しているわけではありませんが、規定のシステムプロパティを設定すればJVMがプロキシを使用してくれます。ビルドスクリプトで<literal>System.properties['proxy.proxyUser'] = 'userid'</literal>とやってもいいですが、システムプロパティを設定するためのよりよい方法は<xref linkend='sec:gradle_properties_and_system_properties'/>で見てきたとおりです。次のような<filename>gradle.properties</filename>で設定できます。</para>
+        <para>Webにアクセスする(依存関係に含まれるライブラリをダウンロードするときなど)ためのプロキシの設定も簡単にできます。Gradle自身がこのために特別な機能を用意しているわけではありませんが、規定のシステムプロパティを設定すればJVMがプロキシを使用してくれます。ビルドスクリプトで<literal>System.properties['proxy.proxyUser'] = 'userid'</literal>とやってもいいですが、システムプロパティを設定するためのよりよい方法は<xref linkend='sec:gradle_properties_and_system_properties'/>で見てきたとおりです。次のような<filename>gradle.properties</filename>で設定できます。</para>
         <example>
             <title>プロキシを通してWebにアクセスする / Accessing the web via a proxy</title>
             <para><filename>gradle.properties</filename></para>
@@ -167,11 +167,11 @@ systemProp.http.nonProxyHosts=*.nonproxyrepos.com|localhost
         </sample>
     </section>
     <section>
-        <title>外部のスクリプトから任意のオブジェクトを設定する / Configuring arbitrary objects using an external script</title>
+        <title>外部スクリプトから任意のオブジェクトを設定する / Configuring arbitrary objects using an external script</title>
         <para>You can also configure arbitrary objects using an external script.
         </para>
         <para>任意のオブジェクトを設定するのは、外部のスクリプトからでも可能です。</para>
-        <sample id="configureObjectUsingScript" dir="userguide/tutorial/configureObjectUsingScript" title="Configuring arbitrary objects using a script">
+        <sample id="configureObjectUsingScript" dir="userguide/tutorial/configureObjectUsingScript" title="外部スクリプトから任意のオブジェクトを設定する / Configuring arbitrary objects using a script">
             <sourcefile file="build.gradle"/>
             <sourcefile file="other.gradle"/>
             <output args="-q configure"/>

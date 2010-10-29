@@ -34,7 +34,7 @@
             <literal>compile</literal> task. Running <userinput>gradle dist test</userinput> for this build script
             results in the <literal>compile</literal> task being executed only once.</para>
         <para>
-        以下の例では、四つのタスクが定義されており、<literal>dist</literal>と<literal>test</literal>はどちらも<literal>compile</literal>タスクに依存しています。このビルドスクリプトを<userinput>gradle dist test</userinput>と実行しても、実行された二つのタスクから依存されている<literal>compile</literal>タスクは一度だけしか実行されません。
+        この例では、四つのタスクが定義されており、<literal>dist</literal>と<literal>test</literal>はどちらも<literal>compile</literal>タスクに依存しています。このビルドスクリプトを<userinput>gradle dist test</userinput>と実行しても、実行された二つのタスクから依存されている<literal>compile</literal>タスクは一度だけしか実行されません。
         </para>
         <figure>
             <title>Task間の依存関係 / Task dependencies</title>
@@ -65,7 +65,7 @@
             <literal>test</literal> task's dependencies, such as <literal>compileTest</literal>
             are not executed either. Those dependencies of <literal>test</literal> that are required by another task, such as
             <literal>compile</literal>, are still executed.</para>
-        <para><literal>dist</literal>タスクは<literal>test</literal>に依存しているわけですが、この例では<literal>test</literal>タスクは実行されていないことが分かります。また、<literal>test</literal>タスクが依存しているタスク、たとえば<literal>compileTest</literal>タスクもやはり実行されていません。しかし、<literal>test</literal>タスクが依存しているタスクのうち、<literal>test</literal>以外からも依存されているタスク、つまり<literal>compile</literal>タスクは実行されているのです。</para>
+        <para><literal>dist</literal>タスクは<literal>test</literal>に依存しているのですが、この例では<literal>test</literal>タスクは実行されていないことが分かります。また、<literal>test</literal>タスクが依存しているタスク、たとえば<literal>compileTest</literal>タスクもやはり実行されていません。しかし、<literal>test</literal>タスクが依存しているタスクのうち、<literal>test</literal>以外からも依存されているタスク、つまり<literal>compile</literal>タスクは実行されているのです。</para>
     </section>
 
     <section>
@@ -73,7 +73,7 @@
         <para>When you specify tasks on the command-line, you don't have to provide the full name of the task. You only need to provide enough of the
             task name to uniquely identify the task. For example, in the sample build above, you can execute task
             <literal>dist</literal> by running <userinput>gradle d</userinput>:</para>
-        <para>タスク名をコマンドラインで指定するとき、タスク名をすべて入力する必要はありません。タスク名を一つに決定できるだけの文字を入力すればよいのです。先ほどの例で言えば、<userinput>gradle d</userinput>と入力すれば<literal>dist</literal>を実行できるわけです。</para>
+        <para>タスク名をコマンドラインで指定するとき、タスク名をすべて入力する必要はありません。タスク名を一つに決定できるだけの文字を入力すればよいのです。先ほどの例で言えば、<userinput>gradle d</userinput>と入力すれば<literal>dist</literal>を実行できます。</para>
         <sample id="abbreviateTaskName" dir="userguide/tutorial/excludeTasks" title="タスク名の省略 / Abbreviated task name">
             <output args="di"/>
         </sample>
@@ -84,7 +84,7 @@
             <output args="cT"/>
         </sample>
         <para>You can also use these abbreviations with the <option>-x</option> command-line option.</para>
-        <para>タスク名の省略は<option>-x</option>オプションでも使うことができます。</para>
+        <para><option>-x</option>オプションで除外タスクを指定するときにも、同じようにタスク名を省略できます。</para>
     </section>
 
     <section id="sec:selecting_build">
@@ -134,7 +134,7 @@
                 selected project. This report shows the default tasks for the project, if any, and a description for
                 each task. Below is an example of this report:
             </para>
-            <userinput>gradle --tasks</userinput>または<userinput>gradle -t</userinput>は、プロジェクトに設定されているメインタスクのリストを表示します。デフォルトタスクを表示し、もしあればそれぞれのタスクに関する説明も表示します。レポート表示例をご覧ください。
+            <para><userinput>gradle --tasks</userinput>または<userinput>gradle -t</userinput>は、プロジェクトに設定されているメインタスクのリストを表示します。さらに、デフォルトタスク、もしあればそれぞれのタスクに関する説明も表示します。レポート表示例をご覧ください。</para>
             <sample id="taskListReport" dir="userguide/tutorial/projectReports" title="タスクに関する情報を取得する / Obtaining information about tasks">
                 <output args="-q tasks"/>
             </sample>
@@ -150,7 +150,7 @@
                 this option, the task report lists all tasks in the project, grouped by main task, and the dependencies
                 for each task. Here is an example:
             </para>
-            <para><option>--all</option>オプションを追加すると、タスクリストについてもっと多くの情報を取得できます。プロジェクトにあるすべてのタスクがメインタスクによってグループ化され、さらにタスク間の依存関係も含めて表示されます。</para>
+            <para><option>--all</option>オプションを追加すると、タスクリストについてもっと多くの情報を取得できます。プロジェクトにあるすべてのメインタスクとタスク間の依存関係が表示されます。</para>
             <sample id="taskListAllReport" dir="userguide/tutorial/projectReports" title="タスクに関するより多くの情報を取得する / Obtaining more information about tasks">
                 <output args="-q tasks --all"/>
             </sample>
