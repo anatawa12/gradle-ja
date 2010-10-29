@@ -27,25 +27,25 @@
         production environments. Don't worry if this seems a little vague for now. Gradle's build-by-convention support adds
         a more concrete definition for what a project is.
     </para>
-    <para>Gradleによるすべてのビルドは、一つ以上の<firstterm>プロジェクト</firstterm>から構成されています。プロジェクトとは、ソフトウェアのコンポーネントであり、「ビルドできる」なにかを表す概念です。ビルドするものが何かによって、この意味は変わってきます。たとえば、あるプロジェクトはライブラリjarやWebアプリケーションをビルドするものかもしれません。または、別のプロジェクトによってビルドされたjarを集めた配布用のzipファイルを作成するものかもしれません。別に何か具体的なものをビルドする必要もなく、アプリケーションを本番環境にステージするというプロジェクトもありえます。それでは、プロジェクトとは結局なんなんでしょう。あいまいな印象を受けられたかもしれませんが、心配する必要はありません。Gradleは規約によるビルドをサポートしており、プロジェクトの定義についても明確に規定されています。</para>
+    <para>Gradleによるすべてのビルドは、一つ以上の<firstterm>プロジェクト</firstterm>から構成されています。プロジェクトとは、ソフトウェアを構成するコンポーネントであり、「ビルドできる」なにかを表す概念です。ビルドが何を表すのかによって、プロジェクトの定義も当然変わってきます。たとえば、あるプロジェクトはライブラリjarやWebアプリケーションをビルドするものかもしれません。または、別のプロジェクトによってビルドされたjarを集めた配布用のzipファイルを作成するものかもしれません。別に何か具体的なものをビルドする必要もなく、アプリケーションを本番環境にステージするというプロジェクトもありえます。それでは、プロジェクトとは結局なんなんでしょう。あいまいな印象を受けられたかもしれませんが、心配する必要はありません。Gradleは規約によるビルドをサポートしており、プロジェクトの定義についても明確に規定されています。</para>
     <para>Each project is made up of one or more <firstterm>tasks</firstterm>. A task represents some atomic piece
         of work which a build performs. This might be compiling some classes, creating a JAR, generating javadoc,
         or publishing some archives to a repository.</para>
-    <para>それぞれのプロジェクトは、一つ以上の<firstterm>タスク</firstterm>から構成されます。タスクとは、ビルド実行時における分割不能な何らかの作業単位を表す概念です。たとえば、クラスをコンパイルしたり、JARファイルを作成したり、アーカイブをリポジトリにパブリッシュしたりするタスクが考えられます。</para>
+    <para>それぞれのプロジェクトは、一つ以上の<firstterm>タスク</firstterm>から構成されます。タスクとは、ビルド実行時における分割不能な何らかの作業単位を表す概念です。たとえば、クラスをコンパイルしたり、JARファイルを作成したり、アーカイブをリポジトリに公開したりするタスクが考えられます。</para>
 
     <para>For now, we will look at defining some simple tasks in a build with one project. Later chapters will look at
         working with multiple projects and more about working with projects and tasks.</para>
-    <para>これから、あるプロジェクト上でいくつかの簡単なタスクを定義してみます。マルチプロジェクトでのビルド例やプロジェクト/タスクの詳細については後の章で紹介しています。</para>
+    <para>では、実際にプロジェクト上でいくつか簡単なタスクを定義してビルドしてみましょう。マルチプロジェクトでのビルド例やプロジェクト/タスクのもっと詳しい情報については後の章をご参照ください。</para>
     </section>
     <section>
         <title>Hello world</title>
         <para>You run a Gradle build using the <command>gradle</command> command. The <command>gradle</command> command
             looks for a file called <filename>build.gradle</filename> in the current directory.
-            <footnote><para>There are command line switches to change this behavior. See <xref linkend='gradle_command_line'/>)</para><para>この動作はコマンドラインスイッチを使用して変更できます。<xref linkend='gradle_command_line'/>を参照してください。</para></footnote>
+            <footnote><para>There are command line switches to change this behavior. See <xref linkend='gradle_command_line'/>)</para></footnote>
             We call this <filename>build.gradle</filename> file a <firstterm>build script</firstterm>, although strictly speaking it is
             a build configuration script, as we will see later. The build script defines a project and its tasks.
         </para>
-        <para>Gradleのビルドは、<command>gradle</command>コマンドで実行します。<command>gradle</command>コマンドはカレントディレクトリの<filename>build.gradle</filename>ファイルを参照してビルドを行います。このファイルは、後述しますが正確には「ビルドの設定を行うスクリプト」です。しかし、一般的には<firstterm>ビルドスクリプト</firstterm>と呼ばれます。</para>
+        <para>Gradleのビルドは、<command>gradle</command>コマンドで実行します。<command>gradle</command>コマンドはカレントディレクトリの<filename>build.gradle</filename>ファイルを参照してビルドを行います。<footnote><para>この動作はコマンドラインスイッチを使用して変更できます。<xref linkend='gradle_command_line'/>を参照してください。</para></footnote>このファイルは、一般的には<firstterm>ビルドスクリプト</firstterm>と呼ばれ、Gradleのプロジェクトとタスクを定義するものです。詳しくは後述しますが、ビルドスクリプトは正確には「ビルドの設定を行うスクリプト」だといえます。</para>
         <para>To try this out, create the following build script named <filename>build.gradle</filename>.
         </para>
         <para>次のようなスクリプトを、<filename>build.gradle</filename>という名前で作成して試してみてください。</para>
@@ -82,7 +82,7 @@
             we <emphasis>always</emphasis> mean Gradle tasks, which are the equivalent to Ant's targets. If we talk
             about Ant tasks (Ant commands), we explicitly say <emphasis>ant task</emphasis>.
         </para>
-        <para>Antのtargetに似ているなと思われたかもしれません。実際、GradleのtaskはAntでいえばtargetに相当するものです。ただ、これから見ていきますがGradleのtaskはAntのtargetよりもずっと強力なものです。Gradleではtaskという、Antとは異なる用語を採用しました。これは<emphasis>task</emphasis>という言葉が、<emphasis>target</emphasis>という言葉に比べて表現力があると考えたためです。しかし、残念ながら<emphasis>task</emphasis>という用語はAntでも<literal>copy</literal>や<literal>javac</literal>といったコマンドを示すものとして使われており、Gradleのtaskと競合してしまいます。このため、Antのtaskについて述べるときには常に<emphasis>ant task</emphasis>と明示的にいい、単にtaskとしたときはGradleのタスクのことを示すものとします。</para>
+        <para>Antのtargetに似ているなと思われたかもしれません。実際、GradleのtaskはAntでいえばtargetに相当するものです。ただ、これから見ていきますがGradleのtaskはAntのtargetよりもずっと強力なものです。Gradleではtaskという、Antとは異なる用語を採用しました。これは<emphasis>task</emphasis>という言葉が、<emphasis>target</emphasis>という言葉よりも実態に合った表現だと考えたためです。しかし、残念ながら<emphasis>task</emphasis>という用語はAntでも<literal>copy</literal>や<literal>javac</literal>といったコマンドを示すものとして使われており、Gradleのtaskと競合してしまいます。このため、Antのtaskについて述べるときには常に<emphasis>ant task</emphasis>と明示的にいい、単にtaskとしたときはGradleのタスクのことを示すものとします。</para>
     </section>
     <section>
         <title>タスク定義のショートカット / A shortcut task definition</title>
@@ -94,7 +94,7 @@
         </sample>
         <para>Again, this defines a task called <literal>hello</literal> with a single closure to execute.
             We will use this task definition style throughout the user guide.</para>
-        <para>この例も先ほどと同様、実行するクロージャを一つだけもった<literal>hello</literal>を定義するものです。このユーザーガイドではこちらの方法を使用します。</para>
+        <para>この例も先ほどと同様、実行するクロージャを一つだけもった<literal>hello</literal>を定義するものです。このユーザーガイドではこちらの定義方法を使用します。</para>
     </section>
     <section>
         <title>ビルドスクリプトはコードです / Build scripts are code</title>
@@ -105,7 +105,7 @@
             <sourcefile file="build.gradle"/>
             <output args="-q upper"/>
         </sample>
-        <para>または</para>
+        <para>さらに</para>
         <sample id="count" dir="userguide/tutorial/count" title="GradleタスクでGroovyを使う / Using Groovy in Gradle's tasks">
             <sourcefile file="build.gradle"/>
             <output args="-q count"/>
@@ -121,8 +121,8 @@
             <output args="-q intro"/>
         </sample>
         <para>To add a dependency, the corresponding task does not need to exist.</para>
-        <para>依存関係にタスクを追加するとき、そのタスクがその時点で存在していなくてもかまいません。</para>
-        <sample id="lazyDependsOn" dir="userguide/tutorial/lazyDependsOn" title="Lazy dependsOn - タスクがまだ存在していない場合 / Lazy dependsOn - the other task does not exist (yet)">
+        <para>依存関係にタスクを追加するときは、そのタスクがその時点で宣言されていなくてもかまいません。</para>
+        <sample id="lazyDependsOn" dir="userguide/tutorial/lazyDependsOn" title="遅延評価のdependsOn - タスクがまだ宣言されていない場合 / Lazy dependsOn - the other task does not exist (yet)">
             <sourcefile file="build.gradle"/>
             <output args="-q taskX"/>
         </sample>
@@ -139,22 +139,25 @@
         <para>The power of Groovy can be used for more than defining what a task does. For example, you can also use it
             to dynamically create tasks.
         </para>
-        <sample id="dynamic" dir="userguide/tutorial/dynamic" title="Dynamic creation of a task">
+        <para>Groovyが力を発揮するのは、タスクが実行するアクションを記述するときだけではありません。たとえば、次のようにタスクを動的に定義することもできます。</para>
+        <sample id="dynamic" dir="userguide/tutorial/dynamic" title="動的なタスク定義 / Dynamic creation of a task">
             <sourcefile file="build.gradle"/>
             <output args="-q task1"/>
         </sample>
     </section>
     <section>
-        <title>Manipulating existing tasks</title>
+        <title>既存のタスクを操作する / Manipulating existing tasks</title>
         <para>Once tasks are created they can be accessed via an <emphasis>API</emphasis>. This is different to Ant. For
             example you can create additional dependencies.
         </para>
-        <sample id="dynamicDepends" dir="userguide/tutorial/dynamicDepends" title="Accessing a task via API - adding a dependency">
+        <para>タスクが公開しているAPIを使えば、既存のタスクにアクセスして定義内容を操作することができます。これはAntと異なるGradleの特長の一つです。たとえば、次のように後からタスクの依存関係を追加することができます。</para>
+        <sample id="dynamicDepends" dir="userguide/tutorial/dynamicDepends" title="APIからタスクにアクセスする - 依存関係の追加 / Accessing a task via API - adding a dependency">
             <sourcefile file="build.gradle"/>
             <output args="-q task0"/>
         </sample>
         <para>Or you can add behavior to an existing task.</para>
-        <sample id="helloEnhanced" dir="userguide/tutorial/helloEnhanced" title="Accessing a task via API - adding behaviour">
+        <para>また、既存のタスクにアクションを追加することもできます。</para>
+        <sample id="helloEnhanced" dir="userguide/tutorial/helloEnhanced" title="APIからタスクにアクセスする - アクションの追加 / Accessing a task via API - adding behaviour">
             <sourcefile file="build.gradle"/>
             <output args="-q hello"/>
         </sample>
@@ -163,48 +166,55 @@
             actions in the action list are executed in order. The <literal>&lt;&lt;</literal> operator is simply an
             alias for <literal>doLast</literal>.
         </para>
+        <para><literal>doFirst</literal>や<literal>doLast</literal>は何回でも呼び出すことができ、既存のタスクが実行する一連のアクションの最初や最後に、新しいアクションを追加します。タスクに追加されたアクションは、タスクが実行されたときに順番に実行されます。<literal>&lt;&lt;</literal>は<literal>doLast</literal>の単なるエイリアスです。</para>
     </section>
     <section id='sec:shortcut_notations'>
-        <title>Shortcut notations</title>
+        <title>略記法 / Shortcut notations</title>
         <para>As you might have noticed in the previous examples, there is a convenient notation for accessing an
             <emphasis>existing</emphasis> task. Each task is available as a property of the build script:
         </para>
-        <sample id="helloWithShortCut" dir="userguide/tutorial/helloWithShortCut" title="Accessing task as a property of the build script">
+        <para>先ほどの例をみたとき、おやっと思われたかもしれません。<emphasis>既存の</emphasis>タスクにアクセスするときは、便利な略記法を使うことができます。すべてのタスクは、ビルドスクリプトではただのプロパティとしてアクセスできるのです。</para>
+        <sample id="helloWithShortCut" dir="userguide/tutorial/helloWithShortCut" title="ビルドスクリプトのプロパティとして既存のタスクにアクセスする / Accessing task as a property of the build script">
             <sourcefile file="build.gradle"/>
             <output args="-q hello"/>
         </sample>
         <para>This enables very readable code, especially when using the out of the box tasks provided by the plugins
             (e.g. <literal>compile</literal>).</para>
+        <para>この略記法は、コードをとても読みやすいものにします。特に、プラグインなどで外部から提供されるタスク(たとえば<literal>compile</literal>)にアクセスするときには威力を発揮します。</para>
     </section>
     <section id='sec:dynamic_properties'>
-        <title>Dynamic task properties</title>
+        <title>動的なタスクプロパティ / Dynamic task properties</title>
         <para>You can assign arbitrary <emphasis>new</emphasis> properties to any task.
         </para>
-        <sample id="dynamicProperties" dir="userguide/tutorial/dynamicProperties" title="Assigning properties to a task">
+        <para>タスクには、任意のプロパティを新しく定義することができます。</para>
+        <sample id="dynamicProperties" dir="userguide/tutorial/dynamicProperties" title="タスクのプロパティを定義する / Assigning properties to a task">
             <sourcefile file="build.gradle"/>
             <output args="-q showProps"/>
         </sample>
     </section>
     <section>
-        <title>Using Ant Tasks</title>
+        <title>Antタスクの使用 / Using Ant Tasks</title>
         <para>Ant tasks are first-class citizens in Gradle. Gradle provides excellent integration for Ant tasks simply
             by relying on Groovy. Groovy is shipped with the fantastic <literal>AntBuilder</literal>. Using Ant tasks
             from Gradle is as convenient and more powerful than using Ant tasks from a <filename>build.xml</filename>
             file. Let's look at an example:
         </para>
-        <sample id="antChecksum" dir="userguide/tutorial/antChecksum" title="Using AntBuilder to execute ant.checksum target">
+        <para>AntのタスクはGradleのファーストクラス・オブジェクトであり、デフォルトで使用できるようになっています。Groovyの持つ機能のおかげで、GradleはAntを非常に高いレベルで統合しています。Groovyには素晴らしき<literal>AntBuilder</literal>が組み込まれているのです。Antのタスクは、<filename>build.xml</filename>で使うよりGradleで使ったほうが便利で強力です。次の例を見てください。</para>
+        <sample id="antChecksum" dir="userguide/tutorial/antChecksum" title="antのchecksumターゲットをAntbuilderで実行する / Using AntBuilder to execute ant.checksum target">
             <sourcefile file="build.gradle"/>
             <output args="-q checksum"/>
         </sample>
 
         <para>There is lots more you can do with Ant in your build scripts. You can find out more in <xref linkend="ant"/>.</para>
+        <para>Antのタスクを使ってできることはもっとたくさんあります。<xref linkend="ant"/>をご参照ください。</para>
     </section>
     <section>
-        <title>Using methods</title>
+        <title>メソッドの使用 / Using methods</title>
         <para>Gradle scales in how you can organize your build logic. The first level of organizing your build logic for
             the example above, is extracting a method.
         </para>
-        <sample id="antChecksumWithMethod" dir="userguide/tutorial/antChecksumWithMethod" title="Using methods to organize your build logic">
+        <para>Gradleでは、段階的にビルドロジックを体系化していくことができます。最初の一歩として、上の例をメソッドの抽出を使ってリファクタリングしてみましょう。</para>
+        <sample id="antChecksumWithMethod" dir="userguide/tutorial/antChecksumWithMethod" title="メソッドを使ったビルドロジックの体系化 / Using methods to organize your build logic">
             <sourcefile file="build.gradle"/>
             <output args="-q checksum"/>
         </sample>
@@ -212,12 +222,14 @@
             build logic becomes more complex, Gradle offers you other very convenient ways to organize it. We have
             devoted a whole chapter to this. See <xref linkend='organizing_build_logic'/>.
         </para>
+        <para>後でマルチプロジェクトの各プロジェクトでメソッドを共有する方法について学びます。それでもビルドロジックが複雑になってくることもあるでしょう。Gradleでは、ロジックを体系化する便利な方法をいくつも用意しています。ビルドロジックの体系化については一つの章をすべて割り当てて取り扱っていますのでご参照ください。(<xref linkend='organizing_build_logic'/>)</para>
     </section>
     <section id='sec:default_tasks'>
-        <title>Default tasks</title>
+        <title>デフォルトタスク / Default tasks</title>
         <para>Gradle allows you to define one or more default tasks for your build.
+        <para>Gradleでは、ビルドに一つ以上のデフォルトタスクを定義することができます。</para>
         </para>
-        <sample id="defaultTasks" dir="userguide/tutorial/defaultTasks" title="Defining a default tasks">
+        <sample id="defaultTasks" dir="userguide/tutorial/defaultTasks" title="デフォルトタスクの定義 / Defining a default tasks">
             <sourcefile file="build.gradle"/>
             <output args="-q"/>
         </sample>
@@ -225,17 +237,20 @@
             subproject can have its own specific default tasks. If a subproject does not specify default tasks, the
             default tasks of the parent project are used (if defined).
         </para>
+        <para>これは、<userinput>gradle clean run</userinput>と入力するのと同じです。マルチプロジェクトのビルドでは、すべてのサブプロジェクトが個別にデフォルトタスクを持つことができます。サブプロジェクトにデフォルトタスクが定義されていない時は、(定義されていれば)親プロジェクトの定義が使用されます。</para>
     </section>
     <section id="configure-by-dag">
-        <title>Configure by DAG</title>
+        <title>DAGによる設定 / Configure by DAG</title>
         <para>As we describe in full detail later (See <xref linkend='build_lifecycle'/>) Gradle has a
             configuration phase and an execution phase. After the configuration phase Gradle knows all tasks that should
             be executed. Gradle offers you a hook to make use of this information. A use-case for this would be to check
             if the release task is part of the tasks to be executed. Depending on this you can assign different values
             to some variables.
         </para>
+        <para>詳しくは<xref linkend='build_lifecycle'/>で説明しますが、Gradleのビルドはいくつかのフェーズに分かれて実行されます。Gradleはどのタスクを実行するのかを設定フェーズで決定しますが、この情報を使うためのフックが提供されています。実行タスクにあるタスクが含まれるかどうかによって、変数に別の値を割り当てたりできるわけです。ユースケースとしては、releaseタスクが実行されるタスクに入っているかどうかチェックするといったものが考えられるでしょう。</para>
         <para>In the following example, execution of <literal>distribution</literal> and <literal>release</literal> tasks results in different value of <literal>version</literal> variable.</para>
-        <sample id="configByDagNoRelease" dir="userguide/tutorial/configByDag" title="Different outcomes of build depending on chosen tasks">
+        <para>次の例では、<literal>distribution</literal>タスクを実行するか<literal>release</literal>タスクを実行するかで<literal>version</literal>変数に違う値を割り当てています。</para>
+        <sample id="configByDagNoRelease" dir="userguide/tutorial/configByDag" title="選択したタスクによって異なる結果を得る / Different outcomes of build depending on chosen tasks">
             <sourcefile file="build.gradle"/>
             <output args="-q distribution"/>
             <output args="-q release" outputFile="configByDag.out"/>
@@ -244,12 +259,14 @@
             <emphasis>before</emphasis> the release task gets executed. Nor has the release task to be the
             <emphasis>primary</emphasis> task (i.e. the task passed to the <command>gradle</command> command).
         </para>
+        <para>ここで大事なことは、releaseタスクが実行予定にあるという事実を、releaseタスクが実行される前に利用できる点です。releaseタスクが<emphasis>プライマリ</emphasis>タスク、つまりgradleコマンドに引き渡されているタスクでなくてもかまいません。</para>
     </section>
     <section>
-        <title>Summary</title>
+        <title>まとめ / Summary</title>
         <para>This is not the end of the story for tasks. So far we have worked with simple tasks. Tasks will be
             revisited in <xref linkend='more_about_tasks'/> and when we look at the Java plugin in
             <xref linkend='java_plugin'/>.
         </para>
+        <para>本章で述べたことがタスクのすべてではありません。これまでは簡単なタスクしか取り扱いませんでしたが、<xref linkend='more_about_tasks'/>ではさらに詳しくタスクについて掘り下げます。また、Javaプラグインについて<xref linkend='java_plugin'/>で紹介していますが、ここでもタスクについて再度取り上げています。</para>
     </section>
 </chapter>
