@@ -27,7 +27,7 @@
             regardless of how it came to be included in the build: whether it was specified on the command-line, or it a
             dependency of another task, or both. Let's look at an example.</para>
         <para>
-        一回のビルドで、複数のタスクを実行することができます。ビルド実行の際に、それぞれのタスクを列挙して指定するだけです。たとえば、<userinput>gradle compile test</userinput>というコマンドを実行すれば、<literal>compile</literal>タスクと<literal>test</literal>タスクが実行されます。Gradleはタスクを列挙された順に実行し、それぞれのタスクに依存タスクがあればそれも実行します。各タスクは、明示的に指定されるにしろ別タスクに依存しているにしろ、またその両方で指定されているにしろ、ただ一度だけ実行されます。次の例を見てください。
+        一回のビルドで、複数のタスクを実行することができます。ビルド実行の際に、それぞれのタスクを列挙して指定するだけです。たとえば、<userinput>gradle compile test</userinput>というコマンドを実行すれば、<literal>compile</literal>タスクと<literal>test</literal>タスクが実行されます。Gradleはタスクを列挙された順に実行し、それぞれのタスクに依存タスクがあればそれも実行します。各タスクは、明示的に指定されるにしろ別タスクに依存しているにしろ、またその両方で指定されているにしろ、実行されるのは一度だけです。次の例を見てください。
         </para>
         <para>
             Below four tasks are defined. Both <literal>dist</literal> and <literal>test</literal> depend on the
@@ -65,7 +65,7 @@
             <literal>test</literal> task's dependencies, such as <literal>compileTest</literal>
             are not executed either. Those dependencies of <literal>test</literal> that are required by another task, such as
             <literal>compile</literal>, are still executed.</para>
-        <para><literal>dist</literal>タスクは<literal>test</literal>に依存しているわけですが、この例では<literal>test</literal>タスクは実行されていないことが分かると思います。また、<literal>test</literal>タスクが依存しているタスク、たとえば<literal>compileTest</literal>タスクもやはり実行されていません。しかし、<literal>test</literal>タスクが依存しているタスクのうち、<literal>test</literal>以外からも依存されているタスク、つまり<literal>compile</literal>タスクは実行されているのです。</para>
+        <para><literal>dist</literal>タスクは<literal>test</literal>に依存しているわけですが、この例では<literal>test</literal>タスクは実行されていないことが分かります。また、<literal>test</literal>タスクが依存しているタスク、たとえば<literal>compileTest</literal>タスクもやはり実行されていません。しかし、<literal>test</literal>タスクが依存しているタスクのうち、<literal>test</literal>以外からも依存されているタスク、つまり<literal>compile</literal>タスクは実行されているのです。</para>
     </section>
 
     <section>
@@ -79,7 +79,7 @@
         </sample>
         <para>You can also abbreviate each word in a camel case task name. For example, you can execute task <literal>compileTest</literal>
             by running <userinput>gradle compTest</userinput> or even <userinput>gradle cT</userinput></para>
-        <para>キャメルケースで分割されたそれぞれの単語を省略することもできます。たとえば、<literal>compileTest</literal>というタスクだと、<userinput>gradle compTest</userinput>と入力したり、<userinput>gradle cT</userinput>と入力したりすることで実行することができます。</para>
+        <para>キャメルケースで分割されたそれぞれの単語を省略することもできます。たとえば、<literal>compileTest</literal>というタスクだと、<userinput>gradle compTest</userinput>と入力したり、<userinput>gradle cT</userinput>と入力したりすることで実行できます。</para>
         <sample id="abbreviateCamelCaseTaskName" dir="userguide/tutorial/excludeTasks" title="キャメルケースのタスク名を省略 / Abbreviated camel case task name">
             <output args="cT"/>
         </sample>

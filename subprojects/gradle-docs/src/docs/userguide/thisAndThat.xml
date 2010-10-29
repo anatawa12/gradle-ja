@@ -65,7 +65,7 @@
             The properties of the <filename>gradle.properties</filename> can be accessed via the project object. The
             properties file in the user's home directory has precedence over property files in the project directories.
         </para>
-        <para>propertiesファイルを記述することで、projectオブジェクトに直接プロパティを追加することもできます。このプロパティファイル<filename>gradle.properties</filename>はGradleのホームディレクトリ(デフォルトでは<filename><replaceable>USER_HOME</replaceable>/.gradle</filename>)かプロジェクトディレクトリに作成します。マルチプロジェクトの場合、gradle.properteisはすべてのサブプロジェクトディレクトリに置くことができます。<filename>gradle.properties</filename>に記述されたプロパティはprojectオブジェクトからアクセスすることができます。なお、ユーザーのホームディレクトリに置かれた<filename>gradle.properties</filename>は各プロジェクトのディレクトリに置かれた<filename>gradle.properties</filename>に定義されたプロパティを上書きし優先的に使用されます。</para>
+        <para>propertiesファイルを記述することで、projectオブジェクトに直接プロパティを追加することもできます。このプロパティファイル<filename>gradle.properties</filename>はGradleのホームディレクトリ(デフォルトでは<filename><replaceable>USER_HOME</replaceable>/.gradle</filename>)かプロジェクトディレクトリに作成します。マルチプロジェクトの場合、gradle.properteisはすべてのサブプロジェクトディレクトリに置くことができます。<filename>gradle.properties</filename>に記述されたプロパティはprojectオブジェクトからアクセスすることができます。なお、ホームディレクトリの<filename>gradle.properties</filename>は、プロジェクトディレクトリの<filename>gradle.properties</filename>の定義を上書きし優先的に使用されます。</para>
         <para>You can also add properties directly to your project object via the <option>-P</option>
             command line option. For more exotic use cases you can even pass properties <emphasis>directly</emphasis>
             to the project object via system and environment properties. For example if you run a build on a continuous
@@ -170,7 +170,7 @@ systemProp.http.nonProxyHosts=*.nonproxyrepos.com|localhost
         <title>外部のスクリプトから任意のオブジェクトを設定する / Configuring arbitrary objects using an external script</title>
         <para>You can also configure arbitrary objects using an external script.
         </para>
-        任意のオブジェクトを設定するのは、外部のスクリプトからでも可能です。
+        <para>任意のオブジェクトを設定するのは、外部のスクリプトからでも可能です。</para>
         <sample id="configureObjectUsingScript" dir="userguide/tutorial/configureObjectUsingScript" title="Configuring arbitrary objects using a script">
             <sourcefile file="build.gradle"/>
             <sourcefile file="other.gradle"/>
