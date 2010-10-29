@@ -72,7 +72,7 @@
             </sample>
             <para>Now we rewrite the <literal>water</literal> build script and boil it down to a single line.</para>
             <para><literal>water</literal>ビルドスクリプトを書き直し、一行で記述するようにします。</para>
-            <sample id="multiprojectAddKrill" dir="userguide/multiproject/addKrill/water" title="Water project build script">
+            <sample id="multiprojectAddKrill" dir="userguide/multiproject/addKrill/water" title="Waterプロジェクトのビルドスクリプト / Water project build script">
                 <sourcefile file="build.gradle"/>
                 <output args="-q hello"/>
             </sample>
@@ -462,7 +462,7 @@
                 difference is that always all projects are configured, even when you start the build from a subproject.
                 The default configuration order is top down, which is usually what is needed.
             </para>
-            <para>評価順序の依存関係は、実行時の依存関係と大きく異なる点がいくつかあります。まず、実行の依存関係が常にタスク間の依存関係になるのに対し、評価順序の依存関係はプロジェクト間の依存関係です。さらに、サブプロジェクトをビルドしたとしても、常にマルチプロジェクトのプロジェクトすべてが評価されるという違いもあります。デフォルトでは、ルートプロジェクトからトップダウンでサブプロジェクトに向かって評価されていきます。普通はその順序で評価する必要があるからです。</para>
+            <para>評価順序の依存関係は、実行時の依存関係と大きく異なる点がいくつかあります。まず、実行の依存関係は最終的には常にタスク間の依存関係になりますが、評価順序の依存関係はプロジェクト間の依存関係です。さらに、サブプロジェクトをビルドしたとしても、常にマルチプロジェクトのプロジェクトすべてが評価されるという違いもあります。デフォルトでは、ルートプロジェクトからトップダウンでサブプロジェクトに向かって評価されていきます。普通はその順序で評価する必要があるからです。</para>
             <para>On the same nesting level the configuration order depends on the alphanumeric position. The most
                 common use case is to have multi-project builds that share a common lifecycle (e.g. all projects use the
                 Java plugin). If you declare with
@@ -487,11 +487,14 @@
                         distribution of webapps. The Resin servlet container allows us, to let such a distribution point
                         to a base installation of the servlet container.
                     </para>
-                    <para>実際のケースでは<ulink url='http://lucene.apache.org/solr'/>を使っており、warファイルをアクセスするインデックスごとに分割する必要がありました。分散型のウェブアプリケーションを作成したひとつの理由はそれです。サーブレットコンテナResinはそのような分散させたWebアプリケーションを、ベースとなるサーブレットコンテナをポイントするよう設定することができます。</para>
                 </footnote>
                 For the example we use only one build script and do <emphasis>cross project configuration</emphasis>.
             </para>
-            <para>Gradleのマルチプロジェクト機能は、開発現場でのユースケースに基づいて作成されています。ここではそのようなユースケースの例として、二つのWebアプリケーションとそれらの配布物を作成する親プロジェクトを紹介します。この例では、<emphasis>クロスプロジェクト設定</emphasis>を使って、一つのビルドスクリプトでそれぞれのプロジェクトの設定を行っています。</para>
+            <para>Gradleのマルチプロジェクト機能は、開発現場でのユースケースに基づいて作成されています。ここではそのようなユースケースの例として、二つのWebアプリケーションとそれらの配布物を作成する親プロジェクトを紹介します。
+                <footnote>
+                    <para>実際のケースでは<ulink url='http://lucene.apache.org/solr'/>を使っており、warファイルをアクセスするインデックスごとに分割する必要がありました。分散型のウェブアプリケーションを作成したひとつの理由はそれです。サーブレットコンテナResinはそのような分散させたWebアプリケーションを、ベースとなるサーブレットコンテナをポイントするよう設定することができます。</para>
+                </footnote>
+この例では、<emphasis>クロスプロジェクト設定</emphasis>を使って、一つのビルドスクリプトですべてのプロジェクトの設定を行っています。</para>
             <sample id="webdist" dir="userguide/multiproject/dependencies/webDist" includeLocation="true" title="依存関係 - 実生活の例 - クロスプロジェクト設定 / Dependencies - real life example - crossproject configuration">
                 <layout>
                     settings.gradle
@@ -528,7 +531,7 @@
                 because it needs to know the <literal>archivePath</literal>. But it asks for this information at
                 <emphasis>execution time</emphasis>. Therefore we have no circular dependency.
             </para>
-            <para>この例は、面白い依存関係を持っています。<literal>date</literal>プロジェクトと<literal>hello</literal>プロジェクトで定義されているタスクの<emphasis>評価</emphasis>は、明らかに<literal>webDist</literal>の<emphasis>評価</emphasis>に依存しています。Webアプリのビルドロジックは、すべてwebDistによって注入されているからです。しかし、実行の依存関係はそれとは逆です。<literal>webDist</literal>は<literal>hello</literal>と<literal>date</literal>の成果物を使ってビルドされるからです。さらに、もう一つの依存関係があります。webDistプロジェクトの評価は、dateとhelloの評価に依存しています。なぜなら、それらのプロジェクトのarchivePathプロパティの値を知る必要があるからです。ただ、この問い合わせは実行時に行われています。なので、依存関係が循環しているわけではありません。</para>
+            <para>この例は、面白い依存関係を持っています。<literal>date</literal>プロジェクトと<literal>hello</literal>プロジェクトで定義されているタスクの<emphasis>評価</emphasis>は、明らかに<literal>webDist</literal>の<emphasis>評価</emphasis>に依存しています。Webアプリのビルドロジックは、すべてwebDistによって注入されているからです。しかし、実行の依存関係はそれとは逆です。<literal>webDist</literal>は<literal>hello</literal>と<literal>date</literal>の成果物を使ってビルドされるからです。さらに、もう一つの依存関係があります。webDistプロジェクトの評価は、dateとhelloの評価に依存しています。なぜなら、それらのプロジェクトのarchivePathプロパティの値を知る必要があるからです。ただ、この問い合わせは実行時に行われていて、依存関係が循環しているわけではありません。</para>
             <para>Such and other dependency patterns are daily bread in the problem space of multi-project builds. If a
                 build system does not support such patterns, you either can't solve your problem or you need to do ugly
                 hacks which are hard to maintain and massively afflict your productivity as a build master.
@@ -565,7 +568,7 @@
             multi-project builds. As already mentioned in <xref linkend='sub:project_dependencies'/>, Gradle
             offers project lib dependencies for this.
         </para>
-        <para>あるプロジェクトが、別のプロジェクトの生成するjarをコンパイルするときのクラスパスに必要としていたらどうすればいいのでしょう。さらに、単にjarだけでなく、そのjarが依存する他のライブラリも必要だとしたら？ これは、Javaのマルチプロジェクトではよくありそうなユースケースです。<xref linkend='sub:project_dependencies'/>ですでに言及していますが、ライブラリプロジェクト依存関係はこのようなケースに対応するものです。</para>
+        <para>あるプロジェクトが、別のプロジェクトの生成するjarをコンパイルするときのクラスパスに必要としていたらどうすればいいのでしょう。さらに、単にjarだけでなく、そのjarが依存する他のライブラリも必要だとしたら？ これは、Javaのマルチプロジェクトではいかにもよくありそうなパターンです。<xref linkend='sub:project_dependencies'/>ですでに言及していますが、ライブラリプロジェクト依存関係はこのようなケースに対応するものです。</para>
         <sample id="javadependencies_1" dir="userguide/multiproject/dependencies/java" includeLocation="true" title="ライブラリプロジェクト依存関係 / Project lib dependencies">
             <layout>
                 settings.gradle
@@ -594,10 +597,13 @@
                     is also a project, but we use it just as a container. It has no build script and gets nothing
                     injected by another build script.
                 </para>
-                <para><literal>services</literal>もまたプロジェクトですが、これはただの入れ物として使用しています。このプロジェクトにはビルドスクリプトも別のプロジェクトから注入されるものもありません。</para>
             </footnote>
         </para>
-        <para><literal>shared</literal>、<literal>api</literal>、<literal>personService</literal>の三つのプロジェクトがあります。<literal>personService</literal>は他の二つのプロジェクトにライブラリを依存しています。また、<literal>api</literal>は<literal>shared</literal>にライブラリ依存を持っています。</para>
+        <para><literal>shared</literal>、<literal>api</literal>、<literal>personService</literal>の三つのプロジェクトがあります。<literal>personService</literal>は他の二つのプロジェクトにライブラリ依存しています。さらに、<literal>api</literal>は<literal>shared</literal>にライブラリ依存しています。
+            <footnote>
+                <para><literal>services</literal>もまたプロジェクトですが、これはただの入れ物です。このプロジェクトにはビルドスクリプトも別のプロジェクトから注入される設定もありません。</para>
+            </footnote>
+        </para>
         <sample id="javadependencies_2" dir="userguide/multiproject/dependencies/java" title="ライブラリプロジェクトの依存関係 / Project lib dependencies">
             <sourcefile file="settings.gradle"/>
             <sourcefile file="build.gradle"/>
@@ -608,7 +614,6 @@
                 <para>We do this here, as it makes the layout a bit easier. We usually put the project specific stuff
                     into the buildscript of the respective projects.
                 </para>
-                <para>ここで実行されている例は、スクリプトのレイアウトが少し簡易化されています。普通は、プロジェクトが指定するものをそれぞれのプロジェクトのビルドスクリプトに記述します。</para>
             </footnote>
             A <emphasis>lib</emphasis>
             dependency is a special form of an execution dependency. It causes the other project to be build first and
@@ -621,11 +626,15 @@
             <literal>api</literal>
             is built. Project dependencies enable partial multi-project builds.
         </para>
-        <para>ビルドロジックはすべてルートプロジェクトの<filename>build.gradle</filename>に記述されています。ライブラリ依存は、実行依存の別形態です。まずあるプロジェクトをビルドし、生成されたクラスをjarに格納して、依存されているプロジェクトのクラスパスに追加するのです。さらに、そのプロジェクトの依存関係も同時にクラスパスに追加します。なので、apiディレクトリに移動して、<command>gradle compile</command>と入力してみましょう。まず<literal>shared</literal>がビルドされ、次に<literal>api</literal>がビルドされるでしょう。プロジェクト依存はマルチプロジェクトの部分ビルドを可能にします。</para>
+        <para>ビルドロジックはすべてルートプロジェクトの<filename>build.gradle</filename>に記述されています。
+            <footnote>
+                <para>この例では、ビルドスクリプトの配置を少し簡易化しています。普通は、プロジェクトが指定するものはそのプロジェクトのビルドスクリプトに記述します。</para>
+            </footnote>
+ライブラリ依存は、実行依存の別形態です。まずあるプロジェクトをビルドを実行し、生成されたクラスをjarに格納して、依存されているプロジェクトのクラスパスに追加するのです。さらに、そのプロジェクトの依存関係も同時にクラスパスに追加します。apiディレクトリに移動して、<command>gradle compile</command>と入力してみましょう。まず<literal>shared</literal>がビルドされ、次に<literal>api</literal>がビルドされるでしょう。プロジェクト依存はマルチプロジェクトの部分ビルドを可能にします。</para>
         <para>If you come from Maven land you might be perfectly happy with this. If you come from Ivy land, you might
             expect some more fine grained control. Gradle offers this to you:
         </para>
-        <para>Mavenを使用されてきた人なら、このことですごく満足できるでしょう。Ivyの経験をお持ちなら、もっと細かい制御を期待するかもしれません。Gradleでは、このようにします。</para>
+        <para>Mavenを使用されてきた人なら、このことですごく満足できるでしょう。Ivyの経験をお持ちなら、もっと細かい制御を期待するかもしれません。Gradleでは、次のようにします。</para>
         <sample id="javaWithCustomConf" dir="userguide/multiproject/dependencies/javaWithCustomConf" title="細かい依存関係の制御 / Fine grained control over dependencies">
             <sourcefile file="build.gradle"/>
         </sample>
@@ -666,7 +675,7 @@
             jars, but only perform code quality and unit tests on the project you have changed.
             The <literal>build</literal> task does this.
         </para>
-        <para>:apiプロジェクトをシングルプロジェクトとするなら、なにか変更し、しかしcleanの実行からすべてをビルドしてはいません。なにか必要なサポート用jarをビルドしたいが、変更したプロジェクトでコードクオリティとユニットテストのみ実行します。ビルドタスクはこうなります。</para>
+        <para>とりあえず、:apiプロジェクトをシングルプロジェクトだと仮定しましょう。:apiに変更を加えましたが、cleanからすべてのリビルドはしていない状況です。この場合、プロジェクトに必要なjarはビルドして作成しなければなりませんが、コードクォリティやユニットテストは変更したプロジェクトでのみ実行したいわけです。つまり、ビルドで実行されるタスクはこうなります。</para>
         <sample id="multitestingBuild" dir="userguide/multiproject/dependencies/java" title="シングルプロジェクトのビルドとテスト / Build and Test Single Project">
             <output args=":api:build"/>
         </sample>
@@ -677,7 +686,7 @@
             Adding the <literal>-a</literal> option will cause gradle to use cached jars to resolve any project lib
             dependencies and not try to re-build the depended on projects.
         </para>
-        <para>:apiプロジェクトの変更に対しビルドとテストの繰り返す典型的な開発サイクルで作業しているとき、このひとつのプロジェクトしか変更していないことが分かっているにもかかわらず:shared:compileが:sharedプロジェクトでなにか変更されていないか見にいくコストに苦痛を感じるかもしれません。<option>-a</option>オプションはプロジェクトライブラリを解決するために、Gradleにキャッシュされたjarを使用するように指示するので依存プロジェクトの再ビルドが試みられることはありません。</para>
+        <para>典型的な開発サイクルでは、:apiプロジェクトに何か変更を加えるたびビルドとテストを繰り返すことになります。このとき、:shared:compileタスクは、ビルドのたび:sharedプロジェクトが変更されていないか確認しに行きます。:apiプロジェクトしか変更していないことが分かっている場合、このコストさえ苦痛かもしれません。<option>-a</option>オプションをつけてビルドすると、ライブラリプロジェクトを解決する際、キャッシュされたjarが使用されるので、依存プロジェクトが再ビルドされることありません。</para>
         <sample id="multitestingBuildDashA" dir="userguide/multiproject/dependencies/java" title="シングルプロジェクトの部分ビルドとテスト / Partial Build and Test Single Project">
             <test args=":shared:assemble"/>
             <output args="-a :api:build"/>
@@ -688,19 +697,18 @@
             but test them as well. The <literal>buildNeeded</literal> task also tests all the projects from the
             project lib dependencies of the testRuntime configuration.
         </para>
-        <para>もし、最新のソースをバージョン管理システムから持ってきている場合、:apiが依存しているプロジェクトに変更が含まれているかもしれません。この場合、依存先のすべてのプロジェクトをビルドするだけでなく、テストもしたいかもしれません。<literal>buildNeeded</literal>タスクは、testRuntime設定のプロジェクトライブラリ依存関係からすべてのプロジェクトをテストします。</para>
-        <sample id="multitestingBuildNeeded" dir="userguide/multiproject/dependencies/java" title="Build and Test Depended On Projects">
+        <para>いま、ちょうど最新のソースをバージョン管理システムから持ってきたとしましょう。:apiが依存しているプロジェクトに変更が含まれているかもしれません。このとき、依存先のすべてのプロジェクトをビルドするだけでなく、テストもしたいという場合もあるでしょう。<literal>buildNeeded</literal>タスクは、指定したプロジェクトだけでなく、そのプロジェクトのtestRuntimeの依存関係に設定されているライブラリプロジェクトをすべてテストします。</para>
+        <sample id="multitestingBuildNeeded" dir="userguide/multiproject/dependencies/java" title="依存プロジェクトのビルドとテスト / Build and Test Depended On Projects">
             <output args=":api:buildNeeded"/>
         </sample>
-
         <para>You also might want to refactor some part of the :api project that is used in other projects.
             If you make these types of changes, it is not sufficient to test just the :api,
             project, you also need to test all projects that depend on the :api project.
             The <literal>buildDependents</literal> task also tests all the projects that have a project lib dependency
             (in the testRuntime configuration) on the specified project.
         </para>
-        <para>別のプロジェクトで使用されている:apiプロジェクトの一部をリファクタリングしたいと思うかもしれません。もしこのタイプの変更をしたいなら、:apiプロジェクトのみテストしても十分ではありません。:apiプロジェクトに依存しているすべてのプロジェクトをテストする必要があります。<literal>buildDependents</literal>タスクは特定のプロジェクトにtestRuntimeのプロジェクトライブラリ依存を持っているプロジェクトをすべてテストします。</para>
-        <sample id="multitestingBuildDependents" dir="userguide/multiproject/dependencies/java" title="依存プロジェクトのビルドとテスト / Build and Test Dependent Projects">
+        <para>:apiプロジェクトが、別のプロジェクトから使用されている場合を考えてみます。:apiプロジェクトをリファクタリングしたとき、:apiプロジェクトだけテストしても十分とはいえないでしょう。:apiプロジェクトに依存しているすべてのプロジェクトをテストする必要があります。<literal>buildDependents</literal>タスクは、指定したプロジェクトだけでなく、そのプロジェクトにtestRuntimeのライブラリプロジェクト依存関係を持っているすべてのプロジェクトをテストします。</para>
+        <sample id="multitestingBuildDependents" dir="userguide/multiproject/dependencies/java" title="依存されているプロジェクトのビルドとテスト / Build and Test Dependent Projects">
             <output args=":api:buildDependents"/>
         </sample>
         <para>Finally, you may want to build and test everything in all projects.  If the root project has declared
@@ -708,7 +716,7 @@
         will cause that same named task to be run on all the children.  So you can just run
         <literal>gradle build</literal> to build and test all projects.
         </para>
-        <para>最後に、すべてのプロジェクトを完全に再ビルド、テストしたいと思うことがあるかもしれません。ルートプロジェクトに<literal>dependsOnChildren()</literal>宣言がある場合、どんなタスクもルートプロジェクトでどんなタスクを実行しても、すべての子プロジェクトの同名タスクが実行されます。なので、ただ<command>gradle build</command>を実行すればすべてのプロジェクトがビルドされテストされます。</para>
+        <para>最後に、すべてのプロジェクトを完全に再ビルド、テストしたいと思うことがあるかもしれません。この例のように、ルートプロジェクトに<literal>dependsOnChildren()</literal>宣言がある場合、ルートプロジェクトでタスクを実行すれば子プロジェクトすべてでそのタスクと同名のタスクが実行されます。なので、ただ<command>gradle build</command>と実行すれば大丈夫です。すべてのプロジェクトがビルドされテストされます。</para>
     </section>
     <section id='sec:property_and_method_inheritance'>
         <title>プロパティとメソッドの継承 / Property and method inheritance</title>
@@ -716,17 +724,17 @@
             to configuration injection. But we think that the model of inheritance does not reflect the problem space of
             multi-project builds very well. In a future edition of this user guide we might write more about this.
         </para>
-        <para>プロジェクトで宣言されたプロパティとメソッドは、すべての子プロジェクトに継承されます。これは設定のインジェクションの代替手段として使用します。しかし、私たちはこの継承のモデルはマルチプロジェクト特有の問題を反映できないものだと考えています。将来バージョンのユーザーガイドでこのことについて詳しく書くつもりです。</para>
+        <para>プロジェクトで宣言されたプロパティとメソッドは、すべての子プロジェクトに継承されます。これは設定のインジェクションの代替手段となるでしょう。ただ、私たちは継承というモデルはマルチプロジェクトの様々な特質を十分に反映できるものではないと考えています。将来バージョンのユーザーガイドでこのことについて詳しく書くつもりです。</para>
         <para>Method inheritance might be interesting to use as Gradle's
             <emphasis>Configuration Injection</emphasis>
             does not support methods yet (but will in a future release.).
         </para>
-        <para>ただ、Gradleの<emphasis>設定のインジェクション</emphasis>ではまだメソッドを注入することができない(将来のリリースで対応する予定です)ので、メソッドの継承は使用する興味があるかもしれません。</para>
+        <para>なお、Gradleの<emphasis>設定のインジェクション</emphasis>ではまだメソッドを注入することができません(将来のリリースで対応する予定です)。なので、メソッドについては継承を使う価値があるかもしれません。</para>
         <para>You might be wondering why we have implemented a feature we obviously don't like that much. One reason is
             that it is offered by other tools and we want to have the check mark in a feature comparison :). And we like
             to offer our users a choice.
         </para>
-        <para>なぜ私たちがこのように好んでいない機能を実装したのか疑問に思われるかもしれません。一つの理由は、継承が別のビルドツールでは提供されており、機能の比較表にチェックマークを入れたかったからです(^^)。また、私たちはユーザーに選択肢を提供したかったのです。</para>
+        <para>どうみても継承機能を敬遠しているのに、なんでそんなのを実装したのか不思議に思われるかもしれません。一つの理由は、継承機能が別のビルドツールで提供されているからです。比較表を作ったときにチェックマークが抜けてるとかアレですし。また、ユーザーには選択肢を用意したかったというのもあります。</para>
     </section>
     <section>
         <title>まとめ / Summary</title>
@@ -749,6 +757,12 @@
             have already a lot of flexibility. But when you enter steep territory Gradle does not become an obstacle and
             usually accompanies and carries you to the top of the mountain.
         </para>
-        <para>この章を書くのは非常に疲れました。読むのも疲れるでしょう。この章で言いたかったことは、要するにGradleでマルチプロジェクトを扱うのは難しいことではないのだということです。覚えておく必要があるのは、次の六つの要素だけです。allproject、subprojects、dependsOn、childrenDependOnMe、dependsOnChildren、そしてプロジェクトライブラリ依存関係です。これらの要素、そしてGradleが設定フェーズと実行フェーズを別個に取り扱うのだということを覚えておけば、多くの柔軟性を得ることができるでしょう。しかし、あなたがGradleの険しいテリトリーに入ったとき、Gradleは障害にはならないし、あなたとともに高い山の上にあなたを運んでくれるでしょう。</para>
+        <para>この章を書くのは非常に疲れました。読むのも疲れるでしょう。最後にひとつだけ、Gradleでマルチプロジェクトを扱うのは決して難しいことではありません。覚えておく必要があるのは、次の六つだけです。allproject、subprojects、dependsOn、childrenDependOnMe、dependsOnChildren、そしてライブラリプロジェクト依存関係です。
+            <footnote>
+                <para>
+                    <ulink url='http://ja.wikipedia.org/wiki/%E3%82%B8%E3%83%A7%E3%83%BC%E3%82%B8%E3%83%BB%E3%83%9F%E3%83%A9%E3%83%BC#.E3.83.9E.E3.82.B8.E3.82.AB.E3.83.AB.E3.83.8A.E3.83.B3.E3.83.90.E3.83.BC'>マジカルナンバー7±2</ulink>に収まるナイスな量です
+                </para>
+            </footnote>
+この六つ、そしてGradleが設定フェーズと実行フェーズを別個に取り扱うのだということを覚えておけば、あとは多くの場合融通がききます。あなたが急勾配の険しい問題に取り組むときも、Gradleが障害になることもなく、逆にあなたを見晴らしのいい山の上に連れて行ってくれるはずです。</para>
     </section>
 </chapter>
