@@ -23,8 +23,7 @@
     <para>Gradle requires a Java JDK to be installed. Gradle requires a JDK 1.5 or higher. Gradle ships with its own
         Groovy library, therefore no Groovy needs to be installed. Any existing Groovy installation is ignored by Gradle.
     </para>
-    <para>Gradleを使用するには、Java JDKの1.5以上のバージョンがインストールされている必要があります。GradleにはGroovyライブラリが同梱されているので、別途Groovyをインストールする必要はありません。すでにインストールされていたとしても、Gradleからはそれら既存のGroovyは無視されます。</para>
-
+    <para>Gradleを使用するには、バージョン1.5以上のJava JDKが必要です。GradleにはGroovyライブラリが同梱されているので、別途Groovyをインストールする必要はありません。すでにインストールされていたとしても、Gradleでは既存のGroovyは使用されません。</para>
     <para>Gradle uses whichever JDK it finds in your path (to check, use <userinput>java -version</userinput>).
         Alternatively, you can set the <envar>JAVA_HOME</envar> environment variable to point to the install directory
         of the desired JDK.
@@ -68,7 +67,7 @@
 <para>You need a GNU compatible tool to unzip Gradle, if you want the file permissions to be properly set. We mention this as
 some zip front ends for Mac OS X don't restore the file permissions properly.
 </para>
-<para>ファイルパーミッションを正しく復元したい場合は、GNU conpatibleのunzipを使用してください。Mac OS Xのいくつかのzipフロントエンドはパーミッションを正しく復元しないものがあるので、念のため書いておきます。</para>
+<para>ファイルパーミッションを正しく復元したい場合は、GNU互換のunzipを使用してください。Mac OS Xのzipフロントエンドには、パーミッションを正しく復元しないものがあるようです。</para>
 </note>
 </section>
 
@@ -79,7 +78,7 @@ some zip front ends for Mac OS X don't restore the file permissions properly.
     environment variable. Usually, this is sufficient to run Gradle. Optionally, you may also want to set the
     <envar>GRADLE_HOME</envar> environment variable to point to the root directory of your Gradle installation.
 </para>
-<para>Gradleを実行するために、<filename><replaceable>GRADLE_HOME</replaceable>/bin</filename>を環境変数<envar>PATH</envar>に追加してください。普通はこれで十分ですが、何かのために<envar>GRADLE_HOME</envar>環境変数にGradleをインストールしたディレクトリをセットすることもできます。</para>
+<para><filename><replaceable>GRADLE_HOME</replaceable>/bin</filename>を環境変数<envar>PATH</envar>に追加してください。Gradleを実行するにはこれで十分ですが、利便性のために<envar>GRADLE_HOME</envar>環境変数にGradleをインストールしたディレクトリをセットすることもできます。</para>
 </section>
 
 <section>
@@ -114,7 +113,7 @@ variable shared by many Java applications. A typical use case would be to set th
 and the memory options in <envar>GRADLE_OPTS</envar>. Those variables can also be set at the beginning
 of the <command>gradle</command> or <command>gradlew</command> script.
 </para>
-<para>Gradle実行時に引き渡すJVMオプションは、環境変数<envar>GRADLE_OPTS</envar>と<envar>JAVA_OPTS</envar>で設定します。両方一緒に使うこともできます。<envar>JAVA_OPTS</envar>に設定したオプションは慣習により多くのJavaアプリケーションで共有されるものです。典型的な例で言えば、HTTPプロキシは<envar>JAVA_OPTS</envar>に設定し、使用メモリに関する設定は<envar>GRADLE_OPTS</envar>にセットする、といった使い分けが考えられるでしょう。これらの設定は<command>gradle</command>や<command>gradlew</command>スクリプトの頭に記述することもできます。</para>
+<para>Gradle実行時に引き渡すJVMオプションは、環境変数<envar>GRADLE_OPTS</envar>と<envar>JAVA_OPTS</envar>で設定します。両方一緒に使うこともできます。<envar>JAVA_OPTS</envar>に設定したオプションは、慣習により多くのJavaアプリケーションで共有されるものです。典型的な例で言えば、HTTPプロキシは<envar>JAVA_OPTS</envar>に設定し、使用メモリに関する設定は<envar>GRADLE_OPTS</envar>にセットする、といった使い分けが考えられるでしょう。これらの設定は<command>gradle</command>や<command>gradlew</command>スクリプトの頭に記述することもできます。</para>
 
 </section>
 
