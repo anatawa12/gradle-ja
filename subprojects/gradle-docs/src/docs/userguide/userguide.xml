@@ -13,7 +13,7 @@
   ~ See the License for the specific language governing permissions and
   ~ limitations under the License.
   -->
-<book xmlns:xi="http://www.w3.org/2001/XInclude" lang="ja">
+<book xmlns:xi="http://www.w3.org/2001/XInclude" xml:lang="ja">
     <bookinfo>
         <title>Gradle</title>
         <subtitle>A better way to build</subtitle>

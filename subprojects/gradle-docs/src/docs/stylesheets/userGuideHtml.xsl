@@ -60,7 +60,7 @@
                     <xsl:call-template name="customXref">
                         <xsl:with-param name="target" select="$prev"/>
                         <xsl:with-param name="content">
-                            <xsl:text>Previous</xsl:text>
+                            <xsl:text>前へ</xsl:text>
                         </xsl:with-param>
                     </xsl:call-template>
                     <span>|</span>
@@ -68,7 +68,7 @@
                 <xsl:call-template name="customXref">
                     <xsl:with-param name="target" select="/book"/>
                     <xsl:with-param name="content">
-                        <xsl:text>Contents</xsl:text>
+                        <xsl:text>目次</xsl:text>
                     </xsl:with-param>
                 </xsl:call-template>
                 <xsl:if test="count($next)>0">
@@ -76,7 +76,7 @@
                     <xsl:call-template name="customXref">
                         <xsl:with-param name="target" select="$next"/>
                         <xsl:with-param name="content">
-                            <xsl:text>Next</xsl:text>
+                            <xsl:text>次へ</xsl:text>
                         </xsl:with-param>
                     </xsl:call-template>
                 </xsl:if>
