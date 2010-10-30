@@ -27,14 +27,14 @@
             regardless of how it came to be included in the build: whether it was specified on the command-line, or it a
             dependency of another task, or both. Let's look at an example.</para>
         <para>
-        一回のビルドで、複数のタスクを実行することができます。ビルド実行の際に、それぞれのタスクを列挙して指定するだけです。たとえば、<userinput>gradle compile test</userinput>というコマンドを実行すれば、<literal>compile</literal>タスクと<literal>test</literal>タスクが実行されます。Gradleはタスクを列挙された順に実行し、それぞれのタスクに依存タスクがあればそれも実行します。各タスクは、明示的に指定されるにしろ別タスクに依存しているにしろ、またその両方で指定されているにしろ、実行されるのは一度だけです。次の例を見てください。
+        一回のビルドで、複数のタスクを実行することができます。ビルドを実行するときに、タスクを列挙して指定してください。たとえば、<userinput>gradle compile test</userinput>というコマンドを実行すれば、<literal>compile</literal>タスクと<literal>test</literal>タスクが実行されます。Gradleはタスクを列挙された順に実行するほか、それらが依存しているタスクも実行します。タスクは、明示的に指定されるにしろ別タスクに依存しているにしろ、またその両方で指定されているにしろ、実行されるのは一度だけです。次の例を見てください。
         </para>
         <para>
             Below four tasks are defined. Both <literal>dist</literal> and <literal>test</literal> depend on the
             <literal>compile</literal> task. Running <userinput>gradle dist test</userinput> for this build script
             results in the <literal>compile</literal> task being executed only once.</para>
         <para>
-        この例では、四つのタスクが定義されており、<literal>dist</literal>と<literal>test</literal>はどちらも<literal>compile</literal>タスクに依存しています。このビルドスクリプトを<userinput>gradle dist test</userinput>と実行しても、実行された二つのタスクから依存されている<literal>compile</literal>タスクは一度だけしか実行されません。
+        この例では、四つのタスクが定義されており、<literal>dist</literal>と<literal>test</literal>はどちらも<literal>compile</literal>タスクに依存しています。このビルドスクリプトを呼び出して<userinput>gradle dist test</userinput>と実行しても、実行された二つのタスクから依存されている<literal>compile</literal>タスクは一度だけしか実行されません。
         </para>
         <figure>
             <title>Task間の依存関係 / Task dependencies</title>
@@ -49,7 +49,7 @@
         <para>
             Because each task is executed once only, executing <userinput>gradle test test</userinput> is exactly the same
             as executing <userinput>gradle test</userinput>.</para>
-        <para><userinput>gradle test test</userinput>と打ち込んでも<userinput>gradle test</userinput>と打ち込んでも、実行される処理内容は同じだということです。</para>
+        <para>つまり、<userinput>gradle test test</userinput>と打ち込んでも<userinput>gradle test</userinput>と打ち込んでも、実行される処理は同じだということです。</para>
     </section>
 
     <section id="sec:excluding_tasks_from_the_command_line">
@@ -109,22 +109,26 @@
         <para>Gradle provides several built-in tasks which show particular details of your build. This can be
             useful for understanding the structure and dependencies of your build, and for debugging problems.
         </para>
+        <para>ビルドに関する様々な情報を表示するために、組み込みのタスクがいくつか用意されています。自分の作ったビルドが今どんな構造になっているのか調べたり、何か問題が起こったときにデバッグしたりするのに役立つはずです。</para>
         <para>In addition to the built-in tasks shown below, you can also use the
             <link linkend="project_reports_plugin">project report plugin</link> to add tasks to your project which will
             generate these reports.
         </para>
+        <para>この組み込みタスクに加えて、<link linkend="project_reports_plugin">プロジェクトレポートプラグイン</link>というプラグインを使うこともできます。このプラグインは、これらの情報をレポートに保存するタスクをプロジェクトに追加してくれます。</para>
         <section>
-            <title>Listing projects</title>
+            <title>プロジェクトの一覧 / Listing projects</title>
             <para>Running <userinput>gradle projects</userinput> gives you a list of the sub-projects of the selected project,
                 displayed in a hierarchy. Here is an example:
             </para>
-            <sample id="projectListReport" dir="userguide/tutorial/projectReports" title="Obtaining information about projects">
+            <para><userinput>gradle projects</userinput>を実行すると、指定したプロジェクトのサブプロジェクトを一覧できます。プロジェクトの一覧は階層構造で表示されます。次の例をご覧ください。</para>
+            <sample id="projectListReport" dir="userguide/tutorial/projectReports" title="プロジェクトに関する情報を取得する / Obtaining information about projects">
                 <output args="-q projects"/>
             </sample>
             <para>The report shows the description of each project, if specified. You can provide a description for a project
                 by setting the <literal>description</literal> property:
             </para>
-            <sample id="projectListReport" dir="userguide/tutorial/projectReports" title="Providing a description for a project">
+            <para>このレポートは、プロジェクトに説明書きが添付されている場合、その説明も表示されます。プロジェクトの説明は、プロジェクトのプロパティで設定してください。</para>
+            <sample id="projectListReport" dir="userguide/tutorial/projectReports" title="プロジェクトに説明を添付する / Providing a description for a project">
                 <sourcefile file="build.gradle" snippet="project-description"/>
             </sample>
         </section>
@@ -134,7 +138,7 @@
                 selected project. This report shows the default tasks for the project, if any, and a description for
                 each task. Below is an example of this report:
             </para>
-            <para><userinput>gradle --tasks</userinput>または<userinput>gradle -t</userinput>は、プロジェクトに設定されているメインタスクのリストを表示します。さらに、デフォルトタスク、もしあればそれぞれのタスクに関する説明も表示します。レポート表示例をご覧ください。</para>
+            <para><userinput>gradle tasks</userinput>を実行すると、プロジェクトに設定されているメインタスクの一覧とデフォルトタスクを表示します。さらに、タスクに説明書きが添付されていれば、その説明も表示されます。</para>
             <sample id="taskListReport" dir="userguide/tutorial/projectReports" title="タスクに関する情報を取得する / Obtaining information about tasks">
                 <output args="-q tasks"/>
             </sample>
@@ -150,8 +154,8 @@
                 this option, the task report lists all tasks in the project, grouped by main task, and the dependencies
                 for each task. Here is an example:
             </para>
-            <para><option>--all</option>オプションを追加すると、タスクリストについてもっと多くの情報を取得できます。プロジェクトにあるすべてのメインタスクとタスク間の依存関係が表示されます。</para>
-            <sample id="taskListAllReport" dir="userguide/tutorial/projectReports" title="タスクに関するより多くの情報を取得する / Obtaining more information about tasks">
+            <para><option>--all</option>オプションを追加すると、タスクリストについてもっと多くの情報を取得できます。プロジェクトにあるすべてのメインタスクとタスク間の依存関係が表示されます。次の表示例をご覧ください。</para>
+            <sample id="taskListAllReport" dir="userguide/tutorial/projectReports" title="タスクに関してもっと多くの情報を取得する / Obtaining more information about tasks">
                 <output args="-q tasks --all"/>
             </sample>
         </section>
@@ -162,7 +166,7 @@
                 configuration, the direct and transitive dependencies of that configuration are shown in a tree. Below
                 is an example of this report:
             </para>
-            <para><userinput>gradle --dependencies</userinput>はプロジェクトの依存関係を一覧表示します。プロジェクトに直接設定されている依存関係と推移的な依存関係をツリーで表します。</para>
+            <para><userinput>gradle dependencies</userinput>はプロジェクトの依存関係をconfigurationごとに一覧表示します。プロジェクトに直接設定されている依存関係と推移的依存関係が、configuration別のツリー構造で表示されます。</para>
             <sample id="dependencyListReport" dir="userguide/tutorial/projectReports" title="依存関係の情報を取得する / Obtaining information about dependencies">
                 <output args="-q dependencies api:dependencies webapp:dependencies"/>
             </sample>
@@ -172,25 +176,28 @@
             <para>Running <userinput>gradle properties</userinput> gives you a list of the properties of the selected
                 project. This is a snippet from the output:
             </para>
-            <para><userinput>gradle --properties</userinput>はプロジェクトのプロパティを一覧表示します。出力例の一部を以下に示します。</para>
+            <para><userinput>gradle properties</userinput>はプロジェクトのプロパティを一覧表示します。出力例の一部を以下に示します。</para>
             <sample id="propertyListReport" dir="userguide/tutorial/projectReports" title="プロパティに関する情報 / Information about properties">
                 <output args="-q api:properties" ignoreExtraLines="true"/>
             </sample>
         </section>
         <section id="sec:profiling_build">
-            <title>Profiling a build</title>
+            <title>ビルドのプロファイリング / Profiling a build</title>
             <para>The <userinput>--profile</userinput> command line option will record some useful timing information
             while your build is running and write a report to the <filename>build/reports/profile</filename> directory.
             The report will be named using the time when the build was run.
             </para>
+            <para>コマンドラインオプションで<userinput>--profile</userinput>をつけてビルドを実行すると、ビルドに要した時間のうち有用と思われるいくつかの情報を計測して、結果を<filename>build/reports/profile</filename>ディレクトリを出力します。レポート名には、ビルドを行った時刻が付加されます。</para>
             <para>This report lists summary times and details for both the configuration phase and task execution.  The
                 times for configuration and task execution are sorted with the most expensive operations first.  The task
                 execution results also indicate if any tasks were skipped (and the reason) or if tasks that were not skipped
                 did no work.
             </para>
+            <para>このレポートでは、ビルド時間に関する概要のほか、設定フェーズとタスク実行に要した時間がタスクごとに表示されます。設定フェーズ、タスク実行に関するレポートは必要時間の降順でソートされており、さらにタスク実行については、タスクがスキップされたかどうか、作業が発生したかどうかみることができるようになっています。</para>
             <para>Builds which utilize a buildSrc directory will generate a second profile report for buildSrc in the
                 <filename>buildSrc/build</filename> directory.                
             </para>
+            <para>なお、<filename>buildSrc</filename>ディレクトリを使っている場合、<filename>buildSrc/build</filename>に<filename>buildSrc</filename>のレポートが別途出力されます。</para>
             <imageobject>
                 <imagedata fileref="img/profile.png" width="903px" depth="477px"/>
             </imageobject>
@@ -199,7 +206,7 @@
     </section>
 
     <section>
-        <title>ドライ・ラン / Dry Run</title>
+        <title>空実行 / Dry Run</title>
         <para>Sometimes you are interested in which tasks are executed in which order for a given set of tasks specified on the
             command line, but you don't want the tasks to be executed. You can use the <option>-m</option> option for this.
             For example <userinput>gradle -m clean compile</userinput> shows you all tasks to be executed as
