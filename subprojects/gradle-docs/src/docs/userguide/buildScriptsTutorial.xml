@@ -27,7 +27,7 @@
         production environments. Don't worry if this seems a little vague for now. Gradle's build-by-convention support adds
         a more concrete definition for what a project is.
     </para>
-    <para>Gradleによるすべてのビルドは、一つ以上の<firstterm>プロジェクト</firstterm>から構成されています。プロジェクトとは、ソフトウェアを構成するコンポーネントであり、「ビルドできる」なにかを表す概念です。ビルドが何を表すのかによって、プロジェクトの定義も当然変わってきます。たとえば、あるプロジェクトはライブラリjarやWebアプリケーションをビルドするものかもしれません。または、別のプロジェクトによってビルドされたjarを集めた配布用のzipファイルを作成するものかもしれません。別に何か具体的なものをビルドする必要もなく、アプリケーションを本番環境にステージするというプロジェクトもありえます。それでは、プロジェクトとは結局なんなんでしょう。あいまいな印象を受けられたかもしれませんが、心配する必要はありません。Gradleは規約によるビルドをサポートしており、プロジェクトの定義についても明確に規定されています。</para>
+    <para>Gradleによるすべてのビルドは、一つ以上の<firstterm>プロジェクト</firstterm>から構成されています。プロジェクトとは、ソフトウェアを構成するコンポーネントであり、「ビルドできる」なにかを表す概念です。ビルドが何を表すのかによって、プロジェクトの定義も当然変わってきます。たとえば、あるプロジェクトはライブラリjarやWebアプリケーションをビルドするものかもしれません。または、別のプロジェクトによってビルドされたjarを集めて配布用のzipファイルを作成するものかもしれません。別に何か具体的なものをビルドする必要もなく、アプリケーションを本番環境にステージするというプロジェクトもありえます。それでは、プロジェクトとは結局なんなんでしょう。あいまいな印象を受けられたかもしれませんが、心配する必要はありません。Gradleは規約によるビルドをサポートしており、プロジェクトの定義についても明確に規定されています。</para>
     <para>Each project is made up of one or more <firstterm>tasks</firstterm>. A task represents some atomic piece
         of work which a build performs. This might be compiling some classes, creating a JAR, generating javadoc,
         or publishing some archives to a repository.</para>
