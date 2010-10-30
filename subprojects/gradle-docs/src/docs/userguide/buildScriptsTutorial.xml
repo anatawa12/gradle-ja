@@ -17,7 +17,7 @@
     <title>ビルドスクリプトの基本 / Build Script Basics</title>
     <section><title>プロジェクトとタスク / Projects and tasks</title>
     <para>Everything in Gradle sits on top of two basic concepts: <firstterm>projects</firstterm> and <firstterm>tasks</firstterm>.</para>
-    <para>Gradleのすべては、二つの基本的な概念の上に成り立っています。<firstterm>プロジェクト</firstterm>と<firstterm>タスク</firstterm>です。</para>
+    <para>Gradleには二つの基本的な概念、<firstterm>プロジェクト</firstterm>と<firstterm>タスク</firstterm>があり、すべてがその上に成り立っています。</para>
     <para>
         Every Gradle build is made up of one or more <firstterm>projects</firstterm>. A project represents
         some component of your software which can be built. What this means exactly depends on what it is that you are
@@ -27,11 +27,11 @@
         production environments. Don't worry if this seems a little vague for now. Gradle's build-by-convention support adds
         a more concrete definition for what a project is.
     </para>
-    <para>Gradleによるすべてのビルドは、一つ以上の<firstterm>プロジェクト</firstterm>から構成されています。プロジェクトとは、ソフトウェアを構成するコンポーネントであり、「ビルドできる」なにかを表す概念です。ビルドが何を表すのかによって、プロジェクトの定義も当然変わってきます。たとえば、あるプロジェクトはライブラリjarやWebアプリケーションをビルドするものかもしれません。または、別のプロジェクトによってビルドされたjarを集めて配布用のzipファイルを作成するものかもしれません。別に何か具体的なものをビルドする必要もなく、アプリケーションを本番環境にステージするというプロジェクトもありえます。それでは、プロジェクトとは結局なんなんでしょう。あいまいな印象を受けられたかもしれませんが、心配する必要はありません。Gradleは規約によるビルドをサポートしており、プロジェクトの定義についても明確に規定されています。</para>
+    <para>Gradleによるビルドは、一つ以上の<firstterm>プロジェクト</firstterm>から構成されています。プロジェクトとは、ソフトウェアを構成するコンポーネントであり、「ビルドできる」なにかを表す概念です。「ビルド」が何を表すのかによって、プロジェクトの定義も変わってきます。たとえば、あるプロジェクトはライブラリjarやWebアプリケーションをビルドするものかもしれません。または、別のプロジェクトによってビルドされたjarを集めて配布用のzipファイルを作成するものかもしれません。別に何か具体的なものをビルドする必要もなく、アプリケーションを本番環境にステージするというプロジェクトもありえます。それでは、プロジェクトとは結局なんなんでしょう。あいまいな印象を受けられたかもしれませんが、心配する必要はありません。Gradleは規約によるビルドをサポートしており、プロジェクトの定義についても明確に規定されています。</para>
     <para>Each project is made up of one or more <firstterm>tasks</firstterm>. A task represents some atomic piece
         of work which a build performs. This might be compiling some classes, creating a JAR, generating javadoc,
         or publishing some archives to a repository.</para>
-    <para>それぞれのプロジェクトは、一つ以上の<firstterm>タスク</firstterm>から構成されます。タスクとは、ビルド実行時における分割不能な何らかの作業単位を表す概念です。たとえば、クラスをコンパイルしたり、JARファイルを作成したり、アーカイブをリポジトリに公開したりするタスクが考えられます。</para>
+    <para>それぞれのプロジェクトは、一つ以上の<firstterm>タスク</firstterm>から構成されます。タスクとは、分割不能な何らかの作業単位を表す概念です。たとえば、クラスをコンパイルしたり、JARファイルを作成したり、アーカイブをリポジトリに公開したりするタスクが考えられます。</para>
 
     <para>For now, we will look at defining some simple tasks in a build with one project. Later chapters will look at
         working with multiple projects and more about working with projects and tasks.</para>
@@ -45,7 +45,7 @@
             We call this <filename>build.gradle</filename> file a <firstterm>build script</firstterm>, although strictly speaking it is
             a build configuration script, as we will see later. The build script defines a project and its tasks.
         </para>
-        <para>Gradleのビルドは、<command>gradle</command>コマンドで実行します。<command>gradle</command>コマンドはカレントディレクトリの<filename>build.gradle</filename>ファイルを参照してビルドを行います。<footnote><para>この動作はコマンドラインスイッチを使用して変更できます。<xref linkend='gradle_command_line'/>を参照してください。</para></footnote>このファイルは、一般的には<firstterm>ビルドスクリプト</firstterm>と呼ばれ、Gradleのプロジェクトとタスクを定義するものです。詳しくは後述しますが、ビルドスクリプトは正確には「ビルドの設定を行うスクリプト」だといえます。</para>
+        <para>Gradleのビルドは、<command>gradle</command>コマンドで実行します。<command>gradle</command>コマンドはカレントディレクトリの<filename>build.gradle</filename>ファイルを参照してビルドを行います。<footnote><para>この動作はコマンドラインスイッチを使用して変更できます。<xref linkend='gradle_command_line'/>を参照してください。</para></footnote>このファイルは、一般的には<firstterm>ビルドスクリプト</firstterm>と呼ばれるファイルです(後述しますが、正確には「ビルドの設定を行うスクリプト」です)。Gradleのプロジェクトとタスクは、このビルドスクリプトで定義されます。</para>
         <para>To try this out, create the following build script named <filename>build.gradle</filename>.
         </para>
         <para>次のようなスクリプトを、<filename>build.gradle</filename>という名前で作成して試してみてください。</para>
@@ -73,7 +73,7 @@
             <literal>hello</literal> task, which in turn executes the action you've provided. The action is simply a
             closure containing some Groovy code to execute.
         </para>
-        <para>何が起こったのでしょう。ビルドスクリプトは、<literal>hello</literal>というタスクを一つ定義していて、このタスクにアクションを一つ追加しています。<userinput>gradle hello</userinput>と入力することで、Gradleがこの<literal>hello</literal>を実行し、<literal>hello</literal>に追加したアクションが実行されたのです。アクションはGroovyコードを含む単なるクロージャです。</para>
+        <para>何が起こったのでしょう。ビルドスクリプトは、<literal>hello</literal>というタスクを一つ定義していて、このタスクにアクションを一つ追加しています。<userinput>gradle hello</userinput>と実行することで、Gradleがこの<literal>hello</literal>を実行し、<literal>hello</literal>に追加したアクションが実行されたのです。アクションはGroovyコードを含む単なるクロージャです。</para>
         <para>If you think this looks similar to Ant's targets, well, you are right. Gradle tasks are the equivalent to
             Ant targets. But as you will see, they are much more powerful. We have used a different terminology than Ant
             as we think the word <emphasis>task</emphasis> is more expressive than the word <emphasis>target</emphasis>.
@@ -132,7 +132,7 @@
         </para>
         <para><literal>taskX</literal>が<literal>taskY</literal>に依存していることが宣言されていますが、宣言した時点では<literal>taskY</literal>の定義文はありません。このことは、マルチプロジェクトのビルドで非常に重要になってきます。タスク間の依存関係については、<xref linkend='sec:adding_dependencies_to_tasks'/>でさらに詳しく述べられています。</para>
         <para>Please notice, that you can't use a shortcut notation (see <xref linkend='sec:shortcut_notations' />) when referring to task, which is not defined yet.</para>
-        <para>なお注意点ですが、未定義のタスクを参照する場合、略記法(<xref linkend='sec:shortcut_notations' />参照)は使えません。</para>
+        <para>なお、未定義のタスクを参照する場合、略記法(<xref linkend='sec:shortcut_notations' />参照)は使えませんので注意してください。</para>
     </section>
     <section>
         <title>動的なタスク / Dynamic tasks</title>
@@ -173,7 +173,7 @@
         <para>As you might have noticed in the previous examples, there is a convenient notation for accessing an
             <emphasis>existing</emphasis> task. Each task is available as a property of the build script:
         </para>
-        <para>先ほどの例をみたとき、おやっと思われたかもしれません。<emphasis>既存の</emphasis>タスクにアクセスするときは、便利な略記法を使うことができます。すべてのタスクは、ビルドスクリプトではただのプロパティとしてアクセスできるのです。</para>
+        <para>先ほどの例をみたとき、おやっと思われたかもしれません。<emphasis>既存の</emphasis>タスクにアクセスするときは、便利な略記法を使うことができます。ただのプロパティとしてすべてのタスクにアクセスできるのです。</para>
         <sample id="helloWithShortCut" dir="userguide/tutorial/helloWithShortCut" title="ビルドスクリプトのプロパティとして既存のタスクにアクセスする / Accessing task as a property of the build script">
             <sourcefile file="build.gradle"/>
             <output args="-q hello"/>
