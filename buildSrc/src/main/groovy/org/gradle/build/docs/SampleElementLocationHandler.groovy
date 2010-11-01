@@ -33,11 +33,10 @@ class SampleElementLocationHandler {
             tipElement.appendChild(textElement)
             Element emphasisElement = doc.createElement('emphasis')
             textElement.appendChild(emphasisElement)
-            emphasisElement.appendChild(doc.createTextNode('Note:'))
-            textElement.appendChild(doc.createTextNode(' The code for this example can be found at '))
+            emphasisElement.appendChild(doc.createTextNode('ノート:'))
+            textElement.appendChild(doc.createTextNode(' 本例のソースコードは、Gradleのバイナリ配布物またはソース配布物に含まれています。以下の場所をご参照ください。'))
             Element filenameElement = doc.createElement('filename')
             textElement.appendChild(filenameElement)
-            textElement.appendChild(doc.createTextNode(' which is in both the binary and source distributions of Gradle.'))
             filenameElement.appendChild(doc.createTextNode("samples/$srcDir"))
 
             child.appendChild(tipElement)

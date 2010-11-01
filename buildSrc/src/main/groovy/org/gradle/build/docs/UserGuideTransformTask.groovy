@@ -191,10 +191,10 @@ public class UserGuideTransformTask extends DefaultTask {
                             xml.sample(id: sampleId, dir: srcDir, args: args, outputFile: outputFile, ignoreExtraLines: ignoreExtraLines)
 
                             Element outputTitle = doc.createElement("para")
-                            outputTitle.appendChild(doc.createTextNode("Output of "))
                             Element commandElement = doc.createElement('userinput')
                             commandElement.appendChild(doc.createTextNode("gradle $args"))
                             outputTitle.appendChild(commandElement)
+                            outputTitle.appendChild(doc.createTextNode(" の出力"))
                             exampleElement.appendChild(outputTitle)
 
                             Element screenElement = doc.createElement('screen')
