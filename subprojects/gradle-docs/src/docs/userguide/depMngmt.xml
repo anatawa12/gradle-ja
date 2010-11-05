@@ -14,38 +14,46 @@
   ~ limitations under the License.
   -->
 <chapter id='dependency_management' xmlns:xi="http://www.w3.org/2001/XInclude">
-    <title>Dependency Management</title>
+    <title>依存関係の管理 / Dependency Management</title>
     <section id='sec:Introduction'>
-        <title>Introduction</title>
+        <title>はじめに / Introduction</title>
         <para>This chapter gives an overview of issues related with dependency management and presents how Gradle can be used to overcome them.
         </para>
+        <para>この章では、依存関係の管理にまつわる様々な課題について概観し、Gradleがそれらをどのように解決しているか解説します。</para>
         <para>Gradle offers a very good support for dependency management. If you are familiar with Maven or Ivy approach you will be delighted to learn that:
+        </para>
+        <para>
+        Gradleは、依存関係の管理についてとても充実したサポートを提供しています。MavenやIvyでの依存関係管理に明るい方なら、Gradleで次のことができると聞いて嬉しくなるでしょう。
+        </para>
         <itemizedlist>
             <listitem>
                 <para>All the concepts that you already know and like are still there and are fully supported by Gradle. The current dependency management solutions all require to work with XML descriptor files and are usually
         based on remote repositories for downloading the dependencies. Gradle fully supports this approach.
                 </para>
+                <para>依存関係管理については、ご存知のようによく使われている既存のコンセプトがあります。XMLの設定ファイルと、依存関係をダウンロードするためのリモートリポジトリを使って依存関係を管理する方法です。この方法は、Gradleでも完全にサポートされています。</para>
             </listitem>
             <listitem>
                 <para>Gradle works <emphasis>perfectly</emphasis> with your existent dependency management
                     infrastructure, be it Maven or Ivy. All the repositories you have set up with your custom POM or
                     ivy files can be used as they are. No changes necessary.
                 </para>
+                <para>Gradleでは、既存の依存関係に関するインフラ、MavenやIvyのリポジトリを<emphasis>完全に</emphasis>サポートしています。GradleでPOMやivy設定ファイルをカスタムした独自のリポジトリを使う場合でも、なにも修正する必要はありません。</para>
             </listitem>
             <listitem>
                 <para>Additionally, Gradle offers a simpler approach, which might be better suited for some projects.
                 </para>
+                <para>さらに、Gradleはもっと単純な依存関係の解決方法も用意しています。こっちのアプローチの方がなじむプロジェクトもあるはずです。</para>
             </listitem>
         </itemizedlist>
-        </para>
     </section>
     <section id='sec:dependency_management_overview'>
-        <title>Dependency management overview</title>
+        <title>依存関係の管理に関する概要 / Dependency management overview</title>
         <para>We think dependency management is very important for almost any project. Yet the kind of dependency
             management you need depends on the complexity and the environment of your project. Is your project a
             distribution or a library? Is it part of an enterprise environment, where it is integrated into other
             projects builds or not? But all types of projects share the following requirements:
         </para>
+        <para>依存関係管理は、ほとんどすべてのプロジェクトにおいて非常に重要なファクターになるのではないでしょうか。しかし、どんな方法で依存関係を管理するべきかはプロジェクトの複雑さや環境によって変わってくるものです。そのプロジェクトは配布物になるのでしょうか。それともライブラリになるのでしょうか。別のプロジェクトと統合してビルドするような、エンタープライズ環境に置かれているプロジェクトなのでしょうか。ただ、どんな種類のプロジェクトにしろ次のことは要求されるはずです。</para>
         <itemizedlist>
             <listitem>
                 <para>The version of the jar must be easy to recognize. Sometimes the version is in the Manifest file of
@@ -53,19 +61,22 @@
                     about the version. Therefore we think that you should only use jars which have their version as part
                     of their file name.
                 </para>
+                <para>依存しているjarのバージョンが簡単に分かるようになっていなければなりません。jarのバージョンはマニフェストファイルに書かれていたりいなかったりですが、バージョンを調べるためにわざわざマニフェストファイルを見ないといけないとなると面倒です。ファイル名にバージョンが付加されているjarだけを使うべきだと思います。</para>
             </listitem>
             <listitem>
                 <para>It hopes to be clear what are the first level dependencies and what are the transitive ones. There
                     are different ways to achieve this. We will look at this later.
                 </para>
+                <para>できれば、何が直接の依存関係で何が推移的な依存関係なのか、明確に分かるようになっていた方がいいでしょう。そのためにはいくつかの方法が考えられます。後ほど見ていきます。</para>
             </listitem>
             <listitem>
                 <para>Conflicting versions of the same jar should be detected and either resolved or cause an exception.
                 </para>
+                <para>バージョン違いの同じjarに依存しているとき、つまりバージョンが競合している場合は、それを検出して解決するか、例外を発行しなければなりません。</para>
             </listitem>
         </itemizedlist>
         <section id='sub:versioning_the_jar_name'>
-            <title>Versioning the jar name</title>
+            <title>jarの名前にバージョンを付加する / Versioning the jar name</title>
             <para>Why do we think this is necessary? Without a dependency management as described above, your are likely
                 to burn your fingers sooner or later. If it is unclear which version of a jar your are using, this can
                 introduce subtle bugs which are very hard to find. For example there might be a project which uses
@@ -75,6 +86,7 @@
                 machine. Without a version in the jar name this problem might take a long time to debug. Version in the
                 jar names increases the expressiveness of your project and makes it easier to maintain.
             </para>
+            <para>どうしてこんなことをする必要があるのか考えてみましょう。上記のような依存関係管理ができなければ、いつか悲惨なことになりかねません。使っているjarのバージョンがなんなのかよく分からないというのは、見つけづらい難解なバグへの第一歩です。たとえば、プロジェクトでHibernateの3.0.4を使っているとしましょう。Hibernateに関するところで何か問題が起こっているようなので、開発者は自分のマシンにHibernate3.0.5をインストールしました。しかし、これでは問題は解決しませんでした…ここで、彼女がHibernateを3.0.4に戻すのを忘れてしまった場合、どうなるでしょうか。数週間後、インテグレーションサーバーで例外が発生しました。開発者のマシンでは再現しません。jarファイル名にバージョンが含まれていなければ、このデバッグに長時間を費やしてしまう可能性があります。jarファイル名の中のバージョン文字列は、そのプロジェクトをわかりやすいものにし、メンテナンスも容易にしてくれるのです。</para>
         </section>
         <section id='sub:transitive_dependency_management'>
             <title>Transitive dependency management</title>
