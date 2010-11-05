@@ -75,7 +75,7 @@
         In <xref linkend='overview'/> you will find a detailed overview of Gradle. Otherwise, the
         <link linkend="tutorials">tutorials</link> are waiting, have fun :)
     </para>
-    <para><xref linkend="overview"/>でGradleの概要について記述しています。<link linkend="overview">チュートリアル</link>も用意しているので楽しんでいってください(^^)</para>
+    <para><xref linkend="overview"/>でGradleの概要について記述しています。<link linkend="tutorials">チュートリアル</link>も用意しているので楽しんでいってください(^^)</para>
     <section>
         <title>このユーザーガイドについて / About this user guide</title>
         <para>This user guide, like Gradle itself, is under very active development. Some parts of Gradle aren't
