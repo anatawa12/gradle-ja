@@ -89,7 +89,7 @@
             <para>どうしてこんなことをする必要があるのか考えてみましょう。上記のような依存関係管理ができなければ、いつか悲惨なことになりかねません。使っているjarのバージョンがなんなのかよく分からないというのは、見つけづらい難解なバグへの第一歩です。たとえば、プロジェクトでHibernateの3.0.4を使っているとしましょう。Hibernateに関するところで何か問題が起こっているようなので、開発者は自分のマシンにHibernate3.0.5をインストールしました。しかし、これでは問題は解決しませんでした…ここで、彼女がHibernateを3.0.4に戻すのを忘れてしまった場合、どうなるでしょうか。数週間後、インテグレーションサーバーで例外が発生しました。開発者のマシンでは再現しません。jarファイル名にバージョンが含まれていなければ、このデバッグに長時間を費やしてしまう可能性があります。jarファイル名の中のバージョン文字列は、そのプロジェクトをわかりやすいものにし、メンテナンスも容易にしてくれるのです。</para>
         </section>
         <section id='sub:transitive_dependency_management'>
-            <title>Transitive dependency management</title>
+            <title>推移的な依存関係の管理 / Transitive dependency management</title>
             <para>Why is transitive dependency management so important? If you don't know which dependencies are first
                 level dependencies and which ones are transitive you will soon lose control over your build. Even
                 Gradle has already 20+ jars. An enterprise project using Spring, Hibernate, etc. easily ends up with
@@ -104,6 +104,7 @@
                 classpath, whose sheer presence, as I found out after much research, accelerated LDAP access. So
                 removing this jar would not have led to any errors at compile or runtime.
             </para>
+            <para>推移的な依存関係というものは、そんなにも重要なのでしょうか。どの依存関係が直接依存しているもので、どの依存関係が推移的に依存しているのか分からなくなれば、ビルドシステムは早晩制御不能になるでしょう。Gradleでさえ20以上のjarから構成されています。SpringやHibernateなどのエンタープライズレベルのプロジェクトだと、jarの数はゆうに100を超えるでしょう。どのjarをどこからなぜ入れたのか、全部覚えておくようなことはできません。こうなると、なにか依存関係を破棄したいとなったとき、それに関連してどのjarを削除すればいいのか分からなくなります。削除しようとしているjarは、それ自身プロジェクトから直接使われているjarかもしれません。別の依存関係から推移的に依存されているかもしれません。プロジェクトが直接依存しているライブラリは、実行時のみの依存関係である場合も多いものです。もちろん、そこから推移する依存関係も実行時の依存関係になります。つまり、コンパイラは頼りにできないということです。このシナリオの行き着く先を、私たちはたくさん見てきました。もはや誰も、恐ろしくて何一つjarを削除できなくなってしまいます。プロジェクトのクラスパスは完全にめちゃくちゃになって、そのクラスパスで問題が発生しようものならこの世の地獄にご招待という話です。私が以前携わっていたプロジェクトでは、LDAPに関するjarをいくつかクラスパスに追加していました。後ほど調べて分かったのですが、このjarはあるだけでLDAPアクセスを高速化させます。つまり、このjarを取り除いたとしても、コンパイル時にも実行時にもエラーが発生することはなかったでしょう。</para>
             <para>Gradle offers you different ways to express what are first level and what are transitive dependencies.
                 Gradle allows you for example to store your jars in CVS or SVN without XML descriptor files and still
                 use transitive dependency management. Gradle also validates your dependency hierarchy against the
