@@ -36,6 +36,10 @@
             <firstname>Adam</firstname>
             <surname>Murdoch</surname>
         </author>
+        <othercredit class="translator">
+            <firstname>Masatoshi</firstname>
+            <surname>Hayashi</surname>
+        </othercredit>
     </bookinfo>
     <xi:include href='introduction.xml'/>
     <xi:include href='overview.xml'/>
