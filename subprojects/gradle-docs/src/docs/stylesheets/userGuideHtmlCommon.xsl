@@ -34,6 +34,7 @@
         <link href="base.css" rel="stylesheet" type="text/css"/>
         <link href="style.css" rel="stylesheet" type="text/css"/>
         <link href="translation.css" rel="stylesheet" type="text/css" title="translation"/>
+        <link href="original.css" rel="stylesheet" type="text/css" title="original"/>
     </xsl:template>
 
     <xsl:param name="generate.toc">
