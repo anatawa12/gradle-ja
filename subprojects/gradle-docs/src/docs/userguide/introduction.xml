@@ -15,77 +15,77 @@
   -->
 
 <chapter id="introduction">
-    <title>はじめに / Introduction</title>
-    <para>We would like to introduce Gradle to you, a build system that we think is a quantum leap for build technology
+    <title>はじめに<phrase role="original">Introduction</phrase></title>
+    <para role="original">We would like to introduce Gradle to you, a build system that we think is a quantum leap for build technology
         in the Java (JVM) world. Gradle provides:
     </para>
     <para>Gradleは、Java(JVM)環境におけるビルドシステムであり、従来のビルド技術を大きく躍進させるものです。Gradleが提供している機能、特長には以下のようなものがあります。
     </para>
     <itemizedlist>
         <listitem>
-            <para>A very flexible general purpose build tool like Ant.
+            <para role="original">A very flexible general purpose build tool like Ant.
             </para>
             <para>あらゆる目的に使用できる汎用ビルドツールです。GradleはAntと同じような目的で使うことができます。</para>
         </listitem>
         <listitem>
-            <para>Switchable, build-by-convention frameworks a la Maven. But we never lock you in!
+            <para role="original">Switchable, build-by-convention frameworks a la Maven. But we never lock you in!
             </para>
             <para>その一方でMavenのような規約によるビルドフレームワークを提供します。その規約も、気に入らないところは変更可能です。</para>
         </listitem>
         <listitem>
-            <para>Very powerful support for multi-project builds.
+            <para role="original">Very powerful support for multi-project builds.
             </para>
             <para>マルチプロジェクトを強力にサポートします。</para>
         </listitem>
         <listitem>
-            <para>Very powerful dependency management (based on Apache Ivy).
+            <para role="original">Very powerful dependency management (based on Apache Ivy).
             </para>
             <para>強力な依存関係管理 (Apache Ivy ベース)を提供します。</para>
         </listitem>
         <listitem>
-            <para>Full support for your existing Maven or Ivy repository infrastructure.
+            <para role="original">Full support for your existing Maven or Ivy repository infrastructure.
             </para>
             <para>Maven/Ivyリポジトリを完全にサポートします。</para>
         </listitem>
         <listitem>
-            <para>Support for transitive dependency management without the need for remote repositories or
+            <para role="original">Support for transitive dependency management without the need for remote repositories or
                 <literal>pom.xml</literal> and <literal>ivy.xml</literal>
                 files.
             </para>
             <para>リモートリポジトリや<literal>pom.xml</literal>、<literal>ivy.xml</literal>を使用しなくても推移的な依存関係を管理できます。</para>
         </listitem>
         <listitem>
-            <para>Ant tasks and builds as first class citizens.
+            <para role="original">Ant tasks and builds as first class citizens.
             </para>
             <para>Antのタスクとプロジェクトがファーストクラス・オブジェクトとして組み込まれており、デフォルトで使用可能です。</para>
         </listitem>
         <listitem>
-            <para>
+            <para role="original">
                 <emphasis>Groovy</emphasis> build scripts.
             </para>
             <para><emphasis>Groovy</emphasis>でビルドスクリプトを記述します。</para>
         </listitem>
         <listitem>
-            <para>A rich domain model for describing your build.
+            <para role="original">A rich domain model for describing your build.
             </para>
             <para>ビルドを記述する際、オブジェクト指向のリッチなドメインモデルを使用可能です。</para>
         </listitem>
     </itemizedlist>
-    <para>
+    <para role="original">
         In <xref linkend='overview'/> you will find a detailed overview of Gradle. Otherwise, the
         <link linkend="tutorials">tutorials</link> are waiting, have fun :)
     </para>
     <para><xref linkend="overview"/>でGradleの概要について記述しています。<link linkend="tutorials">チュートリアル</link>も用意しているので楽しんでいってください(^^)</para>
     <section>
         <title>このユーザーガイドについて / About this user guide</title>
-        <para>This user guide, like Gradle itself, is under very active development. Some parts of Gradle aren't
+        <para role="original">This user guide, like Gradle itself, is under very active development. Some parts of Gradle aren't
             documented as completely as they need to be. Some of the content presented won't be entirely clear or
             will assume that you know more about Gradle than you do. We need your help to improve this user
             guide. You can find out more about contributing to the documentation at the
             <ulink url="website:contributing.html">Gradle web site</ulink>.
         </para>
         <para>このユーザーガイドは、Gradle同様、現在活発に更新されているところです。まだGradleについて必要な部分がすべてドキュメント化されているわけではありません。また、記載内容には明確でない部分やGradleについて読者が知っている以上の知識を要求する部分があるかもしれません。このガイドを改良していくため、力を貸してください。ドキュメンテーションへ参加、貢献していただける方は<ulink url="website:contributing.html">Gradleのウェブサイト</ulink>をご参照ください。</para>
-        <para>You can find more examples, and some additions to this user guide, on the
+        <para role="original">You can find more examples, and some additions to this user guide, on the
             <ulink url="http://docs.codehaus.org/display/GRADLE/User+guide">wiki</ulink>.
             You can also contribute your own examples and extra content there.
         </para>
