@@ -14,10 +14,10 @@
   ~ limitations under the License.
   -->
 <chapter id="tutorials">
-    <title>チュートリアル / Tutorials</title>
+    <title>チュートリアル<phrase role="original">Tutorials</phrase></title>
     <section>
-        <title>始めてみよう / Getting Started</title>
-        <para>The following tutorials introduce some of the basics of Gradle, to help you get started.</para>
+        <title>始めてみよう<phrase role="original">Getting Started</phrase></title>
+        <para role="original">The following tutorials introduce some of the basics of Gradle, to help you get started.</para>
         <para>次のチュートリアルはGradleの基本を紹介しているものです。Gradleを始める手助けになるでしょう。</para>
         <variablelist>
             <varlistentry>
@@ -25,7 +25,7 @@
                     <xref linkend="installation"/>
                 </term>
                 <listitem>
-                    <para>Describes how to install Gradle.</para>
+                    <para role="original">Describes how to install Gradle.</para>
                     <para>インストール方法について</para>
                 </listitem>
             </varlistentry>
@@ -34,7 +34,7 @@
                     <xref linkend="tutorial_using_tasks"/>
                 </term>
                 <listitem>
-                    <para>Introduces the basic build script elements:
+                    <para role="original">Introduces the basic build script elements:
                         <firstterm>projects</firstterm>
                         and
                         <firstterm>tasks</firstterm>.
@@ -47,7 +47,7 @@
                     <xref linkend="tutorial_java_projects"/>
                 </term>
                 <listitem>
-                    <para>Shows how to start using Gradle's build-by-convention support for Java projects.</para>
+                    <para role="original">Shows how to start using Gradle's build-by-convention support for Java projects.</para>
                     <para>Gradleの規約によるビルドでJavaプロジェクトを取り扱う方法について</para>
                 </listitem>
             </varlistentry>
@@ -56,7 +56,7 @@
                     <xref linkend="tutorial_groovy_projects"/>
                 </term>
                 <listitem>
-                    <para>Using Gradle's build-by-convention support for Groovy projects.</para>
+                    <para role="original">Using Gradle's build-by-convention support for Groovy projects.</para>
                     <para>Gradleの規約によるビルドでGroovyプロジェクトを取り扱う方法について</para>
                 </listitem>
             </varlistentry>
@@ -65,15 +65,15 @@
                     <xref linkend="web_project_tutorial"/>
                 </term>
                 <listitem>
-                    <para>Using Gradle's build-by-convention support for Web applications.</para>
+                    <para role="original">Using Gradle's build-by-convention support for Web applications.</para>
                     <para>Gradleの規約によるビルドでWebアプリケーションプロジェクトを取り扱う方法について</para>
                 </listitem>
             </varlistentry>
         </variablelist>
     </section>
     <section condition="website">
-        <title>次に何をするべき? / Where to next?</title>
-        <para>There are more tutorials and plenty of reference material in the <ulink url="website:userguide.html">user guide</ulink>.</para>
+        <title>次に何をするべき?<phrase role="original">Where to next?</phrase></title>
+        <para role="original">There are more tutorials and plenty of reference material in the <ulink url="website:userguide.html">user guide</ulink>.</para>
         <para>さらに多くのチュートリアルやリファレンスが<ulink url="website:userguide.html">ユーザーガイド</ulink>にあります。</para>
     </section>
 </chapter>
