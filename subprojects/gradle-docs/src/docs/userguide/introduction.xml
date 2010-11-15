@@ -77,7 +77,7 @@
     </para>
     <para><xref linkend="overview"/>でGradleの概要について記述しています。<link linkend="tutorials">チュートリアル</link>も用意しているので楽しんでいってください(^^)</para>
     <section>
-        <title>このユーザーガイドについて / About this user guide</title>
+        <title>このユーザーガイドについて<phrase role="original">About this user guide</phrase></title>
         <para role="original">This user guide, like Gradle itself, is under very active development. Some parts of Gradle aren't
             documented as completely as they need to be. Some of the content presented won't be entirely clear or
             will assume that you know more about Gradle than you do. We need your help to improve this user
