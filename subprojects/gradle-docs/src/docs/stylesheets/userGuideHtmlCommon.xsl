@@ -33,6 +33,7 @@
     <xsl:template name="output.html.stylesheets">
         <link href="base.css" rel="stylesheet" type="text/css"/>
         <link href="style.css" rel="stylesheet" type="text/css"/>
+        <link href="translation.css" rel="stylesheet" type="text/css" title="translation"/>
     </xsl:template>
 
     <xsl:param name="generate.toc">
