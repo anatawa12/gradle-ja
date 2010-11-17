@@ -245,6 +245,6 @@ text3</section>
         nodes.each { node ->
             document.documentElement.appendChild(node)
         }
-        return DOMUtil.serialize(document.documentElement)
+        return DOMUtil.serialize(document.documentElement).replaceAll("\r", "")
     }
 }
