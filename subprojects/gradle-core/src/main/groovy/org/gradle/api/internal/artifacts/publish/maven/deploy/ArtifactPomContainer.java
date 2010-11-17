@@ -26,5 +26,5 @@ import java.util.Set;
 public interface ArtifactPomContainer {
     void addArtifact(Artifact artifact, File src);
 
-    Set<DeployableFilesInfo> createDeployableFilesInfos();
+    Set<DefaultMavenDeployment> createDeployableFilesInfos();
 }

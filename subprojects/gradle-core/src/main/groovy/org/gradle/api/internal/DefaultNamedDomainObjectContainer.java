@@ -20,7 +20,7 @@ import groovy.lang.MissingPropertyException;
 import org.gradle.api.*;
 import org.gradle.api.specs.Spec;
 import org.gradle.api.specs.Specs;
-import org.gradle.listener.ListenerBroadcast;
+import org.gradle.listener.ActionBroadcast;
 import org.gradle.util.ConfigureUtil;
 
 import java.util.*;
@@ -78,6 +78,10 @@ public class DefaultNamedDomainObjectContainer<T> extends AbstractDomainObjectCo
             return value;
         }
         applyRules(name);
+        return store.find(name);
+    }
+
+    protected T findByNameWithoutRules(String name) {
         return store.find(name);
     }
 
@@ -189,16 +193,16 @@ public class DefaultNamedDomainObjectContainer<T> extends AbstractDomainObjectCo
     }
 
     private static class MapStore<S> implements NamedObjectStore<S> {
-        private final ListenerBroadcast<Action> addActions = new ListenerBroadcast<Action>(Action.class);
-        private final ListenerBroadcast<Action> removeActions = new ListenerBroadcast<Action>(Action.class);
+        private final ActionBroadcast<S> addActions = new ActionBroadcast<S>();
+        private final ActionBroadcast<S> removeActions = new ActionBroadcast<S>();
         private final Map<String, S> objects = new TreeMap<String, S>();
 
         public S put(String name, S value) {
             S oldValue = objects.put(name, value);
             if (oldValue != null) {
-                removeActions.getSource().execute(oldValue);
+                removeActions.execute(oldValue);
             }
-            addActions.getSource().execute(value);
+            addActions.execute(value);
             return oldValue;
         }
 

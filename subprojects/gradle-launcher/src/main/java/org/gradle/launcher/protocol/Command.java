@@ -13,8 +13,25 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.gradle.launcher;
+package org.gradle.launcher.protocol;
 
-public interface BuildCompleter {
-    void exit(Throwable failure);
+import org.gradle.initialization.BuildClientMetaData;
+
+import java.io.Serializable;
+
+public class Command implements Serializable {
+    private final BuildClientMetaData clientMetaData;
+
+    public Command(BuildClientMetaData clientMetaData) {
+        this.clientMetaData = clientMetaData;
+    }
+
+    public BuildClientMetaData getClientMetaData() {
+        return clientMetaData;
+    }
+
+    @Override
+    public String toString() {
+        return getClass().getSimpleName();
+    }
 }

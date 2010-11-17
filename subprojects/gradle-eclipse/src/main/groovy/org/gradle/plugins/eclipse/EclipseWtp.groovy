@@ -15,24 +15,26 @@
  */
 package org.gradle.plugins.eclipse;
 
-import org.gradle.api.NamedDomainObjectContainer
+
 import org.gradle.api.artifacts.Configuration
+import org.gradle.api.internal.ConventionTask
 import org.gradle.api.tasks.OutputFile
+import org.gradle.api.tasks.SourceSet
 import org.gradle.api.tasks.TaskAction
+import org.gradle.listener.ActionBroadcast
 import org.gradle.plugins.eclipse.model.Facet
-import org.gradle.plugins.eclipse.model.internal.ModelFactory
-import org.gradle.plugins.eclipse.model.Wtp
-import org.gradle.plugins.eclipse.model.WbResource
 import org.gradle.plugins.eclipse.model.WbProperty
-import org.gradle.api.Action
-import org.gradle.listener.ListenerBroadcast
+import org.gradle.plugins.eclipse.model.WbResource
+import org.gradle.plugins.eclipse.model.Wtp
+import org.gradle.plugins.eclipse.model.internal.WtpFactory
+import org.gradle.util.ConfigureUtil
 
 /**
  * Generates Eclipse configuration files for Eclipse WTP.
  *
  * @author Hans Dockter
  */
-public class EclipseWtp extends AbstractXmlGeneratorTask {
+public class EclipseWtp extends ConventionTask {
     /**
      * The file that is merged into the to be produced org.eclipse.wst.common.component file. This
      * file must not exist.
@@ -60,7 +62,7 @@ public class EclipseWtp extends AbstractXmlGeneratorTask {
     /**
      * The source sets to be transformed into wb-resource elements.
      */
-    NamedDomainObjectContainer sourceSets
+    Iterable<SourceSet> sourceSets
 
     /**
      * The configurations which files are to be transformed into dependent-module elements of
@@ -100,9 +102,16 @@ public class EclipseWtp extends AbstractXmlGeneratorTask {
      */
     List<WbProperty> properties = []
 
-    protected ModelFactory modelFactory = new ModelFactory()
+    /**
+     * The context path for the web application
+     */
+    String contextPath
 
-    def ListenerBroadcast<Action> withXmlActions = new ListenerBroadcast<Action>(Action.class);
+    protected WtpFactory modelFactory = new WtpFactory()
+
+    def ActionBroadcast<Map<String, Node>> withXmlActions = new ActionBroadcast<Map<String, Node>>();
+    def ActionBroadcast<Wtp> beforeConfiguredActions = new ActionBroadcast<Wtp>();
+    def ActionBroadcast<Wtp> whenConfiguredActions = new ActionBroadcast<Wtp>();
 
     def EclipseWtp() {
         outputs.upToDateWhen { false }
@@ -120,7 +129,7 @@ public class EclipseWtp extends AbstractXmlGeneratorTask {
      * @param args A map that must contain a name and version key with corresponding values.
      */
     void facet(Map args) {
-        facets.add(new Facet(args.name, args.version))
+        setFacets(getFacets() + [ConfigureUtil.configureByMap(args, new Facet())])
     }
 
     /**
@@ -153,6 +162,14 @@ public class EclipseWtp extends AbstractXmlGeneratorTask {
     }
 
     void withXml(Closure closure) {
-        withXmlActions.add("execute", closure);
+        withXmlActions.add(closure);
+    }
+
+    void beforeConfigured(Closure closure) {
+        beforeConfiguredActions.add(closure);
+    }
+
+    void whenConfigured(Closure closure) {
+        whenConfiguredActions.add(closure);
     }
 }

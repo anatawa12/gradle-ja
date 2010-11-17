@@ -18,42 +18,40 @@ package org.gradle.launcher
 import spock.lang.Specification
 import org.junit.Rule
 import org.gradle.util.RedirectStdOutAndErr
+import org.gradle.api.Action
 
 class MainTest extends Specification {
     @Rule final RedirectStdOutAndErr outputs = new RedirectStdOutAndErr()
-    final BuildCompleter completer = Mock()
+    final Main.BuildCompleter completer = Mock()
     final CommandLineActionFactory factory = Mock()
     final String[] args = ['arg']
     final Main main = new Main(args) {
         @Override
-        BuildCompleter createBuildCompleter() {
+        Main.BuildCompleter createBuildCompleter() {
             completer
         }
 
         @Override
-        CommandLineActionFactory createActionFactory(BuildCompleter buildCompleter) {
-            assert buildCompleter == completer
+        CommandLineActionFactory createActionFactory() {
             factory
         }
     }
 
     def createsAndExecutesCommandLineAction() {
-        Runnable action = Mock()
+        Action<ExecutionListener> action = Mock()
 
         when:
         main.execute()
 
         then:
         1 * factory.convert(args) >> action
-        1 * action.run()
-        1 * completer.exit(null)
-        0 * factory._
-        0 * action._
-        0 * completer._
+        1 * action.execute(completer)
+        1 * completer.exit()
+        0 * _._
     }
 
     def reportsActionExecutionFailure() {
-        Runnable action = Mock()
+        Action<ExecutionListener> action = Mock()
         RuntimeException failure = new RuntimeException('broken')
 
         when:
@@ -61,13 +59,12 @@ class MainTest extends Specification {
 
         then:
         1 * factory.convert(args) >> action
-        1 * action.run() >> { throw failure }
+        1 * action.execute(completer) >> { throw failure }
         outputs.stdErr.contains('internal error')
         outputs.stdErr.contains('java.lang.RuntimeException: broken')
-        1 * completer.exit(failure)
-        0 * factory._
-        0 * action._
-        0 * completer._
+        1 * completer.onFailure(failure)
+        1 * completer.exit()
+        0 * _._
     }
 
     def reportsActionCreationFailure() {
@@ -80,8 +77,8 @@ class MainTest extends Specification {
         1 * factory.convert(args) >> { throw failure }
         outputs.stdErr.contains('internal error')
         outputs.stdErr.contains('java.lang.RuntimeException: broken')
-        1 * completer.exit(failure)
-        0 * factory._
-        0 * completer._
+        1 * completer.onFailure(failure)
+        1 * completer.exit()
+        0 * _._
     }
 }

@@ -35,6 +35,7 @@ import org.junit.Rule
 import org.junit.Test
 import static org.hamcrest.Matchers.*
 import static org.junit.Assert.*
+import org.gradle.util.SetSystemProperties
 
 /**
  * @author Hans Dockter
@@ -42,6 +43,8 @@ import static org.junit.Assert.*
 class StartParameterTest {
     @Rule
     public TemporaryFolder tmpDir = new TemporaryFolder();
+    @Rule
+    public SetSystemProperties systemProperties = new SetSystemProperties()
 
     @Test public void testNewInstance() {
         StartParameter testObj = new StartParameter()
@@ -83,14 +86,10 @@ class StartParameterTest {
     }
 
     @Test public void testDefaultWithGradleUserHomeSystemProp() {
-        String gradleUserHome = "/someGradleUserHomePath"
-        System.setProperty(StartParameter.GRADLE_USER_HOME_PROPERTY_KEY, gradleUserHome)
-        try {
-            StartParameter parameter = new StartParameter();
-            assertThat(parameter.gradleUserHomeDir, equalTo(new File(gradleUserHome)))
-        } finally {
-            System.getProperties().remove(StartParameter.GRADLE_USER_HOME_PROPERTY_KEY)    
-        }
+        File gradleUserHome = tmpDir.file("someGradleUserHomePath")
+        System.setProperty(StartParameter.GRADLE_USER_HOME_PROPERTY_KEY, gradleUserHome.absolutePath)
+        StartParameter parameter = new StartParameter();
+        assertThat(parameter.gradleUserHomeDir, equalTo(gradleUserHome))
     }
 
     @Test public void testSetCurrentDir() {

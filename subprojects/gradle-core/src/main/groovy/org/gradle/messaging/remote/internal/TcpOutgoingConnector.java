@@ -34,8 +34,8 @@ public class TcpOutgoingConnector implements OutgoingConnector {
         this.classLoader = classLoader;
     }
 
-    public Connection<Message> connect(URI destinationUri) {
-        if (!destinationUri.getScheme().equals("tcp") || !destinationUri.getHost().equals("localhost")) {
+    public <T> Connection<T> connect(URI destinationUri) {
+        if (!destinationUri.getScheme().equals("tcp") || destinationUri.getHost() == null || !destinationUri.getHost().equals("localhost")) {
             throw new IllegalArgumentException(String.format("Cannot create connection to destination URI '%s'.",
                     destinationUri));
         }
@@ -59,9 +59,12 @@ public class TcpOutgoingConnector implements OutgoingConnector {
                 }
                 LOGGER.debug("Connected to address {}.", address);
                 URI localAddress = new URI(String.format("tcp://localhost:%d", socketChannel.socket().getLocalPort()));
-                return new SocketConnection(socketChannel, localAddress, destinationUri, classLoader);
+                return new SocketConnection<T>(socketChannel, localAddress, destinationUri, classLoader);
             }
             throw lastFailure;
+        } catch (java.net.ConnectException e) {
+            throw new ConnectException(String.format("Could not connect to server %s. Tried addresses: %s.",
+                    destinationUri, loopBackAddresses), e);
         } catch (Exception e) {
             throw new GradleException(String.format("Could not connect to server %s. Tried addresses: %s.",
                     destinationUri, loopBackAddresses), e);
