@@ -18,7 +18,7 @@
     <title>Gradleのインストール<phrase role="original">Installing Gradle</phrase></title>
 
 <section>
-    <title>必要環境 / Prerequisites</title>
+    <title>必要環境<phrase role="original">Prerequisites</phrase></title>
 
     <para role="original">Gradle requires a Java JDK to be installed. Gradle requires a JDK 1.5 or higher. Gradle ships with its own
         Groovy library, therefore no Groovy needs to be installed. Any existing Groovy installation is ignored by Gradle.
