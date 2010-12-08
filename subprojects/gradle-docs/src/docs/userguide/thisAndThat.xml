@@ -14,10 +14,10 @@
   ~ limitations under the License.
   -->
 <chapter id='tutorial_this_and_that' xmlns:xi="http://www.w3.org/2001/XInclude">
-    <title>いろんなあれこれについてのチュートリアル / Tutorial - 'This and That'</title>
+    <title>いろんなあれこれについてのチュートリアル<phrase role="original">Tutorial - 'This and That'</phrase></title>
     <section id='sec:directory_creation'>
-        <title>ディレクトリの作成 / Directory creation</title>
-        <para>There is a common situation, that multiple tasks depend on the existence of a directory. Of course you can
+        <title>ディレクトリの作成<phrase role="original">Directory creation</phrase></title>
+        <para role="original">There is a common situation, that multiple tasks depend on the existence of a directory. Of course you can
             deal with this by adding a
             <literal>mkdir</literal>
             to the beginning of those tasks. But this is kind of bloated. There is a better solution (works only if the
@@ -30,35 +30,38 @@
             <sourcefile file="build.gradle"/>
             <output args="-q compile"/>
         </sample>
-        <para>But Gradle offers you also <emphasis>Directory Tasks</emphasis> to deal with this.</para>
+        <para role="original">But Gradle offers you also <emphasis>Directory Tasks</emphasis> to deal with this.</para>
         <para>しかし、Gradleではもっといい方法があります。<emphasis>Directoryタスク</emphasis>です。</para>
         <sample id="directoryTask" dir="userguide/tutorial/directoryTask" title="Directory creation with Directory tasks">
             <sourcefile file="build.gradle"/>
             <output args="-q otherResources"/>
         </sample>
-        <para>A <emphasis>Directory Task</emphasis>
+        <para role="original">A <emphasis>Directory Task</emphasis>
             is a simple task whose name is a relative path to the project dir
             <footnote>
-                <para>The notation <literal>dir('/somepath')</literal> is a convenience method for
+                <para role="original">The notation <literal>dir('/somepath')</literal> is a convenience method for
                     <literal>tasks.add('somepath', type: Directory)</literal>
                 </para>
-                <para><literal>dir('/somepath')</literal>は<literal>tasks.add('somepath', type: Directory)</literal>の略記法です。</para>
             </footnote>
             . During the execution phase the directory corresponding to this path gets created if it does not exist yet.
             Another interesting thing to note in this example, is that you can also pass tasks objects to the dependsOn
             declaration of a task.
         </para>
-        <para><emphasis>Directoryタスク</emphasis>はプロジェクトディレクトリからの相対パスを名前とする単純なタスクです。実行フェーズでそのパスにディレクトリがなければ作成します。さらに上の例で注目すべきところは、DirectoryタスクをタスクのdependsOn宣言に引き渡すことができるという点です。</para>
+        <para><emphasis>Directoryタスク</emphasis>はプロジェクトディレクトリからの相対パスを名前とする単純なタスクです。
+            <footnote>
+                <para><literal>dir('/somepath')</literal>は<literal>tasks.add('somepath', type: Directory)</literal>の略記法です。</para>
+            </footnote>
+            実行フェーズでそのパスにディレクトリがなければ作成します。さらに上の例で注目すべきところは、DirectoryタスクをタスクのdependsOn宣言に引き渡すことができるという点です。</para>
     </section>
     <section id='sec:gradle_properties_and_system_properties'>
-        <title>Gradleプロパティとシステムプロパティ / Gradle properties and system properties</title>
-        <para>Gradle offers a variety of ways to add properties to your build. With the <option>-D</option> command line
+        <title>Gradleプロパティとシステムプロパティ<phrase role="original">Gradle properties and system properties</phrase></title>
+        <para role="original">Gradle offers a variety of ways to add properties to your build. With the <option>-D</option> command line
             option you can pass a system property to the JVM which runs Gradle. The <option>-D</option> option of the
             <command>gradle</command> command has the same effect as the <option>-D</option> option of the
             <command>java</command> command.
         </para>
         <para>Gradleでは、さまざまな方法でビルドにプロパティ値を渡すことができます。<option>-D</option>オプションを使えばGradleを実行しているJVMにシステムプロパティを渡すことができます。<command>gradle</command>コマンドは<option>-D</option>オプションを<command>java</command>コマンドへの<option>-D</option>オプションと同じように処理します。</para>
-        <para>You can also directly add properties to your project objects using properties files. You can place a
+        <para role="original">You can also directly add properties to your project objects using properties files. You can place a
             <filename>gradle.properties</filename> file in the Gradle user home directory (defaults to
             <filename><replaceable>USER_HOME</replaceable>/.gradle</filename>) or in your project directory. For
             multi-project builds you can place <filename>gradle.properties</filename> files in any subproject directory.
@@ -66,7 +69,7 @@
             properties file in the user's home directory has precedence over property files in the project directories.
         </para>
         <para>propertiesファイルを記述することで、projectオブジェクトに直接プロパティを追加することもできます。このプロパティファイル<filename>gradle.properties</filename>はGradleのホームディレクトリ(デフォルトでは<filename><replaceable>USER_HOME</replaceable>/.gradle</filename>)かプロジェクトディレクトリに作成します。マルチプロジェクトの場合、gradle.properteisはすべてのサブプロジェクトディレクトリに置くことができます。<filename>gradle.properties</filename>に記述されたプロパティはprojectオブジェクトからアクセスすることができます。なお、ホームディレクトリの<filename>gradle.properties</filename>は、プロジェクトディレクトリの<filename>gradle.properties</filename>の定義を上書きし優先的に使用されます。</para>
-        <para>You can also add properties directly to your project object via the <option>-P</option>
+        <para role="original">You can also add properties directly to your project object via the <option>-P</option>
             command line option. For more exotic use cases you can even pass properties <emphasis>directly</emphasis>
             to the project object via system and environment properties. For example if you run a build on a continuous
             integration server where you have no admin rights for the <emphasis>machine</emphasis>. Your build script
@@ -74,11 +77,10 @@
             option. In this case you can add an environment property in the project administration section (invisible to
             normal users).
             <footnote>
-                <para>
+                <para role="original">
                     <emphasis>Teamcity</emphasis> or <emphasis>Bamboo</emphasis> are for example CI servers which
                     offer this functionality.
                 </para>
-                <para><emphasis>Teamcity</emphasis>や<emphasis>Bamboo</emphasis>といったCIサーバーがこの機能を持っています。</para>
             </footnote>
             If the environment property follows the pattern
             <literal>ORG_GRADLE_PROJECT_<replaceable>propertyName</replaceable>=somevalue</literal>,
@@ -87,8 +89,12 @@
             system properties. The only difference is the pattern, which is
             <literal>org.gradle.project.<replaceable>propertyName</replaceable></literal>.
         </para>
-        <para>projectオブジェクトに追加するプロパティは、コマンドラインオプションの<option>-P</option>オプションで設定することもできます。また、さらにエキゾチックな使い方に備えて、環境変数やシステムプロパティからプロパティを<emphasis>直接</emphasis>取り込む機能もあります。たとえば、管理権限のないマシン上のCIサーバーで継続的なビルドを行う場合について考えてみましょう。自分のビルドスクリプトに、他人から見られたくない値をプロパティとして設定する必要がある場合、<option>-P</option>オプションは使えません。このときは、プロジェクトの管理者のみアクセスできるようなCIサーバー上のページで環境変数を設定することで、ビルドスクリプトにプロパティを渡すことができます。ここで設定する環境変数名にはあるパターンがあり、<literal>ORG_GRADLE_PROJECT_<replaceable>propertyName</replaceable>=somevalue</literal>という環境変数を設定した場合<literal>propertyName</literal>というプロパティがプロジェクトに設定されます。もし将来的にCIサーバーがGradleを直接サポートするようになったときには、CIサーバーはGradleのmainメソッドを呼び出してビルドを開始するかもしれません。そのときのために、Gradleはシステムプロパティを使って同様のメカニズムを実装しています。パターンが<literal>org.gradle.project.<replaceable>propertyName</replaceable></literal>となっていること以外は環境変数の場合と同じです。</para>
-        <para>With the <filename>gradle.properties</filename> files you can also set system properties. If a property
+        <para>projectオブジェクトに追加するプロパティは、コマンドラインオプションの<option>-P</option>オプションで設定することもできます。また、さらにエキゾチックな使い方に備えて、環境変数やシステムプロパティからプロパティを<emphasis>直接</emphasis>取り込む機能もあります。たとえば、管理権限のないマシン上のCIサーバーで継続的なビルドを行う場合について考えてみましょう。自分のビルドスクリプトに、他人から見られたくない値をプロパティとして設定する必要がある場合、<option>-P</option>オプションは使えません。このときは、プロジェクトの管理者のみアクセスできるようなCIサーバー上のページで環境変数を設定することで、ビルドスクリプトにプロパティを渡すことができます。
+            <footnote>
+                <para><emphasis>Teamcity</emphasis>や<emphasis>Bamboo</emphasis>といったCIサーバーがこの機能を持っています。</para>
+            </footnote>
+            ここで設定する環境変数名にはあるパターンがあり、<literal>ORG_GRADLE_PROJECT_<replaceable>propertyName</replaceable>=somevalue</literal>という環境変数を設定した場合<literal>propertyName</literal>というプロパティがプロジェクトに設定されます。もし将来的にCIサーバーがGradleを直接サポートするようになったときには、CIサーバーはGradleのmainメソッドを呼び出してビルドを開始するかもしれません。そのときのために、Gradleはシステムプロパティを使って同様のメカニズムを実装しています。パターンが<literal>org.gradle.project.<replaceable>propertyName</replaceable></literal>となっていること以外は環境変数の場合と同じです。</para>
+        <para role="original">With the <filename>gradle.properties</filename> files you can also set system properties. If a property
             in such a file has the prefix <literal>systemProp.</literal> the property and its value are added to the 
             system properties, without the prefix.
         </para>
@@ -99,8 +105,8 @@
             <output args="-q -PcommandLineProjectProp=commandLineProjectPropValue -Dorg.gradle.project.systemProjectProp=systemPropertyValue printProps"/>
         </sample>
         <section id='sub:checking_for_project_properties'>
-            <title>プロジェクトプロパティの確認 / Checking for project properties</title>
-            <para>You can access a project property in your build script simply by using its name as you would use a
+            <title>プロジェクトプロパティの確認<phrase role="original">Checking for project properties</phrase></title>
+            <para role="original">You can access a project property in your build script simply by using its name as you would use a
                 variable. In case this property does not exists, an exception is thrown and the build fails. If your
                 build script relies on optional properties the user might set for example in a gradle.properties file,
                 you need to check for existence before you can access them. You can do this by using the method
@@ -113,8 +119,8 @@
         </section>
     </section>
     <section id='sec:accessing_the_web_via_a_proxy'>
-        <title>プロキシを通してWebにアクセスする / Accessing the web via a proxy</title>
-        <para>Setting a proxy for web access (for example for downloading dependencies) is easy. Gradle does not need to
+        <title>プロキシを通してWebにアクセスする<phrase role="original">Accessing the web via a proxy</phrase></title>
+        <para role="original">Setting a proxy for web access (for example for downloading dependencies) is easy. Gradle does not need to
             provide special functionality for this. The JVM can be instructed to go via proxy by setting certain system
             properties. You could set these system properties directly in your build script with <literal>
                 System.properties['proxy.proxyUser'] = 'userid'</literal>. An arguably nicer way is shown in
@@ -123,7 +129,7 @@
         </para>
         <para>Webにアクセスする(依存関係に含まれるライブラリをダウンロードするときなど)ためのプロキシの設定も簡単にできます。Gradle自身がこのために特別な機能を用意しているわけではありませんが、規定のシステムプロパティを設定すればJVMがプロキシを使用してくれます。ビルドスクリプトで<literal>System.properties['proxy.proxyUser'] = 'userid'</literal>とやってもいいですが、システムプロパティを設定するためのよりよい方法は<xref linkend='sec:gradle_properties_and_system_properties'/>で見てきたとおりです。次のような<filename>gradle.properties</filename>で設定できます。</para>
         <example>
-            <title>プロキシを通してWebにアクセスする / Accessing the web via a proxy</title>
+            <title>プロキシを通してWebにアクセスする<phrase role="original">Accessing the web via a proxy</phrase></title>
             <para><filename>gradle.properties</filename></para>
             <programlisting><![CDATA[
 systemProp.http.proxyHost=www.somehost.org
@@ -133,7 +139,7 @@ systemProp.http.proxyPassword=password
 systemProp.http.nonProxyHosts=*.nonproxyrepos.com|localhost	
 ]]></programlisting>
         </example>
-        <para>We could not find a good overview for all possible proxy settings. One place to look are the constants
+        <para role="original">We could not find a good overview for all possible proxy settings. One place to look are the constants
             in a file from the ant project. Here a
             <ulink url='http://svn.apache.org/viewvc/ant/core/trunk/src/main/org/apache/tools/ant/util/ProxySetup.java?view=markup&amp;pathrev=556977'>
                 link
@@ -145,8 +151,8 @@ systemProp.http.nonProxyHosts=*.nonproxyrepos.com|localhost
         <para>JVMのプロキシ設定をすべてまとめてあるような良い資料は見つかりませんでした。参考になるのは、Antのソースコードにある定数ファイルです。SVNリポジトリ上のファイルを<ulink url='http://svn.apache.org/viewvc/ant/core/trunk/src/main/org/apache/tools/ant/util/ProxySetup.java?view=markup&amp;pathrev=556977'>ここ</ulink>で見ることができます。もう一つ、<ulink url='http://java.sun.com/javase/6/docs/technotes/guides/net/properties.html'>Networking Properties page</ulink>にも情報があります。もっと良い情報源がありましたら、メーリングリストでお知らせください。</para>
     </section>
     <section id="sec:configuring_using_external_script">
-        <title>外部のビルドスクリプトをプロジェクトに取り込む / Configuring the project using an external build script</title>
-        <para>You can configure the current project using an external build script. All of the Gradle build language
+        <title>外部のビルドスクリプトをプロジェクトに取り込む<phrase role="original">Configuring the project using an external build script</phrase></title>
+        <para role="original">You can configure the current project using an external build script. All of the Gradle build language
             is available in the external script. You can even apply other scripts from the external script.
         </para>
         <para>外部のビルドスクリプトを取り込んでプロジェクトを設定することができます。取り込む外部スクリプト内では、Gradleの文法がすべて使用できます。その外部スクリプトから、さらに別の外部スクリプトを取り込むことさえ可能です。</para>
@@ -157,8 +163,8 @@ systemProp.http.nonProxyHosts=*.nonproxyrepos.com|localhost
         </sample>
     </section>
     <section id='sec:configuring_arbitrary_objects'>
-        <title>任意のオブジェクトを設定する / Configuring arbitrary objects</title>
-        <para>You can configure arbitrary objects in the following very readable way.
+        <title>任意のオブジェクトを設定する<phrase role="original">Configuring arbitrary objects</phrase></title>
+        <para role="original">You can configure arbitrary objects in the following very readable way.
         </para>
         <para>非常に読みやすい方法で任意のオブジェクトを設定できます。</para>
         <sample id="configureObject" dir="userguide/tutorial/configureObject" title="任意のオブジェクトを設定する / Configuring arbitrary objects">
@@ -167,8 +173,8 @@ systemProp.http.nonProxyHosts=*.nonproxyrepos.com|localhost
         </sample>
     </section>
     <section>
-        <title>外部スクリプトから任意のオブジェクトを設定する / Configuring arbitrary objects using an external script</title>
-        <para>You can also configure arbitrary objects using an external script.
+        <title>外部スクリプトから任意のオブジェクトを設定する<phrase role="original">Configuring arbitrary objects using an external script</phrase></title>
+        <para role="original">You can also configure arbitrary objects using an external script.
         </para>
         <para>任意のオブジェクトを設定するのは、外部のスクリプトからでも可能です。</para>
         <sample id="configureObjectUsingScript" dir="userguide/tutorial/configureObjectUsingScript" title="外部スクリプトから任意のオブジェクトを設定する / Configuring arbitrary objects using a script">
@@ -178,8 +184,8 @@ systemProp.http.nonProxyHosts=*.nonproxyrepos.com|localhost
         </sample>
     </section>
     <section id='sec:caching'>
-        <title>キャッシング / Caching</title>
-        <para>To improve responsiveness Gradle caches all compiled scripts by default. This includes all build scripts,
+        <title>キャッシング<phrase role="original">Caching</phrase></title>
+        <para role="original">To improve responsiveness Gradle caches all compiled scripts by default. This includes all build scripts,
             initialization scripts, and other scripts. The first time you run a build for a project, Gradle creates a
             <filename>.gradle</filename> directory in which it puts the compiled script. The next time you run this
             build, Gradle uses the compiled script, if the script has not changed since it was compiled.  Otherwise the
@@ -187,6 +193,6 @@ systemProp.http.nonProxyHosts=*.nonproxyrepos.com|localhost
             <option>-C rebuild</option> option, the cached script is discarded and the script is compiled and stored
             in the cache. This way you can force Gradle to rebuild the cache.
         </para>
-        応答速度を上げるため、Gradleはコンパイル済みのスクリプトをデフォルトですべてキャッシュします。キャッシュ対象にはすべてのビルドスクリプトや初期化スクリプト、その他のスクリプトまで含まれています。最初にプロジェクトをビルドしたとき、Gradleは<filename>.gradle</filename>ディレクトリをプロジェクトディレクトリに作成し、そこのコンパイル済みのスクリプトを保存します。次にプロジェクトをビルドしたときにはGradleはそのコンパイル済みのスクリプトを使用します。前回コンパイルしたときからスクリプトが変更されていた場合は再度コンパイルして保存します。Gradleを実行するときに、リビルドオプションの<option>-C</option>オプションを使えばキャッシュはすべて破棄され、再度コンパイル、保存されます。
+        <para>応答速度を上げるため、Gradleはコンパイル済みのスクリプトをデフォルトですべてキャッシュします。キャッシュ対象にはすべてのビルドスクリプトや初期化スクリプト、その他のスクリプトまで含まれています。最初にプロジェクトをビルドしたとき、Gradleは<filename>.gradle</filename>ディレクトリをプロジェクトディレクトリに作成し、そこのコンパイル済みのスクリプトを保存します。次にプロジェクトをビルドしたときにはGradleはそのコンパイル済みのスクリプトを使用します。前回コンパイルしたときからスクリプトが変更されていた場合は再度コンパイルして保存します。Gradleを実行するときに、リビルドオプションの<option>-C</option>オプションを使えばキャッシュはすべて破棄され、再度コンパイル、保存されます。</para>
     </section>
 </chapter>
