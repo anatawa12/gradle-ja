@@ -18,15 +18,16 @@ package org.gradle.build.docs.dsl.model;
 import java.io.Serializable;
 import java.util.LinkedList;
 
-public class PropertyMetaData implements Serializable {
-    private String type;
+public class PropertyMetaData implements Serializable, LanguageElement {
+    private TypeMetaData type;
     private boolean writeable;
     private String rawCommentText;
     private final String name;
-    private transient ClassMetaData ownerClass;
+    private final ClassMetaData ownerClass;
 
-    public PropertyMetaData(String name) {
+    public PropertyMetaData(String name, ClassMetaData ownerClass) {
         this.name = name;
+        this.ownerClass = ownerClass;
     }
 
     public String getName() {
@@ -35,14 +36,14 @@ public class PropertyMetaData implements Serializable {
 
     @Override
     public String toString() {
-        return ownerClass != null ? String.format("%s.%s", ownerClass, name) : String.format("<unknown>.%s", name);
+        return String.format("%s.%s", ownerClass, name);
     }
 
-    public String getType() {
+    public TypeMetaData getType() {
         return type;
     }
 
-    public void setType(String type) {
+    public void setType(TypeMetaData type) {
         this.type = type;
     }
 
@@ -54,6 +55,10 @@ public class PropertyMetaData implements Serializable {
         this.writeable = writeable;
     }
 
+    public ClassMetaData getOwnerClass() {
+        return ownerClass;
+    }
+
     public String getRawCommentText() {
         return rawCommentText;
     }
@@ -62,7 +67,15 @@ public class PropertyMetaData implements Serializable {
         this.rawCommentText = rawCommentText;
     }
 
-    public String getInheritedRawCommentText() {
+    public String getSignature() {
+        StringBuilder builder = new StringBuilder();
+        builder.append(type.getSignature());
+        builder.append(' ');
+        builder.append(name);
+        return builder.toString();
+    }
+
+    public PropertyMetaData getOverriddenProperty() {
         LinkedList<ClassMetaData> queue = new LinkedList<ClassMetaData>();
         queue.add(ownerClass.getSuperClass());
         queue.addAll(ownerClass.getInterfaces());
@@ -72,18 +85,14 @@ public class PropertyMetaData implements Serializable {
             if (cl == null) {
                 continue;
             }
-            PropertyMetaData overriddenProperty = cl.findProperty(name);
+            PropertyMetaData overriddenProperty = cl.findDeclaredProperty(name);
             if (overriddenProperty != null) {
-                return overriddenProperty.getRawCommentText();
+                return overriddenProperty;
             }
             queue.add(cl.getSuperClass());
             queue.addAll(cl.getInterfaces());
         }
 
         return null;
-    }
-
-    public void attach(ClassMetaData ownerClass) {
-        this.ownerClass = ownerClass;
     }
 }

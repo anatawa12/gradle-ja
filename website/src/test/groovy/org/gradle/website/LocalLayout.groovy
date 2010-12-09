@@ -15,17 +15,26 @@
  */
 package org.gradle.website
 
+import java.util.regex.Pattern
+
 class LocalLayout implements Layout {
-    private final Set<String> ignoredPaths = [
-            'docs/userguide/userguide.html',
-            'docs/userguide/userguide_single.html',
-            'docs/userguide/userguide.pdf',
+    private final List<String> docPaths = [
+            'docs/userguide',
             'docs/javadoc',
-            'docs/groovydoc'
-    ] as Set
+            'docs/groovydoc',
+            'docs/dsl'
+    ]
+    private final List<Pattern> docPatterns
+    final boolean ignoreMissingDocs = System.getProperty('test.ignore.docs', 'false').equalsIgnoreCase('true')
+
+    LocalLayout() {
+        docPatterns = docPaths.collect { String path ->
+            Pattern.compile(".*/[^/]+/${path}(/.+)")
+        }
+    }
 
     PageInfo homePage() {
-        def uri = new URI(System.getProperty('test.base.uri', new File('website/build/website').toURI() as String))
+        def uri = new URI(System.getProperty('test.base.uri', new File('build/website').toURI() as String))
         return new LocalPage(this, uri.resolve('index.php'));
     }
 }
@@ -48,16 +57,21 @@ abstract class PageInfoImpl implements PageInfo {
     }
 
     PageInfo resolve(String path) {
-        if (path.startsWith('<?php') || path.matches('[a-zA-Z]+:.+')) {
-            return new IgnoredPage(layout, null)
+        if (path.startsWith('<?php') || path.startsWith("mailto:")) {
+            return new IgnoredPage(layout, null, false)
         }
-        for (suffix in layout.ignoredPaths) {
-            if (path.endsWith(suffix)) {
-                return new IgnoredPage(layout, null)
-            }
-        }
+
         URI resolved = uri.resolve(path)
         resolved = new URI(resolved.scheme, resolved.authority, resolved.path, null, null)
+
+        for (docPattern in layout.docPatterns) {
+            if (path.matches(docPattern)) {
+                return new IgnoredPage(layout, resolved, !layout.ignoreMissingDocs)
+            }
+        }
+        if (path.matches('[a-zA-Z]+:.+')) {
+            return new IgnoredPage(layout, resolved, true)
+        }
         return new LocalPage(layout, resolved)
     }
 }
@@ -70,14 +84,25 @@ class LocalPage extends PageInfoImpl {
     boolean isLocal() {
         return true
     }
+
+    boolean mustExist() {
+        return true
+    }
 }
 
 class IgnoredPage extends PageInfoImpl {
-    def IgnoredPage(LocalLayout layout, URI uri) {
+    final boolean mustExist
+
+    def IgnoredPage(LocalLayout layout, URI uri, boolean mustExist) {
         super(layout, uri);
+        this.mustExist = mustExist
     }
 
     boolean isLocal() {
         return false
+    }
+
+    boolean mustExist() {
+        return mustExist
     }
 }

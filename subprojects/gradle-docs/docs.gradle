@@ -17,7 +17,7 @@
 import org.gradle.build.docs.UserGuideTransformTask
 import org.gradle.build.docs.ExtractSnippetsTask
 import org.gradle.build.docs.AssembleSamplesDocTask
-import org.gradle.build.docs.dsl.AssembleDslDocTask
+import org.gradle.build.docs.dsl.docbook.AssembleDslDocTask
 import org.gradle.build.docs.dsl.ExtractDslMetaDataTask
 
 apply plugin: 'base'
@@ -49,12 +49,13 @@ RemoteLocations remoteLocations = new RemoteLocations(version: version)
 srcDocsDir = file('src/docs')
 userguideSrcDir = new File(srcDocsDir, 'userguide')
 cssSrcDir = new File(srcDocsDir, 'css')
+dslSrcDir = new File(srcDocsDir, 'dsl')
 
 docsDir = file("$buildDir/docs")
 userguideDir = new File(docsDir, 'userguide')
 distDocsDir = new File(buildDir, 'distDocs')
 samplesDir = file("$buildDir/samples")
-docbookSrc = new File(project.buildDir, 'src/docbook')
+docbookSrc = new File(project.buildDir, 'src')
 samplesSrcDir = file('src/samples')
 websiteDocs = new File(buildDir, 'websiteDocs')
 
@@ -65,12 +66,13 @@ tasks.withType(Docbook2Xhtml).allObjects { task->
 }
 tasks.withType(UserGuideTransformTask).allObjects { task->
     task.classpath = configurations.userGuideTask
-    task.dependsOn samples
+    task.dependsOn samples, dslDocbook
     task.snippetsDir = samples.snippetsDir
+    task.linksFile = dslDocbook.linksFile
 }
 tasks.withType(AssembleDslDocTask).allObjects { task ->
     task.classpath = configurations.userGuideTask
-    task.classDocbookDir = new File(userguideSrcDir, 'dsl')
+    task.classDocbookDir = dslSrcDir
 }
 
 task samples(type: ExtractSnippetsTask) {
@@ -122,11 +124,12 @@ task dslMetaData(type: ExtractDslMetaDataTask) {
 }
 
 task dslDocbook(type: AssembleDslDocTask, dependsOn: [dslMetaData]) {
-    inputs.files fileTree(dir: userguideSrcDir, includes: ['dsl/*.xml'])
-    sourceFile = new File(userguideSrcDir, 'dsl/dsl.xml')
+    inputs.files fileTree(dir: dslSrcDir, includes: ['*.xml'])
+    sourceFile = new File(dslSrcDir, 'dsl.xml')
     classMetaDataFile = dslMetaData.destFile
-    pluginsMetaDataFile = new File(userguideSrcDir, 'dsl/plugins.xml')
+    pluginsMetaDataFile = new File(dslSrcDir, 'plugins.xml')
     destFile = new File(docbookSrc, 'dsl.xml')
+    linksFile = new File(docbookSrc, 'api-links.bin')
 }
 
 task dslStandaloneDocbook(type: UserGuideTransformTask, dependsOn: [dslDocbook]) {
@@ -136,6 +139,7 @@ task dslStandaloneDocbook(type: UserGuideTransformTask, dependsOn: [dslDocbook])
     destFile = new File(docbookSrc, 'dsl-standalone.xml')
     javadocUrl = '../javadoc'
     groovydocUrl = '../groovydoc'
+    dsldocUrl = '.'
     websiteUrl = 'http://www.gradle.org'
 }
 
@@ -146,6 +150,9 @@ task dslHtml(type: Docbook2Xhtml, dependsOn: dslStandaloneDocbook) {
     resources = fileTree {
         from cssSrcDir
         include '*.css'
+    } + fileTree {
+        from dslSrcDir
+        include '*.js'
     }
 }
 
@@ -156,6 +163,7 @@ task userguideDocbook(type: UserGuideTransformTask, dependsOn: [samples, samples
     destFile = new File(docbookSrc, 'userguide.xml')
     javadocUrl = '../javadoc'
     groovydocUrl = '../groovydoc'
+    dsldocUrl = '../dsl'
     websiteUrl = 'http://www.gradle.org'
 }
 
@@ -167,6 +175,7 @@ task remoteUserguideDocbook(type: UserGuideTransformTask, dependsOn: samples) {
     doFirst {
         javadocUrl = remoteLocations.javadocUrl
         groovydocUrl = remoteLocations.groovydocUrl
+        dsldocUrl = remoteLocations.dsldocUrl
         websiteUrl = 'http://www.gradle.org'
     }
 }
@@ -248,7 +257,7 @@ task checkstyleApi(type: Checkstyle) {
 
 task groovydoc(type: Groovydoc) {
     group = 'documentation'
-    source groovyProjects().collect {project -> project.sourceSets.main.groovy }
+    source groovyProjects().collect {project -> project.sourceSets.main.groovy + project.sourceSets.main.java }
     destinationDir = new File(docsDir, 'groovydoc')
     includes = javadoc.includes
     excludes = javadoc.excludes
@@ -265,6 +274,7 @@ task userguideFragmentSrc(type: UserGuideTransformTask, dependsOn: [userguideSty
     doFirst {
         javadocUrl = remoteLocations.javadocUrl
         groovydocUrl = remoteLocations.groovydocUrl
+        dsldocUrl = remoteLocations.dsldocUrl
         websiteUrl = 'http://www.gradle.org'
     }
 }
@@ -284,6 +294,7 @@ task websiteUserguideSrc(type: UserGuideTransformTask, dependsOn: [userguideStyl
     doFirst {
         javadocUrl = remoteLocations.javadocUrl
         groovydocUrl = remoteLocations.groovydocUrl
+        dsldocUrl = remoteLocations.dsldocUrl
         websiteUrl = ''
     }
 }
@@ -378,6 +389,10 @@ class RemoteLocations {
 
     String getGroovydocUrl() {
         "$GRADLE_ORG_URL/${getDocsRemoteDir()}/groovydoc"
+    }
+
+    String getDsldocUrl() {
+        "$GRADLE_ORG_URL/${getDocsRemoteDir()}/dsl"
     }
 }
 

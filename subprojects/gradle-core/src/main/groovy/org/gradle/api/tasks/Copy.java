@@ -23,25 +23,24 @@ import org.gradle.api.internal.file.copy.FileCopySpecVisitor;
 import java.io.File;
 
 /**
- * Copies files into a destination directory.  This task can also rename and filter files as it copies.
- * The task implements {@link org.gradle.api.file.CopySpec CopySpec} for specifying
- * what to copy.
- * <p>
- * Examples:
+ * Copies files into a destination directory.  This task can also rename and filter files as it copies. The task
+ * implements {@link org.gradle.api.file.CopySpec CopySpec} for specifying what to copy.
+ *
+ * <p> Examples:
  * <pre>
- * task(mydoc, type:Copy) {
+ * task mydoc(type:Copy) {
  *    from 'src/main/doc'
  *    into 'build/target/doc'
  * }
  *
- * task(initconfig, type:Copy) {
+ * task initconfig(type:Copy) {
  *    from('src/main/config') {
  *       include '**&#47;*.properties'
  *       include '**&#47;*.xml'
  *       filter(ReplaceTokens, tokens:[version:'2.3.1'])
  *    }
  *    from('src/main/config') {
- *       exclude '**&#47;*.properties', '**&#47;*.xml'  
+ *       exclude '**&#47;*.properties', '**&#47;*.xml'
  *    }
  *    from('src/main/languages') {
  *       rename 'EN_US_(*.)', '$1'
@@ -50,6 +49,7 @@ import java.io.File;
  *    exclude '**&#47;*.bak'
  * }
  * </pre>
+ *
  * @author Steve Appling
  */
 public class Copy extends AbstractCopyTask {
@@ -78,11 +78,21 @@ public class Copy extends AbstractCopyTask {
         this.copyAction = copyAction;
     }
 
+    /**
+     * Returns the directory to copy files into.
+     *
+     * @return The destination dir.
+     */
     @OutputDirectory
     public File getDestinationDir() {
         return getCopyAction().getDestinationDir();
     }
 
+    /**
+     * Sets the directory to copy files into. This is the same as calling {@link #into(Object)} on this task.
+     *
+     * @param destinationDir The destination directory. Must not be null.
+     */
     public void setDestinationDir(File destinationDir) {
         into(destinationDir);
     }

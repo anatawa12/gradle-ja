@@ -57,29 +57,37 @@ public class DaemonConnector {
      * @return The connection, or null if not running.
      */
     Connection<Object> maybeConnect() {
+        URI uri = loadDaemonAddress();
+        if (uri == null) {
+            return null;
+        }
         try {
-            URI uri;
+            return new TcpOutgoingConnector(getClass().getClassLoader()).connect(uri);
+        } catch (ConnectException e) {
+            // Ignore
+            return null;
+        }
+    }
+
+    private URI loadDaemonAddress() {
+        try {
+            FileInputStream inputStream = new FileInputStream(getRegistryFile());
             try {
-                FileInputStream inputStream = new FileInputStream(getRegistryFile());
-                try {
-                    // Acquire shared lock on file while reading it
-                    inputStream.getChannel().lock(0, Long.MAX_VALUE, true);
-                    DataInputStream dataInputStream = new DataInputStream(inputStream);
-                    uri = new URI(dataInputStream.readUTF());
-                } finally {
-                    // Also releases the lock
-                    inputStream.close();
-                }
-            } catch (FileNotFoundException e) {
-                // Ignore
-                return null;
+                // Acquire shared lock on file while reading it
+                inputStream.getChannel().lock(0, Long.MAX_VALUE, true);
+                DataInputStream dataInputStream = new DataInputStream(inputStream);
+                return new URI(dataInputStream.readUTF());
+            } finally {
+                // Also releases the lock
+                inputStream.close();
             }
-            try {
-                return new TcpOutgoingConnector(getClass().getClassLoader()).connect(uri);
-            } catch (ConnectException e) {
-                // Ignore
-                return null;
-            }
+        } catch (FileNotFoundException e) {
+            // Ignore
+            return null;
+        } catch (EOFException e) {
+            // Daemon has created empty file, but not yet locked it or written anything to it.
+            // Or has crashed while writing the registry file.
+            return null;
         } catch (Exception e) {
             throw UncheckedException.asUncheckedException(e);
         }
@@ -97,41 +105,45 @@ public class DaemonConnector {
         }
 
         LOGGER.info("Starting Gradle daemon");
-        try {
-            startDaemon();
-            Date expiry = new Date(System.currentTimeMillis() + 30000L);
-            do {
-                connection = maybeConnect();
-                if (connection != null) {
-                    return connection;
-                }
+        startDaemon();
+        Date expiry = new Date(System.currentTimeMillis() + 30000L);
+        do {
+            connection = maybeConnect();
+            if (connection != null) {
+                return connection;
+            }
+            try {
                 Thread.sleep(200L);
-            } while (System.currentTimeMillis() < expiry.getTime());
-        } catch (Exception e) {
-            throw UncheckedException.asUncheckedException(e);
-        }
+            } catch (InterruptedException e) {
+                throw UncheckedException.asUncheckedException(e);
+            }
+        } while (System.currentTimeMillis() < expiry.getTime());
 
         throw new GradleException("Timeout waiting to connect to Gradle daemon.");
     }
 
-    private void startDaemon() throws IOException {
-        List<String> daemonArgs = new ArrayList<String>();
-        daemonArgs.add(Jvm.current().getJavaExecutable().getAbsolutePath());
-        daemonArgs.add("-Xmx1024m");
-        daemonArgs.add("-XX:MaxPermSize=256m");
-        daemonArgs.add("-cp");
-        daemonArgs.add(GUtil.join(new DefaultClassPathRegistry().getClassPathFiles("GRADLE_RUNTIME"),
-                File.pathSeparator));
-        daemonArgs.add(GradleDaemon.class.getName());
-        daemonArgs.add(String.format("-%s", DefaultCommandLineConverter.GRADLE_USER_HOME));
-        daemonArgs.add(userHomeDir.getAbsolutePath());
-        ProcessBuilder builder = new ProcessBuilder(daemonArgs);
-        builder.directory(userHomeDir);
-        userHomeDir.mkdirs();
-        Process process = builder.start();
-        process.getOutputStream().close();
-        process.getErrorStream().close();
-        process.getInputStream().close();
+    private void startDaemon() {
+        try {
+            List<String> daemonArgs = new ArrayList<String>();
+            daemonArgs.add(Jvm.current().getJavaExecutable().getAbsolutePath());
+            daemonArgs.add("-Xmx1024m");
+            daemonArgs.add("-XX:MaxPermSize=256m");
+            daemonArgs.add("-cp");
+            daemonArgs.add(GUtil.join(new DefaultClassPathRegistry().getClassPathFiles("GRADLE_RUNTIME"),
+                    File.pathSeparator));
+            daemonArgs.add(GradleDaemon.class.getName());
+            daemonArgs.add(String.format("-%s", DefaultCommandLineConverter.GRADLE_USER_HOME));
+            daemonArgs.add(userHomeDir.getAbsolutePath());
+            ProcessBuilder builder = new ProcessBuilder(daemonArgs);
+            builder.directory(userHomeDir);
+            userHomeDir.mkdirs();
+            Process process = builder.start();
+            process.getOutputStream().close();
+            process.getErrorStream().close();
+            process.getInputStream().close();
+        } catch (IOException e) {
+            throw UncheckedException.asUncheckedException(e);
+        }
     }
 
     /**
@@ -145,7 +157,7 @@ public class DaemonConnector {
         final CompletionHandler finished = new CompletionHandler();
 
         LOGGER.lifecycle("Awaiting requests.");
-        
+
         URI uri = incomingConnector.accept(new Action<ConnectEvent<Connection<Object>>>() {
             public void execute(ConnectEvent<Connection<Object>> connectionConnectEvent) {
                 try {
@@ -158,10 +170,21 @@ public class DaemonConnector {
             }
         });
 
+        storeDaemonAddress(uri);
+
+        boolean stopped = finished.awaitStop();
+        if (!stopped) {
+            LOGGER.lifecycle("Time-out waiting for requests. Stopping.");
+        }
+        new CompositeStoppable(incomingConnector, executorFactory).stop();
+
+        getRegistryFile().delete();
+    }
+
+    private void storeDaemonAddress(URI uri) {
         try {
             File registryFile = getRegistryFile();
             registryFile.getParentFile().mkdirs();
-//            registryFile.createNewFile();
             FileOutputStream outputStream = new FileOutputStream(registryFile);
             try {
                 // Lock file while writing to it
@@ -176,14 +199,6 @@ public class DaemonConnector {
         } catch (IOException e) {
             throw UncheckedException.asUncheckedException(e);
         }
-
-        boolean stopped = finished.awaitStop();
-        if (!stopped) {
-            LOGGER.lifecycle("Time-out waiting for requests. Stopping.");
-        }
-        new CompositeStoppable(incomingConnector, executorFactory).stop();
-
-        getRegistryFile().delete();
     }
 
     private File getRegistryFile() {
@@ -199,11 +214,12 @@ public class DaemonConnector {
         private long expiry;
 
         CompletionHandler() {
-            onActivityComplete();
+            resetTimer();
         }
 
         /**
          * Waits until stopped, or timeout.
+         *
          * @return true if stopped, false if timeout
          */
         public boolean awaitStop() {
@@ -211,7 +227,11 @@ public class DaemonConnector {
             try {
                 while (running || (!stopped && System.currentTimeMillis() < expiry)) {
                     try {
-                        condition.awaitUntil(new Date(expiry));
+                        if (running) {
+                            condition.await();
+                        } else {
+                            condition.awaitUntil(new Date(expiry));
+                        }
                     } catch (InterruptedException e) {
                         throw UncheckedException.asUncheckedException(e);
                     }
@@ -247,12 +267,17 @@ public class DaemonConnector {
         public void onActivityComplete() {
             lock.lock();
             try {
+                assert running;
                 running = false;
-                expiry = System.currentTimeMillis() + THREE_HOURS;
+                resetTimer();
                 condition.signalAll();
             } finally {
                 lock.unlock();
             }
+        }
+
+        private void resetTimer() {
+            expiry = System.currentTimeMillis() + THREE_HOURS;
         }
     }
 }

@@ -24,13 +24,16 @@ import org.gradle.api.logging.LogLevel;
 import org.gradle.api.tasks.*;
 
 import java.io.File;
+import java.io.Serializable;
 import java.util.*;
 
 /**
- * Generates HTML API documentation for Groovy and Java classes. It uses Groovy's Groovydoc tool for this. Please note that the
- * Groovydoc tool has some severe limitations at the moment (for example no doc for properties comments). The version of
- * the Groovydoc that is used, is the one from the Groovy defined in the build script. Please note also, that the
- * Groovydoc tool prints to System.out for many of its statements and does circumvents our logging currently.
+ * <p>Generates HTML API documentation for Groovy source, and optionally, Java source.
+ *
+ * <p>This task uses Groovy's Groovydoc tool to generate the API documentation. Please note that the Groovydoc tool has
+ * some severe limitations at the moment (for example no doc for properties comments). The version of the Groovydoc that
+ * is used, is the one from the Groovy defined in the build script. Please note also, that the Groovydoc tool prints to
+ * System.out for many of its statements and does circumvents our logging currently.
  *
  * @author Hans Dockter
  */
@@ -123,26 +126,28 @@ public class Groovydoc extends SourceTask {
     /**
      * Returns whether to create class and package usage pages.
      */
+    @Input
     public boolean isUse() {
         return use;
     }
 
     /**
-     * Set's whether to create class and package usage pages. Defaults to false.
+     * Sets whether to create class and package usage pages.
      */
     public void setUse(boolean use) {
         this.use = use;
     }
 
     /**
-     * Returns the browser window title for the documentation.
+     * Returns the browser window title for the documentation. Set to {@code null} when there is no window title.
      */
+    @Input @Optional
     public String getWindowTitle() {
         return windowTitle;
     }
 
     /**
-     * Set's the browser window title for the documentation.
+     * Sets the browser window title for the documentation.
      *
      * @param windowTitle A text for the windows title
      */
@@ -151,14 +156,15 @@ public class Groovydoc extends SourceTask {
     }
 
     /**
-     * Returns the title for the package index(first) page. Returns null if not set.
+     * Returns the title for the package index(first) page. Set to {@code null} when there is no document title.
      */
+    @Input @Optional
     public String getDocTitle() {
         return docTitle;
     }
 
     /**
-     * Set's title for the package index(first) page (optional).
+     * Sets title for the package index(first) page (optional).
      *
      * @param docTitle the docTitle as html-code
      */
@@ -167,14 +173,15 @@ public class Groovydoc extends SourceTask {
     }
 
     /**
-     * Returns the html header for each page. Returns null if not set.
+     * Returns the html header for each page. Set to {@code null} when there is no header.
      */
+    @Input @Optional
     public String getHeader() {
         return header;
     }
 
     /**
-     * Set's header text for each page (optional).
+     * Sets header text for each page (optional).
      *
      * @param header the header as html-code
      */
@@ -183,14 +190,15 @@ public class Groovydoc extends SourceTask {
     }
 
     /**
-     * Returns the html footer for each page. Returns null if not set.
+     * Returns the html footer for each page. Set to {@code null} when there is no footer.
      */
+    @Input @Optional
     public String getFooter() {
         return footer;
     }
 
     /**
-     * Set's footer text for each page (optional).
+     * Sets footer text for each page (optional).
      *
      * @param footer the footer as html-code
      */
@@ -199,14 +207,14 @@ public class Groovydoc extends SourceTask {
     }
 
     /**
-     * Returns a html file to be used for overview documentation. Returns null if such a file is not set.
+     * Returns a html file to be used for overview documentation. Set to {@code null} when there is no overview file.
      */
     public String getOverview() {
         return overview;
     }
 
     /**
-     * Set's a html file to be used for overview documentation (optional).
+     * Sets a html file to be used for overview documentation (optional).
      */
     public void setOverview(String overview) {
         this.overview = overview;
@@ -215,21 +223,22 @@ public class Groovydoc extends SourceTask {
     /**
      * Returns whether to include all classes and members (i.e. including private ones).
      */
+    @Input
     public boolean isIncludePrivate() {
         return includePrivate;
     }
 
     /**
-     * Set's whether to include all classes and members (i.e. including private ones) if set to true. Defaults to
-     * false.
+     * Sets whether to include all classes and members (i.e. including private ones) if set to true.
      */
     public void setIncludePrivate(boolean includePrivate) {
         this.includePrivate = includePrivate;
     }
 
     /**
-     * Returns links to groovydoc/javadoc output at the given URL.
+     * Returns the links to groovydoc/javadoc output at the given URL.
      */
+    @Input
     public Set<Link> getLinks() {
         return Collections.unmodifiableSet(links);
     }
@@ -238,7 +247,7 @@ public class Groovydoc extends SourceTask {
      * Sets links to groovydoc/javadoc output at the given URL.
      *
      * @param links The links to set
-     * @see #link(String, String[])
+     * @see #link(String, String...)
      */
     public void setLinks(Set<Link> links) {
         this.links = links;
@@ -257,7 +266,7 @@ public class Groovydoc extends SourceTask {
     /**
      * A Link class represent a link between groovydoc/javadoc output and url.
      */
-    public static class Link {
+    public static class Link implements Serializable {
         private List<String> packages = new ArrayList<String>();
         private String url;
 

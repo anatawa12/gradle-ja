@@ -160,7 +160,7 @@
                 <sourcefile file="settings.gradle" snippet="change-project"/>
             </sample>
             <para>Have a look at <apilink class="org.gradle.api.initialization.ProjectDescriptor"/> for more details.</para>
-            詳細については<apilink class="org.gradle.api.iniialization.ProjectDescriptor"/>をご参照ください。
+            詳細については<apilink class="org.gradle.api.initialization.ProjectDescriptor"/>をご参照ください。
         </section>
     </section>
     <section id='sec:initialization'>

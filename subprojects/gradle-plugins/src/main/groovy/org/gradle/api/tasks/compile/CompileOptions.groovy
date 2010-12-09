@@ -24,33 +24,89 @@ import org.gradle.api.tasks.Optional
  * @author Hans Dockter
  */
 class CompileOptions extends AbstractOptions {
+    /**
+     * Specifies whether the compile task should fail when compilation fails. The default is {@code true}.
+     */
     @Input
     boolean failOnError = true
     boolean verbose = false
     boolean listFiles = false
+
+    /**
+     * Specifies whether to log details of usage of deprecated members or classes. The default is {@code false}.
+     */
     boolean deprecation = false
+
+    /**
+     * Specifies whether to log warning messages. The default is {@code true}.
+     */
     boolean warnings = true
+
+    /**
+     * The source encoding name. Uses the platform default encoding if not specified. The default is {@code null}.
+     */
     @Input @Optional
     String encoding = null
     @Input
     boolean optimize
+
+    /**
+     * Specifies whether debugging information should be included in the generated {@code .class} files. The default
+     * is {@code true}.
+     */
     @Input
     boolean debug = true
+
+    /**
+     * The options for debugging information generation.
+     */
     @Nested
     DebugOptions debugOptions = new DebugOptions()
+
+    /**
+     * Specifies whether to run the compiler in a child process. The default is {@code false.
+     */
     boolean fork = false
+
+    /**
+     * The options for running the compiler in a child process.
+     */
     @Nested
     ForkOptions forkOptions = new ForkOptions()
+
+    /**
+     * Specifies whether to use the Ant {@code <depend>} task.
+     */
     boolean useDepend = false
+
+    /**
+     * The options for using the Ant {@code <depend>} task.
+     */
     DependOptions dependOptions = new DependOptions()
+
+    /**
+     * The compiler to use.
+     */
     @Input @Optional
     String compiler = null
     @Input
     boolean includeJavaRuntime = false
+
+    /**
+     * The bootstrap classpath to use when compiling.
+     */
     @Input @Optional
     String bootClasspath = null
+
+    /**
+     * The extension dirs to use when compiling.
+     */
     @Input @Optional
     String extensionDirs = null
+
+    /**
+     * The arguments to pass to the compiler.
+     */
     @Input
     List compilerArgs = []
 

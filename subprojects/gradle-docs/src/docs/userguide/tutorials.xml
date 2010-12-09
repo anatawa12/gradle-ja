@@ -73,7 +73,7 @@
     </section>
     <section condition="website">
         <title>次に何をするべき?<phrase role="original">Where to next?</phrase></title>
-        <para role="original">There are more tutorials and plenty of reference material in the <ulink url="website:userguide.html">user guide</ulink>.</para>
-        <para>さらに多くのチュートリアルやリファレンスが<ulink url="website:userguide.html">ユーザーガイド</ulink>にあります。</para>
+        <para role="original">There are more tutorials and plenty of reference material in the <ulink url="website:documentation.html">user guide</ulink>.</para>
+        <para>さらに多くのチュートリアルやリファレンスが<ulink url="website:documentation.html">ユーザーガイド</ulink>にあります。</para>
     </section>
 </chapter>

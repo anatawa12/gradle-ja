@@ -90,7 +90,7 @@ import java.util.Set;
  * <p>Projects are arranged into a hierarchy of projects. A project has a name, and a fully qualified path which
  * uniquely identifies it in the hierarchy.</p>
  *
- * <h3>Using a Project in a Build File</h3>
+ * <h3>Build scripts</h3>
  *
  * <p>Gradle executes the project's build file against the <code>Project</code> instance to configure the project. Any
  * property or method which your script uses which is not defined in the script is delegated through to the associated
@@ -191,8 +191,7 @@ public interface Project extends Comparable<Project> {
 
     /**
      * <p>Returns the root project for the hierarchy that this project belongs to.  In the case of a single-project
-     * build, this method returns this project.</p> <p/> <p>You can access this property in your build file using
-     * <code>rootProject</code></p>
+     * build, this method returns this project.</p>
      *
      * @return The root project. Never returns null.
      */
@@ -200,7 +199,7 @@ public interface Project extends Comparable<Project> {
 
     /**
      * <p>Returns the root directory of this project. The root directory is the project directory of the root
-     * project.</p> <p/> <p>You can access this property in your build file using <code>rootDir</code></p>
+     * project.</p>
      *
      * @return The root directory. Never returns null.
      */
@@ -208,8 +207,7 @@ public interface Project extends Comparable<Project> {
 
     /**
      * <p>Returns the build directory of this project.  The build directory is the directory which all artifacts are
-     * generated into.  The default value for the build directory is <code><i>projectDir</i>/build</code></p> <p/>
-     * <p>You can access this property in your build file using <code>buildDir</code></p>
+     * generated into.  The default value for the build directory is <code><i>projectDir</i>/build</code></p>
      *
      * @return The build directory. Never returns null.
      */
@@ -218,7 +216,7 @@ public interface Project extends Comparable<Project> {
     /**
      * <p>Sets the build directory of this project. The build directory is the directory which all artifacts are
      * generated into. The path parameter is evaluated as described for {@link #file(Object)}. This mean you can use,
-     * amongst other things, a relative or absolute path or File object to specify the build directory. </p>
+     * amongst other things, a relative or absolute path or File object to specify the build directory.</p>
      *
      * @param path The build directory. This is evaluated as for {@link #file(Object)}
      */
@@ -226,8 +224,7 @@ public interface Project extends Comparable<Project> {
 
     /**
      * <p>Returns the name of the build directory of this project. It is resolved relative to the project directory of
-     * this project to determine the build directory. The default value is {@value #DEFAULT_BUILD_DIR_NAME}.</p> <p/>
-     * <p>You can access this property in your build file using <code>buildDirName</code></p>
+     * this project to determine the build directory. The default value is {@value #DEFAULT_BUILD_DIR_NAME}.</p>
      *
      * @return The build dir name. Never returns null.
      */
@@ -245,16 +242,14 @@ public interface Project extends Comparable<Project> {
 
     /**
      * <p>Returns the build file Gradle will evaluate against this project object. The default is <code> {@value
-     * #DEFAULT_BUILD_FILE}</code>. If an embedded script is provided the build file will be null. <p/> <p>You can
-     * access this property in your build file using <code>buildFile</code></p>
+     * #DEFAULT_BUILD_FILE}</code>. If an embedded script is provided the build file will be null. </p>
      *
      * @return Current build file. May return null.
      */
     File getBuildFile();
 
     /**
-     * <p>Returns the parent project of this project, if any.</p> <p/> <p>You can access this property in your build
-     * file using <code>parent</code></p>
+     * <p>Returns the parent project of this project, if any.</p>
      *
      * @return The parent project, or null if this is the root project.
      */
@@ -262,8 +257,7 @@ public interface Project extends Comparable<Project> {
 
     /**
      * <p>Returns the name of this project. The project's name is not necessarily unique within a project hierarchy. You
-     * should use the {@link #getPath()} method for a unique identifier for the project.</p> <p/> <p>You can access this
-     * property in your build file using <code>name</code></p>
+     * should use the {@link #getPath()} method for a unique identifier for the project.</p>
      *
      * @return The name of this project. Never return null.
      */
@@ -284,36 +278,55 @@ public interface Project extends Comparable<Project> {
     void setDescription(String description);
 
     /**
-     * <p>Returns the group of this project. Gradle always uses the toString() value of a group. The group defaults to
-     * the path with dots a separators.</p> <p/> <p>You can access this property in your build file using
-     * <code>group</code></p>
+     * <p>Returns the group of this project. Gradle always uses the {@code toString()} value of the group. The group
+     * defaults to the path with dots a separators.</p>
      *
      * @return The group of this project. Never returns null.
      */
     Object getGroup();
 
     /**
-     * <p>Returns the version of this project. Gradle always uses the toString() value of a version. The version
-     * defaults to {@value #DEFAULT_VERSION}.</p> <p/> <p>You can access this property in your build file using
-     * <code>version</code></p>
+     * <p>Sets the group of this project.</p>
+     *
+     * @param group The group of this project. Must not be null.
+     */
+    void setGroup(Object group);
+
+    /**
+     * <p>Returns the version of this project. Gradle always uses the {@code toString()} value of the version. The
+     * version defaults to {@value #DEFAULT_VERSION}.</p>
      *
      * @return The version of this project. Never returns null.
      */
     Object getVersion();
 
     /**
-     * <p>Returns the status of this project. Gradle always uses the toString() value of a version. The status defaults
-     * to {@value #DEFAULT_STATUS}.</p> <p/> <p>You can access this property in your build file using
-     * <code>status</code></p> <p/> The status of the project is only relevant, if you upload libraries together with a
-     * module descriptor. The status specified here, will be part of this module descriptor.
+     * <p>Sets the version of this project.</p>
+     *
+     * @param version The version of this project. Must not be null.
+     */
+    void setVersion(Object version);
+
+    /**
+     * <p>Returns the status of this project. Gradle always uses the {@code toString()} value of the status. The status
+     * defaults to {@value #DEFAULT_STATUS}.</p>
+     *
+     * <p>The status of the project is only relevant, if you upload libraries together with a module descriptor. The
+     * status specified here, will be part of this module descriptor.</p>
      *
      * @return The status of this project. Never returns null.
      */
     Object getStatus();
 
     /**
-     * <p>Returns the direct children of this project.</p> <p/> <p>You can access this property in your build file using
-     * <code>childProjects</code></p>
+     * Sets the status of this project.
+     *
+     * @param status The status. Must not be null.
+     */
+    void setStatus(Object status);
+
+    /**
+     * <p>Returns the direct children of this project.</p>
      *
      * @return A map from child project name to child project. Returns an empty map if this this project does not have
      *         any children.
@@ -321,8 +334,7 @@ public interface Project extends Comparable<Project> {
     Map<String, Project> getChildProjects();
 
     /**
-     * <p>Returns the set of projects which this project depends on.</p> <p/> <p>You can access this property in your
-     * build file using <code>dependsOnProjects</code></p>
+     * <p>Returns the set of projects which this project depends on.</p>
      *
      * @return The set of projects. Returns an empty set if this project depends on no projects.
      */
@@ -330,11 +342,21 @@ public interface Project extends Comparable<Project> {
 
     /**
      * <p>Sets a property of this project.  This method searches for a property with the given name in the following
-     * locations, and sets the property on the first location where it finds the property.</p> <p/> <ol> <p/> <li>The
-     * project object itself.  For example, the <code>rootDir</code> project property.</li> <p/> <li>The project's
-     * {@link Convention} object.  For example, the <code>srcRootName</code> java plugin property.</li> <p/> <li>The
-     * project's additional properties.</li> <p/> </ol> <p/> <p>If the property is not found in any of these locations,
-     * it is added to the project's additional properties.</p>
+     * locations, and sets the property on the first location where it finds the property.</p>
+     *
+     * <ol>
+     *
+     * <li>The project object itself.  For example, the <code>rootDir</code> project property.</li>
+     *
+     * <li>The project's {@link Convention} object.  For example, the <code>srcRootName</code> java plugin
+     * property.</li>
+     *
+     * <li>The project's additional properties.</li>
+     *
+     * </ol>
+     *
+     * <p>If the property is not found in any of these locations, it is added to the project's additional
+     * properties.</p>
      *
      * @param name The name of the property
      * @param value The value of the property
@@ -347,23 +369,19 @@ public interface Project extends Comparable<Project> {
      * <code>name</code>. This method also allows you to access project properties from a scope where the property may
      * be hidden, such as, for example, from a method or closure. </p>
      *
-     * <p>You can access this property in your build file using <code>project</code></p>
-     *
      * @return This project. Never returns null.
      */
     Project getProject();
 
     /**
-     * <p>Returns the set containing this project and its subprojects.</p> <p/> <p>You can access this property in your
-     * build file using <code>allprojects</code></p>
+     * <p>Returns the set containing this project and its subprojects.</p>
      *
      * @return The set of projects.
      */
     Set<Project> getAllprojects();
 
     /**
-     * <p>Returns the set containing the subprojects of this project.</p> <p/> <p>You can access this property in your
-     * build file using <code>subprojects</code></p>
+     * <p>Returns the set containing the subprojects of this project.</p>
      *
      * @return The set of projects.  Returns an empty set if this project has no subprojects.
      */
@@ -393,10 +411,12 @@ public interface Project extends Comparable<Project> {
 
     /**
      * <p>Creates a {@link Task} with the given name and adds it to this project. Calling this method is equivalent to
-     * calling {@link #task(java.util.Map, String)} with an empty options map.</p> <p/> <p>After the task is added to
-     * the project, it is made available as a property of the project, so that you can reference the task by name in
-     * your build file.  See <a href="#properties">here</a> for more details</p> <p/> <p>If a task with the given name
-     * already exists in this project, an exception is thrown.</p>
+     * calling {@link #task(java.util.Map, String)} with an empty options map.</p>
+     *
+     * <p>After the task is added to the project, it is made available as a property of the project, so that you can
+     * reference the task by name in your build file.  See <a href="#properties">here</a> for more details</p>
+     *
+     * <p>If a task with the given name already exists in this project, an exception is thrown.</p>
      *
      * @param name The name of the task to be created
      * @return The newly created task object
@@ -406,18 +426,32 @@ public interface Project extends Comparable<Project> {
 
     /**
      * <p>Creates a {@link Task} with the given name and adds it to this project. A map of creation options can be
-     * passed to this method to control how the task is created. The following options are available:</p> <p/> <table>
-     * <p/> <tr><th>Option</th><th>Description</th><th>Default Value</th></tr> <p/> <tr><td><code>{@value
-     * org.gradle.api.Task#TASK_TYPE}</code></td><td>The class of the task to create.</td><td>{@link
-     * org.gradle.api.DefaultTask}</td></tr> <p/> <tr><td><code>{@value org.gradle.api.Task#TASK_OVERWRITE}</code></td><td>Replace
-     * an existing task?</td><td><code>false</code></td></tr> <p/> <tr><td><code>{@value
-     * org.gradle.api.Task#TASK_DEPENDS_ON}</code></td><td>A task name or set of task names which this task depends
-     * on</td><td><code>[]</code></td></tr> <p/> <tr><td><code>{@value org.gradle.api.Task#TASK_ACTION}</code></td><td>A
-     * closure or {@link Action} to add to the task.</td><td><code>null</code></td></tr> <p/> </table> <p/> <p>After the
-     * task is added to the project, it is made available as a property of the project, so that you can reference the
-     * task by name in your build file.  See <a href="#properties">here</a> for more details</p> <p/> <p>If a task with
-     * the given name already exists in this project and the <code>override</code> option is not set to true, an
-     * exception is thrown.</p>
+     * passed to this method to control how the task is created. The following options are available:</p>
+     *
+     * <table>
+     *
+     * <tr><th>Option</th><th>Description</th><th>Default Value</th></tr>
+     *
+     * <tr><td><code>{@value org.gradle.api.Task#TASK_TYPE}</code></td><td>The class of the task to
+     * create.</td><td>{@link org.gradle.api.DefaultTask}</td></tr>
+     *
+     * <tr><td><code>{@value org.gradle.api.Task#TASK_OVERWRITE}</code></td><td>Replace an existing
+     * task?</td><td><code>false</code></td></tr>
+     *
+     *
+     * <tr><td><code>{@value org.gradle.api.Task#TASK_DEPENDS_ON}</code></td><td>A task name or set of task names which
+     * this task depends on</td><td><code>[]</code></td></tr>
+     *
+     * <tr><td><code>{@value org.gradle.api.Task#TASK_ACTION}</code></td><td>A closure or {@link Action} to add to the
+     * task.</td><td><code>null</code></td></tr>
+     *
+     * </table>
+     *
+     * <p>After the task is added to the project, it is made available as a property of the project, so that you can
+     * reference the task by name in your build file.  See <a href="#properties">here</a> for more details</p>
+     *
+     * <p>If a task with the given name already exists in this project and the <code>override</code> option is not set
+     * to true, an exception is thrown.</p>
      *
      * @param args The task creation options.
      * @param name The name of the task to be created
@@ -429,11 +463,13 @@ public interface Project extends Comparable<Project> {
     /**
      * <p>Creates a {@link Task} with the given name and adds it to this project. Before the task is returned, the given
      * closure is executed to configure the task. A map of creation options can be passed to this method to control how
-     * the task is created. See {@link #task(java.util.Map, String)} for the available options.</p> <p/> <p>After the
-     * task is added to the project, it is made available as a property of the project, so that you can reference the
-     * task by name in your build file.  See <a href="#properties">here</a> for more details</p> <p/> <p>If a task with
-     * the given name already exists in this project and the <code>override</code> option is not set to true, an
-     * exception is thrown.</p>
+     * the task is created. See {@link #task(java.util.Map, String)} for the available options.</p>
+     *
+     * <p>After the task is added to the project, it is made available as a property of the project, so that you can
+     * reference the task by name in your build file.  See <a href="#properties">here</a> for more details</p>
+     *
+     * <p>If a task with the given name already exists in this project and the <code>override</code> option is not set
+     * to true, an exception is thrown.</p>
      *
      * @param args The task creation options.
      * @param name The name of the task to be created
@@ -458,10 +494,12 @@ public interface Project extends Comparable<Project> {
 
     /**
      * <p>Creates a {@link Task} with the given name and adds it to this project. Calling this method is equivalent to
-     * calling {@link #createTask(java.util.Map, String)} with an empty options map.</p> <p/> <p>After the task is added
-     * to the project, it is made available as a property of the project, so that you can reference the task by name in
-     * your build file.  See <a href="#properties">here</a> for more details</p> <p/> <p>If a task with the given name
-     * already exists in this project, an exception is thrown.</p>
+     * calling {@link #createTask(java.util.Map, String)} with an empty options map.</p>
+     *
+     * <p>After the task is added to the project, it is made available as a property of the project, so that you can
+     * reference the task by name in your build file.  See <a href="#properties">here</a> for more details</p>
+     *
+     * <p>If a task with the given name already exists in this project, an exception is thrown.</p>
      *
      * @param name The name of the task to be created
      * @return The newly created task object
@@ -474,10 +512,12 @@ public interface Project extends Comparable<Project> {
     /**
      * <p>Creates a {@link Task} with the given name and adds it to this project. Before the task is returned, the given
      * action is passed to the task's {@link Task#doFirst(Action)} method. Calling this method is equivalent to calling
-     * {@link #createTask(java.util.Map, String, Action)} with an empty options map.</p> <p/> <p>After the task is added
-     * to the project, it is made available as a property of the project, so that you can reference the task by name in
-     * your build file.  See <a href="#properties">here</a> for more details</p> <p/> <p>If a task with the given name
-     * already exists in this project, an exception is thrown.</p>
+     * {@link #createTask(java.util.Map, String, Action)} with an empty options map.</p>
+     *
+     * <p>After the task is added to the project, it is made available as a property of the project, so that you can
+     * reference the task by name in your build file.  See <a href="#properties">here</a> for more details</p>
+     *
+     * <p>If a task with the given name already exists in this project, an exception is thrown.</p>
      *
      * @param name The name of the task to be created
      * @param action The action to be passed to the {@link Task#doFirst(Action)} method of the created task.
@@ -490,16 +530,28 @@ public interface Project extends Comparable<Project> {
 
     /**
      * <p>Creates a {@link Task} with the given name and adds it to this project. A map of creation options can be
-     * passed to this method to control how the task is created. The following options are available:</p> <p/> <table>
-     * <p/> <tr><th>Option</th><th>Description</th><th>Default Value</th></tr> <p/> <tr><td><code>{@value
-     * org.gradle.api.Task#TASK_TYPE}</code></td><td>The class of the task to create.</td><td>{@link
-     * org.gradle.api.DefaultTask}</td></tr> <p/> <tr><td><code>{@value org.gradle.api.Task#TASK_OVERWRITE}</code></td><td>Replace
-     * an existing task?</td><td><code>false</code></td></tr> <p/> <tr><td><code>{@value
-     * org.gradle.api.Task#TASK_DEPENDS_ON}</code></td><td>A task name or set of task names which this task depends
-     * on</td><td><code>[]</code></td></tr> <p/> </table> <p/> <p>After the task is added to the project, it is made
-     * available as a property of the project, so that you can reference the task by name in your build file.  See <a
-     * href="#properties">here</a> for more details</p> <p/> <p>If a task with the given name already exists in this
-     * project and the <code>override</code> option is not set to true, an exception is thrown.</p>
+     * passed to this method to control how the task is created. The following options are available:</p>
+     *
+     * <table>
+     *
+     * <tr><th>Option</th><th>Description</th><th>Default Value</th></tr>
+     *
+     * <tr><td><code>{@value org.gradle.api.Task#TASK_TYPE}</code></td><td>The class of the task to
+     * create.</td><td>{@link org.gradle.api.DefaultTask}</td></tr>
+     *
+     * <tr><td><code>{@value org.gradle.api.Task#TASK_OVERWRITE}</code></td><td>Replace an existing
+     * task?</td><td><code>false</code></td></tr>
+     *
+     * <tr><td><code>{@value org.gradle.api.Task#TASK_DEPENDS_ON}</code></td><td>A task name or set of task names which
+     * this task depends on</td><td><code>[]</code></td></tr>
+     *
+     * </table>
+     *
+     * <p>After the task is added to the project, it is made available as a property of the project, so that you can
+     * reference the task by name in your build file.  See <a href="#properties">here</a> for more details</p>
+     *
+     * <p>If a task with the given name already exists in this project and the <code>override</code> option is not set
+     * to true, an exception is thrown.</p>
      *
      * @param args The task creation options.
      * @param name The name of the task to be created
@@ -514,10 +566,13 @@ public interface Project extends Comparable<Project> {
      * <p>Creates a {@link Task} with the given name and adds it to this project. Before the task is returned, the given
      * action is passed to the task's {@link Task#doFirst(Action)} method. A map of creation options can be passed to
      * this method to control how the task is created. See {@link #createTask(java.util.Map, String)} for the available
-     * options.</p> <p/> <p>After the task is added to the project, it is made available as a property of the project,
-     * so that you can reference the task by name in your build file.  See <a href="#properties">here</a> for more
-     * details</p> <p/> <p>If a task with the given name already exists in this project and the <code>override</code>
-     * option is not set to true, an exception is thrown.</p>
+     * options.</p>
+     *
+     * <p>After the task is added to the project, it is made available as a property of the project, so that you can
+     * reference the task by name in your build file.  See <a href="#properties">here</a> for more details</p>
+     *
+     * <p>If a task with the given name already exists in this project and the <code>override</code> option is not set
+     * to true, an exception is thrown.</p>
      *
      * @param args The task creation options.
      * @param name The name of the task to be created
@@ -532,10 +587,12 @@ public interface Project extends Comparable<Project> {
     /**
      * <p>Creates a {@link Task} with the given name and adds it to this project. Before the task is returned, the given
      * action closure is passed to the task's {@link Task#doFirst(Closure)} method. Calling this method is equivalent to
-     * calling {@link #createTask(java.util.Map, String, Closure)} with an empty options map.</p> <p/> <p>After the task
-     * is added to the project, it is made available as a property of the project, so that you can reference the task by
-     * name in your build file.  See <a href="#properties">here</a> for more details</p> <p/> <p>If a task with the
-     * given name already exists in this project, an exception is thrown.</p>
+     * calling {@link #createTask(java.util.Map, String, Closure)} with an empty options map.</p>
+     *
+     * <p>After the task is added to the project, it is made available as a property of the project, so that you can
+     * reference the task by name in your build file.  See <a href="#properties">here</a> for more details</p>
+     *
+     * <p>If a task with the given name already exists in this project, an exception is thrown.</p>
      *
      * @param name The name of the task to be created
      * @param action The closure to be passed to the {@link Task#doFirst(Closure)} method of the created task.
@@ -550,10 +607,13 @@ public interface Project extends Comparable<Project> {
      * <p>Creates a {@link Task} with the given name and adds it to this project. Before the task is returned, the given
      * action closure is passed to the task's {@link Task#doFirst(Closure)} method. A map of creation options can be
      * passed to this method to control how the task is created. See {@link #createTask(java.util.Map, String)} for the
-     * available options.</p> <p/> <p>After the task is added to the project, it is made available as a property of the
-     * project, so that you can reference the task by name in your build file.  See <a href="#properties">here</a> for
-     * more details</p> <p/> <p>If a task with the given name already exists in this project and the
-     * <code>override</code> option is not set to true, an exception is thrown.</p>
+     * available options.</p>
+     *
+     * <p>After the task is added to the project, it is made available as a property of the project, so that you can
+     * reference the task by name in your build file.  See <a href="#properties">here</a> for more details</p>
+     *
+     * <p>If a task with the given name already exists in this project and the <code>override</code> option is not set
+     * to true, an exception is thrown.</p>
      *
      * @param args The task creation options.
      * @param name The name of the task to be created
@@ -692,8 +752,7 @@ public interface Project extends Comparable<Project> {
     Set<Task> getTasksByName(String name, boolean recursive);
 
     /**
-     * <p>The directory containing the project build file.</p> <p/> <p>You can access this property in your build file
-     * using <code>projectDir</code></p>
+     * <p>The directory containing the project build file.</p>
      *
      * @return The project directory. Never returns null.
      */
@@ -953,7 +1012,7 @@ public interface Project extends Comparable<Project> {
 
     /**
      * <p>Returns the <code>AntBuilder</code> for this project. You can use this in your build file to execute ant
-     * tasks.</p> <p/> <p>You can access this property in your build file using <code>ant</code></p>
+     * tasks.</p>
      *
      * @return The <code>AntBuilder</code> for this project. Never returns null.
      */
@@ -971,8 +1030,7 @@ public interface Project extends Comparable<Project> {
     /**
      * <p>Executes the given closure against the <code>AntBuilder</code> for this project. You can use this in your
      * build file to execute ant tasks. The <code>AntBuild</code> is passed to the closure as the closure's
-     * delegate.</p> <p/> <p>You can call this method in your build file using <code>ant</code> followed by a code
-     * block.</p>
+     * delegate.</p>
      *
      * @param configureClosure The closure to execute against the <code>AntBuilder</code>.
      * @return The <code>AntBuilder</code>. Never returns null.
@@ -987,9 +1045,10 @@ public interface Project extends Comparable<Project> {
     ConfigurationContainer getConfigurations();
 
     /**
-     * Configures the dependency configurations for this project. Executes the given closure against the {@link
-     * org.gradle.api.artifacts.ConfigurationContainer} for this project. The {@link
-     * org.gradle.api.artifacts.ConfigurationContainer} is passed to the closure as the closure's delegate.
+     * <p>Configures the dependency configurations for this project.
+     *
+     * <p>This method executes the given closure against the {@link ConfigurationContainer} for this project. The {@link
+     * ConfigurationContainer} is passed to the closure as the closure's delegate.
      *
      * @param configureClosure the closure to use to configure the dependency configurations.
      */
@@ -1001,9 +1060,10 @@ public interface Project extends Comparable<Project> {
     ArtifactHandler getArtifacts();
 
     /**
-     * Configures the published artifacts for this project. Executes the given closure against the {@link
-     * ArtifactHandler} for this project. The {@link ArtifactHandler} is passed to the closure as the closure's
-     * delegate.
+     * <p>Configures the published artifacts for this project.
+     *
+     * <p>This method executes the given closure against the {@link ArtifactHandler} for this project. The {@link
+     * ArtifactHandler} is passed to the closure as the closure's delegate.
      *
      * @param configureClosure the closure to use to configure the published artifacts.
      */
@@ -1042,34 +1102,40 @@ public interface Project extends Comparable<Project> {
     TaskContainer getTasks();
 
     /**
-     * <p>Executes the given {@link Action} against the subprojects of this project.</p>
+     * <p>Configures the sub-projects of this project</p>
+     *
+     * <p>This method executes the given {@link Action} against the sub-projects of this project.</p>
      *
      * @param action The action to execute.
      */
     void subprojects(Action<? super Project> action);
 
     /**
-     * <p>Executes the given closure against each of the sub-projects of this project. The target project is passed to
-     * the closure as the closure's delegate. </p> <p/> <p>You can call this method in your build file using
-     * <code>subprojects</code> followed by a code block.</p>
+     * <p>Configures the sub-projects of this project.</p>
      *
-     * @param configureClosure The closure to execute. The closure receives no parameters.
+     * <p>This method executes the given closure against each of the sub-projects of this project. The target {@link
+     * Project} is passed to the closure as the closure's delegate.</p>
+     *
+     * @param configureClosure The closure to execute.
      */
     void subprojects(Closure configureClosure);
 
     /**
-     * <p>Executes the given {@link Action} against this project and its subprojects.</p>
+     * <p>Configures this project and each of its sub-projects.</p>
+     *
+     * <p>This method executes the given {@link Action} against this project and each of its sub-projects.</p>
      *
      * @param action The action to execute.
      */
     void allprojects(Action<? super Project> action);
 
     /**
-     * <p>Executes the given closure against this project and its sub-projects. The target project is passed to the
-     * closure as the closure's delegate.</p> <p/> <p>You can call this method in your build file using
-     * <code>allprojects</code> followed by a code block.</p>
+     * <p>Configures this project and each of its sub-projects.</p>
      *
-     * @param configureClosure The closure to execute. The closure receives no parameters.
+     * <p>This method executes the given closure against this project and its sub-projects. The target {@link Project}
+     * is passed to the closure as the closure's delegate.</p>
+     *
+     * @param configureClosure The closure to execute.
      */
     void allprojects(Closure configureClosure);
 
@@ -1151,16 +1217,14 @@ public interface Project extends Comparable<Project> {
     Object property(String propertyName) throws MissingPropertyException;
 
     /**
-     * <p>Returns the logger for this project. You can use this in your build file to write log messages.</p> <p/>
-     * <p>You can use this property in your build file using <code>logger</code>.</p>
+     * <p>Returns the logger for this project. You can use this in your build file to write log messages.</p>
      *
      * @return The logger. Never returns null.
      */
     Logger getLogger();
 
     /**
-     * <p>Returns the {@link org.gradle.api.invocation.Gradle} which this project belongs to.</p> <p/> <p>You can use
-     * this property in your build file using <code>gradle</code>.</p>
+     * <p>Returns the {@link org.gradle.api.invocation.Gradle} invocation which this project belongs to.</p>
      *
      * @return The Gradle object. Never returns null.
      */
@@ -1255,8 +1319,10 @@ public interface Project extends Comparable<Project> {
     RepositoryHandler getRepositories();
 
     /**
-     * Configures the repositories for this project. Executes the given closure against the {@link RepositoryHandler}
-     * for this project. The {@link RepositoryHandler} is passed to the closure as the closure's delegate.
+     * <p>Configures the repositories for this project.
+     *
+     * <p>This method executes the given closure against the {@link RepositoryHandler} for this project. The {@link
+     * RepositoryHandler} is passed to the closure as the closure's delegate.
      *
      * @param configureClosure the closure to use to configure the repositories.
      */
@@ -1280,8 +1346,10 @@ public interface Project extends Comparable<Project> {
     DependencyHandler getDependencies();
 
     /**
-     * Configures the dependencies for this project. Executes the given closure against the {@link DependencyHandler}
-     * for this project. The {@link DependencyHandler} is passed to the closure as the closure's delegate.
+     * <p>Configures the dependencies for this project.
+     *
+     * <p>This method executes the given closure against the {@link DependencyHandler} for this project. The {@link
+     * DependencyHandler} is passed to the closure as the closure's delegate.
      *
      * @param configureClosure the closure to use to configure the dependencies.
      */
@@ -1304,15 +1372,17 @@ public interface Project extends Comparable<Project> {
     ScriptHandler getBuildscript();
 
     /**
-     * Configures the build script classpath for this project. The given closure is executed against this project's
-     * {@link ScriptHandler}. The {@link ScriptHandler} is passed to the closure as the closure's delegate.
+     * <p>Configures the build script classpath for this project.
+     *
+     * <p>The given closure is executed against this project's {@link ScriptHandler}. The {@link ScriptHandler} is
+     * passed to the closure as the closure's delegate.
      *
      * @param configureClosure the closure to use to configure the build script classpath.
      */
     void buildscript(Closure configureClosure);
 
     /**
-     * Copy the specified files.  The given closure is used to configure a {@link CopySpec}, which is then used to copy
+     * Copies the specified files.  The given closure is used to configure a {@link CopySpec}, which is then used to copy
      * the files. Example:
      * <pre>
      * copy {

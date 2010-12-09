@@ -23,6 +23,7 @@ apply plugin: 'groovy'
 apply plugin: 'code-quality'
 apply plugin: 'idea'
 apply plugin: 'eclipse'
+apply from: '../gradle/codeQuality.gradle'
 
 repositories {
     mavenCentral()
@@ -39,7 +40,7 @@ dependencies {
     }
     groovy localGroovy()
     testCompile 'junit:junit:4.7'
-    testCompile 'net.sourceforge.htmlunit:htmlunit:2.7'
+    testCompile 'net.sourceforge.htmlunit:htmlunit:2.8'
 }
 
 webSrcDir = file('src')
@@ -68,12 +69,9 @@ task configureReleases << {
     gradleCoreProperties = GUtil.loadProperties(new File(generatedDocs, 'version.properties'))
 
     version = gradleCoreProperties.version
-    releases << new Release(title: 'Current Release', version: version)
-    stableVersion = '0.8'
-    if (stableVersion != version) {
-        releases << new Release(title: 'Current Stable Release', version: stableVersion)
-    }
-    releases << new Release(title: 'Previous Release', version: '0.7')
+    releases << new Release(version: version, status: 'Current Release')
+    releases << new Release(version: '0.8')
+    releases << new Release(version: '0.7')
 }
 
 task html(dependsOn: configureReleases) << {
@@ -83,7 +81,8 @@ task html(dependsOn: configureReleases) << {
     def binding = [
             php: new PhpIncludes(phpSrcDir: new File(webSrcDir, 'php')),
             currentRelease: releases[0],
-            releases: releases
+            releases: releases,
+            previousReleases: releases.subList(1, releases.size())
     ]
     binding.sidebar = engine.createTemplate(new File(webSrcDir, 'sidebar.html')).make(binding).toString()
     def skeletonTemplate = engine.createTemplate(new File(webSrcDir, 'skeleton.html'))
@@ -123,13 +122,27 @@ task html(dependsOn: configureReleases) << {
     }
 }
 
+assemble.dependsOn html
+
 test {
     dependsOn html
     systemProperties 'test.base.uri': buildWebsiteDir.toURI()
+    systemProperties 'test.ignore.docs': true
     inputs.dir buildWebsiteDir
 }
 
-task uploadWebsite(dependsOn: html) << {
+task testLatestWebsite(type: Test) {
+    systemProperties 'test.base.uri': 'http://www.gradle.org/latest/'
+    systemProperties 'test.ignore.docs': false
+}
+
+task install(type: Copy) {
+    dependsOn html
+    from buildWebsiteDir
+    into "${System.getProperty('user.home')}/Sites/gradle"
+}
+
+task uploadWebsite(dependsOn: html, type: Ftp) {
     ftp(action: 'delete') {
         fileset() {
             include(name: '*.html')
@@ -141,7 +154,7 @@ task uploadWebsite(dependsOn: html) << {
     }
 }
 
-task uploadLatestWebsite(dependsOn: html) << {
+task uploadLatestWebsite(dependsOn: html, type: Ftp) {
     ftp(action: 'delete', remotedir: 'latest') {
         fileset() {
             include(name: '*.html')
@@ -154,6 +167,48 @@ task uploadLatestWebsite(dependsOn: html) << {
 }
 
 task ciBuild(dependsOn: [clean, html, uploadLatestWebsite])
+
+tasks.withType(Ftp).allObjects { ftp ->
+    ftp.ftpAntClasspath = configurations.ftpAntTask
+    ftp.websiteFtpUserName = project.hasProperty('websiteFtpUserName') ? project.websiteFtpUserName : null
+    ftp.websiteFtpUserPassword = project.hasProperty('websiteFtpUserPassword') ? project.websiteFtpUserPassword : null
+}
+
+class Ftp extends DefaultTask {
+    final List ftpActions = []
+
+    def ftp(Map args, Closure cl = {}) {
+        ftpActions << [args: args, action: cl]
+    }
+
+    @InputFiles
+    FileCollection ftpAntClasspath
+
+    @Input
+    String websiteFtpUserName
+
+    @Input
+    String websiteFtpUserPassword
+
+    @TaskAction
+    def executeActions() {
+        ant.taskdef(name: 'ftp',
+                classname: 'org.apache.tools.ant.taskdefs.optional.net.FTP',
+                classpath: ftpAntClasspath.asPath)
+        ftpActions.each { a ->
+            Map ftpArgs = a.args + [
+                    server: 'ftp.gradle.org',
+                    userid: websiteFtpUserName,
+                    password: websiteFtpUserPassword
+            ]
+            Closure cl = a.action
+            cl.delegate = ant
+            ant.ftp(ftpArgs) {
+                cl()
+            }
+        }
+    }
+}
 
 void ftp(Map args, Closure antFileset = {}) {
     ant {
@@ -244,10 +299,57 @@ class PhpIncludes {
 
 class Release {
     def String title
+    def String status
     def String version
-    def String getReleaseNoteVersion() {
+
+    def String getMajorVersion() {
         Matcher matcher = version =~ /(\d+\.\d+).*/
         matcher.matches()
         return matcher.group(1)
+    }
+
+    def String getReleaseNoteVersion() {
+        return majorVersion
+    }
+
+    def String getDisplayName() {
+        return status ? "Gradle $version ($status)" : "Gradle $version"
+    }
+
+    def String getDocsUrl() {
+        return "/${version}/docs"
+    }
+
+    def String getReleaseNotesUrl() {
+        return "http://docs.codehaus.org/display/GRADLE/Gradle+${releaseNoteVersion}+Release+Notes"
+    }
+
+    def String getUserGuideHtmlUrl() {
+        return "${docsUrl}/userguide/userguide.html"
+    }
+
+    def String getUserGuideSingleHtmlUrl() {
+        return "${docsUrl}/userguide/userguide_single.html"
+    }
+
+    def String getUserGuidePdfUrl() {
+        return "${docsUrl}/userguide/userguide.pdf"
+    }
+
+    def boolean getHasDsldoc() {
+        def version = majorVersion as BigDecimal
+        return version >= 0.9
+    }
+
+    def String getDsldocUrl() {
+        return "${docsUrl}/dsl/index.html"
+    }
+
+    def String getJavadocUrl() {
+        return "${docsUrl}/javadoc/index.html"
+    }
+
+    def String getGroovydocUrl() {
+        return "${docsUrl}/groovydoc/index.html"
     }
 }
