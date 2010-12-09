@@ -14,20 +14,20 @@
   ~ limitations under the License.
   -->
 <chapter id='multi_project_builds' xmlns:xi="http://www.w3.org/2001/XInclude">
-    <title>マルチプロジェクトのビルド / Multi-project Builds</title>
-    <para>The powerful support for multi-project builds is one of Gradle's unique selling points. This topic is also the
+    <title>マルチプロジェクトのビルド<phrase role="original">Multi-project Builds</phrase></title>
+    <para role="original">The powerful support for multi-project builds is one of Gradle's unique selling points. This topic is also the
         most intellectually challenging.
     </para>
     <para>マルチプロジェクトはビルドツールの知恵の絞りどころであり、とてもやりがいのあるテーマです。Gradleはマルチプロジェクトを強力にサポートしていて、ユニークなセールスポイントの一つとなっています。</para>
     <section id='sec:cross_project_configuration'>
-        <title>クロスプロジェクト設定 / Cross project configuration</title>
-        <para>Let's start with a very simple multi-project build. After all Gradle is a general purpose build tool at
+        <title>クロスプロジェクト設定<phrase role="original">Cross project configuration</phrase></title>
+        <para role="original">Let's start with a very simple multi-project build. After all Gradle is a general purpose build tool at
             its core, so the projects don't have to be java projects. Our first examples are about marine life.
         </para>
         まず、ごく簡単な例から始めましょう。なんと言ってもGradleは汎用のビルドツールですので、扱うプロジェクトがJavaプロジェクトである必要はありません。これから例として使用するプロジェクトは、海洋生物に関するものです。
         <section>
-            <title>共通の振る舞いを定義する / Defining common behavior</title>
-            <para>We have the following project tree. This is a multi-project build with a root project
+            <title>共通の振る舞いを定義する<phrase role="original">Defining common behavior</phrase></title>
+            <para role="original">We have the following project tree. This is a multi-project build with a root project
                 <literal>water</literal> and a subproject <literal>bluewhale</literal>.
             </para>
             <para>このプロジェクトは、以下のような木構造になっています。ルートプロジェクト「<literal>water</literal>」と、サブプロジェクトの「<literal>bluewhale</literal>(シロナガスクジラ)」からなるマルチプロジェクトです。</para>
@@ -39,7 +39,7 @@
                 </layout>
                 <sourcefile file="settings.gradle"/>
             </sample>
-            <para>And where is the build script for the <literal>bluewhale</literal> project? In Gradle build scripts are optional.
+            <para role="original">And where is the build script for the <literal>bluewhale</literal> project? In Gradle build scripts are optional.
                 Obviously for a single project build, a project without a build script doesn't make much sense. For
                 multiproject builds the situation is different. Let's look at the build script for the <literal>water</literal> project and
                 execute it:
@@ -49,14 +49,14 @@
                 <sourcefile file="build.gradle"/>
                 <output args="-q hello"/>
             </sample>
-            <para>Gradle allows you to access any project of the multi-project build from any build script. The Project
+            <para role="original">Gradle allows you to access any project of the multi-project build from any build script. The Project
                 API provides a method called <literal>project()</literal>, which takes a path as an argument and returns
                 the Project object for this path. The capability to configure a project build from any build script we
                 call <firstterm>cross project configuration</firstterm>. Gradle implements this via
                 <firstterm>configuration injection</firstterm>.
             </para>
             <para>Gradleでは、マルチプロジェクトを構成するすべてのプロジェクトに、どのビルドスクリプトからでもアクセスすることができます。ビルドスクリプトでは<literal>project()</literal>というメソッドを使用でき、引数にプロジェクトへのパスを渡せばProjectオブジェクトを取得できます。つまり、あるプロジェクトを設定しようとしたとき、マルチプロジェクト内どのビルドスクリプトからでもプロジェクトを取得して設定できるのです。このことを、私たちは<firstterm>クロスプロジェクト設定</firstterm>と呼んでいます。Gradleは、この機能を<firstterm>設定のインジェクション</firstterm>を利用して実現します。</para>
-            <para>We are not that happy with the build script of the <literal>water</literal>  project. It is inconvenient to add the task
+            <para role="original">We are not that happy with the build script of the <literal>water</literal>  project. It is inconvenient to add the task
                 explicitly for every project. We can do better. Let's first add another project called
                 <literal>krill</literal> to our multi-project build.
             </para>
@@ -70,13 +70,13 @@
                 </layout>
                 <sourcefile file="settings.gradle"/>
             </sample>
-            <para>Now we rewrite the <literal>water</literal> build script and boil it down to a single line.</para>
+            <para role="original">Now we rewrite the <literal>water</literal> build script and boil it down to a single line.</para>
             <para><literal>water</literal>ビルドスクリプトを書き直し、一行で記述するようにします。</para>
             <sample id="multiprojectAddKrill" dir="userguide/multiproject/addKrill/water" title="Waterプロジェクトのビルドスクリプト / Water project build script">
                 <sourcefile file="build.gradle"/>
                 <output args="-q hello"/>
             </sample>
-            <para>Is this cool or is this cool? And how does this work? The Project API provides a property
+            <para role="original">Is this cool or is this cool? And how does this work? The Project API provides a property
                 <literal>allprojects</literal>
                 which returns a list with the current project and all its subprojects underneath it. If you call
                 <literal>allprojects</literal>
@@ -85,7 +85,7 @@
                 that would be more verbose.
             </para>
             <para>素晴らしい。これはどういう原理で動いているのでしょう。プロジェクトAPIは<literal>allprojects</literal>というプロパティを提供しており、そのプロパティには現在のプロジェクトと、そのサブプロジェクトのリストが格納されています。 <literal>allprojects</literal>をクロージャとともに呼び出せば、クロージャの実行が<literal>allprojects</literal>に格納されたすべてのプロジェクトに委譲されます。もちろん<literal>allprojects</literal>をeachでループすることもできますが、記述が冗長になってしまいます。</para>
-            <para>Other build systems use inheritance as the primary means for defining common behavior. We also offer
+            <para role="original">Other build systems use inheritance as the primary means for defining common behavior. We also offer
                 inheritance for projects as you will see later. But Gradle uses configuration injection as the usual way
                 of defining common behavior. We think it provides a very powerful and flexible way of configuring
                 multiproject builds.
@@ -94,20 +94,20 @@
         </section>
     </section>
     <section id='sec:subproject_configuration'>
-        <title>サブプロジェクトの設定 / Subproject configuration</title>
-        <para>The Project API also provides a property for accessing the subprojects only.
+        <title>サブプロジェクトの設定<phrase role="original">Subproject configuration</phrase></title>
+        <para role="original">The Project API also provides a property for accessing the subprojects only.
         </para>
         <para>プロジェクトAPIはサブプロジェクトのみにアクセスする方法も提供します。</para>
         <section>
-            <title>共通の振る舞いを定義する / Defining common behavior</title>
+            <title>共通の振る舞いを定義する<phrase role="original">Defining common behavior</phrase></title>
             <sample id="multiprojectUseSubprojects" dir="userguide/multiproject/useSubprojects/water" title="サブプロジェクト共通の振る舞いとすべてのプロジェクト共通の振る舞いをそれぞれ定義する / Defining common behaviour of all projects and subprojects">
                 <sourcefile file="build.gradle"/>
                 <output args="-q hello"/>
             </sample>
         </section>
         <section id='sub:adding_specific_behavior'>
-            <title>個別の振る舞いを追加する / Adding specific behavior</title>
-            <para>You can add specific behavior on top of the common behavior. Usually we put the project specific
+            <title>個別の振る舞いを追加する<phrase role="original">Adding specific behavior</phrase></title>
+            <para role="original">You can add specific behavior on top of the common behavior. Usually we put the project specific
                 behavior in the build script of the project where we want to apply this specific behavior. But as we
                 have already seen, we don't have to do it this way. We could add project specific behavior for the
                 <literal>bluewhale</literal> project like this:
@@ -117,7 +117,7 @@
                 <sourcefile file="build.gradle"/>
                 <output args="-q hello"/>
             </sample>
-            <para>As we have said, we usually prefer to put project specific behavior into the build script of this
+            <para role="original">As we have said, we usually prefer to put project specific behavior into the build script of this
                 project. Let's refactor and also add some project specific behavior to the <literal>krill</literal>
                 project.
             </para>
@@ -139,14 +139,14 @@
             </sample>
         </section>
         <section id='sub:project_filtering'>
-            <title>プロジェクトのフィルタリング / Project filtering</title>
-            <para>To show more of the power of configuration injection, let's add another project
+            <title>プロジェクトのフィルタリング<phrase role="original">Project filtering</phrase></title>
+            <para role="original">To show more of the power of configuration injection, let's add another project
                 called <literal>tropicalFish</literal> and add more behavior to the build via the build script of the
                 <literal>water</literal> project.
             </para>
             <para>設定のインジェクションが持つもっと大きな力をお見せするために、<literal>tropicalFish(熱帯魚)</literal>プロジェクトを追加します。このプロジェクトに、<literal>water</literal>プロジェクトのビルドスクリプトから振る舞いを定義していきます。</para>
             <section id='ssub:filtering_by_name'>
-                <title>名前によるフィルタリング / Filtering by name</title>
+                <title>名前によるフィルタリング<phrase role="original">Filtering by name</phrase></title>
                 <sample id="multiprojectAddTropical" dir="userguide/multiproject/addTropical/water" includeLocation="true" title="プロジェクトに振る舞いを追加する(プロジェクト名によるフィルタリング) / Adding custom behaviour to some projects (filtered by project name)">
                     <layout>
                         build.gradle
@@ -161,14 +161,14 @@
                     <sourcefile file="build.gradle"/>
                     <output args="-q hello"/>
                 </sample>
-                <para>The <literal>configure()</literal> method takes a list as an argument and applies the
+                <para role="original">The <literal>configure()</literal> method takes a list as an argument and applies the
                     configuration to the projects in this list.
                 </para>
                 <para>configure()は引数にリストを取るメソッドで、そのリストに格納されたプロジェクトに設定を適用します。</para>
             </section>
             <section id='ssub:filtering_by_properties'>
-                <title>プロパティによるフィルタリング / Filtering by properties</title>
-                <para>Using the project name for filtering is one option. Using dynamic project properties is another.
+                <title>プロパティによるフィルタリング<phrase role="original">Filtering by properties</phrase></title>
+                <para role="original">Using the project name for filtering is one option. Using dynamic project properties is another.
                 </para>
                 <para>フィルタリングに使用できるのはプロジェクト名だけではありません。プロジェクトの動的なプロパティもフィルタリングに使用できます。</para>
                 <sample id="multiprojectTropicalWithProperties" dir="userguide/multiproject/tropicalWithProperties/water" includeLocation="true" title="プロジェクトに振る舞いを追加する(プロパティによるフィルタリング) / Adding custom behaviour to some projects (filtered by project properties)">
@@ -189,7 +189,7 @@
                     <sourcefile file="build.gradle"/>
                     <output args="-q hello"/>
                 </sample>
-                <para>In the build file of the <literal>water</literal> project we use an <literal>afterEvaluate</literal>
+                <para role="original">In the build file of the <literal>water</literal> project we use an <literal>afterEvaluate</literal>
                     notification. This means that the closure we are passing gets evaluated <emphasis>after</emphasis>
                     the build scripts of the subproject are evaluated. As the property <literal>arctic</literal>
                     is set in those build scripts, we have to do it this way. You will find more on this topic in
@@ -200,8 +200,8 @@
         </section>
     </section>
     <section id='sec:execution_rules_for_multi_project_builds'>
-        <title>マルチプロジェクトのビルド実行ルール / Execution rules for multi-project builds</title>
-        <para>When we have executed the <literal>hello</literal> task from the root project dir things behaved in an
+        <title>マルチプロジェクトのビルド実行ルール<phrase role="original">Execution rules for multi-project builds</phrase></title>
+        <para role="original">When we have executed the <literal>hello</literal> task from the root project dir things behaved in an
             intuitive way. All the <literal>hello</literal> tasks of the different projects were executed. Let's switch
             to the <literal>bluewhale</literal> dir and see what happens if we execute Gradle from there.
         </para>
@@ -209,7 +209,7 @@
         <sample id="multiprojectSubBuild" dir="userguide/multiproject/tropicalWithProperties/water/bluewhale" title="サブプロジェクトからビルドを実行する / Running build from subproject">
            <output args='-q hello'/>
         </sample>
-        <para>The basic rule behind Gradle's behavior is simple. Gradle looks down the hierarchy, starting with the
+        <para role="original">The basic rule behind Gradle's behavior is simple. Gradle looks down the hierarchy, starting with the
             <emphasis>current dir</emphasis>, for tasks with the name
             <literal>hello</literal>
             an executes them. One thing is very important to note. Gradle
@@ -228,12 +228,12 @@
             <sourcefile file="krill/build.gradle"/>
             <output args="-q distanceToIceberg"/>
         </sample>
-        <para>Here the output without the <literal>-q</literal> option:</para>
+        <para role="original">Here the output without the <literal>-q</literal> option:</para>
         <para><literal>-q</literal>オプションを外すと、出力結果は以下のようになります。:</para>
         <sample id="multiprojectPartialTasksNotQuiet" dir="userguide/multiproject/partialTasks/water" title="プロジェクトの評価と実行 / Evaluation and execution of projects">
             <output args="distanceToIceberg"/>
         </sample>
-        <para>The build is executed from the <literal>water</literal> project. Neither <literal>water</literal> nor
+        <para role="original">The build is executed from the <literal>water</literal> project. Neither <literal>water</literal> nor
             <literal>tropicalFish</literal> have a task with the name <literal>distanceToIceberg</literal>. Gradle does
             not care. The simple rule mentioned already above is: Execute all tasks down the hierarchy which have this
             name. Only complain if there is <emphasis>no</emphasis> such task!
@@ -241,8 +241,8 @@
         <para>このビルドは<literal>water</literal>プロジェクトのディレクトリで実行しています。<literal>water</literal>プロジェクトも<literal>tropicalFish</literal>プロジェクトもdistanceToIcebergという名前のタスクは持っていませんが、Gradleはそんなこと気にしません。前述の実行ルールに従って、プロジェクト階層にあるdistanceToIcebergという名前のタスクをすべて実行するだけです。distanceToIcebergタスクが一つもないときだけ警告を出してきます。</para>
     </section>
     <section id='sec:running_partial_build_from_the_root'>
-        <title>絶対パスによるタスクの実行 / Running tasks by their absolute path</title>
-        <para>As we have seen, you can run a multi-project build by entering any subproject dir and execute the build
+        <title>絶対パスによるタスクの実行<phrase role="original">Running tasks by their absolute path</phrase></title>
+        <para role="original">As we have seen, you can run a multi-project build by entering any subproject dir and execute the build
             from there. All matching task names of the project hierarchy starting with the current dir are executed. But
             Gradle also offers to execute tasks by their absolute path (see also <xref linkend='sec:project_and_task_paths'/>):
         </para>
@@ -250,7 +250,7 @@
         <sample id="multiprojectAbsoluteTaskPaths" dir="userguide/multiproject/tropicalWithProperties/water/tropicalFish" title="絶対パスによるタスクの実行 / Running tasks by their absolute path">
             <output args="-q :hello :krill:hello hello"/>
         </sample>
-        <para>The build is executed from the <literal>tropicalFish</literal> project. We execute the <literal>hello</literal>
+        <para role="original">The build is executed from the <literal>tropicalFish</literal> project. We execute the <literal>hello</literal>
             tasks of the <literal>water</literal>, the <literal>krill</literal> and the <literal>tropicalFish</literal>
             project. The first two tasks are specified by there absolute path, the last task is executed on the name
             matching mechanism described above.
@@ -258,8 +258,8 @@
         <para>ビルドは<literal>tropicalFish</literal>プロジェクトのディレクトリで実行されています。上記の例では、ルートプロジェクト<literal>watar</literal>、<literal>krill</literal>プロジェクト、そしてカレントのサブプロジェクト<literal>tropicalFish</literal>の<literal>hello</literal>がそれぞれ実行されます。</para>
     </section>
     <section id='sec:project_and_task_paths'>
-        <title>プロジェクトとタスクのパス / Project and task paths</title>
-        <para>A project path has the following pattern: It starts always with a colon, which denotes the root project.
+        <title>プロジェクトとタスクのパス<phrase role="original">Project and task paths</phrase></title>
+        <para role="original">A project path has the following pattern: It starts always with a colon, which denotes the root project.
             The root project is the only project in a path that is not specified by its name. The path
             <literal>:bluewhale</literal>
             corresponds to the file system path
@@ -267,12 +267,12 @@
             in the case of the example above.
         </para>
         <para>プロジェクトのパスは、ルートプロジェクトを表すコロンで始まります。ルートプロジェクトはパス内では名前が指定されません。<literal>:bluewhale</literal>はファイルシステムで言えば「water/bluewhale」に対応します。</para>
-        <para>The path of a task is simply its project path plus the task name. For example <literal>
+        <para role="original">The path of a task is simply its project path plus the task name. For example <literal>
             :bluewhale:hello</literal>. Within a project you can address a task of the same project just by its name.
             This is interpreted as a relative path.
         </para>
         <para>タスクのパスは、単純にプロジェクトパスにタスク名を加えるだけです(例 <literal>:bluewhale:hello</literal>)。なお、カレントのプロジェクトにあるタスクは、タスク名だけで指定できます。これは、絶対パスに対して、相対パスと考えることができます。</para>
-        <para>Originally Gradle has used the
+        <para role="original">Originally Gradle has used the
             <literal>'/'</literal>
             character as a natural path separator. With the introduction of directory tasks (see <xref
                     linkend='sec:directory_creation'/>) this was no longer possible, as the name of the directory task
@@ -283,16 +283,16 @@
         <para>以前Gradleでは、プロジェクトのパスセパレータとして<literal>「/」</literal>を使用していました。しかし、このセパレータ文字は<literal>directory</literal>タスク(<xref linkend='sec:directory_creation'/>参照)が導入されたときに廃止されています。<literal>directory</literal>タスクのタスク名に、<literal>「/」</literal>が含まれるためです。</para>
     </section>
     <section id='sec:dependencies_which_dependencies'>
-        <title>依存関係 - なんの依存関係？ / Dependencies - Which dependencies?</title>
-        <para>The examples from the last section were special, as the projects had no <emphasis>Execution
+        <title>依存関係 - なんの依存関係？<phrase role="original">Dependencies - Which dependencies?</phrase></title>
+        <para role="original">The examples from the last section were special, as the projects had no <emphasis>Execution
             Dependencies</emphasis>. They had only <emphasis>Configuration Dependencies</emphasis>. Here is an example
             where this is different:
         </para>
         <para>先ほどまでの例は特殊なもので、プロジェクトの間で設定情報は依存関係がありましたが、実行に関しては依存関係がありませんでした。ここでは、実行の依存関係について見てきます。</para>
         <section id='sub:execution_time_dependencies'>
-            <title>実行に関する依存関係 / Execution dependencies</title>
+            <title>実行に関する依存関係<phrase role="original">Execution dependencies</phrase></title>
             <section id='ssub:dependencies_and_execution_order'>
-                <title>依存関係と実行順序 / Dependencies and execution order</title>
+                <title>依存関係と実行順序<phrase role="original">Dependencies and execution order</phrase></title>
                 <sample id="multiprojectFirstMessages" dir="userguide/multiproject/dependencies/firstMessages/messages" includeLocation="true" title="依存関係とビルド実行順序 / Dependencies and execution order">
                     <layout>
                         settings.gradle
@@ -306,7 +306,7 @@
                     <sourcefile file="producer/build.gradle"/>
                     <output args="-q action"/>
                 </sample>
-                <para>This did not work out. If nothing else is defined, Gradle executes the task in alphanumeric order.
+                <para role="original">This did not work out. If nothing else is defined, Gradle executes the task in alphanumeric order.
                     Therefore
                     <literal>:consumer:action</literal>
                     is executed before <literal>:producer:action</literal>. Let's try to solve this with a hack and
@@ -326,14 +326,14 @@
                     <sourcefile file="consumer/build.gradle"/>
                     <output args="-q action"/>
                 </sample>
-                <para>Now we take the air out of this hack. We simply switch to the <literal>consumer</literal> dir and
+                <para role="original">Now we take the air out of this hack. We simply switch to the <literal>consumer</literal> dir and
                     execute the build.
                 </para>
                 <para>ただ、このハックは簡単に破綻してしまいます。consumerディレクトリに移動して、ビルドしてみましょう。</para>
                 <sample id="multiprojectMessagesHackBroken" dir="userguide/multiproject/dependencies/messagesHack/messages/consumer" title="依存関係とビルド実行順序 / Dependencies and execution order">
                     <output args="-q action"/>
                 </sample>
-                <para>For Gradle the two
+                <para role="original">For Gradle the two
                     <literal>action</literal>
                     tasks are just not related. If you execute the build from the
                     <literal>messages</literal>
@@ -346,7 +346,7 @@
                 <para>結局、Gradleにとってこの二つのタスクはなんの関係もない別個のタスクにすぎません。確かに、<literal>messages</literal>プロジェクトをビルドすればGradleはこの二つのタスクを両方とも実行します。しかし、それは二つのタスクが同じ名前のタスクであり、両方とも実行ディレクトリ以下にあるからです。最後の例では一方のタスクが実行ディレクトリから外れたので、片方のタスクしか実行されませんでした。依存関係を定義するには、それに適した方法が必要になります。</para>
             </section>
             <section id='ssub:declaring_dependencies'>
-                <title>依存関係を宣言する / Declaring dependencies</title>
+                <title>依存関係を宣言する<phrase role="original">Declaring dependencies</phrase></title>
                 <sample id="multiprojectMessagesDependencies" dir="userguide/multiproject/dependencies/messagesWithDependencies/messages" includeLocation="true" title="依存関係を宣言する">
                     <layout>
                         settings.gradle
@@ -360,12 +360,12 @@
                     <sourcefile file="producer/build.gradle"/>
                     <output args="-q action"/>
                 </sample>
-                <para>Running this from the <literal>consumer</literal> directory gives:</para>
+                <para role="original">Running this from the <literal>consumer</literal> directory gives:</para>
                 <para><literal>consumer</literal>ディレクトリでビルドすると、以下のようになります。</para>
                 <sample id="multiprojectMessagesDependenciesSubBuild" dir="userguide/multiproject/dependencies/messagesWithDependencies/messages/consumer" title="依存関係を宣言する">
                     <output args="-q action"/>
                 </sample>
-                <para>We have now declared that the
+                <para role="original">We have now declared that the
                     <literal>consumer</literal>
                     project has an
                     <emphasis>execution dependency</emphasis>
@@ -381,8 +381,8 @@
                 <para><literal>consumer</literal>プロジェクトは<literal>producer</literal>プロジェクトの実行に依存することを宣言しました。プロジェクト間の実行依存の宣言はGradleの構文糖衣で、実際にはタスク間の実行依存を作成しています。タスクの絶対パスを使って、プロジェクト間にまたがるタスクの実行依存関係を手で定義することもできます。</para>
             </section>
             <section id='ssub:the_nature_of_project_dependencies'>
-                <title>プロジェクト間依存関係の性質 / The nature of project dependencies</title>
-                <para>Let's change the naming of our tasks and execute the build.
+                <title>プロジェクト間依存関係の性質<phrase role="original">The nature of project dependencies</phrase></title>
+                <para role="original">Let's change the naming of our tasks and execute the build.
                 </para>
                 <para>タスクの名前を変えてビルドしてみましょう。</para>
                 <sample id="multiprojectMessagesDifferentTaskNames" dir="userguide/multiproject/dependencies/messagesDifferentTaskNames/messages" title="プロジェクト間の実行依存 / Project execution dependencies">
@@ -390,7 +390,7 @@
                     <sourcefile file="producer/build.gradle"/>
                     <output args="-q consume"/>
                 </sample>
-                <para>Oops. Why does this not work? The
+                <para role="original">Oops. Why does this not work? The
                     <literal>dependsOn</literal>
                     command is created for projects with a common lifecycle. Provided you have two Java projects where
                     one depends on the other. If you trigger a compile for the dependent project you don't want that
@@ -409,8 +409,8 @@
             </section>
         </section>
         <section id='sub:configuration_time_dependencies'>
-            <title>評価順序の依存関係 / Configuration time dependencies</title>
-            <para>Let's have one more example with our producer-consumer build before we enter
+            <title>評価順序の依存関係<phrase role="original">Configuration time dependencies</phrase></title>
+            <para role="original">Let's have one more example with our producer-consumer build before we enter
                 <emphasis>Java</emphasis>
                 land. We add a property to the producer project and create now a configuration time dependency from
                 consumer on producer.
@@ -421,7 +421,7 @@
                 <sourcefile file="producer/build.gradle"/>
                 <output args="-q consume"/>
             </sample>
-            <para>The default
+            <para role="original">The default
                 <emphasis>evaluation</emphasis>
                 order of the projects is alphanumeric (for the same nesting level). Therefore the
                 <literal>consumer</literal>
@@ -442,7 +442,7 @@
                 <sourcefile file="consumer/build.gradle"/>
                 <output args="-q consume"/>
             </sample>
-            <para>The command
+            <para role="original">The command
                 <literal>evaluationDependsOn</literal>
                 triggers the evaluation of
                 <literal>producer</literal>
@@ -457,13 +457,13 @@
                 <sourcefile file="consumer/build.gradle"/>
                 <output args="-q consume"/>
             </sample>
-            <para>Configuration dependencies are very different to execution dependencies. Configuration dependencies
+            <para role="original">Configuration dependencies are very different to execution dependencies. Configuration dependencies
                 are between projects whereas execution dependencies are always resolved to task dependencies. Another
                 difference is that always all projects are configured, even when you start the build from a subproject.
                 The default configuration order is top down, which is usually what is needed.
             </para>
             <para>評価順序の依存関係は、実行時の依存関係と大きく異なる点がいくつかあります。まず、実行の依存関係は最終的には常にタスク間の依存関係になりますが、評価順序の依存関係はプロジェクト間の依存関係です。さらに、サブプロジェクトをビルドしたとしても、常にマルチプロジェクトのプロジェクトすべてが評価されるという違いもあります。デフォルトでは、ルートプロジェクトからトップダウンでサブプロジェクトに向かって評価されていきます。普通はその順序で評価する必要があるからです。</para>
-            <para>On the same nesting level the configuration order depends on the alphanumeric position. The most
+            <para role="original">On the same nesting level the configuration order depends on the alphanumeric position. The most
                 common use case is to have multi-project builds that share a common lifecycle (e.g. all projects use the
                 Java plugin). If you declare with
                 <literal>dependsOn</literal>
@@ -477,12 +477,12 @@
             <para>同じ階層にあるプロジェクトは、プロジェクト名のアルファベット順で評価されます。よく使われるのは、マルチプロジェクトに参加しているプロジェクトの間で、同じビルドサイクルを共有させるときです(すべてのプロジェクトがJavaプラグインを使うなど)。プロジェクト間に実行の依存関係を定義すると、評価順序の依存関係も同様に定義されます。したがって、評価順序の依存関係を明示的に指定することはあまりないかもしれません。</para>
         </section>
         <section id='sub:real_life_examples'>
-            <title>実生活での例 / Real life examples</title>
-            <para>Gradle's multi-project features are driven by real life use cases. The first example for describing
+            <title>実生活での例<phrase role="original">Real life examples</phrase></title>
+            <para role="original">Gradle's multi-project features are driven by real life use cases. The first example for describing
                 such a use case, consists of two webapplication projects and a parent project that creates a
                 distribution out of them.
                 <footnote>
-                    <para>The real use case we had, was using <ulink url='http://lucene.apache.org/solr'/>, where you
+                    <para role="original">The real use case we had, was using <ulink url='http://lucene.apache.org/solr'/>, where you
                         need a separate war for each index your are accessing. That was one reason why we have created a
                         distribution of webapps. The Resin servlet container allows us, to let such a distribution point
                         to a base installation of the servlet container.
@@ -507,7 +507,7 @@
                 <sourcefile file="settings.gradle"/>
                 <sourcefile file="build.gradle"/>
             </sample>
-            <para>We have an interesting set of dependencies. Obviously the
+            <para role="original">We have an interesting set of dependencies. Obviously the
                 <literal>date</literal>
                 and
                 <literal>hello</literal>
@@ -532,12 +532,12 @@
                 <emphasis>execution time</emphasis>. Therefore we have no circular dependency.
             </para>
             <para>この例は、面白い依存関係を持っています。<literal>date</literal>プロジェクトと<literal>hello</literal>プロジェクトで定義されているタスクの<emphasis>評価</emphasis>は、明らかに<literal>webDist</literal>の<emphasis>評価</emphasis>に依存しています。Webアプリのビルドロジックは、すべてwebDistによって注入されているからです。しかし、実行の依存関係はそれとは逆です。<literal>webDist</literal>は<literal>hello</literal>と<literal>date</literal>の成果物を使ってビルドされるからです。さらに、もう一つの依存関係があります。webDistプロジェクトの評価は、dateとhelloの評価に依存しています。なぜなら、それらのプロジェクトのarchivePathプロパティの値を知る必要があるからです。ただ、この問い合わせは実行時に行われていて、依存関係が循環しているわけではありません。</para>
-            <para>Such and other dependency patterns are daily bread in the problem space of multi-project builds. If a
+            <para role="original">Such and other dependency patterns are daily bread in the problem space of multi-project builds. If a
                 build system does not support such patterns, you either can't solve your problem or you need to do ugly
                 hacks which are hard to maintain and massively afflict your productivity as a build master.
             </para>
             <para>この手の依存関係は、マルチプロジェクトのビルドではよく発生します。ビルドシステムがこのような依存関係に対応できなければ、解決できない問題が発生したり、苦し紛れのハックを行うハメになるでしょう。ビルドのメンテナンスが難しくなり、ビルドの管理者として生産性を大きく落としてしまうことになりかねません。</para>
-            <para>There is one more thing to note from the current example. We have used the command <literal>
+            <para role="original">There is one more thing to note from the current example. We have used the command <literal>
                 dependsOnChildren()</literal>. It is a convenience method and calls the
                 <literal>dependsOn</literal>
                 method of the parent project for every child project (not every sub project). It declares a
@@ -549,7 +549,7 @@
                 and <literal>hello</literal>.
             </para>
             <para>この例には、注目すべき点がもう一つあります。dependsOnChildren()というコマンドです。これは親プロジェクトがすべての子プロジェクト(すべてのサブプロジェクトではありません)に対してdependsOnを呼び出す便利なメソッドです。webDistがdateとhelloに実行の依存関係を持っていることを宣言しているのです。</para>
-            <para>Another use case would be a situation where the subprojects have a configuration
+            <para role="original">Another use case would be a situation where the subprojects have a configuration
                 <emphasis>and</emphasis>
                 execution dependency on the parent project. This is the case when the parent project does configuration
                 injection into its subprojects, and additionally produces something at execution time that is needed by
@@ -562,8 +562,8 @@
         </section>
     </section>
     <section id='sec:project_jar_dependencies'>
-        <title>ライブラリプロジェクトの依存関係 / Project lib dependencies</title>
-        <para>What if one projects needs the jar produced by another project in its compile path? And not just the jar
+        <title>ライブラリプロジェクトの依存関係<phrase role="original">Project lib dependencies</phrase></title>
+        <para role="original">What if one projects needs the jar produced by another project in its compile path? And not just the jar
             but also the transitive dependencies of this jar? Obviously this is a very common use case for Java
             multi-project builds. As already mentioned in <xref linkend='sub:project_dependencies'/>, Gradle
             offers project lib dependencies for this.
@@ -584,7 +584,7 @@
                 shared/src/main/java/org/gradle/sample/shared/Helper.java
             </layout>
         </sample>
-        <para>We have the projects <literal>shared</literal>,
+        <para role="original">We have the projects <literal>shared</literal>,
             <literal>api</literal>
             and <literal>personService</literal>.
             <literal>personService</literal>
@@ -592,7 +592,7 @@
             <literal>api</literal>
             has a lib dependency on <literal>shared</literal>.
             <footnote>
-                <para>
+                <para role="original">
                     <literal>services</literal>
                     is also a project, but we use it just as a container. It has no build script and gets nothing
                     injected by another build script.
@@ -608,10 +608,10 @@
             <sourcefile file="settings.gradle"/>
             <sourcefile file="build.gradle"/>
         </sample>
-        <para>All the build logic is in the
+        <para role="original">All the build logic is in the
             <literal>build.gradle</literal> of the root project.
             <footnote>
-                <para>We do this here, as it makes the layout a bit easier. We usually put the project specific stuff
+                <para role="original">We do this here, as it makes the layout a bit easier. We usually put the project specific stuff
                     into the buildscript of the respective projects.
                 </para>
             </footnote>
@@ -631,14 +631,14 @@
                 <para>この例では、ビルドスクリプトの配置を少し簡易化しています。普通は、プロジェクトが指定するものはそのプロジェクトのビルドスクリプトに記述します。</para>
             </footnote>
 ライブラリ依存は、実行依存の別形態です。まずあるプロジェクトをビルドを実行し、生成されたクラスをjarに格納して、依存されているプロジェクトのクラスパスに追加するのです。さらに、そのプロジェクトの依存関係も同時にクラスパスに追加します。apiディレクトリに移動して、<command>gradle compile</command>と入力してみましょう。まず<literal>shared</literal>がビルドされ、次に<literal>api</literal>がビルドされるでしょう。プロジェクト依存はマルチプロジェクトの部分ビルドを可能にします。</para>
-        <para>If you come from Maven land you might be perfectly happy with this. If you come from Ivy land, you might
+        <para role="original">If you come from Maven land you might be perfectly happy with this. If you come from Ivy land, you might
             expect some more fine grained control. Gradle offers this to you:
         </para>
         <para>Mavenを使用されてきた人なら、このことですごく満足できるでしょう。Ivyの経験をお持ちなら、もっと細かい制御を期待するかもしれません。Gradleでは、次のようにします。</para>
         <sample id="javaWithCustomConf" dir="userguide/multiproject/dependencies/javaWithCustomConf" title="細かい依存関係の制御 / Fine grained control over dependencies">
             <sourcefile file="build.gradle"/>
         </sample>
-        <para>The Java plugin adds per default a jar to your project libraries which contains all the classes. In this
+        <para role="original">The Java plugin adds per default a jar to your project libraries which contains all the classes. In this
             example we create an
             <emphasis>additional</emphasis>
             library containing only the interfaces of the
@@ -650,27 +650,27 @@
         </para>
         <para>Javaプラグインは、すべてのクラスが含まれたjarをプロジェクトライブラリに追加します。この例では、さらにapiプロジェクトのインターフェースのみが含まれたライブラリを作成し、新しい依存関係設定に割り当てています。person serviceをコンパイルするときはインターフェースしかいりませんが、テストをするにはapiからすべてのクラスを持ってくる必要があるのです。</para>
         <section id="disable_dependency_projects">
-            <title>依存プロジェクトのビルドを無効化する / Disable the build of dependency projects.</title>
-            <para>Sometimes you don't want depended on projects to be built when doing a partial build.
+            <title>依存プロジェクトのビルドを無効化する<phrase role="original">Disable the build of dependency projects.</phrase></title>
+            <para role="original">Sometimes you don't want depended on projects to be built when doing a partial build.
                 To disable the build of the depended on projects you can run gradle with the <code>-a</code> option.
             </para>
             <para>部分ビルドを実行する際、依存しているプロジェクトをビルドしたくないときがあるかもしれません。依存プロジェクトのビルドを無効化するには、<option>-a</option>オプションをつけてプロジェクトをビルドしてください。</para>
         </section>
     </section>
     <section id="sec:multiproject_build_and_test">
-        <title>マルチプロジェクトのビルドとテスティング / Multi-Project Building and Testing</title>
-        <para>The <literal>build</literal> task of the Java plugin is typically used to compile, test, and perform
+        <title>マルチプロジェクトのビルドとテスティング<phrase role="original">Multi-Project Building and Testing</phrase></title>
+        <para role="original">The <literal>build</literal> task of the Java plugin is typically used to compile, test, and perform
             code style checks (if the CodeQuality plugin is used) of a single project.  In multi-project builds
             you may often want to do all of these tasks across a range of projects.  The <literal>buildNeeded</literal>
             and <literal>buildDependents</literal> tasks can help with this.
         </para>
         <para>Javaプラグインの<literal>build</literal>タスクは、コンパイル、テストして、(CodeQualityプラグインを使っていれば)コードスタイルのチェックも行うという、シングルプロジェクトの典型的なユースケースを想定したものです。一方、マルチプロジェクトの場合はこれらのタスクをプロジェクトを横断して実行したいこともあるでしょう。<literal>buildNeeded</literal>と<literal>buildDependents</literal>はこの用途を助けてくれるものです。</para>
-        <para>Let's use the project structure shown in <xref linkend='javadependencies_2'/>.  In this
+        <para role="original">Let's use the project structure shown in <xref linkend='javadependencies_2'/>.  In this
             example :services:personservice depends on both :api and :shared.  The :api project also depends on
             :shared.
         </para>
         <para><xref linkend='javadependencies_2'/>にあるプロジェクトの構造を使いましょう。この例では:service:personserviceが:apiと:sharedの双方に依存しています。また、:apiは:sharedに依存しています。</para>
-        <para>Assume you are working on a single project, the :api project.  You have been making changes, but
+        <para role="original">Assume you are working on a single project, the :api project.  You have been making changes, but
             have not built the entire project since performing a clean.  You want to build any necessary supporting
             jars, but only perform code quality and unit tests on the project you have changed.
             The <literal>build</literal> task does this.
@@ -680,7 +680,7 @@
             <output args=":api:build"/>
         </sample>
 
-        <para>While you are working in a typical development cycle repeatedly building and testing changes to a
+        <para role="original">While you are working in a typical development cycle repeatedly building and testing changes to a
             the :api project (knowing that you are only changing files in this one project), you may not want to
             even suffer the expense of :shared:compile checking to see what has changed in the :shared project.
             Adding the <literal>-a</literal> option will cause gradle to use cached jars to resolve any project lib
@@ -692,7 +692,7 @@
             <output args="-a :api:build"/>
         </sample>
 
-        <para>If you have just gotten the latest version of source from your version control system which included changes
+        <para role="original">If you have just gotten the latest version of source from your version control system which included changes
             in other projects that :api depends on, you might want to not only build all the projects you depend on,
             but test them as well. The <literal>buildNeeded</literal> task also tests all the projects from the
             project lib dependencies of the testRuntime configuration.
@@ -701,7 +701,7 @@
         <sample id="multitestingBuildNeeded" dir="userguide/multiproject/dependencies/java" title="依存プロジェクトのビルドとテスト / Build and Test Depended On Projects">
             <output args=":api:buildNeeded"/>
         </sample>
-        <para>You also might want to refactor some part of the :api project that is used in other projects.
+        <para role="original">You also might want to refactor some part of the :api project that is used in other projects.
             If you make these types of changes, it is not sufficient to test just the :api,
             project, you also need to test all projects that depend on the :api project.
             The <literal>buildDependents</literal> task also tests all the projects that have a project lib dependency
@@ -711,7 +711,7 @@
         <sample id="multitestingBuildDependents" dir="userguide/multiproject/dependencies/java" title="依存されているプロジェクトのビルドとテスト / Build and Test Dependent Projects">
             <output args=":api:buildDependents"/>
         </sample>
-        <para>Finally, you may want to build and test everything in all projects.  If the root project has declared
+        <para role="original">Finally, you may want to build and test everything in all projects.  If the root project has declared
         <literal>dependsOnChildren()</literal> (as this one does), then any task you run against the root project
         will cause that same named task to be run on all the children.  So you can just run
         <literal>gradle build</literal> to build and test all projects.
@@ -719,26 +719,26 @@
         <para>最後に、すべてのプロジェクトを完全に再ビルド、テストしたいと思うことがあるかもしれません。この例のように、ルートプロジェクトに<literal>dependsOnChildren()</literal>宣言がある場合、ルートプロジェクトでタスクを実行すれば子プロジェクトすべてでそのタスクと同名のタスクが実行されます。なので、ただ<command>gradle build</command>と実行すれば大丈夫です。すべてのプロジェクトがビルドされテストされます。</para>
     </section>
     <section id='sec:property_and_method_inheritance'>
-        <title>プロパティとメソッドの継承 / Property and method inheritance</title>
-        <para>Properties and methods declared in a project are inherited to all its subprojects. This is an alternative
+        <title>プロパティとメソッドの継承<phrase role="original">Property and method inheritance</phrase></title>
+        <para role="original">Properties and methods declared in a project are inherited to all its subprojects. This is an alternative
             to configuration injection. But we think that the model of inheritance does not reflect the problem space of
             multi-project builds very well. In a future edition of this user guide we might write more about this.
         </para>
         <para>プロジェクトで宣言されたプロパティとメソッドは、すべての子プロジェクトに継承されます。これは設定のインジェクションの代替手段となるでしょう。ただ、私たちは継承というモデルはマルチプロジェクトの様々な特質を十分に反映できるものではないと考えています。将来バージョンのユーザーガイドでこのことについて詳しく書くつもりです。</para>
-        <para>Method inheritance might be interesting to use as Gradle's
+        <para role="original">Method inheritance might be interesting to use as Gradle's
             <emphasis>Configuration Injection</emphasis>
             does not support methods yet (but will in a future release.).
         </para>
         <para>なお、Gradleの<emphasis>設定のインジェクション</emphasis>ではまだメソッドを注入することができません(将来のリリースで対応する予定です)。なので、メソッドについては継承を使う価値があるかもしれません。</para>
-        <para>You might be wondering why we have implemented a feature we obviously don't like that much. One reason is
+        <para role="original">You might be wondering why we have implemented a feature we obviously don't like that much. One reason is
             that it is offered by other tools and we want to have the check mark in a feature comparison :). And we like
             to offer our users a choice.
         </para>
         <para>どうみても継承機能を敬遠しているのに、なんでそんなのを実装したのか不思議に思われるかもしれません。一つの理由は、継承機能が別のビルドツールで提供されているからです。比較表を作ったときにチェックマークが抜けてるとかアレですし。また、ユーザーには選択肢を用意したかったというのもあります。</para>
     </section>
     <section>
-        <title>まとめ / Summary</title>
-        <para>Writing this chapter was pretty exhausting and reading it might have a similar effect. Our final message
+        <title>まとめ<phrase role="original">Summary</phrase></title>
+        <para role="original">Writing this chapter was pretty exhausting and reading it might have a similar effect. Our final message
             for this chapter is that multi-project builds with Gradle are usually
             <emphasis>not</emphasis>
             difficult. There are six elements you need to remember: <literal>allproject</literal>, <literal>
@@ -746,7 +746,7 @@
             <literal>dependsOnChildren</literal>
             and project lib dependencies.
             <footnote>
-                <para>So we are well in the range of the
+                <para role="original">So we are well in the range of the
                     <ulink url='http://en.wikipedia.org/wiki/The_Magical_Number_Seven,_Plus_or_Minus_Two'>7 plus 2
                         Rule
                     </ulink>
