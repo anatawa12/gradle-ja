@@ -46,7 +46,7 @@
 <itemizedlist>
     <listitem><para role="original">The Gradle binaries.</para><para>Gradleのバイナリ</para></listitem>
     <listitem><para role="original">The user guide (HTML and PDF).</para><para>ユーザーガイド(HTMLとPDF)</para></listitem>
-    <listitem><para>The DSL reference guide.</para></listitem>
+    <listitem><para role="original">The DSL reference guide.</para><para>DSLのリファレンスガイド</para></listitem>
     <listitem><para role="original">The API documentation (Javadoc and Groovydoc).</para><para>APIドキュメント(JavadocとGroovydoc)</para></listitem>
     <listitem>
         <para role="original">Extensive samples, including the examples referenced in the user guide, along with some complete and more
