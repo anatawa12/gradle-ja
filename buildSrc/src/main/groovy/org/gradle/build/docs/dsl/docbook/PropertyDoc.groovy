@@ -17,20 +17,29 @@ package org.gradle.build.docs.dsl.docbook
 
 import org.gradle.build.docs.dsl.model.PropertyMetaData
 import org.w3c.dom.Element
+import org.gradle.build.docs.dsl.model.ClassMetaData
 
 class PropertyDoc {
     private final String id
     private final String name
-    final List<Element> comment
-    private final List<Element> additionalValues
+    private final List<Element> comment
+    private final List<ExtraAttributeDoc> additionalValues
     private final PropertyMetaData metaData
 
-    PropertyDoc(PropertyMetaData propertyMetaData, List<Element> comment, List<Element> additionalValues) {
+    PropertyDoc(PropertyMetaData propertyMetaData, List<Element> comment, List<ExtraAttributeDoc> additionalValues) {
+        this(propertyMetaData.ownerClass, propertyMetaData, comment, additionalValues)
+    }
+
+    PropertyDoc(ClassMetaData referringClass, PropertyMetaData propertyMetaData, List<Element> comment, List<ExtraAttributeDoc> additionalValues) {
         name = propertyMetaData.name
         this.metaData = propertyMetaData
-        id = "${propertyMetaData.ownerClass.className}:$name"
+        id = "${referringClass.className}:$name"
         this.comment = comment
         this.additionalValues = additionalValues
+    }
+
+    PropertyDoc forClass(ClassMetaData classMetaData, List<ExtraAttributeDoc> additionalValues) {
+        return new PropertyDoc(classMetaData, metaData, comment, additionalValues)
     }
 
     String getId() {
@@ -49,7 +58,11 @@ class PropertyDoc {
         return comment.find { it.nodeName == 'para' }
     }
 
-    List<Element> getAdditionalValues() {
+    List<Element> getComment() {
+        return comment
+    }
+
+    List<ExtraAttributeDoc> getAdditionalValues() {
         return additionalValues
     }
 }

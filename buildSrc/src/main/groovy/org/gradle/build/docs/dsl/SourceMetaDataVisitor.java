@@ -15,6 +15,7 @@
  */
 package org.gradle.build.docs.dsl;
 
+import groovyjarjarantlr.collections.AST;
 import org.apache.commons.lang.StringUtils;
 import org.codehaus.groovy.antlr.GroovySourceAST;
 import org.codehaus.groovy.antlr.LineColumn;
@@ -47,7 +48,8 @@ public class SourceMetaDataVisitor extends VisitorAdapter {
     private String packageName;
     private LineColumn lastLineCol;
 
-    SourceMetaDataVisitor(SourceBuffer sourceBuffer, ClassMetaDataRepository<ClassMetaData> repository, boolean isGroovy) {
+    SourceMetaDataVisitor(SourceBuffer sourceBuffer, ClassMetaDataRepository<ClassMetaData> repository,
+                          boolean isGroovy) {
         this.sourceBuffer = sourceBuffer;
         this.repository = repository;
         groovy = isGroovy;
@@ -100,7 +102,8 @@ public class SourceMetaDataVisitor extends VisitorAdapter {
         if (visit == OPENING_VISIT) {
             ClassMetaData outerClass = getCurrentClass();
             String baseName = extractIdent(t);
-            String className = outerClass != null ? outerClass.getClassName() + '.' + baseName : packageName + '.' + baseName;
+            String className = outerClass != null ? outerClass.getClassName() + '.' + baseName
+                    : packageName + '.' + baseName;
             String comment = getJavaDocCommentsBeforeNode(t);
             ClassMetaData currentClass = new ClassMetaData(className, packageName, isInterface, groovy, comment);
             if (outerClass != null) {
@@ -122,7 +125,9 @@ public class SourceMetaDataVisitor extends VisitorAdapter {
     public void visitExtendsClause(GroovySourceAST t, int visit) {
         if (visit == OPENING_VISIT) {
             ClassMetaData currentClass = getCurrentClass();
-            for (GroovySourceAST child = (GroovySourceAST) t.getFirstChild(); child != null; child = (GroovySourceAST) child.getNextSibling()) {
+            for (
+                    GroovySourceAST child = (GroovySourceAST) t.getFirstChild(); child != null;
+                    child = (GroovySourceAST) child.getNextSibling()) {
                 if (!currentClass.isInterface()) {
                     currentClass.setSuperClassName(extractName(child));
                 } else {
@@ -136,7 +141,9 @@ public class SourceMetaDataVisitor extends VisitorAdapter {
     public void visitImplementsClause(GroovySourceAST t, int visit) {
         if (visit == OPENING_VISIT) {
             ClassMetaData currentClass = getCurrentClass();
-            for (GroovySourceAST child = (GroovySourceAST) t.getFirstChild(); child != null; child = (GroovySourceAST) child.getNextSibling()) {
+            for (
+                    GroovySourceAST child = (GroovySourceAST) t.getFirstChild(); child != null;
+                    child = (GroovySourceAST) child.getNextSibling()) {
                 currentClass.addInterfaceName(extractName(child));
             }
         }
@@ -145,20 +152,29 @@ public class SourceMetaDataVisitor extends VisitorAdapter {
     @Override
     public void visitMethodDef(GroovySourceAST t, int visit) {
         if (visit == OPENING_VISIT) {
-            maybeAddPropertyFromMethod(t);
+            maybeAddMethod(t);
             skipJavaDocComment(t);
         }
     }
 
-    private void maybeAddPropertyFromMethod(GroovySourceAST t) {
+    private void maybeAddMethod(GroovySourceAST t) {
         String name = extractName(t);
         if (!groovy && name.equals(getCurrentClass().getSimpleName())) {
             // A constructor. The java grammar treats a constructor as a method, the groovy grammar does not.
             return;
         }
 
+        ASTIterator children = new ASTIterator(t);
+        if (groovy) {
+            children.skip(TYPE_PARAMETERS);
+            children.skip(MODIFIERS);
+        } else {
+            children.skip(MODIFIERS);
+            children.skip(TYPE_PARAMETERS);
+        }
+
         String rawCommentText = getJavaDocCommentsBeforeNode(t);
-        TypeMetaData returnType = extractTypeName(t);
+        TypeMetaData returnType = extractTypeName(children.current);
         MethodMetaData method = getCurrentClass().addMethod(name, returnType, rawCommentText);
 
         extractParameters(t, method);
@@ -167,7 +183,7 @@ public class SourceMetaDataVisitor extends VisitorAdapter {
         if (matcher.matches()) {
             int startName = matcher.start(2);
             String propName = name.substring(startName, startName + 1).toLowerCase() + name.substring(startName + 1);
-            getCurrentClass().addReadableProperty(propName, returnType, rawCommentText);
+            getCurrentClass().addReadableProperty(propName, returnType, rawCommentText, method);
             return;
         }
 
@@ -179,17 +195,19 @@ public class SourceMetaDataVisitor extends VisitorAdapter {
             int startName = matcher.start(1);
             String propName = name.substring(startName, startName + 1).toLowerCase() + name.substring(startName + 1);
             TypeMetaData type = method.getParameters().get(0).getType();
-            getCurrentClass().addWriteableProperty(propName, type, rawCommentText);
+            getCurrentClass().addWriteableProperty(propName, type, rawCommentText, method);
         }
     }
 
     private void extractParameters(GroovySourceAST t, MethodMetaData method) {
         GroovySourceAST paramsAst = t.childOfType(PARAMETERS);
-        for (GroovySourceAST child = (GroovySourceAST) paramsAst.getFirstChild(); child != null; child = (GroovySourceAST) child.getNextSibling()) {
+        for (
+                GroovySourceAST child = (GroovySourceAST) paramsAst.getFirstChild(); child != null;
+                child = (GroovySourceAST) child.getNextSibling()) {
             assert child.getType() == PARAMETER_DEF || child.getType() == VARIABLE_PARAMETER_DEF;
-            TypeMetaData type = extractTypeName(child);
+            TypeMetaData type = extractTypeName((GroovySourceAST) child.getFirstChild().getNextSibling());
             if (child.getType() == VARIABLE_PARAMETER_DEF) {
-                type.setVarargs(true);
+                type.setVarargs();
             }
             method.addParameter(extractIdent(child), type);
         }
@@ -211,23 +229,61 @@ public class SourceMetaDataVisitor extends VisitorAdapter {
         }
 
         int modifiers = extractModifiers(t);
-        boolean isProp = groovy && !Modifier.isStatic(modifiers) && !Modifier.isPublic(modifiers) && !Modifier.isProtected(modifiers) && !Modifier.isPrivate(modifiers);
+        boolean isConst = getCurrentClass().isInterface() || (Modifier.isStatic(modifiers) && Modifier.isFinal(modifiers));
+        if (isConst) {
+            visitConst(t);
+            return;
+        }
+
+        boolean isProp = groovy && !Modifier.isStatic(modifiers) && !Modifier.isPublic(modifiers)
+                && !Modifier.isProtected(modifiers) && !Modifier.isPrivate(modifiers);
         if (!isProp) {
             return;
         }
 
+        ASTIterator children = new ASTIterator(t);
+        children.skip(MODIFIERS);
+
         String propertyName = extractIdent(t);
-        TypeMetaData propertyType = extractTypeName(t);
+        TypeMetaData propertyType = extractTypeName(children.current);
         ClassMetaData currentClass = getCurrentClass();
 
-        currentClass.addReadableProperty(propertyName, propertyType, getJavaDocCommentsBeforeNode(t));
-        currentClass.addMethod(String.format("get%s", StringUtils.capitalize(propertyName)), propertyType, "");
+        MethodMetaData getterMethod = currentClass.addMethod(String.format("get%s", StringUtils.capitalize(
+                propertyName)), propertyType, "");
+        currentClass.addReadableProperty(propertyName, propertyType, getJavaDocCommentsBeforeNode(t), getterMethod);
         if (!Modifier.isFinal(modifiers)) {
-            currentClass.addWriteableProperty(propertyName, propertyType, getJavaDocCommentsBeforeNode(t));
             MethodMetaData setterMethod = currentClass.addMethod(String.format("set%s", StringUtils.capitalize(
                     propertyName)), TypeMetaData.VOID, "");
             setterMethod.addParameter(propertyName, propertyType);
+            currentClass.addWriteableProperty(propertyName, propertyType, getJavaDocCommentsBeforeNode(t), setterMethod);
         }
+    }
+
+    private void visitConst(GroovySourceAST t) {
+        String constName = extractIdent(t);
+        GroovySourceAST assign = t.childOfType(ASSIGN);
+        String value = null;
+        if (assign != null) {
+            value = extractLiteral(assign.getFirstChild());
+        }
+        getCurrentClass().getConstants().put(constName, value);
+    }
+
+    private String extractLiteral(AST ast) {
+        switch (ast.getType()) {
+            case EXPR:
+                // The java grammar wraps initialisers in an EXPR token
+                return extractLiteral(ast.getFirstChild());
+            case NUM_INT:
+            case NUM_LONG:
+            case NUM_FLOAT:
+            case NUM_DOUBLE:
+            case NUM_BIG_INT:
+            case NUM_BIG_DECIMAL:
+            case STRING_LITERAL:
+                return ast.getText();
+        }
+        return null;
     }
 
     public GroovySourceAST pop() {
@@ -261,7 +317,9 @@ public class SourceMetaDataVisitor extends VisitorAdapter {
             return 0;
         }
         int modifierFlags = 0;
-        for (GroovySourceAST child = (GroovySourceAST) modifiers.getFirstChild(); child != null; child = (GroovySourceAST) child.getNextSibling()) {
+        for (
+                GroovySourceAST child = (GroovySourceAST) modifiers.getFirstChild(); child != null;
+                child = (GroovySourceAST) child.getNextSibling()) {
             switch (child.getType()) {
                 case LITERAL_private:
                     modifierFlags |= Modifier.PRIVATE;
@@ -284,10 +342,31 @@ public class SourceMetaDataVisitor extends VisitorAdapter {
     }
 
     private TypeMetaData extractTypeName(GroovySourceAST ast) {
-        GroovySourceAST typeAst = ast.childOfType(TYPE);
-        GroovySourceAST firstChild = (GroovySourceAST) typeAst.getFirstChild();
         TypeMetaData type = new TypeMetaData();
-        extractTypeName(firstChild, type);
+        switch (ast.getType()) {
+            case TYPE:
+                GroovySourceAST typeName = (GroovySourceAST) ast.getFirstChild();
+                extractTypeName(typeName, type);
+                break;
+            case WILDCARD_TYPE:
+                // In the groovy grammar, the bounds are sibling of the ?, in the java grammar, they are the child
+                GroovySourceAST bounds = (GroovySourceAST) (groovy ? ast.getNextSibling() : ast.getFirstChild());
+                if (bounds == null) {
+                    type.setWildcard();
+                } else if (bounds.getType() == TYPE_UPPER_BOUNDS) {
+                    type.setUpperBounds(extractTypeName((GroovySourceAST) bounds.getFirstChild()));
+                } else if (bounds.getType() == TYPE_LOWER_BOUNDS) {
+                    type.setLowerBounds(extractTypeName((GroovySourceAST) bounds.getFirstChild()));
+                }
+                break;
+            case IDENT:
+            case DOT:
+                extractTypeName(ast, type);
+                break;
+            default:
+                throw new RuntimeException(String.format("Unexpected token in type name: %s", ast));
+        }
+
         return type;
     }
 
@@ -328,6 +407,15 @@ public class SourceMetaDataVisitor extends VisitorAdapter {
         }
 
         type.setName(extractName(ast));
+        GroovySourceAST typeArgs = ast.childOfType(TYPE_ARGUMENTS);
+        if (typeArgs != null) {
+            for (
+                    GroovySourceAST child = (GroovySourceAST) typeArgs.getFirstChild(); child != null;
+                    child = (GroovySourceAST) child.getNextSibling()) {
+                assert child.getType() == TYPE_ARGUMENT;
+                type.addTypeArg(extractTypeName((GroovySourceAST) child.getFirstChild()));
+            }
+        }
     }
 
     private void skipJavaDocComment(GroovySourceAST t) {
@@ -375,5 +463,19 @@ public class SourceMetaDataVisitor extends VisitorAdapter {
         }
 
         throw new RuntimeException(String.format("Unexpected token in name: %s", t));
+    }
+
+    private static class ASTIterator {
+        GroovySourceAST current;
+
+        private ASTIterator(GroovySourceAST parent) {
+            this.current = (GroovySourceAST) parent.getFirstChild();
+        }
+
+        void skip(int token) {
+            if (current != null && current.getType() == token) {
+                current = (GroovySourceAST) current.getNextSibling();
+            }
+        }
     }
 }

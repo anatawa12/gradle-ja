@@ -585,7 +585,7 @@ public class Test extends ConventionTask implements JavaForkOptions, PatternFilt
 
     public TestFramework testFramework(Closure testFrameworkConfigure) {
         if (testFramework == null) {
-            return useJUnit(testFrameworkConfigure);
+            useJUnit(testFrameworkConfigure);
         }
 
         return testFramework;
@@ -594,7 +594,7 @@ public class Test extends ConventionTask implements JavaForkOptions, PatternFilt
     /**
      * <p>Returns the test options options.</p>
      *
-     * <p>Be sure to call the appropriate {@link #useJUnit} or {@link #useTestNG} method before using this method.</p>
+     * <p>Be sure to call the appropriate {@link #useJUnit()} or {@link #useTestNG()} method before using this method.</p>
      *
      * @return The testframework options.
      */
@@ -630,8 +630,8 @@ public class Test extends ConventionTask implements JavaForkOptions, PatternFilt
     /**
      * Specifies that JUnit should be used to execute the tests.
      */
-    public TestFramework useJUnit() {
-        return useJUnit(null);
+    public void useJUnit() {
+        useJUnit(null);
     }
 
     /**
@@ -640,15 +640,15 @@ public class Test extends ConventionTask implements JavaForkOptions, PatternFilt
      * @param testFrameworkConfigure A closure used to configure the JUint options. This closure is passed an instance
      * of type {@link org.gradle.api.tasks.testing.junit.JUnitOptions}.
      */
-    public TestFramework useJUnit(Closure testFrameworkConfigure) {
-        return useTestFramework(new JUnitTestFramework(this), testFrameworkConfigure);
+    public void useJUnit(Closure testFrameworkConfigure) {
+        useTestFramework(new JUnitTestFramework(this), testFrameworkConfigure);
     }
 
     /**
      * Specifies that TestNG should be used to execute the tests.
      */
-    public TestFramework useTestNG() {
-        return useTestNG(null);
+    public void useTestNG() {
+        useTestNG(null);
     }
 
     /**
@@ -657,10 +657,13 @@ public class Test extends ConventionTask implements JavaForkOptions, PatternFilt
      * @param testFrameworkConfigure A closure used to configure the JUint options. This closure is passed an instance
      * of type {@link org.gradle.api.tasks.testing.junit.JUnitOptions}.
      */
-    public TestFramework useTestNG(Closure testFrameworkConfigure) {
-        return useTestFramework(new TestNGTestFramework(this), testFrameworkConfigure);
+    public void useTestNG(Closure testFrameworkConfigure) {
+        useTestFramework(new TestNGTestFramework(this), testFrameworkConfigure);
     }
 
+    /**
+     * Returns the classpath to use to execute the tests.
+     */
     @InputFiles
     public FileCollection getClasspath() {
         return classpath;
@@ -670,6 +673,9 @@ public class Test extends ConventionTask implements JavaForkOptions, PatternFilt
         this.classpath = classpath;
     }
 
+    /**
+     * Specifies whether the test report should be generated.
+     */
     public boolean isTestReport() {
         return testReport;
     }
@@ -686,6 +692,9 @@ public class Test extends ConventionTask implements JavaForkOptions, PatternFilt
         this.testReport = false;
     }
 
+    /**
+     * Returns the directories containing the test source.
+     */
     @InputFiles
     public List<File> getTestSrcDirs() {
         return testSrcDirs;
@@ -695,6 +704,11 @@ public class Test extends ConventionTask implements JavaForkOptions, PatternFilt
         this.testSrcDirs = testSrcDir;
     }
 
+    /**
+     * Specifies whether test classes should be detected. When {@code true} the classes which match the include and
+     * exclude patterns are scanned for test classes, and any found are executed. When {@code false} the classes which
+     * match the include and exclude patterns are executed.
+     */
     public boolean isScanForTestClasses() {
         return scanForTestClasses;
     }

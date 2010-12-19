@@ -17,36 +17,156 @@ package org.gradle.build.docs.dsl.docbook;
 
 import org.gradle.build.docs.dsl.TypeNameResolver;
 import org.gradle.build.docs.dsl.model.ClassMetaData;
+import org.gradle.build.docs.dsl.model.MethodMetaData;
 import org.gradle.build.docs.dsl.model.TypeMetaData;
+import org.gradle.build.docs.model.ClassMetaDataRepository;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
 
-import java.util.Arrays;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * Converts a javadoc link into docbook.
  */
 public class JavadocLinkConverter {
+    private final Pattern linkPattern = Pattern.compile("(?s)\\s*([\\w\\.]*)(#(\\w+)(\\((.*)\\))?)?.*");
     private final Document document;
     private final TypeNameResolver typeNameResolver;
-    private final ClassLinkRenderer linkRenderer;
+    private final LinkRenderer linkRenderer;
+    private final ClassMetaDataRepository<ClassMetaData> repository;
 
-    public JavadocLinkConverter(Document document, TypeNameResolver typeNameResolver, ClassLinkRenderer linkRenderer) {
+    public JavadocLinkConverter(Document document, TypeNameResolver typeNameResolver, LinkRenderer linkRenderer,
+                                ClassMetaDataRepository<ClassMetaData> repository) {
         this.document = document;
         this.typeNameResolver = typeNameResolver;
         this.linkRenderer = linkRenderer;
+        this.repository = repository;
     }
 
-    public Iterable<? extends Node> resolve(String link, ClassMetaData classMetaData) {
-        String className = typeNameResolver.resolve(link, classMetaData);
-
-        if (className == null || className.contains("#")) {
-            Element element = document.createElement("UNHANDLED-LINK");
-            element.appendChild(document.createTextNode(link));
-            return Arrays.asList(element);
+    /**
+     * Converts a javadoc link into docbook.
+     */
+    public Node resolve(String link, ClassMetaData classMetaData, GenerationListener listener) {
+        Node node = doResolve(link, classMetaData, listener);
+        if (node != null) {
+            return node;
         }
 
-        return Arrays.asList(linkRenderer.link(new TypeMetaData(className)));
+        listener.warning(String.format("Could not convert Javadoc link '%s'", link));
+        Element element = document.createElement("UNHANDLED-LINK");
+        element.appendChild(document.createTextNode(link));
+        return element;
+    }
+
+    private Node doResolve(String link, ClassMetaData classMetaData, GenerationListener listener) {
+        Matcher matcher = linkPattern.matcher(link);
+        if (!matcher.matches()) {
+            return null;
+        }
+
+        String className = null;
+        if (matcher.group(1).length() > 0) {
+            className = typeNameResolver.resolve(matcher.group(1), classMetaData);
+            if (className == null) {
+                return null;
+            }
+        }
+        if (matcher.group(2) == null) {
+            return linkRenderer.link(new TypeMetaData(className), listener);
+        }
+
+        ClassMetaData targetClass;
+        if (className != null) {
+            targetClass = repository.find(className);
+            if (targetClass == null) {
+                return null;
+            }
+        } else {
+            targetClass = classMetaData;
+        }
+
+        String methodSignature = matcher.group(3);
+        if (matcher.group(5) != null) {
+            StringBuilder signature = new StringBuilder();
+            signature.append(methodSignature);
+            signature.append("(");
+            if (matcher.group(5).length() > 0) {
+                String[] types = matcher.group(5).split(",\\s*");
+                for (int i = 0; i < types.length; i++) {
+                    String type = types[i];
+                    Matcher typeMatcher = Pattern.compile("(\\w+)(.*)").matcher(type);
+                    if (!typeMatcher.matches()) {
+                        return null;
+                    }
+                    if (i > 0) {
+                        signature.append(", ");
+                    }
+                    signature.append(typeNameResolver.resolve(typeMatcher.group(1), classMetaData));
+                    signature.append(typeMatcher.group(2));
+                }
+            }
+            signature.append(")");
+            methodSignature = signature.toString();
+        }
+
+        MethodMetaData method = findMethod(methodSignature, targetClass);
+        if (method == null) {
+            return null;
+        }
+
+        return linkRenderer.link(method, listener);
+    }
+
+    private MethodMetaData findMethod(String name, ClassMetaData targetClass) {
+        List<MethodMetaData> candidates = new ArrayList<MethodMetaData>();
+        for (MethodMetaData methodMetaData : targetClass.getDeclaredMethods()) {
+            if (name.equals(methodMetaData.getOverrideSignature())) {
+                return methodMetaData;
+            }
+            if (name.equals(methodMetaData.getName())) {
+                candidates.add(methodMetaData);
+            }
+        }
+
+        if (candidates.size() != 1) {
+            return null;
+        }
+        return candidates.get(0);
+    }
+
+    /**
+     * Converts a javadoc value link into docbook.
+     */
+    public Node resolveValue(String fieldName, ClassMetaData classMetaData, GenerationListener listener) {
+        String[] parts = fieldName.split("#");
+        ClassMetaData targetClass;
+        if (parts[0].length() > 0) {
+            String targetClassName = typeNameResolver.resolve(parts[0], classMetaData);
+            targetClass = repository.find(targetClassName);
+            if (targetClass == null) {
+                listener.warning(String.format("Could not local target class '%s' for field value link '%s'", targetClass, fieldName));
+                Element element = document.createElement("UNHANDLED-VALUE");
+                element.appendChild(document.createTextNode(targetClassName + ":" + parts[1]));
+                return element;
+            }
+        } else {
+            targetClass = classMetaData;
+        }
+
+        String value = targetClass.getConstants().get(parts[1]);
+        if (value == null) {
+            listener.warning(String.format("Field '%s' does not have any value", fieldName));
+            Element element = document.createElement("NO-VALUE-FOR_FIELD");
+            element.appendChild(document.createTextNode(targetClass.getClassName() + ":" + parts[1]));
+            return element;
+        }
+
+        Element element = document.createElement("literal");
+        element.appendChild(document.createTextNode(value));
+        return element;
     }
 }

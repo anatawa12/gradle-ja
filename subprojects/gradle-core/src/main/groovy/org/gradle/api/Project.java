@@ -72,18 +72,18 @@ import java.util.Set;
  * <p>A project is essentially a collection of {@link Task} objects. Each task performs some basic piece of work, such
  * as compiling classes, or running unit tests, or zipping up a WAR file. You add tasks to a project using one of the
  * {@code add()} methods on {@link TaskContainer}, such as {@link TaskContainer#add(String)}.  You can locate existing
- * tasks using one of the lookup methods on {@link TaskContainer}, such as {@link TaskContainer#getByName(String)}.</p>
+ * tasks using one of the lookup methods on {@link TaskContainer}, such as {@link org.gradle.api.tasks.TaskCollection#getByName(String)}.</p>
  *
  * <h3>Dependencies</h3>
  *
  * <p>A project generally has a number of dependencies it needs in order to do its work.  Also, a project generally
  * produces a number of artifacts, which other projects can use. Those dependencies are grouped in configurations, and
  * can be retrieved and uploaded from repositories. You use the {@link org.gradle.api.artifacts.ConfigurationContainer}
- * returned by {@link #getConfigurations()} ()} method to manage the configurations. The {@link
+ * returned by {@link #getConfigurations()} method to manage the configurations. The {@link
  * org.gradle.api.artifacts.dsl.DependencyHandler} returned by {@link #getDependencies()} method to manage the
- * dependencies. The {@link org.gradle.api.artifacts.dsl.ArtifactHandler} returned by {@link #getArtifacts()} ()} method
- * to manage the artifacts. The {@link org.gradle.api.artifacts.dsl.RepositoryHandler} returned by {@link
- * #getRepositories()} ()} method to manage the repositories.</p>
+ * dependencies. The {@link org.gradle.api.artifacts.dsl.ArtifactHandler} returned by {@link #getArtifacts()} method to
+ * manage the artifacts. The {@link org.gradle.api.artifacts.dsl.RepositoryHandler} returned by {@link
+ * #getRepositories()} method to manage the repositories.</p>
  *
  * <h3>Multi-project Builds</h3>
  *
@@ -1070,7 +1070,7 @@ public interface Project extends Comparable<Project> {
     void artifacts(Closure configureClosure);
 
     /**
-     * <p>Return the {@link Convention} for this project.</p> <p/> <p>You can access this property in your build file
+     * <p>Returns the {@link Convention} for this project.</p> <p/> <p>You can access this property in your build file
      * using <code>convention</code>. You can also can also access the properties and methods of the convention object
      * as if they were properties and methods of this project. See <a href="#properties">here</a> for more details</p>
      *
@@ -1382,8 +1382,8 @@ public interface Project extends Comparable<Project> {
     void buildscript(Closure configureClosure);
 
     /**
-     * Copies the specified files.  The given closure is used to configure a {@link CopySpec}, which is then used to copy
-     * the files. Example:
+     * Copies the specified files.  The given closure is used to configure a {@link CopySpec}, which is then used to
+     * copy the files. Example:
      * <pre>
      * copy {
      *    from configurations.runtime

@@ -5,8 +5,21 @@
             <thead>
                 <tr>
                     <td>Name</td>
+                    <td>Default with <literal>scala</literal> plugin <overrides>Default with <litera>java</litera> plugin</overrides></td>
                 </tr>
             </thead>
+            <tr>
+                <td>scalaClasspath</td>
+                <td><literal>project.configurations.scalaTools</literal></td>
+            </tr>
+            <tr>
+                <td>scalaCompileOptions</td>
+                <td/>
+            </tr>
+            <tr>
+                <td>source</td>
+                <td><literal><replaceable>sourceSet</replaceable>.scala</literal></td>
+            </tr>
         </table>
     </section>
     <section>

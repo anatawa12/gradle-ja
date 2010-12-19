@@ -23,6 +23,7 @@ import org.gradle.build.docs.dsl.model.MethodMetaData
 class JavadocConverterTest extends XmlSpecification {
     final ClassMetaData classMetaData = Mock()
     final JavadocLinkConverter linkConverter = Mock()
+    final GenerationListener listener = Mock()
     final JavadocConverter parser = new JavadocConverter(document, linkConverter)
 
     def removesLeadingAsterixFromEachLine() {
@@ -30,7 +31,7 @@ class JavadocConverterTest extends XmlSpecification {
  * line 2
 '''
         when:
-        def result = parser.parse(classMetaData)
+        def result = parser.parse(classMetaData, listener)
 
         then:
         format(result.docbook) == '''<para>line 1
@@ -44,7 +45,7 @@ line 2</para>'''
 '''
 
         when:
-        def result = parser.parse(classMetaData)
+        def result = parser.parse(classMetaData, listener)
 
         then:
         format(result.docbook) == '''<para>line 1</para>'''
@@ -58,7 +59,7 @@ line 2</para>'''
 '''
 
         when:
-        def result = parser.parse(classMetaData)
+        def result = parser.parse(classMetaData, listener)
 
         then:
         format(result.docbook) == '''<para>line 1</para>'''
@@ -71,7 +72,7 @@ line 2</para>'''
 '''
 
         when:
-        def result = parser.parse(classMetaData)
+        def result = parser.parse(classMetaData, listener)
 
         then:
         result.docbook == []
@@ -81,7 +82,7 @@ line 2</para>'''
         _ * classMetaData.rawCommentText >> ''' * &lt;&gt;&amp; &#47;>'''
 
         when:
-        def result = parser.parse(classMetaData)
+        def result = parser.parse(classMetaData, listener)
 
         then:
         format(result.docbook) == '''<para>&lt;&gt;&amp; /&gt;</para>'''
@@ -91,7 +92,7 @@ line 2</para>'''
         _ * classMetaData.rawCommentText >> '<p>para 1</p><P>para 2</P>'
 
         when:
-        def result = parser.parse(classMetaData)
+        def result = parser.parse(classMetaData, listener)
 
         then:
         format(result.docbook) == '''<para>para 1</para><para>para 2</para>'''
@@ -101,7 +102,7 @@ line 2</para>'''
         _ * classMetaData.rawCommentText >> '<em>para 1</em><P>para 2</P>'
 
         when:
-        def result = parser.parse(classMetaData)
+        def result = parser.parse(classMetaData, listener)
 
         then:
         format(result.docbook) == '''<para><emphasis>para 1</emphasis></para><para>para 2</para>'''
@@ -111,7 +112,7 @@ line 2</para>'''
         _ * classMetaData.rawCommentText >> 'para 1<p/><p></p>para 2<p></p>'
 
         when:
-        def result = parser.parse(classMetaData)
+        def result = parser.parse(classMetaData, listener)
 
         then:
         format(result.docbook) == '''<para>para 1</para><para>para 2</para>'''
@@ -121,7 +122,7 @@ line 2</para>'''
         _ * classMetaData.rawCommentText >> 'This is <code>code</code>. So is {@code this}.'
 
         when:
-        def result = parser.parse(classMetaData)
+        def result = parser.parse(classMetaData, listener)
 
         then:
         format(result.docbook) == '''<para>This is <literal>code</literal>. So is <literal>this</literal>.</para>'''
@@ -131,7 +132,7 @@ line 2</para>'''
         _ * classMetaData.rawCommentText >> '{@code List<String> && a < 9} <code>&amp;</code>'
 
         when:
-        def result = parser.parse(classMetaData)
+        def result = parser.parse(classMetaData, listener)
 
         then:
         format(result.docbook) == '''<para><literal>List&lt;String&gt; &amp;&amp; a &lt; 9</literal> <literal>&amp;</literal></para>'''
@@ -144,7 +145,7 @@ line 2</para>'''
 '''
 
         when:
-        def result = parser.parse(classMetaData)
+        def result = parser.parse(classMetaData, listener)
 
         then:
         format(result.docbook) == '''<programlisting>this is some
@@ -160,7 +161,7 @@ literal code</programlisting>'''
 '''
 
         when:
-        def result = parser.parse(classMetaData)
+        def result = parser.parse(classMetaData, listener)
 
         then:
         format(result.docbook) == '''<para>for example: </para><programlisting>this is some
@@ -173,7 +174,7 @@ literal code</programlisting><para> does something.
         _ * classMetaData.rawCommentText >> '''<ul><li>item 1<li>item 2</ul>'''
 
         when:
-        def result = parser.parse(classMetaData)
+        def result = parser.parse(classMetaData, listener)
 
         then:
         format(result.docbook) == '''<itemizedlist><listitem>item 1</listitem><listitem>item 2</listitem></itemizedlist>'''
@@ -183,7 +184,7 @@ literal code</programlisting><para> does something.
         _ * classMetaData.rawCommentText >> '<ul><li>item1</li></ul>'
 
         when:
-        def result = parser.parse(classMetaData)
+        def result = parser.parse(classMetaData, listener)
 
         then:
         format(result.docbook) == '''<itemizedlist><listitem>item1</listitem></itemizedlist>'''
@@ -193,30 +194,52 @@ literal code</programlisting><para> does something.
         _ * classMetaData.rawCommentText >> '<ol><li>item1</li></ol>'
 
         when:
-        def result = parser.parse(classMetaData)
+        def result = parser.parse(classMetaData, listener)
 
         then:
         format(result.docbook) == '''<orderedlist><listitem>item1</listitem></orderedlist>'''
     }
 
     def convertsALinkTag() {
-        _ * classMetaData.rawCommentText >> '{@link someClass} {@link otherClass label}'
+        _ * classMetaData.rawCommentText >> '{@link someClass} {@link otherClass#method(a, b) label}'
 
         when:
-        def result = parser.parse(classMetaData)
+        def result = parser.parse(classMetaData, listener)
 
         then:
         format(result.docbook) == '''<para><xref/> <xref/></para>'''
-        1 * linkConverter.resolve('someClass', classMetaData) >> [document.createElement("xref")]
-        1 * linkConverter.resolve('otherClass', classMetaData) >> [document.createElement("xref")]
+        1 * linkConverter.resolve('someClass', classMetaData, listener) >> document.createElement("xref")
+        1 * linkConverter.resolve('otherClass#method(a, b) label', classMetaData, listener) >> document.createElement("xref")
         0 * linkConverter._
+    }
+
+    def convertsAnAElementWithNameAttribute() {
+        _ * classMetaData.rawCommentText >> '<a name="anchor"/>'
+
+        when:
+        def result = parser.parse(classMetaData, listener)
+
+        then:
+        format(result.docbook) == '<anchor id="org.gradle.Class.anchor"/>'
+        _ * classMetaData.className >> 'org.gradle.Class'
+    }
+
+    def convertsAnAElementWithAUrlFragment() {
+        _ * classMetaData.rawCommentText >> '<a href="#anchor">some value</a>'
+
+        when:
+        def result = parser.parse(classMetaData, listener)
+
+        then:
+        format(result.docbook) == '<para><link linkend="org.gradle.Class.anchor">some value</link></para>'
+        _ * classMetaData.className >> 'org.gradle.Class'
     }
 
     def convertsAnEmElementToAnEmphasisElement() {
         _ * classMetaData.rawCommentText >> '<em>text</em>'
 
         when:
-        def result = parser.parse(classMetaData)
+        def result = parser.parse(classMetaData, listener)
 
         then:
         format(result.docbook) == '''<para><emphasis>text</emphasis></para>'''
@@ -226,7 +249,7 @@ literal code</programlisting><para> does something.
         _ * classMetaData.rawCommentText >> '<i>text</i> <b>other</b>'
 
         when:
-        def result = parser.parse(classMetaData)
+        def result = parser.parse(classMetaData, listener)
 
         then:
         format(result.docbook) == '''<para><emphasis>text</emphasis> <emphasis>other</emphasis></para>'''
@@ -243,7 +266,7 @@ text3
 '''
 
         when:
-        def result = parser.parse(classMetaData)
+        def result = parser.parse(classMetaData, listener)
 
         then:
         format(result.docbook) == '''<section><title>section1</title>
@@ -254,12 +277,30 @@ text2
 text3</section>'''
     }
 
+    def convertsTable() {
+        _ * classMetaData.rawCommentText >> '''
+<table>
+    <tr><th>column1</th><th>column2</th></tr>
+    <tr><td>cell1</td><td>cell2</td></tr>
+</table>
+'''
+
+        when:
+        def result = parser.parse(classMetaData, listener)
+
+        then:
+        format(result.docbook) == '''<table>
+    <thead><tr><td>column1</td><td>column2</td></tr></thead>
+    <tr><td>cell1</td><td>cell2</td></tr>
+</table>'''
+    }
+
     def convertsPropertyGetterMethodCommentToPropertyComment() {
         PropertyMetaData propertyMetaData = Mock()
         _ * propertyMetaData.rawCommentText >> 'returns the name of the thing.'
 
         when:
-        def result = parser.parse(propertyMetaData)
+        def result = parser.parse(propertyMetaData, listener)
 
         then:
         format(result.docbook) == '''<para>The name of the thing.</para>'''
@@ -270,7 +311,7 @@ text3</section>'''
         PropertyMetaData overriddenMetaData = Mock()
 
         when:
-        def result = parser.parse(propertyMetaData)
+        def result = parser.parse(propertyMetaData, listener)
 
         then:
         _ * propertyMetaData.rawCommentText >> 'before {@inheritDoc} after'
@@ -282,12 +323,26 @@ text3</section>'''
         format(result.docbook) == '''<para>before </para><para><emphasis>inherited value</emphasis></para><para> after</para>'''
     }
 
+    def convertsValueTag() {
+        PropertyMetaData propertyMetaData = Mock()
+
+        when:
+        def result = parser.parse(propertyMetaData, listener)
+
+        then:
+        _ * propertyMetaData.rawCommentText >> '{@value org.gradle.SomeClass#CONST}'
+        _ * propertyMetaData.ownerClass >> classMetaData
+        _ * linkConverter.resolveValue('org.gradle.SomeClass#CONST', classMetaData, listener) >> document.importNode(parse('<literal>some-value</literal>'), true)
+
+        format(result.docbook) == '''<para><literal>some-value</literal></para>'''
+    }
+
     def convertsMethodComment() {
         MethodMetaData methodMetaData = Mock()
         _ * methodMetaData.rawCommentText >> 'a method.'
 
         when:
-        def result = parser.parse(methodMetaData)
+        def result = parser.parse(methodMetaData, listener)
 
         then:
         format(result.docbook) == '''<para>a method.</para>'''
@@ -298,17 +353,17 @@ text3</section>'''
         _ * propertyMetaData.rawCommentText >> '<unknown>text</unknown><inheritDoc>{@unknown text}{@p text}{@ unknown}'
 
         when:
-        def result = parser.parse(propertyMetaData)
+        def result = parser.parse(propertyMetaData, listener)
 
         then:
-        format(result.docbook) == '''<para><UNHANDLED-ELEMENT>&lt;unknown&gt;text</UNHANDLED-ELEMENT><UNHANDLED-ELEMENT>&lt;inheritdoc&gt;<UNHANDLED-TAG>&lt;unknown&gt;text</UNHANDLED-TAG><UNHANDLED-TAG>&lt;p&gt;text</UNHANDLED-TAG><UNHANDLED-TAG>&lt;&gt;unknown</UNHANDLED-TAG></UNHANDLED-ELEMENT></para>'''
+        format(result.docbook) == '''<para><UNHANDLED-ELEMENT>&lt;unknown&gt;text&lt;/unknown&gt;</UNHANDLED-ELEMENT><UNHANDLED-ELEMENT>&lt;inheritdoc&gt;<UNHANDLED-TAG>{@unknown text}</UNHANDLED-TAG><UNHANDLED-TAG>{@p text}</UNHANDLED-TAG><UNHANDLED-TAG>{@ unknown}</UNHANDLED-TAG></UNHANDLED-ELEMENT></para>'''
     }
 
     def handlesMissingStartTags() {
         _ * classMetaData.rawCommentText >> 'a para</b></p>'
 
         when:
-        def result = parser.parse(classMetaData)
+        def result = parser.parse(classMetaData, listener)
 
         then:
         format(result.docbook) == '''<para>a para</para>'''

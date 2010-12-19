@@ -39,7 +39,10 @@ import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.List;
+import java.util.Set;
 
 /**
  * <p>Deploys an exploded web application to an embedded Jetty web container. Does not require that the web application
@@ -365,8 +368,9 @@ public class JettyRun extends AbstractJettyRunTask {
         this.jettyEnvXml = jettyEnvXml;
     }
 
-//    @InputFile @Optional
-
+    /**
+     * Returns the {@code web.xml} file to use. When {@code null}, no {@code web.xml} file is used.
+     */
     public File getWebXml() {
         return webXml;
     }
@@ -375,6 +379,9 @@ public class JettyRun extends AbstractJettyRunTask {
         this.webXml = webXml;
     }
 
+    /**
+     * Returns the directory containing the web application source files.
+     */
     @InputDirectory
     public File getWebAppSourceDirectory() {
         return webAppSourceDirectory;

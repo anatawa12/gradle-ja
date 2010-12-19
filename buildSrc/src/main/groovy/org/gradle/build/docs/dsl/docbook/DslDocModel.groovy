@@ -37,7 +37,7 @@ class DslDocModel {
         this.classpath = classpath
         this.classMetaData = classMetaData
         this.extensionMetaData = extensionMetaData
-        javadocConverter = new JavadocConverter(document, new JavadocLinkConverter(document, new TypeNameResolver(classMetaData), new ClassLinkRenderer(document, this)))
+        javadocConverter = new JavadocConverter(document, new JavadocLinkConverter(document, new TypeNameResolver(classMetaData), new LinkRenderer(document, this), classMetaData))
     }
 
     boolean isKnownType(String className) {
@@ -75,7 +75,7 @@ class DslDocModel {
             doc.mergeContent()
             return doc
         } catch (Exception e) {
-            throw new RuntimeException("Could not generate the class documentation for class '$className'.", e)
+            throw new RuntimeException("Could not load the class documentation for class '$className'.", e)
         }
     }
 }

@@ -17,6 +17,9 @@
     <xsl:import href="html/chunkfast.xsl"/>
     <xsl:import href="userGuideHtmlCommon.xsl"/>
 
+    <xsl:output method="html" doctype-system="http://www.w3.org/TR/html4/strict.dtd"
+         doctype-public="-//W3C//DTD HTML 4.01//EN"/>
+
     <xsl:param name="root.filename">index</xsl:param>
     <xsl:param name="chunk.section.depth">0</xsl:param>
     <xsl:param name="chunk.quietly">1</xsl:param>
@@ -77,7 +80,7 @@
                 <div class="content">
                     <xsl:copy-of select="$content"/>
                 </div>
-                <script src="sidebar.js" type="text/javascript"/>
+                <!--<script src="sidebar.js" type="text/javascript"/>-->
             </body>
         </html>
         <xsl:value-of select="$chunk.append"/>
@@ -92,7 +95,7 @@
             Home
         </li>
         <ul class='sections'>
-            <xsl:apply-templates select="section" mode="sidebar"/>
+            <xsl:apply-templates select="section" mode="sidebar.link"/>
         </ul>
     </xsl:template>
 
@@ -109,16 +112,27 @@
             <xsl:value-of select="title"/>
         </li>
         <ul class='sections'>
-            <xsl:apply-templates select="section" mode="sidebar"/>
+            <xsl:apply-templates select="section[table]" mode="sidebar.link"/>
         </ul>
     </xsl:template>
 
-    <xsl:template match="section" mode="sidebar">
+    <xsl:template match="section" mode="sidebar.link">
         <li>
             <xsl:call-template name="customXref">
                 <xsl:with-param name="target" select="."/>
+                <xsl:with-param name="content">
+                    <xsl:choose>
+                        <xsl:when test="titleabbrev"><xsl:value-of select="titleabbrev"/></xsl:when>
+                        <xsl:otherwise><xsl:value-of select="title"/></xsl:otherwise>
+                    </xsl:choose>
+                </xsl:with-param>
             </xsl:call-template>
         </li>
+        <xsl:if test="section[table]">
+            <ul class='sections'>
+                <xsl:apply-templates select="section[table]" mode="sidebar.link"/>
+            </ul>
+        </xsl:if>
     </xsl:template>
 
     <xsl:template match="table" mode="sidebar">
@@ -145,12 +159,12 @@
             </xsl:call-template>
         </xsl:variable>
 
-        <xsl:call-template name="anchor">
-            <xsl:with-param name="node" select="ancestor::section"/>
-            <xsl:with-param name="conditional" select="0"/>
-        </xsl:call-template>
         <xsl:element name="h{$level+1}">
             <xsl:attribute name="class">signature</xsl:attribute>
+            <xsl:call-template name="anchor">
+                <xsl:with-param name="node" select="ancestor::section"/>
+                <xsl:with-param name="conditional" select="0"/>
+            </xsl:call-template>
             <xsl:apply-templates/>
         </xsl:element>
     </xsl:template>

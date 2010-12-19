@@ -15,14 +15,23 @@
  */
 package org.gradle.build.docs.dsl.model;
 
-import java.io.Serializable;
+import org.gradle.api.Action;
 
-public class TypeMetaData implements Serializable {
+import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.List;
+
+public class TypeMetaData implements Serializable, TypeContainer {
     public static final TypeMetaData VOID = new TypeMetaData("void");
+    public static final TypeMetaData OBJECT = new TypeMetaData("java.lang.Object");
 
     private String name;
     private int arrayDimensions;
     private boolean varargs;
+    private List<TypeMetaData> typeArgs;
+    private boolean wildcard;
+    private TypeMetaData upperBounds;
+    private TypeMetaData lowerBounds;
 
     public TypeMetaData(String name) {
         this.name = name;
@@ -43,22 +52,45 @@ public class TypeMetaData implements Serializable {
         return arrayDimensions + (varargs ? 1 : 0);
     }
 
-    public void addArrayDimension() {
+    public TypeMetaData addArrayDimension() {
         arrayDimensions++;
+        return this;
     }
 
     public boolean isVarargs() {
         return varargs;
     }
 
-    public void setVarargs(boolean varargs) {
-        this.varargs = varargs;
+    public TypeMetaData setVarargs() {
+        this.varargs = true;
+        return this;
+    }
+
+    public TypeMetaData getRawType() {
+        if (wildcard || lowerBounds != null) {
+            return OBJECT;
+        }
+        if (upperBounds != null) {
+            return upperBounds.getRawType();
+        }
+        TypeMetaData rawType = new TypeMetaData(name);
+        rawType.arrayDimensions = arrayDimensions;
+        rawType.varargs = varargs;
+        return rawType;
     }
 
     public String getSignature() {
-        StringBuilder builder = new StringBuilder();
-        builder.append(name);
-        builder.append(getArraySuffix());
+        final StringBuilder builder = new StringBuilder();
+
+        visitSignature(new SignatureVisitor() {
+            public void visitText(String text) {
+                builder.append(text);
+            }
+
+            public void visitType(String name) {
+                builder.append(name);
+            }
+        });
         return builder.toString();
     }
 
@@ -71,5 +103,84 @@ public class TypeMetaData implements Serializable {
             builder.append("...");
         }
         return builder.toString();
+    }
+
+    public TypeMetaData addTypeArg(TypeMetaData typeArg) {
+        if (typeArgs == null) {
+            typeArgs = new ArrayList<TypeMetaData>();
+        }
+        typeArgs.add(typeArg);
+        return this;
+    }
+
+    public void visitTypes(Action<TypeMetaData> action) {
+        if (wildcard) {
+            return;
+        }
+        if (upperBounds != null) {
+            upperBounds.visitTypes(action);
+            return;
+        }
+        if (lowerBounds != null) {
+            lowerBounds.visitTypes(action);
+            return;
+        }
+        
+        action.execute(this);
+        if (typeArgs != null) {
+            for (TypeMetaData typeArg : typeArgs) {
+                typeArg.visitTypes(action);
+            }
+        }
+    }
+
+    public void visitSignature(SignatureVisitor visitor) {
+        if (wildcard) {
+            visitor.visitText("?");
+        } else if (upperBounds != null) {
+            visitor.visitText("? extends ");
+            upperBounds.visitSignature(visitor);
+        } else if (lowerBounds != null) {
+            visitor.visitText("? super ");
+            lowerBounds.visitSignature(visitor);
+        } else {
+            visitor.visitType(name);
+            if (typeArgs != null) {
+                visitor.visitText("<");
+                for (int i = 0; i < typeArgs.size(); i++) {
+                    if (i > 0) {
+                        visitor.visitText(", ");
+                    }
+                    TypeMetaData typeArg = typeArgs.get(i);
+                    typeArg.visitSignature(visitor);
+                }
+                visitor.visitText(">");
+            }
+            String suffix = getArraySuffix();
+            if (suffix.length() > 0) {
+                visitor.visitText(suffix);
+            }
+        }
+    }
+
+    public TypeMetaData setWildcard() {
+        wildcard = true;
+        return this;
+    }
+
+    public TypeMetaData setUpperBounds(TypeMetaData upperBounds) {
+        this.upperBounds = upperBounds;
+        return this;
+    }
+
+    public TypeMetaData setLowerBounds(TypeMetaData lowerBounds) {
+        this.lowerBounds = lowerBounds;
+        return this;
+    }
+
+    public interface SignatureVisitor {
+        void visitText(String text);
+
+        void visitType(String name);
     }
 }

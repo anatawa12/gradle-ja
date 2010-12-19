@@ -15,15 +15,17 @@
  */
 package org.gradle.build.docs.dsl.model;
 
-import java.io.Serializable;
-import java.util.LinkedList;
+import org.gradle.api.Action;
 
-public class PropertyMetaData implements Serializable, LanguageElement {
+import java.io.Serializable;
+
+public class PropertyMetaData implements Serializable, LanguageElement, TypeContainer {
     private TypeMetaData type;
-    private boolean writeable;
     private String rawCommentText;
     private final String name;
     private final ClassMetaData ownerClass;
+    private MethodMetaData setter;
+    private MethodMetaData getter;
 
     public PropertyMetaData(String name, ClassMetaData ownerClass) {
         this.name = name;
@@ -48,11 +50,7 @@ public class PropertyMetaData implements Serializable, LanguageElement {
     }
 
     public boolean isWriteable() {
-        return writeable;
-    }
-
-    public void setWriteable(boolean writeable) {
-        this.writeable = writeable;
+        return setter != null;
     }
 
     public ClassMetaData getOwnerClass() {
@@ -75,24 +73,38 @@ public class PropertyMetaData implements Serializable, LanguageElement {
         return builder.toString();
     }
 
-    public PropertyMetaData getOverriddenProperty() {
-        LinkedList<ClassMetaData> queue = new LinkedList<ClassMetaData>();
-        queue.add(ownerClass.getSuperClass());
-        queue.addAll(ownerClass.getInterfaces());
+    public MethodMetaData getGetter() {
+        return getter;
+    }
 
-        while (!queue.isEmpty()) {
-            ClassMetaData cl = queue.removeFirst();
-            if (cl == null) {
-                continue;
-            }
-            PropertyMetaData overriddenProperty = cl.findDeclaredProperty(name);
-            if (overriddenProperty != null) {
-                return overriddenProperty;
-            }
-            queue.add(cl.getSuperClass());
-            queue.addAll(cl.getInterfaces());
+    public void setGetter(MethodMetaData getter) {
+        this.getter = getter;
+    }
+
+    public MethodMetaData getSetter() {
+        return setter;
+    }
+
+    public void setSetter(MethodMetaData setter) {
+        this.setter = setter;
+    }
+
+    public PropertyMetaData getOverriddenProperty() {
+        MethodMetaData overriddenMethod = null;
+        if (getter != null) {
+            overriddenMethod = getter.getOverriddenMethod();
+        }
+        if (overriddenMethod == null && setter != null) {
+            overriddenMethod = setter.getOverriddenMethod();
+        }
+        if (overriddenMethod != null) {
+            return overriddenMethod.getOwnerClass().findDeclaredProperty(name);
         }
 
         return null;
+    }
+
+    public void visitTypes(Action<TypeMetaData> action) {
+        action.execute(type);
     }
 }

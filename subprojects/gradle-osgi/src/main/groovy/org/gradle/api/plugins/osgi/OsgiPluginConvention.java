@@ -36,13 +36,12 @@ public class OsgiPluginConvention {
     }
 
     /**
-     * Returns a new instance of {@link org.gradle.api.plugins.osgi.OsgiManifest}. The returned object is preconfigured with:
-     * <blockquote>
+     * Creates a new instance of {@link org.gradle.api.plugins.osgi.OsgiManifest}. The returned object is preconfigured with:
      * <pre>
      * version: project.version
      * name: project.archivesBaseName
      * symbolicName: project.group + "." + project.archivesBaseName (see below for exceptions to this rule)
-     * </pre></blockquote>
+     * </pre>
      *
      * The symbolic name is usually the group + "." + archivesBaseName, with the following exceptions
      * <ul>
@@ -60,7 +59,7 @@ public class OsgiPluginConvention {
     }
 
     /**
-     * Returns a new instance of an  {@link org.gradle.api.plugins.osgi.OsgiManifest} . The closure configures
+     * Creates and configures a new instance of an  {@link org.gradle.api.plugins.osgi.OsgiManifest} . The closure configures
      * the new manifest instance before it is returned.
      */
     public OsgiManifest osgiManifest(Closure closure) {

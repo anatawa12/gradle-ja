@@ -15,15 +15,17 @@
  */
 package org.gradle.build.docs.dsl.docbook
 
+import com.google.common.collect.*
+
 class ExtensionMetaData {
     final String targetClass
-    final Set<Map<String, String>> extensionClasses = new HashSet()
+    final SetMultimap<String, String> extensionClasses = HashMultimap.create()
 
     ExtensionMetaData(String targetClass) {
         this.targetClass = targetClass
     }
     
     def void add(String plugin, String extensionClass) {
-        extensionClasses << [plugin: plugin, extensionClass: extensionClass]
+        extensionClasses.put(plugin, extensionClass)
     }
 }

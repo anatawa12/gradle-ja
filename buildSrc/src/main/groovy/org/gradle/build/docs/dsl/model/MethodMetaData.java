@@ -15,11 +15,14 @@
  */
 package org.gradle.build.docs.dsl.model;
 
+import org.gradle.api.Action;
+
 import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.LinkedList;
 import java.util.List;
 
-public class MethodMetaData implements Serializable, LanguageElement {
+public class MethodMetaData implements Serializable, LanguageElement, TypeContainer {
     private final String name;
     private final ClassMetaData ownerClass;
     private final List<ParameterMetaData> parameters = new ArrayList<ParameterMetaData>();
@@ -37,7 +40,7 @@ public class MethodMetaData implements Serializable, LanguageElement {
 
     @Override
     public String toString() {
-        return String.format("%s.%s", ownerClass, name);
+        return String.format("%s.%s()", ownerClass, name);
     }
 
     public ClassMetaData getOwnerClass() {
@@ -50,6 +53,29 @@ public class MethodMetaData implements Serializable, LanguageElement {
 
     public void setReturnType(TypeMetaData returnType) {
         this.returnType = returnType;
+    }
+
+    public MethodMetaData getOverriddenMethod() {
+        LinkedList<ClassMetaData> queue = new LinkedList<ClassMetaData>();
+        queue.add(ownerClass.getSuperClass());
+        queue.addAll(ownerClass.getInterfaces());
+        
+        String overrideSignature = getOverrideSignature();
+
+        while (!queue.isEmpty()) {
+            ClassMetaData cl = queue.removeFirst();
+            if (cl == null) {
+                continue;
+            }
+            MethodMetaData overriddenMethod = cl.findDeclaredMethod(overrideSignature);
+            if (overriddenMethod != null) {
+                return overriddenMethod;
+            }
+            queue.add(cl.getSuperClass());
+            queue.addAll(cl.getInterfaces());
+        }
+
+        return null;
     }
 
     public List<ParameterMetaData> getParameters() {
@@ -75,7 +101,16 @@ public class MethodMetaData implements Serializable, LanguageElement {
         StringBuilder builder = new StringBuilder();
         builder.append(returnType.getSignature());
         builder.append(' ');
-        builder.append(getOverrideSignature());
+        builder.append(name);
+        builder.append('(');
+        for (int i = 0; i < parameters.size(); i++) {
+            ParameterMetaData param =  parameters.get(i);
+            if (i > 0) {
+                builder.append(", ");
+            }
+            builder.append(param.getSignature());
+        }
+        builder.append(')');
         return builder.toString();
     }
 
@@ -88,9 +123,16 @@ public class MethodMetaData implements Serializable, LanguageElement {
             if (i > 0) {
                 builder.append(", ");
             }
-            builder.append(param.getSignature());
+            builder.append(param.getType().getRawType().getSignature());
         }
         builder.append(')');
         return builder.toString();
+    }
+
+    public void visitTypes(Action<TypeMetaData> action) {
+        action.execute(returnType);
+        for (ParameterMetaData parameter : parameters) {
+            parameter.visitTypes(action);
+        }
     }
 }

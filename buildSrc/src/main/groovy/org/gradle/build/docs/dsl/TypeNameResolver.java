@@ -16,11 +16,15 @@
 package org.gradle.build.docs.dsl;
 
 import org.apache.commons.lang.StringUtils;
+import org.gradle.api.Action;
 import org.gradle.build.docs.dsl.model.ClassMetaData;
 import org.gradle.build.docs.dsl.model.TypeMetaData;
 import org.gradle.build.docs.model.ClassMetaDataRepository;
+import org.gradle.util.UncheckedException;
 
+import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 /**
@@ -28,6 +32,8 @@ import java.util.Set;
  */
 public class TypeNameResolver {
     private final Set<String> primitiveTypes = new HashSet<String>();
+    private final List<String> groovyImplicitImportPackages = new ArrayList<String>();
+    private final List<String> groovyImplicitTypes = new ArrayList<String>();
     private final ClassMetaDataRepository<ClassMetaData> metaDataRepository;
 
     public TypeNameResolver(ClassMetaDataRepository<ClassMetaData> metaDataRepository) {
@@ -40,13 +46,32 @@ public class TypeNameResolver {
         primitiveTypes.add("long");
         primitiveTypes.add("float");
         primitiveTypes.add("double");
+        primitiveTypes.add("void");
+        groovyImplicitImportPackages.add("java.util.");
+        groovyImplicitImportPackages.add("java.io.");
+        groovyImplicitImportPackages.add("java.net.");
+        groovyImplicitImportPackages.add("groovy.lang.");
+        groovyImplicitImportPackages.add("groovy.util.");
+        groovyImplicitTypes.add("java.math.BigDecimal");
+        groovyImplicitTypes.add("java.math.BigInteger");
+
+        // check that groovy is visible.
+        try {
+            getClass().getClassLoader().loadClass("groovy.lang.Closure");
+        } catch (ClassNotFoundException e) {
+            throw UncheckedException.asUncheckedException(e);
+        }
     }
 
     /**
      * Resolves the names in the given type into fully qualified names.
      */
-    public void resolve(TypeMetaData type, ClassMetaData classMetaData) {
-        type.setName(resolve(type.getName(), classMetaData));
+    public void resolve(final TypeMetaData type, final ClassMetaData classMetaData) {
+        type.visitTypes(new Action<TypeMetaData>() {
+            public void execute(TypeMetaData t) {
+                t.setName(resolve(t.getName(), classMetaData));
+            }
+        });
     }
 
     /**
@@ -96,6 +121,9 @@ public class TypeNameResolver {
                 if (metaDataRepository.find(candidateClassName) != null) {
                     return candidateClassName;
                 }
+                if (importedClass.startsWith("java.") && isVisibleClass(candidateClassName)) {
+                    return candidateClassName;
+                }
             } else if (name.equals(baseName)) {
                 return importedClass;
             }
@@ -106,14 +134,34 @@ public class TypeNameResolver {
             return candidateClassName;
         }
 
-        try {
-            candidateClassName = "java.lang." + name;
-            ClassLoader.getSystemClassLoader().loadClass(candidateClassName);
+        candidateClassName = "java.lang." + name;
+        if (isVisibleClass(candidateClassName)) {
             return candidateClassName;
+        }
+
+        if (classMetaData.isGroovy()) {
+            candidateClassName = "java.math." + name;
+            if (groovyImplicitTypes.contains(candidateClassName)) {
+                return candidateClassName;
+            }
+            for (String prefix : groovyImplicitImportPackages) {
+                candidateClassName = prefix + name;
+                if (isVisibleClass(candidateClassName)) {
+                    return candidateClassName;
+                }
+            }
+        }
+
+        return name;
+    }
+
+    private boolean isVisibleClass(String candidateClassName) {
+        try {
+            getClass().getClassLoader().loadClass(candidateClassName);
+            return true;
         } catch (ClassNotFoundException e) {
             // Ignore
         }
-        
-        return name;
+        return false;
     }
 }

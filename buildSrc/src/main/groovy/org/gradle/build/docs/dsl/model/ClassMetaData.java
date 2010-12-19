@@ -16,6 +16,7 @@
 package org.gradle.build.docs.dsl.model;
 
 import org.apache.commons.lang.StringUtils;
+import org.gradle.api.Action;
 import org.gradle.build.docs.model.Attachable;
 import org.gradle.build.docs.model.ClassMetaDataRepository;
 import org.gradle.util.GUtil;
@@ -23,7 +24,7 @@ import org.gradle.util.GUtil;
 import java.io.Serializable;
 import java.util.*;
 
-public class ClassMetaData implements Serializable, Attachable<ClassMetaData>, LanguageElement {
+public class ClassMetaData implements Serializable, Attachable<ClassMetaData>, LanguageElement, TypeContainer {
     private final String className;
     private String superClassName;
     private final String packageName;
@@ -37,6 +38,7 @@ public class ClassMetaData implements Serializable, Attachable<ClassMetaData>, L
     private final List<String> innerClassNames = new ArrayList<String>();
     private String outerClassName;
     private transient ClassMetaDataRepository<ClassMetaData> metaDataRepository;
+    public final HashMap<String,String> constants = new HashMap<String, String>();
 
     public ClassMetaData(String className, String packageName, boolean isInterface, boolean isGroovy, String rawClassComment) {
         this.className = className;
@@ -134,14 +136,15 @@ public class ClassMetaData implements Serializable, Attachable<ClassMetaData>, L
         imports.add(importName);
     }
 
-    public PropertyMetaData addReadableProperty(String name, TypeMetaData type, String rawCommentText) {
+    public PropertyMetaData addReadableProperty(String name, TypeMetaData type, String rawCommentText, MethodMetaData getterMethod) {
         PropertyMetaData property = getProperty(name);
         property.setType(type);
         property.setRawCommentText(rawCommentText);
+        property.setGetter(getterMethod);
         return property;
     }
 
-    public PropertyMetaData addWriteableProperty(String name, TypeMetaData type, String rawCommentText) {
+    public PropertyMetaData addWriteableProperty(String name, TypeMetaData type, String rawCommentText, MethodMetaData setterMethod) {
         PropertyMetaData property = getProperty(name);
         if (property.getType() == null) {
             property.setType(type);
@@ -149,7 +152,7 @@ public class ClassMetaData implements Serializable, Attachable<ClassMetaData>, L
         if (!GUtil.isTrue(property.getRawCommentText())) {
             property.setRawCommentText(rawCommentText);
         }
-        property.setWriteable(true);
+        property.setSetter(setterMethod);
         return property;
     }
 
@@ -167,6 +170,15 @@ public class ClassMetaData implements Serializable, Attachable<ClassMetaData>, L
 
     public Set<MethodMetaData> getDeclaredMethods() {
         return declaredMethods;
+    }
+
+    public MethodMetaData findDeclaredMethod(String signature) {
+        for (MethodMetaData method : declaredMethods) {
+            if (method.getOverrideSignature().equals(signature)) {
+                return method;
+            }
+        }
+        return null;
     }
 
     /**
@@ -211,6 +223,10 @@ public class ClassMetaData implements Serializable, Attachable<ClassMetaData>, L
         return property;
     }
 
+    public Map<String, String> getConstants() {
+        return constants;
+    }
+    
     public void attach(ClassMetaDataRepository<ClassMetaData> metaDataRepository) {
         this.metaDataRepository = metaDataRepository;
     }
@@ -221,5 +237,14 @@ public class ClassMetaData implements Serializable, Attachable<ClassMetaData>, L
         method.setReturnType(returnType);
         method.setRawCommentText(rawCommentText);
         return method;
+    }
+
+    public void visitTypes(Action<TypeMetaData> action) {
+        for (PropertyMetaData propertyMetaData : declaredProperties.values()) {
+            propertyMetaData.visitTypes(action);
+        }
+        for (MethodMetaData methodMetaData : declaredMethods) {
+            methodMetaData.visitTypes(action);
+        }
     }
 }

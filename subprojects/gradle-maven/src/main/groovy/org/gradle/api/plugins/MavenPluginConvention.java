@@ -41,14 +41,25 @@ public class MavenPluginConvention {
         this.project = project;
     }
 
+    /**
+     * Returns the name of the directory to generate Maven POMs into, relative to the build directory.
+     */
     public String getPomDirName() {
         return pomDirName;
     }
 
+    /**
+     * Sets the name of the directory to generate Maven POMs into, relative to the build directory.
+     */
     public void setPomDirName(String pomDirName) {
         this.pomDirName = pomDirName;
     }
 
+    /**
+     * Returns the set of rules for how to map Gradle dependencies to Maven scopes.
+     *
+     * @return The mapping rules.
+     */
     public Conf2ScopeMappingContainer getConf2ScopeMappings() {
         return conf2ScopeMappings;
     }
@@ -57,19 +68,33 @@ public class MavenPluginConvention {
         this.conf2ScopeMappings = conf2ScopeMappings;
     }
 
+    /**
+     * Returns the directory to generate Maven POMs into.
+     */
     public File getPomDir() {
         return project.getFileResolver().withBaseDir(project.getBuildDir()).resolve(pomDirName);
     }
 
+    /**
+     * Creates a new {@link MavenPom}.
+     *
+     * @return The POM instance.
+     */
     public MavenPom pom() {
         return pom(null);
     }
 
+    /**
+     * Creates and configures a new {@link MavenPom}. The given closure is executed to configure the new POM instance.
+     *
+     * @param configureClosure The closure to use to configure the POM instance.
+     * @return The POM instance.
+     */
     public MavenPom pom(Closure configureClosure) {
         DefaultMavenPom pom = new DefaultMavenPom(project.getConfigurations(),
                 new DefaultConf2ScopeMappingContainer(conf2ScopeMappings.getMappings()),
                 new DefaultPomDependenciesConverter(new DefaultExcludeRuleConverter()),
-                ((ProjectInternal) project).getFileResolver());
+                project.getFileResolver());
         pom.setGroupId(project.getGroup().toString());
         pom.setArtifactId(project.getName());
         pom.setVersion(project.getVersion().toString());

@@ -15,18 +15,31 @@
  */
 package org.gradle.build.docs.dsl.docbook
 
+import org.gradle.build.docs.dsl.model.ClassMetaData
 import org.gradle.build.docs.dsl.model.MethodMetaData
 import org.w3c.dom.Element
 
 class MethodDoc {
-    final String id
+    private final String id
     private final MethodMetaData metaData
-    final List<Element> comment
+    private final List<Element> comment
 
     MethodDoc(MethodMetaData metaData, List<Element> comment) {
+        this(metaData.ownerClass, metaData, comment)
+    }
+
+    MethodDoc(ClassMetaData referringClass, MethodMetaData metaData, List<Element> comment) {
         this.metaData = metaData
-        id = "$metaData.ownerClass.className:$metaData.overrideSignature"
+        id = "$referringClass.className:$metaData.overrideSignature"
         this.comment = comment
+    }
+
+    MethodDoc forClass(ClassMetaData c) {
+        return new MethodDoc(c, metaData, comment)
+    }
+
+    String getId() {
+        return id
     }
 
     String getName() {
@@ -39,5 +52,9 @@ class MethodDoc {
 
     Element getDescription() {
         return comment.find { it.nodeName == 'para' }
+    }
+    
+    List<Element> getComment() {
+        return comment
     }
 }
