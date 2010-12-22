@@ -14,51 +14,64 @@
   ~ limitations under the License.
   -->
 <chapter id="tutorial_groovy_projects">
-    <title>Groovy Quickstart</title>
+    <title>Groovyクイックスタート<phrase role="original">Groovy Quickstart</phrase></title>
 
-    <para>To build a Groovy project, you use the <firstterm>Groovy plugin</firstterm>. This plugin extends the Java
+    <para role="original">To build a Groovy project, you use the <firstterm>Groovy plugin</firstterm>. This plugin extends the Java
         plugin to add Groovy compilation capabilties to your project. Your project can contain Groovy source code,
         Java source code, or a mix of the two. In every other respect, a Groovy project is identical to a Java project,
         which we have already seen in <xref linkend="tutorial_java_projects"/>.
     </para>
+    <para>Groovyプロジェクトをビルドするのには、<firstterm>Groovyプラグイン</firstterm>を使います。このプラグインはJavaプラグインを拡張して、Groovyのコンパイル能力をプロジェクトに加えます。
+    プロジェクトはGroovyソースコード、Javaソースコード、またはこれらの両方を含むことができます。これ以外の点では、Groovyプロジェクトは<xref linkend="tutorial_java_projects"/>ですでに見たJavaプロジェクトを同じです。
+    </para>
 
     <section>
-        <title>A basic Groovy project</title>
+        <title>基本的なGroovyプロジェクト<phrase role="original">A basic Groovy project</phrase></title>
 
-        <para>Let's look at an example. To use the Groovy plugin, add the following to your build file:</para>
-        <sample id="groovyQuickstart" dir="groovy/quickstart" includeLocation="true" title="Groovy plugin">
+        <para role="original">Let's look at an example. To use the Groovy plugin, add the following to your build file:</para>
+        <para>実例を見てみましょう。Groovyプラグインを使うためには、ビルドファイルに以下を記述を追加します：</para>
+        <sample id="groovyQuickstart" dir="groovy/quickstart" includeLocation="true" title="Groovyプラグイン / Groovy plugin">
             <sourcefile file="build.gradle" snippet="use-plugin"/>
         </sample>
-        <para>This will also apply the Java plugin to the project, if it has not already been applied. The Groovy plugin
+        <para role="original">This will also apply the Java plugin to the project, if it has not already been applied. The Groovy plugin
             extends the <literal>compile</literal> task to look for source files in directory
             <filename>src/main/groovy</filename>, and the <literal>compileTest</literal> task to look for test source
             files in directory<filename>src/test/groovy</filename>. The compile tasks use joint compilation for these
             directories, which means they can contain a mixture of java and groovy source files.
         </para>
-        <para>To use the groovy compilation tasks, you must also declare the Groovy version to use and where to find the
+        <para>これにより、（もしまだなら）プロジェクトにはJavaプラグインも適用されます。Groovyプラグインは<literal>compile</literal>タスクを拡張して<filename>src/main/groovy</filename>ディレクトリにあるソースファイルも参照するようにし、また<literal>compileTest</literal>タスクを拡張して<filename>src/test/groovy</filename>ディレクトリにあるテスト用ソースファイルも参照するようにします。compileタスクはこれらのディレクトリに対してジョイントコンパイルを使うので、javaとgroovyのソースファイルが混在していてもかまいません。
+        </para>
+        <para role="original">To use the groovy compilation tasks, you must also declare the Groovy version to use and where to find the
             Groovy libraries. You do this by adding a dependency to the <literal>groovy</literal> configuration.
             The <literal>compile</literal> configuration inherits this dependency, so the groovy libraries will
             be included in classpath when compiling Groovy and Java source.  For our sample, we will use Groovy 1.6.0
             from the public Maven repository:</para>
-        <sample id="groovyQuickstart" dir="groovy/quickstart" title="Dependency on Groovy 1.6.0">
+        <para>Groovy用のcompileタスクを使うには、GroovyのバージョンとGroovyライブラリの存在場所を宣言する必要もあります。これは、<literal>groovy</literal>設定に依存関係を追加することによって行います。<literal>compile</literal>設定はこの依存関係を継承するので、GroovyやJavaソースをコンパイルするとき、クラスパスにはgroovyライブラリが含まれるようになります。この例では、公開MavenリポジトリのGroovyを使います：</para>
+        <sample id="groovyQuickstart" dir="groovy/quickstart" title="Groovyへの依存関係 / Dependency on Groovy 1.6.0">
             <sourcefile file="build.gradle" snippet="groovy-dependency"/>
         </sample>
-        <para>Here is our complete build file:</para>
-        <sample id="groovyQuickstart" dir="groovy/quickstart" title="Groovy example - complete build file">
+        <para role="original">Here is our complete build file:</para>
+        <para>以下にビルドファイルの全体を示します：</para>
+        <sample id="groovyQuickstart" dir="groovy/quickstart" title="Groovy用のビルドファイル（全体） / Groovy example - complete build file">
             <sourcefile file="build.gradle"/>
         </sample>
-        <para>Running <userinput>gradle build</userinput> will compile, test and JAR your project.</para>
+        <para role="original">Running <userinput>gradle build</userinput> will compile, test and JAR your project.</para>
+        <para><userinput>gradle build</userinput>を実行すれば、プロジェクトがコンパイル、テストされ、JARが生成されます。</para>
     </section>
 
     <section>
-        <title>Summary</title>
-        <para>This chapter describes a very simple Groovy project. Usually, a real project will require more than this.
+        <title>まとめ<phrase role="original">Summary</phrase></title>
+        <para role="original">This chapter describes a very simple Groovy project. Usually, a real project will require more than this.
             Because a Groovy project <emphasis>is</emphasis> a Java project, whatever you can do with a Java project,
             you can also do with a Groovy project.
         </para>
-        <para>
+        <para>この章では非常にシンプルなGroovyプロジェクトについて説明しました。通常、実プロジェクトではこの例よりもっと複雑な記述が必要でしょう。GroovyプロジェクトはJavaプロジェクト<emphasis>でもある</emphasis>ので、Javaプロジェクトで可能なことなら何でもGroovyプロジェクトでも可能です。
+        </para>
+        <para role="original">
             You can find out more about the Groovy plugin in <xref linkend="groovy_plugin"/>, and you can find more
             sample Groovy projects in the <filename>samples/groovy</filename> directory in the Gradle distribution.
+        </para>
+        <para><xref linkend="groovy_plugin"/>では、Groovyプラグインをより詳しく説明しています。また、Gradle配布物の<filename>samples/groovy</filename>ディレクトリには、Groovyプロジェクトの実例が多く含まれています。
         </para>
     </section>
 
