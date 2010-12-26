@@ -40,6 +40,10 @@
             <firstname>Masatoshi</firstname>
             <surname>Hayashi</surname>
         </othercredit>
+        <othercredit class="translator">
+            <firstname>Kazuchika</firstname>
+            <surname>Sekiya</surname>
+        </othercredit>
     </bookinfo>
     <preface>
         <title>翻訳版について</title>
