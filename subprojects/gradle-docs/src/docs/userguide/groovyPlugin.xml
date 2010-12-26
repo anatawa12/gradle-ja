@@ -15,10 +15,10 @@
   -->
 <chapter id='groovy_plugin' xmlns:xi="http://www.w3.org/2001/XInclude">
     <title>Groovyプラグイン<phrase role="original">The Groovy Plugin</phrase></title>
-    <para>The Groovy plugin extends the Java plugin to add support for Groovy projects. It can deal with Groovy-only projects and
+    <para role="original">The Groovy plugin extends the Java plugin to add support for Groovy projects. It can deal with Groovy-only projects and
         with mixed Java/Groovy projects. It can even deal with Java-only projects.
         <footnote>
-            <para>We don't recommend this, as the Groovy plugin uses the <emphasis>Groovyc</emphasis>
+            <para role="original">We don't recommend this, as the Groovy plugin uses the <emphasis>Groovyc</emphasis>
                 Ant task to compile the sources. For pure Java projects you might rather stick with
                 <literal>javac</literal>. In particular as you would have to supply a groovy jar for doing this.
             </para>
@@ -26,59 +26,69 @@
         The Groovy plugin supports joint compilation of Java and Groovy. This means that your project can contain Groovy
         classes which use Java classes, and vice versa.
     </para>
+    <para>GroovyプラグインはJavaプラグインを拡張し、Groovyプロジェクトのサポートを追加します。このプラグインはGroovyだけのプロジェクト、およびJava/Groovyの混合プロジェクトを扱うことができます。また、Javaだけのプロジェクトでも扱うことができます。
+        <footnote>
+            <para>これは推奨しません。Groovyプラグインはソースをコンパイルするのに<emphasis>Groovyc</emphasis> Antタスクを使うからです。純粋なJavaプロジェクトでは<literal>javac</literal>を使い続ける方がよいでしょう。また、Groovyプラグインを使うためにはgroovyのjarを提供する必要もあります。
+            </para>
+        </footnote>
+        GroovyプラグインはJavaとGroovyのジョイントコンパイルもサポートします。つまり、プロジェクトはJavaクラスを使うGroovyクラスや、その逆のものを含むことが可能です。
+    </para>
 
     <section>
-        <title>Usage</title>
-        <para>To use the Groovy plugin, include in your build script:</para>
-        <sample id="useGroovyPlugin" dir="groovy/quickstart" title="Using the Groovy plugin">
+        <title>使用方法<phrase role="original">Usage</phrase></title>
+        <para role="original">To use the Groovy plugin, include in your build script:</para>
+        <para>Groovyプラグインを使うためには、ビルドスクリプトに下記を含めます：</para>
+        <sample id="useGroovyPlugin" dir="groovy/quickstart" title="Groovyプラグインの使用 / Using the Groovy plugin">
             <sourcefile file="build.gradle" snippet="use-plugin"/>
         </sample>
     </section>
 
     <section>
-        <title>Tasks</title>
-        <para>The Groovy plugin adds the following tasks to the project.</para>
+        <title>タスク<phrase role="original">Tasks</phrase></title>
+        <para role="original">The Groovy plugin adds the following tasks to the project.</para>
+        <para>Groovyプラグインは、以下のタスクをプロジェクトに追加します。</para>
         <table>
-            <title>Groovy plugin - tasks</title>
+            <title>Groovyプラグイン - タスク<phrase role="original">Groovy plugin - tasks</phrase></title>
             <thead>
                 <tr>
-                    <td>Task name</td>
-                    <td>Depends on</td>
-                    <td>Type</td>
-                    <td>Description</td>
+                    <td>タスク名<phrase role="original">Task name</phrase></td>
+                    <td>依存先<phrase role="original">Depends on</phrase></td>
+                    <td>型<phrase role="original">Type</phrase></td>
+                    <td>説明<phrase role="original">Description</phrase></td>
                 </tr>
             </thead>
             <tr>
                 <td><literal>compileGroovy</literal></td>
                 <td><literal>compileJava</literal></td>
                 <td><apilink class="org.gradle.api.tasks.compile.GroovyCompile"/></td>
-                <td>Compiles production Groovy source files using groovyc.</td>
+                <td>groovycを使って製品のGroovyソースファイルをコンパイルする<phrase role="original">Compiles production Groovy source files using groovyc.</phrase></td>
             </tr>
             <tr>
                 <td><literal>compileTestGroovy</literal></td>
                 <td><literal>compileTestJava</literal></td>
                 <td><apilink class="org.gradle.api.tasks.compile.GroovyCompile"/></td>
-                <td>Compiles test Groovy source files using groovyc.</td>
+                <td>groovycを使ってテストのGroovyソースファイルをコンパイルする<phrase role="original">Compiles test Groovy source files using groovyc.</phrase></td>
             </tr>
             <tr>
                 <td><literal>compile<replaceable>SourceSet</replaceable>Groovy</literal></td>
                 <td><literal>compile<replaceable>SourceSet</replaceable>Java</literal></td>
                 <td><apilink class="org.gradle.api.tasks.compile.GroovyCompile"/></td>
-                <td>Compiles the given source set's Groovy source files using groovyc.</td>
+                <td>groovycを使って特定のソースセットのGroovyソースファイルをコンパイルする<phrase role="original">Compiles the given source set's Groovy source files using groovyc.</phrase></td>
             </tr>
             <tr>
                 <td><literal>groovydoc</literal></td>
                 <td>-</td>
                 <td><apilink class="org.gradle.api.tasks.javadoc.Groovydoc"/></td>
-                <td>Generates API documentation for the production Groovy source files using groovydoc.</td>
+                <td>groovydoccを使って製品のGroovyソースファイルのAPIドキュメントを生成する<phrase role="original">Generates API documentation for the production Groovy source files using groovydoc.</phrase></td>
             </tr>
         </table>
-        <para>The Groovy plugin adds the following dependencies to tasks added by the Java plugin.</para>
+        <para role="original">The Groovy plugin adds the following dependencies to tasks added by the Java plugin.</para>
+        <para>Groovyプラグインは、Javaプラグインによって追加されたタスクに以下の依存関係を追加します。</para>
         <table>
-            <title>Groovy plugin - additional task dependencies</title>
+            <title>Groovyプラグイン - タスクの追加依存関係<phrase role="original">Groovy plugin - additional task dependencies</phrase></title>
             <thead>
-                <td>Task name</td>
-                <td>Depends on</td>
+                <td>タスク名<phrase role="original">Task name</phrase></td>
+                <td>依存先<phrase role="original">Depends on</phrase></td>
             </thead>
             <tr>
                 <td>classes</td>
@@ -94,7 +104,7 @@
             </tr>
         </table>
         <figure>
-            <title>Groovy plugin - tasks</title>
+            <title>Groovyプラグイン - タスク<phrase role="original">Groovy plugin - tasks</phrase></title>
             <imageobject>
                 <imagedata fileref="img/groovyPluginTasks.png"/>
             </imageobject>
@@ -102,25 +112,33 @@
     </section>
 
     <section>
-        <title>Project layout</title>
-        <para>The Groovy plugin assumes the project layout shown in <xref linkend='groovylayout'/>. All the Groovy
+        <title>プロジェクトレイアウト<phrase role="original">Project layout</phrase></title>
+        <para role="original">The Groovy plugin assumes the project layout shown in <xref linkend='groovylayout'/>. All the Groovy
             source directories can contain Groovy <emphasis>and</emphasis> Java code. The Java source directories may
             only contain Java source code.
             <footnote>
-                <para>We are using the same conventions as introduced by Russel Winders Gant tool (<ulink
+                <para role="original">We are using the same conventions as introduced by Russel Winders Gant tool (<ulink
                         url='http://gant.codehaus.org'/>).
                 </para>
             </footnote>
             None of these directories need exist or have anything in them. The Groovy plugin will compile whatever it
             finds, and handles anything which is missing.
         </para>
+        <para>Groovyプラグインでは、<xref linkend='groovylayout'/>に示したようなプロジェクトレイアウトを想定しています。すべてのGroovyソースディレクトリは、Groovy<emphasis>および</emphasis>Javaコードを含むことができます。Javaソースディレクトリは、Javaソースコードだけしか含むことができません。
+            <footnote>
+                <para>Russel WinderのGant (<ulink
+                        url='http://gant.codehaus.org'/>)が導入したのと同じ規約を使っています。
+                </para>
+            </footnote>
+            これらのどのディレクトリも、存在しなかったり、何も含んでいなくてもかまいません。Groovyプラグインは、何が見つかるかに関わらずコンパイルを実行し、見つからないものにも対処します。
+        </para>
 
         <table id='groovylayout'>
-            <title>Groovy plugin - project layout</title>
+            <title>Groovyプラグイン - プロジェクトレイアウト<phrase role="original">Groovy plugin - project layout</phrase></title>
             <thead>
                 <tr>
-                    <td>Directory</td>
-                    <td>Meaning</td>
+                    <td>ディレクトリ<phrase role="original">Directory</phrase></td>
+                    <td>意味<phrase role="original">Meaning</phrase></td>
                 </tr>
             </thead>
             <xi:include href="javaProjectMainLayout.xml"/>
@@ -128,28 +146,28 @@
                 <td>
                     <filename>src/main/groovy</filename>
                 </td>
-                <td>Production Groovy source. May also contain Java source for joint compilation.</td>
+                <td>製品のGroovyソース。ジョイントコンパイルするJavaソースを含んでもよい<phrase role="original">Production Groovy source. May also contain Java source for joint compilation.</phrase></td>
             </tr>
             <xi:include href="javaProjectTestLayout.xml"/>
             <tr>
                 <td>
                     <filename>src/test/groovy</filename>
                 </td>
-                <td>Test Groovy source. May also contain Java source for joint compilation.</td>
+                <td>テストのGroovyソース。ジョイントコンパイルするJavaソースを含んでもよい<phrase role="original">Test Groovy source. May also contain Java source for joint compilation.</phrase></td>
             </tr>
             <xi:include href="javaProjectGenericLayout.xml"/>
             <tr>
                 <td>
                     <filename>src/<replaceable>sourceSet</replaceable>/groovy</filename>
                 </td>
-                <td>Groovy source for the given source set. May also contain Java source for joint compilation.</td>
+                <td>特定のソースセットのGroovyソース。ジョイントコンパイルするJavaソースを含んでもよい<phrase role="original">Groovy source for the given source set. May also contain Java source for joint compilation.</phrase></td>
             </tr>
         </table>
 
         <section>
-            <title>Changing the project layout</title>
+            <title>プロジェクトレイアウトの変更<phrase role="original">Changing the project layout</phrase></title>
             <para>TBD</para>
-            <sample id="customGroovySourceLayout" dir="groovy/customizedLayout" title="Custom Groovy source layout">
+            <sample id="customGroovySourceLayout" dir="groovy/customizedLayout" title="Groovyソースレイアウトのカスタマイズ / Custom Groovy source layout">
                 <sourcefile file="build.gradle" snippet="define-main"/>
             </sample>
         </section>
@@ -157,9 +175,10 @@
     </section>
 
     <section>
-        <title>Dependency management</title>
-        <para>The Groovy plugin adds a dependency configuration called <literal>groovy</literal>.</para>
-        <para>Gradle is written in Groovy and allows you to write your build scripts in Groovy. But this is an internal
+        <title>依存関係の管理<phrase role="original">Dependency management</phrase></title>
+        <para role="original">The Groovy plugin adds a dependency configuration called <literal>groovy</literal>.</para>
+        <para>Groovyプラグインは、<literal>groovy</literal>という名前の依存関係設定を追加します。</para>
+        <para role="original">Gradle is written in Groovy and allows you to write your build scripts in Groovy. But this is an internal
             aspect of Gradle which is strictly separated from building Groovy projects. You are free to choose the Groovy
             version your project should be build with. This Groovy version is not just used for compiling your code and
             running your tests. The <literal>groovyc</literal> compiler and the the <literal>groovydoc</literal>
@@ -168,34 +187,39 @@
             assigned to the <literal>groovy</literal> dependency configuration. Here is an example using the public Maven
             repository:
         </para>
-        <sample id="quickstartGroovyDependency" dir="groovy/quickstart" title="Configuration of Groovy plugin">
+        <para>GradleはGroovyで書かれており、ビルドスクリプトをGroovyで書くことができます。しかし、これはGradleの内部の事情であって、Groovyプロジェクトのビルドとは完全に分離された話です。プロジェクトをビルドするGroovyのバージョンは自由に選ぶことができます。このGroovyバージョンは単にコードをコンパイルし、テストを実行するのに使われるだけではありません。<literal>groovyc</literal>コンパイラや<literal>groovydoc</literal>ツールも選択したGroovyバージョンのものが使われます。例によって、自由には責任がつきものです ;)。Groovyのバージョンは自由に選べますが、それを提供するのはあなたです。Gradleは、groovyライブラリが<literal>groovy</literal>依存関係設定で指定されていることを要求します。以下に公開Mavenリポジトリを使う例を示します：
+        </para>
+        <sample id="quickstartGroovyDependency" dir="groovy/quickstart" title="Groovyプラグインの設定 / Configuration of Groovy plugin">
             <sourcefile file="build.gradle" snippet="groovy-dependency"/>
         </sample>
-        <para>And here is an example using the Groovy JARs checked into the <filename>lib</filename> directory of the source
+        <para role="original">And here is an example using the Groovy JARs checked into the <filename>lib</filename> directory of the source
             tree:</para>
-        <sample id="flatDirGroovyDependency" dir="userguide/tutorial/groovyWithFlatDir" title="Configuration of Groovy plugin">
+        <para>そして以下は、ソースツリーの<filename>lib</filename>ディレクトリにチェックインされたGroovyのJARを使う例です：</para>
+        <sample id="flatDirGroovyDependency" dir="userguide/tutorial/groovyWithFlatDir" title="Groovyプラグインの設定 / Configuration of Groovy plugin">
             <sourcefile file="build.gradle" snippet="groovy-dependency"/>
         </sample>
     </section>
 
     <section>
-        <title>Convention properties</title>
-        <para>The Groovy plugin does not add any convention properties to the project.</para>
+        <title>規約プロパティ<phrase role="original">Convention properties</phrase></title>
+        <para role="original">The Groovy plugin does not add any convention properties to the project.</para>
+        <para>Groovyプラグインは、プロジェクトには規約プロパティを追加しません。</para>
     </section>
 
     <section>
-        <title>Source set properties</title>
-        <para>The Groovy plugin adds the following convention properties to each source set in the project. You can
+        <title>ソースセットプロパティ<phrase role="original">Source set properties</phrase></title>
+        <para role="original">The Groovy plugin adds the following convention properties to each source set in the project. You can
             use these properties in your build script as though they were properties of the source set object (see
             <xref linkend="sub:more_about_convention_objects"/>).</para>
+        <para>Groovyプラグインは、プロジェクトの各ソースセットに以下の規約プロパティを追加します。これらのプロパティは、あたかもソースセットオブジェクトのプロパティであるかのようにビルドスクリプト内で使うことができます(<xref linkend="sub:more_about_convention_objects"/>参照)。</para>
         <table>
-            <title>Groovy plugin - source set properties</title>
+            <title>Groovyプラグイン - ソースセットプロパティ<phrase role="original">Groovy plugin - source set properties</phrase></title>
             <thead>
                 <tr>
-                    <td>Property name</td>
-                    <td>Type</td>
-                    <td>Default value</td>
-                    <td>Description</td>
+                    <td>プロパティ名<phrase role="original">Property name</phrase></td>
+                    <td>型<phrase role="original">Type</phrase></td>
+                    <td>デフォルト値<phrase role="original">Default value</phrase></td>
+                    <td>説明<phrase role="original">Description</phrase></td>
                 </tr>
             </thead>
             <tr>
@@ -203,15 +227,18 @@
                     <literal>groovy</literal>
                 </td>
                 <td>
-                    <apilink class="org.gradle.api.file.SourceDirectorySet"/> (read-only)
+                    <apilink class="org.gradle.api.file.SourceDirectorySet"/> (読取り専用)
+                    <phrase role="original"><apilink class="org.gradle.api.file.SourceDirectorySet"/> (read-only)</phrase>
                 </td>
                 <td>
-                    Not null
+                    非null
+                    <phrase role="original">Not null</phrase>
                 </td>
                 <td>
-                    The Groovy source files of this source set. Contains all <filename>.groovy</filename> and
+                    このソースセットのGroovyソースファイル。Groovyソースディレクトリにある、すべての<filename>.groovy</filename>と<filename>.java</filename>ファイルを含み、その他のタイプのファイルは含まない
+                    <phrase role="original">The Groovy source files of this source set. Contains all <filename>.groovy</filename> and
                     <filename>.java</filename> files found in the Groovy source directories, and excludes all other
-                    types of files.
+                    types of files.</phrase>
                 </td>
             </tr>
             <tr>
@@ -219,14 +246,16 @@
                     <literal>groovy.srcDirs</literal>
                 </td>
                 <td>
-                    <classname>Set&lt;File></classname>. Can set using anything described in <xref linkend="sec:specifying_multiple_files"/>.
+                    <classname>Set&lt;File></classname>。<xref linkend="sec:specifying_multiple_files"/>で説明されたものなら何でも設定可能
+                    <phrase role="original"><classname>Set&lt;File></classname>. Can set using anything described in <xref linkend="sec:specifying_multiple_files"/>.</phrase>
                 </td>
                 <td>
                     <literal>[<replaceable>projectDir</replaceable>/src/<replaceable>name</replaceable>/groovy]</literal>
                 </td>
                 <td>
-                    The source directories containing the Groovy source files of this source set. May also contain
-                    Java source files for joint compilation.
+                    このソースセットのGroovyソースファイルを含むソースディレクトリ。ジョイントコンパイルするJavaソースファイルも含む場合がある
+                    <phrase role="original">The source directories containing the Groovy source files of this source set. May also contain
+                    Java source files for joint compilation.</phrase>
                 </td>
             </tr>
             <tr>
@@ -234,38 +263,43 @@
                     <literal>allGroovy</literal>
                 </td>
                 <td>
-                    <apilink class="org.gradle.api.file.FileTree"/> (read-only)
+                    <apilink class="org.gradle.api.file.FileTree"/> (読取り専用)
+                    <phrase role="original"><apilink class="org.gradle.api.file.FileTree"/> (read-only)</phrase>
                 </td>
                 <td>
-                    Not null
+                    非null
+                    <phrase role="original">Not null</phrase>
                 </td>
                 <td>
-                    All Groovy source files of this source set. Contains only the <filename>.groovy</filename> files
-                    found in the Groovy source directories.
+                    このソースセットの全Groovyソースファイル。Groovyソースディレクトリにある<filename>.groovy</filename>ファイルのみを含む
+                    <phrase role="original">All Groovy source files of this source set. Contains only the <filename>.groovy</filename> files
+                    found in the Groovy source directories.</phrase>
                 </td>
             </tr>
         </table>
-        <para>These properties are provided by a convention object of type <apilink class="org.gradle.api.tasks.GroovySourceSet"/>.</para>
-        <para>The Groovy plugin also modifies some source set properties:</para>
+        <para role="original">These properties are provided by a convention object of type <apilink class="org.gradle.api.tasks.GroovySourceSet"/>.</para>
+        <para>上記プロパティは<apilink class="org.gradle.api.tasks.GroovySourceSet"/>型の規約オブジェクトにより提供されます。</para>
+        <para role="original">The Groovy plugin also modifies some source set properties:</para>
+        <para>また、Groovyプラグインは、いくつかのソースセットプロパティを修正します：</para>
         <table>
-            <title>Groovy plugin - source set properties</title>
+            <title>Groovyプラグイン - ソースセットプロパティ<phrase role="original">Groovy plugin - source set properties</phrase></title>
             <thead>
                 <tr>
-                    <td>Property name</td>
-                    <td>Change</td>
+                    <td>プロパティ名<phrase role="original">Property name</phrase></td>
+                    <td>変更点<phrase role="original">Change</phrase></td>
                 </tr>
             </thead>
             <tr>
                 <td>
                     <literal>allJava</literal>
                 </td>
-                <td>Adds all <filename>.java</filename> files found in the Groovy source directories.</td>
+                <td>Groovyソースディレクトリにあるすべての<filename>.java</filename>ファイルを追加<phrase role="original">Adds all <filename>.java</filename> files found in the Groovy source directories.</phrase></td>
             </tr>
             <tr>
                 <td>
                     <literal>allSource</literal>
                 </td>
-                <td>Adds all source files found in the Groovy source directories.</td>
+                <td>Groovyソースディレクトリにあるすべてのソースファイルを追加<phrase role="original">Adds all source files found in the Groovy source directories.</phrase></td>
             </tr>
         </table>
 
@@ -273,18 +307,20 @@
 
     <section id='sec:groovyCompile'>
         <title>CompileGroovy</title>
-        <para>The Groovy plugin adds a <apilink class="org.gradle.api.tasks.compile.GroovyCompile"/> instance for
+        <para role="original">The Groovy plugin adds a <apilink class="org.gradle.api.tasks.compile.GroovyCompile"/> instance for
             each source set in the project. The task type extends the <literal>Compile</literal>
             task (see <xref linkend='sec:compile'/>). The compile task delegates to the Ant Groovyc task to do the
             compile. Via the compile task you can set most of the properties of Ants Groovyc task.
         </para>
+        <para>Groovyプラグインは、プロジェクトの各ソースセットに<apilink class="org.gradle.api.tasks.compile.GroovyCompile"/>インスタンスを追加します。このタスクは<literal>Compile</literal>タスクを拡張しています(<xref linkend='sec:compile'/>参照)。このコンパイルタスクは、コンパイルの実行をAntのGroovycタスクに委ねます。AntのGroovycタスクのプロパティの多くは、このタスクを通じて設定することが可能です。
+        </para>
         <table>
-            <title>Groovy plugin - CompileGroovy properties</title>
+            <title>Groovyプラグイン - CompileGroovyプロパティ<phrase role="original">Groovy plugin - CompileGroovy properties</phrase></title>
             <thead>
                 <tr>
-                    <td>Task Property</td>
-                    <td>Type</td>
-                    <td>Default Value</td>
+                    <td>タスクプロパティ<phrase role="original">Task Property</phrase></td>
+                    <td>型<phrase role="original">Type</phrase></td>
+                    <td>デフォルト値<phrase role="original">Default Value</phrase></td>
                 </tr>
             </thead>
             <tr>
@@ -298,7 +334,7 @@
                 <td>
                     <literal>source</literal>
                 </td>
-                <td><apilink class="org.gradle.api.file.FileTree"/>. Can set using anything described in <xref linkend="sec:specifying_multiple_files"/>.</td>
+                <td><apilink class="org.gradle.api.file.FileTree"/>。<xref linkend="sec:specifying_multiple_files"/>で説明されたものなら何でも設定可能<phrase role="original"><apilink class="org.gradle.api.file.FileTree"/>. Can set using anything described in <xref linkend="sec:specifying_multiple_files"/>.</phrase></td>
                 <td><literal><replaceable>sourceSet</replaceable>.groovy</literal></td>
             </tr>
             <tr>
@@ -313,7 +349,7 @@
                     <literal>groovyClasspath</literal>
                 </td>
                 <td><apilink class="org.gradle.api.file.FileCollection"/></td>
-                <td><literal>groovy</literal> configuration</td>
+                <td><literal>groovy</literal>設定<phrase role="original"><literal>groovy</literal> configuration</phrase></td>
             </tr>
         </table>
     </section>

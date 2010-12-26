@@ -18,12 +18,12 @@
         <td>
             <filename>src/<replaceable>sourceSet</replaceable>/java</filename>
         </td>
-        <td>Java source for the given source set</td>
+        <td>特定のソースセットのJavaソース<phrase role="original">Java source for the given source set</phrase></td>
     </tr>
     <tr>
         <td>
             <filename>src/<replaceable>sourceSet</replaceable>/resources</filename>
         </td>
-        <td>Resources for the given source set</td>
+        <td>特定のソースセットのリソース<phrase role="original">Resources for the given source set</phrase></td>
     </tr>
 </tgroup>

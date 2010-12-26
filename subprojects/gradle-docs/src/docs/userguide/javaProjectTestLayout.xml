@@ -18,12 +18,12 @@
         <td>
             <filename>src/test/java</filename>
         </td>
-        <td>Test Java source</td>
+        <td>テストのJavaソース<phrase role="original">Test Java source</phrase></td>
     </tr>
     <tr>
         <td>
             <filename>src/test/resources</filename>
         </td>
-        <td>Test resources</td>
+        <td>テストのリソース<phrase role="original">Test resources</phrase></td>
     </tr>
 </tgroup>

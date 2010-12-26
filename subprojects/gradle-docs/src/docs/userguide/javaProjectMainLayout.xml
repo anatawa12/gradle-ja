@@ -18,12 +18,12 @@
         <td>
             <filename>src/main/java</filename>
         </td>
-        <td>Production Java source</td>
+        <td>製品のJavaソース<phrase role="original">Production Java source</phrase></td>
     </tr>
     <tr>
         <td>
             <filename>src/main/resources</filename>
         </td>
-        <td>Production resources</td>
+        <td>製品のリソース<phrase role="original">Production resources</phrase></td>
     </tr>
 </tgroup>
