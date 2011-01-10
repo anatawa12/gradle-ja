@@ -113,8 +113,8 @@
             <para>Gradleでは、何が直接依存していて何が推移的に依存しているのか、様々な方法で定義できます。たとえば、XMLのディスクリプタなしでjarをCVSやSVNに置いたとしても、推移的な依存関係は管理できます。さらに、依存関係の構造を検証し、コンパイルするコードが直接的な依存関係のみ使用しているかどうか、確認することもできます。</para>
         </section>
         <section id='sub:version_conflicts'>
-            <title>Version conflicts</title>
-            <para>In your dependency description you tell Gradle which version of a dependency is needed by another
+            <title>バージョン競合<phrase role="original">Version conflicts</phrase></title>
+            <para role="original">In your dependency description you tell Gradle which version of a dependency is needed by another
                 dependency. This frequently leads to conflicts. Different dependencies rely on different versions of
                 another dependency. The JVM unfortunately does not offer yet any easy way, to have different versions of
                 the same jar in the classpath (see <xref linkend='sub:dependency_management_and_java'/>). What Gradle
@@ -122,16 +122,18 @@
                 version conflicts, reports with dependency graphs are also very helpful. Such reports are another
                 feature of dependency management.
             </para>
+            <para>依存関係について定義していると、ある別の依存関係から要求されているライブラリを依存関係に含めていることがあります。この場合、依存関係が競合しやすくなります。別々のライブラリが、異なるバージョンの同じライブラリに依存してしまうのです。残念ながら、JVMではクラスパス上にバージョン違いの同じjarを混在させるのは簡単なことではありません(<xref linkend='sub:dependency_management_and_java'/>参照)。Gradleでは、バージョン競合を解決するための戦略を提供しており、デフォルトでは最新バージョンが使用されるようになっています。また、バージョン競合を解決する際には、依存関係をグラフにしたレポートを参照することが大きな助けになるでしょう。このようなレポートの生成が依存関係管理のもう一つの機能です。</para>
         </section>
         <section id='sub:dependency_management_and_java'>
-            <title>Dependency management and Java</title>
-            <para>Traditionally, Java has offered no support at all for dealing with libraries and versions. There are
+            <title>依存関係の管理とJava<phrase role="original">Dependency management and Java</phrase></title>
+            <para role="original">Traditionally, Java has offered no support at all for dealing with libraries and versions. There are
                 no standard ways to say that
                 <literal>foo-1.0.jar</literal>
                 depends on a <literal>bar-2.0.jar</literal>. This has led to proprietary solutions. The most popular ones
                 are Maven and Ivy. Maven is a complete build system whereas Ivy focuses solely on dependency management.
             </para>
-            <para>Both approaches rely on descriptor XML files, which contains information about the dependencies of a
+            <para>Javaでは、伝統的に、ライブラリとバージョンの取り扱いをまったくサポートしてきませんでした。<literal>foo-1.0.jar</literal>が<literal>bar-2.0.jar</literal>に依存していると明確に宣言できるような、標準的な方法がないのです。そのため、様々なソリューションがプロプライエタリに開発されてきました。もっとも有名なものがMavenとIvyです。Ivyが依存関係の管理にのみフォーカスしているのに対し、Mavenはビルドシステム全体を取り扱います。</para>
+            <para role="original">Both approaches rely on descriptor XML files, which contains information about the dependencies of a
                 particular jar. Both also use repositories where the actual jars are placed together with their
                 descriptor files. And both offer resolution for conflicting jar versions in one form or the other. Yet
                 we think the differences of both approaches are significant
@@ -141,27 +143,37 @@
                 an API. We integrate deeply with Ivy via its API. This enables us to build new concepts on top
                 of Ivy which Ivy does not offer itself.
             </para>
-            <para>Right now there is a lot of movement in the field of dependency handling. There is OSGi and there is
+            <para>どちらも、jarの依存関係を記述したXMLの設定ファイルを使用します。それらの設定ファイルと実際のjarファイルをともにリポジトリに保管する点も同じです。また、どちらも、jarファイルのバージョンが競合すれば、それを解決するための手段をなにかしら提供しています。IvyとMavenの違いは、柔軟性やメンテナンス性にあるのではないでしょうか。加えて、IvyはMavenの管理する依存関係を完全にサポートしています。Ivyを使用すれば、IvyとMaven、両方の領域を取り扱うことができるのです。私たちは、Ivyがとても気に入っています。Gradleは、依存関係を管理するために内部でIvyを使用しています。Ivyは、たいていAntとXMLの設定ファイルを使って使用されますが、APIも用意されています。Gradleは、そのAPIを通してIvyを深いレベルで統合しているのです。このことで、Ivyそれ自体では提供していないような新しい概念をIvy上に構築することができました。</para>
+            <para role="original">Right now there is a lot of movement in the field of dependency handling. There is OSGi and there is
                 JSR-294.
                 <footnote>
-                    <para>JSR 294: Improved Modularity Support in the JavaTM Programming Language, <ulink url='http://jcp.org/en/jsr/detail?id=294'/>
+                    <para role="original">JSR 294: Improved Modularity Support in the JavaTM Programming Language, <ulink url='http://jcp.org/en/jsr/detail?id=294'/>
                     </para>
                 </footnote>
                 OSGi is available already, JSR-294 is supposed to be shipped with Java 7. These technologies
                 deal, amongst many other things, also with a painful problem which is neither solved by Maven nor by Ivy. This is enabling different
                 versions of the same jar to be used at runtime.
             </para>
+            <para>
+            現在では、依存関係管理の分野には多くの活動があります。OSGiやJSR-294
+            <footnote>
+                <para>JSR 294: JavaTMプログラミング言語におけるモジュール化サポートの改善、<ulink url='http://jcp.org/en/jsr/detail?id=294'/>
+            　　</para>
+            </footnote>
+            です。OSGiはすでに利用可能、JSR-294はJava7に盛り込まれるのではないかと言われています。これらのテクノロジーはさまざまな多くの問題を取り扱うもので、同じjarの異なるバージョンを実行時に有効化するという、MavenでもIvyでも解決できない困難な問題にも対応しています。
+            </para>
         </section>
     </section>
     <section id='sec:how_to_declare_your_dependencies'>
-        <title>How to declare your dependencies</title>
-        <para>People who know Ivy have come across most of the concepts we are going to introduce now. But Gradle does not
+        <title>依存関係の宣言方法<phrase role="original">How to declare your dependencies</phrase></title>
+        <para role="original">People who know Ivy have come across most of the concepts we are going to introduce now. But Gradle does not
             use any XML for declaring the dependencies (e.g. no <literal>ivy.xml</literal> file). It has its own
             notation which is part of the Gradle build file.
         </para>
+        <para>Ivyを知っている方にとっては、これから解説する概念のほとんどは既知のものかと思われます。ただし、Gradleは依存関係を宣言するのにXML(<literal>ivy.xml</literal>など)は一切使用しません。依存関係は、Gradleのビルドスクリプトに独自の記法で記述します。</para>
         <section id='sub:configurations'>
             <title>Configurations</title>
-            <para>Dependencies are grouped in configurations. Configurations have a name, a number of other properties,
+            <para role="original">Dependencies are grouped in configurations. Configurations have a name, a number of other properties,
                 and they can extend each other. For examples see: <xref linkend='sec:artifact_configurations'/>.
                 If you use the Java plugin, Gradle adds a number of pre-defined configurations to your build. The
                 plugin also assigns configurations to tasks. See <xref linkend='sec:java_plugin_and_dependency_management'/>
@@ -172,16 +184,19 @@
                 the configurations object is applied against its API. To learn more about this API have a look at
                 <apilink class='org.gradle.api.artifacts.ConfigurationContainer'/>.
             </para>
+            <para>依存関係は、Configurationによりグループ化されます。Configurationは名前(name)の他、いくつかのプロパティを持っていて、それらを別のConfigurationから継承することもできます(例:<xref linkend='sec:artifact_configurations'/>)。Javaプラグインを使用している場合、Gradleにより定義済みのConfigurationがいくつか追加されています。Javaプラグインは、さらにそれらのConfigurationをタスクに割り当てます。詳しくは<xref linkend='sec:java_plugin_and_dependency_management'/>をご参照ください。もちろん、定義済みのConfigurationに加えて、自分でカスタムのConfigurationを定義することもできます。カスタムのConfigurationには様々な使い道があります。たとえば、ビルド時にもテスト時にも使用されない依存関係(配布物に同梱するオプションのJDBCドライバなど)を追加するときなどに便利です。定義されているConfigurationはconfigurationsオブジェクトで管理されています。このオブジェクトに渡したクロージャは、configurationsのAPIに対して適用されます。このAPIについてさらに詳しく学ぶには、<apilink class='org.gradle.api.artifacts.ConfigurationContainer'/>をご参照ください。
+</para>
         </section>
         <section id='sub:module_dependencies'>
-            <title>Module dependencies</title>
-            <para>Module dependencies are the most common dependencies. They correspond to a dependency in an external
+            <title>モジュールの依存関係<phrase role="original">Module dependencies</phrase></title>
+            <para role="original">Module dependencies are the most common dependencies. They correspond to a dependency in an external
                 repository.
             </para>
-            <sample id="moduleDependencies" dir="userguide/artifacts/externalDependencies" title="Module dependencies">
+            <para>モジュールの依存関係は、もっともよくある依存関係です。外部リポジトリ内で定義されている依存関係に対応しています。</para>
+            <sample id="moduleDependencies" dir="userguide/artifacts/externalDependencies" title="モジュールの依存関係 / Module dependencies">
                 <sourcefile file="build.gradle" snippet="module-dependencies"/>
             </sample>
-            <para>Gradle provides different notations for module dependencies. There is a string notation and
+            <para role="original">Gradle provides different notations for module dependencies. There is a string notation and
                 a map notation. A module dependency has an API which allows for further configuration. Have a look at
                 <apilink class='org.gradle.api.artifacts.ExternalModuleDependency'/> to learn all about the API.
                 This API provides properties and configuration methods. Via the string notation you can define a subset
@@ -189,6 +204,7 @@
                 either with the map or with the string notation, you can assign a single dependency to a configuration
                 together with a closure.
             </para>
+            <para>依存関係を定義する際、Gradleでは文字列記法とマップ記法を使用できます。モジュールの依存関係はAPIを公開しているので、それを使用してさらに設定を行うこともできます。APIについての詳細は<apilink class='org.gradle.api.artifacts.ExternalModuleDependency'/>をご覧ください。このAPIではプロパティと設定用のメソッドを公開しており、文字列記法で設定できるのはプロパティのうちの一部です。マップ記法を使うとすべてのプロパティを設定できます。文字列記法かマップ記法で定義した一つの依存関係に対して、一つのクロージャを割り当てることで、すべてのAPIにアクセスすることもできます。</para>
             <para>If you declare a module dependency, Gradle looks for a corresponding module descriptor file (<literal>pom.xml</literal> or
                 <literal>ivy.xml</literal>) in the repositories. If such a module descriptor file exists, it is parsed and the artifacts of
                 this module (e.g. <literal>hibernate-3.0.5.jar</literal>) as well as its dependencies (e.g. cglib) are downloaded. If no such
