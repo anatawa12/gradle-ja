@@ -21,24 +21,26 @@
     </para>
 
     <section>
-        <title>Usage</title>
-        <para>To use the Jetty plugin, include in your build script:</para>
+        <title>使用方法<phrase role="original">Usage</phrase></title>
+        <para role="original">To use the Jetty plugin, include in your build script:</para>
+        <para>Jettyプラグインを使うためには、ビルドスクリプトに下記を含めます：</para>
+
         <sample id="useJettyPlugin" dir="webApplication/quickstart" title="Using the Jetty plugin">
             <sourcefile file="build.gradle" snippet="use-jetty-plugin"/>
         </sample>
     </section>
 
     <section>
-        <title>Tasks</title>
+        <title>タスク<phrase role="original">Tasks</phrase></title>
         <para>The Jetty plugin defines the following tasks:</para>
         <table>
-            <title>Jetty plugin - tasks</title>
+            <title>Jettyプラグイン - タスク<phrase role="original">Jetty plugin - tasks</phrase></title>
             <thead>
                 <tr>
-                    <td>Task name</td>
-                    <td>Depends on</td>
-                    <td>Type</td>
-                    <td>Description</td>
+                    <td>タスク名<phrase role="original">Task name</phrase></td>
+                    <td>依存先<phrase role="original">Depends on</phrase></td>
+                    <td>型<phrase role="original">Type</phrase></td>
+                    <td>説明<phrase role="original">Description</phrase></td>
                 </tr>
             </thead>
             <tr>
@@ -71,7 +73,7 @@
             </tr>
         </table>
         <figure>
-            <title>Jetty plugin - tasks</title>
+            <title>Jettyプラグイン - タスク<phrase role="original">Jetty plugin - tasks</phrase></title>
             <imageobject>
                 <imagedata fileref="img/jettyPluginTasks.png"/>
             </imageobject>
@@ -79,26 +81,26 @@
     </section>
 
     <section>
-        <title>Project layout</title>
+        <title>プロジェクトレイアウト<phrase role="original">Project layout</phrase></title>
         <para>The Jetty plugin uses the same layout as the War plugin.</para>
     </section>
 
     <section>
-        <title>Dependency management</title>
+        <title>依存関係の管理<phrase role="original">Dependency management</phrase></title>
         <para>The Jetty plugin does not define any dependency configurations.</para>
     </section>
 
     <section>
-        <title>Convention properties</title>
+        <title>規約プロパティ<phrase role="original">Convention properties</phrase></title>
         <para>The Jetty plugin defines the following convention properties:</para>
         <table>
             <title>Jetty plugin - properties</title>
             <thead>
                 <tr>
-                    <td>Property name</td>
-                    <td>Type</td>
-                    <td>Default value</td>
-                    <td>Description</td>
+                    <td>プロパティ名<phrase role="original">Property name</phrase></td>
+                    <td>型<phrase role="original">Type</phrase></td>
+                    <td>デフォルト値<phrase role="original">Default value</phrase></td>
+                    <td>説明<phrase role="original">Description</phrase></td>
                 </tr>
             </thead>
             <tr>
