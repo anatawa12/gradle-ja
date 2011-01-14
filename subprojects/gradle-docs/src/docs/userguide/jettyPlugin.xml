@@ -16,8 +16,10 @@
 <chapter id="jetty_plugin">
     <title>The Jetty プラグイン<phrase role="original">The Jetty Plugin</phrase></title>
 
-    <para>The Jetty plugin extends the War plugin to add tasks which allow you to deploy your web application to a
+    <para role="original">The Jetty plugin extends the War plugin to add tasks which allow you to deploy your web application to a
         Jetty web container embedded in the build.
+    </para>
+    <para>JettyプラグインはWarプラグインを拡張し、あなたのWEBアプリケーションをJettyコンテナにビルドしてデプロイできるタスクを追加したものです
     </para>
 
     <section>
@@ -32,7 +34,8 @@
 
     <section>
         <title>タスク<phrase role="original">Tasks</phrase></title>
-        <para>The Jetty plugin defines the following tasks:</para>
+        <para role="original">The Jetty plugin defines the following tasks:</para>
+        <para>Jettyプラグインは、以下のタスクを定義します。</para>
         <table>
             <title>Jettyプラグイン - タスク<phrase role="original">Jetty plugin - tasks</phrase></title>
             <thead>
@@ -51,7 +54,7 @@
                     <literal>compile</literal>
                 </td>
                 <td><apilink class="org.gradle.api.plugins.jetty.JettyRun"/></td>
-                <td>Starts a Jetty instance and deploys the exploded web application to it.</td>
+                <td>Jettyのインスタンスを開始し、webアプリケーションをデプロイします<phrase role="original">Starts a Jetty instance and deploys the exploded web application to it.</phrase></td>
             </tr>
             <tr>
                 <td>
@@ -61,7 +64,7 @@
                     <literal>war</literal>
                 </td>
                 <td><apilink class="org.gradle.api.plugins.jetty.JettyRunWar"/></td>
-                <td>Starts a Jetty instance and deploys the WAR to it.</td>
+                <td>Jettyのインスタンスを開始し、WARファイルをデプロイします<phrase role="original">Starts a Jetty instance and deploys the WAR to it.</phrase></td>
             </tr>
             <tr>
                 <td>
@@ -69,7 +72,7 @@
                 </td>
                 <td>-</td>
                 <td><apilink class="org.gradle.api.plugins.jetty.JettyStop"/></td>
-                <td>Stops the Jetty instance.</td>
+                <td>Jettyのインスタンスを停止します<phrase role="original">Stops the Jetty instance.</phrase></td>
             </tr>
         </table>
         <figure>
@@ -82,19 +85,22 @@
 
     <section>
         <title>プロジェクトレイアウト<phrase role="original">Project layout</phrase></title>
-        <para>The Jetty plugin uses the same layout as the War plugin.</para>
+        <para role="original">The Jetty plugin uses the same layout as the War plugin.</para>
+        <para>Jettyプラグインは、Warプラグインと同じレイアウトを使用します。</para>
     </section>
 
     <section>
         <title>依存関係の管理<phrase role="original">Dependency management</phrase></title>
-        <para>The Jetty plugin does not define any dependency configurations.</para>
+				<para role="original">The Jetty plugin does not define any dependency configurations.</para>
+				<para>Jettyプラグインは、依存関係を定義しません。</para>
     </section>
 
     <section>
         <title>規約プロパティ<phrase role="original">Convention properties</phrase></title>
-        <para>The Jetty plugin defines the following convention properties:</para>
+        <para role="original">The Jetty plugin defines the following convention properties:</para>
+        <para>Jettyプラグインは、規約プロパティに従って定義されます。</para>
         <table>
-            <title>Jetty plugin - properties</title>
+            <title>Jettyプラグイン - プロパティ<phrase role="original">Jetty plugin - properties</phrase></title>
             <thead>
                 <tr>
                     <td>プロパティ名<phrase role="original">Property name</phrase></td>
@@ -114,7 +120,7 @@
                     <literal>8080</literal>
                 </td>
                 <td>
-                    The TCP port which Jetty should listen for HTTP requests on.
+                    JettyのHTTPリクエストの待受けTCPポート<phrase role="original">The TCP port which Jetty should listen for HTTP requests on.</phrase>
                 </td>
             </tr>
             <tr>
@@ -128,7 +134,7 @@
                     <literal>null</literal>
                 </td>
                 <td>
-                    The TCP port which Jetty should listen for admin requests on.
+                    Jettyの管理者リクエストの待受けTCPポート<phrase role="original">The TCP port which Jetty should listen for admin requests on.</phrase>
                 </td>
             </tr>
             <tr>
@@ -142,12 +148,13 @@
                     <literal>null</literal>
                 </td>
                 <td>
-                    The key to pass to Jetty when requesting it to stop.
+                    停止要求時にJettyに渡す文字列キー<phrase role="original">The key to pass to Jetty when requesting it to stop.</phrase>
                 </td>
             </tr>
         </table>
-        <para>These properties are provided by a <apilink class="org.gradle.api.plugins.jetty.JettyPluginConvention"/>
+        <para role="original">These properties are provided by a <apilink class="org.gradle.api.plugins.jetty.JettyPluginConvention"/>
             convention object.</para>
+        <para>上記プロパティは<apilink class="org.gradle.api.plugins.jetty.JettyPluginConvention"/>型の規約オブジェクトにより提供されます。</para>
     </section>
 
 </chapter>
