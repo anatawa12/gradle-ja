@@ -15,7 +15,7 @@
   -->
 
 <chapter id='java_plugin' xmlns:xi="http://www.w3.org/2001/XInclude">
-    <title>The Java Plugin</title>
+    <title>Javaプラグイン<phrase role="original">The Java Plugin</phrase></title>
 
     <para>The Java plugin adds Java compilation, testing and bundling capabilities to a project. It serves as the basis
         for many of the other Gradle plugins.
