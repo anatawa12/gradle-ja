@@ -19,13 +19,22 @@ package org.gradle.util;
 import org.apache.tools.ant.util.JavaEnvUtils;
 
 import java.io.File;
+import java.util.HashMap;
+import java.util.Map;
 
 public class Jvm {
+    private final OperatingSystem os;
+
     public static Jvm current() {
-        return new Jvm();
+        String vendor = System.getProperty("java.vm.vendor");
+        if (vendor.toLowerCase().startsWith("apple inc.")) {
+            return new AppleJvm(OperatingSystem.current());
+        }
+        return new Jvm(OperatingSystem.current());
     }
 
-    Jvm() {
+    Jvm(OperatingSystem os) {
+        this.os = os;
     }
 
     @Override
@@ -49,20 +58,66 @@ public class Jvm {
         return System.getProperty("java.version").startsWith("1.6");
     }
 
+    public boolean isAppleJvm() {
+        return false;
+    }
+
+    public File getJavaHome() {
+        File toolsJar = getToolsJar();
+        return toolsJar == null ? new File(System.getProperty("java.home")) : toolsJar.getParentFile().getParentFile();
+    }
+
+    public File getBinDir() {
+        return new File(getJavaHome(), "bin");
+    }
+
     public File getToolsJar() {
         File javaHome = new File(System.getProperty("java.home"));
-        File toolsJar = new File(javaHome, "/lib/tools.jar");
+        File toolsJar = new File(javaHome, "lib/tools.jar");
         if (toolsJar.exists()) {
             return toolsJar;
         }
         if (javaHome.getName().equalsIgnoreCase("jre")) {
             javaHome = javaHome.getParentFile();
-            toolsJar = new File(javaHome + "/lib/tools.jar");
+            toolsJar = new File(javaHome, "lib/tools.jar");
+            if (toolsJar.exists()) {
+                return toolsJar;
+            }
         }
-        if (!toolsJar.exists()) {
-            return null;
+        if (javaHome.getName().matches("jre\\d+") && os.isWindows()) {
+            javaHome = new File(javaHome.getParentFile(), String.format("jdk%s", System.getProperty("java.version")));
+            toolsJar = new File(javaHome, "lib/tools.jar");
+            if (toolsJar.exists()) {
+                return toolsJar;
+            }
         }
-        return toolsJar;
+        return null;
     }
 
+    public Map<String, ?> getInheritableEnvironmentVariables(Map<String, ?> envVars) {
+        return envVars;
+    }
+
+    static class AppleJvm extends Jvm {
+        AppleJvm(OperatingSystem os) {
+            super(os);
+        }
+
+        @Override
+        public boolean isAppleJvm() {
+            return true;
+        }
+
+        @Override
+        public Map<String, ?> getInheritableEnvironmentVariables(Map<String, ?> envVars) {
+            Map<String, Object> vars = new HashMap<String, Object>();
+            for (Map.Entry<String, ?> entry : envVars.entrySet()) {
+                if (entry.getKey().matches("APP_NAME_\\d+") || entry.getKey().matches("JAVA_MAIN_CLASS_\\d+")) {
+                    continue;
+                }
+                vars.put(entry.getKey(), entry.getValue());
+            }
+            return vars;
+        }
+    }
 }

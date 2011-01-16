@@ -15,8 +15,6 @@
  */
 package org.gradle.integtests.fixtures;
 
-import org.gradle.util.Jvm;
-
 import java.io.File;
 import java.util.List;
 import java.util.Map;
@@ -55,11 +53,19 @@ public interface GradleExecuter {
      */
     GradleExecuter withArguments(List<String> args);
 
+    /**
+     * Sets the environment variables to use when executing the build. Defaults to the environment of this process.
+     */
     GradleExecuter withEnvironmentVars(Map<String, ?> environment);
 
     GradleExecuter usingSettingsFile(File settingsFile);
 
     GradleExecuter usingInitScript(File initScript);
+
+    /**
+     * Uses the given project directory
+     */
+    GradleExecuter usingProjectDirectory(File projectDir);
 
     /**
      * Uses the given build script
@@ -96,6 +102,4 @@ public interface GradleExecuter {
      * @return The result.
      */
     ExecutionFailure runWithFailure();
-
-    boolean worksWith(Jvm jvm);
 }
