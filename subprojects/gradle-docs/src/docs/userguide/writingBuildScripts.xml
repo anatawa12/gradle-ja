@@ -1,5 +1,5 @@
 <!--
-  ~ Copyright 2009 the original author or authors.
+  ~ Copyright 2010 the original author or authors.
   ~
   ~ Licensed under the Apache License, Version 2.0 (the "License");
   ~ you may not use this file except in compliance with the License.
@@ -13,14 +13,20 @@
   ~ See the License for the specific language governing permissions and
   ~ limitations under the License.
   -->
-<chapter id='writing_build_scripts' xmlns:xi="http://www.w3.org/2001/XInclude">
+<chapter id='writing_build_scripts'>
     <title>ビルドスクリプトの記述<phrase role="original">Writing Build Scripts</phrase></title>
     <para role="original">This chapter looks at some of the details of writing a build script.</para>
     <para>本章では、ビルドスクリプトの記述についてもう少し詳しく見ていきます。</para>
 
+    <section>
+        <title>The Gradle build language</title>
+        <para>Gradle provides a <firstterm>domain specific language</firstterm>, or DSL, for describing builds.
+            This build language is based on Groovy, with some additions to make it easier to describe a build.
+        </para>
+    </section>
     <section id='sec:project_api'>
-        <title>プロジェクトAPI<phrase role="original">Project API</phrase></title>
-        <para role="original">In the tutorial in <xref linkend='tutorial_java_projects'/> we used, for example, the
+        <title>The Project API</title>
+        <para>In the tutorial in <xref linkend='tutorial_java_projects'/> we used, for example, the
             <literal>apply()</literal> method. Where does this method come from? We said earlier that the build script
             defines a project in Gradle. For each project in the build creates an instance of type
             <apilink class='org.gradle.api.Project'/> and associates this <classname>Project</classname> object with
@@ -55,7 +61,7 @@
         </para>
         <para>プロジェクトオブジェクトの<literal>name</literal>プロパティにアクセスして試してみましょう。</para>
         <sample id="projectApi" dir="userguide/tutorial/projectApi" title="Accessing property of the Project object">
-            <sourcefile file="build.gradle"/>
+            <sourcefile file="build.gradle" snippet="project-name"/>
             <output args="-q check"/>
         </sample>
         <para role="original">Both <literal>println</literal> statements print out the same property. The first uses auto-delegation to
@@ -89,7 +95,7 @@
                 <tr>
                     <td><literal>name</literal></td>
                     <td><classname>String</classname></td>
-                    <td>ビルドスクリプトのあるディレクトリの名前<phrase role="original">The name of the directory containing the build script.</phrase></td>
+                    <td>The name of the project directory.</td>
                 </tr>
                 <tr>
                     <td><literal>path</literal></td>
@@ -102,19 +108,9 @@
                     <td>A description for the project.</td>
                 </tr>
                 <tr>
-                    <td><literal>buildFile</literal></td>
-                    <td><classname>File</classname></td>
-                    <td>ビルドスクリプトファイル<phrase role="original">The build script.</phrase></td>
-                </tr>
-                <tr>
                     <td><literal>projectDir</literal></td>
                     <td><classname>File</classname></td>
                     <td>ビルドスクリプトのあるディレクトリ<phrase role="original">The directory containing the build script.</phrase></td>
-                </tr>
-                <tr>
-                    <td><literal>buildDirName</literal></td>
-                    <td><classname>String</classname></td>
-                    <td><filename>build</filename></td>
                 </tr>
                 <tr>
                     <td><literal>buildDir</literal></td>
@@ -137,24 +133,80 @@
                     <td><classname>AntBuilder</classname>インスタンス<phrase role="original">An <classname>AntBuilder</classname> instance</phrase></td>
                 </tr>
             </table>
-
-            <para role="original">Below is a sample build which demonstrates some of these properties.</para>
-            <para>次のサンプルは、これらのプロパティを使用したデモです。</para>
-            <sample id="projectCoreProperties" dir="userguide/tutorial/projectCoreProperties" title="プロジェクトプロパティ / Project properties">
-                <layout>
-                    build.gradle
-                    subProject
-                    subProject/build.gradle
-                </layout>
-                <sourcefile file="build.gradle"/>
-                <output args="-q check"/>
-            </sample>
         </section>
     </section>
     <section>
-        <title>スクリプトAPI<phrase role="original">Script API</phrase></title>
-        <para role="original">When Gradle executes a script, it compiles the script into a class which implements <apilink class="org.gradle.api.Script"/>.</para>
-        <para>ビルドスクリプトは、実行時には<apilink class="org.gradle.api.Script"/>を実装したクラスとしてコンパイルされます。</para>
+        <title>The Script API</title>
+        <para>When Gradle executes a script, it compiles the script into a class which implements <apilink class="org.gradle.api.Script"/>.
+            This means that all of the properties and methods declared by the <classname>Script</classname> interface
+            are available in your script.
+        </para>
     </section>
-
+    <section>
+        <title>Some Groovy basics</title>
+        <para>Groovy provides plenty of features for creating DSLs, and the Gradle build language takes advantage of these.
+            Understanding how the build language works will help you when you write your build script, and in particular,
+            when you start to write customs plugins and tasks.
+        </para>
+        <section>
+            <title>Groovy JDK</title>
+            <para>
+                Groovy adds lots of useful methods to JVM classes. For example, <classname>Iterable</classname> gets
+                an <literal>each</literal> method, which iterates over the elements of the <classname>Iterable</classname>:
+            </para>
+            <sample id="groovyBasics" dir="userguide/tutorial/groovy" title="Groovy JDK methods">
+                <sourcefile file="build.gradle" snippet="groovyJdk"/>
+            </sample>
+            <para>Have a look at <ulink url="http://groovy.codehaus.org/groovy-jdk/"/> for more details.</para>
+        </section>
+        <section>
+            <title>Property accessors</title>
+            <para>
+               Groovy automatically converts a property reference into a call to the appropriate getter or setter method.
+            </para>
+            <sample id="groovyBasics" dir="userguide/tutorial/groovy" title="Property accessors">
+                <sourcefile file="build.gradle" snippet="propertyAccessors"/>
+            </sample>
+        </section>
+        <section>
+            <title>Optional parentheses on method calls</title>
+            <para>
+                Parentheses are optional for method calls.
+            </para>
+            <sample id="groovyBasics" dir="userguide/tutorial/groovy" title="Method call without parentheses">
+                <sourcefile file="build.gradle" snippet="methodCallWithoutParentheses"/>
+            </sample>
+        </section>
+        <section>
+            <title>List and map literals</title>
+            <para>
+                Groovy provides some shortcuts for defining <classname>List</classname> and <classname>Map</classname>
+                instances.
+            </para>
+            <sample id="groovyBasics" dir="userguide/tutorial/groovy" title="List and map literals">
+                <sourcefile file="build.gradle" snippet="listAndMapLiterals"/>
+            </sample>
+        </section>
+        <section>
+            <title>Closures as the last parameter in a method</title>
+            <para>The Gradle DSL uses closures in many places. You can find out more about closures <ulink url="http://groovy.codehaus.org/Closures">here</ulink>.
+                When the last parameter of a method is a closure, you can place the closure after the method call:
+            </para>
+            <sample id="groovyBasics" dir="userguide/tutorial/groovy" title="Closure as method parameter">
+                <sourcefile file="build.gradle" snippet="closureAsLastParam"/>
+            </sample>
+        </section>
+        <section>
+            <title>Closure delegate</title>
+            <para>
+                Each closure has a <literal>delegate</literal> object, which Groovy uses to look up variable and method
+                references which are not local variables or parameters of the closure. Gradle uses this for
+                <firstterm>configuration closures</firstterm>, where the <literal>delegate</literal> object is set to
+                the object to be configured.
+            </para>
+            <sample id="groovyBasics" dir="userguide/tutorial/groovy" title="Closure delegates">
+                <sourcefile file="build.gradle" snippet="closureDelegates"/>
+            </sample>
+        </section>
+    </section>
 </chapter>

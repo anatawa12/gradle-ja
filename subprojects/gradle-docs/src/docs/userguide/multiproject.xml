@@ -35,7 +35,7 @@
                 <layout>
                     build.gradle
                     settings.gradle
-                    bluewhale
+                    bluewhale/
                 </layout>
                 <sourcefile file="settings.gradle"/>
             </sample>
@@ -65,8 +65,8 @@
                 <layout>
                     build.gradle
                     settings.gradle
-                    bluewhale
-                    krill
+                    bluewhale/
+                    krill/
                 </layout>
                 <sourcefile file="settings.gradle"/>
             </sample>
@@ -126,9 +126,7 @@
                 <layout>
                     build.gradle
                     settings.gradle
-                    bluewhale
                     bluewhale/build.gradle
-                    krill
                     krill/build.gradle
                 </layout>
                 <sourcefile file="settings.gradle"/>
@@ -151,11 +149,9 @@
                     <layout>
                         build.gradle
                         settings.gradle
-                        bluewhale
                         bluewhale/build.gradle
-                        krill
                         krill/build.gradle
-                        tropicalFish
+                        tropicalFish/
                     </layout>
                     <sourcefile file="settings.gradle"/>
                     <sourcefile file="build.gradle"/>
@@ -175,11 +171,8 @@
                     <layout>
                         build.gradle
                         settings.gradle
-                        bluewhale
                         bluewhale/build.gradle
-                        krill
                         krill/build.gradle
-                        tropicalFish
                         tropicalFish/build.gradle
                     </layout>
                     <sourcefile file="settings.gradle"/>
@@ -263,7 +256,7 @@
             The root project is the only project in a path that is not specified by its name. The path
             <literal>:bluewhale</literal>
             corresponds to the file system path
-            <literal>water/project</literal>
+            <literal>water/bluewhale</literal>
             in the case of the example above.
         </para>
         <para>プロジェクトのパスは、ルートプロジェクトを表すコロンで始まります。ルートプロジェクトはパス内では名前が指定されません。<literal>:bluewhale</literal>はファイルシステムで言えば「water/bluewhale」に対応します。</para>
@@ -296,9 +289,7 @@
                 <sample id="multiprojectFirstMessages" dir="userguide/multiproject/dependencies/firstMessages/messages" includeLocation="true" title="依存関係とビルド実行順序 / Dependencies and execution order">
                     <layout>
                         settings.gradle
-                        consumer
                         consumer/build.gradle
-                        producer
                         producer/build.gradle
                     </layout>
                     <sourcefile file="settings.gradle"/>
@@ -316,9 +307,7 @@
                 <sample id="multiprojectMessagesHack" dir="userguide/multiproject/dependencies/messagesHack/messages" title="依存関係とビルド実行順序 / Dependencies and execution order">
                     <layout>
                         settings.gradle
-                        aProducer
                         aProducer/build.gradle
-                        consumer
                         consumer/build.gradle
                     </layout>
                     <sourcefile file="settings.gradle"/>
@@ -350,9 +339,7 @@
                 <sample id="multiprojectMessagesDependencies" dir="userguide/multiproject/dependencies/messagesWithDependencies/messages" includeLocation="true" title="依存関係を宣言する">
                     <layout>
                         settings.gradle
-                        consumer
                         consumer/build.gradle
-                        producer
                         producer/build.gradle
                     </layout>
                     <sourcefile file="settings.gradle"/>
@@ -499,9 +486,11 @@
                 <layout>
                     settings.gradle
                     build.gradle
-                    date
+                    date/
+                    date/src/main/java/
                     date/src/main/java/org/gradle/sample/DateServlet.java
-                    hello
+                    hello/
+                    hello/src/main/java/
                     hello/src/main/java/org/gradle/sample/HelloServlet.java
                 </layout>
                 <sourcefile file="settings.gradle"/>
@@ -511,7 +500,7 @@
                 <literal>date</literal>
                 and
                 <literal>hello</literal>
-                task have a
+                projects have a
                 <emphasis>configuration</emphasis>
                 dependency on <literal>webDist</literal>, as all the build logic for the webapp projects is injected by
                 <literal>webDist</literal>. The
@@ -573,23 +562,22 @@
             <layout>
                 settings.gradle
                 build.gradle
-                api
+                api/
+                api/src/main/java/
                 api/src/main/java/org/gradle/sample/api/Person.java
                 api/src/main/java/org/gradle/sample/apiImpl/PersonImpl.java
-                services
-                services/personService
+                services/personService/
+                services/personService/src/main/java/
                 services/personService/src/main/java/org/gradle/sample/services/PersonService.java
+                services/personService/src/test/java/
                 services/personService/src/test/java/org/gradle/sample/services/PersonServiceTest.java
-                shared
+                shared/
+                shared/src/main/java/
                 shared/src/main/java/org/gradle/sample/shared/Helper.java
             </layout>
         </sample>
-        <para role="original">We have the projects <literal>shared</literal>,
-            <literal>api</literal>
-            and <literal>personService</literal>.
-            <literal>personService</literal>
-            has a lib dependency on the other two projects.
-            <literal>api</literal>
+        <para>We have the projects <literal>shared</literal>, <literal>api</literal> and<literal>personService</literal>.
+            <literal>personService</literal> has a lib dependency on the other two projects. <literal>api</literal>
             has a lib dependency on <literal>shared</literal>.
             <footnote>
                 <para role="original">
@@ -612,12 +600,12 @@
             <literal>build.gradle</literal> of the root project.
             <footnote>
                 <para role="original">We do this here, as it makes the layout a bit easier. We usually put the project specific stuff
-                    into the buildscript of the respective projects.
+                    into the build script of the respective projects.
                 </para>
             </footnote>
             A <emphasis>lib</emphasis>
-            dependency is a special form of an execution dependency. It causes the other project to be build first and
-            adds the jar with the classes of the other project to the classpath. It also add the dependencies of the
+            dependency is a special form of an execution dependency. It causes the other project to be built first and
+            adds the jar with the classes of the other project to the classpath. It also adds the dependencies of the
             other project to the classpath. So you can enter the
             <literal>api</literal>
             directory and trigger a <userinput>gradle compile</userinput>. First
@@ -650,8 +638,8 @@
         </para>
         <para>Javaプラグインは、すべてのクラスが含まれたjarをプロジェクトライブラリに追加します。この例では、さらにapiプロジェクトのインターフェースのみが含まれたライブラリを作成し、新しい依存関係設定に割り当てています。person serviceをコンパイルするときはインターフェースしかいりませんが、テストをするにはapiからすべてのクラスを持ってくる必要があるのです。</para>
         <section id="disable_dependency_projects">
-            <title>依存プロジェクトのビルドを無効化する<phrase role="original">Disable the build of dependency projects.</phrase></title>
-            <para role="original">Sometimes you don't want depended on projects to be built when doing a partial build.
+            <title>Disabling the build of dependency projects</title>
+            <para>Sometimes you don't want depended on projects to be built when doing a partial build.
                 To disable the build of the depended on projects you can run gradle with the <code>-a</code> option.
             </para>
             <para>部分ビルドを実行する際、依存しているプロジェクトをビルドしたくないときがあるかもしれません。依存プロジェクトのビルドを無効化するには、<option>-a</option>オプションをつけてプロジェクトをビルドしてください。</para>
@@ -680,7 +668,7 @@
             <output args=":api:build"/>
         </sample>
 
-        <para role="original">While you are working in a typical development cycle repeatedly building and testing changes to a
+        <para>While you are working in a typical development cycle repeatedly building and testing changes to
             the :api project (knowing that you are only changing files in this one project), you may not want to
             even suffer the expense of :shared:compile checking to see what has changed in the :shared project.
             Adding the <literal>-a</literal> option will cause gradle to use cached jars to resolve any project lib
@@ -702,7 +690,7 @@
             <output args=":api:buildNeeded"/>
         </sample>
         <para role="original">You also might want to refactor some part of the :api project that is used in other projects.
-            If you make these types of changes, it is not sufficient to test just the :api,
+            If you make these types of changes, it is not sufficient to test just the :api
             project, you also need to test all projects that depend on the :api project.
             The <literal>buildDependents</literal> task also tests all the projects that have a project lib dependency
             (in the testRuntime configuration) on the specified project.
@@ -727,7 +715,7 @@
         <para>プロジェクトで宣言されたプロパティとメソッドは、すべての子プロジェクトに継承されます。これは設定のインジェクションの代替手段となるでしょう。ただ、私たちは継承というモデルはマルチプロジェクトの様々な特質を十分に反映できるものではないと考えています。将来バージョンのユーザーガイドでこのことについて詳しく書くつもりです。</para>
         <para role="original">Method inheritance might be interesting to use as Gradle's
             <emphasis>Configuration Injection</emphasis>
-            does not support methods yet (but will in a future release.).
+            does not support methods yet (but will in a future release).
         </para>
         <para>なお、Gradleの<emphasis>設定のインジェクション</emphasis>ではまだメソッドを注入することができません(将来のリリースで対応する予定です)。なので、メソッドについては継承を使う価値があるかもしれません。</para>
         <para role="original">You might be wondering why we have implemented a feature we obviously don't like that much. One reason is
@@ -741,7 +729,7 @@
         <para role="original">Writing this chapter was pretty exhausting and reading it might have a similar effect. Our final message
             for this chapter is that multi-project builds with Gradle are usually
             <emphasis>not</emphasis>
-            difficult. There are six elements you need to remember: <literal>allproject</literal>, <literal>
+            difficult. There are six elements you need to remember: <literal>allprojects</literal>, <literal>
             subprojects</literal>, <literal>dependsOn</literal>, <literal>childrenDependOnMe</literal>,
             <literal>dependsOnChildren</literal>
             and project lib dependencies.

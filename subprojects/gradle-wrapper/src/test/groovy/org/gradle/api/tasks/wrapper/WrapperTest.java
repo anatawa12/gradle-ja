@@ -61,9 +61,9 @@ public class WrapperTest extends AbstractTaskTest {
         wrapper.setGradleVersion("1.0");
         targetWrapperJarPath = "jarPath";
         expectedTargetWrapperJar = new TestFile(getProject().getProjectDir(),
-                targetWrapperJarPath + "/" + Wrapper.WRAPPER_JAR);
+                targetWrapperJarPath + "/gradle-wrapper.jar");
         expectedTargetWrapperProperties = new File(getProject().getProjectDir(),
-                targetWrapperJarPath + "/" + Wrapper.WRAPPER_PROPERTIES);
+                targetWrapperJarPath + "/gradle-wrapper.properties");
         new File(getProject().getProjectDir(), targetWrapperJarPath).mkdirs();
         wrapper.setJarPath(targetWrapperJarPath);
         wrapper.setDistributionPath("somepath");
@@ -86,9 +86,62 @@ public class WrapperTest extends AbstractTaskTest {
         assertEquals(Wrapper.DEFAULT_ARCHIVE_NAME, wrapper.getArchiveName());
         assertEquals(Wrapper.DEFAULT_ARCHIVE_CLASSIFIER, wrapper.getArchiveClassifier());
         assertEquals(Wrapper.DEFAULT_DISTRIBUTION_PARENT_NAME, wrapper.getArchivePath());
-        assertEquals(Wrapper.DEFAULT_URL_ROOT, wrapper.getUrlRoot());
         assertEquals(Wrapper.PathBase.GRADLE_USER_HOME, wrapper.getDistributionBase());
         assertEquals(Wrapper.PathBase.GRADLE_USER_HOME, wrapper.getArchiveBase());
+        assertNotNull(wrapper.getUrlRoot());
+        assertNotNull(wrapper.getDistributionUrl());
+    }
+
+    @Test
+    public void testDownloadsFromReleaseRepositoryForReleaseVersions() {
+        wrapper.setGradleVersion("0.9.1");
+        assertEquals("http://gradle.artifactoryonline.com/gradle/distributions", wrapper.getUrlRoot());
+        assertEquals("http://gradle.artifactoryonline.com/gradle/distributions/gradle-0.9.1-bin.zip", wrapper.getDistributionUrl());
+    }
+
+    @Test
+    public void testDownloadsFromReleaseRepositoryForPreviewReleaseVersions() {
+        wrapper.setGradleVersion("1.0-milestone-1");
+        assertEquals("http://gradle.artifactoryonline.com/gradle/distributions", wrapper.getUrlRoot());
+        assertEquals("http://gradle.artifactoryonline.com/gradle/distributions/gradle-1.0-milestone-1-bin.zip", wrapper.getDistributionUrl());
+    }
+
+    @Test
+    public void testDownloadsFromOldReleaseRepositoryForPre09ReleaseVersions() {
+        wrapper.setGradleVersion("0.9-rc-3");
+        assertEquals("http://dist.codehaus.org/gradle", wrapper.getUrlRoot());
+        assertEquals("http://dist.codehaus.org/gradle/gradle-0.9-rc-3-bin.zip", wrapper.getDistributionUrl());
+    }
+
+    @Test
+    public void testDownloadsFromSnapshotRepositoryForSnapshotVersions() {
+        wrapper.setGradleVersion("0.9.1-20101224110000+1100");
+        assertEquals("http://gradle.artifactoryonline.com/gradle/distributions/gradle-snapshots", wrapper.getUrlRoot());
+        assertEquals("http://gradle.artifactoryonline.com/gradle/distributions/gradle-snapshots/gradle-0.9.1-20101224110000+1100-bin.zip", wrapper.getDistributionUrl());
+    }
+
+    @Test
+    public void testDownloadsFromOldSnapshotRepositoryForPre09SnapshotVersions() {
+        wrapper.setGradleVersion("0.9-20101224110000+1100");
+        assertEquals("http://snapshots.dist.codehaus.org/gradle", wrapper.getUrlRoot());
+        assertEquals("http://snapshots.dist.codehaus.org/gradle/gradle-0.9-20101224110000+1100-bin.zip", wrapper.getDistributionUrl());
+    }
+
+    @Test
+    public void testUsesExplicitlyDefinedDistributionUrl() {
+        wrapper.setGradleVersion("0.9");
+        wrapper.setDistributionUrl("http://some-url");
+        assertEquals("http://gradle.artifactoryonline.com/gradle/distributions", wrapper.getUrlRoot());
+        assertEquals("http://some-url", wrapper.getDistributionUrl());
+    }
+
+    @Test
+    public void testAssemblesDistributionUrlFromPartsIfNotSpecified() {
+        wrapper.setGradleVersion("0.9");
+        wrapper.setUrlRoot("http://some-url");
+        wrapper.setArchiveName("archive");
+        wrapper.setArchiveClassifier("all");
+        assertEquals("http://some-url/archive-0.9-all.zip", wrapper.getDistributionUrl());
     }
 
     @Test
@@ -99,7 +152,7 @@ public class WrapperTest extends AbstractTaskTest {
     @Test
     public void testCheckInputs() throws IOException {
         assertThat(wrapper.getInputs().getProperties().keySet(),
-                equalTo(WrapUtil.toSet("archiveClassifier", "distributionPath", "archiveName", "urlRoot", "gradleVersion", "archivePath")));
+                equalTo(WrapUtil.toSet("distributionBase", "distributionPath", "distributionUrl", "archiveBase", "archivePath")));
     }
 
     @Test
@@ -121,8 +174,8 @@ public class WrapperTest extends AbstractTaskTest {
         context.checking(new Expectations() {
             {
                 one(wrapperScriptGeneratorMock).generate(
-                        toNative("../" + targetWrapperJarPath + "/" + Wrapper.WRAPPER_JAR),
-                        toNative("../" + targetWrapperJarPath + "/" + Wrapper.WRAPPER_PROPERTIES),
+                        toNative("../" + targetWrapperJarPath + "/gradle-wrapper.jar"),
+                        toNative("../" + targetWrapperJarPath + "/gradle-wrapper.properties"),
                         wrapper.getScriptFile());
             }
         });
@@ -131,12 +184,9 @@ public class WrapperTest extends AbstractTaskTest {
         expectedTargetWrapperJar.unzipTo(unjarDir);
         unjarDir.file(GradleWrapperMain.class.getName().replace(".", "/") + ".class").assertIsFile();
         Properties properties = GUtil.loadProperties(expectedTargetWrapperProperties);
-        assertEquals(properties.getProperty(Wrapper.URL_ROOT_PROPERTY), wrapper.getUrlRoot());
+        assertEquals(properties.getProperty(Wrapper.DISTRIBUTION_URL_PROPERTY), wrapper.getDistributionUrl());
         assertEquals(properties.getProperty(Wrapper.DISTRIBUTION_BASE_PROPERTY), wrapper.getDistributionBase().toString());
         assertEquals(properties.getProperty(Wrapper.DISTRIBUTION_PATH_PROPERTY), wrapper.getDistributionPath());
-        assertEquals(properties.getProperty(Wrapper.DISTRIBUTION_NAME_PROPERTY), wrapper.getArchiveName());
-        assertEquals(properties.getProperty(Wrapper.DISTRIBUTION_CLASSIFIER_PROPERTY), wrapper.getArchiveClassifier());
-        assertEquals(properties.getProperty(Wrapper.DISTRIBUTION_VERSION_PROPERTY), wrapper.getGradleVersion());
         assertEquals(properties.getProperty(Wrapper.ZIP_STORE_BASE_PROPERTY), wrapper.getArchiveBase().toString());
         assertEquals(properties.getProperty(Wrapper.ZIP_STORE_PATH_PROPERTY), wrapper.getArchivePath());
     }
