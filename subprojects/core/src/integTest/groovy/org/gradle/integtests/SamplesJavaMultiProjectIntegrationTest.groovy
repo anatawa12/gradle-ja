@@ -25,13 +25,11 @@ import org.gradle.util.TestFile
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
-import org.junit.runner.RunWith
 import static org.hamcrest.Matchers.*
 
 /**
  * @author Hans Dockter
  */
-@RunWith(DistributionIntegrationTestRunner.class)
 class SamplesJavaMultiProjectIntegrationTest {
 
     static final String JAVA_PROJECT_NAME = 'java/multiproject'
@@ -193,13 +191,6 @@ class SamplesJavaMultiProjectIntegrationTest {
         TestFile.Snapshot snapshot = sharedJar.snapshot()
         executer.inDirectory(apiDir).withTasks('clean', 'classes').withArguments("-a").run()
         sharedJar.assertHasNotChangedSince(snapshot)
-    }
-
-    @Test
-    public void additionalProjectDependenciesTasks() {
-        TestFile apiDir = javaprojectDir.file(API_NAME)
-        executer.inDirectory(apiDir).withTasks('classes').withArguments("-Ajavadoc").run()
-        assertExists(javaprojectDir, SHARED_NAME, 'build/docs/javadoc/index.html')
     }
 
     @Test

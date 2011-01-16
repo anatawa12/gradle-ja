@@ -23,11 +23,9 @@ import org.gradle.util.GradleVersion
 import org.gradle.util.TestFile
 import org.junit.Rule
 import org.junit.Test
-import org.junit.runner.RunWith
 import static org.hamcrest.Matchers.*
 import static org.junit.Assert.*
 
-@RunWith(DistributionIntegrationTestRunner)
 class DistributionIntegrationTest {
     @Rule public final GradleDistribution dist = new GradleDistribution()
     @Rule public final GradleDistributionExecuter executer = new GradleDistributionExecuter()
@@ -90,10 +88,11 @@ class DistributionIntegrationTest {
         assertIsGradleJar(contentsDir.file("lib/gradle-core-${version}.jar"))
         assertIsGradleJar(contentsDir.file("lib/gradle-ui-${version}.jar"))
         assertIsGradleJar(contentsDir.file("lib/gradle-launcher-${version}.jar"))
+        assertIsGradleJar(contentsDir.file("lib/gradle-tooling-api-${version}.jar"))
+        assertIsGradleJar(contentsDir.file("lib/gradle-wrapper-${version}.jar"))
         assertIsGradleJar(contentsDir.file("lib/plugins/gradle-code-quality-${version}.jar"))
         assertIsGradleJar(contentsDir.file("lib/plugins/gradle-plugins-${version}.jar"))
         assertIsGradleJar(contentsDir.file("lib/plugins/gradle-jetty-${version}.jar"))
-        assertIsGradleJar(contentsDir.file("lib/plugins/gradle-wrapper-${version}.jar"))
 
         // Docs
         contentsDir.file('getting-started.html').assertIsFile()

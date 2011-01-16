@@ -24,9 +24,7 @@ import org.gradle.util.OperatingSystem
 import org.junit.Ignore
 import org.junit.Rule
 import org.junit.Test
-import org.junit.runner.RunWith
 
-@RunWith(DistributionIntegrationTestRunner.class)
 public class CommandLineIntegrationTest {
     @Rule public final GradleDistribution dist = new GradleDistribution()
     @Rule public final GradleDistributionExecuter executer = new GradleDistributionExecuter()
@@ -53,11 +51,11 @@ public class CommandLineIntegrationTest {
 
     @Test
     public void canDefineJavaHomeViaEnvironmentVariable() {
-        String expectedJavaHome = "-PexpectedJavaHome=${System.properties['java.home']}"
-        String javaHome = System.properties['java.home']
+        String javaHome = Jvm.current().javaHome
+        String expectedJavaHome = "-PexpectedJavaHome=${javaHome}"
 
-        // Handle on the system PATH, with no JAVA_HOME specified
-        String path = String.format('%s%s%s', Jvm.current().binDir, File.pathSeparator, System.getenv('PATH'))
+        // Handle java on the system PATH, with no JAVA_HOME specified
+        String path = String.format('%s%s%s', Jvm.current().javaExecutable.parentFile, File.pathSeparator, System.getenv('PATH'))
         executer.withEnvironmentVars('PATH': path, 'JAVA_HOME': '')
                 .withArguments(expectedJavaHome)
                 .withTasks('checkJavaHome')

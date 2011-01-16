@@ -60,7 +60,7 @@ public class StartParameter {
     private List<String> taskNames = new ArrayList<String>();
     private Set<String> excludedTaskNames = new HashSet<String>();
     private ProjectDependenciesBuildInstruction projectDependenciesBuildInstruction
-            = new ProjectDependenciesBuildInstruction(Collections.<String>emptyList());
+            = new ProjectDependenciesBuildInstruction(true);
     private File currentDir;
     private boolean searchUpwards = true;
     private Map<String, String> projectProperties = new HashMap<String, String>();
@@ -421,8 +421,7 @@ public class StartParameter {
      * addition to the user init script located in ${user.home}/.gradle/init.gradle.
      * @param initScriptFile The init script to be run during the Gradle invocation.
      */
-    public void addInitScript(File initScriptFile)
-    {
+    public void addInitScript(File initScriptFile) {
         initScripts.add(initScriptFile);
     }
 
@@ -527,26 +526,26 @@ public class StartParameter {
 
     @Override
     public String toString() {
-        return "StartParameter{" +
-                "taskNames=" + taskNames +
-                ", excludedTaskNames=" + excludedTaskNames +
-                ", currentDir=" + currentDir +
-                ", searchUpwards=" + searchUpwards +
-                ", projectProperties=" + projectProperties +
-                ", systemPropertiesArgs=" + systemPropertiesArgs +
-                ", gradleUserHomeDir=" + gradleUserHomeDir +
-                ", cacheUsage=" + cacheUsage +
-                ", buildScriptSource=" + buildScriptSource +
-                ", settingsScriptSource=" + settingsScriptSource +
-                ", buildExecuter=" + buildExecuter +
-                ", defaultProjectSelector=" + defaultProjectSelector +
-                ", logLevel=" + logLevel +
-                ", showStacktrace=" + showStacktrace +
-                ", buildFile=" + buildFile +
-                ", initScripts=" + initScripts +
-                ", dryRun=" + dryRun +
-                ", noOpt=" + noOpt +
-                ", profile=" + profile +
-                '}';
+        return "StartParameter{"
+                + "taskNames=" + taskNames
+                + ", excludedTaskNames=" + excludedTaskNames
+                + ", currentDir=" + currentDir
+                + ", searchUpwards=" + searchUpwards
+                + ", projectProperties=" + projectProperties
+                + ", systemPropertiesArgs=" + systemPropertiesArgs
+                + ", gradleUserHomeDir=" + gradleUserHomeDir
+                + ", cacheUsage=" + cacheUsage
+                + ", buildScriptSource=" + buildScriptSource
+                + ", settingsScriptSource=" + settingsScriptSource
+                + ", buildExecuter=" + buildExecuter
+                + ", defaultProjectSelector=" + defaultProjectSelector
+                + ", logLevel=" + logLevel
+                + ", showStacktrace=" + showStacktrace
+                + ", buildFile=" + buildFile
+                + ", initScripts=" + initScripts
+                + ", dryRun=" + dryRun
+                + ", noOpt=" + noOpt
+                + ", profile=" + profile
+                + '}';
     }
 }

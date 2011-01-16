@@ -18,7 +18,7 @@ package org.gradle.messaging.concurrent;
 
 public interface ExecutorFactory {
     /**
-     * Creates an executor. It is the caller's responsibility to stop the executor.
+     * Creates an executor which can run multiple tasks concurrently. It is the caller's responsibility to stop the executor.
      *
      * @param displayName The display name for the this executor. Used for thread names, logging and error message.
      * @return The executor.
