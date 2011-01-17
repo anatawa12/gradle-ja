@@ -78,7 +78,7 @@ some zip front ends for Mac OS X don't restore the file permissions properly.
 <para role="original">For running Gradle, add <filename><replaceable>GRADLE_HOME</replaceable>/bin</filename> to your <envar>PATH</envar>
     environment variable. Usually, this is sufficient to run Gradle.
 </para>
-<para><filename><replaceable>GRADLE_HOME</replaceable>/bin</filename>を環境変数<envar>PATH</envar>に追加してください。Gradleを実行するにはこれで十分ですが、利便性のために<envar>GRADLE_HOME</envar>環境変数にGradleをインストールしたディレクトリをセットすることもできます。</para>
+<para><filename><replaceable>GRADLE_HOME</replaceable>/bin</filename>を環境変数<envar>PATH</envar>に追加してください。Gradleの実行に必要な環境変数の設定は、通常これだけです。</para>
 </section>
 
 <section>
