@@ -31,13 +31,13 @@ import org.gradle.api.JavaVersion
  *
  * @author Hans Dockter
  */
-public class EclipsePlugin extends IdePlugin {
-    public static final String ECLIPSE_TASK_NAME = "eclipse";
-    public static final String CLEAN_ECLIPSE_TASK_NAME = "cleanEclipse";
-    public static final String ECLIPSE_PROJECT_TASK_NAME = "eclipseProject";
-    public static final String ECLIPSE_WTP_TASK_NAME = "eclipseWtp";
-    public static final String ECLIPSE_CP_TASK_NAME = "eclipseClasspath";
-    public static final String ECLIPSE_JDT_TASK_NAME = "eclipseJdt";
+class EclipsePlugin extends IdePlugin {
+    static final String ECLIPSE_TASK_NAME = "eclipse"
+    static final String CLEAN_ECLIPSE_TASK_NAME = "cleanEclipse"
+    static final String ECLIPSE_PROJECT_TASK_NAME = "eclipseProject"
+    static final String ECLIPSE_WTP_TASK_NAME = "eclipseWtp"
+    static final String ECLIPSE_CP_TASK_NAME = "eclipseClasspath"
+    static final String ECLIPSE_JDT_TASK_NAME = "eclipseJdt"
 
     @Override protected String getLifecycleTaskName() {
         return 'eclipse'
@@ -54,24 +54,24 @@ public class EclipsePlugin extends IdePlugin {
 
     private void configureEclipseProject(Project project) {
         EclipseProject eclipseProject = project.tasks.add(ECLIPSE_PROJECT_TASK_NAME, EclipseProject.class);
-        eclipseProject.setProjectName(project.name);
+        eclipseProject.projectName = project.name
         eclipseProject.description = "Generates the Eclipse .project file."
-        eclipseProject.setInputFile(project.file('.project'))
-        eclipseProject.setOutputFile(project.file('.project'))
+        eclipseProject.inputFile = project.file('.project')
+        eclipseProject.outputFile = project.file('.project')
         eclipseProject.conventionMapping.comment = { project.description }
 
-        project.plugins.withType(JavaBasePlugin.class).all {
+        project.plugins.withType(JavaBasePlugin.class) {
             project.configure(project.eclipseProject) {
                 buildCommands = [new BuildCommand("org.eclipse.jdt.core.javabuilder")]
                 natures = ["org.eclipse.jdt.core.javanature"]
             }
         }
-        project.plugins.withType(GroovyBasePlugin.class).all {
+        project.plugins.withType(GroovyBasePlugin.class) {
             project.configure(project.eclipseProject) {
                 natures.add(natures.indexOf("org.eclipse.jdt.core.javanature"), "org.eclipse.jdt.groovy.core.groovyNature")
             }
         }
-        project.plugins.withType(ScalaBasePlugin.class).all {
+        project.plugins.withType(ScalaBasePlugin.class) {
             project.configure(project.eclipseProject) {
                 buildCommands = buildCommands.collect { command ->
                     command.name == "org.eclipse.jdt.core.javabuilder" ? new BuildCommand("ch.epfl.lamp.sdt.core.scalabuilder") : command
@@ -79,7 +79,7 @@ public class EclipsePlugin extends IdePlugin {
                 natures.add(natures.indexOf("org.eclipse.jdt.core.javanature"), "ch.epfl.lamp.sdt.core.scalanature")
             }
         }
-        project.plugins.withType(WarPlugin.class).all {
+        project.plugins.withType(WarPlugin.class) {
             project.configure(project.eclipseProject) {
                 buildCommand 'org.eclipse.wst.common.project.facet.core.builder'
                 buildCommand 'org.eclipse.wst.validation.validationbuilder'
@@ -91,29 +91,28 @@ public class EclipsePlugin extends IdePlugin {
     }
 
     private void configureEclipseClasspath(final Project project) {
-        project.plugins.withType(JavaBasePlugin.class).all {
-            EclipseClasspath eclipseClasspath = project.tasks.add(ECLIPSE_CP_TASK_NAME, EclipseClasspath.class);
+        project.plugins.withType(JavaBasePlugin.class) {
+            EclipseClasspath eclipseClasspath = project.tasks.add(ECLIPSE_CP_TASK_NAME, EclipseClasspath.class)
             project.configure(eclipseClasspath) {
                 description = "Generates the Eclipse .classpath file."
                 containers 'org.eclipse.jdt.launching.JRE_CONTAINER'
                 sourceSets = project.sourceSets
                 inputFile = project.file('.classpath')
                 outputFile = project.file('.classpath')
-                conventionMapping.defaultOutputDir = { new File(project.buildDir, 'eclipse') }
+                conventionMapping.defaultOutputDir = { new File(project.projectDir, 'bin') }
             }
             addWorker(eclipseClasspath)
         }
-        project.plugins.withType(JavaPlugin.class).all {
+        project.plugins.withType(JavaPlugin.class) {
             project.configure(project.eclipseClasspath) {
                 plusConfigurations = [project.configurations.testRuntime]
-                conventionMapping.defaultOutputDir = { project.sourceSets.main.classesDir }
             }
         }
     }
 
     private void configureEclipseJdt(final Project project) {
-        project.plugins.withType(JavaBasePlugin.class).all {
-            EclipseJdt eclipseJdt = project.tasks.add(ECLIPSE_JDT_TASK_NAME, EclipseJdt.class);
+        project.plugins.withType(JavaBasePlugin.class) {
+            EclipseJdt eclipseJdt = project.tasks.add(ECLIPSE_JDT_TASK_NAME, EclipseJdt.class)
             project.configure(eclipseJdt) {
                 description = "Generates the Eclipse JDT settings file."
                 outputFile = project.file('.settings/org.eclipse.jdt.core.prefs')
@@ -126,8 +125,8 @@ public class EclipsePlugin extends IdePlugin {
     }
 
     private void configureEclipseWtpModuleForWarProjects(final Project project) {
-        project.plugins.withType(WarPlugin.class).all {
-            final EclipseWtp eclipseWtp = project.getTasks().add(ECLIPSE_WTP_TASK_NAME, EclipseWtp.class);
+        project.plugins.withType(WarPlugin.class) {
+            final EclipseWtp eclipseWtp = project.tasks.add(ECLIPSE_WTP_TASK_NAME, EclipseWtp.class);
 
             project.configure(eclipseWtp) {
                 description = 'Generate the Eclipse WTP settings files.'
@@ -148,7 +147,7 @@ public class EclipsePlugin extends IdePlugin {
         }
     }
 
-    def toJavaFacetVersion(JavaVersion version) {
+    private String toJavaFacetVersion(JavaVersion version) {
         if (version == JavaVersion.VERSION_1_5) {
             return '5.0'
         }

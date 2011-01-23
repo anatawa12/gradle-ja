@@ -77,7 +77,7 @@ class IdeaPlugin extends IdePlugin {
     }
 
     private def configureForJavaPlugin(Project project) {
-        project.plugins.withType(JavaPlugin).all {
+        project.plugins.withType(JavaPlugin) {
             configureIdeaProjectForJava(project)
             configureIdeaModuleForJava(project)
         }
@@ -95,8 +95,8 @@ class IdeaPlugin extends IdePlugin {
         project.ideaModule {
             conventionMapping.sourceDirs = { project.sourceSets.main.allSource.sourceTrees.srcDirs.flatten() as LinkedHashSet }
             conventionMapping.testSourceDirs = { project.sourceSets.test.allSource.sourceTrees.srcDirs.flatten() as LinkedHashSet }
-            conventionMapping.outputDir = { project.sourceSets.main.classesDir }
-            conventionMapping.testOutputDir = { project.sourceSets.test.classesDir }
+            conventionMapping.outputDir = { new File("$project.projectDir/out/production/$project.name") }
+            conventionMapping.testOutputDir = { new File("$project.projectDir/out/test/$project.name") }
             def configurations = project.configurations
             scopes = [
                     COMPILE: [plus: [configurations.compile], minus: []],

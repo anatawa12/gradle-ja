@@ -14,30 +14,23 @@
  * limitations under the License.
  */
 
-
 package org.gradle.integtests
 
 import org.custommonkey.xmlunit.Diff
 import org.custommonkey.xmlunit.ElementNameAndAttributeQualifier
 import org.custommonkey.xmlunit.XMLAssert
-import org.gradle.integtests.fixtures.GradleDistribution
-import org.gradle.integtests.fixtures.GradleDistributionExecuter
 import org.gradle.integtests.fixtures.TestResources
 import org.gradle.util.TestFile
 import org.junit.Rule
 import org.junit.Test
 import junit.framework.AssertionFailedError
 
-class IdeaIntegrationTest {
-    @Rule
-    public final GradleDistribution dist = new GradleDistribution()
-    @Rule
-    public final GradleDistributionExecuter executer = new GradleDistributionExecuter()
+class IdeaIntegrationTest extends AbstractIdeIntegrationTest {
     @Rule
     public final TestResources testResources = new TestResources()
 
     @Test
-    public void canCreateAndDeleteMetaData() {
+    void canCreateAndDeleteMetaData() {
         executer.withTasks('idea').run()
 
         assertHasExpectedContents('root.ipr')
@@ -50,7 +43,7 @@ class IdeaIntegrationTest {
     }
 
     @Test
-    public void worksWithAnEmptyProject() {
+    void worksWithAnEmptyProject() {
         executer.withTasks('idea').run()
 
         assertHasExpectedContents('root.ipr')
@@ -58,15 +51,15 @@ class IdeaIntegrationTest {
     }
 
     @Test
-    public void worksWithASubProjectThatDoesNotHaveTheIdeaPluginApplied() {
+    void worksWithASubProjectThatDoesNotHaveTheIdeaPluginApplied() {
         executer.withTasks('idea').run()
 
         assertHasExpectedContents('root.ipr')
     }
 
     @Test
-    public void worksWithNonStandardLayout() {
-        executer.inDirectory(dist.testDir.file('root')).withTasks('idea').run()
+    void worksWithNonStandardLayout() {
+        executer.inDirectory(testDir.file('root')).withTasks('idea').run()
 
         assertHasExpectedContents('root/root.ipr')
         assertHasExpectedContents('root/root.iml')
@@ -74,17 +67,65 @@ class IdeaIntegrationTest {
     }
 
     @Test
-    public void overwritesExistingDependencies() {
+    void overwritesExistingDependencies() {
         executer.withTasks('idea').run()
 
         assertHasExpectedContents('root.iml')
     }
 
-    def assertHasExpectedContents(String path) {
-        TestFile file = dist.testDir.file(path).assertIsFile()
-        TestFile expectedFile = dist.testDir.file("expectedFiles/${path}.xml").assertIsFile()
+    @Test
+    void outputDirsDefaultToToIdeaDefaults() {
+        def settingsFile = file("settings.gradle")
+        settingsFile << "rootProject.name = 'root'"
+        def buildFile = file("build.gradle")
+        buildFile << "apply plugin: 'java'; apply plugin: 'idea'"
 
-        def cache = dist.userHomeDir.file("cache")
+        executer.usingSettingsFile(settingsFile).usingBuildScript(buildFile).withTasks("idea").run()
+
+        def module = parseImlFile("root")
+        def outputUrl = module.component.output[0].@url
+        def testOutputUrl = module.component."output-test"[0].@url
+
+        assert outputUrl.text() == 'file://$MODULE_DIR$/out/production/root'
+        assert testOutputUrl.text() == 'file://$MODULE_DIR$/out/test/root'
+    }
+
+    @Test
+    void canHandleCircularModuleDependencies() {
+        def repoDir = file("repo")
+        def artifact1 = publishArtifact(repoDir, "myGroup", "myArtifact1", "myArtifact2")
+        def artifact2 = publishArtifact(repoDir, "myGroup", "myArtifact2", "myArtifact1")
+
+        def settingsFile = file("settings.gradle")
+        settingsFile << "rootProject.name = 'root'"
+
+        def buildFile = file("build.gradle")
+        buildFile << """
+apply plugin: "java"
+apply plugin: "idea"
+
+repositories {
+    mavenRepo urls: "file://$repoDir.absolutePath"
+}
+
+dependencies {
+    compile "myGroup:myArtifact1:1.0"
+}
+        """
+
+        executer.usingSettingsFile(settingsFile).usingBuildScript(buildFile).withTasks("idea").run()
+
+        def module = parseImlFile("root", true)
+        def libs = module.component.orderEntry.library
+        assert libs.size() == 2
+        assert libs.CLASSES.root*.@url*.text().collect { new File(it).name } as Set == [artifact1.name + "!", artifact2.name + "!"] as Set
+    }
+
+    private void assertHasExpectedContents(String path) {
+        TestFile file = testDir.file(path).assertIsFile()
+        TestFile expectedFile = testDir.file("expectedFiles/${path}.xml").assertIsFile()
+
+        def cache = distribution.userHomeDir.file("cache")
         def cachePath = cache.absolutePath.replace(File.separator, '/')
         def expectedXml = expectedFile.text.replace('@CACHE_DIR@', cachePath)
 
@@ -95,5 +136,9 @@ class IdeaIntegrationTest {
         } catch (AssertionFailedError e) {
             throw new AssertionFailedError("generated file '$path' does not contain the expected contents: ${e.message}.\nExpected:\n${expectedXml}\nActual:\n${file.text}").initCause(e)
         }
+    }
+
+    private parseImlFile(projectName, print = false) {
+        parseXmlFile("${projectName}.iml", print)
     }
 }

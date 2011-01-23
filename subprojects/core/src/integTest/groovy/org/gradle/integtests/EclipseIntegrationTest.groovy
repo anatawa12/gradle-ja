@@ -20,18 +20,18 @@ import org.gradle.integtests.fixtures.TestResources
 import org.junit.Rule
 import org.junit.Test
 
-class EclipseIntegrationTest extends AbstractIntegrationTest {
+class EclipseIntegrationTest extends AbstractIdeIntegrationTest {
     @Rule
     public final TestResources testResources = new TestResources()
 
     @Test
-    public void canCreateAndDeleteMetaData() {
+    void canCreateAndDeleteMetaData() {
         File buildFile = testFile("master/build.gradle")
         usingBuildFile(buildFile).run()
     }
 
     @Test
-    public void sourceEntriesInDotClasspathFileAreSortedAsPerUsualConvention() {
+    void sourceEntriesInClasspathFileAreSortedAsPerUsualConvention() {
         def expectedOrder = [
             "src/main/java",
             "src/main/groovy",
@@ -63,12 +63,64 @@ sourceSets {
 
         usingBuildFile(buildFile).withTasks("eclipse").run()
 
-        def classpathFile = testFile(".classpath")
-        assert classpathFile.exists()
-
-        def classpath = new XmlSlurper().parse(classpathFile)
-        def sourceEntries = classpath.classpathentry.findAll { it.@kind == "src" }
-
+        def classpath = parseClasspathFile()
+        def sourceEntries = findEntries(classpath, "src")
         assert sourceEntries*.@path == expectedOrder
+    }
+
+    @Test
+    void outputDirDefaultsToEclipseDefault() {
+        def buildFile = testFile("build.gradle")
+        buildFile << "apply plugin: 'java'; apply plugin: 'eclipse'"
+
+        usingBuildFile(buildFile).withTasks("eclipse").run()
+
+        def classpath = parseClasspathFile()
+
+        def outputs = findEntries(classpath, "output")
+        assert outputs*.@path == ["bin"]
+
+        def sources = findEntries(classpath, "src")
+        sources.each { assert !it.attributes().containsKey("path") }
+    }
+
+    @Test
+    void canHandleCircularModuleDependencies() {
+        def repoDir = file("repo")
+        def artifact1 = publishArtifact(repoDir, "myGroup", "myArtifact1", "myArtifact2")
+        def artifact2 = publishArtifact(repoDir, "myGroup", "myArtifact2", "myArtifact1")
+
+        def buildFile = testFile("build.gradle")
+        buildFile << """
+apply plugin: "java"
+apply plugin: "eclipse"
+
+repositories {
+    mavenRepo urls: "file://$repoDir.absolutePath"
+}
+
+dependencies {
+    compile "myGroup:myArtifact1:1.0"
+}
+        """
+
+        usingBuildFile(buildFile).withTasks("eclipse").run()
+
+        def classpath = parseClasspathFile()
+        def libs = findEntries(classpath, "lib")
+        assert libs.size() == 2
+        assert libs*.@path*.text().collect { new File(it).name } as Set == [artifact1.name, artifact2.name] as Set
+    }
+
+    private parseClasspathFile(print = false) {
+        parseXmlFile(".classpath", print)
+    }
+
+    private parseProjectFile(print = false) {
+        parseXmlFile(".project", print)
+    }
+
+    private findEntries(classpath, kind) {
+        classpath.classpathentry.findAll { it.@kind == kind }
     }
 }
