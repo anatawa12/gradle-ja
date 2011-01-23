@@ -18,6 +18,7 @@ package org.gradle.api.internal
 import spock.lang.Specification
 import org.gradle.api.artifacts.maven.XmlProvider
 import org.gradle.api.Action
+import org.gradle.util.TextUtil
 
 class XmlTransformerTest extends Specification {
     final XmlTransformer transformer = new XmlTransformer()
@@ -65,7 +66,7 @@ class XmlTransformerTest extends Specification {
         def result = transformer.transform('<xml/>')
 
         then:
-        result == toNative('<?xml version="1.0" encoding="UTF-8"?>\n<xml>\n  <child1/>\n</xml>\n')
+        result == toNative('<xml>\n  <child1/>\n</xml>\n')
         1 * action.execute(!null) >> { args ->
             def provider = args[0]
             def document = provider.asElement().ownerDocument
@@ -174,7 +175,26 @@ class XmlTransformerTest extends Specification {
         }
     }
 
+    def "correct indentation used when writing out groovy.util.Node"() {
+        transformer.indentation = "\t"
+        transformer.addAction { XmlProvider provider -> provider.asNode().children()[0].appendNode("grandchild") }
+
+        expect:
+        transformer.transform("<xml>\n    <child/>\n</xml>\n") == "<xml>\n\t<child>\n\t\t<grandchild/>\n\t</child>\n</xml>\n"
+    }
+
+    def "incorrect indentation used when writing out org.w3c.dom.Element"() {
+        transformer.indentation = "\t"
+        transformer.addAction { XmlProvider provider ->
+            def document = provider.asElement().ownerDocument
+            document.getElementsByTagName("child").item(0).appendChild(document.createElement("grandchild"))
+        }
+
+        expect:
+        transformer.transform("<xml>\n    <child/>\n</xml>\n") == toNative("<xml>\n    <child>\n    <grandchild/>\n  </child>\n</xml>\n")
+    }
+
     def String toNative(String value) {
-        return value.replaceAll('\n', System.getProperty('line.separator'))
+        return value.replaceAll('\n', TextUtil.LINE_SEPARATOR)
     }
 }
