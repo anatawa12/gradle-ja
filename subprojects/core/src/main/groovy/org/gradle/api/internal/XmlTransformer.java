@@ -16,6 +16,7 @@
 package org.gradle.api.internal;
 
 import groovy.lang.Closure;
+import groovy.util.IndentPrinter;
 import groovy.util.Node;
 import groovy.util.XmlNodePrinter;
 import groovy.util.XmlParser;
@@ -171,17 +172,23 @@ public class XmlTransformer implements Transformer<String> {
 
             try {
                 if (node != null) {
-                    PrintWriter printWriter = new PrintWriter(writer);
-                    XmlNodePrinter nodePrinter = new XmlNodePrinter(printWriter, indentation);
+                    final PrintWriter printWriter = new PrintWriter(writer);
+                    IndentPrinter indentPrinter = new IndentPrinter(printWriter, indentation) {
+                        @Override
+                        public void println() {
+                            printWriter.println();
+                        }
+                    };
+                    XmlNodePrinter nodePrinter = new XmlNodePrinter(indentPrinter);
                     nodePrinter.setPreserveWhitespace(true);
                     nodePrinter.print(node);
                     printWriter.flush();
                 } else if (element != null) {
                     printNode(element, writer);
                 } else if (builder != null) {
-                    writer.append(removeAnyXmlDeclaration(builder));
+                    writer.append(TextUtil.toNativeLineSeparators(removeAnyXmlDeclaration(builder)));
                 } else {
-                    writer.append(removeAnyXmlDeclaration(stringValue));
+                    writer.append(TextUtil.toNativeLineSeparators(removeAnyXmlDeclaration(stringValue)));
                 }
             } catch (IOException e) {
                 throw UncheckedException.asUncheckedException(e);

@@ -124,6 +124,10 @@ configure(groovyProjects()) {
     }
 }
 
+configure(publishedProjects()) {
+    apply from: "$rootDir/gradle/publish.gradle"
+}
+
 allprojects {
     apply from: "$rootDir/gradle/codeQuality.gradle"
 }
@@ -165,6 +169,7 @@ ideaProject {
     javaVersion = '1.6'
     withXml { provider ->
 		def node = provider.asNode()
+
 		// Use git
         def vcsConfig = node.component.find { it.'@name' == 'VcsDirectoryMappings' }
         vcsConfig.mapping[0].'@vcs' = 'Git'
@@ -284,6 +289,20 @@ ideaProject {
     }
 }
 
+ideaWorkspace {
+    withXml { provider ->
+        Node node = provider.asNode()
+
+        Node runConfig = node.component.find { it.'@name' == 'RunManager' }.configuration.find { it.'@type' == 'JUnit'}
+
+        Node module = runConfig.module[0]
+        module.'@name' = 'launcher'
+
+        Node vmParameters = runConfig.option.find { it.'@name' == 'VM_PARAMETERS' }
+        vmParameters.'@value' = "\"-DintegTest.gradleHomeDir=${intTestImage.destinationDir}\" -ea -Dorg.gradle.integtest.executer=embedded"
+    }
+}
+
 // Exclude resource directories from compilation and add them back in as classpath resources
 
 ideaProject {
@@ -333,6 +352,8 @@ clean.dependsOn subprojects.collect { "$it.path:clean" }
 task check(overwrite: true, dependsOn: groovyProjects()*.check)
 check.dependsOn ':docs:checkstyleApi'
 task test(overwrite: true, dependsOn: groovyProjects()*.test)
+task uploadArchives(dependsOn: publishedProjects()*.uploadArchives)
+task publishLocalArchives(dependsOn: publishedProjects()*.publishLocalArchives)
 
 zipRootFolder = "$archivesBaseName-${-> version}"
 
@@ -420,7 +441,7 @@ task intTestImage(type: Sync) {
 
 tasks.withType(Test).allTasks { task ->
     task.configure {
-        dependsOn intTestImage, binZip, allZip, srcZip, ':docs:userguideDocbook'
+        dependsOn intTestImage, publishLocalArchives, binZip, allZip, srcZip, project(':docs').userguideDocbook
         integTestUserDir = file('intTestHomeDir')
         systemProperties['integTest.userGuideInfoDir'] = project(':docs').docbookSrc
         systemProperties['integTest.userGuideOutputDir'] = new File(project(':docs').samplesSrcDir, "userguideOutput").absolutePath
@@ -504,7 +525,7 @@ uploadDists {
     uploadDescriptor = false
     doFirst {
         org.apache.ivy.util.url.CredentialsStore.INSTANCE.addCredentials('Artifactory Realm', 'gradle.artifactoryonline.com', artifactoryUserName, artifactoryUserPassword)
-        it.repositories.add(new org.apache.ivy.plugins.resolver.URLResolver()) {
+        repositories.add(new org.apache.ivy.plugins.resolver.URLResolver()) {
             name = 'gradleReleases'
             addArtifactPattern("${version.distributionUrl}/[artifact]-[revision](-[classifier]).[ext]" as String)
         }
@@ -512,7 +533,7 @@ uploadDists {
 }
 
 gradle.taskGraph.whenReady {graph ->
-    if (graph.hasTask(uploadDists)) {
+    if (graph.hasTask(uploadDists) || graph.hasTask(uploadArchives)) {
         // check properties defined and fail early
         artifactoryUserName
         artifactoryUserPassword
@@ -556,7 +577,7 @@ task releaseArtifacts {
 task release {
     description = 'Builds, tests and uploads the release artifacts'
     group = 'release'
-    dependsOn releaseVersion, tag, releaseArtifacts, testedDists, uploadDists, ':docs:uploadDocs'
+    dependsOn releaseVersion, tag, releaseArtifacts, testedDists, uploadArchives, uploadDists, ':docs:uploadDocs'
 }
 
 task wrapper(type: Wrapper) {
@@ -565,6 +586,10 @@ task wrapper(type: Wrapper) {
 
 def groovyProjects() {
     subprojects.findAll { project -> project.name != 'docs' }
+}
+
+def publishedProjects() {
+    return [project(':core'), project(':toolingApi'), project(':wrapper')]
 }
 
 def runtimeProjects() {
