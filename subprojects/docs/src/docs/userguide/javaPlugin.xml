@@ -17,48 +17,58 @@
 <chapter id='java_plugin' xmlns:xi="http://www.w3.org/2001/XInclude">
     <title>Javaプラグイン<phrase role="original">The Java Plugin</phrase></title>
 
-    <para>The Java plugin adds Java compilation, testing and bundling capabilities to a project. It serves as the basis
+    <para role="original">The Java plugin adds Java compilation, testing and bundling capabilities to a project. It serves as the basis
         for many of the other Gradle plugins.
+    </para>
+    <para>Javaプラグインは、プロジェクトにJavaのコンパイル、テスト、そしてビルド能力を与えます。このプラグインは、他の多くのGradleプラグインの基礎となっています。
     </para>
 
     <section>
-        <title>Usage</title>
-        <para>To use the Java plugin, include in your build script:</para>
-        <sample id="useJavaPlugin" dir="java/quickstart" title="Using the Java plugin">
+        <title>使用方法<phrase role="original">Usage</phrase></title>
+        <para role="original">To use the Java plugin, include in your build script:</para>
+        <para>Javaプラグインを使うためには、ビルドスクリプトに下記を含めます：</para>
+        <sample id="useJavaPlugin" dir="java/quickstart" title="Javaプラグインの使用 / Using the Java plugin">
             <sourcefile file="build.gradle" snippet="use-plugin"/>
         </sample>
     </section>
 
     <section>
-        <title>Source sets</title>
-        <para>The Java plugin introduces the concept of a <firstterm>source set</firstterm>. A source set is a group of
+        <title>ソースセット<phrase role="original">Source sets</phrase></title>
+        <para role="original">The Java plugin introduces the concept of a <firstterm>source set</firstterm>. A source set is a group of
             source files which are compiled and executed together. These source files may include Java source files and
             resource files. Other plugins add the ability to include Groovy and Scala source files in a source set.
             A source set has an associated compile classpath, and runtime classpath.
         </para>
-        <para>
+        <para>Javaプラグインは<firstterm>ソースセット</firstterm>の概念を導入します。ソースセットは、一緒にコンパイルされ実行されるソースファイルのグループです。このソースファイルには、Javaソースファイルとリソースファイルを含むことができます。他のプラグインは、ソースセットにGroovyやScalaのソースファイルを含めることを可能にします。ソースセットは、それぞれに関連づけられたコンパイル時クラスパスと実行時クラスパスを持ちます。
+        </para>
+        <para role="original">
             You might use a source set to define an integration test suite, or for the API classes of your project, or
             to separate source which needs to be compiled against different Java versions.
         </para>
-        <para>The Java plugin defines two standard source sets, called <literal>main</literal> and <literal>test</literal>.
+        <para>ソースセットは、統合テストスイートやプロジェクトのAPIクラスを定義したり、異なるJavaバージョンでコンパイルする必要があるソースを分離することなどに使うことができます。
+        </para>
+        <para role="original">The Java plugin defines two standard source sets, called <literal>main</literal> and <literal>test</literal>.
             The <literal>main</literal> source set contains your production source code, which is compiled and assembled
             into a JAR file. The <literal>test</literal> source set contains your unit test source code, which is
             compiled and executed using JUnit or TestNG.
         </para>
+        <para>Javaプラグインは、<literal>main</literal>と<literal>test</literal>という二つの標準ソースセットを定義します。<literal>main</literal>ソースセットは、コンパイルされJARファイルを構成する製品ソースコードを含みます。<literal>test</literal>ソースセットは、コンパイルされJUnitやTestNGで実行されるユニットテストコードを含みます。
+        </para>
     </section>
     
     <section>
-        <title>Tasks</title>
-        <para>The Java plugin adds a number of tasks to your project, as shown below.</para>
+        <title>タスク<phrase role="original">Tasks</phrase></title>
+        <para role="original">The Java plugin adds a number of tasks to your project, as shown below.</para>
+        <para>Javaプラグインは、以下に示すような数多くのタスクをプロジェクトに追加します。</para>
 
         <table>
-            <title>Java plugin - tasks</title>
+            <title>Javaプラグイン - タスク<phrase role="original">Java plugin - tasks</phrase></title>
             <thead>
                 <tr>
-                    <td>Task name</td>
-                    <td>Depends on</td>
-                    <td>Type</td>
-                    <td>Description</td>
+                    <td>タスク名<phrase role="original">Task name</phrase></td>
+                    <td>依存先<phrase role="original">Depends on</phrase></td>
+                    <td>型<phrase role="original">Type</phrase></td>
+                    <td>説明<phrase role="original">Description</phrase></td>
                 </tr>
             </thead>
             <tr>
@@ -180,15 +190,16 @@
             </tr>
         </table>
 
-        <para>For each source set you add to the project, the Java plugin adds the following compilation tasks:</para>
+        <para role="original">For each source set you add to the project, the Java plugin adds the following compilation tasks:</para>
+        <para>Javaプラグインは、プロジェクトに追加されるソースセットの各々について以下のコンパイルタスクを追加します：</para>
         <table id="java_source_set_tasks">
-            <title>Java plugin - source set tasks</title>
+            <title>Javaプラグイン - ソースセットタスク<phrase role="original">Java plugin - source set tasks</phrase></title>
             <thead>
                 <tr>
-                    <td>Task name</td>
-                    <td>Depends on</td>
-                    <td>Type</td>
-                    <td>Description</td>
+                    <td>タスク名<phrase role="original">Task name</phrase></td>
+                    <td>依存先<phrase role="original">Depends on</phrase></td>
+                    <td>型<phrase role="original">Type</phrase></td>
+                    <td>説明<phrase role="original">Description</phrase></td>
                 </tr>
             </thead>
             <tr>
@@ -223,16 +234,17 @@
             </tr>
         </table>
         
-        <para>The Java plugin also adds a number of tasks which form a lifecycle for the project:</para>
+        <para role="original">The Java plugin also adds a number of tasks which form a lifecycle for the project:</para>
+        <para>Javaプラグインは、プロジェクトのライフサイクルを構成する数多くのタスクも追加します：</para>
 
         <table>
-            <title>Java plugin - lifecycle tasks</title>
+            <title>Javaプラグイン - ライフサイクルタスク<phrase role="original">Java plugin - lifecycle tasks</phrase></title>
             <thead>
                 <tr>
-                    <td>Task name</td>
-                    <td>Depends on</td>
-                    <td>Type</td>
-                    <td>Description</td>
+                    <td>タスク名<phrase role="original">Task name</phrase></td>
+                    <td>依存先<phrase role="original">Depends on</phrase></td>
+                    <td>型<phrase role="original">Type</phrase></td>
+                    <td>説明<phrase role="original">Description</phrase></td>
                 </tr>
             </thead>
             <tr>
@@ -311,10 +323,11 @@
             </tr>
         </table>
 
-        <para>The following diagram shows the relationships between these tasks.</para>
+        <para role="original">The following diagram shows the relationships between these tasks.</para>
+        <para>下の図は、上記のタスク間の関係を示しています。</para>
 
         <figure>
-            <title>Java plugin - tasks</title>
+            <title>Javaプラグイン - タスク<phrase role="original">Java plugin - tasks</phrase></title>
             <imageobject>
                 <imagedata fileref="img/javaPluginTasks.png"/>
             </imageobject>
@@ -322,17 +335,17 @@
     </section>
 
     <section>
-        <title>Project layout</title>
+        <title>プロジェクトレイアウト<phrase role="original">Project layout</phrase></title>
         <para>The Java plugin assumes the project layout shown below. None of these directories need exist or have
             anything in them. The Java plugin will compile whatever it finds, and handles anything which is missing.
         </para>
 
         <table id='javalayout'>
-            <title>Java plugin - default project layout</title>
+            <title>Javaプラグイン - デフォルトプロジェクトレイアウト<phrase role="original">Java plugin - default project layout</phrase></title>
             <thead>
                 <tr>
-                    <td>Directory</td>
-                    <td>Meaning</td>
+                    <td>ディレクトリ<phrase role="original">Directory</phrase></td>
+                    <td>意味<phrase role="original">Meaning</phrase></td>
                 </tr>
             </thead>
             <xi:include href="javaProjectMainLayout.xml"/>
@@ -341,32 +354,32 @@
         </table>
 
         <section>
-            <title>Changing the project layout</title>
+            <title>プロジェクトレイアウトの変更<phrase role="original">Changing the project layout</phrase></title>
             <para>You configure the project layout by configuring the appropriate source set. This is discussed in
                 more detail in the following sections. Here is a brief example which changes the main Java and resource
                 source directories.
             </para>
-            <sample id="customJavaSourceLayout" dir="java/customizedLayout" title="Custom Java source layout">
+            <sample id="customJavaSourceLayout" dir="java/customizedLayout" title="Javaソースレイアウトのカスタマイズ / Custom Java source layout">
                 <sourcefile file="build.gradle" snippet="define-main"/>
             </sample>
         </section>
     </section>
 
     <section id="sec:java_plugin_and_dependency_management">
-        <title>Dependency management</title>
+        <title>依存関係の管理<phrase role="original">Dependency management</phrase></title>
         <para>The Java plugin adds a number of dependency configurations to your project, as shown below. It assigns
             those configurations to tasks such as <literal>compileJava</literal> and <literal>test</literal>.
             To learn more about configurations see <xref linkend="sub:configurations"/> and
             <xref linkend="artifacts_and_configurations"/>.
         </para>
         <table id='tab:configurations'>
-            <title>Java plugin - dependency configurations</title>
+            <title>Javaプラグイン - 依存関係configuration<phrase role="original">Java plugin - dependency configurations</phrase></title>
             <thead>
                 <tr>
-                    <td>Name</td>
-                    <td>Extends</td>
-                    <td>Used by tasks</td>
-                    <td>Meaning</td>
+                    <td>名前<phrase role="original">Name</phrase></td>
+                    <td>拡張元<phrase role="original">Extends</phrase></td>
+                    <td>利用するタスク<phrase role="original">Used by tasks</phrase></td>
+                    <td>意味<phrase role="original">Meaning</phrase></td>
                 </tr>
             </thead>
             <tr>
@@ -408,7 +421,7 @@
             </tr>
         </table>
         <figure>
-            <title>Java plugin - dependency configurations</title>
+            <title>Javaプラグイン - 依存関係configuration<phrase role="original">Java plugin - dependency configurations</phrase></title>
             <imageobject>
                 <imagedata fileref="img/javaPluginConfigurations.png"/>
             </imageobject>
@@ -416,7 +429,7 @@
     </section>
 
     <section>
-        <title>Convention properties</title>
+        <title>規約プロパティ<phrase role="original">Convention properties</phrase></title>
         <para>
             The Java plugin adds a number of convention properties to the project, shown below. You can use these properties
             in your build script as though they were properties of the project object (see
@@ -424,13 +437,13 @@
         </para>
 
         <table id='javaconventionDir'>
-            <title>Java plugin - directory properties</title>
+            <title>Javaプラグイン - ディレクトリプロパティ<phrase role="original">Java plugin - directory properties</phrase></title>
             <thead>
                 <tr>
-                    <td>Property name</td>
-                    <td>Type</td>
-                    <td>Default value</td>
-                    <td>Description</td>
+                    <td>プロパティ名<phrase role="original">Property name</phrase></td>
+                    <td>型<phrase role="original">Type</phrase></td>
+                    <td>デフォルト値<phrase role="original">Default value</phrase></td>
+                    <td>説明<phrase role="original">Description</phrase></td>
                 </tr>
             </thead>
             <xi:include href="reportingBasePluginProperties.xml"/>
@@ -605,13 +618,13 @@
         </table>
 
         <table id='javaconventionNonDir'>
-            <title>Java plugin - other properties</title>
+            <title>Javaプラグイン - その他のプロパティ<phrase role="original">Java plugin - other properties</phrase></title>
             <thead>
                 <tr>
-                    <td>Property name</td>
-                    <td>Type</td>
-                    <td>Default value</td>
-                    <td>Description</td>
+                    <td>プロパティ名<phrase role="original">Property name</phrase></td>
+                    <td>型<phrase role="original">Type</phrase></td>
+                    <td>デフォルト値<phrase role="original">Default value</phrase></td>
+                    <td>説明<phrase role="original">Description</phrase></td>
                 </tr>
             </thead>
             <tr>
@@ -685,20 +698,20 @@
     </section>
 
     <section id="sec:source_sets">
-        <title>Working with source sets</title>
+        <title>ソースセットの利用<phrase role="original">Working with source sets</phrase></title>
         <para>You can access the source sets of a project using the <literal>sourceSets</literal> property. This
             is a container for the project's source sets, of type <apilink class="org.gradle.api.tasks.SourceSetContainer"/>.
             There is also a <literal>sourceSets()</literal> method, which you can pass a closure to which configures the
             source set container. The source set container works pretty much the same way as other containers, such
             as <literal>tasks</literal>.
         </para>
-        <sample id="defineSourceSet" dir="userguide/java/sourceSets" title="Accessing a source set">
+        <sample id="defineSourceSet" dir="userguide/java/sourceSets" title="ソースセットへのアクセス / Accessing a source set">
             <sourcefile file="build.gradle" snippet="access-source-set"/>
         </sample>
         <para>To configure an existing source set, you simply use one of the above access methods to set the
             properties of the source set. The properties are described below. Here is an example which configures the
             main Java and resources directories:</para>
-        <sample id="configureSourceSet" dir="java/customizedLayout" title="Configuring the source directories of a source set">
+        <sample id="configureSourceSet" dir="java/customizedLayout" title="ソースセットのソースディレクトリの設定 / Configuring the source directories of a source set">
             <sourcefile file="build.gradle" snippet="define-main"/>
         </sample>
         <para>To define a new source set, you simply reference it in the <literal>sourceSets { }</literal> block.
@@ -707,23 +720,23 @@
             <literal>intTest</literal>, the Java plugin adds <literal>compileIntTestJava</literal>, <literal>processIntTestResources</literal>
             and <literal>intTestClasses</literal> tasks.
         </para>
-        <sample id="defineSourceSet" dir="userguide/java/sourceSets" title="Defining a source set">
+        <sample id="defineSourceSet" dir="userguide/java/sourceSets" title="ソースセットの定義 / Defining a source set">
             <sourcefile file="build.gradle" snippet="define-source-set"/>
         </sample>
 
         <section>
-            <title>Source set properties</title>
+            <title>ソースセットプロパティ<phrase role="original">Source set properties</phrase></title>
             <para>The following table lists some of the important properties of a source set.
                 You can find more details in the API documentation for <apilink class="org.gradle.api.tasks.SourceSet"/>.
             </para>
             <table>
-                <title>Java plugin - source set properties</title>
+                <title>Javaプラグイン - ソースセットプロパティ<phrase role="original">Java plugin - source set properties</phrase></title>
                 <thead>
                     <tr>
-                        <td>Property name</td>
-                        <td>Type</td>
-                        <td>Default value</td>
-                        <td>Description</td>
+                        <td>プロパティ名<phrase role="original">Property name</phrase></td>
+                        <td>型<phrase role="original">Type</phrase></td>
+                        <td>デフォルト値<phrase role="original">Default value</phrase></td>
+                        <td>説明<phrase role="original">Description</phrase></td>
                     </tr>
                 </thead>
                 <tr>
@@ -875,28 +888,28 @@
         </section>
 
         <section>
-            <title>Some source set examples</title>
+            <title>ソースセットの実例<phrase role="original">Some source set examples</phrase></title>
             <para>Using dependency configurations to define the source set classpath:</para>
-            <sample id="configureSourceSet" dir="userguide/java/sourceSets" title="Defining the classpath of a source set">
+            <sample id="configureSourceSet" dir="userguide/java/sourceSets" title="ソースセットのクラスパスを定義 / Defining the classpath of a source set">
                 <sourcefile file="build.gradle" snippet="classpath-using-configurations"/>
             </sample>
             <para>Adding a JAR containing the classes of a source set:</para>
-            <sample id="configureSourceSet" dir="userguide/java/sourceSets" title="Assembling a JAR for a source set">
+            <sample id="configureSourceSet" dir="userguide/java/sourceSets" title="ソースセットのJARを生成 / Assembling a JAR for a source set">
                 <sourcefile file="build.gradle" snippet="jar"/>
             </sample>
             <para>Generating Javadoc for a source set:</para>
-            <sample id="configureSourceSet" dir="userguide/java/sourceSets" title="Generating the Javadoc for a source set">
+            <sample id="configureSourceSet" dir="userguide/java/sourceSets" title="ソースセットのJavadocを生成 / Generating the Javadoc for a source set">
                 <sourcefile file="build.gradle" snippet="javadoc"/>
             </sample>
             <para>Adding a test suite to run the tests in a source set:</para>
-            <sample id="configureSourceSet" dir="userguide/java/sourceSets" title="Running tests in a source set">
+            <sample id="configureSourceSet" dir="userguide/java/sourceSets" title="ソースセットのテストを実行 / Running tests in a source set">
                 <sourcefile file="build.gradle" snippet="test"/>
             </sample>
         </section>
     </section>
 
     <section id='sec:javadoc'>
-        <title>Javadoc</title>
+        <title>Javadoc<phrase role="original">Javadoc</phrase></title>
         <para>The <literal>javadoc</literal> task is an instance of <apilink class="org.gradle.api.tasks.javadoc.Javadoc"/>.
             It supports the core javadoc options and the options of the standard doclet described in the
             <ulink url='http://java.sun.com/j2se/1.5.0/docs/tooldocs/windows/javadoc.html#referenceguide'>reference documentation</ulink>
@@ -905,12 +918,12 @@
             <apilink class="org.gradle.external.javadoc.CoreJavadocOptions"/> and <apilink class="org.gradle.external.javadoc.StandardJavadocDocletOptions"/>. 
         </para>
         <table>
-            <title>Java plugin - Javadoc properties</title>
+            <title>Javaプラグイン - Javadocプロパティ<phrase role="original">Java plugin - Javadoc properties</phrase></title>
             <thead>
                 <tr>
-                    <td>Task Property</td>
-                    <td>Type</td>
-                    <td>Default Value</td>
+                    <td>プロパティ名<phrase role="original">Property name</phrase></td>
+                    <td>型<phrase role="original">Type</phrase></td>
+                    <td>デフォルト値<phrase role="original">Default value</phrase></td>
                 </tr>
             </thead>
             <tr>
@@ -943,18 +956,18 @@
     </section>
 
     <section id='sec:clean'>
-        <title>Clean</title>
+        <title>Clean<phrase role="original">Clean</phrase></title>
         <para>The <literal>clean</literal> task is an instance of <apilink class="org.gradle.api.tasks.Delete"/>. It
             simply removes the directory denoted by its <literal>dir</literal>
             property.
         </para>
         <table>
-            <title>Java plugin - Clean properties</title>
+            <title>Javaプラグイン - Cleanプロパティ<phrase role="original">Java plugin - Clean properties</phrase></title>
             <thead>
                 <tr>
-                    <td>Task Property</td>
-                    <td>Type</td>
-                    <td>Default Value</td>
+                    <td>タスクプロパティ<phrase role="original">Property name</phrase></td>
+                    <td>型<phrase role="original">Type</phrase></td>
+                    <td>デフォルト値<phrase role="original">Default value</phrase></td>
                 </tr>
             </thead>
             <tr>
@@ -968,18 +981,18 @@
     </section>
 
     <section id='sec:resources'>
-        <title>Resources</title>
+        <title>リソース<phrase role="original">Resources</phrase></title>
         <para>The Java plugin uses the <apilink class="org.gradle.api.tasks.Copy"/> task for resource handling. It adds an
             instance for each source set in the project. You can find out more about the copy task in
             <xref linkend="sec:copying_files"/>.
         </para>
         <table>
-            <title>Java plugin - ProcessResources properties</title>
+            <title>Javaプラグイン- processResourcesプロパティ<phrase role="original">Java plugin - ProcessResources properties</phrase></title>
             <thead>
                 <tr>
-                    <td>Task Property</td>
-                    <td>Type</td>
-                    <td>Default Value</td>
+                    <td>タスクプロパティ<phrase role="original">Property name</phrase></td>
+                    <td>型<phrase role="original">Type</phrase></td>
+                    <td>デフォルト値<phrase role="original">Default value</phrase></td>
                 </tr>
             </thead>
             <tr>
@@ -1000,18 +1013,18 @@
     </section>
 
     <section id='sec:compile'>
-        <title>CompileJava</title>
+        <title>CompileJava<phrase role="original">CompileJava</phrase></title>
         <para>The Java plugin adds a <apilink class="org.gradle.api.tasks.compile.Compile"/> instance for each
             source set in the project. The compile task delegates to Ant's javac task to do the compile. You can set most
             of the properties of the Ant javac task.
         </para>
         <table>
-            <title>Java plugin - Compile properties</title>
+            <title>Javaプラグイン - Compileプロパティ<phrase role="original">Java plugin - Compile properties</phrase></title>
             <thead>
                 <tr>
-                    <td>Task Property</td>
-                    <td>Type</td>
-                    <td>Default Value</td>
+                    <td>タスクプロパティ<phrase role="original">Property name</phrase></td>
+                    <td>型<phrase role="original">Type</phrase></td>
+                    <td>デフォルト値<phrase role="original">Default value</phrase></td>
                 </tr>
             </thead>
             <tr>
@@ -1039,7 +1052,7 @@
     </section>
 
     <section id='sec:java_test'>
-        <title>Test</title>
+        <title>Test<phrase role="original">Test</phrase></title>
         <para>The <literal>test</literal> task is an instance of <apilink class="org.gradle.api.tasks.testing.Test"/>.
             It automatically detects and executes all unit tests in the <literal>test</literal> source set.
             It also generates a report once test execution is complete. JUnit and TestNG are both supported.
@@ -1047,7 +1060,7 @@
         </para>
 
         <section>
-            <title>Test execution</title>
+            <title>テストの実行<phrase role="original">Test execution</phrase></title>
             <para>Tests are executed in a separate isolated JVM. The <apilink class="org.gradle.api.tasks.testing.Test"/> task's
                 API allows you some control over how this happens.
             </para>
@@ -1080,7 +1093,7 @@
         </section>
 
         <section>
-            <title>System properties</title>
+            <title>システムプロパティ<phrase role="original">System properties</phrase></title>
             <para>There are two system properties that can affect test execution.  Both of these are based off
                   of the name of the test task with a suffix.
             </para>
@@ -1119,7 +1132,7 @@
         </section>
 
         <section>
-            <title>Test detection</title>
+            <title>テストの検出<phrase role="original">Test detection</phrase></title>
             <para>The <literal>Test</literal> task detects which classes are test classes by inspecting the compiled test classes.
                 By default it scans all <filename>.class</filename> files. You can set custom includes / excludes, only those
                 classes will be scanned. Depending on the test framework used (JUnit / TestNG) the test class detection
@@ -1159,14 +1172,14 @@
         </section>
 
         <section>
-            <title>Convention values</title>
+            <title>規約値<phrase role="original">Convention values</phrase></title>
             <table>
-                <title>Java plugin - test properties</title>
+                <title>Javaプラグイン - テストプロパティ<phrase role="original">Java plugin - test properties</phrase></title>
                 <thead>
                     <tr>
-                        <td>Task Property</td>
-                        <td>Type</td>
-                        <td>Default Value</td>
+                        <td>タスクプロパティ<phrase role="original">Property name</phrase></td>
+                        <td>型<phrase role="original">Type</phrase></td>
+                        <td>デフォルト値<phrase role="original">Default value</phrase></td>
                     </tr>
                 </thead>
                 <tr>
@@ -1200,7 +1213,7 @@
     </section>
 
     <section>
-        <title>Jar</title>
+        <title>Jar<phrase role="original">Jar</phrase></title>
         <para>The <literal>jar</literal> task creates a JAR file containing the class files and resources of the
             project. The JAR file is declared as an artifact in the <literal>archives</literal> dependency
             configuration. This means that the JAR is available in the classpath of a dependent project. If you upload
@@ -1209,26 +1222,26 @@
             <xref linkend="artifact_management"/>.
         </para>
         <section id='sub:manifest'>
-            <title>Manifest</title>
+            <title>Manifest<phrase role="original">Manifest</phrase></title>
             <para>Each jar or war object has a <literal>manifest</literal>
                 property with a separate instance of <apilink class="org.gradle.api.java.archives.Manifest"/>.
                 When the archive is generated, a corresponding <literal>MANIFEST.MF</literal> file is written into the
                 archive.
             </para>
-            <sample id="manifest" dir="userguide/tutorial/manifest" title="Customization of MANIFEST.MF">
+            <sample id="manifest" dir="userguide/tutorial/manifest" title="MANIFEST.MFのカスタマイズ / Customization of MANIFEST.MF">
                 <sourcefile file="build.gradle" snippet="add-to-manifest"/>
             </sample>
             <para>You can create stand alone instances of a <classname>Manifest</classname>. You can use that for example,
                 to share manifest information between jars.
             </para>
-            <sample id="manifest" dir="userguide/tutorial/manifest" title="Creating a manifest object.">
+            <sample id="manifest" dir="userguide/tutorial/manifest" title="manifestオブジェクトの作成 / Creating a manifest object.">
                 <sourcefile file="build.gradle" snippet="custom-manifest"/>
             </sample>
             <para>You can merge other manifests into any <classname>Manifest</classname>
                 object. The other manifests might
                 be either described by a file path or, like in the example above, by a reference to another <classname>Manifest</classname> object.
             </para>
-            <sample id="manifest" dir="userguide/tutorial/manifest" title="Separate MANIFEST.MF for a particular archive">
+            <sample id="manifest" dir="userguide/tutorial/manifest" title="特定のアーカイブ用にMANIFEST.MFを分離 / Separate MANIFEST.MF for a particular archive">
                 <sourcefile file="build.gradle" snippet="merge"/>
             </sample>
             <para>Manifest are merged in the order they are declared by the <literal>from</literal> statement. If
@@ -1239,12 +1252,12 @@
                 either when generating the jar, or by calling <literal>writeTo</literal> or <literal>effectiveManifest</literal></para>
             <para>You can easily write a manifest to disk.
             </para>
-            <sample id="manifest" dir="userguide/tutorial/manifest" title="Separate MANIFEST.MF for a particular archive">
+            <sample id="manifest" dir="userguide/tutorial/manifest" title="特定のアーカイブ用にMANIFEST.MFを分離 / Separate MANIFEST.MF for a particular archive">
                 <sourcefile file="build.gradle" snippet="write"/>
             </sample>
         </section>
         <section id='sub:metainf'>
-            <title>MetaInf</title>
+            <title>MetaInf<phrase role="original">MetaInf</phrase></title>
             <para>The convention object of the Java plugin has a <literal>metaInf</literal> property pointing to a list of
                 <classname>FileSet</classname> objects. With these file sets you can define which files should be in the
                 <filename>META-INF</filename> directory of a JAR or a WAR archive.
@@ -1256,8 +1269,10 @@ metaInf << new FileSet(someDir)
     </section>
 
     <section id='sec:upload'>
-        <title>Uploading</title>
-        <para>How to upload your archives is described in <xref linkend="artifact_management"/>.
+        <title>アップロード<phrase role="original">Uploading</phrase></title>
+        <para role="original">How to upload your archives is described in <xref linkend="artifact_management"/>.
+        </para>
+        <para>作成したアーカイブをアップロードする方法は、<xref linkend="artifact_management"/>で説明しています。
         </para>
     </section>
     
