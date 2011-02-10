@@ -14,12 +14,12 @@
   ~ limitations under the License.
   -->
 <chapter id='init_scripts' xmlns:xi="http://www.w3.org/2001/XInclude">
-    <title>Initialization Scripts</title>
+    <title>初期化スクリプト<phrase role="original">Initialization Scripts</phrase></title>
     <para>Gradle provides a powerful mechanism to allow customizing the build based on the current environment.  This
         mechanism also supports tools that wish to integrate with Gradle.
     </para>
     <section id='sec:basic_usage'>
-        <title>Basic usage</title>
+        <title>基本的な使い方<phrase role="original">Basic usage</phrase></title>
         <para>Initialization scripts (a.k.a. <firstterm>init scripts</firstterm>) are similar to other scripts in Gradle.
             These scripts, however, are run before the build starts.  Here are several possible uses:
             <itemizedlist>
