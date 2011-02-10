@@ -166,7 +166,7 @@
                 configuration, the direct and transitive dependencies of that configuration are shown in a tree. Below
                 is an example of this report:
             </para>
-            <para id="para:commandline_dependency_report"><userinput>gradle dependencies</userinput>はプロジェクトの依存関係をconfigurationごとに一覧表示します。プロジェクトに直接設定されている依存関係と推移的依存関係が、configuration別のツリー構造で表示されます。</para>
+            <para id="para:commandline_dependency_report"><userinput>gradle dependencies</userinput>はプロジェクトの依存関係をコンフィギュレーションごとに一覧表示します。プロジェクトに直接設定されている依存関係と推移的依存関係が、コンフィギュレーション別のツリー構造で表示されます。</para>
             <sample id="dependencyListReport" dir="userguide/tutorial/projectReports" title="依存関係の情報を取得する / Obtaining information about dependencies">
                 <output args="-q dependencies api:dependencies webapp:dependencies"/>
             </sample>
