@@ -48,7 +48,7 @@
     <preface>
         <title>翻訳版について</title>
         <para>
-            本ドキュメントは、<ulink url="http://gradle.org/userguide.html">Gradleユーザーガイド</ulink>を非公式に日本語に翻訳したものです。翻訳作業は<ulink url="https://github.com/literalice/gradle-ja">github上のプロジェクト</ulink>で行っていますので、誤訳、不自然な点など発見されましたらプロジェクトサイト上からご連絡ください。
+            本ドキュメントは、<ulink url="http://www.gradle.org/latest/docs/userguide/userguide.html">Gradleユーザーガイド</ulink>を非公式に日本語に翻訳したものです。翻訳作業は<ulink url="https://github.com/literalice/gradle-ja">github上のプロジェクト</ulink>で行っていますので、誤訳、不自然な点など発見されましたらプロジェクトサイト上からご連絡ください。
         </para>
         <para>
             なお、原文は添付の代替スタイルシート(original)を使用すれば表示されます。

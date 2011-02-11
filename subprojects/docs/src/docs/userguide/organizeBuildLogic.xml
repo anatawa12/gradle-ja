@@ -58,13 +58,13 @@
                 your build classes into a certain directory and Gradle automatically compiles them and includes them
                 in the classpath of your build script.
             </para>
-            <para><link linkend="sec:build_sources"><filename>buildSrc</filename> プロジェクト</link>。ビルドスクリプトで使いたいクラスのソースを決まったディレクトリに入れておけば、Gradleは自動的にそのクラスをコンパイルしてクラスパスに追加します。</para>
+            <para><link linkend="sec:build_sources"><filename>buildSrc</filename>プロジェクト</link>。ビルドスクリプトで使いたいクラスのソースを決まったディレクトリに入れておけば、Gradleは自動的にそのクラスをコンパイルしてクラスパスに追加します。</para>
         </listitem>
         <listitem>
             <para role="original"><link linkend="sec:configuring_using_external_script">Shared scripts</link>. Define common configuration
                 in an external build, and apply the script to multiple projects, possibly across different builds.
             </para>
-            <para><link linkend="sec:build_sources">共有スクリプト</link>。外部のスクリプトファイルに共通で使う設定を定義して、それをいろいろなプロジェクトのビルドスクリプトでプロジェクトに適用できます。別々のビルドに含まれているプロジェクトの間でも共有可能です。</para>
+            <para><link linkend="sec:configuring_using_external_script">共有スクリプト</link>。外部のスクリプトファイルに共通で使う設定を定義して、それをいろいろなプロジェクトのビルドスクリプトでプロジェクトに適用できます。別々のビルドに含まれているプロジェクトの間でも共有可能です。</para>
         </listitem>
         <listitem>
             <para role="original"><link linkend="custom_tasks">Custom tasks</link>. Put your build logic into a custom task, and
