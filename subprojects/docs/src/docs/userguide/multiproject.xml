@@ -551,14 +551,14 @@
         </section>
     </section>
     <section id='sec:project_jar_dependencies'>
-        <title>ライブラリプロジェクトの依存関係<phrase role="original">Project lib dependencies</phrase></title>
+        <title>プロジェクト依存関係<phrase role="original">Project lib dependencies</phrase></title>
         <para role="original">What if one projects needs the jar produced by another project in its compile path? And not just the jar
             but also the transitive dependencies of this jar? Obviously this is a very common use case for Java
             multi-project builds. As already mentioned in <xref linkend='sub:project_dependencies'/>, Gradle
             offers project lib dependencies for this.
         </para>
-        <para>あるプロジェクトが、別のプロジェクトの生成するjarをコンパイルするときのクラスパスに必要としていたらどうすればいいのでしょう。さらに、単にjarだけでなく、そのjarが依存する他のライブラリも必要だとしたら？ これは、Javaのマルチプロジェクトではいかにもよくありそうなパターンです。<xref linkend='sub:project_dependencies'/>ですでに言及していますが、ライブラリプロジェクト依存関係はこのようなケースに対応するものです。</para>
-        <sample id="javadependencies_1" dir="userguide/multiproject/dependencies/java" includeLocation="true" title="ライブラリプロジェクト依存関係 / Project lib dependencies">
+        <para>あるプロジェクトが、別のプロジェクトの生成するjarをコンパイルするときのクラスパスに必要としていたらどうすればいいのでしょう。さらに、単にjarだけでなく、そのjarが依存する他のライブラリも必要だとしたら？ これは、Javaのマルチプロジェクトではいかにもよくありそうなパターンです。<xref linkend='sub:project_dependencies'/>ですでに言及していますが、プロジェクト依存関係はこのようなケースに対応するものです。</para>
+        <sample id="javadependencies_1" dir="userguide/multiproject/dependencies/java" includeLocation="true" title="プロジェクト依存関係 / Project lib dependencies">
             <layout>
                 settings.gradle
                 build.gradle
@@ -592,7 +592,7 @@
                 <para><literal>services</literal>もまたプロジェクトですが、これはただの入れ物です。このプロジェクトにはビルドスクリプトも別のプロジェクトから注入される設定もありません。</para>
             </footnote>
         </para>
-        <sample id="javadependencies_2" dir="userguide/multiproject/dependencies/java" title="ライブラリプロジェクトの依存関係 / Project lib dependencies">
+        <sample id="javadependencies_2" dir="userguide/multiproject/dependencies/java" title="プロジェクト依存関係 / Project lib dependencies">
             <sourcefile file="settings.gradle"/>
             <sourcefile file="build.gradle"/>
         </sample>
@@ -674,7 +674,7 @@
             Adding the <literal>-a</literal> option will cause gradle to use cached jars to resolve any project lib
             dependencies and not try to re-build the depended on projects.
         </para>
-        <para>典型的な開発サイクルでは、:apiプロジェクトに何か変更を加えるたびビルドとテストを繰り返すことになります。このとき、:shared:compileタスクは、ビルドのたび:sharedプロジェクトが変更されていないか確認しに行きます。:apiプロジェクトしか変更していないことが分かっている場合、このコストさえ苦痛かもしれません。<option>-a</option>オプションをつけてビルドすると、ライブラリプロジェクトを解決する際、キャッシュされたjarが使用されるので、依存プロジェクトが再ビルドされることありません。</para>
+        <para>典型的な開発サイクルでは、:apiプロジェクトに何か変更を加えるたびビルドとテストを繰り返すことになります。このとき、:shared:compileタスクは、ビルドのたび:sharedプロジェクトが変更されていないか確認しに行きます。:apiプロジェクトしか変更していないことが分かっている場合、このコストさえ苦痛かもしれません。<option>-a</option>オプションをつけてビルドすると、依存プロジェクトのライブラリを解決する際、キャッシュされたjarが使用されるので、依存プロジェクトが再ビルドされることありません。</para>
         <sample id="multitestingBuildDashA" dir="userguide/multiproject/dependencies/java" title="シングルプロジェクトの部分ビルドとテスト / Partial Build and Test Single Project">
             <test args=":shared:assemble"/>
             <output args="-a :api:build"/>
@@ -685,7 +685,7 @@
             but test them as well. The <literal>buildNeeded</literal> task also tests all the projects from the
             project lib dependencies of the testRuntime configuration.
         </para>
-        <para>いま、ちょうど最新のソースをバージョン管理システムから持ってきたとしましょう。:apiが依存しているプロジェクトに変更が含まれているかもしれません。このとき、依存先のすべてのプロジェクトをビルドするだけでなく、テストもしたいという場合もあるでしょう。<literal>buildNeeded</literal>タスクは、指定したプロジェクトだけでなく、そのプロジェクトのtestRuntimeの依存関係に設定されているライブラリプロジェクトをすべてテストします。</para>
+        <para>いま、ちょうど最新のソースをバージョン管理システムから持ってきたとしましょう。:apiが依存しているプロジェクトに変更が含まれているかもしれません。このとき、依存先のすべてのプロジェクトをビルドするだけでなく、テストもしたいという場合もあるでしょう。<literal>buildNeeded</literal>タスクは、指定したプロジェクトだけでなく、そのプロジェクトのtestRuntimeの依存関係に設定されているプロジェクトをすべてテストします。</para>
         <sample id="multitestingBuildNeeded" dir="userguide/multiproject/dependencies/java" title="依存プロジェクトのビルドとテスト / Build and Test Depended On Projects">
             <output args=":api:buildNeeded"/>
         </sample>
@@ -695,7 +695,7 @@
             The <literal>buildDependents</literal> task also tests all the projects that have a project lib dependency
             (in the testRuntime configuration) on the specified project.
         </para>
-        <para>:apiプロジェクトが、別のプロジェクトから使用されている場合を考えてみます。:apiプロジェクトをリファクタリングしたとき、:apiプロジェクトだけテストしても十分とはいえないでしょう。:apiプロジェクトに依存しているすべてのプロジェクトをテストする必要があります。<literal>buildDependents</literal>タスクは、指定したプロジェクトだけでなく、そのプロジェクトにtestRuntimeのライブラリプロジェクト依存関係を持っているすべてのプロジェクトをテストします。</para>
+        <para>:apiプロジェクトが、別のプロジェクトから使用されている場合を考えてみます。:apiプロジェクトをリファクタリングしたとき、:apiプロジェクトだけテストしても十分とはいえないでしょう。:apiプロジェクトに依存しているすべてのプロジェクトをテストする必要があります。<literal>buildDependents</literal>タスクは、指定したプロジェクトだけでなく、そのプロジェクトにtestRuntimeのプロジェクト依存関係を持っているすべてのプロジェクトをテストします。</para>
         <sample id="multitestingBuildDependents" dir="userguide/multiproject/dependencies/java" title="依存されているプロジェクトのビルドとテスト / Build and Test Dependent Projects">
             <output args=":api:buildDependents"/>
         </sample>
@@ -745,7 +745,7 @@
             have already a lot of flexibility. But when you enter steep territory Gradle does not become an obstacle and
             usually accompanies and carries you to the top of the mountain.
         </para>
-        <para>この章を書くのは非常に疲れました。読むのも疲れるでしょう。最後にひとつだけ、Gradleでマルチプロジェクトを扱うのは決して難しいことではありません。覚えておく必要があるのは、次の六つだけです。allproject、subprojects、dependsOn、childrenDependOnMe、dependsOnChildren、そしてライブラリプロジェクト依存関係です。
+        <para>この章を書くのは非常に疲れました。読むのも疲れるでしょう。最後にひとつだけ、Gradleでマルチプロジェクトを扱うのは決して難しいことではありません。覚えておく必要があるのは、次の六つだけです。allproject、subprojects、dependsOn、childrenDependOnMe、dependsOnChildren、そしてプロジェクト依存関係です。
             <footnote>
                 <para>
                     <ulink url='http://ja.wikipedia.org/wiki/%E3%82%B8%E3%83%A7%E3%83%BC%E3%82%B8%E3%83%BB%E3%83%9F%E3%83%A9%E3%83%BC#.E3.83.9E.E3.82.B8.E3.82.AB.E3.83.AB.E3.83.8A.E3.83.B3.E3.83.90.E3.83.BC'>マジカルナンバー7±2</ulink>に収まるナイスな量です
