@@ -576,7 +576,7 @@
                 shared/src/main/java/org/gradle/sample/shared/Helper.java
             </layout>
         </sample>
-        <para>We have the projects <literal>shared</literal>, <literal>api</literal> and<literal>personService</literal>.
+        <para role="original">We have the projects <literal>shared</literal>, <literal>api</literal> and<literal>personService</literal>.
             <literal>personService</literal> has a lib dependency on the other two projects. <literal>api</literal>
             has a lib dependency on <literal>shared</literal>.
             <footnote>
@@ -587,7 +587,7 @@
                 </para>
             </footnote>
         </para>
-        <para><literal>shared</literal>、<literal>api</literal>、<literal>personService</literal>の三つのプロジェクトがあります。<literal>personService</literal>は他の二つのプロジェクトにライブラリ依存しています。さらに、<literal>api</literal>は<literal>shared</literal>にライブラリ依存しています。
+        <para><literal>shared</literal>、<literal>api</literal>、<literal>personService</literal>の三つのプロジェクトがあります。<literal>personService</literal>プロジェクトは他の二つのプロジェクトに依存しています。さらに、<literal>api</literal>プロジェクトは<literal>shared</literal>プロジェクトに依存しています。
             <footnote>
                 <para><literal>services</literal>もまたプロジェクトですが、これはただの入れ物です。このプロジェクトにはビルドスクリプトも別のプロジェクトから注入される設定もありません。</para>
             </footnote>
@@ -618,7 +618,7 @@
             <footnote>
                 <para>この例では、ビルドスクリプトの配置を少し簡易化しています。普通は、プロジェクトが指定するものはそのプロジェクトのビルドスクリプトに記述します。</para>
             </footnote>
-ライブラリ依存は、実行依存の別形態です。まずあるプロジェクトをビルドを実行し、生成されたクラスをjarに格納して、依存されているプロジェクトのクラスパスに追加するのです。さらに、そのプロジェクトの依存関係も同時にクラスパスに追加します。apiディレクトリに移動して、<command>gradle compile</command>と入力してみましょう。まず<literal>shared</literal>がビルドされ、次に<literal>api</literal>がビルドされるでしょう。プロジェクト依存はマルチプロジェクトの部分ビルドを可能にします。</para>
+プロジェクト依存関係は、実行依存の別形態といえます。まずあるプロジェクトのビルドを実行し、生成されたクラスをjarに格納して、そのプロジェクトに依存しているプロジェクトのクラスパスに追加するのです。さらに、そのプロジェクトの依存関係も同時にクラスパスに追加します。apiディレクトリに移動して、<command>gradle compile</command>と入力してみましょう。まず<literal>shared</literal>がビルドされ、次に<literal>api</literal>がビルドされるでしょう。プロジェクト依存はマルチプロジェクトの部分ビルドを可能にします。</para>
         <para role="original">If you come from Maven land you might be perfectly happy with this. If you come from Ivy land, you might
             expect some more fine grained control. Gradle offers this to you:
         </para>
@@ -636,13 +636,13 @@
             <literal>api</literal>
             interfaces but tested with all classes from <literal>api</literal>.
         </para>
-        <para>Javaプラグインは、すべてのクラスが含まれたjarをプロジェクトライブラリに追加します。この例では、さらにapiプロジェクトのインターフェースのみが含まれたライブラリを作成し、新しい依存関係設定に割り当てています。person serviceをコンパイルするときはインターフェースしかいりませんが、テストをするにはapiからすべてのクラスを持ってくる必要があるのです。</para>
+        <para>Javaプラグインは、デフォルトではすべてのクラスが含まれたjarをプロジェクトのライブラリとして追加しますが、ここでは<emphasis>それに加えて</emphasis>、apiプロジェクトのインターフェースのみが含まれたライブラリを作成しています。そしてこのライブラリを、新規に作成した、依存関係のコンフィギュレーション(spi)に割り当てています。person serviceをコンパイルするときはインターフェースしか要りませんが、テストをするにはapiからすべてのクラスを持ってくる必要があるのです。</para>
         <section id="disable_dependency_projects">
-            <title>Disabling the build of dependency projects</title>
-            <para>Sometimes you don't want depended on projects to be built when doing a partial build.
+            <title>依存プロジェクトをビルドしないようにする<phrase role="original">Disabling the build of dependency projects</phrase></title>
+            <para role="original">Sometimes you don't want depended on projects to be built when doing a partial build.
                 To disable the build of the depended on projects you can run gradle with the <code>-a</code> option.
             </para>
-            <para>部分ビルドを実行する際、依存しているプロジェクトをビルドしたくないときがあるかもしれません。依存プロジェクトのビルドを無効化するには、<option>-a</option>オプションをつけてプロジェクトをビルドしてください。</para>
+            <para>部分ビルドを実行する際、依存しているプロジェクトはビルドしたくない、という場合もあるかもしれません。依存しているプロジェクトのビルドを無効化するには、<option>-a</option>オプションをつけてプロジェクトをビルドしてください。</para>
         </section>
     </section>
     <section id="sec:multiproject_build_and_test">
@@ -663,12 +663,12 @@
             jars, but only perform code quality and unit tests on the project you have changed.
             The <literal>build</literal> task does this.
         </para>
-        <para>とりあえず、:apiプロジェクトをシングルプロジェクトだと仮定しましょう。:apiに変更を加えましたが、cleanからすべてのリビルドはしていない状況です。この場合、プロジェクトに必要なjarはビルドして作成しなければなりませんが、コードクォリティやユニットテストは変更したプロジェクトでのみ実行したいわけです。つまり、ビルドで実行されるタスクはこうなります。</para>
+        <para>:apiプロジェクトをシングルプロジェクトだと仮定しましょう。:apiに変更を加えましたが、cleanからすべてのリビルドはしていない状況です。この場合、プロジェクトに必要なjarはビルドして作成しなければなりませんが、コードクォリティやユニットテストは変更したプロジェクトでのみ実行したいわけです。なので、ビルドで実行されるタスクは次のようになります。</para>
         <sample id="multitestingBuild" dir="userguide/multiproject/dependencies/java" title="シングルプロジェクトのビルドとテスト / Build and Test Single Project">
             <output args=":api:build"/>
         </sample>
 
-        <para>While you are working in a typical development cycle repeatedly building and testing changes to
+        <para role="original">While you are working in a typical development cycle repeatedly building and testing changes to
             the :api project (knowing that you are only changing files in this one project), you may not want to
             even suffer the expense of :shared:compile checking to see what has changed in the :shared project.
             Adding the <literal>-a</literal> option will cause gradle to use cached jars to resolve any project lib
@@ -685,7 +685,7 @@
             but test them as well. The <literal>buildNeeded</literal> task also tests all the projects from the
             project lib dependencies of the testRuntime configuration.
         </para>
-        <para>いま、ちょうど最新のソースをバージョン管理システムから持ってきたとしましょう。:apiが依存しているプロジェクトに変更が含まれているかもしれません。このとき、依存先のすべてのプロジェクトをビルドするだけでなく、テストもしたいという場合もあるでしょう。<literal>buildNeeded</literal>タスクは、指定したプロジェクトだけでなく、そのプロジェクトのtestRuntimeの依存関係に設定されているプロジェクトをすべてテストします。</para>
+        <para>いま、ちょうど最新のソースをバージョン管理システムから持ってきたとしましょう。:apiが依存しているプロジェクトに変更が含まれているかもしれません。このとき、依存先のすべてのプロジェクトをビルドするだけでなく、テストもしたいという場合もあるでしょう。<literal>buildNeeded</literal>タスクは、指定したプロジェクトだけでなく、そのプロジェクトのtestRuntime依存関係に設定されているプロジェクトをすべてテストします。</para>
         <sample id="multitestingBuildNeeded" dir="userguide/multiproject/dependencies/java" title="依存プロジェクトのビルドとテスト / Build and Test Depended On Projects">
             <output args=":api:buildNeeded"/>
         </sample>
