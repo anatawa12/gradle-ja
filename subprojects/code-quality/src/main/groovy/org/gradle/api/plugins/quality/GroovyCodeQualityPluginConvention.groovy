@@ -25,14 +25,21 @@ class GroovyCodeQualityPluginConvention {
     String codeNarcConfigFileName
 
     /**
+     * The output format of the generated CodeNarc report.
+     */
+    String codeNarcReportsFormat
+
+    /**
      * The name of the directory to write CodeNarc reports into.
      */
     String codeNarcReportsDirName
+
     private final ProjectInternal project
 
     def GroovyCodeQualityPluginConvention(Project project) {
         this.project = project
         codeNarcConfigFileName = 'config/codenarc/codenarc.xml'
+        codeNarcReportsFormat = "html"
         codeNarcReportsDirName = 'codenarc'
     }
 

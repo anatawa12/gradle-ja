@@ -68,7 +68,7 @@ dependencies {
 
     compile libraries.ant_launcher
 
-    integTestCompile libraries.jetty_depends, project(':wrapper'), project(':toolingApi')
+    integTestCompile libraries.jetty_depends
 
     testFixtures sourceSets.test.classes, sourceSets.main.classes
     integTestFixtures sourceSets.integTest.classes
@@ -97,10 +97,6 @@ ideaModule {
 eclipseClasspath {
     dependsOn ideVersionProperties
     plusConfigurations.add(configurations.detachedConfiguration(new DefaultSelfResolvingDependency(files(new File(ideDir, "resources/test/")))))
-    plusConfigurations.add(configurations.detachedConfiguration(new DefaultSelfResolvingDependency(files(project.sourceSets.integTest.resources.srcDirs))))
-	whenConfigured { classpath ->
-		classpath.entries.removeAll { entry -> entry.kind == 'src' && entry.path.startsWith('src/integTest/resources')}
-	}
 }
 
 [compileGroovy, compileTestGroovy]*.groovyOptions*.fork(memoryInitialSize: '128M', memoryMaximumSize: '1G')

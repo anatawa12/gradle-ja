@@ -1,0 +1,8 @@
+apply plugin:'java'
+// START SNIPPET use-plugin
+apply plugin:'application'
+// END SNIPPET use-plugin
+
+// START SNIPPET mainClassName-conf
+mainClassName = "org.gradle.sample.Main"
+// END SNIPPET mainClassName-conf

@@ -23,7 +23,6 @@ import org.gradle.api.plugins.announce.AnnouncePluginConvention
 /**
  * @author Hans Dockter
  */
-
 class DefaultAnnouncerFactoryTest extends Specification {
     AnnouncePluginConvention announcePluginConvention = new AnnouncePluginConvention(project)
     DefaultAnnouncerFactory announcerFactory = new DefaultAnnouncerFactory(announcePluginConvention)
@@ -32,7 +31,7 @@ class DefaultAnnouncerFactoryTest extends Specification {
     def createForTwitter() {
         announcePluginConvention.username = 'username'
         announcePluginConvention.password = 'password'
-        
+
         when:
         Twitter twitter = announcerFactory.createAnnouncer('twitter')
 
@@ -58,6 +57,6 @@ class DefaultAnnouncerFactoryTest extends Specification {
 
     def createWithUnknownType() {
         expect:
-        announcerFactory.createAnnouncer('unknown') instanceof DoNothingAnnouncer
+        announcerFactory.createAnnouncer('inter-galaxy-announcer') instanceof UnknownAnnouncer
     }
 }

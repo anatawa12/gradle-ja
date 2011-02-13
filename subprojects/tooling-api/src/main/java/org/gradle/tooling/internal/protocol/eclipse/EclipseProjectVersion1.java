@@ -24,5 +24,9 @@ import org.gradle.tooling.internal.protocol.ProjectVersion1;
 public interface EclipseProjectVersion1 extends ProjectVersion1 {
     Iterable<? extends EclipseProjectVersion1> getChildProjects();
 
+    Iterable<? extends EclipseSourceDirectoryVersion1> getSourceDirectories();
+
+    Iterable<? extends EclipseProjectDependencyVersion1> getProjectDependencies();
+
     Iterable<? extends ExternalDependencyVersion1> getClasspath();
 }

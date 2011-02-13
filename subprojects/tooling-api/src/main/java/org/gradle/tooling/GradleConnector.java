@@ -16,7 +16,7 @@
 package org.gradle.tooling;
 
 import org.gradle.tooling.internal.consumer.ConnectionFactory;
-import org.gradle.tooling.internal.consumer.Distribution;
+import org.gradle.tooling.internal.consumer.DefaultGradleConnector;
 import org.gradle.tooling.internal.consumer.DistributionFactory;
 
 import java.io.File;
@@ -29,7 +29,7 @@ import java.net.URI;
  *
  * <li>Call {@link #newConnector()} to create a new connector instance.</li>
  *
- * <li>Configure the connector.</li>
+ * <li>Configure the connector. You must call {@link #forProjectDirectory(java.io.File)} to specify which build you wish to connect to. Other methods are optional.</li>
  *
  * <li>Call {@link #connect()} to create the connection to a build.</li>
  *
@@ -41,60 +41,42 @@ import java.net.URI;
  *
  * <p>{@code GradleConnector} instances are not thread-safe.</p>
  */
-public class GradleConnector {
-    private final ConnectionFactory connectionFactory;
-    private final DistributionFactory distributionFactory;
-    private File projectDir;
-    private Distribution distribution;
-
-    GradleConnector(ConnectionFactory connectionFactory, DistributionFactory distributionFactory) {
-        this.connectionFactory = connectionFactory;
-        this.distributionFactory = distributionFactory;
-    }
-
+public abstract class GradleConnector {
     /**
      * Creates a new connector instance.
      *
      * @return The instance. Never returns null.
      */
     public static GradleConnector newConnector() {
-        return new GradleConnector(new ConnectionFactory(), new DistributionFactory());
+        return new DefaultGradleConnector(new ConnectionFactory(), new DistributionFactory());
     }
 
     /**
      * Specifies which Gradle installation to use. This replaces any value specified using {@link #useDistribution(java.net.URI)} or {@link #useGradleVersion(String)}.
+     * Defaults to a project-specific Gradle version.
      *
      * @param gradleHome The Gradle installation directory.
      * @return this
      */
-    public GradleConnector useInstallation(File gradleHome) {
-        distribution = distributionFactory.getDistribution(gradleHome);
-        return this;
-    }
+    public abstract GradleConnector useInstallation(File gradleHome);
 
     /**
      * Specifies which Gradle version to use. The appropriate distribution is downloaded and installed into the user's Gradle home directory. This replaces any value specified using {@link
-     * #useInstallation(java.io.File)} or {@link #useDistribution(java.net.URI)}.
+     * #useInstallation(java.io.File)} or {@link #useDistribution(java.net.URI)}. Defaults to a project-specific Gradle version.
      *
      * @param gradleVersion The version to use.
      * @return this
      */
-    public GradleConnector useGradleVersion(String gradleVersion) {
-        distribution = distributionFactory.getDistribution(gradleVersion);
-        return this;
-    }
+    public abstract GradleConnector useGradleVersion(String gradleVersion);
 
     /**
      * Specifies which Gradle distribution to use. The appropriate distribution is downloaded and installed into the user's Gradle home directory. This replaces any value specified using {@link
-     * #useInstallation(java.io.File)} or {@link #useGradleVersion(String)}.
+     * #useInstallation(java.io.File)} or {@link #useGradleVersion(String)}. Defaults to a project-specific Gradle version.
      *
      * @param gradleDistribution The distribution to use.
      * @return this
      */
-    public GradleConnector useDistribution(URI gradleDistribution) {
-        distribution = distributionFactory.getDistribution(gradleDistribution);
-        return this;
-    }
+    public abstract GradleConnector useDistribution(URI gradleDistribution);
 
     /**
      * Specifies the working directory to use.
@@ -102,10 +84,15 @@ public class GradleConnector {
      * @param projectDir The working directory.
      * @return this
      */
-    public GradleConnector forProjectDirectory(File projectDir) {
-        this.projectDir = projectDir;
-        return this;
-    }
+    public abstract GradleConnector forProjectDirectory(File projectDir);
+
+    /**
+     * Specifies the user's Gradle home directory to use. Defaults to {@code ~/.gradle}
+     *
+     * @param gradleUserHomeDir The user's Gradle home directory to use.
+     * @return this
+     */
+    public abstract GradleConnector useGradleUserHomeDir(File gradleUserHomeDir);
 
     /**
      * Creates a connection to the build in the specified project directory.
@@ -114,20 +101,10 @@ public class GradleConnector {
      * @throws UnsupportedVersionException When the target Gradle version does not support this version of the tooling API.
      * @throws GradleConnectionException On failure to establish a connection with the target Gradle version.
      */
-    public BuildConnection connect() throws GradleConnectionException {
-        if (projectDir == null) {
-            throw new IllegalStateException("A project directory must be specified before creating a connection.");
-        }
-        if (distribution == null) {
-            distribution = distributionFactory.getCurrentDistribution();
-        }
-        return connectionFactory.create(distribution, projectDir);
-    }
+    public abstract BuildConnection connect() throws GradleConnectionException;
 
     /**
      * Closes this connector and all connections created by it.
      */
-    public void close() {
-        connectionFactory.stop();
-    }
+    public abstract void close();
 }

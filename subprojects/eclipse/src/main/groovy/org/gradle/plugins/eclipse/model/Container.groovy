@@ -19,20 +19,16 @@ package org.gradle.plugins.eclipse.model
  * @author Hans Dockter
  */
 class Container extends AbstractClasspathEntry {
-    def Container(node) {
+    Container(node) {
         super(node);
     }
 
-    def Container(String path, boolean exported, String nativeLibraryLocation, Set accessRules) {
+    Container(String path, boolean exported, String nativeLibraryLocation, Set accessRules) {
         super(path, exported, nativeLibraryLocation, accessRules)
     }
 
     String getKind() {
         'con'
-    }
-
-    void appendNode(Node node) {
-        addClasspathEntry(node, [:])
     }
 
     public String toString() {

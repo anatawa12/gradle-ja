@@ -1,0 +1,146 @@
+<!--
+  ~ Copyright 2011 the original author or authors.
+  ~
+  ~ Licensed under the Apache License, Version 2.0 (the "License");
+  ~ you may not use this file except in compliance with the License.
+  ~ You may obtain a copy of the License at
+  ~
+  ~      http://www.apache.org/licenses/LICENSE-2.0
+  ~
+  ~ Unless required by applicable law or agreed to in writing, software
+  ~ distributed under the License is distributed on an "AS IS" BASIS,
+  ~ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  ~ See the License for the specific language governing permissions and
+  ~ limitations under the License.
+  -->
+<chapter id='application_plugin'>
+    <title>The Application Plugin</title>
+    <para>The Gradle application plugin extends the language plugins with common application related tasks.
+	It allows running and bundling applications for the jvm.
+	</para>
+
+    <section>
+        <title>Usage</title>
+        <para>To use the application plugin, include in your build script:</para>
+        <sample id="useApplicationPlugin" dir="application" title="Using the application plugin">
+            <sourcefile file="build.gradle" snippet="use-plugin"/>
+        </sample>
+        <para>To define the main-class for the application you have to set the <literal>mainClassName</literal> property as shown below</para>
+        <sample id="useApplicationPlugin" dir="application" title="Configure the application main class">
+            <sourcefile file="build.gradle" snippet="mainClassName-conf"/>
+        </sample>
+
+        <para>Then, you can run the application by running <userinput>gradle run</userinput>. Gradle will take care of building the application classes,
+            along with their runtime dependencies, and starting the application with the correct classpath.
+        </para>
+
+        <para>The plugin can also build a distribution for your application. The distribution will package up the runtime dependencies of the application
+            along with some OS specific start scripts. You can run <userinput>gradle install</userinput> to create an image of the application in
+            <filename>build/install/<replaceable>projectName</replaceable></filename>. You can run <userinput>gradle distZip</userinput> to create a
+            ZIP containing the distribution.
+        </para>
+    </section>
+
+    <section>
+        <title>Tasks</title>
+        <para>The Application plugin adds the following tasks to the project.</para>
+        <table>
+            <title>Application plugin - tasks</title>
+            <thead>
+                <tr>
+                    <td>Task name</td>
+                    <td>Depends on</td>
+                    <td>Type</td>
+                    <td>Description</td>
+                </tr>
+            </thead>
+            <tr>
+                <td>
+                    <literal>run</literal>
+                </td>
+                <td>
+                    <literal>classes</literal>
+                </td>
+                <td><apilink class="org.gradle.api.tasks.JavaExec"/></td>
+                <td>Starts the application.</td>
+            </tr>
+            <tr>
+                <td>
+                    <literal>createStartScripts</literal>
+                </td>
+                <td>
+                    <literal>jar</literal>
+                </td>
+                <td>-</td>
+                <td>Creates OS specific scripts to run the project as a JVM application.</td>
+            </tr>
+            <tr>
+                <td>
+                    <literal>install</literal>
+                </td>
+                <td>
+                    <literal>jar</literal>, <literal>createStartScripts</literal>
+                </td>
+                <td><apilink class="org.gradle.api.tasks.Copy"/></td>
+                <td>Installs the application into a specified directory.</td>
+            </tr>
+            <tr>
+                <td>
+                    <literal>distZip</literal>
+                </td>
+                <td>
+                    <literal>jar</literal>, <literal>createStartScripts</literal>
+                </td>
+                <td><apilink class="org.gradle.api.tasks.bundling.Zip"/></td>
+                <td>Creates a full distribution ZIP archive including runtime libraries and OS specific scripts.</td>
+            </tr>
+        </table>
+    </section>
+
+    <section>
+            <title>Convention properties</title>
+            <table>
+                <title>Application plugin - directory properties</title>
+                <thead>
+                    <tr>
+                        <td>Property name</td>
+                        <td>Type</td>
+                        <td>Default value</td>
+                        <td>Description</td>
+                    </tr>
+                </thead>
+                <tr>
+                    <td>
+                        <literal>mainClassName</literal>
+                    </td>
+                    <td>
+                        <classname>String</classname>
+                    </td>
+                    <td>
+                        -
+                    </td>
+                    <td>
+                        The fully qualified name of the main class of the application.
+                    </td>
+                </tr>
+                <tr>
+                    <td>
+                        <literal>installDirPath</literal>
+                    </td>
+                    <td>
+                        <classname>String</classname>
+                    </td>
+                    <td>
+                        build/install
+                    </td>
+                    <td>
+                        The path the application should be installed into.
+                    </td>
+                </tr>
+            </table>
+
+            <para>These properties are provided by a <apilink class="org.gradle.api.plugins.ApplicationPluginConvention"/>
+                convention object.
+            </para>
+    </section>
+</chapter>

@@ -15,7 +15,6 @@
  */
 
 import java.util.jar.Attributes
-import org.gradle.api.artifacts.repositories.WebdavResolver
 import org.gradle.api.internal.artifacts.dependencies.DefaultSelfResolvingDependency
 
 import org.gradle.build.samples.WrapperProjectCreator
@@ -103,7 +102,6 @@ allprojects {
 
 configure(groovyProjects()) {
     apply plugin: 'groovy'
-    apply plugin: 'eclipse'
 
     archivesBaseName = "gradle-${name.replaceAll("\\p{Upper}") { "-${it.toLowerCase()}" } }"
     dependencies {
@@ -143,14 +141,6 @@ allprojects {
     task ide(type: Sync) {
         into "$ideDir/lib"
         from { config.copyRecursive {dep -> !(dep instanceof ProjectDependency)}.files }
-    }
-    ideaModule {
-        gradleCacheVariable = 'GRADLE_CACHE'
-        outputDir = "$rootProject.projectDir/intellij/out" as File
-        testOutputDir = "$rootProject.projectDir/intellij/testOut" as File
-    }
-    eclipseClasspath {
-        variables = [:]
     }
 }
 
@@ -295,9 +285,6 @@ ideaWorkspace {
 
         Node runConfig = node.component.find { it.'@name' == 'RunManager' }.configuration.find { it.'@type' == 'JUnit'}
 
-        Node module = runConfig.module[0]
-        module.'@name' = 'launcher'
-
         Node vmParameters = runConfig.option.find { it.'@name' == 'VM_PARAMETERS' }
         vmParameters.'@value' = "\"-DintegTest.gradleHomeDir=${intTestImage.destinationDir}\" -ea -Dorg.gradle.integtest.executer=embedded"
     }
@@ -323,6 +310,12 @@ configure(groovyProjects()) {
         scopes.TEST.plus.add(configurations.detachedConfiguration(new DefaultSelfResolvingDependency(files { sourceSets*.resources*.srcDirs })))
         beforeConfigured { module -> module.dependencies = [] }
     }
+    eclipseClasspath {
+        plusConfigurations.add(configurations.detachedConfiguration(new DefaultSelfResolvingDependency(files { sourceSets*.resources*.srcDirs*.findAll { it.isDirectory() }} )))
+        whenConfigured { classpath ->
+            classpath.entries.removeAll { it instanceof org.gradle.plugins.eclipse.model.SourceFolder && it.path.endsWith('/resources') }
+        }
+    }
 }
 
 configurations {
@@ -345,7 +338,7 @@ dependencies {
 }
 
 evaluationDependsOn(':docs')
-evaluationDependsOn(':core')
+evaluationDependsOn(':integTest')
 
 clean.dependsOn subprojects.collect { "$it.path:clean" }
 
@@ -428,6 +421,8 @@ artifacts {
     }
 }
 
+integTestUserDir = file('intTestHomeDir')
+
 task intTestImage(type: Sync) {
     dependsOn allZip.taskDependencies
     with allDistImage
@@ -439,60 +434,16 @@ task intTestImage(type: Sync) {
     }
 }
 
-tasks.withType(Test).allTasks { task ->
-    task.configure {
-        dependsOn intTestImage, publishLocalArchives, binZip, allZip, srcZip, project(':docs').userguideDocbook
-        integTestUserDir = file('intTestHomeDir')
-        systemProperties['integTest.userGuideInfoDir'] = project(':docs').docbookSrc
-        systemProperties['integTest.userGuideOutputDir'] = new File(project(':docs').samplesSrcDir, "userguideOutput").absolutePath
-        systemProperties['integTest.gradleUserHomeDir'] = integTestUserDir.absolutePath
-        forkEvery = 15
-        maxParallelForks = guessMaxForks()
-
-        testClassesDir = project(':core').sourceSets.integTest.classesDir
-        classpath = project(':core').sourceSets.integTest.runtimeClasspath + configurations.testRuntime
-        testResultsDir = file("build/test-results/$name")
-        testReportDir = file("build/reports/tests/$name")
-        testSrcDirs = []
-
-        systemProperties['integTest.gradleHomeDir'] = intTestImage.integTestGradleHome.absolutePath
-        jvmArgs '-Xmx512m', '-XX:+HeapDumpOnOutOfMemoryError'
-
-        doFirst {
-            if (isDevBuild()) {
-                exclude 'org/gradle/integtests/DistributionIntegrationTest.*'
-            }
-        }
-    }
+def isDevBuild() {
+    gradle.taskGraph.hasTask(developerBuild)
 }
 
-task integTest(type: Test) {
+def isCIBuild() {
+    gradle.taskGraph.hasTask(ciBuild)
 }
 
-task embeddedIntegTest(type: Test) {
-    systemProperties['org.gradle.integtest.executer'] = 'embedded'
-    jvmArgs '-Xmx512m', '-XX:MaxPermSize=256m', '-XX:+HeapDumpOnOutOfMemoryError'
-}
-
-task daemonIntegTest(type: Test) {
-    systemProperties['org.gradle.integtest.executer'] = 'daemon'
-}
-
-private def isDevBuild() {
-    gradle.taskGraph.hasTask(':developerBuild')
-}
-
-gradle.taskGraph.whenReady { graph ->
-    if (isDevBuild()) {
-        if (OperatingSystem.current().isWindows()) {
-            embeddedIntegTest.enabled = false
-        } else {
-            integTest.enabled = false
-        }
-    }
-    if (graph.hasTask(':ciBuild')) {
-        embeddedIntegTest.enabled = false
-    }
+def isCommitBuild() {
+    gradle.taskGraph.hasTask(commitBuild)
 }
 
 def guessMaxForks() {
@@ -500,7 +451,7 @@ def guessMaxForks() {
     return Math.max(2, (int) (processors / 2))
 }
 
-task testedDists(dependsOn: [assemble, check, integTest, embeddedIntegTest, 'openApi:integTest', ':ui:integTest'])
+task testedDists(dependsOn: [assemble, check, 'integTest:integTest', 'integTest:embeddedIntegTest', 'openApi:integTest', ':ui:integTest'])
 
 task nightlyBuild(dependsOn: [clean, testedDists, ':docs:uploadDocs'])
 
@@ -543,13 +494,19 @@ gradle.taskGraph.whenReady {graph ->
 task developerBuild {
     description = 'Builds distributions and runs pre-checkin checks'
     group = 'build'
-    dependsOn clean, testedDists
+    dependsOn testedDists
 }
 
 task ciBuild {
-    description = 'Build performed by the CI server'
+    description = 'Full build performed by the CI server'
     dependsOn clean, testedDists
 }
+
+task commitBuild {
+    description = 'Commit build performed by the CI server'
+    dependsOn testedDists
+}
+
 gradle.taskGraph.whenReady {graph ->
     if (graph.hasTask(ciBuild)) {
         subprojects { reportsDirName = "$rootProject.reportsDir/${path.replaceFirst(':', '').replaceAll(':', '.')}" }
@@ -593,7 +550,7 @@ def publishedProjects() {
 }
 
 def runtimeProjects() {
-    groovyProjects() - pluginProjects()
+    groovyProjects() - pluginProjects() - [project(':integTest')]
 }
 
 def pluginProjects() {

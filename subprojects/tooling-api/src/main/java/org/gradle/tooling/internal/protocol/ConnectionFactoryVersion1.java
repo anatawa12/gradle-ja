@@ -15,8 +15,6 @@
  */
 package org.gradle.tooling.internal.protocol;
 
-import java.io.File;
-
 /**
  * DO NOT CHANGE THIS INTERFACE. It is part of the cross-version protocol.
  */
@@ -26,5 +24,5 @@ public interface ConnectionFactoryVersion1 {
      */
     void stop();
 
-    ConnectionVersion1 create(File projectDirectory);
+    ConnectionVersion1 create(ConnectionParametersVersion1 parameters);
 }
