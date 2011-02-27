@@ -413,146 +413,173 @@
         </section>
     </section>
     <section>
-        <title>Working with dependencies</title>
-        <para>For the examples below we have the following dependencies setup:</para>
+        <title>依存関係の使い方<phrase role="original">Working with dependencies</phrase></title>
+        <para role="original">For the examples below we have the following dependencies setup:</para>
+        <para>例として、次のような依存関係を定義します。</para>
         <sample id="configurationHandlingSetup" dir="userguide/artifacts/configurationHandling" title="Configuration.copy">
             <sourcefile file="build.gradle" snippet="setup"/>
         </sample>
-        <para>The dependencies have the following transitive dependencies:</para>
+        <para role="original">The dependencies have the following transitive dependencies:</para>
+        <para>この依存関係は、以下の推移的な依存関係を持っています。</para>
         <para>shark-1.0 -> seal-2.0, tuna-1.0</para>
         <para>orca-1.0 -> seal-1.0</para>
         <para>tuna-1.0 -> herring-1.0</para>
-        <para>You can use the configuration to access the declared dependencies or a subset of those:
+        <para role="original">You can use the configuration to access the declared dependencies or a subset of those:
         </para>
-        <sample id="configurationHandlingDependencies" dir="userguide/artifacts/configurationHandling" title="Accessing declared dependencies">
+        <para>コンフィギュレーションを使って、定義した依存関係や、そのサブセットにアクセスできます。</para>
+        <sample id="configurationHandlingDependencies" dir="userguide/artifacts/configurationHandling" title="定義した依存関係へアクセスする / Accessing declared dependencies">
             <sourcefile file="build.gradle" snippet="dependencies"/>
             <output args="-q dependencies"/>
         </sample>
-        <para><code>dependencies</code> returns only the dependencies belonging explicitly to the configuration.
+        <para role="original"><code>dependencies</code> returns only the dependencies belonging explicitly to the configuration.
             <code>allDependencies</code> includes the dependencies from extended
             configurations.
         </para>
-        <para>To get the library files of the configuration dependencies you can do:
+        <para><code>dependencies</code>は、明示的にコンフィギュレーションに割り当てた依存関係のみ表示します。<code>allDependencies</code>は、それに加えて、継承元のコンフィギュレーションに属する依存関係も表示します。</para>
+        <para role="original">To get the library files of the configuration dependencies you can do:
         </para>
+        <para>コンフィギュレーションに属する依存関係に含まれるライブラリファイルを取得するには、次のようにします。</para>
         <sample id="configurationHandlingAllFiles" dir="userguide/artifacts/configurationHandling" title="Configuration.files">
             <sourcefile file="build.gradle" snippet="allFiles"/>
             <output args="-q allFiles"/>
         </sample>
-        <para>Sometimes you want the library files of a subset of the configuration dependencies (e.g. of a single dependency).
+        <para role="original">Sometimes you want the library files of a subset of the configuration dependencies (e.g. of a single dependency).
         </para>
+        <para>コンフィギュレーションの依存関係から、あるサブセット(ひとつの依存関係のみなど)に含まれるライブラリのみを取り出したい場合もあるでしょう。</para>
         <sample id="configurationHandlingFiles" dir="userguide/artifacts/configurationHandling" title="Configuration.files with spec">
             <sourcefile file="build.gradle" snippet="files"/>
             <output args="-q files"/>
         </sample>
-        <para>The <code>Configuration.files</code> method always retrieves all artifacts of the <emphasis>whole</emphasis> configuration. It
+        <para role="original">The <code>Configuration.files</code> method always retrieves all artifacts of the <emphasis>whole</emphasis> configuration. It
         then filters the retrieved files by specified dpendencies. As you can see in the example, transitive dependencies are included.
         </para>
-        <para>You can also copy a configuration. You can optionally specify that only a subset of dependencies from the orginal configuration
+        <para><code>Configuration.files</code>は、常にすべてのコンフィギュレーションに含まれるすべてのアーティファクトを取得します。ここでは、取得したファイルを依存関係名でフィルタして表示しました。この例の通り、推移的な依存関係も含まれています。</para>
+        <para role="original">You can also copy a configuration. You can optionally specify that only a subset of dependencies from the orginal configuration
             should be copied. The copying methods come in two flavors. The <code>copy</code> method copies only the dependencies belonging
             explicitly to the configuration. The <code>copyRecursive</code> methode copies all the dependencies, including the dependencies from extended
             configurations.
         </para>
+        <para>コンフィギュレーションはコピーすることもできます。さらに、元のコンフィギュレーションから一部の依存関係のみコピーするといったこともできます。コピー用のメソッドは二つ用意されており、そのうちの一つ、<code>copy</code>メソッドは、明示的にコンフィギュレーションに所属させた依存関係のみコピーします。もう一つの<code>copyRecursive</code>メソッドは、継承元のコンフィギュレーションに属しているものも含めすべての依存関係をコピーするものです。</para>
         <sample id="configurationHandlingCopy" dir="userguide/artifacts/configurationHandling" title="Configuration.copy">
             <sourcefile file="build.gradle" snippet="copy"/>
              <output args="-q copy"/>
         </sample>
-        <para>It is important to note that the returned files of the copied configuration
+        <para role="original">It is important to note that the returned files of the copied configuration
             are often but not always the same than the returned files of the dependency subset of the original configuration.
             In case of version conflicts between
             dependencies of the subset and dependencies not belonging to the subset the resolve result might be different.</para>
+        <para>注意するべきなのは、コピーされたコンフィギュレーションから返されるライブラリが、オリジナルのコンフィギュレーションのサブセットになるとは限らないという点です。「コピーされたサブセット」と、「コピーされなかった残りのサブセット」の間でバージョンの競合がある場合、依存関係の解決結果が異なることもあります。</para>
         <sample id="configurationHandlingCopyVsFiles" dir="userguide/artifacts/configurationHandling" title="Configuration.copy vs. Configuration.files">
             <sourcefile file="build.gradle" snippet="copyVsFiles"/>
              <output args="-q copyVsFiles"/>
         </sample>
-        <para>In the example above, <code>orca</code> has a dependency on <code>seal-1.0</code> whereas
+        <para role="original">In the example above, <code>orca</code> has a dependency on <code>seal-1.0</code> whereas
             <code>shark</code> has a dependency on <code>seal-2.0</code>. The original configuration has therefore a version
             conflict which is resolved to the newer <code>seal-2.0</code> version. The <code>files</code> method therefore
             returns <code>seal-2.0</code> as a transitive dependency of <code>orca</code>. The copied configuration only has <code>orca</code>
             as a dependency and therefore there is no version conflict and <code>seal-1.0</code> is returned as a transitive
             dependency.
         </para>
-        <para>Once a configuration is resolved it is immutable. Changing its state or the state of one of its dependencies
+        <para>上の例では、<code>orca</code>が<code>seal-1.0</code>に依存しており、<code>shark</code>は<code>seal-2.0</code>に依存しています。なので、オリジナルのコンフィギュレーションではバージョンの競合が発生しているわけです。そのため、この依存関係はより新しいバージョンである<code>seal-2.0</code>に解決され、推移的な依存関係として<code>seal-2.0</code>が表示されています。一方、コピー先のコンフィギュレーションには<code>orca</code>しか含まれていません。そのためバージョンの競合は発生しておらず、推移的な依存関係として<code>seal-1.0</code>が表示されているのです。</para>
+        <para role="original">Once a configuration is resolved it is immutable. Changing its state or the state of one of its dependencies
             will cause an exception. You can always copy a resolved configuration. The copied configuration is in the unresolved
             state and can be freshly resolved.
         </para>
-        <para>To learn more about the API of the configuration class see the API documentation:
+        <para>一度解決されたコンフィギュレーションは不変となります。その状態を変更したり、コンフィギュレーション内の依存関係の状態を変更したりすると例外が発生します。一方でコンフィギュレーションのコピーはいつでも可能です。コピーされたコンフィギュレーションは未解決状態であり、解決処理を新規に行うことができます。</para>
+        <para role="original">To learn more about the API of the configuration class see the API documentation:
             <apilink class='org.gradle.api.artifacts.Configuration'/>.
         </para>
+        <para>ConfigurationクラスのAPIをさらに詳しく知りたいときは、APIドキュメント(<apilink class='org.gradle.api.artifacts.Configuration'/>)をご参照ください。</para>
     </section>
     <section id='sec:repositories'>
-        <title>Repositories</title>
-        <para>Gradle repository management, based on Apache Ivy, gives you a lot of freedom
+        <title>リポジトリ<phrase role="original">Repositories</phrase></title>
+        <para role="original">Gradle repository management, based on Apache Ivy, gives you a lot of freedom
             regarding repository layout and retrieval policies. Additionally Gradle provides various convenience
             method to add preconfigured repositories.
         </para>
+        <para>Gradleのリポジトリ管理は、Apache Ivyをベースにしており、リポジトリのレイアウトや、リポジトリの場所を探す方法を柔軟に定義できるようになっています。加えて、Gradleは、定義済みのリポジトリ定義を簡単に追加するための便利なメソッドを色々提供しています。</para>
         <section id='sub:maven_repo'>
-            <title>Maven repositories</title>
-            <para>To add the central Maven2 repository (<ulink url='http://repo1.maven.org/maven2'/>) simply
+            <title>Mavenリポジトリ<phrase role="original">Maven repositories</phrase></title>
+            <para role="original">To add the central Maven2 repository (<ulink url='http://repo1.maven.org/maven2'/>) simply
                 type:
             </para>
-            <sample id="mavenCentral" dir="userguide/artifacts/defineRepository" title="Adding central Maven repository">
+            <para>Maven2のセントラルリポジトリ(<ulink url='http://repo1.maven.org/maven2'/>)は、ただ次のように書くだけで簡単に追加できます。</para>
+            <sample id="mavenCentral" dir="userguide/artifacts/defineRepository" title="Mavenセントラルリポジトリを追加する / Adding central Maven repository">
                 <sourcefile file="build.gradle" snippet="maven-central"/>
             </sample>
-            <para>Now Gradle will look for your dependencies in this repository.
+            <para role="original">Now Gradle will look for your dependencies in this repository.
             </para>
-            <para>Quite often certain jars are not in the official Maven repository for licensing reasons (e.g. JTA),
+            <para>こうすることで、Gradleはこのリポジトリから依存関係を取得するようになります。</para>
+            <para role="original">Quite often certain jars are not in the official Maven repository for licensing reasons (e.g. JTA),
                 but its POMs are.
             </para>
-            <sample id="mavenCentralJarRepo" dir="userguide/artifacts/defineRepository" title="Adding several Maven repositories">
+            あるjarが、POM上にはあるのに、ライセンス上の理由からMavenの公式リポジトリ上にないということは大変よくあることです(JTAとか)。
+            <sample id="mavenCentralJarRepo" dir="userguide/artifacts/defineRepository" title="Mavenリポジトリをいくつか追加する / Adding several Maven repositories">
                 <sourcefile file="build.gradle" snippet="maven-central-jar-repo"/>
             </sample>
-            <para>Gradle will look first in the central Maven repository for the POM and the JAR. If the JAR can't be
+            <para role="original">Gradle will look first in the central Maven repository for the POM and the JAR. If the JAR can't be
                 found there, it will look for it in the other repositories.
             </para>
-            <para>For adding a custom Maven repository you can say:
+            <para>Gradleは、まずMavenのセントラルリポジトリへPOMとJARを見に行きます。もしJARが見つからなければ、別のリポジトリを参照しに行きます。</para>
+            <para role="original">For adding a custom Maven repository you can say:
             </para>
-            <sample id="mavenLikeRepo" dir="userguide/artifacts/defineRepository" title="Adding custom Maven repository">
+            <para>カスタムのMavenリポジトリを追加するには、次のようにします。</para>
+            <sample id="mavenLikeRepo" dir="userguide/artifacts/defineRepository" title="カスタムMavenリポジトリを追加する / Adding custom Maven repository">
                 <sourcefile file="build.gradle" snippet="maven-like-repo"/>
             </sample>
-            <para>To declare additional repositories to look for jars (like above in the example
+            <para role="original">To declare additional repositories to look for jars (like above in the example
                 for the central Maven repository), you can say:
             </para>
-            <sample id="mavenLikeRepoWithJarRepo" dir="userguide/artifacts/defineRepository" title="Adding additional Maven repositories for JAR files">
+            <para>次のようにすることで、jarを探しに行くリポジトリを、先ほどのMavenセントラルリポジトリの例のように、複数追加することが出来ます。</para>
+            <sample id="mavenLikeRepoWithJarRepo" dir="userguide/artifacts/defineRepository" title="JARファイルのために、Mavenリポジトリを複数追加する / Adding additional Maven repositories for JAR files">
                 <sourcefile file="build.gradle" snippet="maven-like-repo-with-jar-repo"/>
             </sample>
-            <para>The first URL is used to look for POMs and JARs. The subsequent URLs are used to look for JARs.
+            <para role="original">The first URL is used to look for POMs and JARs. The subsequent URLs are used to look for JARs.
             </para>
-            <para>To use the local Maven cache as a repository you can say:</para>
-            <sample id="mavenLocalRepo" dir="userguide/artifacts/defineRepository" title="Adding the local Maven cache as a repository">
+            <para>最初のURLは、POMとJARを探すために使われます。それ以降のURLは、JARを探すために使われるものです。</para>
+            <para role="original">To use the local Maven cache as a repository you can say:</para>
+            <para>Mavenのローカルキャッシュをリポジトリとして使うには、次のようにします。</para>
+            <sample id="mavenLocalRepo" dir="userguide/artifacts/defineRepository" title="Mavenのローカルキャッシュをリポジトリとして追加する / Adding the local Maven cache as a repository">
                 <sourcefile file="build.gradle" snippet="maven-local"/>
             </sample>
             <section>
-            	<title>Accessing password protected Maven repositories</title>
-            	<para>To access a password protected Maven repository (basic authentication) you need to use one of Ivy features:</para>
-    	        <sample id="mavenPasswordProtectedRepo" dir="userguide/artifacts/defineRepository" title="Accessing password protected Maven repository">
+                <title>パスワードで保護されたMavenリポジトリへのアクセス<phrase role="original">Accessing password protected Maven repositories</phrase></title>
+            	<para role="original">To access a password protected Maven repository (basic authentication) you need to use one of Ivy features:</para>
+                <para>パスワードで保護(BASIC認証)されたMavenリポジトリへアクセスするには、Ivyの機能を使う必要があります。</para>
+                <sample id="mavenPasswordProtectedRepo" dir="userguide/artifacts/defineRepository" title="パスワードで保護されたMavenリポジトリへのアクセス / Accessing password protected Maven repository">
 	                <sourcefile file="build.gradle" snippet="maven-password-protected-repo"/>
         	    </sample>
-        	    <para>Host name should not include <literal>"http://"</literal> prefix. It is advisable to keep your login and password in <filename>gradle.properties</filename> rather than directly in the build file.</para>
+        	    <para role="original">Host name should not include <literal>"http://"</literal> prefix. It is advisable to keep your login and password in <filename>gradle.properties</filename> rather than directly in the build file.</para>
+                <para>ホスト名に「<literal>http://</literal>」を含めてはいけません。ログイン情報とパスワードは、ビルドファイルに直接書くよりは<filename>gradle.properties</filename>に書くのがお勧めです。</para>
             </section>
         </section>
         <section id='sec:flat_dir_resolver'>
-            <title>Flat directory resolver</title>
-            <para>If you want to use a (flat) filesytem directory as a repository, simply type:
+            <title>フラットディレクトリ・リゾルバ<phrase role="original">Flat directory resolver</phrase></title>
+            <para role="original">If you want to use a (flat) filesytem directory as a repository, simply type:
             </para>
-            <sample id="flatDirMulti" dir="userguide/artifacts/defineRepository" title="Flat repository resolver">
+            <para>ファイルシステム上の(フラットな)ディレクトリをリポジトリとして使用したい場合も、簡単に定義できます。</para>
+            <sample id="flatDirMulti" dir="userguide/artifacts/defineRepository" title="フラットディレクトリ・リゾルバ / Flat repository resolver">
                 <sourcefile file="build.gradle" snippet="flat-dir-multi"/>
             </sample>
-            <para>This adds repositories which look into one or more directories for finding dependencies. If you only
+            <para role="original">This adds repositories which look into one or more directories for finding dependencies. If you only
                 work with flat directory resolvers you don't need to set all attributes of a dependency.
                 See <xref linkend='para:dependencies_with_empty_attributes'/>
             </para>
+            <para>これで、依存関係を取得するリポジトリとして、複数のディレクトリが追加されました。このフラットディレクトリ・リゾルバのみ使うのであれば、依存関係定義ですべての属性を定義する必要はありません。<xref linkend='para:dependencies_with_empty_attributes'/>をご参照ください。</para>
         </section>
         <section>
-            <title>More about preconfigured repositories</title>
-            <para>The methods above for creating preconfigured repositories share some common behavior. For all of them, defining
+            <title>定義済みリポジトリについての追加情報<phrase role="original">More about preconfigured repositories</phrase></title>
+            <para role="original">The methods above for creating preconfigured repositories share some common behavior. For all of them, defining
                 a name for the repository is optional. If no name is defined a default name is calculated, depending on the
                 type of the repository. You might want to assign a name, if you want to access the declared repository. For example
                 if you want to use it also for uploading your project artifacts. An explicit name might also be helpful when
                 studying the debug output.
             </para>
-            <para>The values passed as arguments to the repository methods can be of any type, not just String. The value
+            <para>これまで紹介してきた、定義済みのリポジトリを追加するためのメソッドには、共通する振る舞いがあります。オプションとしてリポジトリ名を定義できるのです。もしリポジトリ名が定義されていなければ、リポジトリの形式に依存したデフォルトの名前が生成されます。リポジトリ定義にアクセスしたい場合には、名前を割り当てたくなるかもしれません。たとえば、プロジェクトのアーティファクトをアップロードする場合などです。明示的に命名すると、デバッグ出力を調査するときに役に立つこともあります。</para>
+            <para role="original">The values passed as arguments to the repository methods can be of any type, not just String. The value
                 that is actually used, is the <code>toString</code> result of the argument object.
             </para>
+            <para>リポジトリ定義メソッドに引き渡す値は、必ずしも文字列である必要はなく、どんな型のオブジェクトでも渡すことができます。実際には、引き渡されたオブジェクトを<code>toString</code>で変換した結果が使用されるのです。</para>
         </section>
         <section id='sub:cache'>
             <title>Cache</title>
