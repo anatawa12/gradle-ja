@@ -78,11 +78,7 @@ class IdeaIntegrationTest extends AbstractIdeIntegrationTest {
         runIdeaTask("apply plugin: 'java'; apply plugin: 'idea'")
 
         def module = parseImlFile("root")
-        def outputUrl = module.component.output[0].@url
-        def testOutputUrl = module.component."output-test"[0].@url
-
-        assert outputUrl.text() == 'file://$MODULE_DIR$/out/production/root'
-        assert testOutputUrl.text() == 'file://$MODULE_DIR$/out/test/root'
+        assert module.component.@"inherit-compiler-output" == "true"
     }
 
     @Test
@@ -122,7 +118,7 @@ sourceSets.main.resources.srcDirs.each { it.mkdirs() }
 sourceSets.test.groovy.srcDirs.each { it.mkdirs() }
         """
 
-        def module = parseImlFile("root", true)
+        def module = parseImlFile("root")
         def sourceFolders = module.component.content.sourceFolder
         def urls = sourceFolders*.@url*.text()
 
@@ -155,8 +151,8 @@ sourceSets.test.groovy.srcDirs.each { it.mkdirs() }
         runTask("idea", buildScript)
     }
 
-    private parseImlFile(projectName, print = false) {
-        parseXmlFile("${projectName}.iml", print)
+    private parseImlFile(Map options = [:], String projectName) {
+        parseFile(options, "${projectName}.iml")
     }
 
     private containsDir(path, urls) {

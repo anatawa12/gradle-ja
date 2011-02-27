@@ -21,14 +21,14 @@ repositories {
 }
 
 dependencies {
-    testCompile 'junit:junit:4.8.1'
+    testCompile 'junit:junit:4.8.2'
 }
 test.testReport = false
 
 <% if (groovyProject) { %>
 apply plugin: 'groovy'
 dependencies {
-    groovy 'org.codehaus.groovy:groovy-all:1.7.6'
+    groovy 'org.codehaus.groovy:groovy-all:1.7.8'
 }
 <% } %>
 

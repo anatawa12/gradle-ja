@@ -13,19 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.gradle.tooling.internal.provider;
+package org.gradle.tooling.internal.provider
 
-import org.gradle.tooling.internal.protocol.eclipse.EclipseBuildVersion1;
-import org.gradle.tooling.internal.protocol.eclipse.EclipseProjectVersion1;
+import spock.lang.Specification
 
-class DefaultEclipseBuild implements EclipseBuildVersion1 {
-    private final EclipseProjectVersion1 rootProject;
+class DefaultEclipseProjectTest extends Specification {
+    def usesPathForToStringValue() {
+        def project = new DefaultEclipseProject("name", ":path", null, [], [], [], [])
 
-    public DefaultEclipseBuild(EclipseProjectVersion1 rootProject) {
-        this.rootProject = rootProject;
-    }
-
-    public EclipseProjectVersion1 getRootProject() {
-        return rootProject;
+        expect:
+        project.toString() == "project ':path'"
     }
 }

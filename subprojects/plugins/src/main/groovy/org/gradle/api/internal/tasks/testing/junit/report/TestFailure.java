@@ -13,13 +13,22 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.gradle.tooling.internal.protocol.eclipse;
+package org.gradle.api.internal.tasks.testing.junit.report;
 
-import org.gradle.tooling.internal.protocol.BuildVersion1;
+public class TestFailure {
+    private final String message;
+    private final String stackTrace;
 
-/**
- * DO NOT CHANGE THIS INTERFACE. It is part of the cross-version protocol.
- */
-public interface EclipseBuildVersion1 extends BuildVersion1 {
-    EclipseProjectVersion1 getRootProject();
+    public TestFailure(String message, String stackTrace) {
+        this.message = message;
+        this.stackTrace = stackTrace;
+    }
+
+    public String getMessage() {
+        return message;
+    }
+
+    public String getStackTrace() {
+        return stackTrace;
+    }
 }

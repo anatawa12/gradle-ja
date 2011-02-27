@@ -18,8 +18,17 @@ package org.gradle.tooling.internal.protocol;
 /**
  * DO NOT CHANGE THIS INTERFACE. It is part of the cross-version protocol.
  */
-public interface ProjectVersion1 {
-    String getName();
+public interface ConnectionFactoryVersion2 {
+    /**
+     * Stops this factory, blocking until complete.
+     */
+    void stop();
 
-    Iterable<? extends ProjectVersion1> getChildProjects();
+    /**
+     * Creates a connection with the given parameters. The caller is responsible for stopping the connection.
+     * @param parameters The connection parameters
+     * @return The connection.
+     * @throws IllegalStateException When this connection has been stopped.
+     */
+    ConnectionVersion2 create(ConnectionParametersVersion1 parameters) throws IllegalStateException;
 }

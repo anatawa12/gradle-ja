@@ -15,7 +15,7 @@
  */
 package org.gradle.tooling.internal.consumer;
 
-import org.gradle.tooling.BuildConnection;
+import org.gradle.tooling.ProjectConnection;
 import org.gradle.tooling.GradleConnectionException;
 import org.gradle.tooling.GradleConnector;
 import org.gradle.util.GradleVersion;
@@ -69,8 +69,8 @@ public class DefaultGradleConnector extends GradleConnector {
         return this;
     }
 
-    public BuildConnection connect() throws GradleConnectionException {
-        LOGGER.info("Connecting from tooling API consumer version {}", new GradleVersion().getVersion());
+    public ProjectConnection connect() throws GradleConnectionException {
+        LOGGER.info("Connecting from tooling API consumer version {}", GradleVersion.current().getVersion());
         LOGGER.info("Consumer ClassLoader: {}", getClass().getClassLoader());
 
         if (projectDir == null) {
@@ -82,7 +82,4 @@ public class DefaultGradleConnector extends GradleConnector {
         return connectionFactory.create(distribution, new DefaultConnectionParametersVersion1(projectDir, gradleUserHomeDir, searchUpwards));
     }
 
-    public void close() {
-        connectionFactory.stop();
-    }
 }

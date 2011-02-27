@@ -19,8 +19,6 @@ import org.apache.commons.io.FilenameUtils
 import org.gradle.api.artifacts.Dependency
 import org.gradle.api.artifacts.ExternalDependency
 import org.gradle.api.artifacts.SelfResolvingDependency
-import org.gradle.api.file.SourceDirectorySet
-import org.gradle.api.tasks.SourceSet
 import org.gradle.plugins.eclipse.EclipseWtpComponent
 import org.gradle.plugins.eclipse.model.*
 
@@ -28,45 +26,55 @@ import org.gradle.plugins.eclipse.model.*
  * @author Hans Dockter
  */
 class WtpComponentFactory {
-    WtpComponent createWtpComponent(EclipseWtpComponent eclipseComponent) {
-        File inputFile = eclipseComponent.inputFile
-        FileReader reader = inputFile != null && inputFile.exists() ? new FileReader(inputFile) : null
-        List entries = getEntriesFromSourceSets(eclipseComponent.sourceSets, eclipseComponent.project)
+    void configure(EclipseWtpComponent eclipseComponent, WtpComponent component) {
+        def entries = getEntriesFromSourceDirs(eclipseComponent)
         entries.addAll(eclipseComponent.resources)
         entries.addAll(eclipseComponent.properties)
         entries.addAll(getEntriesFromConfigurations(eclipseComponent))
-        return new WtpComponent(eclipseComponent, entries, reader)
+
+        component.configure(eclipseComponent.deployName, eclipseComponent.contextPath, entries)
     }
 
-    private List getEntriesFromSourceSets(def sourceSets, def project) {
-        List entries = []
-        sourceSets.each { SourceSet sourceSet ->
-            entries.add(new WbProperty('java-output-path', PathUtil.normalizePath(project.relativePath(sourceSet.classesDir))))
-            sourceSet.allSource.sourceTrees.each { SourceDirectorySet sourceDirectorySet ->
-                sourceDirectorySet.srcDirs.each { dir ->
-                    if (dir.isDirectory()) {
-                        entries.add(new WbResource("/WEB-INF/classes", project.relativePath(dir)))
-                    }
-                }
-            }
+    private List getEntriesFromSourceDirs(EclipseWtpComponent eclipseComponent) {
+        eclipseComponent.sourceDirs.findAll { it.isDirectory() }.collect { dir ->
+            new WbResource("/WEB-INF/classes", eclipseComponent.project.relativePath(dir))
         }
-        entries
     }
 
     private List getEntriesFromConfigurations(EclipseWtpComponent eclipseComponent) {
         (getEntriesFromProjectDependencies(eclipseComponent) as List) + (getEntriesFromLibraries(eclipseComponent) as List)
     }
 
+    // must include transitive project dependencies
     private Set getEntriesFromProjectDependencies(EclipseWtpComponent eclipseComponent) {
-        def projectDependencies = getDependencies(eclipseComponent.plusConfigurations, eclipseComponent.minusConfigurations,
+        def dependencies = getDependencies(eclipseComponent.plusConfigurations, eclipseComponent.minusConfigurations,
                 { it instanceof org.gradle.api.artifacts.ProjectDependency })
 
-        projectDependencies.collect {
-            def project = it.dependencyProject
+        def projects = dependencies*.dependencyProject
+
+        def allProjects = [] as LinkedHashSet
+        allProjects.addAll(projects)
+        projects.each { collectDependedUponProjects(it, allProjects) }
+
+        allProjects.collect { project ->
             new WbDependentModule("/WEB-INF/lib", "module:/resource/" + project.name + "/" + project.name)
         }
     }
 
+    // TODO: might have to search all class paths of all source sets for project dependendencies, not just runtime configuration
+    private void collectDependedUponProjects(org.gradle.api.Project project, LinkedHashSet result) {
+        def runtimeConfig = project.configurations.findByName("runtime")
+        if (runtimeConfig) {
+            def projectDeps = runtimeConfig.getAllDependencies(org.gradle.api.artifacts.ProjectDependency)
+            def dependedUponProjects = projectDeps*.dependencyProject
+            result.addAll(dependedUponProjects)
+            for (dependedUponProject in dependedUponProjects) {
+                collectDependedUponProjects(dependedUponProject, result)
+            }
+        }
+    }
+
+    // must NOT include transitive library dependencies
     private Set getEntriesFromLibraries(EclipseWtpComponent eclipseComponent) {
         Set declaredDependencies = getDependencies(eclipseComponent.plusConfigurations, eclipseComponent.minusConfigurations,
                 { it instanceof ExternalDependency})
@@ -86,7 +94,7 @@ class WtpComponentFactory {
 
     private WbDependentModule createWbDependentModuleEntry(File file, Map<String, File> variables) {
         def usedVariableEntry = variables.find { name, value -> file.canonicalPath.startsWith(value.canonicalPath) }
-        String handleSnippet;
+        def handleSnippet
         if (usedVariableEntry) {
             handleSnippet = "var/$usedVariableEntry.key/${file.canonicalPath.substring(usedVariableEntry.value.canonicalPath.length())}"
         } else {
@@ -96,9 +104,8 @@ class WtpComponentFactory {
         return new WbDependentModule('/WEB-INF/lib', "module:/classpath/$handleSnippet")
     }
 
-    // TODO: seems this has to be transitive (like library entries)
     private LinkedHashSet getDependencies(Set plusConfigurations, Set minusConfigurations, Closure filter) {
-        Set declaredDependencies = new LinkedHashSet()
+        def declaredDependencies = new LinkedHashSet()
         plusConfigurations.each { configuration ->
             declaredDependencies.addAll(configuration.allDependencies.findAll(filter))
         }

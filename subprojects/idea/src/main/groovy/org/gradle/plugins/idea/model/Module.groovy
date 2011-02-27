@@ -27,46 +27,52 @@ class Module extends XmlPersistableConfigurationObject {
     static final String INHERITED = "inherited"
 
     /**
-     * The dir for the content root of the module.  Defaults to the projectDir for the project.  If null,
-     * the directory that contains the output file will be used.
+     * The directory for the content root of the module.  Defaults to the project dirctory.
+     * If null, the directory containing the output file will be used.
      */
-    Path contentPath;
+    Path contentPath
 
     /**
-     * The foldes for the production code. Must not be null.
+     * The directories containing the production sources. Must not be null.
      */
     Set<Path> sourceFolders = [] as LinkedHashSet
 
     /**
-     * The folders for the test code. Must not be null.
+     * The directories containing the test sources. Must not be null.
      */
     Set<Path> testSourceFolders = [] as LinkedHashSet
 
     /**
-     * Folders to be excluded. Must not be null.
+     * The directories to be excluded. Must not be null.
      */
     Set<Path> excludeFolders = [] as LinkedHashSet
 
     /**
-     * The dir for the production source classes. If null this output dir element is not added.
+     * If true, output directories for this module will be located below the output directory for the project;
+     * otherwise, {@link #outputDir} and {@link #testOutputDir} will take effect.
+     */
+    boolean inheritOutputDirs
+
+    /**
+     * The output directory for production classes. If {@code null}, no entry will be created.
      */
     Path outputDir
 
     /**
-     * The dir for the compiled test source classes. If null this output element is not added.
+     * The output directory for test classes. If {@code null}, no entry will be created.
      */
     Path testOutputDir
 
     /**
-     * The dependencies of this module. Must not be null. Has instances of type    {@link Dependency}   .
+     * The dependencies of this module. Must not be null.
      */
-    Set dependencies = [] as LinkedHashSet
+    Set<Dependency> dependencies = [] as LinkedHashSet
 
     String javaVersion
 
     private final PathFactory pathFactory
 
-    def Module(XmlTransformer withXmlActions, PathFactory pathFactory) {
+    Module(XmlTransformer withXmlActions, PathFactory pathFactory) {
         super(withXmlActions)
         this.pathFactory = pathFactory
     }
@@ -78,27 +84,41 @@ class Module extends XmlPersistableConfigurationObject {
     @Override protected void load(Node xml) {
         readJdkFromXml()
         readSourceAndExcludeFolderFromXml()
+        readInheritOutputDirsFromXml()
         readOutputDirsFromXml()
         readDependenciesFromXml()
     }
 
-    private def readJdkFromXml() {
+    private readJdkFromXml() {
         def jdk = findOrderEntries().find { it.@type == 'jdk' }
-        if (jdk) {
-            this.javaVersion = jdk.@jdkName
-        } else {
-            this.javaVersion = INHERITED
+        javaVersion = jdk ? jdk.@jdkName : INHERITED
+    }
+
+    private readSourceAndExcludeFolderFromXml() {
+        findSourceFolder().each { sourceFolder ->
+            if (sourceFolder.@isTestSource == 'false') {
+                sourceFolders.add(pathFactory.path(sourceFolder.@url))
+            } else {
+                testSourceFolders.add(pathFactory.path(sourceFolder.@url))
+            }
+        }
+        findExcludeFolder().each { excludeFolder ->
+            excludeFolders.add(pathFactory.path(excludeFolder.@url))
         }
     }
 
-    private def readOutputDirsFromXml() {
-        def outputDirUrl = findOutputDir()?.@url
-        def testOutputDirUrl = findTestOutputDir()?.@url
-        this.outputDir = outputDirUrl ? pathFactory.path(outputDirUrl) : null
-        this.testOutputDir = testOutputDirUrl ? pathFactory.path(testOutputDirUrl) : null
+    private readInheritOutputDirsFromXml() {
+        inheritOutputDirs = findNewModuleRootManager().@"inherit-compiler-output" == "true"
     }
 
-    private def readDependenciesFromXml() {
+    private readOutputDirsFromXml() {
+        def outputDirUrl = findOutputDir()?.@url
+        def testOutputDirUrl = findTestOutputDir()?.@url
+        outputDir = outputDirUrl ? pathFactory.path(outputDirUrl) : null
+        testOutputDir = testOutputDirUrl ? pathFactory.path(testOutputDirUrl) : null
+    }
+
+    private readDependenciesFromXml() {
         return findOrderEntries().each { orderEntry ->
             switch (orderEntry.@type) {
                 case "module-library":
@@ -121,30 +141,20 @@ class Module extends XmlPersistableConfigurationObject {
         }
     }
 
-    private def readSourceAndExcludeFolderFromXml() {
-        findSourceFolder().each { sourceFolder ->
-            if (sourceFolder.@isTestSource == 'false') {
-                this.sourceFolders.add(pathFactory.path(sourceFolder.@url))
-            } else {
-                this.testSourceFolders.add(pathFactory.path(sourceFolder.@url))
-            }
-        }
-        findExcludeFolder().each { excludeFolder ->
-            this.excludeFolders.add(pathFactory.path(excludeFolder.@url))
-        }
-    }
-
-    def configure(Path contentPath, Set sourceFolders, Set testSourceFolders, Set excludeFolders, Path outputDir, Path testOutputDir, Set dependencies,
+    void configure(Path contentPath, Set sourceFolders, Set testSourceFolders, Set excludeFolders, Boolean inheritOutputDirs, Path outputDir, Path testOutputDir, Set dependencies,
                   String javaVersion) {
         this.contentPath = contentPath
-        this.sourceFolders.addAll(sourceFolders);
-        this.testSourceFolders.addAll(testSourceFolders);
-        this.excludeFolders.addAll(excludeFolders);
+        this.sourceFolders.addAll(sourceFolders)
+        this.testSourceFolders.addAll(testSourceFolders)
+        this.excludeFolders.addAll(excludeFolders)
+        if (inheritOutputDirs != null) {
+            this.inheritOutputDirs = inheritOutputDirs
+        }
         if (outputDir) {
             this.outputDir = outputDir
         }
         if (testOutputDir) {
-            this.testOutputDir = testOutputDir;
+            this.testOutputDir = testOutputDir
         }
         this.dependencies = dependencies; // overwrite rather than append dependencies
         if (javaVersion) {
@@ -157,13 +167,14 @@ class Module extends XmlPersistableConfigurationObject {
         setContentURL()
         removeSourceAndExcludeFolderFromXml()
         addSourceAndExcludeFolderToXml()
+        writeInheritOutputDirsToXml()
         addOutputDirsToXml()
 
         removeDependenciesFromXml()
         addDependenciesToXml()
     }
 
-    private def addJdkToXml() {
+    private addJdkToXml() {
         assert javaVersion != null
         Node moduleJdk = findOrderEntries().find { it.@type == 'jdk' }
         if (javaVersion != INHERITED) {
@@ -183,13 +194,17 @@ class Module extends XmlPersistableConfigurationObject {
         }
     }
 
-    private def setContentURL() {
+    private setContentURL() {
         if (contentPath != null) {
             findContent().@url = contentPath.url
         }
     }
 
-    private def addOutputDirsToXml() {
+    private writeInheritOutputDirsToXml() {
+        findNewModuleRootManager().@"inherit-compiler-output" = inheritOutputDirs
+    }
+
+    private addOutputDirsToXml() {
         if (outputDir) {
             findOrCreateOutputDir().@url = outputDir.url
         }
@@ -212,7 +227,7 @@ class Module extends XmlPersistableConfigurationObject {
         }
     }
 
-    private def addSourceAndExcludeFolderToXml() {
+    private addSourceAndExcludeFolderToXml() {
         sourceFolders.each { Path path ->
             findContent().appendNode('sourceFolder', [url: path.url, isTestSource: 'false'])
         }
@@ -224,7 +239,7 @@ class Module extends XmlPersistableConfigurationObject {
         }
     }
 
-    private def removeSourceAndExcludeFolderFromXml() {
+    private removeSourceAndExcludeFolderFromXml() {
         findSourceFolder().each { sourceFolder ->
             findContent().remove(sourceFolder)
         }
@@ -233,7 +248,7 @@ class Module extends XmlPersistableConfigurationObject {
         }
     }
 
-    private def removeDependenciesFromXml() {
+    private removeDependenciesFromXml() {
         return findOrderEntries().each { orderEntry ->
             if (isDependencyOrderEntry(orderEntry)) {
                 findNewModuleRootManager().remove(orderEntry)
@@ -249,28 +264,28 @@ class Module extends XmlPersistableConfigurationObject {
         findNewModuleRootManager().content[0]
     }
 
-    private def findSourceFolder() {
-        return findContent().sourceFolder
+    private findSourceFolder() {
+        findContent().sourceFolder
     }
 
-    private def findExcludeFolder() {
-        return findContent().excludeFolder
+    private findExcludeFolder() {
+        findContent().excludeFolder
     }
 
     private Node findOutputDir() {
-        return findNewModuleRootManager().output[0]
+        findNewModuleRootManager().output[0]
     }
 
     private Node findNewModuleRootManager() {
-        return xml.component.find { it.@name == 'NewModuleRootManager'}
+        xml.component.find { it.@name == 'NewModuleRootManager'}
     }
 
     private Node findTestOutputDir() {
         return findNewModuleRootManager().'output-test'[0]
     }
 
-    private def findOrderEntries() {
-        return findNewModuleRootManager().orderEntry
+    private findOrderEntries() {
+        findNewModuleRootManager().orderEntry
     }
 
 
@@ -279,7 +294,7 @@ class Module extends XmlPersistableConfigurationObject {
 
         if (getClass() != o.class) { return false }
 
-        Module module = (Module) o;
+        Module module = (Module) o
 
         if (dependencies != module.dependencies) { return false }
         if (excludeFolders != module.excludeFolders) { return false }
@@ -288,30 +303,32 @@ class Module extends XmlPersistableConfigurationObject {
         if (testOutputDir != module.testOutputDir) { return false }
         if (testSourceFolders != module.testSourceFolders) { return false }
 
-        return true;
+        return true
     }
 
     int hashCode() {
         int result;
 
-        result = (sourceFolders != null ? sourceFolders.hashCode() : 0);
-        result = 31 * result + (testSourceFolders != null ? testSourceFolders.hashCode() : 0);
-        result = 31 * result + (excludeFolders != null ? excludeFolders.hashCode() : 0);
-        result = 31 * result + outputDir.hashCode();
-        result = 31 * result + testOutputDir.hashCode();
-        result = 31 * result + (dependencies != null ? dependencies.hashCode() : 0);
-        return result;
+        result = (sourceFolders != null ? sourceFolders.hashCode() : 0)
+        result = 31 * result + (testSourceFolders != null ? testSourceFolders.hashCode() : 0)
+        result = 31 * result + (excludeFolders != null ? excludeFolders.hashCode() : 0)
+        result = 31 * result + (inheritOutputDirs != null ? inheritOutputDirs.hashCode() : 0)
+        result = 31 * result + outputDir.hashCode()
+        result = 31 * result + testOutputDir.hashCode()
+        result = 31 * result + (dependencies != null ? dependencies.hashCode() : 0)
+        return result
     }
 
 
-    public String toString() {
+    String toString() {
         return "Module{" +
                 "dependencies=" + dependencies +
                 ", sourceFolders=" + sourceFolders +
                 ", testSourceFolders=" + testSourceFolders +
                 ", excludeFolders=" + excludeFolders +
+                ", inheritOutputDirs=" + inheritOutputDirs +
                 ", outputDir=" + outputDir +
                 ", testOutputDir=" + testOutputDir +
-                '}';
+                '}'
     }
 }

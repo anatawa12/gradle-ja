@@ -20,6 +20,8 @@ import org.junit.Rule
 import org.junit.Test
 
 class EclipseIntegrationTest extends AbstractEclipseIntegrationTest {
+    private static String nonAscii = "\\u7777\\u8888\\u9999"
+
     @Rule
     public final TestResources testResources = new TestResources()
 
@@ -32,15 +34,15 @@ class EclipseIntegrationTest extends AbstractEclipseIntegrationTest {
     @Test
     void sourceEntriesInClasspathFileAreSortedAsPerUsualConvention() {
         def expectedOrder = [
-            "src/main/java",
-            "src/main/groovy",
-            "src/main/resources",
-            "src/test/java",
-            "src/test/groovy",
-            "src/test/resources",
-            "src/integTest/java",
-            "src/integTest/groovy",
-            "src/integTest/resources"
+                "src/main/java",
+                "src/main/groovy",
+                "src/main/resources",
+                "src/test/java",
+                "src/test/groovy",
+                "src/test/resources",
+                "src/integTest/java",
+                "src/integTest/groovy",
+                "src/integTest/resources"
         ]
 
         expectedOrder.each { testFile(it).mkdirs() }
@@ -97,5 +99,41 @@ dependencies {
         """
 
         libEntriesInClasspathFileHaveFilenames(artifact1.name, artifact2.name)
+    }
+
+    @Test
+    void eclipseFilesAreWrittenWithUtf8Encoding() {
+        runEclipseTask """
+apply plugin: "war"
+apply plugin: "eclipse"
+
+eclipseProject {
+  projectName = "$nonAscii"
+}
+
+eclipseClasspath {
+  containers("$nonAscii")
+}
+
+eclipseWtpComponent {
+  deployName = "$nonAscii"
+}
+
+eclipseWtpFacet {
+  facet([name: "$nonAscii"])
+}
+        """
+
+        checkIsWrittenWithUtf8Encoding(getProjectFile())
+        checkIsWrittenWithUtf8Encoding(getClasspathFile())
+        checkIsWrittenWithUtf8Encoding(getComponentFile())
+        checkIsWrittenWithUtf8Encoding(getFacetFile())
+    }
+
+    private void checkIsWrittenWithUtf8Encoding(File file) {
+        def text = file.getText("UTF-8")
+        assert text.contains('encoding="UTF-8"')
+        String expectedNonAsciiChars = "\u7777\u8888\u9999"
+        assert text.contains(expectedNonAsciiChars)
     }
 }

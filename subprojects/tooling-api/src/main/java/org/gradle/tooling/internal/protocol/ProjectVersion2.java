@@ -13,16 +13,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.gradle.tooling.model;
+package org.gradle.tooling.internal.protocol;
+
+import java.io.File;
 
 /**
- * Represents a Gradle build.
+ * DO NOT CHANGE THIS INTERFACE. It is part of the cross-version protocol.
  */
-public interface Build {
-    /**
-     * Returns the root project of this build.
-     *
-     * @return The root project.
-     */
-    Project getRootProject();
+public interface ProjectVersion2 {
+    String getName();
+
+    File getProjectDirectory();
+
+    ProjectVersion2 getParent();
+
+    Iterable<? extends ProjectVersion2> getChildren();
 }

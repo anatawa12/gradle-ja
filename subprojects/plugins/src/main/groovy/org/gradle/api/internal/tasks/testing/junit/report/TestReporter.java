@@ -13,11 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.gradle.tooling.internal.protocol;
+package org.gradle.api.internal.tasks.testing.junit.report;
 
-/**
- * DO NOT CHANGE THIS INTERFACE. It is part of the cross-version protocol.
- */
-public interface BuildVersion1 {
-    ProjectVersion1 getRootProject();
+import java.io.File;
+
+public interface TestReporter {
+    void setTestResultsDir(File resultDir);
+
+    void setTestReportDir(File reportDir);
+
+    void generateReport();
 }

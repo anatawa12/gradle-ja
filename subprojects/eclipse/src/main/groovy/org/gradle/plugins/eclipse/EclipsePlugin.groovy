@@ -27,6 +27,8 @@ import org.gradle.api.artifacts.ProjectDependency
 import org.gradle.plugins.eclipse.model.BuildCommand
 import org.gradle.plugins.eclipse.model.Facet
 import org.gradle.plugins.eclipse.model.Library
+import org.gradle.plugins.eclipse.model.Classpath
+import org.gradle.plugins.eclipse.model.WbResource
 
 /**
  * <p>A plugin which generates Eclipse files.</p>
@@ -47,8 +49,8 @@ class EclipsePlugin extends IdePlugin {
     }
 
     @Override protected void onApply(Project project) {
-        lifecycleTask.description = 'Generates the Eclipse files.'
-        cleanTask.description = 'Cleans the generated Eclipse files.'
+        lifecycleTask.description = 'Generates all Eclipse files.'
+        cleanTask.description = 'Cleans all Eclipse files.'
         configureEclipseProject(project)
         configureEclipseClasspath(project)
         configureEclipseJdt(project)
@@ -59,7 +61,7 @@ class EclipsePlugin extends IdePlugin {
     private void configureEclipseProject(Project project) {
         addEclipsePluginTask(project, this, ECLIPSE_PROJECT_TASK_NAME, EclipseProject) {
             projectName = project.name
-            description = "Generates the Eclipse .project file."
+            description = "Generates the Eclipse project file."
             inputFile = project.file('.project')
             outputFile = project.file('.project')
             conventionMapping.comment = { project.description }
@@ -102,7 +104,7 @@ class EclipsePlugin extends IdePlugin {
     private void configureEclipseClasspath(Project project) {
         project.plugins.withType(JavaBasePlugin) {
             addEclipsePluginTask(project, this, ECLIPSE_CP_TASK_NAME, EclipseClasspath) {
-                description = "Generates the Eclipse .classpath file."
+                description = "Generates the Eclipse classpath file."
                 containers 'org.eclipse.jdt.launching.JRE_CONTAINER'
                 sourceSets = project.sourceSets
                 inputFile = project.file('.classpath')
@@ -116,9 +118,12 @@ class EclipsePlugin extends IdePlugin {
                 project.plugins.withType(WarPlugin) {
                     eachDependedUponProject(project) { Project otherProject ->
                         configureTask(otherProject, ECLIPSE_CP_TASK_NAME) {
-                            entryConfigurers << { Library library ->
-                                // TODO: what's the correct value here?
-                                library.entryAttributes['org.eclipse.jst.component.dependency'] = '../'
+                            whenConfigured { Classpath classpath ->
+                                for (entry in classpath.entries) {
+                                    if (entry instanceof Library) {
+                                        entry.entryAttributes['org.eclipse.jst.component.dependency'] = '../' // TODO: what's the correct value here?
+                                    }
+                                }
                             }
                         }
                     }
@@ -142,31 +147,28 @@ class EclipsePlugin extends IdePlugin {
     private void configureEclipseWtpComponent(Project project) {
         project.plugins.withType(WarPlugin) {
             addEclipsePluginTask(project, this, ECLIPSE_WTP_COMPONENT_TASK_NAME, EclipseWtpComponent) {
-                description = 'Generates the org.eclipse.wst.common.component file for Eclipse WTP.'
+                description = 'Generates the Eclipse WTP component settings file.'
                 deployName = project.name
-                sourceSets = project.sourceSets.matching { sourceSet -> sourceSet.name == 'main' }
+                conventionMapping.sourceDirs = { getMainSourceDirs(project) }
                 plusConfigurations = [project.configurations.runtime]
+                minusConfigurations = [project.configurations.providedRuntime]
+                conventionMapping.contextPath = { project.war.baseName }
+                resource deployPath: '/', sourcePath: project.convention.plugins.war.webAppDirName // TODO: not lazy
                 inputFile = project.file('.settings/org.eclipse.wst.common.component')
                 outputFile = project.file('.settings/org.eclipse.wst.common.component')
-
-                conventionMapping.contextPath = { project.war.baseName }
-                minusConfigurations = [project.configurations.providedRuntime]
-                resource deployPath: '/', sourcePath: project.convention.plugins.war.webAppDirName
             }
 
             eachDependedUponProject(project) { otherProject ->
                 // require Java plugin because we need source sets and configurations
                 otherProject.plugins.withType(JavaPlugin) {
                     addEclipsePluginTask(otherProject, ECLIPSE_WTP_COMPONENT_TASK_NAME, EclipseWtpComponent) {
-                        description = 'Generates the org.eclipse.wst.common.component file for Eclipse WTP.'
+                        description = 'Generates the Eclipse WTP component settings file.'
                         deployName = otherProject.name
-                        sourceSets = otherProject.sourceSets.matching { sourceSet -> sourceSet.name == 'main' }
-                        plusConfigurations = [otherProject.configurations.runtime]
+                        conventionMapping.resources = {
+                            getMainSourceDirs(otherProject).collect { new WbResource("/", otherProject.relativePath(it)) }
+                        }
                         inputFile = otherProject.file('.settings/org.eclipse.wst.common.component')
                         outputFile = otherProject.file('.settings/org.eclipse.wst.common.component')
-
-                        // remove the provided dependencies specified in the War (!) project
-                        minusConfigurations = [project.configurations.providedRuntime]
                     }
                 }
             }
@@ -176,7 +178,7 @@ class EclipsePlugin extends IdePlugin {
     private void configureEclipseWtpFacet(Project project) {
         project.plugins.withType(WarPlugin) {
             addEclipsePluginTask(project, this, ECLIPSE_WTP_FACET_TASK_NAME, EclipseWtpFacet) {
-                description = 'Generates the org.eclipse.wst.common.project.facet.core.xml settings file for Eclipse WTP.'
+                description = 'Generates the Eclipse WTP facet settings file.'
                 inputFile = project.file('.settings/org.eclipse.wst.common.project.facet.core.xml')
                 outputFile = project.file('.settings/org.eclipse.wst.common.project.facet.core.xml')
                 conventionMapping.facets = { [new Facet("jst.web", "2.4"), new Facet("jst.java", toJavaFacetVersion(project.sourceCompatibility))] }
@@ -184,7 +186,7 @@ class EclipsePlugin extends IdePlugin {
 
             eachDependedUponProject(project) { otherProject ->
                 addEclipsePluginTask(otherProject, ECLIPSE_WTP_FACET_TASK_NAME, EclipseWtpFacet) {
-                    description = 'Generates the org.eclipse.wst.common.project.facet.core.xml settings file for Eclipse WTP.'
+                    description = 'Generates the Eclipse WTP facet settings file.'
                     inputFile = otherProject.file('.settings/org.eclipse.wst.common.project.facet.core.xml')
                     outputFile = otherProject.file('.settings/org.eclipse.wst.common.project.facet.core.xml')
                     conventionMapping.facets = { [new Facet("jst.utility", "1.0")] }
@@ -199,12 +201,21 @@ class EclipsePlugin extends IdePlugin {
         }
     }
 
+    // TODO: might have to search all class paths of all source sets for project dependendencies, not just runtime configuration
     private void eachDependedUponProject(Project project, Closure action) {
-        project.afterEvaluate {
-            def runtimeConfig = project.configurations.findByName("runtime")
-            if (runtimeConfig) {
-                def projectDeps = runtimeConfig.getAllDependencies(ProjectDependency)
-                projectDeps*.dependencyProject.each(action)
+        project.gradle.projectsEvaluated {
+            doEachDependedUponProject(project, action)
+        }
+    }
+
+    private void doEachDependedUponProject(Project project, Closure action) {
+        def runtimeConfig = project.configurations.findByName("runtime")
+        if (runtimeConfig) {
+            def projectDeps = runtimeConfig.getAllDependencies(ProjectDependency)
+            def dependedUponProjects = projectDeps*.dependencyProject
+            for (dependedUponProject in dependedUponProjects) {
+                action(dependedUponProject)
+                doEachDependedUponProject(dependedUponProject, action)
             }
         }
     }
@@ -233,7 +244,7 @@ class EclipsePlugin extends IdePlugin {
     private void doAddEclipsePluginTask(Project project, EclipsePlugin plugin, String taskName, Class taskType, Closure action) {
         if (project.tasks.findByName(taskName)) { return }
 
-        def task = project.tasks.add(taskName, taskType)
+        def task = project.tasks.add(taskName, taskType) // TODO: whenTaskAdded hook will fire before task has been configured
         project.configure(task, action)
         plugin.addWorker(task)
     }
@@ -246,5 +257,9 @@ class EclipsePlugin extends IdePlugin {
             return '6.0'
         }
         return version.toString()
+    }
+
+    private Set<File> getMainSourceDirs(Project project) {
+        project.sourceSets.main.allSource.sourceTrees.srcDirs.flatten() as LinkedHashSet
     }
 }

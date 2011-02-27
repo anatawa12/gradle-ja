@@ -13,16 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.gradle.tooling.model.eclipse;
+package org.gradle.api.internal.tasks.testing.junit.report
 
-import org.gradle.tooling.model.Build;
+import spock.lang.Specification
 
-/**
- * An Eclipse-centric view of a Gradle build.
- */
-public interface EclipseBuild extends Build {
-    /**
-     * {@inheritDoc}
-     */
-    EclipseProject getRootProject();
+class ClassTestResultsTest extends Specification {
+    def determinesSimpleName() {
+        expect:
+        new ClassTestResults('org.gradle.Test', null).simpleName == 'Test'
+        new ClassTestResults('Test', null).simpleName == 'Test'
+    }
 }

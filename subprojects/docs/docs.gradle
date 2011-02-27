@@ -29,7 +29,7 @@ configurations {
 }
 
 dependencies {
-    ftpAntTask module("org.apache.ant:ant-commons-net:1.7.0") {
+    ftpAntTask module("org.apache.ant:ant-commons-net:1.8.2") {
         module("commons-net:commons-net:1.4.1") {
             dependencies("oro:oro:2.0.8@jar")
         }
@@ -351,6 +351,13 @@ task uploadDocs(dependsOn: docs) << {
     }
     ftp(action: 'send', remotedir: remoteLocations.docsRemoteDir) {
         fileset(dir: docsDir)
+    }
+}
+gradle.taskGraph.whenReady { graph ->
+    if (graph.hasTask(uploadDocs)) {
+        // fail early
+        project.websiteFtpUserName
+        project.websiteFtpUserPassword
     }
 }
 
