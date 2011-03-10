@@ -14,7 +14,7 @@
   ~ limitations under the License.
   -->
 <chapter id='osgi_plugin' xmlns:xi="http://www.w3.org/2001/XInclude">
-    <title>The OSGi Plugin</title>
+    <title>OSGiプラグイン<phrase role="original">The OSGi Plugin</phrase></title>
     <para>The OSGi plugin provides a factory method to create an
         <apilink class="org.gradle.api.plugins.osgi.OsgiManifest"/> object. <literal>OsgiManifest</literal> extends
         <apilink class="org.gradle.api.java.archives.Manifest"/>. To learn more
