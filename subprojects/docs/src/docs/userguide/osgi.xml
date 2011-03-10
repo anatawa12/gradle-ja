@@ -15,63 +15,80 @@
   -->
 <chapter id='osgi_plugin' xmlns:xi="http://www.w3.org/2001/XInclude">
     <title>OSGiプラグイン<phrase role="original">The OSGi Plugin</phrase></title>
-    <para>The OSGi plugin provides a factory method to create an
+    <para role="original">The OSGi plugin provides a factory method to create an
         <apilink class="org.gradle.api.plugins.osgi.OsgiManifest"/> object. <literal>OsgiManifest</literal> extends
         <apilink class="org.gradle.api.java.archives.Manifest"/>. To learn more
         about generic manifest handling, see <xref linkend="sub:manifest"/>. If the Java plugins is applied, the OSGi plugin
         replaces the manifest object of the default jar with an <literal>OsgiManifest</literal> object. The replaced manifest
         is merged into the new one.
     </para>
-    <para>The OSGi plugin makes heavy use of Peter Kriens <ulink url='http://www.aqute.biz/Code/Bnd'>BND tool</ulink>.
+    <para>OSGiプラグインは
+        <apilink class="org.gradle.api.plugins.osgi.OsgiManifest"/> オブジェクトを生成するためのファクトリメソッドを提供します。 <literal>OsgiManifest</literal> は
+        <apilink class="org.gradle.api.java.archives.Manifest"/> を継承しています。一般的な manifest 操作に関しての詳細については、
+        <xref linkend="sub:manifest"/> を参照してください。 Javaプラグインが適用されている場合、OSGiプラグインはデフォルトのjarのmanifestオブジェクトを <literal>OsgiManifest</literal> オブジェクトに置き換えます。 置き換えられたmanifestは新しいmanifestにマージされます。
+    </para>
+    <para role="original">The OSGi plugin makes heavy use of Peter Kriens <ulink url='http://www.aqute.biz/Code/Bnd'>BND tool</ulink>.
+    </para>
+    <para>OSGiプラグインは Peter Kriens の <ulink url='http://www.aqute.biz/Code/Bnd'>BND tool</ulink> を大いに活用しています。
     </para>
 
     <section>
-        <title>Usage</title>
-        <para>To use the OSGi plugin, include in your build script:</para>
-        <sample id="useOsgiPlugin" dir="osgi" title="Using the OSGi plugin">
+        <title>使用方法<phrase role="original">Usage</phrase></title>
+        <para role="original">To use the OSGi plugin, include in your build script:</para>
+        <para>OSGiプラグインを使うためには、ビルドスクリプトに以下のコードを追加します:</para>
+        <sample id="useOsgiPlugin" dir="osgi" title="OSGiプラグインの利用 / Using the OSGi plugin">
             <sourcefile file="build.gradle" snippet="use-plugin"/>
         </sample>
     </section>
 
     <section>
-        <title>Implicitly applied plugins</title>
-        <para>Applies the Java base plugin.</para>
+        <title>暗黙的に適用されるプラグイン<phrase role="original">Implicitly applied plugins</phrase></title>
+        <para role="original">Applies the Java base plugin.</para>
+        <para>Java ベースプラグインを適用します。</para>
     </section>
 
     <section>
-        <title>Tasks</title>
-        <para>This plugin does not add any tasks.</para>
+        <title>タスク<phrase role="original">Tasks</phrase></title>
+        <para role="original">This plugin does not add any tasks.</para>
+        <para>このプラグインはタスクを追加しません。</para>
     </section>
 
     <section>
-        <title>Dependency management</title>
+        <title>依存関係の管理<phrase role="original">Dependency management</phrase></title>
+        <para role="original">TBD</para>
         <para>TBD</para>
     </section>
 
     <section>
-        <title>Convention object</title>
+        <title>規約オブジェクト<phrase role="original">Convention object</phrase></title>
 
-        <para>The OSGi plugin adds the following convention object: <apilink class="org.gradle.api.plugins.osgi.OsgiPluginConvention"/>
+        <para role="original">The OSGi plugin adds the following convention object: <apilink class="org.gradle.api.plugins.osgi.OsgiPluginConvention"/>
+        </para>
+        <para>OSGiプラグインは以下の規約オブジェクトを追加します: <apilink class="org.gradle.api.plugins.osgi.OsgiPluginConvention"/>
         </para>
         <section>
-            <title>Convention properties</title>
+            <title>規約プロパティ<phrase role="original">Convention properties</phrase></title>
 
-            <para>The OSGi plugin does not add any convention properties to the project.
+            <para role="original">The OSGi plugin does not add any convention properties to the project.
+            </para>
+            <para>OSGiプラグインはプロジェクトに規約プロパティを追加しません。
             </para>
         </section>
         <section>
-            <title>Convention methods</title>
+            <title>規約メソッド<phrase role="original">Convention methods</phrase></title>
 
-            <para>The OSGi plugin adds the following methods. For more details, see the API documentation of the convention
+            <para role="original">The OSGi plugin adds the following methods. For more details, see the API documentation of the convention
                 object.
             </para>
+            <para>OSGiプラグインは以下の規約メソッドを追加します。詳細については規約オブジェクトのAPIドキュメントを参照してください。
+            </para>
             <table>
-                <title>OSGi methods</title>
+                <title>OSGiメソッド<phrase role="original">OSGi methods</phrase></title>
                 <thead>
                     <tr>
-                        <td>Method</td>
-                        <td>Return Type</td>
-                        <td>Description</td>
+                        <td>メソッド<phrase role="original">Method</phrase></td>
+                        <td>戻り値<phrase role="original">Return Type</phrase></td>
+                        <td>説明<phrase role="original">Description</phrase></td>
                     </tr>
                 </thead>
                 <tr>
@@ -79,30 +96,37 @@
                     <td>
                         <apilink class="org.gradle.api.plugins.osgi.OsgiManifest"/>
                     </td>
-                    <td>Returns an OsgiManifest object.</td>
+                    <td>OsgiManifestオブジェクトを返す。<phrase role="original">Returns an OsgiManifest object.</phrase></td>
                 </tr>
                 <tr>
                     <td>osgiManifest(Closure cl)</td>
                     <td>
                         <apilink class="org.gradle.api.plugins.osgi.OsgiManifest"/>
                     </td>
-                    <td>Returns an OsgiManifest object configured by the closure.</td>
+                    <td>クロージャによって構成されたOsgiManifestオブジェクトを返す。<phrase role="original">Returns an OsgiManifest object configured by the closure.</phrase></td>
                 </tr>
             </table>
         </section>
     </section>
     <section>
-        <para>The classes in the classes dir are analyzed regarding there package dependencies and the packages they expose.
+        <para role="original">The classes in the classes dir are analyzed regarding there package dependencies and the packages they expose.
             Based on this the <emphasis>Import-Package</emphasis> and the <emphasis>Export-Package</emphasis> values of the
             OSGi Manifest are calculated. If the classpath contains jars with an OSGi bundle, the bundle
             information is used to specify version information for the <emphasis>Import-Package</emphasis>
             value. Beside the explicit properties of the <literal>OsgiManifest</literal> object you can add instructions.
         </para>
-        <sample id="osgi" dir="userguide/tutorial/osgi" title="Configuration of OSGi MANIFEST.MF file">
+        <para>classesディレクトリにあるクラスのパッケージ依存関係と公開するパッケージが解析され、その情報に基づいてOSGi Manifestの <emphasis>Import-Package</emphasis> と <emphasis>Export-Package</emphasis> の値が決定される。
+            クラスパスにOSGiバンドル形式のjarがある場合、<emphasis>Import-Package</emphasis>の値を決定するためにバンドルの情報が参照される。
+            <literal>OsgiManifest</literal> オブジェクトに明示的にinstructionプロパティを追加することでメタデータを追加できる。
+        </para>
+        <sample id="osgi" dir="userguide/tutorial/osgi" title="OSGiのMANIFEST.MFファイルの設定 / Configuration of OSGi MANIFEST.MF file">
             <sourcefile file="build.gradle" snippet="configure-jar"/>
         </sample>
-        <para>The first argument of the instruction call is the key of the property. The other arguments form the value.
+        <para role="original">The first argument of the instruction call is the key of the property. The other arguments form the value.
             They are joined by Gradle with the <literal>,</literal> separator. To learn more about the available
             instructions have a look at the <ulink url='http://www.aqute.biz/Code/Bnd'>BND tool</ulink>.</para>
+        <para>instruction の第1引数はプロパティのキー、第2引数は値を指定する。
+            それらはGradleによって <literal>,</literal> で結合される。
+            利用可能な instruction の詳細については <ulink url='http://www.aqute.biz/Code/Bnd'>BND tool</ulink> を参照。</para>
     </section>
 </chapter>
