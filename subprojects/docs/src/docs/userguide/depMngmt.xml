@@ -513,7 +513,7 @@
             <para role="original">Quite often certain jars are not in the official Maven repository for licensing reasons (e.g. JTA),
                 but its POMs are.
             </para>
-            あるjarが、POM上にはあるのに、ライセンス上の理由からMavenの公式リポジトリ上にないということは大変よくあることです(JTAとか)。
+            <para>あるjarが、POM上にはあるのに、ライセンス上の理由からMavenの公式リポジトリ上にないということは大変よくあることです(JTAとか)。</para>
             <sample id="mavenCentralJarRepo" dir="userguide/artifacts/defineRepository" title="Mavenリポジトリをいくつか追加する / Adding several Maven repositories">
                 <sourcefile file="build.gradle" snippet="maven-central-jar-repo"/>
             </sample>
@@ -568,55 +568,64 @@
             <para>これで、依存関係を取得するリポジトリとして、複数のディレクトリが追加されました。このフラットディレクトリ・リゾルバのみ使うのであれば、依存関係定義ですべての属性を定義する必要はありません。<xref linkend='para:dependencies_with_empty_attributes'/>をご参照ください。</para>
         </section>
         <section>
-            <title>定義済みリポジトリについての追加情報<phrase role="original">More about preconfigured repositories</phrase></title>
+            <title>定義済みリポジトリについての補足<phrase role="original">More about preconfigured repositories</phrase></title>
             <para role="original">The methods above for creating preconfigured repositories share some common behavior. For all of them, defining
                 a name for the repository is optional. If no name is defined a default name is calculated, depending on the
                 type of the repository. You might want to assign a name, if you want to access the declared repository. For example
                 if you want to use it also for uploading your project artifacts. An explicit name might also be helpful when
                 studying the debug output.
             </para>
-            <para>これまで紹介してきた、定義済みのリポジトリを追加するためのメソッドには、共通する振る舞いがあります。オプションとしてリポジトリ名を定義できるのです。もしリポジトリ名が定義されていなければ、リポジトリの形式に依存したデフォルトの名前が生成されます。リポジトリ定義にアクセスしたい場合には、名前を割り当てたくなるかもしれません。たとえば、プロジェクトのアーティファクトをアップロードする場合などです。明示的に命名すると、デバッグ出力を調査するときに役に立つこともあります。</para>
+            <para>これまで紹介してきた定義済みリポジトリの追加メソッドには、一つの共通した性質があります。オプションとしてリポジトリ名を定義できるのです。もしリポジトリ名が定義されていなければ、リポジトリの形式に依存したデフォルトの名前が生成されます。リポジトリ定義にアクセスしたい場合には、名前を割り当てたくなるかもしれません。たとえば、プロジェクトのアーティファクトをアップロードする場合などです。明示的に命名すると、デバッグ出力を調査するときに役に立つこともあります。</para>
             <para role="original">The values passed as arguments to the repository methods can be of any type, not just String. The value
                 that is actually used, is the <code>toString</code> result of the argument object.
             </para>
             <para>リポジトリ定義メソッドに引き渡す値は、必ずしも文字列である必要はなく、どんな型のオブジェクトでも渡すことができます。実際には、引き渡されたオブジェクトを<code>toString</code>で変換した結果が使用されるのです。</para>
         </section>
         <section id='sub:cache'>
-            <title>Cache</title>
-            <para>When Gradle downloads dependencies from remote repositories it stores them in a local cache located at
+            <title>キャッシュ<phrase role="original">Cache</phrase></title>
+            <para role="original">When Gradle downloads dependencies from remote repositories it stores them in a local cache located at
                 <literal>USER_HOME/.gradle/cache</literal>. When Gradle downloads dependencies from one of its
                 predefined local resolvers (e.g. Flat Directory resolver), the cache is not used as an intermediate
                 storage for dependency artifacts. The cache is always used for caching module descriptors.
             </para>
+            <para>リモートリポジトリからダウンロードされた依存関係は、<literal>USER_HOME/.gradle/cache</literal>にローカルキャッシュとして保存されます。一方、定義済みのローカルリゾルバ(フラットディレクトリ・リゾルバなど)から依存関係を取得した場合、ローカルキャッシュは依存ファイルの中間ストレージとしては使用されません。ただし、どちらの場合も、依存関係のディスクリプタは常にローカルキャッシュに保存されます。</para>
         </section>
         <section id='sub:more_about_ivy_resolvers'>
-            <title>More about Ivy resolvers</title>
+            <title>Ivyリゾルバについての補足<phrase role="original">More about Ivy resolvers</phrase></title>
             <para>Gradle, thanks to Ivy under its hood, is extremely flexible regarding repositories:
             </para>
+            Gradleは、水面下でIvyを使っているおかげで、とても柔軟にリポジトリを取り扱うことができます。たとえば、
             <itemizedlist>
                 <listitem>
-                    <para>There are many options for the protocol to communicate with the repository (e.g. filesystem,
+                    <para role="original">There are many options for the protocol to communicate with the repository (e.g. filesystem,
                         http, ssh, ...)
                     </para>
+                    リポジトリと通信する方法(ファイルシステムから、httpで、またはsshを使って、etc...)がたくさん用意されている
                 </listitem>
                 <listitem>
-                    <para>Each repository can have its own layout.
+                    <para role="original">Each repository can have its own layout.
                     </para>
+                    <para>一つ一つのリポジトリが、それぞれ独自のレイアウトを持つことができる</para>
                 </listitem>
             </itemizedlist>
-            <para>Let's say, you declare a dependency on the
+            <para role="original">Let's say, you declare a dependency on the
                 <literal>junit:junit:3.8.2</literal> library.
                 Now how does Gradle find it in the repositories? Somehow the dependency information has to be mapped to a
                 path. In contrast to Maven, where this path is fixed, with Gradle you can define a pattern that defines
                 what the path will look like. Here are some examples:
                 <footnote>
-                    <para>At
+                    <para role="original">At
                         <ulink url='http://ant.apache.org/ivy/history/latest-milestone/concept.html'/>
                         you can learn more about ivy patterns.
                     </para>
                 </footnote>
             </para>
-            <programlisting><![CDATA[
+            <para><literal>junit:junit:3.8.2</literal>へ依存していることを定義したとしましょう。このとき、Gradleはどのようにしてリポジトリからjunitを探すのでしょうか。そのためには、なんとかしてこの依存関係情報をファイルパスに変換する必要があります。Mavenではその変換方法は変更できませんが、Gradleではパスをどのように決定するか、そのパターンを自分で定義できます。たとえば、
+                <footnote>
+                    <para>ivyパターンについては<ulink url='http://ant.apache.org/ivy/history/latest-milestone/concept.html'/>で詳細な情報を知ることができます。</para>
+                </footnote>
+            </para>
+            <para role="original"><![CDATA[
 // Maven2 layout (if a repository is marked as Maven2 compatible, the organization (group) is split into subfolders according to the dots.)
 someroot/[organisation]/[module]/[revision]/[module]-[revision].[ext]
 
@@ -625,61 +634,81 @@ someroot/[organisation]/[module]/[revision]/[type]s/[artifact].[ext]
 
 // Simple layout (the organization is not used, no nested folders.)
 someroot/[artifact]-[revision].[ext]
+]]></para>
+            <programlisting><![CDATA[
+// Maven2 レイアウト (Maven2と互換性があるとマークすれば、組織(グループ)フォルダは組織名のドットに従ってサブフォルダに分割される)
+someroot/[organisation]/[module]/[revision]/[module]-[revision].[ext]
+
+// 典型的なIvyリポジトリレイアウト(組織フォルダはサブフォルダに分割されない)
+someroot/[organisation]/[module]/[revision]/[type]s/[artifact].[ext]
+
+// シンプルなレイアウト(組織名は使用せず、フォルダをネストしない)
+someroot/[artifact]-[revision].[ext]
 ]]></programlisting>
-            <para>To add any kind of repository (you can pretty easy write your own ones) you can do:
+            <para role="original">To add any kind of repository (you can pretty easy write your own ones) you can do:
             </para>
-            <sample id="fileSystemResolver" dir="userguide/artifacts/excludesAndClassifiers" title="Definition of a custom repository">
+            <para>どんな種類のリポジトリでも、簡単に定義できます。</para>
+            <sample id="fileSystemResolver" dir="userguide/artifacts/excludesAndClassifiers" title="カスタムリポジトリの定義 / Definition of a custom repository">
                 <sourcefile file="build.gradle" snippet="file-system-resolver"/>
             </sample>
-            <para>An overview of which Resolvers are offered by Ivy and thus also by Gradle can be found
+            <para role="original">An overview of which Resolvers are offered by Ivy and thus also by Gradle can be found
                 <ulink url='http://ant.apache.org/ivy/history/latest-milestone/settings/resolvers.html'>here</ulink>. With
                 Gradle you just don't configure them via XML but directly via their API.
             </para>
+            <para>Ivyで(つまりGradleで)どんなリゾルバを使えるか、概要を<ulink url='http://ant.apache.org/ivy/history/latest-milestone/settings/resolvers.html'>ここ</ulink>で見ることができます。Gradleを使えば、XMLを経由することなく、直接これらのAPIを操作できます。</para>
         </section>
     </section>
     <section id='sec:strategies_of_transitive_dependency_management'>
-        <title>Strategies for transitive dependency management</title>
-        <para>Many projects rely on the <ulink url='http://repo1.maven.org/maven2'>Maven2 repository</ulink>. This is not
+        <title>推移的依存関係を管理するための戦略<phrase role="original">Strategies for transitive dependency management</phrase></title>
+        <para role="original">Many projects rely on the <ulink url='http://repo1.maven.org/maven2'>Maven2 repository</ulink>. This is not
             without problems.
         </para>
+        <para>多くのプロジェクトが、<ulink url='http://repo1.maven.org/maven2'>Maven2リポジトリ</ulink>をあてにしています。これには問題がないわけではありません。</para>
         <itemizedlist>
             <listitem>
-                <para>The IBibilio repository can be down or has a very long response time.
+                <para role="original">The IBibilio repository can be down or has a very long response time.
                 </para>
+                <para>IBibilioリポジトリはダウンする可能性もあり、レスポンスが返るまで長い時間がかかります。</para>
             </listitem>
             <listitem>
-                <para>The <literal>pom.xml</literal>'s of many projects have wrong information (as one example, the POM of
+                <para role="original">The <literal>pom.xml</literal>'s of many projects have wrong information (as one example, the POM of
                     <literal>commons-httpclient-3.0</literal> declares JUnit as a runtime dependency).
                 </para>
+                <para><literal>pom.xml</literal>に間違った情報を入れているプロジェクトがたくさんあります(たとえば、<literal>commons-httpclient-3.0</literal>はJUnitをruntime依存関係に設定している)。</para>
             </listitem>
             <listitem>
-                <para>For many projects there is not one right set of dependencies (as more or less imposed by the
+                <para role="original">For many projects there is not one right set of dependencies (as more or less imposed by the
                     <literal>pom</literal>
                     format).
                 </para>
+                「ただ一つの正当な依存関係」というものが決められないようなプロジェクトもたくさんあります。(つまり、<literal>pom</literal>の形式のせいで、押しつけられる依存関係が多すぎたり少なすぎたりすることがままあります。)
             </listitem>
         </itemizedlist>
-        <para>If your project relies on the IBibilio repository you are likely to need an additional custom repository,
+        <para role="original">If your project relies on the IBibilio repository you are likely to need an additional custom repository,
             because:
         </para>
+        <para>もしプロジェクトがIBibilioリポジトリに依存しているのであれば、カスタムリポジトリを追加することになるかもしれません。なぜなら、</para>
         <itemizedlist>
             <listitem>
-                <para>You might need dependencies that are not uploaded to IBibilio yet.
+                <para role="original">You might need dependencies that are not uploaded to IBibilio yet.
                 </para>
+                <para>まだIBibilioにアップロードされていない依存関係が必要になるかもしれません。</para>
             </listitem>
             <listitem>
-                <para>You want to deal properly with wrong metadata in a IBibilio <literal>pom.xml</literal>.
+                <para role="original">You want to deal properly with wrong metadata in a IBibilio <literal>pom.xml</literal>.
                 </para>
+                <para>IBibilioの<literal>pom.xml</literal>に誤ったメタデータが含まれているかもしれません。</para>
             </listitem>
             <listitem>
-                <para>You don't want to expose people who want to build your project, to the
+                <para role="original">You don't want to expose people who want to build your project, to the
                     downtimes or sometimes very long response times of IBibilio.
                 </para>
+                <para>IBibilioがダウンしたり調子が悪くなったりしたときでも、プロジェクトを正常にビルドできるようにしたいという場合もあります。</para>
             </listitem>
         </itemizedlist>
-        <para>It is not a big deal to set-up a custom repository.
+        <para role="original">It is not a big deal to set-up a custom repository.
             <footnote>
-                <para>If you want to shield your project from the downtimes of IBibilio things get more complicated. You
+                <para role="original">If you want to shield your project from the downtimes of IBibilio things get more complicated. You
                     probably want to set-up a repository proxy for this. In an enterprise environment this is rather
                     common. For an open source project it looks like overkill.
                 </para>
@@ -691,17 +720,26 @@ someroot/[artifact]-[revision].[ext]
             you have to lookup. All this is not really a big deal but in its sum it has an impact. Repository Manager like
             Artifactory or Nexus make this easier. But for example open source projects don't usually have a host for those products.
         </para>
-        <para>This is a reason why some projects prefer to store their libraries in their version control system. This
+        <para>カスタムリポジトリのセットアップ自体はたいした作業ではありませんが
+            <footnote>
+                <para>
+                    IBiblioのダウンからプロジェクトを防御したい場合は、もう少し複雑になります。おそらく、リポジトリのプロキシをセットアップすることになるでしょう。エンタープライズ環境では、むしろよくあるシチュエーションですが、オープンソースプロジェクトの場合は、やりすぎのように思えます。
+                </para>
+            </footnote>
+            、そのリポジトリを最新に保つ作業は単調で退屈なものになりがちです。新しいバージョンが出るたびに、新しいXML設定ファイルとディレクトリを作成しなければなりません。それに、そのカスタムリポジトリもまたダウンしたり、保守する必要があったりするインフラのひとつです。過去のビルドを再現できるようにするには、過去使用したすべてのライブラリをバックアップしておく必要があります。だんだんと複雑さが増していくことになるのです。一つ一つは本当に大したことではないかもしれませんが、積み重なっていけばやはり問題です。こういった作業を簡単にしてくれるArtifactoryやNexusはリポジトリ管理者にとって嬉しい存在ですが、たとえばオープンソースプロジェクトなどがいつもこのような受け入れ先を用意できるわけではありません。</para>
+        <para role="original">This is a reason why some projects prefer to store their libraries in their version control system. This
             approach is fully supported by Gradle. The libraries can be stored in a flat directory without any XML module
             descriptor files.  Yet Gradle offers complete transitive dependency management. You can use either client module
             dependencies to express the dependency relations, or artifact dependencies in case a first level dependency has no
             transitive dependencies. People can check out such a project from svn and have everything necessary to build it.
         </para>
-        <para>If you are working with a distributed version control system like Git you probably don't want to
+        <para>いくつかのプロジェクトが、使用しているライブラリをバージョン管理システムに入れたがるのはこのあたりが理由です。この方法は、Gradleでは完全にサポートされています。ライブラリを、XML設定ファイルを一切使用せず、ただローカルディレクトリに入れておくことができるのです。また、その場合でも、Gradleは推移的な依存関係を完全に管理できます。クライアントモジュール依存関係を使って依存関係のグラフを表現したり、推移的な依存関係がない場合は、アーティファクトオンリー記法を使ったりできます。こうしたプロジェクトは、SVNからチェックアウトされた段階で、ビルドに必要なすべてのものがそろっていることになります。</para>
+        <para role="original">If you are working with a distributed version control system like Git you probably don't want to
         use the version control system to store libraries as people check out the whole history. But even here the flexibility
         of Gradle can make your life easier. For example you can use a shared flat directory without XML descriptors and
         yet you can have full transitive dependency management as described above.</para>
-        <para>You could also have a mixed strategy. If your main concern is bad metadata in the <literal>pom.xml</literal> and maintaining
+    <para>Gitのような分散バージョン管理システムを使っている場合は、リポジトリにライブラリを格納したくないかもしれません。ユーザーがリポジトリの履歴をすべてチェックアウトする必要があるからです。しかし、たとえこのような場合でも、Gradleの柔軟性はあなたの生活をイージーにしてくれます。たとえば、XMLリポジトリなしの共有ディレクトリを使うこともできます。そして、この場合でも上記の方法で推移的な依存関係は完全に管理できるのです。</para>
+        <para role="original">You could also have a mixed strategy. If your main concern is bad metadata in the <literal>pom.xml</literal> and maintaining
             custom XML descriptors,
             <emphasis>Client Modules</emphasis>
             offer an alternative. But you can of course still use Maven2 repo and your custom repository as a
@@ -712,14 +750,16 @@ someroot/[artifact]-[revision].[ext]
             dependency management. Or you can only provide client modules for POMs with bad metadata. For the
             jars and the correct POMs you still use the remote repository.
         </para>
+        <para>これらを複合させた戦略をとることもあるでしょう。<literal>pom.xml</literal>の不良メタデータをなんとかしたい、カスタムPOMを使いたいということであれば、<emphasis>クライアントモジュール</emphasis>が一つの選択肢になります。しかし、そのときももちろんMaven2のリポジトリはそのまま使えますし、<emphasis>jarの取得だけ</emphasis>カスタムリポジトリを使い、<emphasis>推移的な</emphasis>依存関係の管理もそのままエンジョイできます。また、不良メタデータに代わるクライアントモジュールだけを用意することもできます。その場合、jarと正しいPOM情報の取得先については、今まで通りリモートリポジトリを使うということになります。</para>
         <section id='sub:implicit_transitive_dependencies'>
-            <title>Implicit transitive dependencies</title>
-            <para>There is another way to deal with transitive dependencies
+            <title>暗黙的な推移的依存関係<phrase role="original">Implicit transitive dependencies</phrase></title>
+            <para role="original">There is another way to deal with transitive dependencies
                 <emphasis>without</emphasis>
                 XML descriptor files. You can do this with Gradle, but we don't recommend it. We mention it for the sake
                 of completeness and comparison with other build tools.
             </para>
-            <para>The trick is to use only artifact dependencies and group them in lists. That way you have somehow
+            <para>XML設定ファイル<emphasis>なし</emphasis>で推移的な依存関係を取り扱う方法がもう一つあります。Gradleで実現できる方法ではありますが、私たちはこの方法を推奨していません。他のビルドツールと比較する目的で解説します。</para>
+            <para role="original">The trick is to use only artifact dependencies and group them in lists. That way you have somehow
                 expressed, what are your first level dependencies and what are transitive dependencies (see
                 <xref linkend="para:notation_collections"/>).
                 But the draw-back is, that for the Gradle dependency management all dependencies are considered first level dependencies. The
@@ -728,6 +768,7 @@ someroot/[artifact]-[revision].[ext]
                 task uses all dependencies, not just the first level dependencies. All in all, your build is less
                 maintainable and reliable than it could be when using client modules. And you don't gain anything.
             </para>
+            <para>そのトリックは、アーティファクトオンリー記法を使い、それらをリストでグループ化するというものです。この方法でも、なにが直接の依存関係で、何が推移的な依存関係なのか、なんとか表現することはできました(<xref linkend="para:notation_collections"/>を参照してください)。しかし、この方法の欠点は、Gradleの依存関係管理システムが、すべての依存関係を直接の依存関係として取り扱ってしまうことです。依存関係のレポートを出力させても正しい依存関係グラフは出てきませんし、<literal>compile</literal>タスクでも、直接的な依存関係だけでなく、すべての依存関係が使われてしまうことになります。クライアントモジュールを使った場合に比べると、大抵は保守性も信頼性も落ちてしまいますし、特にその分なにか利点があるわけでもありません。</para>
         </section>
     </section>
 </chapter>
