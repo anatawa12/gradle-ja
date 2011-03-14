@@ -53,7 +53,7 @@ libraries = [
         commons_io: 'commons-io:commons-io:1.4@jar',
         commons_lang: 'commons-lang:commons-lang:2.6@jar',
         dom4j: 'dom4j:dom4j:1.6.1@jar',
-        google_collections: 'com.google.collections:google-collections:1.0@jar',
+        guava: 'com.google.guava:guava:r08@jar',
         groovy: 'org.codehaus.groovy:groovy-all:1.7.8@jar',
         ivy: 'org.apache.ivy:ivy:2.2.0@jar',
         jaxen: 'jaxen:jaxen:1.1@jar',
@@ -339,7 +339,6 @@ configure(groovyProjects()) {
     ideaModule {
         scopes.RUNTIME.plus.add(configurations.detachedConfiguration(new DefaultSelfResolvingDependency(files { sourceSets.main.resources.srcDirs })))
         scopes.TEST.plus.add(configurations.detachedConfiguration(new DefaultSelfResolvingDependency(files { sourceSets*.resources*.srcDirs })))
-        beforeConfigured { module -> module.dependencies = [] }
     }
     eclipseClasspath {
         plusConfigurations.add(configurations.detachedConfiguration(new DefaultSelfResolvingDependency(files { sourceSets*.resources*.srcDirs*.findAll { it.isDirectory() }} )))
@@ -585,7 +584,7 @@ def runtimeProjects() {
 }
 
 def pluginProjects() {
-    ['plugins', 'codeQuality', 'jetty', 'antlr', 'wrapper', 'osgi', 'maven', 'eclipse', 'idea', 'announce', 'scala'].collect {
+    ['plugins', 'codeQuality', 'jetty', 'antlr', 'wrapper', 'osgi', 'maven', 'eclipse', 'idea', 'announce', 'scala', 'sonar'].collect {
         project(it)
     }
 }
@@ -595,6 +594,7 @@ switch (System.getProperty("user.name")) {
         allprojects {
             tasks.withType(Test) {
                 maxParallelForks = 1
+                forkEvery = 0
             }
         }
         break

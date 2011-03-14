@@ -451,12 +451,12 @@
             <output args="-q files"/>
         </sample>
         <para role="original">The <code>Configuration.files</code> method always retrieves all artifacts of the <emphasis>whole</emphasis> configuration. It
-        then filters the retrieved files by specified dpendencies. As you can see in the example, transitive dependencies are included.
+        then filters the retrieved files by specified dependencies. As you can see in the example, transitive dependencies are included.
         </para>
         <para><code>Configuration.files</code>は、常にすべてのコンフィギュレーションに含まれるすべてのアーティファクトを取得します。ここでは、取得したファイルを依存関係名でフィルタして表示しました。この例の通り、推移的な依存関係も含まれています。</para>
         <para role="original">You can also copy a configuration. You can optionally specify that only a subset of dependencies from the orginal configuration
             should be copied. The copying methods come in two flavors. The <code>copy</code> method copies only the dependencies belonging
-            explicitly to the configuration. The <code>copyRecursive</code> methode copies all the dependencies, including the dependencies from extended
+            explicitly to the configuration. The <code>copyRecursive</code> method copies all the dependencies, including the dependencies from extended
             configurations.
         </para>
         <para>コンフィギュレーションはコピーすることもできます。さらに、元のコンフィギュレーションから一部の依存関係のみコピーするといったこともできます。コピー用のメソッドは二つ用意されており、そのうちの一つ、<code>copy</code>メソッドは、明示的にコンフィギュレーションに所属させた依存関係のみコピーします。もう一つの<code>copyRecursive</code>メソッドは、継承元のコンフィギュレーションに属しているものも含めすべての依存関係をコピーするものです。</para>

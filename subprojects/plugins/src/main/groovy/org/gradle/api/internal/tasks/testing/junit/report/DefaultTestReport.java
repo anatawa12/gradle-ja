@@ -27,7 +27,6 @@ import org.xml.sax.InputSource;
 import javax.xml.parsers.DocumentBuilderFactory;
 import java.io.*;
 import java.math.BigDecimal;
-import java.text.DecimalFormat;
 
 public class DefaultTestReport implements TestReporter {
     private File resultDir;
@@ -60,7 +59,7 @@ public class DefaultTestReport implements TestReporter {
 
     private void mergeFromFile(File file, AllTestResults model) {
         try {
-            FileInputStream inputStream = new FileInputStream(file);
+            InputStream inputStream = new FileInputStream(file);
             Document document;
             try {
                 document = DocumentBuilderFactory.newInstance().newDocumentBuilder().parse(new InputSource(inputStream));
@@ -72,9 +71,8 @@ public class DefaultTestReport implements TestReporter {
                 Element testCase = (Element) testCases.item(i);
                 String className = testCase.getAttribute("classname");
                 String testName = testCase.getAttribute("name");
-                DecimalFormat format = new DecimalFormat("#.#");
-                format.setParseBigDecimal(true);
-                BigDecimal duration = (BigDecimal) format.parse(testCase.getAttribute("time"));
+                LocaleSafeDecimalFormat format = new LocaleSafeDecimalFormat();
+                BigDecimal duration = format.parse(testCase.getAttribute("time"));
                 duration = duration.multiply(BigDecimal.valueOf(1000));
                 NodeList failures = testCase.getElementsByTagName("failure");
                 TestResult testResult = model.addTest(className, testName, duration.longValue());
@@ -82,6 +80,13 @@ public class DefaultTestReport implements TestReporter {
                     Element failure = (Element) failures.item(j);
                     testResult.addFailure(failure.getAttribute("message"), failure.getTextContent());
                 }
+            }
+            NodeList ignoredTestCases = document.getElementsByTagName("ignored-testcase");
+            for (int i = 0; i < ignoredTestCases.getLength(); i++) {
+                Element testCase = (Element) ignoredTestCases.item(i);
+                String className = testCase.getAttribute("classname");
+                String testName = testCase.getAttribute("name");
+                model.addTest(className, testName, 0).ignored();
             }
             String suiteClassName = document.getDocumentElement().getAttribute("name");
             ClassTestResults suiteResults = model.addTestClass(suiteClassName);
@@ -117,13 +122,15 @@ public class DefaultTestReport implements TestReporter {
 
     private <T extends CompositeTestResults> void generatePage(T model, PageRenderer<T> renderer, File outputFile) throws IOException {
         outputFile.getParentFile().mkdirs();
-        PrintWriter writer = new PrintWriter(new OutputStreamWriter(new FileOutputStream(outputFile), "utf-8"));
+        OutputStream outputStream = new FileOutputStream(outputFile);
         try {
+            PrintWriter writer = new PrintWriter(new OutputStreamWriter(outputStream, "utf-8"));
             writer.println("<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.01//EN\" \"http://www.w3.org/TR/html4/strict.dtd\">");
             MarkupBuilder markupBuilder = new MarkupBuilder(new IndentPrinter(writer, ""));
             renderer.render(markupBuilder, model);
+            writer.flush();
         } finally {
-            writer.close();
+            outputStream.close();
         }
     }
 
@@ -134,18 +141,17 @@ public class DefaultTestReport implements TestReporter {
     }
 
     private void copyResource(String resourceName) throws IOException {
-        Writer writer;
         File cssFile = new File(reportDir, resourceName);
-        writer = new BufferedWriter(new FileWriter(cssFile));
+        OutputStream outputStream = new FileOutputStream(cssFile);
         try {
             InputStream cssResource = getClass().getResourceAsStream(resourceName);
             try {
-                IOUtils.copy(cssResource, writer);
+                IOUtils.copy(cssResource, outputStream);
             } finally {
                 cssResource.close();
             }
         } finally {
-            writer.close();
+            outputStream.close();
         }
     }
 }

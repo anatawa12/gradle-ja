@@ -41,9 +41,11 @@ dependencies {
     testFixtures sourceSets.test.classes
 }
 
-task reportResources(type: Copy) {
-    from(configurations.reports)
-    into "${sourceSets.main.classesDir}/org/gradle/api/internal/tasks/testing/junit/report"
+task reportResources << {
+    copy {
+        from(configurations.reports)
+        into "${sourceSets.main.classesDir}/org/gradle/api/internal/tasks/testing/junit/report"
+    }
 }
 
 classes.dependsOn reportResources
@@ -67,5 +69,6 @@ eclipseClasspath {
 
 test {
     exclude 'org/gradle/api/internal/tasks/testing/junit/ATestClass*.*'
+    exclude 'org/gradle/api/internal/tasks/testing/junit/ABroken*TestClass*.*'
     jvmArgs '-Xms128m', '-Xmx256m', '-XX:+HeapDumpOnOutOfMemoryError'
 }

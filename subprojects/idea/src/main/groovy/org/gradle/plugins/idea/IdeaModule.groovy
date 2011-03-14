@@ -17,21 +17,31 @@ package org.gradle.plugins.idea
 
 import org.gradle.api.internal.artifacts.dependencies.DefaultExternalModuleDependency
 import org.gradle.api.specs.Specs
-import org.gradle.api.tasks.*
-import org.gradle.api.artifacts.ProjectDependency
-import org.gradle.api.artifacts.ExternalDependency
-import org.gradle.api.artifacts.ResolvedConfiguration
-import org.gradle.api.artifacts.SelfResolvingDependency
-import org.gradle.api.artifacts.ResolvedDependency
-import org.gradle.api.artifacts.Dependency
-import org.gradle.api.artifacts.Configuration
+import org.gradle.api.tasks.Input
+import org.gradle.api.tasks.Optional
+import org.gradle.api.tasks.XmlGeneratorTask
+import org.gradle.plugins.idea.model.Module
 import org.gradle.plugins.idea.model.ModuleLibrary
 import org.gradle.plugins.idea.model.Path
-import org.gradle.plugins.idea.model.PathFactory
-import org.gradle.plugins.idea.model.Module
+import org.gradle.api.artifacts.*
 
 /**
  * Generates an IDEA module file.
+ * <p>
+ * Usually it is not necessary to configure ideaModule directly because applying the 'idea' plugin on projects should be enough.
+ * However, if you need to do it here's how:
+ * <pre>
+ * allprojects {
+ *   apply plugin: 'java'
+ *   apply plugin: 'idea'
+ * }
+ *
+ * project(':model') {
+ *   ideaModule {
+ *     moduleName = 'database-model'
+ *   }
+ * }
+ * </pre>
  *
  * @author Hans Dockter
  */
@@ -113,8 +123,11 @@ public class IdeaModule extends XmlGeneratorTask<Module> {
      */
     Map<String, Map<String, Configuration>> scopes = [:]
 
+    Module moduleModel
+
     @Override protected Module create() {
-        return new Module(xmlTransformer, pathFactory)
+        configurePathFactory(moduleModel)
+        return moduleModel
     }
 
     @Override protected void configure(Module module) {
@@ -158,7 +171,7 @@ public class IdeaModule extends XmlGeneratorTask<Module> {
         if (scopes[scope]) {
             return getScopeDependencies(scopes[scope], { it instanceof ProjectDependency }).collect { ProjectDependency dependency ->
                 def project = dependency.dependencyProject
-                new org.gradle.plugins.idea.model.ModuleDependency(project.name, scope)
+                new org.gradle.plugins.idea.model.ModuleDependency(project.ideaModule.moduleName, scope)
             }
         }
         return []
@@ -272,15 +285,71 @@ public class IdeaModule extends XmlGeneratorTask<Module> {
     }
 
     protected Path getPath(File file) {
-        return pathFactory.path(file)
+        return moduleModel.pathFactory.path(file)
     }
 
-    protected PathFactory getPathFactory() {
-        PathFactory factory = new PathFactory()
-        factory.addPathVariable('MODULE_DIR', getOutputFile().parentFile)
+    def configurePathFactory(Module moduleModel) {
+        moduleModel.pathFactory.addPathVariable('MODULE_DIR', getOutputFile().parentFile)
         variables.each { key, value ->
-            factory.addPathVariable(key, value)
+            moduleModel.pathFactory.addPathVariable(key, value)
         }
-        return factory
+    }
+
+    /**
+     * Configures output *.iml file. It's <b>optional</b> because the task should configure it correctly for you
+     * (including making sure it is unique in the multi-module build).
+     * If you really need to change the output file name it is much easier to do it via the <b>moduleName</b> property.
+     * <p>
+     * Please refer to documentation on <b>moduleName</b> property. In IntelliJ IDEA the module name is the same as the name of the *.iml file.
+     *
+     * @return
+     */
+    File getOutputFile() {
+        //this getter lives here only for the sake of generating the DSL documentation.
+        return super.outputFile
+    }
+
+    /**
+     * Configures module name. It's <b>optional</b> because the task should configure it correctly for you.
+     * By default it will try to use the <b>project.name</b> or prefix it with a part of a <b>project.path</b>
+     * to make sure the moduleName is unique in the scope of a multi-module build.
+     * The 'uniqeness' of a module name is required for correct import
+     * into IntelliJ IDEA and the task will make sure the name is unique.
+     * <p>
+     * <b>moduleName</b> is a synthethic property that actually modifies the <b>outputFile</b> property value.
+     * This means that you should not configure both moduleName and outputFile at the same time. moduleName is recommended.
+     * <p>
+     * However, in case you really need to override the default moduleName this is the way to go:
+     * <pre>
+     * project(':someProject') {
+     *    ideaModule {
+     *      moduleName = 'some-important-project'
+     *    }
+     * }
+     * </pre>
+     * <p>
+     * <b>since</b> 1.0-milestone-2
+     * <p>
+     * @return
+     */
+    String getModuleName() {
+        return outputFile.name.replaceFirst(/\.iml$/,"");
+    }
+
+    void setModuleName(String moduleName) {
+        outputFile = new File(outputFile.parentFile, moduleName + ".iml")
+    }
+
+    Collection<String> getCandidateNames() {
+        def out = []
+        def p = project.parent
+        def currentName = getModuleName()
+        out << currentName
+        while (p) {
+            currentName = p.name + "-" + currentName
+            out.add(currentName)
+            p = p.parent
+        }
+        return out
     }
 }

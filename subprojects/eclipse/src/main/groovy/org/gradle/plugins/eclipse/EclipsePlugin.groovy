@@ -51,11 +51,24 @@ class EclipsePlugin extends IdePlugin {
     @Override protected void onApply(Project project) {
         lifecycleTask.description = 'Generates all Eclipse files.'
         cleanTask.description = 'Cleans all Eclipse files.'
+        configureEclipseConfigurer(project)
         configureEclipseProject(project)
         configureEclipseClasspath(project)
         configureEclipseJdt(project)
         configureEclipseWtpComponent(project)
         configureEclipseWtpFacet(project)
+    }
+
+    def configureEclipseConfigurer(Project project) {
+        def root = project.rootProject
+        def task = root.tasks.findByName('eclipseConfigurer')
+        //making sure configurer is created once and added to the root project only
+        if (!task) {
+            task = root.task('eclipseConfigurer', description: 'Performs extra configuration on eclipse generator tasks', type: EclipseConfigurer)
+            addWorker(task)
+        }
+        //making sure configurer before generator tasks
+        project.tasks.withType(DependsOnConfigurer) { it.dependsOn(task)}
     }
 
     private void configureEclipseProject(Project project) {
@@ -121,7 +134,8 @@ class EclipsePlugin extends IdePlugin {
                             whenConfigured { Classpath classpath ->
                                 for (entry in classpath.entries) {
                                     if (entry instanceof Library) {
-                                        entry.entryAttributes['org.eclipse.jst.component.dependency'] = '../' // TODO: what's the correct value here?
+                                        // '../' and '/WEB-INF/lib' both seem to be correct (and equivalent) values here
+                                        entry.entryAttributes['org.eclipse.jst.component.dependency'] = '../'
                                     }
                                 }
                             }
@@ -159,7 +173,8 @@ class EclipsePlugin extends IdePlugin {
             }
 
             eachDependedUponProject(project) { otherProject ->
-                // require Java plugin because we need source sets and configurations
+                // require Java plugin because we need source set 'main'
+                // (in the absence of 'main', it probably makes no sense to write the file)
                 otherProject.plugins.withType(JavaPlugin) {
                     addEclipsePluginTask(otherProject, ECLIPSE_WTP_COMPONENT_TASK_NAME, EclipseWtpComponent) {
                         description = 'Generates the Eclipse WTP component settings file.'
