@@ -122,7 +122,7 @@
                 version conflicts, reports with dependency graphs are also very helpful. Such reports are another
                 feature of dependency management.
             </para>
-            <para>依存関係の定義では、どのバージョンのライブラリが必要なのかを別のライブラリから指定されることになります。これが依存関係の競合をよく引き起こすのです。ある別々のライブラリに依存しているとき、そのそれぞれが、同じライブラリの異なるバージョンを要求する場合があります。残念ながら、JVMではクラスパス上にバージョン違いの同じjarを混在させるのはまだ簡単なことではありません(<xref linkend='sub:dependency_management_and_java'/>参照)。Gradleは、どのようにバージョン競合を解決するかという戦略を提供します。デフォルトでは最新バージョンが使用されるようになっています。また、バージョン競合を解決する際には、依存関係をグラフにしたレポートを参照することが大きな助けになるでしょう。このようなレポートの生成が依存関係管理のもう一つの機能です。</para>
+            <para>依存関係の定義では、様々なライブラリが様々なバージョンのライブラリを要求します。これが依存関係の競合をよく引き起こすのです。つまり、同じライブラリの異なるバージョンが要求される場合があります。残念ながら、JVMではクラスパス上にバージョン違いの同じjarを混在させるのは、簡単なことではありません(<xref linkend='sub:dependency_management_and_java'/>参照)。Gradleは、どのようにバージョン競合を解決するかという戦略を提供します。デフォルトでは最新バージョンが使用されるようになっています。また、バージョン競合を解決する際には、依存関係をグラフにしたレポートを参照することが大きな助けになるでしょう。このようなレポートの生成が依存関係管理のもう一つの機能です。</para>
         </section>
         <section id='sub:dependency_management_and_java'>
             <title>依存関係の管理とJava<phrase role="original">Dependency management and Java</phrase></title>
@@ -366,7 +366,7 @@
                 Have also a look at the API documentation of <apilink class="org.gradle.api.artifacts.Dependency"/> and
                 <apilink class="org.gradle.api.artifacts.Configuration"/>.
             </para>
-            <para>あるコンフィギュレーションで除外設定を行った場合、そのコンフィギュレーションとそれを継承したコンフィギュレーションが解決されるときに、除外した推移的依存関係がすべての依存関係から取り除かれます。すべてのコンフィギュレーションからある依存関係を除外したい場合は、例にあるように、Groovyの展開演算子を使うことで簡単に実現できます。除外設定では、group名だけ、またはモジュール名だけで指定することもできますし、その両方で指定することもできます。APIドキュメントの<apilink class="org.gradle.api.artifacts.Dependency"/>と<apilink class="org.gradle.api.artifacts.Configuration"/>もご参照ください。</para>
+            <para>コンフィギュレーションに対して除外設定した場合、そのコンフィギュレーション(とそれを継承したコンフィギュレーション)に属する依存関係すべてから、指定した推移的依存関係が取り除かれます。すべてのコンフィギュレーションから、ある依存関係を除外したい場合は、例にあるように、Groovyの展開演算子を使うことで簡単に実現できます。除外設定では、group名だけ、またはモジュール名だけで指定することもできますし、その両方で指定することもできます。APIドキュメントの<apilink class="org.gradle.api.artifacts.Dependency"/>と<apilink class="org.gradle.api.artifacts.Configuration"/>もご参照ください。</para>
         </section>
         <section>
             <title>オプショナル属性<phrase role="original">Optional attributes</phrase></title>
