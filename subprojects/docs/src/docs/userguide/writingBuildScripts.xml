@@ -164,7 +164,8 @@
             <sample id="groovyBasics" dir="userguide/tutorial/groovy" title="Groovy JDKのメソッド / Groovy JDK methods">
                 <sourcefile file="build.gradle" snippet="groovyJdk"/>
             </sample>
-            <para>Have a look at <ulink url="http://groovy.codehaus.org/groovy-jdk/"/> for more details.</para>
+            <para role="original">Have a look at <ulink url="http://groovy.codehaus.org/groovy-jdk/"/> for more details.</para>
+            <para>詳細は<ulink url="http://groovy.codehaus.org/groovy-jdk/"/>をご参照ください。</para>
         </section>
         <section>
             <title>プロパティのアクセサ<phrase role="original">Property accessors</phrase></title>
