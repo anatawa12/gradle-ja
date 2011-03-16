@@ -19,20 +19,24 @@
     <para>本章では、ビルドスクリプトの記述についてもう少し詳しく見ていきます。</para>
 
     <section>
-        <title>The Gradle build language</title>
-        <para>Gradle provides a <firstterm>domain specific language</firstterm>, or DSL, for describing builds.
+        <title>Gradleビルド言語<phrase role="original">The Gradle build language</phrase></title>
+        <para role="original">Gradle provides a <firstterm>domain specific language</firstterm>, or DSL, for describing builds.
             This build language is based on Groovy, with some additions to make it easier to describe a build.
+        </para>
+        <para>
+        Gradleは、ビルドシステムを記述するための<firstterm>ドメイン特化言語</firstterm>(DSL)を提供します。
+        このビルド用言語は、Groovyをベースに、ビルドシステムの記述を簡単にするための機能をいくつか追加したものです。
         </para>
     </section>
     <section id='sec:project_api'>
-        <title>The Project API</title>
-        <para>In the tutorial in <xref linkend='tutorial_java_projects'/> we used, for example, the
+        <title>プロジェクトAPI<phrase role="original">The Project API</phrase></title>
+        <para role="original">In the tutorial in <xref linkend='tutorial_java_projects'/> we used, for example, the
             <literal>apply()</literal> method. Where does this method come from? We said earlier that the build script
             defines a project in Gradle. For each project in the build creates an instance of type
             <apilink class='org.gradle.api.Project'/> and associates this <classname>Project</classname> object with
             the build script. As the build script executes, it configures this <classname>Project</classname> object:
         </para>
-        <para>ここでは例として、<xref linkend='tutorial_java_projects'/>のチュートリアルで使用した<literal>apply()</literal>メソッドを取り上げます。このメソッドはどこから来たのでしょうか。前述のように、ビルドスクリプトはGradleプロジェクトを定義するものです。<classname>Project</classname>型のインスタンスが生成され、ビルドスクリプトに割り当てられます。ビルドスクリプトでは、プロジェクトオブジェクトは以下のように振る舞います。</para>
+        <para>たとえば、<xref linkend='tutorial_java_projects'/>のチュートリアルで使用した<literal>apply()</literal>メソッド、このメソッドはどこから来たのでしょうか。前述のように、ビルドスクリプトはGradleの「プロジェクト」を定義するものです。定義されたGradleのプロジェクトは、<classname>Project</classname>型のインスタンスを一つ生成して、ビルドスクリプトに割り当てます。ビルドが実行されたとき、このプロジェクトオブジェクトは以下のように振る舞います。</para>
         <tip>
             <title>ビルドスクリプトのリファレンスを見たいときは<phrase role="original">Getting help writing build scripts</phrase></title>
             <para role="original">Don't forget that your build script is simply Groovy code that drives the Gradle API. And the
@@ -60,7 +64,7 @@
             <classname>Project</classname> object.
         </para>
         <para>プロジェクトオブジェクトの<literal>name</literal>プロパティにアクセスして試してみましょう。</para>
-        <sample id="projectApi" dir="userguide/tutorial/projectApi" title="Accessing property of the Project object">
+        <sample id="projectApi" dir="userguide/tutorial/projectApi" title="Projectオブジェクトへのアクセス / Accessing property of the Project object">
             <sourcefile file="build.gradle" snippet="project-name"/>
             <output args="-q check"/>
         </sample>
@@ -71,7 +75,7 @@
             same name as a member of the <classname>Project</classname> object, you need to use the <literal>project</literal>
             property.
         </para>
-        <para>どちらの<literal>println</literal>も出力結果は同じです。はじめのprintlnはビルドスクリプトで定義されていないプロパティへのアクセスを暗黙のうちにプロジェクトオブジェクトに委譲しています。もう一方の例では、プロジェクトオブジェクトを返す<literal>project</literal>プロパティを使って<literal>name</literal>にアクセスしています。<literal>project</literal>プロパティはビルドスクリプト内でいつでもアクセスすることができます。プロジェクトオブジェクトのメンバーと同じ名前のプロパティやメソッドをビルドスクリプトに定義している場合は、<literal>project</literal>プロパティを使ってそれらのメンバーにアクセスすることになるでしょう。</para>
+        <para>どちらの<literal>println</literal>も出力結果は同じです。最初のprintlnは、ビルドスクリプトで定義されていないプロパティへのアクセスを、暗黙のうちにプロジェクトオブジェクトに委譲しています。もう一方の例では、プロジェクトオブジェクトを返す<literal>project</literal>プロパティを使って、<literal>name</literal>にアクセスしています。<literal>project</literal>プロパティには、ビルドスクリプトのどこからでもアクセスできます。プロジェクトオブジェクトのプロパティやメソッドと同名のものをビルドスクリプトに定義している場合は、<literal>project</literal>プロパティからアクセスすることになるでしょう。</para>
         <section>
             <title>標準のプロジェクトプロパティ<phrase role="original">Standard project properties</phrase></title>
             <para role="original">The <classname>Project</classname> object provides some standard properties, which are available in
@@ -95,7 +99,7 @@
                 <tr>
                     <td><literal>name</literal></td>
                     <td><classname>String</classname></td>
-                    <td>The name of the project directory.</td>
+                    <td>プロジェクトディレクトリの名前<phrase role="original">The name of the project directory.</phrase></td>
                 </tr>
                 <tr>
                     <td><literal>path</literal></td>
@@ -105,7 +109,7 @@
                 <tr>
                     <td><literal>description</literal></td>
                     <td><classname>String</classname></td>
-                    <td>A description for the project.</td>
+                    <td>プロジェクトの説明<phrase role="original">A description for the project.</phrase></td>
                 </tr>
                 <tr>
                     <td><literal>projectDir</literal></td>
@@ -136,75 +140,83 @@
         </section>
     </section>
     <section>
-        <title>The Script API</title>
-        <para>When Gradle executes a script, it compiles the script into a class which implements <apilink class="org.gradle.api.Script"/>.
+        <title>スクリプトAPI<phrase role="original">The Script API</phrase></title>
+        <para role="original">When Gradle executes a script, it compiles the script into a class which implements <apilink class="org.gradle.api.Script"/>.
             This means that all of the properties and methods declared by the <classname>Script</classname> interface
             are available in your script.
         </para>
+        <para>ビルドスクリプトが実行されるときは、スクリプトは<apilink class="org.gradle.api.Script"/>を実装したクラスにコンパイルされます。つまり、ビルドスクリプトでは<classname>Script</classname>インターフェースで宣言されているプロパティとメソッドを全て使うことができるということです。</para>
     </section>
     <section>
-        <title>Some Groovy basics</title>
-        <para>Groovy provides plenty of features for creating DSLs, and the Gradle build language takes advantage of these.
+        <title>Groovyの基本<phrase role="original">Some Groovy basics</phrase></title>
+        <para role="original">Groovy provides plenty of features for creating DSLs, and the Gradle build language takes advantage of these.
             Understanding how the build language works will help you when you write your build script, and in particular,
             when you start to write customs plugins and tasks.
         </para>
+        GroovyにはDSLを作るための機能が豊富に用意されていて、Gradleもその長所を活用しています。Gradleビルド言語がどういう仕組みで動いているか理解すれば、ビルドスクリプトを書くのに、特にカスタムプラグインやタスクを作り始めたときには役に立つはずです。
         <section>
             <title>Groovy JDK</title>
-            <para>
+            <para role="original">
                 Groovy adds lots of useful methods to JVM classes. For example, <classname>Iterable</classname> gets
                 an <literal>each</literal> method, which iterates over the elements of the <classname>Iterable</classname>:
             </para>
-            <sample id="groovyBasics" dir="userguide/tutorial/groovy" title="Groovy JDK methods">
+            <para>Groovyは、たくさんの便利なメソッドをJavaの標準クラスに追加しています。たとえば、<classname>Iterable</classname>には<literal>each</literal>というメソッドが追加されていて、要素を走査するときに次のように書くことができます。</para>
+            <sample id="groovyBasics" dir="userguide/tutorial/groovy" title="Groovy JDKのメソッド / Groovy JDK methods">
                 <sourcefile file="build.gradle" snippet="groovyJdk"/>
             </sample>
             <para>Have a look at <ulink url="http://groovy.codehaus.org/groovy-jdk/"/> for more details.</para>
         </section>
         <section>
-            <title>Property accessors</title>
-            <para>
+            <title>プロパティのアクセサ<phrase role="original">Property accessors</phrase></title>
+            <para role="original">
                Groovy automatically converts a property reference into a call to the appropriate getter or setter method.
             </para>
-            <sample id="groovyBasics" dir="userguide/tutorial/groovy" title="Property accessors">
+            <para>Groovyは、プロパティ参照を自動的にゲッター/セッターメソッドの呼び出しに変換してくれます。</para>
+            <sample id="groovyBasics" dir="userguide/tutorial/groovy" title="プロパティアクセサ / Property accessors">
                 <sourcefile file="build.gradle" snippet="propertyAccessors"/>
             </sample>
         </section>
         <section>
-            <title>Optional parentheses on method calls</title>
-            <para>
+            <title>メソッド呼び出し時のカッコを省略できる<phrase role="original">Optional parentheses on method calls</phrase></title>
+            <para role="original">
                 Parentheses are optional for method calls.
             </para>
-            <sample id="groovyBasics" dir="userguide/tutorial/groovy" title="Method call without parentheses">
+            <para>Groovyではメソッド呼び出しのカッコは省略できます。</para>
+            <sample id="groovyBasics" dir="userguide/tutorial/groovy" title="カッコなしのメソッド呼び出し / Method call without parentheses">
                 <sourcefile file="build.gradle" snippet="methodCallWithoutParentheses"/>
             </sample>
         </section>
         <section>
-            <title>List and map literals</title>
-            <para>
+            <title>リストリテラル、マップリテラル<phrase role="original">List and map literals</phrase></title>
+            <para role="original">
                 Groovy provides some shortcuts for defining <classname>List</classname> and <classname>Map</classname>
                 instances.
             </para>
-            <sample id="groovyBasics" dir="userguide/tutorial/groovy" title="List and map literals">
+            <para>Groovyでは、<classname>List</classname>や<classname>Map</classname>のインスタンスを作るときにショートカット記法が使えます。</para>
+            <sample id="groovyBasics" dir="userguide/tutorial/groovy" title="マップリテラル、リストリテラル / List and map literals">
                 <sourcefile file="build.gradle" snippet="listAndMapLiterals"/>
             </sample>
         </section>
         <section>
-            <title>Closures as the last parameter in a method</title>
-            <para>The Gradle DSL uses closures in many places. You can find out more about closures <ulink url="http://groovy.codehaus.org/Closures">here</ulink>.
+            <title>メソッド引数の最後にクロージャを使う<phrase role="original">Closures as the last parameter in a method</phrase></title>
+            <para role="original">The Gradle DSL uses closures in many places. You can find out more about closures <ulink url="http://groovy.codehaus.org/Closures">here</ulink>.
                 When the last parameter of a method is a closure, you can place the closure after the method call:
             </para>
-            <sample id="groovyBasics" dir="userguide/tutorial/groovy" title="Closure as method parameter">
+            <para>GradleのDSLでは、クロージャ(詳細は<ulink url="http://groovy.codehaus.org/Japanese+Closures">こちら</ulink>)を多用します。Groovyでは、メソッドの最後の引数がクロージャになっている場合、そのメソッドをクロージャをつけて呼び出すことができます。</para>
+            <sample id="groovyBasics" dir="userguide/tutorial/groovy" title="メソッドのクロージャ引数 / Closure as method parameter">
                 <sourcefile file="build.gradle" snippet="closureAsLastParam"/>
             </sample>
         </section>
         <section>
-            <title>Closure delegate</title>
-            <para>
+            <title>クロージャのdelegateオブジェクト<phrase role="original">Closure delegate</phrase></title>
+            <para role="original">
                 Each closure has a <literal>delegate</literal> object, which Groovy uses to look up variable and method
                 references which are not local variables or parameters of the closure. Gradle uses this for
                 <firstterm>configuration closures</firstterm>, where the <literal>delegate</literal> object is set to
                 the object to be configured.
             </para>
-            <sample id="groovyBasics" dir="userguide/tutorial/groovy" title="Closure delegates">
+            <para>すべてのクロージャは、<literal>delegate</literal>オブジェクトを持っています。クロージャ内では、(クロージャ引数やローカル変数以外の)変数やメソッドは<literal>delegate</literal>オブジェクトから検索されます。Gradleの<firstterm>設定用クロージャ</firstterm>では、<literal>delegate</literal>オブジェクトに設定対象のオブジェクトがセットされています。</para>
+            <sample id="groovyBasics" dir="userguide/tutorial/groovy" title="クロージャのdelegate / Closure delegates">
                 <sourcefile file="build.gradle" snippet="closureDelegates"/>
             </sample>
         </section>
