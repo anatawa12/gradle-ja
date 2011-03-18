@@ -155,7 +155,7 @@
     </section>
 
     <section id='sec:external_tools'>
-        <title>外部ツールやライブラリからログを出力する<phrase role="original">Logging from external tools and libraries</phrase></title>
+        <title>外部ツールやライブラリからのログについて<phrase role="original">Logging from external tools and libraries</phrase></title>
         <para role="original">Internally, Gradle uses Ant and Ivy. Both have their own logging system. Gradle redirects their logging
             output into the Gradle logging system. There is a 1:1 mapping from the Ant/Ivy log levels to the Gradle log
             levels, except the Ant/Ivy <literal>TRACE</literal> log level, which is mapped to Gradle
