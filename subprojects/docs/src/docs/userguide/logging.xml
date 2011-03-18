@@ -21,7 +21,7 @@
         addition to the ones you might normally see. Those levels are <emphasis>QUIET</emphasis> and
         <emphasis>LIFECYCLE</emphasis>. The latter is the default, and is used to report build progress.
     </para>
-    <para>ログは、ビルドツールの「ユーザーインターフェース」とも言えるものです。あまりにくどいと本当に重要な警告や問題が埋もれてしまいますが、何かおかしくなったとき、その原因を突き止めるための情報はとてもありがたいものです。Gradleでは、6つのログレベル(<xref linkend="logLevels"/>)を規定しています。だいたいはどこか見たことのあるログレベルだと思いますが、<emphasis>QUIET</emphasis>と<emphasis>LIFECYCLE</emphasis>の2つはGradle特有のものです。<emphasis>LIFECYCLE</emphasis>はデフォルトのログレベルで、ビルドプロセスの進行状況をレポートするために使われます。</para>
+    <para>ログは、ビルドツールのユーザーインターフェースとも言えるものです。あまりにくどいと本当に重要な警告や問題が埋もれてしまいますが、何かおかしくなったとき、その原因を突き止めるための情報はとてもありがたいものです。Gradleでは、6つのログレベル(<xref linkend="logLevels"/>)を規定しています。だいたいはどこか見たことのあるログレベルだと思いますが、<emphasis>QUIET</emphasis>と<emphasis>LIFECYCLE</emphasis>の2つはGradle特有のものです。<emphasis>LIFECYCLE</emphasis>はデフォルトのログレベルで、ビルドプロセスの進行状況をレポートするために使われます。</para>
     <table id="logLevels">
         <title>ログレベル<phrase role="original">Log levels</phrase></title>
         <thead>
