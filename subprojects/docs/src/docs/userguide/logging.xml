@@ -15,185 +15,196 @@
   -->
 <chapter id='logging' xmlns:xi="http://www.w3.org/2001/XInclude">
     <title>ロギング<phrase role="original">Logging</phrase></title>
-    <para>The log is the main 'UI' of a build tool. If it is too verbose, real warnings and problems are easily hidden
+    <para role="original">The log is the main 'UI' of a build tool. If it is too verbose, real warnings and problems are easily hidden
         by this. On the other hand you need the relevant information for figuring out if things have gone wrong. Gradle
         defines 6 log levels, as shown in <xref linkend="logLevels"/>. There are two Gradle-specific log levels, in
         addition to the ones you might normally see. Those levels are <emphasis>QUIET</emphasis> and
         <emphasis>LIFECYCLE</emphasis>. The latter is the default, and is used to report build progress.
     </para>
+    <para>ログは、ビルドツールの「ユーザーインターフェース」とも言えるものです。あまりにくどいと本当に重要な警告や問題が埋もれてしまいますが、何かおかしくなったとき、その原因を突き止めるための情報はとてもありがたいものです。Gradleでは、6つのログレベル(<xref linkend="logLevels"/>)を規定しています。だいたいはどこか見たことのあるログレベルだと思いますが、<emphasis>QUIET</emphasis>と<emphasis>LIFECYCLE</emphasis>の2つはGradle特有のものです。<emphasis>LIFECYCLE</emphasis>はデフォルトのログレベルで、ビルドプロセスの進行状況をレポートするために使われます。</para>
     <table id="logLevels">
-        <title>Log levels</title>
+        <title>ログレベル<phrase role="original">Log levels</phrase></title>
         <thead>
             <tr>
-                <td>Level</td>
-                <td>Used for</td>
+                <td>レベル<phrase role="original">Level</phrase></td>
+                <td>用途<phrase role="original">Used for</phrase></td>
             </tr>
         </thead>
         <tr>
             <td>ERROR</td>
-            <td>Error messages</td>
+            <td>エラーメッセージ<phrase role="original">Error messages</phrase></td>
         </tr>
         <tr>
             <td>QUIET</td>
-            <td>Important information messages</td>
+            <td>重要な情報メッセージ<phrase role="original">Important information messages</phrase></td>
         </tr>
         <tr>
             <td>WARNING</td>
-            <td>Warning messages</td>
+            <td>警告メッセージ<phrase role="original">Warning messages</phrase></td>
         </tr>
         <tr>
             <td>LIFECYCLE</td>
-            <td>Progress information messages</td>
+            <td>進行状況を示す情報メッセージ<phrase role="original">Progress information messages</phrase></td>
         </tr>
         <tr>
             <td>INFO</td>
-            <td>Information messages</td>
+            <td>情報メッセージ<phrase role="original">Information messages</phrase></td>
         </tr>
         <tr>
             <td>DEBUG</td>
-            <td>Debug messages</td>
+            <td>デバッグメッセージ<phrase role="original">Debug messages</phrase></td>
         </tr>
     </table>
     <section id='sec:choosing_a_log_level'>
-        <title>Choosing a log level</title>
-        <para>You can use the command line switches shown in <xref linkend='logLevelCommandLineOptions'/> to choose
+        <title>ログレベルの選択<phrase role="original">Choosing a log level</phrase></title>
+        <para role="original">You can use the command line switches shown in <xref linkend='logLevelCommandLineOptions'/> to choose
             different log levels. In <xref linkend='stacktraces'/> you find the command line switches which affect
             stacktrace logging.
         </para>
+        <para>表示させるログレベルは、コマンドラインオプション(<xref linkend='logLevelCommandLineOptions'/>)で変更できます。<xref linkend='stacktraces'/>には、スタックトレースログをどうするか指定する方法を載せています。</para>
         <table id='logLevelCommandLineOptions'>
-            <title>Log level command-line options</title>
+            <title>ログレベルに関するコマンドラインオプション<phrase role="original">Log level command-line options</phrase></title>
             <thead>
                 <tr>
-                    <td>Option</td>
-                    <td>Outputs Log Levels</td>
+                    <td>オプション<phrase role="original">Option</phrase></td>
+                    <td>出力ログレベル<phrase role="original">Outputs Log Levels</phrase></td>
                 </tr>
             </thead>
             <tr>
-                <td>no logging options</td>
-                <td>LIFECYCLE and higher</td>
+                <td>ロギングオプション未指定<phrase role="original">no logging options</phrase></td>
+                <td>LIFECYCLE以上<phrase role="original">LIFECYCLE and higher</phrase></td>
             </tr>
             <tr>
                 <td>
                     <literal>-q</literal>
                 </td>
-                <td>QUIET and higher</td>
+                <td>QUIET以上<phrase role="original">QUIET and higher</phrase></td>
             </tr>
             <tr>
                 <td>
                     <literal>-i</literal>
                 </td>
-                <td>INFO and higher</td>
+                <td>INFO以上<phrase role="original">INFO and higher</phrase></td>
             </tr>
             <tr>
                 <td>
                     <literal>-d</literal>
                 </td>
-                <td>DEBUG and higher (that is, all log messages)</td>
+                <td>DEBUG以上(要するに全部)<phrase role="original">DEBUG and higher (that is, all log messages)</phrase></td>
             </tr>
 
         </table>
         <table id='stacktraces'>
-            <title>Stacktrace command-line options</title>
+            <title>スタックトレースに関するコマンドラインオプション<phrase role="original">Stacktrace command-line options</phrase></title>
             <thead>
                 <tr>
-                    <td>Option</td>
-                    <td>Meaning</td>
+                    <td>オプション<phrase role="original">Option</phrase></td>
+                    <td>意味<phrase role="original">Meaning</phrase></td>
                 </tr>
             </thead>
             <tr>
-                <td>No stacktrace options</td>
-                <td>No stacktraces are printed to the console in case of a build error (e.g. a compile error). Only in
+                <td>スタックトレースオプション未指定<phrase role="original">No stacktrace options</phrase></td>
+                <td>ビルドエラー(コンパイルエラーとか)のスタックトレースはコンソールに表示されず、内部からの例外のみスタックトレースが表示される。ただし、ログレベルオプションで<literal>-d</literal>が指定されている場合、切り詰められたスタックトレースが常に表示される。<phrase role="original">No stacktraces are printed to the console in case of a build error (e.g. a compile error). Only in
                     case of internal exceptions will stacktraces be printed. If the loglevel option <literal>-d</literal>
-                    is chosen, truncated stacktraces are always printed.
+                    is chosen, truncated stacktraces are always printed.</phrase>
                 </td>
             </tr>
             <tr>
                 <td>
                     <literal>-s</literal>
                 </td>
-                <td>Truncated stacktraces are printed. We recommend this over full stacktraces. Groovy full stacktraces
+                <td>切り詰められたスタックトレースが表示される。Groovyのフルスタックトレースはあまりにうるさい(動的言語としての呼び出しメカニズムが色々出力され、<emphasis>自分の</emphasis>コードのどこがダメなのか有用な情報がでてこない)ので、こちらの切り詰め済みスタックトレースを推奨します。<phrase role="original">Truncated stacktraces are printed. We recommend this over full stacktraces. Groovy full stacktraces
                     are extremely verbose (Due to the underlying dynamic invocation mechanisms. Yet they usually do not
-                    contain relevant information for what has gone wrong in <emphasis>your</emphasis> code.)
+                    contain relevant information for what has gone wrong in <emphasis>your</emphasis> code.)</phrase>
                 </td>
             </tr>
             <tr>
                 <td>
                     <literal>-S</literal>
                 </td>
-                <td>The full stacktraces are printed out.</td>
+                <td>フルスタックトレースを表示する。<phrase role="original">The full stacktraces are printed out.</phrase></td>
             </tr>
 
         </table>
     </section>
     <section id='sec:sending_your_own_log_messages'>
-        <title>Writing your own log messages</title>
-        <para>A simple option for logging in your build file is to write messages to standard output. Gradle redirects
+        <title>ログメッセージを書く<phrase role="original">Writing your own log messages</phrase></title>
+        <para role="original">A simple option for logging in your build file is to write messages to standard output. Gradle redirects
             anything written to standard output to it's logging system at the <literal>QUIET</literal> log level.</para>
-        <sample id="logging_to_stdout" dir="userguide/tutorial/logging" title="Using stdout to write log messages">
+        <para>ログメッセージを書く簡単な方法は、標準出力に書き込むことです。Gradleは、標準出力に書かれたすべてのメッセージを、Gradleのロギングシステムに<literal>QUIET</literal>レベルでリダイレクトします。</para>
+        <sample id="logging_to_stdout" dir="userguide/tutorial/logging" title="ログに標準出力を使う / Using stdout to write log messages">
             <sourcefile file="build.gradle" snippet="use-println"/>
         </sample>
-        <para>Gradle also provides a <literal>logger</literal> property to a build script, which is an instance of
+        <para role="original">Gradle also provides a <literal>logger</literal> property to a build script, which is an instance of
             <apilink class="org.gradle.api.logging.Logger"/>. This interface extends the SLF4J
             <classname>Logger</classname> interface and adds a few Gradle specific methods to it. Below is an example
             of how this is used in the build script:
         </para>
-        <sample id="logging_ex" dir="userguide/tutorial/logging" title="Writing your own log messages">
+        <para>また、ビルドスクリプト内では<literal>logger</literal>プロパティも使えます。このプロパティには、<apilink class="org.gradle.api.logging.Logger"/>(SLF4Jの<classname>Logger</classname>インターフェースにGradle特有のメソッドを少し追加したもの)のインスタンスがセットされています。使い方は以下の例をご覧ください。</para>
+        <sample id="logging_ex" dir="userguide/tutorial/logging" title="自分でログメッセージを書く / Writing your own log messages">
             <sourcefile file="build.gradle" snippet="use-logger"/>
         </sample>
-        <para>You can also hook into Gradle's logging system from within other classes used in the build (classes from
+        <para role="original">You can also hook into Gradle's logging system from within other classes used in the build (classes from
             the <filename>buildSrc</filename> directory for example). Simply use an SLF4J logger. You can use this
             logger the same way as you use the provided logger in the build script.
         </para>
-        <sample id="logging_with_slf4j" dir="userguide/tutorial/logging" title="Using SLF4J to write log messages">
+        <para>さらに、ビルドで使っている別のクラス(たとえば<filename>buildSrc</filename>ディレクトリのクラス)の中から、Gradleのロギングシステムへログを出力することもできます。やり方も、ただSLF4Jのロガーを使えばいいだけです。このロガーは、ビルドスクリプトで使えるロガーと全く同じように使うことができます。</para>
+        <sample id="logging_with_slf4j" dir="userguide/tutorial/logging" title="SLF4Jでログを出力する / Using SLF4J to write log messages">
             <sourcefile file="build.gradle" snippet="use-slf4j"/>
         </sample>
     </section>
 
     <section id='sec:external_tools'>
-        <title>Logging from external tools and libraries</title>
-        <para>Internally, Gradle uses Ant and Ivy. Both have their own logging system. Gradle redirects their logging
+        <title>外部ツールやライブラリからログを出力する<phrase role="original">Logging from external tools and libraries</phrase></title>
+        <para role="original">Internally, Gradle uses Ant and Ivy. Both have their own logging system. Gradle redirects their logging
             output into the Gradle logging system. There is a 1:1 mapping from the Ant/Ivy log levels to the Gradle log
             levels, except the Ant/Ivy <literal>TRACE</literal> log level, which is mapped to Gradle
             <literal>DEBUG</literal> log level. This means the default Gradle log level will not show any Ant/Ivy output
             unless it is an error or a warning.
         </para>
-        <para>There are many tools out there which still use standard output for logging. By default, Gradle redirects
+        <para>内部的には、GradleはAntとIvyを使っています。どちらも、自身で独自のロギングシステムを持っています。Gradleはそれらのログ出力をGradleのロギングシステムにリダイレクトしているのです。Ant、Ivyのログレベルは、基本的にGradleのログレベルと1対1で対応しています(<literal>TRACE</literal>だけはGradleの<literal>DEBUG</literal>に対応)。つまり、Gradleのデフォルトログレベルだと、Ant、Ivyのメッセージはエラーやワーニングでないと出力されないと言うことです。</para>
+        <para role="original">There are many tools out there which still use standard output for logging. By default, Gradle redirects
             standard output to the <literal>QUIET</literal> log level and standard error to the <literal>ERROR</literal>
             level. This behavior is configurable. The project object provides a
             <apilink class="org.gradle.api.logging.LoggingManager"/>, which allows you to change the log levels that
             standard out or error are redirected to when your build script is evaluated.</para>
-        <sample id="project_stdout_capture" dir="userguide/tutorial/logging" title="Configuring standard output capture">
+        <para>ログに標準出力を使っているツールは、いまだにたくさんあります。デフォルトでは、Gradleは標準出力を<literal>QUIET</literal>レベルログに、標準エラーを<literal>ERROR</literal>レベルログにリダイレクトします。また、この動作は設定で変更可能です。プロジェクトオブジェクトの<apilink class="org.gradle.api.logging.LoggingManager"/>を使えば、ビルドスクリプト実行時の標準出力、標準エラーをどのログレベルにリダイレクトするか変更できるようになっています。</para>
+        <sample id="project_stdout_capture" dir="userguide/tutorial/logging" title="標準出力のキャプチャ設定 / Configuring standard output capture">
             <sourcefile file="build.gradle" snippet="capture-stdout"/>
         </sample>
-        <para>
+        <para role="original">
             To change the log level for standard out or error during task execution, tasks also provide a <apilink class="org.gradle.api.logging.LoggingManager"/>.
         </para>
-        <sample id="task_stdout_capture" dir="userguide/tutorial/logging" title="Configuring standard output capture for a task">
+        <para>さらに、タスク実行時のログリダイレクト設定も変更できるよう、タスクにも<apilink class="org.gradle.api.logging.LoggingManager"/>があります。</para>
+        <sample id="task_stdout_capture" dir="userguide/tutorial/logging" title="タスク実行時の標準出力キャプチャ設定 / Configuring standard output capture for a task">
             <sourcefile file="build.gradle" snippet="task-capture-stdout"/>
             <test args="logInfo"/>
         </sample>
-        <para>Gradle also provides integration with the Java Util Logging, Jakarta Commons Logging and Log4j logging
+        <para role="original">Gradle also provides integration with the Java Util Logging, Jakarta Commons Logging and Log4j logging
             toolkits. Any log messages which your build classes write using these logging toolkits will be redirected to
             Gradle's logging system.
         </para>
+        <para>Gradleは、Java標準のロギング実装や、Jakarta CommonsのCommons Logging、Log4jも統合しています。ビルドで使っているクラスが、これらのツールキットでログメッセージを出力すれば、すべてGradleのロギングシステムにリダイレクトされるでしょう。</para>
     </section>
 
     <section id="sec:changing_what_gradle_logs">
-        <title>Changing what Gradle logs</title>
-        <para>You can replace much of Gradle's logging UI with your own. You might do this, for example, if you want to
+        <title>Gradleがロギングするものを変更する<phrase role="original">Changing what Gradle logs</phrase></title>
+        <para role="original">You can replace much of Gradle's logging UI with your own. You might do this, for example, if you want to
             customize the UI in some way - to log more or less information, or to change the formatting. You replace
             the logging using the <apilink class="org.gradle.api.invocation.Gradle" method="useLogger"/> method. This
             is accessible from a build script, or an init script, or via the embedding API. Below is an example
             init script which changes how task execution and build completion is logged.
         </para>
-        <sample id="custom_logging_ui" dir="userguide/initScripts/customLogger" title="Customizing what Gradle logs">
+        <para>GradleのロギングUIを、独自のものに差し替えることができます。もっと多くの情報を出したい場合、また、逆に出力される情報を減らしたい場合、さらにログフォーマットを変えたいときなどに検討してください。ロギングを差し替えるには、ビルドスクリプトや初期化スクリプト、組み込みAPIからアクセスできる<apilink class="org.gradle.api.invocation.Gradle" method="useLogger"/>メソッドを使います。次の例では、初期化スクリプトを使って、タスク実行、ビルドの完了をロギングする方法を変更しています。</para>
+        <sample id="custom_logging_ui" dir="userguide/initScripts/customLogger" title="Gradleがロギングするものを変更する / Customizing what Gradle logs">
             <sourcefile file="init.gradle"/>
             <output args="-I init.gradle build"/>
         </sample>
-        <para>Your logger can implement any of the listener interfaces listed below.
+        <para><phrase role="original">Your logger can implement any of the listener interfaces listed below.
             When you register a logger, only the logging for the interfaces that it implements is replaced. Logging
             for the other interfaces is left untouched.
-            You can find out more about the listener interfaces in <xref linkend="build_lifecycle_events"/>.
+            You can find out more about the listener interfaces in <xref linkend="build_lifecycle_events"/>.</phrase>
+            独自ロガーは、以下にリストしたリスナーインターフェースを実装できます。登録したロガーのインターフェースに対応したロギングのみ差し替えられ、その他のロギングは変更されません。リスナーインターフェースの詳細については<xref linkend="build_lifecycle_events"/>をご参照ください。
             <itemizedlist>
                 <listitem><para><apilink class="org.gradle.BuildListener"/></para></listitem>
                 <listitem><para><apilink class="org.gradle.api.ProjectEvaluationListener"/></para></listitem>
