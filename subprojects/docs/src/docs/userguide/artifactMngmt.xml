@@ -14,15 +14,16 @@
   ~ limitations under the License.
   -->
 <chapter id="artifact_management" xmlns:xi="http://www.w3.org/2001/XInclude">
-    <title>Artifact Management</title>
+    <title>アーティファクトの管理<phrase role="original">Artifact Management</phrase></title>
     <section>
-        <title>Introduction</title>
-        <para>This chapter is about how you declare what are the artifacts of your project and how to work with
+        <title>はじめに<phrase role="original">Introduction</phrase></title>
+        <para role="original">This chapter is about how you declare what are the artifacts of your project and how to work with
             them (e.g. upload them). We define the artifacts of the projects as the files the project want to
             provide to the outside world. This can be a library or a distribution or any other file. Usually artifacts
             are archives, but not necessarily. In the Maven world a project can provide only one artifact. With Gradle
             a project can provide as many artifacts as needed.
         </para>
+        <para>この章では、プロジェクトのアーティファクト(成果物)を定義する方法と、アーティファクトの取り扱い方(アップロードする方法など)について解説します。Gradleでは、アーティファクトを「プロジェクトが外部へ公開したいファイル」と定義しています。普通は何らかのアーカイブになるかと思いますが、必ずしもはそうとは限りません。ライブラリだったり配布物だったり、その他いろいろなファイルがアーティファクトになりうるでしょう。Mavenの世界では、一つのプロジェクトにつき一つのアーティファクトしか公開できませんが、Gradleでは必要ならいくつでも公開することができます。</para>
     </section>
     <section id="artifacts_and_configurations">
         <title>Artifacts and configurations</title>
