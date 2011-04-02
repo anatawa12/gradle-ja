@@ -592,7 +592,7 @@
         </section>
         <section id='sub:more_about_ivy_resolvers'>
             <title>Ivyリゾルバについての補足<phrase role="original">More about Ivy resolvers</phrase></title>
-            <para>Gradle, thanks to Ivy under its hood, is extremely flexible regarding repositories:
+            <para role="original">Gradle, thanks to Ivy under its hood, is extremely flexible regarding repositories:
             </para>
             Gradleは、水面下でIvyを使っているおかげで、とても柔軟にリポジトリを取り扱うことができます。たとえば、
             <itemizedlist>
