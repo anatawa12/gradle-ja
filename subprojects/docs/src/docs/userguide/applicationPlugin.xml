@@ -14,7 +14,7 @@
   ~ limitations under the License.
   -->
 <chapter id='application_plugin'>
-    <title>The Application Plugin</title>
+    <title>アプリケーション プラグイン<phrase role="original">The Application Plugin</phrase></title>
     <para>The Gradle application plugin extends the language plugins with common application related tasks.
 	It allows running and bundling applications for the jvm.
 	</para>
