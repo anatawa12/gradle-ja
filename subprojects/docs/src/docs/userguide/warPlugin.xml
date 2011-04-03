@@ -15,29 +15,34 @@
   -->
 <chapter id='war_plugin' xmlns:xi="http://www.w3.org/2001/XInclude">
     <title>War プラグイン<phrase role="original">The War Plugin</phrase></title>
-    <para>The War plugin extends the Java plugin to add support for assembling web application WAR files.
+    <para role="original">The War plugin extends the Java plugin to add support for assembling web application WAR files.
         It disables the default JAR archive generation of the Java plugin and adds a default WAR archive task.
+    </para>
+    <para>War プラグインは WEB アプリケーションの WAR ファイルを生成できるように Java プラグインを拡張したものです。
+        Java プラグインの 標準の JAR ファイルは生成されなくなり、WAR アーカイブ タスクが追加されます。
     </para>
 
     <section>
-        <title>Usage</title>
-        <para>To use the War plugin, include in your build script:</para>
+        <title>使用方法<phrase role="original">Usage</phrase></title>
+        <para role="original">To use the War plugin, include in your build script:</para>
+        <para>War プラグインを使うためには、ビルドスクリプトに下記を含めます：</para>
         <sample id="useWarPlugin" dir="webApplication/quickstart" title="Using the War plugin">
             <sourcefile file="build.gradle" snippet="use-war-plugin"/>
         </sample>
     </section>
 
     <section>
-        <title>Tasks</title>
-        <para>The War plugin adds the following tasks to the project.</para>
+        <title>タスク<phrase role="original">Tasks</phrase></title>
+        <para role="original">The War plugin adds the following tasks to the project.</para>
+        <para>War プラグインは 次のタスクをプロジェクトに追加します。</para>
         <table>
-            <title>War plugin - tasks</title>
+            <title>War プラグイン - タスク<phrase role="original">War plugin - tasks</phrase></title>
             <thead>
                 <tr>
-                    <td>Task name</td>
-                    <td>Depends on</td>
-                    <td>Type</td>
-                    <td>Description</td>
+                    <td>タスク名<phrase role="original">Task name</phrase></td>
+                    <td>依存先<phrase role="original">Depends on</phrase></td>
+                    <td>型<phrase role="original">Type</phrase></td>
+                    <td>説明<phrase role="original">Description</phrase></td>
                 </tr>
             </thead>
             <tr>
@@ -48,15 +53,16 @@
                     <literal>compile</literal>
                 </td>
                 <td><apilink class="org.gradle.api.tasks.bundling.War"/></td>
-                <td>Assembles the application WAR file.</td>
+                <td>WAR ファイルを生成します。<phrase role="original">Assembles the application WAR file.</phrase></td>
             </tr>
         </table>
-        <para>The War plugin adds the following dependencies to tasks added by the Java plugin.</para>
+        <para role="original">The War plugin adds the following dependencies to tasks added by the Java plugin.</para>
+        <para>War プラグインは Java プラグインで追加されたタスクに対し、次の依存関係を追加します。</para>
         <table>
-            <title>War plugin - additional task dependencies</title>
+            <title>War プラグイン - 追加されたタスクの依存関係<phrase role="original">War plugin - additional task dependencies</phrase></title>
             <thead>
-                <td>Task name</td>
-                <td>Depends on</td>
+                <td>タスク名<phrase role="original">Task name</phrase></td>
+                <td>依存先<phrase role="original">Depends on</phrase></td>
             </thead>
             <tr>
                 <td>assemble</td>
@@ -64,7 +70,7 @@
             </tr>
         </table>
         <figure>
-            <title>War plugin - tasks</title>
+            <title>War プラグイン - タスク<phrase role="original">War plugin - tasks</phrase></title>
             <imageobject>
                 <imagedata fileref="img/warPluginTasks.png"/>
             </imageobject>
@@ -72,27 +78,27 @@
     </section>
 
     <section>
-        <title>Project layout</title>
+        <title>プロジェクトレイアウト<phrase role="original">Project layout</phrase></title>
         <table>
-            <title>War plugin - project layout</title>
+            <title>War プラグイン - プロジェクトレイアウト<phrase role="original">War plugin - project layout</phrase></title>
             <thead>
                 <tr>
-                    <td>Directory</td>
-                    <td>Meaning</td>
+                    <td>ディレクトリ<phrase role="original">Directory</phrase></td>
+                    <td>意味<phrase role="original">Meaning</phrase></td>
                 </tr>
             </thead>
             <tr>
                 <td>
                     <filename>src/main/webapp</filename>
                 </td>
-                <td>Web application sources</td>
+                <td>WEB アプリケーションソース<phrase role="original">Web application sources</phrase></td>
             </tr>
         </table>
     </section>
 
     <section>
-        <title>Dependency management</title>
-        <para>The War plugin adds two dependency configurations: <literal>providedCompile</literal> and
+        <title>依存関係の管理<phrase role="original">Dependency management</phrase></title>
+        <para role="original">The War plugin adds two dependency configurations: <literal>providedCompile</literal> and
             <literal>providedRuntime</literal>. Those configurations have the same scope as the respective
             <literal>compile</literal> and <literal>runtime</literal> configurations, except that they are not added to
             the WAR archive. It is important to note that those <literal>provided</literal> configurations work
@@ -103,18 +109,29 @@
             configuration. If you don't want this transitive behavior, simply declare your <literal>provided</literal>
             dependencies like <literal>commons-httpclient:commons-httpclient:3.0@jar</literal>.
         </para>
+        <para>War プラグインは <literal>providedCompile</literal> と <literal>providedRuntime</literal> の２つの依存構成を追加します。
+            これらの構成は WAR アーカイブには追加されないという点を除けば、それぞれ <literal>compile</literal>、<literal>runtime</literal>
+            と同じスコープを持ちます。 
+            <literal>provided</literal> 構成が推移的に機能することは特筆すべき点です。
+            そうですね。例えば provided 構成の何れかに <literal>commons-httpclient:commons-httpclient:3.0</literal> を追加したとします。
+            この依存ライブラリは <literal>commons-codec</literal> に依存します。
+            これは、たとえ、<literal>commons-codec</literal> が <literal>compile</literal> 構成に依存していることが明らかであったとしても
+            WAR ファイルには <literal>httpclient</literal> も <literal>commons-codec</literal> も追加されないことを意味します。
+            もし、この推移的な挙動を望まないのであれば、単純に <literal>commons-httpclient:commons-httpclient:3.0@jar</literal> を
+            dependencies の <literal>provided</literal> 構成に定義してください。
+        </para>
     </section>
 
     <section>
-        <title>Convention properties</title>
+        <title>規約プロパティ<phrase role="original">Convention properties</phrase></title>
         <table>
-            <title>War plugin - directory properties</title>
+            <title>War プラグイン - ディレクトリプロパティ<phrase role="original">War plugin - directory properties</phrase></title>
             <thead>
                 <tr>
-                    <td>Property name</td>
-                    <td>Type</td>
-                    <td>Default value</td>
-                    <td>Description</td>
+                    <td>プロパティ名<phrase role="original">Property name</phrase></td>
+                    <td>型<phrase role="original">Type</phrase></td>
+                    <td>デフォルト値<phrase role="original">Default value</phrase></td>
+                    <td>説明<phrase role="original">Description</phrase></td>
                 </tr>
             </thead>
             <tr>
@@ -128,7 +145,8 @@
                     <filename>src/main/webapp</filename>
                 </td>
                 <td>
-                    The name of the web application source directory, relative to the project directory.
+                    WEB アプリケーションソースディレクトリの名前、プロジェクトディレクトリからの相対パス
+                    <phrase role="original">The name of the web application source directory, relative to the project directory.</phrase>
                 </td>
             </tr>
             <tr>
@@ -136,32 +154,35 @@
                     <literal>webAppDir</literal>
                 </td>
                 <td>
-                    <classname>File</classname> (read-only)
+                    <classname>File</classname> (読取専用)<phrase role="original">(read-only)</phrase>
                 </td>
                 <td>
                     <filename><replaceable>projectDir</replaceable>/<replaceable>webAppDirName</replaceable></filename>
                 </td>
                 <td>
-                    The web application source directory.
+                    WEB アプリケーションソースディレクトリ
+                    <phrase role="original">The web application source directory.</phrase>
                 </td>
             </tr>
         </table>
 
-        <para>These properties are provided by a <apilink class="org.gradle.api.plugins.WarPluginConvention"/>
+        <para role="original">>These properties are provided by a <apilink class="org.gradle.api.plugins.WarPluginConvention"/>
             convention object.
+        </para>
+        <para>これらのプロパティは <apilink class="org.gradle.api.plugins.WarPluginConvention"/> オブジェクトによって提供されています。
         </para>
     </section>
 
     <section id='sec:default_settings'>
         <title>War</title>
 
-        <para>The default behavior of the War task is to copy the content of <literal>src/main/webapp</literal>
+        <para role="original">>The default behavior of the War task is to copy the content of <literal>src/main/webapp</literal>
             to the root of the archive. Your <literal>webapp</literal> directory may of course contain a
             <literal>WEB-INF</literal> sub-directory, which again may contain a <literal>web.xml</literal> file.
             Your compiled classes are compiled to <literal>WEB-INF/classes</literal>. All the dependencies of the
             <literal>runtime</literal>
             <footnote>
-                <para>The
+                <para role="original">The
                     <literal>runtime</literal>
                     configuration extends the
                     <literal>compile</literal>
@@ -169,18 +190,34 @@
                 </para>
             </footnote>
             configuration are copied to <literal>WEB-INF/lib</literal>.</para>
-        <para>Have also a look at <apilink class="org.gradle.api.tasks.bundling.War"/>.</para>
+         <para>War タスクは デフォルトでは <literal>src/main/webapp</literal> 配下のコンテンツを WAR アーカイブのルートにコピーします。
+            <literal>webapp</literal> ディレクトリには 当然 <literal>WEB-INF</literal> サブディレクトリが含まれるかもしれませんし、
+            更にその配下には <literal>web.xml</literal> ファイルが含まれるかもしれません。
+            クラスファイルは <literal>WEB-INF/classes</literal> にコンパイルされます。
+            <literal>runtime</literal>
+            <footnote>
+                <para><literal>runtime</literal> 構成は <literal>compile</literal> 構成を拡張したものです。</para>
+            </footnote>
+            構成の依存ライブラリは全て <literal>WEB-INF/lib</literal> にコピーされます。</para>
+        <para role="original">Have also a look at <apilink class="org.gradle.api.tasks.bundling.War"/>.</para>
+        <para><apilink class="org.gradle.api.tasks.bundling.War"/> も見てみてください。</para>
     </section>
     <section id='sec:customizing'>
-        <title>Customizing</title>
-        <para>Here is an example with the most important customization options:
+        <title>カスタマイズ<phrase role="original">Customizing</phrase></title>
+        <para role="original">Here is an example with the most important customization options:
+        </para>
+        <para>以下は最も重要なカスタマイズ例です。
         </para>
         <sample id="webproject" dir="webApplication/customised" title="Customization of war plugin">
             <sourcefile file="build.gradle"/>
         </sample>
-        <para>Of course one can configure the different file-sets with a closure to define excludes and includes.
+        <para role="original">Of course one can configure the different file-sets with a closure to define excludes and includes.
         </para>
-        <para>If you want to enable the generation of the default jar archive additional to the war archive just type:
+        <para>もちろん、excludes と includes を定義したクロージャを使って異なるファイルセットを設定することもできます。
+        </para>
+        <para role="original">If you want to enable the generation of the default jar archive additional to the war archive just type:
+        </para>
+        <para>WAR アーカイブに加えて デフォルトの JAR アーカイブを生成するようにしたいのであれば、以下を追加するだけでよいです。
         </para>
         <sample id="customisedWebApplication" dir="webApplication/customised" title="Generation of JAR archive in addition to WAR archive">
             <sourcefile file="build.gradle" snippet="enable-jar"/>
