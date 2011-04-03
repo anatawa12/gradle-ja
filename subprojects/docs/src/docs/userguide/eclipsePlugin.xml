@@ -15,7 +15,7 @@
   -->
 
 <chapter id="eclipse_plugin">
-    <title>The Eclipse Plugin</title>
+    <title>Eclipse プラグイン<phrase role="original">The Eclipse Plugin</phrase></title>
     
     <para>The Eclipse plugin generates files that are used by the <ulink url="http://eclipse.org">Eclipse IDE</ulink>, thus
         making it possible to import the project into Eclipse (<guimenuitem>File</guimenuitem> - <guimenuitem>Import...</guimenuitem> - <guimenuitem>Existing Projects into Workspace</guimenuitem>).
