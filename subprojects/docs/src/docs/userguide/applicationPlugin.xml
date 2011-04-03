@@ -15,43 +15,58 @@
   -->
 <chapter id='application_plugin'>
     <title>アプリケーション プラグイン<phrase role="original">The Application Plugin</phrase></title>
-    <para>The Gradle application plugin extends the language plugins with common application related tasks.
+    <para role="original">The Gradle application plugin extends the language plugins with common application related tasks.
 	It allows running and bundling applications for the jvm.
+    </para>
+    <para>Gradle アプリケーション プラグインは言語プラグインを一般的なアプリケーションの関連タスクで拡張しています。
+    JVM 用アプリケーションの実行 及び ビルドが可能です。
 	</para>
 
     <section>
-        <title>Usage</title>
-        <para>To use the application plugin, include in your build script:</para>
+        <title>使用方法<phrase role="original">Usage</phrase></title>
+        <para role="original">To use the application plugin, include in your build script:</para>
+        <para>アプリケーション プラグインを使うためには、ビルドスクリプトに下記を含めます：</para>
         <sample id="useApplicationPlugin" dir="application" title="Using the application plugin">
             <sourcefile file="build.gradle" snippet="use-plugin"/>
         </sample>
-        <para>To define the main-class for the application you have to set the <literal>mainClassName</literal> property as shown below</para>
+        <para role="original">To define the main-class for the application you have to set the <literal>mainClassName</literal> property as shown below</para>
+        <para>アプリケーションのメインクラスを定義するには、次のように <literal>mainClassName</literal> プロパティを設定するだけでよいです。</para>
         <sample id="useApplicationPlugin" dir="application" title="Configure the application main class">
             <sourcefile file="build.gradle" snippet="mainClassName-conf"/>
         </sample>
 
-        <para>Then, you can run the application by running <userinput>gradle run</userinput>. Gradle will take care of building the application classes,
+        <para role="original">Then, you can run the application by running <userinput>gradle run</userinput>. Gradle will take care of building the application classes,
             along with their runtime dependencies, and starting the application with the correct classpath.
         </para>
+        <para>あとは <userinput>gradle run</userinput> を実行するだけで、アプリケーションを実行することができます。
+            Gradle は アプリケーションクラスのビルドから 実行時の依存解決、 適切なクラスパスでのアプリケーションの起動まで全て面倒みてくれます。
+        </para>
 
-        <para>The plugin can also build a distribution for your application. The distribution will package up the runtime dependencies of the application
+        <para role="original">The plugin can also build a distribution for your application. The distribution will package up the runtime dependencies of the application
             along with some OS specific start scripts. You can run <userinput>gradle install</userinput> to create an image of the application in
             <filename>build/install/<replaceable>projectName</replaceable></filename>. You can run <userinput>gradle distZip</userinput> to create a
             ZIP containing the distribution.
         </para>
+        <para>このプラグインではアプリケーション用のディストリビューションをビルドすることもできます。
+            ディストリビューションには OS 依存の起動スクリプトと一緒に アプリケーションの実行時の依存ライブラリもパッケージングされます。
+            <userinput>gradle install</userinput> で <filename>build/install/<replaceable>projectName</replaceable></filename> 配下に
+            アプリケーションイメージを生成することができます。
+            <userinput>gradle distZip</userinput> で ディストリビューションを含む ZIP ファイルを生成することができます。
+        </para>
     </section>
 
     <section>
-        <title>Tasks</title>
-        <para>The Application plugin adds the following tasks to the project.</para>
+        <title>タスク<phrase role="original">Tasks</phrase></title>
+        <para role="original">The Application plugin adds the following tasks to the project.</para>
+        <para>アプリケーション プラグインは 次のタスクをプロジェクトに追加します。</para>
         <table>
-            <title>Application plugin - tasks</title>
+            <title>アプリケーション プラグイン - タスク<phrase role="original">Application plugin - tasks</phrase></title>
             <thead>
                 <tr>
-                    <td>Task name</td>
-                    <td>Depends on</td>
-                    <td>Type</td>
-                    <td>Description</td>
+                    <td>タスク名<phrase role="original">Task name</phrase></td>
+                    <td>依存先<phrase role="original">Depends on</phrase></td>
+                    <td>型<phrase role="original">Type</phrase></td>
+                    <td>説明<phrase role="original">Description</phrase></td>
                 </tr>
             </thead>
             <tr>
@@ -62,7 +77,7 @@
                     <literal>classes</literal>
                 </td>
                 <td><apilink class="org.gradle.api.tasks.JavaExec"/></td>
-                <td>Starts the application.</td>
+                <td>アプリケーションを起動します。<phrase role="original">Starts the application.</phrase></td>
             </tr>
             <tr>
                 <td>
@@ -72,7 +87,8 @@
                     <literal>jar</literal>
                 </td>
                 <td><apilink class="org.gradle.api.tasks.application.CreateStartScripts"/></td>
-                <td>Creates OS specific scripts to run the project as a JVM application.</td>
+                <td>プロジェクトを JVM アプリケーションとして実行するための OS 依存スクリプトを生成します。
+                    <phrase role="original">Creates OS specific scripts to run the project as a JVM application.</phrase></td>
             </tr>
             <tr>
                 <td>
@@ -82,7 +98,8 @@
                     <literal>jar</literal>, <literal>startScripts</literal>
                 </td>
                 <td><apilink class="org.gradle.api.tasks.Sync"/></td>
-                <td>Installs the application into a specified directory.</td>
+                <td>指定したディレクトリ配下にアプリケーションをインストールします。
+                    <phrase role="original">Installs the application into a specified directory.</phrase></td>
             </tr>
             <tr>
                 <td>
@@ -92,14 +109,17 @@
                     <literal>jar</literal>, <literal>startScripts</literal>
                 </td>
                 <td><apilink class="org.gradle.api.tasks.bundling.Zip"/></td>
-                <td>Creates a full distribution ZIP archive including runtime libraries and OS specific scripts.</td>
+                <td>実行ライブラリと OS 依存スクリプトを含んだ 完全なディストリビューション ZIP アーカイブを生成します。
+                    <phrase role="original">Creates a full distribution ZIP archive including runtime libraries and OS specific scripts.</phrase></td>
             </tr>
         </table>
     </section>
 
     <section>
-            <title>Convention properties</title>
-            <para>The application plugin adds some properties to the project, which you can use to configure its behaviour. See <apilink class="org.gradle.api.Project"/>.
+            <title>規約プロパティ<phrase role="original">Convention properties</phrase></title>
+            <para role="original">The application plugin adds some properties to the project, which you can use to configure its behaviour. See <apilink class="org.gradle.api.Project"/>.
+            </para>
+            <para>アプリケーション プラグインは いくつかのプロパティをプロジェクトに追加します。そのプロパティを設定すれば挙動が変えられます。詳しくは <apilink class="org.gradle.api.Project"/> を参照してください。
             </para>
     </section>
 </chapter>
