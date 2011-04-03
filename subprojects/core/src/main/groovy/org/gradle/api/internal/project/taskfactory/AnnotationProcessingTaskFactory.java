@@ -18,10 +18,10 @@ package org.gradle.api.internal.project.taskfactory;
 import org.apache.commons.lang.StringUtils;
 import org.gradle.api.Action;
 import org.gradle.api.GradleException;
-import org.gradle.api.InvalidUserDataException;
 import org.gradle.api.Task;
 import org.gradle.api.internal.TaskInternal;
 import org.gradle.api.internal.project.ProjectInternal;
+import org.gradle.api.internal.tasks.execution.TaskValidator;
 import org.gradle.api.tasks.Optional;
 import org.gradle.api.tasks.TaskAction;
 import org.gradle.util.ReflectionUtil;
@@ -35,8 +35,7 @@ import java.util.*;
 import java.util.concurrent.Callable;
 
 /**
- * A {@link ITaskFactory} which determines task actions, inputs and outputs based on annotation attached to the task
- * properties. Also provides some validation based on these annotations.
+ * A {@link ITaskFactory} which determines task actions, inputs and outputs based on annotation attached to the task properties. Also provides some validation based on these annotations.
  */
 public class AnnotationProcessingTaskFactory implements ITaskFactory {
     private final ITaskFactory taskFactory;
@@ -50,10 +49,9 @@ public class AnnotationProcessingTaskFactory implements ITaskFactory {
             new InputPropertyAnnotationHandler(),
             new NestedBeanPropertyAnnotationHandler());
     private final ValidationAction notNullValidator = new ValidationAction() {
-        public void validate(String propertyName, Object value) throws InvalidUserDataException {
+        public void validate(String propertyName, Object value, Collection<String> messages) {
             if (value == null) {
-                throw new InvalidUserDataException(String.format("No value has been specified for property '%s'.",
-                        propertyName));
+                messages.add(String.format("No value has been specified for property '%s'.", propertyName));
             }
         }
     };
@@ -138,10 +136,11 @@ public class AnnotationProcessingTaskFactory implements ITaskFactory {
                 && method.getParameterTypes().length == 0 && !Modifier.isStatic(method.getModifiers());
     }
 
-    private class Validator implements Action<Task> {
+    private class Validator implements Action<Task>, TaskValidator {
         private Set<PropertyInfo> properties = new LinkedHashSet<PropertyInfo>();
 
-        public void addInputsAndOutputs(final Task task) {
+        public void addInputsAndOutputs(final TaskInternal task) {
+            task.addValidator(this);
             for (final PropertyInfo property : properties) {
                 Callable<Object> futureValue = new Callable<Object>() {
                     public Object call() throws Exception {
@@ -154,22 +153,18 @@ public class AnnotationProcessingTaskFactory implements ITaskFactory {
         }
 
         public void execute(Task task) {
-            try {
-                List<PropertyValue> propertyValues = new ArrayList<PropertyValue>();
-                for (PropertyInfo property : properties) {
-                    propertyValues.add(property.getValue(task));
-                }
-                for (PropertyValue propertyValue : propertyValues) {
-                    propertyValue.checkNotNull();
-                }
-                for (PropertyValue propertyValue : propertyValues) {
-                    propertyValue.checkSkip();
-                }
-                for (PropertyValue propertyValue : propertyValues) {
-                    propertyValue.checkValid();
-                }
-            } catch (InvalidUserDataException e) {
-                throw new InvalidUserDataException(String.format("Error validating %s: %s", task, e.getMessage()), e);
+        }
+
+        public void validate(TaskInternal task, Collection<String> messages) {
+            List<PropertyValue> propertyValues = new ArrayList<PropertyValue>();
+            for (PropertyInfo property : properties) {
+                propertyValues.add(property.getValue(task));
+            }
+            for (PropertyValue propertyValue : propertyValues) {
+                propertyValue.checkNotNull(messages);
+            }
+            for (PropertyValue propertyValue : propertyValues) {
+                propertyValue.checkValid(messages);
             }
         }
 
@@ -236,16 +231,14 @@ public class AnnotationProcessingTaskFactory implements ITaskFactory {
     private interface PropertyValue {
         Object getValue();
 
-        void checkNotNull();
+        void checkNotNull(Collection<String> messages);
 
-        void checkSkip();
-
-        void checkValid();
+        void checkValid(Collection<String> messages);
     }
 
     private static class PropertyInfo implements PropertyActionContext {
         private static final ValidationAction NO_OP_VALIDATION_ACTION = new ValidationAction() {
-            public void validate(String propertyName, Object value) throws InvalidUserDataException {
+            public void validate(String propertyName, Object value, Collection<String> messages) {
             }
         };
         private static final PropertyValue NO_OP_VALUE = new PropertyValue() {
@@ -253,13 +246,10 @@ public class AnnotationProcessingTaskFactory implements ITaskFactory {
                 return null;
             }
 
-            public void checkNotNull() {
+            public void checkNotNull(Collection<String> messages) {
             }
 
-            public void checkSkip() {
-            }
-
-            public void checkValid() {
+            public void checkValid(Collection<String> messages) {
             }
         };
         private static final UpdateAction NO_OP_CONFIGURATION_ACTION = new UpdateAction() {
@@ -271,7 +261,6 @@ public class AnnotationProcessingTaskFactory implements ITaskFactory {
         private final PropertyInfo parent;
         private final String propertyName;
         private final Method method;
-        private ValidationAction skipAction = NO_OP_VALIDATION_ACTION;
         private ValidationAction validationAction = NO_OP_VALIDATION_ACTION;
         private ValidationAction notNullValidator = NO_OP_VALIDATION_ACTION;
         private UpdateAction configureAction = NO_OP_CONFIGURATION_ACTION;
@@ -299,10 +288,6 @@ public class AnnotationProcessingTaskFactory implements ITaskFactory {
 
         public AnnotatedElement getTarget() {
             return method;
-        }
-
-        public void setSkipAction(ValidationAction action) {
-            skipAction = action;
         }
 
         public void setValidationAction(ValidationAction action) {
@@ -338,17 +323,13 @@ public class AnnotationProcessingTaskFactory implements ITaskFactory {
                     return value;
                 }
 
-                public void checkNotNull() {
-                    notNullValidator.validate(propertyName, value);
+                public void checkNotNull(Collection<String> messages) {
+                    notNullValidator.validate(propertyName, value, messages);
                 }
 
-                public void checkSkip() {
-                    skipAction.validate(propertyName, value);
-                }
-
-                public void checkValid() {
+                public void checkValid(Collection<String> messages) {
                     if (value != null) {
-                        validationAction.validate(propertyName, value);
+                        validationAction.validate(propertyName, value, messages);
                     }
                 }
             };

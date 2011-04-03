@@ -32,6 +32,7 @@ import java.util.*;
 import java.util.regex.Pattern;
 
 import static org.gradle.util.Matchers.containsLine;
+import static org.gradle.util.Matchers.matchesRegexp;
 import static org.hamcrest.Matchers.*;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assert.fail;
@@ -39,9 +40,11 @@ import static org.junit.Assert.fail;
 public class ForkingGradleExecuter extends AbstractGradleExecuter {
     private static final Logger LOG = LoggerFactory.getLogger(ForkingGradleExecuter.class);
     private final TestFile gradleHomeDir;
+    private final List<String> gradleOpts = new ArrayList<String>();
 
     public ForkingGradleExecuter(TestFile gradleHomeDir) {
         this.gradleHomeDir = gradleHomeDir;
+        gradleOpts.add("-ea");
     }
 
     public TestFile getGradleHomeDir() {
@@ -58,6 +61,13 @@ public class ForkingGradleExecuter extends AbstractGradleExecuter {
     protected ExecutionFailure doRunWithFailure() {
         Map result = doRun(true);
         return new ForkedExecutionFailure(result);
+    }
+
+    /**
+     * Adds some options to the GRADLE_OPTS environment variable to use.
+     */
+    public void addGradleOpts(String... opts) {
+        gradleOpts.addAll(Arrays.asList(opts));
     }
 
     protected Map doRun(boolean expectFailure) {
@@ -81,7 +91,7 @@ public class ForkingGradleExecuter extends AbstractGradleExecuter {
         builder.setErrorOutput(errStream);
         builder.environment("GRADLE_HOME", "");
         builder.environment("JAVA_HOME", Jvm.current().getJavaHome());
-        builder.environment("GRADLE_OPTS", "-ea");
+        builder.environment("GRADLE_OPTS", GUtil.join(gradleOpts, " "));
         builder.environment(getEnvironmentVars());
         builder.workingDir(getWorkingDir());
 
@@ -225,6 +235,8 @@ public class ForkingGradleExecuter extends AbstractGradleExecuter {
     }
 
     private static class ForkedExecutionFailure extends ForkedExecutionResult implements ExecutionFailure {
+        private final Pattern causePattern = Pattern.compile("(?m)^Cause: ");
+
         public ForkedExecutionFailure(Map result) {
             super(result);
         }
@@ -245,7 +257,6 @@ public class ForkingGradleExecuter extends AbstractGradleExecuter {
         }
 
         public ExecutionFailure assertThatCause(Matcher<String> matcher) {
-            Pattern causePattern = Pattern.compile("(?m)^Cause: ");
             String error = getError();
             java.util.regex.Matcher regExpMatcher = causePattern.matcher(error);
             int pos = 0;
@@ -267,6 +278,11 @@ public class ForkingGradleExecuter extends AbstractGradleExecuter {
                 }
             }
             fail(String.format("No matching cause found in '%s'", error));
+            return this;
+        }
+
+        public ExecutionFailure assertHasNoCause() {
+            assertThat(getError(), not(matchesRegexp(causePattern)));
             return this;
         }
 

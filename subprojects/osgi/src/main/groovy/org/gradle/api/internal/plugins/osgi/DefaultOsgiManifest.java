@@ -31,7 +31,6 @@ import java.io.IOException;
 import java.util.*;
 import java.util.jar.Manifest;
 
-
 /**
  * @author Hans Dockter
  */
@@ -67,7 +66,7 @@ public class DefaultOsgiManifest extends DefaultManifest implements OsgiManifest
                 effectiveManifest.attributes(WrapUtil.toMap(entry.getKey().toString(), (String) entry.getValue()));
             }
             effectiveManifest.attributes(this.getAttributes());
-            for(Map.Entry<String, Attributes> ent : getSections().entrySet()) {
+            for (Map.Entry<String, Attributes> ent : getSections().entrySet()) {
                 effectiveManifest.attributes(ent.getValue(), ent.getKey());
             }
         } catch (Exception e) {
@@ -77,9 +76,25 @@ public class DefaultOsgiManifest extends DefaultManifest implements OsgiManifest
     }
 
     private void setAnalyzerProperties(Analyzer analyzer) throws IOException {
-        for (String instructionName : instructions.keySet()) {
-            analyzer.setProperty(instructionName, createPropertyStringFromList(instructionValue(instructionName)));
+        for (Map.Entry<String, Object> attribute : getAttributes().entrySet()) {
+            String key = attribute.getKey();
+            if (!"Manifest-Version".equals(key)) {
+                analyzer.setProperty(key, attribute.getValue().toString());
+            }
         }
+        Set<String> instructionNames = instructions.keySet();
+        if (!instructionNames.contains(Analyzer.IMPORT_PACKAGE)) {
+            analyzer.setProperty(Analyzer.IMPORT_PACKAGE,
+                    "*, !org.apache.ant.*, !org.junit.*, !org.jmock.*, !org.easymock.*, !org.mockito.*");
+        }
+        if (!instructionNames.contains(Analyzer.EXPORT_PACKAGE)) {
+            analyzer.setProperty(Analyzer.EXPORT_PACKAGE, "*;-noimport:=false;version=" + version);
+        }
+        for (String instructionName : instructionNames) {
+            String list = createPropertyStringFromList(instructionValue(instructionName));
+            analyzer.setProperty(instructionName, list);
+        }
+
         setProperty(analyzer, Analyzer.BUNDLE_VERSION, getVersion());
         setProperty(analyzer, Analyzer.BUNDLE_SYMBOLICNAME, getSymbolicName());
         setProperty(analyzer, Analyzer.BUNDLE_NAME, getName());

@@ -15,9 +15,11 @@
  */
 package org.gradle.api.internal.plugins.osgi;
 
+import org.gradle.api.GradleException;
 import org.gradle.api.Project;
 import org.gradle.api.plugins.BasePluginConvention;
 
+import java.util.StringTokenizer;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -28,42 +30,45 @@ public class OsgiHelper {
     /**
      * Bundle-Version must match this pattern
      */
-    private static final Pattern OSGI_VERSION_PATTERN = Pattern
-            .compile("[0-9]+\\.[0-9]+\\.[0-9]+(\\.[0-9A-Za-z_-]+)?");
+    private static final Pattern OSGI_VERSION_PATTERN = Pattern.compile("[0-9]+(\\.[0-9]+(\\.[0-9]+(\\.[0-9A-Za-z_-]+)?)?)?");
 
-    /** pattern used to change - to . */
-    // private static final Pattern P_VERSION = Pattern.compile("([0-9]+(\\.[0-9])*)-(.*)");
-    /**
-     * pattern that matches strings that contain only numbers
-     */
     private static final Pattern ONLY_NUMBERS = Pattern.compile("[0-9]+");
-    private static final Pattern DATED_SNAPSHOT = Pattern.compile("([0-9])(\\.([0-9]))?(\\.([0-9]))?\\-([0-9]{8}\\.[0-9]{6}\\-[0-9]*)");
-    private static final Pattern DOTS_IN_QUALIFIER = Pattern.compile("([0-9])(\\.[0-9])?\\.([0-9A-Za-z_-]+)\\.([0-9A-Za-z_-]+)");
-    private static final Pattern NEED_TO_FILL_ZEROS = Pattern.compile("([0-9])(\\.([0-9]))?(\\.([0-9A-Za-z_-]+))?");
-
-    private String getBundleSymbolicName(String groupId, String artifactId) {
-        return groupId + "." + artifactId;
-    }
+    private static final Pattern QUALIFIER = Pattern.compile("[0-9A-Za-z_\\-]*");
 
     /**
      * Get the symbolic name as group + "." + archivesBaseName, with the following exceptions
      * <ul>
-     * <li>if group has only one section (no dots) and archivesBaseName is not null then the
-     * first package name with classes is returned. eg. commons-logging:commons-logging ->
-     * org.apache.commons.logging</li>
-     * <li>if archivesBaseName is equal to last section of group then group is returned. eg.
-     * org.gradle:gradle -> org.gradle</li>
-     * <li>if archivesBaseName starts with last section of group that portion is removed. eg.
-     * org.gradle:gradle-core -> org.gradle.core</li>
+     * <li>
+     * if group has only one section (no dots) and archivesBaseName is not null then the first package
+     * name with classes is returned. eg. commons-logging:commons-logging -> org.apache.commons.logging
+     * </li>
+     * <li>
+     * if archivesBaseName is equal to last section of group then group is returned.
+     * eg. org.gradle:gradle -> org.gradle
+     * </li>
+     * <li>
+     * if archivesBaseName starts with last section of group that portion is removed.
+     * eg. org.gradle:gradle-core -> org.gradle.core
+     * </li>
+     * <li>
+     * if archivesBaseName starts with the full group, the archivesBaseName is return,
+     * e.g. org.gradle:org.gradle.core -> org.gradle.core
+     * </li>
      * </ul>
+     *
+     * @param project The project being processed.
+     *
+     * @return Returns the SymbolicName that should be used for the bundle.
      */
     public String getBundleSymbolicName(Project project) {
 
         String group = (String) project.property("group");
-        int i = group.lastIndexOf('.');
-
-        String lastSection = group.substring(++i);
         String archiveBaseName = project.getConvention().getPlugin(BasePluginConvention.class).getArchivesBaseName();
+        if (archiveBaseName.startsWith(group)) {
+            return archiveBaseName;
+        }
+        int i = group.lastIndexOf('.');
+        String lastSection = group.substring(++i);
         if (archiveBaseName.equals(lastSection)) {
             return group;
         }
@@ -77,120 +82,74 @@ public class OsgiHelper {
         }
         return getBundleSymbolicName(group, archiveBaseName);
     }
-    
+
+    private String getBundleSymbolicName(String groupId, String artifactId) {
+        return groupId + "." + artifactId;
+    }
+
     public String getVersion(String version) {
-        String osgiVersion;
-
-        // Matcher m = P_VERSION.matcher(version);
-        // if (m.matches()) {
-        // osgiVersion = m.group(1) + "." + m.group(3);
-        // }
-
-        /* TODO need a regexp guru here */
-
-        Matcher m;
 
         /* if it's already OSGi compliant don't touch it */
-        m = OSGI_VERSION_PATTERN.matcher(version);
+        final Matcher m = OSGI_VERSION_PATTERN.matcher(version);
         if (m.matches()) {
             return version;
         }
 
-        osgiVersion = version;
-
-        /* check for dated snapshot versions with only major or major and minor */
-        m = DATED_SNAPSHOT.matcher(osgiVersion);
-        if (m.matches()) {
-            String major = m.group(1);
-            String minor = (m.group(3) != null) ? m.group(3) : "0";
-            String service = (m.group(5) != null) ? m.group(5) : "0";
-            String qualifier = m.group(6).replaceAll("-", "_").replaceAll("\\.", "_");
-            osgiVersion = major + "." + minor + "." + service + "." + qualifier;
-        }
-
-        /* else transform first - to . and others to _ */
-        osgiVersion = osgiVersion.replaceFirst("-", "\\.");
-        osgiVersion = osgiVersion.replaceAll("-", "_");
-        m = OSGI_VERSION_PATTERN.matcher(osgiVersion);
-        if (m.matches()) {
-            return osgiVersion;
-        }
-
-        /* remove dots in the middle of the qualifier */
-        m = DOTS_IN_QUALIFIER.matcher(osgiVersion);
-        if (m.matches()) {
-            String s1 = m.group(1);
-            String s2 = m.group(2);
-            String s3 = m.group(3);
-            String s4 = m.group(4);
-
-            Matcher qualifierMatcher = ONLY_NUMBERS.matcher(s3);
-            /*
-             * if last portion before dot is only numbers then it's not in the middle of the
-             * qualifier
-             */
-            if (!qualifierMatcher.matches()) {
-                osgiVersion = s1 + s2 + "." + s3 + "_" + s4;
-            }
-        }
-
-        /* convert
-         * 1.string   -> 1.0.0.string
-         * 1.2.string -> 1.2.0.string
-         * 1          -> 1.0.0
-         * 1.1        -> 1.1.0
-         */
-        //Pattern NEED_TO_FILL_ZEROS = Pattern.compile( "([0-9])(\\.([0-9]))?\\.([0-9A-Za-z_-]+)" );
-        m = NEED_TO_FILL_ZEROS.matcher(osgiVersion);
-        if (m.matches()) {
-            String major = m.group(1);
-            String minor = m.group(3);
-            String service = null;
-            String qualifier = m.group(5);
-
-            /* if there's no qualifier just fill with 0s */
-            if (qualifier == null) {
-                osgiVersion = getVersion(major, minor, service, qualifier);
-            } else {
-                /* if last portion is only numbers then it's not a qualifier */
-                Matcher qualifierMatcher = ONLY_NUMBERS.matcher(qualifier);
-                if (qualifierMatcher.matches()) {
-                    if (minor == null) {
-                        minor = qualifier;
+        int group = 0;
+        boolean groupToken = true;
+        String[] groups = new String[4];
+        groups[0] = "0";
+        groups[1] = "0";
+        groups[2] = "0";
+        groups[3] = "";
+        StringTokenizer st = new StringTokenizer(version, ",./;'?:\\|=+-_*&^%$#@!~", true);
+        while (st.hasMoreTokens()) {
+            String token = st.nextToken();
+            if (groupToken) {
+                if (group < 3) {
+                    if (ONLY_NUMBERS.matcher(token).matches()) {
+                        groups[group++] = token;
+                        groupToken = false;
                     } else {
-                        service = qualifier;
+                        // if not a number, i.e. 2.ABD
+                        groups[3] = token + fillQualifier(st);
                     }
-                    osgiVersion = getVersion(major, minor, service, null);
                 } else {
-                    osgiVersion = getVersion(major, minor, service, qualifier);
+                    // Last group; what ever is left take that replace all characters that are not alphanum or '_' or '-'
+                    groups[3] = token + fillQualifier(st);
+                }
+            } else {
+                // If a delimiter; if dot, swap to groupToken, otherwise the rest belongs in qualifier.
+                if (".".equals(token)) {
+                    groupToken = true;
+                } else {
+                    groups[3] = fillQualifier(st);
                 }
             }
         }
-
-        m = OSGI_VERSION_PATTERN.matcher(osgiVersion);
-        /* if still its not OSGi version then add everything as qualifier */
-        if (!m.matches()) {
-            String major = "0";
-            String minor = "0";
-            String service = "0";
-            String qualifier = osgiVersion.replaceAll("\\.", "_");
-            osgiVersion = major + "." + minor + "." + service + "." + qualifier;
+        String ver = groups[0] + "." + groups[1] + "." + groups[2];
+        String result;
+        if (groups[3].length() > 0) {
+            result = ver + "." + groups[3];
+        } else {
+            result = ver;
         }
-
-        return osgiVersion;
+        if (!OSGI_VERSION_PATTERN.matcher(result).matches()) {
+            throw new GradleException("OSGi plugin unable to convert version to a compliant version");
+        }
+        return result;
     }
 
-    private String getVersion(String major, String minor, String service, String qualifier) {
-        StringBuffer sb = new StringBuffer();
-        sb.append(major != null ? major : "0");
-        sb.append('.');
-        sb.append(minor != null ? minor : "0");
-        sb.append('.');
-        sb.append(service != null ? service : "0");
-        if (qualifier != null) {
-            sb.append('.');
-            sb.append(qualifier);
+    private String fillQualifier(StringTokenizer st) {
+        StringBuffer buf = new StringBuffer();
+        while (st.hasMoreTokens()) {
+            String token = st.nextToken();
+            if (QUALIFIER.matcher(token).matches()) {
+                buf.append(token);
+            } else {
+                buf.append("_");
+            }
         }
-        return sb.toString();
+        return buf.toString();
     }
 }

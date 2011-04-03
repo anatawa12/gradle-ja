@@ -16,16 +16,17 @@
 package org.gradle.api.internal.file;
 
 import groovy.lang.Closure;
-import org.gradle.api.file.FileCollection;
 import org.gradle.api.file.FileTree;
 import org.gradle.api.file.FileVisitor;
+import org.gradle.api.internal.file.collections.FileCollectionResolveContext;
+import org.gradle.api.internal.file.collections.FileTreeInternal;
+import org.gradle.api.internal.file.collections.ResolvableFileCollectionResolveContext;
 import org.gradle.api.tasks.TaskDependency;
 import org.gradle.api.tasks.util.PatternFilterable;
 
-import java.util.Collection;
 import java.util.List;
 
-public abstract class CompositeFileTree extends CompositeFileCollection implements FileTree {
+public abstract class CompositeFileTree extends CompositeFileCollection implements FileTreeInternal {
     protected List<FileTree> getSourceCollections() {
         return (List) super.getSourceCollections();
     }
@@ -57,7 +58,7 @@ public abstract class CompositeFileTree extends CompositeFileCollection implemen
     }
 
     @Override
-    public FileTree getAsFileTree() {
+    public FileTreeInternal getAsFileTree() {
         return this;
     }
 
@@ -86,12 +87,14 @@ public abstract class CompositeFileTree extends CompositeFileCollection implemen
         }
 
         @Override
-        protected void addSourceCollections(Collection<FileCollection> sources) {
-            for (FileTree set : CompositeFileTree.this.getSourceCollections()) {
+        public void resolve(FileCollectionResolveContext context) {
+            ResolvableFileCollectionResolveContext nestedContext = context.newContext();
+            CompositeFileTree.this.resolve(nestedContext);
+            for (FileTree set : nestedContext.resolveAsFileTrees()) {
                 if (closure != null) {
-                    sources.add(set.matching(closure));
+                    context.add(set.matching(closure));
                 } else {
-                    sources.add(set.matching(patterns));
+                    context.add(set.matching(patterns));
                 }
             }
         }

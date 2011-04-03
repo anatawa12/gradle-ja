@@ -18,7 +18,9 @@ package org.gradle.api.internal.file;
 import groovy.lang.Closure;
 import org.codehaus.groovy.runtime.DefaultGroovyMethods;
 import org.gradle.api.file.*;
+import org.gradle.api.internal.file.collections.FileTreeInternal;
 import org.gradle.api.specs.Spec;
+import org.gradle.api.tasks.TaskDependency;
 import org.gradle.api.tasks.util.PatternFilterable;
 import org.gradle.api.tasks.util.PatternSet;
 import org.gradle.util.ConfigureUtil;
@@ -30,7 +32,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-public abstract class AbstractFileTree extends AbstractFileCollection implements FileTree {
+public abstract class AbstractFileTree extends AbstractFileCollection implements FileTreeInternal {
     public Set<File> getFiles() {
         final Set<File> files = new LinkedHashSet<File>();
         visit(new EmptyFileVisitor() {
@@ -83,20 +85,24 @@ public abstract class AbstractFileTree extends AbstractFileCollection implements
     /**
      * Visits all the files of this tree.
      */
-    protected void visitAll() {
+    protected boolean visitAll() {
+        final AtomicBoolean hasContent = new AtomicBoolean();
         visit(new FileVisitor() {
             public void visitDir(FileVisitDetails dirDetails) {
                 dirDetails.getFile();
+                hasContent.set(true);
             }
 
             public void visitFile(FileVisitDetails fileDetails) {
                 fileDetails.getFile();
+                hasContent.set(true);
             }
         });
+        return hasContent.get();
     }
 
     @Override
-    public FileTree getAsFileTree() {
+    public FileTreeInternal getAsFileTree() {
         return this;
     }
 
@@ -120,6 +126,11 @@ public abstract class AbstractFileTree extends AbstractFileCollection implements
         @Override
         public String getDisplayName() {
             return fileTree.getDisplayName();
+        }
+
+        @Override
+        public TaskDependency getBuildDependencies() {
+            return fileTree.getBuildDependencies();
         }
 
         public FileTree visit(final FileVisitor visitor) {

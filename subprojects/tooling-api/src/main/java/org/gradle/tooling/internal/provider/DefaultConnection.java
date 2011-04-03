@@ -15,28 +15,16 @@
  */
 package org.gradle.tooling.internal.provider;
 
-import org.gradle.BuildAdapter;
 import org.gradle.GradleLauncher;
 import org.gradle.StartParameter;
-import org.gradle.api.Project;
-import org.gradle.api.artifacts.Configuration;
-import org.gradle.api.artifacts.Dependency;
-import org.gradle.api.artifacts.ExternalModuleDependency;
-import org.gradle.api.artifacts.ProjectDependency;
-import org.gradle.api.internal.GradleInternal;
-import org.gradle.api.invocation.Gradle;
-import org.gradle.api.specs.Spec;
 import org.gradle.messaging.actor.Actor;
 import org.gradle.messaging.actor.ActorFactory;
 import org.gradle.tooling.internal.protocol.*;
-import org.gradle.tooling.internal.protocol.eclipse.EclipseProjectDependencyVersion1;
-import org.gradle.tooling.internal.protocol.eclipse.EclipseProjectVersion2;
-import org.gradle.tooling.internal.protocol.eclipse.EclipseSourceDirectoryVersion1;
+import org.gradle.tooling.internal.protocol.eclipse.EclipseProjectVersion3;
 
-import java.io.File;
-import java.util.*;
+import static org.codehaus.groovy.runtime.InvokerHelper.asList;
 
-public class DefaultConnection implements ConnectionVersion2 {
+public class DefaultConnection implements ConnectionVersion3 {
     private final ActorFactory actorFactory;
     private final ConnectionParametersVersion1 parameters;
     private Worker worker;
@@ -52,10 +40,16 @@ public class DefaultConnection implements ConnectionVersion2 {
     }
 
     public void stop() {
-        actor.stop();
+        if (actor != null) {
+            try {
+                actor.stop();
+            } finally {
+                actor = null;
+            }
+        }
     }
 
-    public <T extends ProjectVersion2> void getModel(Class<T> type, ResultHandlerVersion1<? super T> handler) throws UnsupportedOperationException {
+    public <T extends ProjectVersion3> void getModel(Class<T> type, ResultHandlerVersion1<? super T> handler) throws UnsupportedOperationException {
         if (worker == null) {
             actor = actorFactory.createActor(new WorkerImpl());
             worker = actor.getProxy(Worker.class);
@@ -63,98 +57,12 @@ public class DefaultConnection implements ConnectionVersion2 {
         worker.build(type, handler);
     }
 
-    private static class ModelBuilder extends BuildAdapter {
-        private DefaultEclipseProject currentProject;
-        private final Map<String, EclipseProjectVersion2> projectMapping = new HashMap<String, EclipseProjectVersion2>();
-        private GradleInternal gradle;
-
-        @Override
-        public void projectsEvaluated(Gradle gradle) {
-            this.gradle = (GradleInternal) gradle;
-            try {
-                build(gradle.getRootProject());
-            } finally {
-                this.gradle = null;
-            }
-        }
-
-        private DefaultEclipseProject build(Project project) {
-            Configuration configuration = project.getConfigurations().findByName(
-                    "testRuntime");
-            List<ExternalDependencyVersion1> dependencies = new ArrayList<ExternalDependencyVersion1>();
-            final List<EclipseProjectDependencyVersion1> projectDependencies = new ArrayList<EclipseProjectDependencyVersion1>();
-
-            if (configuration != null) {
-                Set<File> classpath = configuration.files(new Spec<Dependency>() {
-                    public boolean isSatisfiedBy(Dependency element) {
-                        return element instanceof ExternalModuleDependency;
-                    }
-                });
-                for (final File file : classpath) {
-                    dependencies.add(new ExternalDependencyVersion1() {
-                        public File getFile() {
-                            return file;
-                        }
-                    });
-                }
-                for (final ProjectDependency projectDependency : configuration.getAllDependencies(ProjectDependency.class)) {
-                    projectDependencies.add(new EclipseProjectDependencyVersion1() {
-                        public EclipseProjectVersion2 getTargetProject() {
-                            return projectMapping.get(projectDependency.getDependencyProject().getPath());
-                        }
-
-                        public String getPath() {
-                            return projectDependency.getDependencyProject().getName();
-                        }
-                    });
-                }
-            }
-
-            List<EclipseSourceDirectoryVersion1> sourceDirectories = new ArrayList<EclipseSourceDirectoryVersion1>();
-            sourceDirectories.add(sourceDirectory(project, "src/main/java"));
-            sourceDirectories.add(sourceDirectory(project, "src/main/resources"));
-            sourceDirectories.add(sourceDirectory(project, "src/test/java"));
-            sourceDirectories.add(sourceDirectory(project, "src/test/resources"));
-
-            List<DefaultEclipseProject> children = new ArrayList<DefaultEclipseProject>();
-            for (Project child : project.getChildProjects().values()) {
-                children.add(build(child));
-            }
-
-            DefaultEclipseProject eclipseProject = new DefaultEclipseProject(project.getName(), project.getPath(), project.getProjectDir(), children, sourceDirectories, dependencies, projectDependencies);
-            for (DefaultEclipseProject child : children) {
-                child.setParent(eclipseProject);
-            }
-            addProject(project, eclipseProject);
-            return eclipseProject;
-        }
-
-        private void addProject(Project project, DefaultEclipseProject eclipseProject) {
-            if (project == gradle.getDefaultProject()) {
-                currentProject = eclipseProject;
-            }
-            projectMapping.put(project.getPath(), eclipseProject);
-        }
-
-        private EclipseSourceDirectoryVersion1 sourceDirectory(final Project project, final String path) {
-            return new EclipseSourceDirectoryVersion1() {
-                public File getDirectory() {
-                    return project.file(path);
-                }
-
-                public String getPath() {
-                    return path;
-                }
-            };
-        }
-    }
-
     private interface Worker {
-        <T extends ProjectVersion2> void build(Class<T> type, ResultHandlerVersion1<? super T> handler);
+        <T extends ProjectVersion3> void build(Class<T> type, ResultHandlerVersion1<? super T> handler);
     }
 
     private class WorkerImpl implements Worker {
-        public <T extends ProjectVersion2> void build(Class<T> type, ResultHandlerVersion1<? super T> handler) {
+        public <T extends ProjectVersion3> void build(Class<T> type, ResultHandlerVersion1<? super T> handler) {
             try {
                 handler.onComplete(build(type));
             } catch (Throwable t) {
@@ -162,15 +70,27 @@ public class DefaultConnection implements ConnectionVersion2 {
             }
         }
 
-        private <T extends ProjectVersion2> T build(Class<T> type) throws UnsupportedOperationException {
-            if (type.isAssignableFrom(EclipseProjectVersion2.class)) {
+        private <T extends ProjectVersion3> T build(Class<T> type) throws UnsupportedOperationException {
+            if (type.isAssignableFrom(EclipseProjectVersion3.class)) {
                 StartParameter startParameter = new ConnectionToStartParametersConverter().convert(parameters);
+                startParameter.setTaskNames(asList(":eclipseConfigurer"));
 
-                final GradleLauncher gradleLauncher = GradleLauncher.newInstance(startParameter);
-                final ModelBuilder builder = new ModelBuilder();
-                gradleLauncher.addListener(builder);
-                gradleLauncher.getBuildAnalysis().rethrowFailure();
-                return type.cast(builder.currentProject);
+                GradleLauncher gradleLauncher = GradleLauncher.newInstance(startParameter);
+
+                ModelBuildingAdapter adapter = new ModelBuildingAdapter();
+                gradleLauncher.addListener(adapter);
+
+                boolean fullModel = EclipseProjectVersion3.class.isAssignableFrom(type);
+                boolean includeTasks = BuildableProjectVersion1.class.isAssignableFrom(type);
+                if (fullModel) {
+                    adapter.setConfigurer(new EclipsePluginApplier());
+                } else {
+                    adapter.setConfigurer(new MinimalModelConfigurer());
+                }
+                adapter.setBuilder(new ModelBuilder(includeTasks));
+
+                gradleLauncher.run().rethrowFailure();
+                return type.cast(adapter.getProject());
             }
 
             throw new UnsupportedOperationException();

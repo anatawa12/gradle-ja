@@ -255,7 +255,7 @@ public class TestFile extends File implements TestFileContext {
 
     @Override
     public TestFile getParentFile() {
-        return new TestFile(super.getParentFile());
+        return super.getParentFile() == null ? null : new TestFile(super.getParentFile());
     }
 
     @Override
@@ -340,6 +340,14 @@ public class TestFile extends File implements TestFileContext {
         return this;
     }
 
+    public TestFile assertIsEmptyDir() {
+        if (exists()) {
+            assertIsDir();
+            assertHasDescendants();
+        }
+        return this;
+    }
+
     private void visit(Set<String> names, String prefix, File file) {
         for (File child : file.listFiles()) {
             if (child.isFile()) {
@@ -389,6 +397,10 @@ public class TestFile extends File implements TestFileContext {
             throw new UncheckedIOException(e);
         }
         return this;
+    }
+
+    public TestFile createFile(Object path) {
+        return file(path).createFile();
     }
 
     public TestFile zipTo(TestFile zipFile) {

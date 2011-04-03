@@ -39,8 +39,16 @@ public class ShortCircuitTaskArtifactStateRepository implements TaskArtifactStat
                 return state.getExecutionHistory();
             }
 
-            public void update() {
-                state.update();
+            public void beforeTask() {
+                state.beforeTask();
+            }
+
+            public void afterTask() {
+                state.afterTask();
+            }
+
+            public void finished() {
+                state.finished();
             }
         };
     }

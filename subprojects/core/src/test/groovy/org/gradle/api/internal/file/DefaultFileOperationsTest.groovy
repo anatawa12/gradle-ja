@@ -24,18 +24,20 @@ import org.gradle.api.file.ConfigurableFileCollection
 import org.gradle.api.file.FileTree
 import org.gradle.api.internal.file.archive.TarFileTree
 import org.gradle.api.internal.file.archive.ZipFileTree
+import org.gradle.api.internal.file.collections.DefaultConfigurableFileCollection
+import org.gradle.api.internal.file.collections.FileTreeAdapter
 import org.gradle.api.internal.file.copy.CopyActionImpl
 import org.gradle.api.internal.file.copy.CopySpecImpl
 import org.gradle.api.internal.tasks.TaskResolver
+import org.gradle.process.ExecResult
+import org.gradle.process.internal.ExecException
+import org.gradle.util.ClasspathUtil
+import org.gradle.util.OperatingSystem
 import org.gradle.util.TemporaryFolder
 import org.gradle.util.TestFile
-import org.gradle.process.internal.ExecException
-import org.gradle.process.ExecResult
 import org.junit.Rule
 import org.junit.Test
 import spock.lang.Specification
-import org.gradle.util.OperatingSystem
-import org.gradle.util.ClasspathUtil
 
 public class DefaultFileOperationsTest extends Specification {
     private final FileResolver resolver = Mock()
@@ -74,8 +76,8 @@ public class DefaultFileOperationsTest extends Specification {
         def fileCollection = fileOperations.files('a', 'b')
 
         then:
-        fileCollection instanceof PathResolvingFileCollection
-        fileCollection.sources == ['a', 'b']
+        fileCollection instanceof DefaultConfigurableFileCollection
+        fileCollection.from == ['a', 'b'] as LinkedHashSet
         fileCollection.resolver.is(resolver)
         fileCollection.buildDependency.resolver.is(taskResolver)
     }
@@ -124,7 +126,8 @@ public class DefaultFileOperationsTest extends Specification {
         def zipTree = fileOperations.zipTree('path')
 
         then:
-        zipTree instanceof ZipFileTree
+        zipTree instanceof FileTreeAdapter
+        zipTree.tree instanceof ZipFileTree
     }
 
     def createsTarFileTree() {
@@ -135,7 +138,8 @@ public class DefaultFileOperationsTest extends Specification {
         def tarTree = fileOperations.tarTree('path')
 
         then:
-        tarTree instanceof TarFileTree
+        tarTree instanceof FileTreeAdapter
+        tarTree.tree instanceof TarFileTree
     }
 
     def copiesFiles() {
@@ -157,7 +161,7 @@ public class DefaultFileOperationsTest extends Specification {
 
     def deletes() {
         TestFile fileToBeDeleted = tmpDir.file("file")
-        ConfigurableFileCollection fileCollection = new PathResolvingFileCollection(resolver, null, "file")
+        ConfigurableFileCollection fileCollection = new DefaultConfigurableFileCollection(resolver, null, "file")
         resolver.resolveFiles(["file"] as Object[]) >> fileCollection
         resolver.resolve("file") >> fileToBeDeleted
         fileToBeDeleted.touch();

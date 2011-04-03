@@ -14,12 +14,12 @@
  * limitations under the License.
  */
 include 'core'
+include 'coreImpl'
 include 'wrapper'
 include 'launcher'
 include 'plugins'
 include 'scala'
-include 'eclipse'
-include 'idea'
+include 'ide'
 include 'osgi'
 include 'maven'
 include 'announce'

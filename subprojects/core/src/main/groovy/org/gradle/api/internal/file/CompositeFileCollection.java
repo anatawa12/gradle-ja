@@ -16,8 +16,9 @@
 
 package org.gradle.api.internal.file;
 
+import org.gradle.api.Buildable;
 import org.gradle.api.file.FileCollection;
-import org.gradle.api.file.FileTree;
+import org.gradle.api.internal.file.collections.*;
 import org.gradle.api.internal.tasks.AbstractTaskDependency;
 import org.gradle.api.internal.tasks.TaskDependencyResolveContext;
 import org.gradle.api.specs.Spec;
@@ -30,7 +31,7 @@ import java.util.*;
  * A {@link org.gradle.api.file.FileCollection} which contains the union of the given source collections. Maintains file
  * ordering.
  */
-public abstract class CompositeFileCollection extends AbstractFileCollection {
+public abstract class CompositeFileCollection extends AbstractFileCollection implements FileCollectionContainer {
     public Set<File> getFiles() {
         Set<File> files = new LinkedHashSet<File>();
         for (FileCollection collection : getSourceCollections()) {
@@ -67,8 +68,8 @@ public abstract class CompositeFileCollection extends AbstractFileCollection {
     }
 
     @Override
-    protected Collection<DefaultConfigurableFileTree> getAsFileTrees() {
-        List<DefaultConfigurableFileTree> fileTree = new ArrayList<DefaultConfigurableFileTree>();
+    protected Collection<DirectoryFileTree> getAsFileTrees() {
+        List<DirectoryFileTree> fileTree = new ArrayList<DirectoryFileTree>();
         for (FileCollection source : getSourceCollections()) {
             AbstractFileCollection collection = (AbstractFileCollection) source;
             fileTree.addAll(collection.getAsFileTrees());
@@ -77,23 +78,18 @@ public abstract class CompositeFileCollection extends AbstractFileCollection {
     }
 
     @Override
-    public FileTree getAsFileTree() {
+    public FileTreeInternal getAsFileTree() {
         return new CompositeFileTree() {
             @Override
-            protected void addSourceCollections(Collection<FileCollection> sources) {
-                for (FileCollection collection : CompositeFileCollection.this.getSourceCollections()) {
-                    sources.add(collection.getAsFileTree());
-                }
+            public void resolve(FileCollectionResolveContext context) {
+                ResolvableFileCollectionResolveContext nested = context.newContext();
+                CompositeFileCollection.this.resolve(nested);
+                context.add(nested.resolveAsFileTrees());
             }
 
             @Override
             public String getDisplayName() {
                 return CompositeFileCollection.this.getDisplayName();
-            }
-
-            @Override
-            public TaskDependency getBuildDependencies() {
-                return CompositeFileCollection.this.getBuildDependencies();
             }
         };
     }
@@ -102,9 +98,9 @@ public abstract class CompositeFileCollection extends AbstractFileCollection {
     public FileCollection filter(final Spec<? super File> filterSpec) {
         return new CompositeFileCollection() {
             @Override
-            protected void addSourceCollections(Collection<FileCollection> sources) {
+            public void resolve(FileCollectionResolveContext context) {
                 for (FileCollection collection : CompositeFileCollection.this.getSourceCollections()) {
-                    sources.add(collection.filter(filterSpec));
+                    context.add(collection.filter(filterSpec));
                 }
             }
 
@@ -134,16 +130,18 @@ public abstract class CompositeFileCollection extends AbstractFileCollection {
      * @param context The context to add dependencies to.
      */
     protected void addDependencies(TaskDependencyResolveContext context) {
-        for (FileCollection collection : getSourceCollections()) {
-            context.add(collection);
+        BuildDependenciesOnlyFileCollectionResolveContext fileContext = new BuildDependenciesOnlyFileCollectionResolveContext();
+        resolve(fileContext);
+        for (Buildable buildable : fileContext.resolveAsBuildables()) {
+            context.add(buildable);
         }
     }
 
     protected List<? extends FileCollection> getSourceCollections() {
-        List<FileCollection> collections = new ArrayList<FileCollection>();
-        addSourceCollections(collections);
-        return collections;
+        DefaultFileCollectionResolveContext context = new DefaultFileCollectionResolveContext();
+        resolve(context);
+        return context.resolveAsFileCollections();
     }
 
-    protected abstract void addSourceCollections(Collection<FileCollection> sources);
+    public abstract void resolve(FileCollectionResolveContext context);
 }

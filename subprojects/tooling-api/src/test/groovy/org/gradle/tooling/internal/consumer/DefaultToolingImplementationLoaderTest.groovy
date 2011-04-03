@@ -16,18 +16,25 @@
 package org.gradle.tooling.internal.consumer
 
 import org.gradle.api.internal.AbstractClassPathProvider
-import org.gradle.tooling.internal.provider.DefaultConnectionFactory
-import spock.lang.Specification
 import org.gradle.messaging.actor.ActorFactory
-import org.slf4j.Logger
 import org.gradle.tooling.UnsupportedVersionException
+import org.gradle.tooling.internal.provider.DefaultConnectionFactory
 import org.gradle.util.GradleVersion
+import org.slf4j.Logger
+import spock.lang.Specification
 
 class DefaultToolingImplementationLoaderTest extends Specification {
     final Distribution distribution = Mock()
 
     def usesMetaInfServiceToDetermineFactoryImplementation() {
+        given:
         def loader = new DefaultToolingImplementationLoader()
+        distribution.toolingImplementationClasspath >> ([
+                getToolingApiResourcesDir(),
+                AbstractClassPathProvider.getClasspathForClass(DefaultConnectionFactory.class),
+                AbstractClassPathProvider.getClasspathForClass(ActorFactory.class),
+                AbstractClassPathProvider.getClasspathForClass(Logger.class)
+        ] as Set)
 
         when:
         def factory = loader.create(distribution)
@@ -35,11 +42,14 @@ class DefaultToolingImplementationLoaderTest extends Specification {
         then:
         factory.class != DefaultConnectionFactory.class
         factory.class.name == DefaultConnectionFactory.class.name
-        _ * distribution.toolingImplementationClasspath >> ([
-                AbstractClassPathProvider.getClasspathForClass(DefaultConnectionFactory.class),
-                AbstractClassPathProvider.getClasspathForClass(ActorFactory.class),
-                AbstractClassPathProvider.getClasspathForClass(Logger.class)
-        ] as Set)
+    }
+
+    private getToolingApiResourcesDir() {
+        def resource = getClass().classLoader.getResource("META-INF/services/org.gradle.tooling.internal.protocol.ConnectionFactoryVersion3")
+        assert resource
+        assert resource.protocol == 'file'
+        def dir = resource.path.replaceFirst(/META-INF.*/, '')
+        return new File(dir)
     }
 
     def failsWhenNoImplementationDeclared() {
@@ -51,7 +61,8 @@ class DefaultToolingImplementationLoaderTest extends Specification {
 
         then:
         UnsupportedVersionException e = thrown()
-        e.message == "The specified Gradle distribution is not supported by this tooling API version (${GradleVersion.current().version}, protocol version 2)"
+        e.message == "The specified <dist-display-name> is not supported by this tooling API version (${GradleVersion.current().version}, protocol version 3)"
         _ * distribution.toolingImplementationClasspath >> ([] as Set)
+        _ * distribution.displayName >> '<dist-display-name>'
     }
 }

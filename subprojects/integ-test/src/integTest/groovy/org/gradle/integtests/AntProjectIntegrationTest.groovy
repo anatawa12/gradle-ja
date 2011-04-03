@@ -19,6 +19,7 @@ import org.gradle.integtests.fixtures.ExecutionFailure
 import org.gradle.util.TestFile
 import org.junit.Test
 import static org.hamcrest.Matchers.*
+import org.gradle.integtests.fixtures.internal.AbstractIntegrationTest
 
 public class AntProjectIntegrationTest extends AbstractIntegrationTest {
     @Test
@@ -151,7 +152,6 @@ ant.importBuild('build.xml')
 ant.importBuild('build.xml')
 """
         ExecutionFailure failure = inTestDirectory().withTasks('target1').runWithFailure()
-        failure.assertHasFileName("Build file '$buildFile'")
         failure.assertHasDescription('Execution failed for task \':target1\'.')
         failure.assertHasCause('broken')
     }

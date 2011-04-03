@@ -16,18 +16,16 @@
 
 package org.gradle.api.internal.artifacts.ivyservice
 
-import org.apache.ivy.core.cache.DefaultRepositoryCacheManager
+import org.apache.ivy.plugins.resolver.*
 import org.gradle.api.InvalidUserDataException
 import org.gradle.api.artifacts.ResolverContainer
+import org.gradle.api.internal.Factory
+import org.gradle.api.internal.artifacts.publish.maven.LocalMavenCacheLocator
+import org.gradle.api.artifacts.maven.MavenFactory
 import org.gradle.util.JUnit4GroovyMockery
 import org.jmock.integration.junit4.JMock
 import org.junit.Test
 import org.junit.runner.RunWith
-import org.apache.ivy.plugins.resolver.*
-import static org.junit.Assert.*
-import static org.hamcrest.Matchers.*
-import org.gradle.api.internal.Factory
-import org.gradle.util.SystemProperties
 
 /**
  * @author Hans Dockter
@@ -47,7 +45,7 @@ class DefaultResolverFactoryTest {
 
     final JUnit4GroovyMockery context = new JUnit4GroovyMockery()
     final LocalMavenCacheLocator localMavenCacheLocator = context.mock(LocalMavenCacheLocator.class)
-    final DefaultResolverFactory factory = new DefaultResolverFactory(context.mock(Factory.class), localMavenCacheLocator)
+    final DefaultResolverFactory factory = new DefaultResolverFactory(context.mock(Factory.class), context.mock(MavenFactory.class), localMavenCacheLocator)
 
     @Test(expected = InvalidUserDataException) public void testCreateResolver() {
         checkMavenResolver(factory.createResolver(RESOLVER_URL), RESOLVER_URL, RESOLVER_URL)
@@ -59,22 +57,22 @@ class DefaultResolverFactoryTest {
     }
 
     private void checkMavenResolver(IBiblioResolver resolver, String name, String url) {
-        assertEquals url, resolver.root
-        assertEquals name, resolver.name
-        assertTrue resolver.allownomd
+        assert url == resolver.root
+        assert name == resolver.name
+        assert resolver.allownomd
     }
 
     @Test
     public void testCreateMavenRepoWithAdditionalJarUrls() {
         String testUrl2 = 'http://www.gradle2.org'
         DualResolver dualResolver = factory.createMavenRepoResolver(TEST_REPO_NAME, TEST_REPO_URL, testUrl2)
-        assertTrue dualResolver.allownomd
+        assert dualResolver.allownomd
         checkIBiblio(dualResolver.ivyResolver, "_poms")
         URLResolver urlResolver = dualResolver.artifactResolver
         assert urlResolver.m2compatible
         assert urlResolver.artifactPatterns.contains("$TEST_REPO_URL/$ResolverContainer.MAVEN_REPO_PATTERN" as String)
         assert urlResolver.artifactPatterns.contains("$testUrl2/$ResolverContainer.MAVEN_REPO_PATTERN" as String)
-        assertEquals("${TEST_REPO_NAME}_jars" as String, urlResolver.name)
+        assert "${TEST_REPO_NAME}_jars" == urlResolver.name
     }
 
     @Test
@@ -85,10 +83,10 @@ class DefaultResolverFactoryTest {
     private void checkIBiblio(IBiblioResolver iBiblioResolver, String expectedNameSuffix) {
         assert iBiblioResolver.usepoms
         assert iBiblioResolver.m2compatible
-        assertTrue iBiblioResolver.allownomd
-        assertEquals(TEST_REPO_URL + '/', iBiblioResolver.root)
-        assertEquals(ResolverContainer.MAVEN_REPO_PATTERN, iBiblioResolver.pattern)
-        assertEquals("${TEST_REPO_NAME}$expectedNameSuffix" as String, iBiblioResolver.name)
+        assert iBiblioResolver.allownomd
+        assert TEST_REPO_URL + '/' == iBiblioResolver.root
+        assert ResolverContainer.MAVEN_REPO_PATTERN == iBiblioResolver.pattern
+        assert "${TEST_REPO_NAME}$expectedNameSuffix" == iBiblioResolver.name
     }
 
     @Test public void testCreateFlatDirResolver() {
@@ -96,11 +94,16 @@ class DefaultResolverFactoryTest {
         File dir2 = new File('/rootFolder2')
         String expectedName = 'libs'
         FileSystemResolver resolver = factory.createFlatDirResolver(expectedName, [dir1, dir2] as File[])
-        checkNoModuleRepository(resolver, expectedName,
-                [dir1, dir2].collect {"$it.absolutePath/$ResolverContainer.FLAT_DIR_RESOLVER_PATTERN"}, [])
-        assertEquals(new File(SystemProperties.javaIoTmpDir).getCanonicalPath(),
-                new File(((DefaultRepositoryCacheManager) resolver.getRepositoryCacheManager()).getBasedir().getParent()).getCanonicalPath())
-
+        def expectedPatterns = [
+                "$dir1.absolutePath/[artifact]-[revision](-[classifier]).[ext]",
+                "$dir1.absolutePath/[artifact](-[classifier]).[ext]",
+                "$dir2.absolutePath/[artifact]-[revision](-[classifier]).[ext]",
+                "$dir2.absolutePath/[artifact](-[classifier]).[ext]"
+        ]
+        assert expectedName == resolver.name
+        assert [] == resolver.ivyPatterns
+        assert expectedPatterns == resolver.artifactPatterns
+        assert resolver.allownomd
     }
 
     @Test public void testCreateLocalMavenRepo() {
@@ -112,15 +115,7 @@ class DefaultResolverFactoryTest {
         }
 
         def repo = factory.createMavenLocalResolver('name')
-        assertThat(repo, instanceOf(GradleIBiblioResolver))
-        assertThat(repo.root, equalTo(repoDir.toURI().toString() + '/'))
-    }
-
-    private void checkNoModuleRepository(RepositoryResolver resolver, String expectedName, List expectedArtifactPatterns,
-                                         List expectedIvyPatterns) {
-        assertEquals(expectedName, resolver.name)
-        assertEquals(expectedIvyPatterns, resolver.ivyPatterns)
-        assert expectedArtifactPatterns == resolver.artifactPatterns
-        assertTrue(resolver.allownomd)
+        assert repo instanceof GradleIBiblioResolver
+        assert repo.root == repoDir.toURI().toString() + '/'
     }
 }

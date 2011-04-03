@@ -31,7 +31,7 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
-import java.io.File;
+import java.io.*;
 import java.util.*;
 
 import static org.gradle.util.Matchers.*;
@@ -65,7 +65,7 @@ public class DefaultTaskArtifactStateRepositoryTest {
 
     @Before
     public void setup() {
-        context.checking(new Expectations(){{
+        context.checking(new Expectations() {{
             CacheBuilder builder = context.mock(CacheBuilder.class);
 
             one(cacheRepository).cache("outputFileStates");
@@ -75,7 +75,7 @@ public class DefaultTaskArtifactStateRepositoryTest {
             will(returnValue(persistentCache));
 
             one(persistentCache).openIndexedCache();
-            will(returnValue(new TestIndexedCache()));
+            will(returnValue(new InMemoryIndexedCache()));
         }});
 
         FileSnapshotter inputFilesSnapshotter = new DefaultFileSnapshotter(new DefaultHasher());
@@ -263,7 +263,7 @@ public class DefaultTaskArtifactStateRepositoryTest {
         TaskArtifactState state = repository.getStateFor(task());
         assertFalse(state.isUpToDate());
     }
-    
+
     @Test
     public void artifactsAreNotUpToDateWhenAnyFileInInputDirChangesType() {
         execute();
@@ -328,7 +328,7 @@ public class DefaultTaskArtifactStateRepositoryTest {
 
         TaskArtifactState state = repository.getStateFor(task1);
         assertFalse(state.isUpToDate());
-        state.update();
+        state.afterTask();
 
         outputDir.deleteDir();
 
@@ -336,7 +336,7 @@ public class DefaultTaskArtifactStateRepositoryTest {
         state = repository.getStateFor(task2);
         assertFalse(state.isUpToDate());
         task2.execute();
-        state.update();
+        state.afterTask();
 
         // Task should be out-of-date
         state = repository.getStateFor(task1);
@@ -381,7 +381,7 @@ public class DefaultTaskArtifactStateRepositoryTest {
         TaskArtifactState state = repository.getStateFor(task());
         assertThat(state.getExecutionHistory().getOutputFiles().getFiles(), isEmpty());
     }
-    
+
     @Test
     public void hasTaskHistoryFromPreviousExecution() {
         execute();
@@ -445,7 +445,7 @@ public class DefaultTaskArtifactStateRepositoryTest {
     @Test
     public void considersExistingFileInOutputDirectoryWhichIsUpdatedByTheTaskAsProducedByTask() {
         expectEmptyCacheLocated();
-        
+
         TestFile otherFile = outputDir.file("other").createFile();
 
         TaskInternal task = task();
@@ -455,7 +455,7 @@ public class DefaultTaskArtifactStateRepositoryTest {
         task.execute();
         otherFile.write("new content");
 
-        state.update();
+        state.afterTask();
 
         otherFile.delete();
 
@@ -472,14 +472,14 @@ public class DefaultTaskArtifactStateRepositoryTest {
 
         TaskArtifactState state = repository.getStateFor(task());
         assertFalse(state.isUpToDate());
-        state.update();
+        state.afterTask();
 
         outputDirFile.write("ignore me");
 
         state = repository.getStateFor(task());
         assertTrue(state.isUpToDate());
         assertThat(state.getExecutionHistory().getOutputFiles().getFiles(), (Matcher) not(hasItem(outputDirFile)));
-        state.update();
+        state.afterTask();
     }
 
     @Test
@@ -561,29 +561,35 @@ public class DefaultTaskArtifactStateRepositoryTest {
             TaskArtifactState state = repository.getStateFor(task);
             state.isUpToDate();
             task.execute();
-            state.update();
+            state.afterTask();
         }
     }
-    
+
     private void expectEmptyCacheLocated() {
-        context.checking(new Expectations(){{
-            CacheBuilder builder = context.mock(CacheBuilder.class);
+        context.checking(new Expectations() {{
+            CacheBuilder tasksCacheBuilder = context.mock(CacheBuilder.class);
+            CacheBuilder fileSnapshotCacheBuilder = context.mock(CacheBuilder.class);
 
             one(cacheRepository).cache("taskArtifacts");
-            will(returnValue(builder));
+            will(returnValue(tasksCacheBuilder));
 
-            one(builder).forObject(gradle);
-            will(returnValue(builder));
+            one(tasksCacheBuilder).forObject(gradle);
+            will(returnValue(tasksCacheBuilder));
 
-            one(builder).open();
+            one(tasksCacheBuilder).open();
             will(returnValue(persistentCache));
 
+            atMost(1).of(cacheRepository).cache("fileSnapshots");
+            will(returnValue(fileSnapshotCacheBuilder));
 
-
-
+            atMost(1).of(fileSnapshotCacheBuilder).open();
+            will(returnValue(persistentCache));
 
             one(persistentCache).openIndexedCache(with(notNullValue(Serializer.class)));
-            will(returnValue(new TestIndexedCache()));
+            will(returnValue(new InMemoryIndexedCache()));
+
+            atMost(1).of(persistentCache).openIndexedCache();
+            will(returnValue(new InMemoryIndexedCache()));
         }});
     }
 
@@ -670,19 +676,4 @@ public class DefaultTaskArtifactStateRepositoryTest {
     public static class TaskSubType extends DefaultTask {
     }
 
-    public static class TestIndexedCache implements PersistentIndexedCache<Object, Object> {
-        Map<Object, Object> entries = new HashMap<Object, Object>();
-
-        public Object get(Object key) {
-            return entries.get(key);
-        }
-
-        public void put(Object key, Object value) {
-            entries.put(key, value);
-        }
-
-        public void remove(Object key) {
-            entries.remove(key);
-        }
-    }
 }

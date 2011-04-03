@@ -19,17 +19,19 @@ import groovy.lang.Closure;
 import org.apache.commons.lang.StringUtils;
 import org.gradle.api.file.FileCollection;
 import org.gradle.api.file.FileTree;
+import org.gradle.api.internal.file.collections.*;
 import org.gradle.api.internal.tasks.DefaultTaskDependency;
 import org.gradle.api.specs.Spec;
 import org.gradle.api.specs.Specs;
 import org.gradle.api.tasks.StopExecutionException;
 import org.gradle.api.tasks.TaskDependency;
+import org.gradle.api.tasks.util.PatternSet;
 import org.gradle.util.GUtil;
 
 import java.io.File;
 import java.util.*;
 
-public abstract class AbstractFileCollection implements FileCollection {
+public abstract class AbstractFileCollection implements FileCollectionInternal {
     /**
      * Returns the display name of this file collection. Used in log and error messages.
      *
@@ -108,9 +110,7 @@ public abstract class AbstractFileCollection implements FileCollection {
     }
 
     protected void addAsFileSet(Object builder, String nodeName) {
-        for (DefaultConfigurableFileTree fileTree : getAsFileTrees()) {
-            fileTree.addToAntBuilder(builder, nodeName, AntType.FileSet);
-        }
+        new AntFileSetBuilder(getAsFileTrees()).addToAntBuilder(builder, nodeName);
     }
 
     protected void addAsResourceCollection(Object builder, String nodeName) {
@@ -118,15 +118,15 @@ public abstract class AbstractFileCollection implements FileCollection {
     }
 
     /**
-     * Returns this collection as a set of {@link DefaultConfigurableFileTree} instances.
+     * Returns this collection as a set of {@link DirectoryFileTree} instances.
      */
-    protected Collection<DefaultConfigurableFileTree> getAsFileTrees() {
-        List<DefaultConfigurableFileTree> fileTrees = new ArrayList<DefaultConfigurableFileTree>();
+    protected Collection<DirectoryFileTree> getAsFileTrees() {
+        List<DirectoryFileTree> fileTrees = new ArrayList<DirectoryFileTree>();
         for (File file : getFiles()) {
             if (file.isFile()) {
-                DefaultConfigurableFileTree fileTree = new DefaultConfigurableFileTree(file.getParentFile(), null, null);
-                fileTree.include(new String[]{file.getName()});
-                fileTrees.add(fileTree);
+                PatternSet patternSet = new PatternSet();
+                patternSet.include(new String[]{file.getName()});
+                fileTrees.add(new DirectoryFileTree(file.getParentFile(), patternSet));
             }
         }
         return fileTrees;
@@ -175,19 +175,13 @@ public abstract class AbstractFileCollection implements FileCollection {
         return new DefaultTaskDependency();
     }
 
-    public FileTree getAsFileTree() {
+    public FileTreeInternal getAsFileTree() {
         return new CompositeFileTree() {
             @Override
-            public TaskDependency getBuildDependencies() {
-                return AbstractFileCollection.this.getBuildDependencies();
-            }
-
-            @Override
-            protected void addSourceCollections(Collection<FileCollection> sources) {
-                TaskDependency taskDependency = AbstractFileCollection.this.getBuildDependencies();
-                for (File file : AbstractFileCollection.this.getFiles()) {
-                    sources.add(new SingletonFileTree(file, taskDependency));
-                }
+            public void resolve(FileCollectionResolveContext context) {
+                ResolvableFileCollectionResolveContext nested = context.newContext();
+                nested.add(AbstractFileCollection.this);
+                context.add(nested.resolveAsFileTrees());
             }
 
             @Override

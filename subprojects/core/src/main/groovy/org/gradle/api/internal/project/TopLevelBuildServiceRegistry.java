@@ -22,6 +22,7 @@ import org.gradle.StartParameter;
 import org.gradle.api.Project;
 import org.gradle.api.artifacts.Module;
 import org.gradle.api.artifacts.dsl.RepositoryHandler;
+import org.gradle.api.artifacts.maven.MavenFactory;
 import org.gradle.api.execution.TaskActionListener;
 import org.gradle.api.internal.*;
 import org.gradle.api.internal.artifacts.ConfigurationContainerFactory;
@@ -41,10 +42,8 @@ import org.gradle.api.internal.file.IdentityFileResolver;
 import org.gradle.api.internal.initialization.DefaultScriptHandlerFactory;
 import org.gradle.api.internal.initialization.ScriptHandlerFactory;
 import org.gradle.api.internal.project.taskfactory.*;
-import org.gradle.api.internal.tasks.DefaultTaskExecuter;
-import org.gradle.api.internal.tasks.ExecuteAtMostOnceTaskExecuter;
-import org.gradle.api.internal.tasks.SkipTaskExecuter;
-import org.gradle.api.internal.tasks.TaskExecuter;
+import org.gradle.api.internal.tasks.*;
+import org.gradle.api.internal.tasks.execution.*;
 import org.gradle.cache.AutoCloseCacheFactory;
 import org.gradle.cache.CacheFactory;
 import org.gradle.cache.CacheRepository;
@@ -126,18 +125,21 @@ public class TopLevelBuildServiceRegistry extends DefaultServiceRegistry impleme
 
     protected TaskExecuter createTaskExecuter() {
         return new ExecuteAtMostOnceTaskExecuter(
-                new SkipTaskExecuter(
-                        new ExecutionShortCircuitTaskExecuter(
-                                new PostExecutionAnalysisTaskExecuter(
-                                        new DefaultTaskExecuter(
-                                                get(ListenerManager.class).getBroadcaster(TaskActionListener.class))),
-                                        get(TaskArtifactStateRepository.class))));
+                new SkipOnlyIfTaskExecuter(
+                        new SkipTaskWithNoActionsExecuter(
+                                new SkipEmptySourceFilesTaskExecuter(
+                                        new ValidatingTaskExecuter(
+                                                new SkipUpToDateTaskExecuter(
+                                                        new PostExecutionAnalysisTaskExecuter(
+                                                                new ExecuteActionsTaskExecuter(
+                                                                        get(ListenerManager.class).getBroadcaster(TaskActionListener.class))),
+                                                        get(TaskArtifactStateRepository.class)))))));
     }
 
     protected Factory<RepositoryHandler> createRepositoryHandlerFactory() {
         return new DefaultRepositoryHandlerFactory(
                 new DefaultResolverFactory(
-                        getFactory(LoggingManagerInternal.class)),
+                        getFactory(LoggingManagerInternal.class), get(MavenFactory.class)),
                 get(ClassGenerator.class));
     }
 
@@ -254,11 +256,13 @@ public class TopLevelBuildServiceRegistry extends DefaultServiceRegistry impleme
                         cacheRepository));
 
         FileSnapshotter outputFilesSnapshotter = new OutputFilesSnapshotter(fileSnapshotter, new RandomLongIdGenerator(), cacheRepository);
-        return new ShortCircuitTaskArtifactStateRepository(
-                startParameter,
-                new DefaultTaskArtifactStateRepository(cacheRepository,
-                        fileSnapshotter,
-                        outputFilesSnapshotter));
+        return new FileCacheBroadcastTaskArtifactStateRepository(
+                new ShortCircuitTaskArtifactStateRepository(
+                        startParameter,
+                        new DefaultTaskArtifactStateRepository(cacheRepository,
+                                fileSnapshotter,
+                                outputFilesSnapshotter)),
+                new DefaultFileCacheListener());
     }
 
     protected ScriptCompilerFactory createScriptCompileFactory() {
@@ -328,6 +332,15 @@ public class TopLevelBuildServiceRegistry extends DefaultServiceRegistry impleme
                 new ProjectEvaluationConfigurer(),
                 new ProjectDependencies2TaskResolver(),
                 new ImplicitTasksConfigurer());
+    }
+
+    protected MavenFactory createMavenFactory() {
+        ClassLoader coreImplClassLoader = get(ClassLoaderFactory.class).getCoreImplClassLoader();
+        try {
+            return (MavenFactory) coreImplClassLoader.loadClass("org.gradle.api.internal.artifacts.publish.maven.DefaultMavenFactory").newInstance();
+        } catch (Exception e) {
+            throw UncheckedException.asUncheckedException(e);
+        }
     }
 
     public ServiceRegistryFactory createFor(Object domainObject) {

@@ -17,7 +17,7 @@
 package org.gradle.api.internal.changedetection;
 
 import org.gradle.api.file.FileCollection;
-import org.gradle.api.internal.file.SimpleFileCollection;
+import org.gradle.api.internal.file.collections.SimpleFileCollection;
 import org.gradle.util.ChangeListener;
 import org.gradle.util.NoOpChangeListener;
 
@@ -33,7 +33,7 @@ public class DefaultFileSnapshotter implements FileSnapshotter {
         this.hasher = hasher;
     }
 
-    public FileCollectionSnapshot snapshot() {
+    public FileCollectionSnapshot emptySnapshot() {
         return new FileCollectionSnapshotImpl(new HashMap<String, FileSnapshot>());
     }
 

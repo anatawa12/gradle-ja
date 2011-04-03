@@ -16,6 +16,7 @@
 package org.gradle.api.plugins.quality;
 
 import org.gradle.api.logging.LogLevel;
+import org.gradle.api.plugins.quality.internal.AntCodeNarc;
 import org.gradle.api.tasks.*;
 
 import java.io.File;

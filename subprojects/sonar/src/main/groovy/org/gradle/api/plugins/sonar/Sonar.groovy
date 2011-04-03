@@ -19,8 +19,11 @@ import org.sonar.batch.bootstrapper.Bootstrapper
 import org.gradle.api.internal.ConventionTask
 import org.gradle.api.tasks.TaskAction
 import org.gradle.util.ClasspathUtil
-import org.gradle.util.SystemProperties
-import org.gradle.api.logging.LogLevel
+import org.gradle.api.plugins.sonar.internal.ClassesOnlyClassLoader
+import org.gradle.util.GradleVersion
+import org.slf4j.LoggerFactory
+import ch.qos.logback.classic.Logger
+import ch.qos.logback.classic.Level
 
 /**
  * Analyzes a project and stores the results in Sonar's database.
@@ -34,12 +37,17 @@ class Sonar extends ConventionTask {
     /**
      * The directory to be used for caching files downloaded from the Sonar server.
      */
-    File bootstrapDir = new File(SystemProperties.javaIoTmpDir, "sonar-bootstrap")
+    File bootstrapDir
 
     /**
      * The base directory for the project to be analyzed.
      */
     File projectDir
+
+    /**
+     * The build output directory for the project to be analyzed.
+     */
+    File buildDir
 
     /**
      * The directories containing the production sources of the project to be analyzed.
@@ -93,17 +101,19 @@ class Sonar extends ConventionTask {
 
     @TaskAction
     void execute() {
-        withErrorLogLevel {
-            bootstrapDir.mkdirs()
+        withErrorSqlLogging {
+            getBootstrapDir().mkdirs()
             def bootstrapper = new Bootstrapper("Gradle", getServerUrl(), getBootstrapDir())
 
-            def classLoader = bootstrapper.createClassLoader([findGradleSonarJar()] as URL[],
-                    Sonar.classLoader, "groovy", "org.codehaus.groovy", "org.slf4j", "org.apache.log4j", "org.apache.commons.logging")
+            def classLoader = bootstrapper.createClassLoader(
+                    [findGradleSonarJar()] as URL[], new ClassesOnlyClassLoader(Sonar.classLoader),
+                    "groovy", "org.codehaus.groovy", "org.slf4j", "org.apache.log4j", "org.apache.commons.logging")
 
-            def launcherClass = classLoader.loadClass("org.gradle.api.plugins.sonar.internal.SonarCodeAnalyzer")
-            def launcher = launcherClass.newInstance()
-            launcher.sonarTask = this
-            launcher.execute()
+            def analyzerClass = classLoader.loadClass("org.gradle.api.plugins.sonar.internal.SonarCodeAnalyzer")
+            def analyzer = analyzerClass.newInstance()
+            analyzer.gradleVersion = GradleVersion.current().version
+            analyzer.sonarTask = this
+            analyzer.execute()
         }
     }
 
@@ -225,26 +235,24 @@ class Sonar extends ConventionTask {
 
     protected URL findGradleSonarJar() {
         def url = ClasspathUtil.getClasspath(Sonar.classLoader).find { it.path.contains("gradle-sonar") }
-        assert url != null, "failed to detect gradle-sonar Jar"
+        assert url != null, "failed to detect file system location of gradle-sonar Jar"
         url
     }
 
-    // this is an unsuccessful attempt to get rid of the Hibernate SQL logging
-    private void withErrorLogLevel(Closure block) {
-        def level = project.logging.level
-        def outLevel = project.logging.standardOutputCaptureLevel
-        def errLevel = project.logging.standardErrorCaptureLevel
-
-        project.logging.level = LogLevel.ERROR
-        project.logging.captureStandardOutput(LogLevel.ERROR)
-        project.logging.captureStandardError(LogLevel.ERROR)
+    // limit Hibernate SQL logging to errors, no matter what the Gradle log level is
+    // this is a workaround for org.sonar.jpa.session.AbstractDatabaseConnector, line 158:
+    // props.put("hibernate.show_sql", Boolean.valueOf(LOG_SQL.isInfoEnabled()).toString());
+    // without this workaround, each SQL statement gets logged even if Gradle log level
+    // is set to QUIET
+    private void withErrorSqlLogging(Closure block) {
+        Logger sqlLogger = (Logger) LoggerFactory.getLogger("org.hibernate.SQL")
+        def oldLevel = sqlLogger.level
 
         try {
+            sqlLogger.level = Level.ERROR
             block()
         } finally {
-            project.logging.level = level
-            project.logging.captureStandardOutput(outLevel)
-            project.logging.captureStandardError(errLevel)
+            sqlLogger.level = oldLevel
         }
     }
 }

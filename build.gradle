@@ -14,13 +14,12 @@
  * limitations under the License.
  */
 
-import java.util.jar.Attributes
-import org.gradle.api.internal.artifacts.dependencies.DefaultSelfResolvingDependency
-
 import org.gradle.build.samples.WrapperProjectCreator
 import org.gradle.build.Version
 import org.gradle.build.Install
 import org.gradle.build.Git
+import java.util.jar.Attributes
+import org.gradle.api.internal.artifacts.dependencies.DefaultSelfResolvingDependency
 
 /**
  * For building Gradle you usually don't need to specify any properties. Only certain functionality of the Gradle requires
@@ -93,7 +92,7 @@ allprojects {
     }
 
     repositories {
-        mavenRepo(urls: 'http://gradle.artifactoryonline.com/gradle/libs')
+        mavenRepo(urls: 'http://repo.gradle.org/gradle/libs')
     }
 
     version = this.version
@@ -356,6 +355,9 @@ configurations {
     plugins {
         visible = false
     }
+    coreImpl {
+        visible = false
+    }
     testRuntime {
         extendsFrom runtime
         extendsFrom plugins
@@ -365,6 +367,7 @@ configurations {
 dependencies {
     runtime runtimeProjects()
     plugins pluginProjects()
+    coreImpl project(':coreImpl')
 }
 
 evaluationDependsOn(':docs')
@@ -393,6 +396,9 @@ binDistImage = copySpec {
         from configurations.runtime
         into('plugins') {
             from configurations.plugins - configurations.runtime
+        }
+        into('core-impl') {
+            from configurations.coreImpl - configurations.runtime
         }
     }
 }
@@ -481,7 +487,7 @@ def guessMaxForks() {
     return Math.max(2, (int) (processors / 2))
 }
 
-task testedDists(dependsOn: [assemble, check, 'integTest:integTest', 'integTest:embeddedIntegTest', 'openApi:integTest', ':ui:integTest'])
+task testedDists(dependsOn: [assemble, check, 'integTest:integTest', 'integTest:embeddedIntegTest', 'openApi:integTest', ':ui:integTest', 'ide:integTest'])
 
 task nightlyBuild(dependsOn: [clean, testedDists, ':docs:uploadDocs'])
 
@@ -505,7 +511,7 @@ uploadDists {
     dependsOn testedDists
     uploadDescriptor = false
     doFirst {
-        org.apache.ivy.util.url.CredentialsStore.INSTANCE.addCredentials('Artifactory Realm', 'gradle.artifactoryonline.com', artifactoryUserName, artifactoryUserPassword)
+        org.apache.ivy.util.url.CredentialsStore.INSTANCE.addCredentials('Artifactory Realm', 'repo.gradle.org', artifactoryUserName, artifactoryUserPassword)
         repositories.add(new org.apache.ivy.plugins.resolver.URLResolver()) {
             name = 'gradleReleases'
             addArtifactPattern("${version.distributionUrl}/[artifact]-[revision](-[classifier]).[ext]" as String)
@@ -580,11 +586,11 @@ def publishedProjects() {
 }
 
 def runtimeProjects() {
-    groovyProjects() - pluginProjects() - [project(':integTest')]
+    groovyProjects() - pluginProjects() - [project(':integTest'), project(':coreImpl')]
 }
 
 def pluginProjects() {
-    ['plugins', 'codeQuality', 'jetty', 'antlr', 'wrapper', 'osgi', 'maven', 'eclipse', 'idea', 'announce', 'scala', 'sonar'].collect {
+    ['plugins', 'codeQuality', 'jetty', 'antlr', 'wrapper', 'osgi', 'maven', 'ide', 'announce', 'scala', 'sonar'].collect {
         project(it)
     }
 }

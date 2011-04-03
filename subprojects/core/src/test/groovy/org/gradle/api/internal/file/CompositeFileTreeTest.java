@@ -18,11 +18,14 @@ package org.gradle.api.internal.file;
 import groovy.lang.Closure;
 import org.gradle.api.file.FileTree;
 import org.gradle.api.file.FileVisitor;
-import org.gradle.api.file.FileCollection;
+import org.gradle.api.internal.file.collections.FileCollectionResolveContext;
+import org.gradle.api.internal.file.collections.FileTreeInternal;
 import org.gradle.api.tasks.util.PatternSet;
 import org.gradle.util.HelperUtil;
 import static org.gradle.util.WrapUtil.*;
 import static org.hamcrest.Matchers.*;
+
+import org.gradle.util.JUnit4GroovyMockery;
 import org.jmock.Expectations;
 import org.jmock.integration.junit4.JMock;
 import org.jmock.integration.junit4.JUnit4Mockery;
@@ -30,13 +33,11 @@ import static org.junit.Assert.*;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
-import java.util.Collection;
-
 @RunWith(JMock.class)
 public class CompositeFileTreeTest {
-    private final JUnit4Mockery context = new JUnit4Mockery();
-    private final FileTree source1 = context.mock(FileTree.class, "source1");
-    private final FileTree source2 = context.mock(FileTree.class, "source2");
+    private final JUnit4Mockery context = new JUnit4GroovyMockery();
+    private final FileTreeInternal source1 = context.mock(FileTreeInternal.class);
+    private final FileTreeInternal source2 = context.mock(FileTreeInternal.class);
     private final CompositeFileTree tree = new CompositeFileTree() {
         @Override
         public String getDisplayName() {
@@ -44,17 +45,17 @@ public class CompositeFileTreeTest {
         }
 
         @Override
-        protected void addSourceCollections(Collection<FileCollection> sources) {
-            sources.add(source1);
-            sources.add(source2);
+        public void resolve(FileCollectionResolveContext context) {
+            context.add(source1);
+            context.add(source2);
         }
     };
 
     @Test
     public void matchingWithClosureReturnsUnionOfFilteredSets() {
         final Closure closure = HelperUtil.TEST_CLOSURE;
-        final FileTree filtered1 = context.mock(FileTree.class, "filtered1");
-        final FileTree filtered2 = context.mock(FileTree.class, "filtered2");
+        final FileTreeInternal filtered1 = context.mock(FileTreeInternal.class);
+        final FileTreeInternal filtered2 = context.mock(FileTreeInternal.class);
 
         context.checking(new Expectations() {{
             one(source1).matching(closure);
@@ -67,14 +68,14 @@ public class CompositeFileTreeTest {
         assertThat(filtered, instanceOf(CompositeFileTree.class));
         CompositeFileTree filteredCompositeSet = (CompositeFileTree) filtered;
 
-        assertThat(toList(filteredCompositeSet.getSourceCollections()), equalTo(toList(filtered1, filtered2)));
+        assertThat(toList(filteredCompositeSet.getSourceCollections()), equalTo(toList((FileTree)filtered1, filtered2)));
     }
 
     @Test
     public void matchingWithPatternSetReturnsUnionOfFilteredSets() {
         final PatternSet patternSet = new PatternSet();
-        final FileTree filtered1 = context.mock(FileTree.class, "filtered1");
-        final FileTree filtered2 = context.mock(FileTree.class, "filtered2");
+        final FileTreeInternal filtered1 = context.mock(FileTreeInternal.class);
+        final FileTreeInternal filtered2 = context.mock(FileTreeInternal.class);
 
         context.checking(new Expectations() {{
             one(source1).matching(patternSet);
@@ -87,17 +88,17 @@ public class CompositeFileTreeTest {
         assertThat(filtered, instanceOf(CompositeFileTree.class));
         CompositeFileTree filteredCompositeSet = (CompositeFileTree) filtered;
 
-        assertThat(toList(filteredCompositeSet.getSourceCollections()), equalTo(toList(filtered1, filtered2)));
+        assertThat(toList(filteredCompositeSet.getSourceCollections()), equalTo(toList((FileTree) filtered1, filtered2)));
     }
 
     @Test
     public void plusReturnsUnionOfThisTreeAndSourceTree() {
-        FileTree other = context.mock(FileTree.class, "other");
+        FileTreeInternal other = context.mock(FileTreeInternal.class);
 
         FileTree sum = tree.plus(other);
         assertThat(sum, instanceOf(CompositeFileTree.class));
         UnionFileTree sumCompositeTree = (UnionFileTree) sum;
-        assertThat(sumCompositeTree.getSourceCollections(), equalTo((Iterable) toList(tree, other)));
+        assertThat(sumCompositeTree.getSourceCollections(), equalTo((Iterable) toList(source1, source2, other)));
     }
 
     @Test
