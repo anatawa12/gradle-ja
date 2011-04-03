@@ -200,8 +200,8 @@
             from Gradle is as convenient and more powerful than using Ant tasks from a <filename>build.xml</filename>
             file. From below example you can learn how to execute ant tasks and how to access ant properties:
         </para>
-        <para>AntのタスクはGradleのファーストクラス・オブジェクトであり、デフォルトで使用できるようになっています。Groovyの持つ機能のおかげで、GradleはAntを非常に高いレベルで統合しています。Groovyには素晴らしき<literal>AntBuilder</literal>が組み込まれているのです。Antのタスクは、<filename>build.xml</filename>で使うよりGradleで使ったほうが便利で強力です。次の例を見てください。</para>
-        <sample id="antLoadfile" dir="userguide/tutorial/antLoadfile" title="Using AntBuilder to execute ant.loadfile target">
+        <para>AntのタスクはGradleのファーストクラス・オブジェクトであり、デフォルトで使用できるようになっています。Groovyの持つ機能のおかげで、GradleはAntを非常に高いレベルで統合しています。Groovyには素晴らしき<literal>AntBuilder</literal>が組み込まれているのです。Antのタスクは、<filename>build.xml</filename>で使うよりGradleで使ったほうが便利で強力です。次の例を見てください。Antのタスクを実行する方法やAntのプロパティにアクセスする方法を示しています。</para>
+        <sample id="antLoadfile" dir="userguide/tutorial/antLoadfile" title="AntBuilderを使ってant.loadfileターゲットを実行する / Using AntBuilder to execute ant.loadfile target">
             <sourcefile file="build.gradle"/>
             <output args="-q loadfile"/>
         </sample>
@@ -215,7 +215,7 @@
             the example above, is extracting a method.
         </para>
         <para>Gradleでは、段階的にビルドロジックを体系化していくことができます。最初の一歩として、上の例をメソッドの抽出を使ってリファクタリングしてみましょう。</para>
-        <sample id="antLoadfileWithMethod" dir="userguide/tutorial/antLoadfileWithMethod" title="Using methods to organize your build logic">
+        <sample id="antLoadfileWithMethod" dir="userguide/tutorial/antLoadfileWithMethod" title="メソッドを抽出してビルドロジックを整理する / Using methods to organize your build logic">
             <sourcefile file="build.gradle"/>
             <output args="-q loadfile"/>
         </sample>
