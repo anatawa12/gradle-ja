@@ -336,8 +336,10 @@
 
     <section>
         <title>プロジェクトレイアウト<phrase role="original">Project layout</phrase></title>
-        <para>The Java plugin assumes the project layout shown below. None of these directories need exist or have
+        <para role="original">The Java plugin assumes the project layout shown below. None of these directories need exist or have
             anything in them. The Java plugin will compile whatever it finds, and handles anything which is missing.
+        </para>
+        <para>Javaプラグインは、以下のようなプロジェクトレイアウトを仮定しています。これらのディレクトリは、存在しなかったり中身が空でもかまいません。Javaプラグインは、見つけたものをコンパイルし、見つからないものには適切に対処します。
         </para>
 
         <table id='javalayout'>
@@ -355,9 +357,11 @@
 
         <section>
             <title>プロジェクトレイアウトの変更<phrase role="original">Changing the project layout</phrase></title>
-            <para>You configure the project layout by configuring the appropriate source set. This is discussed in
+            <para role="original">You configure the project layout by configuring the appropriate source set. This is discussed in
                 more detail in the following sections. Here is a brief example which changes the main Java and resource
                 source directories.
+            </para>
+            <para>プロジェクトのレイアウトは、適切なソースセットを設定することでカスタマイズできます。これについては後続の節でより詳しく説明します。以下に、製品のJavaソースとリソースのソースディレクトリを変更する簡単な例を示します。
             </para>
             <sample id="customJavaSourceLayout" dir="java/customizedLayout" title="Javaソースレイアウトのカスタマイズ / Custom Java source layout">
                 <sourcefile file="build.gradle" snippet="define-main"/>
@@ -367,13 +371,18 @@
 
     <section id="sec:java_plugin_and_dependency_management">
         <title>依存関係の管理<phrase role="original">Dependency management</phrase></title>
-        <para>The Java plugin adds a number of dependency configurations to your project, as shown below. It assigns
+        <para role="original">The Java plugin adds a number of dependency configurations to your project, as shown below. It assigns
             those configurations to tasks such as <literal>compileJava</literal> and <literal>test</literal>.
             To learn more about configurations see <xref linkend="sub:configurations"/> and
             <xref linkend="artifacts_and_configurations"/>.
         </para>
+        <para>Javaプラグインは、以下のような多くの依存関係のコンフィギュレーションをプロジェクトに追加します。
+        これらのコンフィギュレーションは<literal>compileJava</literal>や<literal>test</literal>といったタスクに割り当てられます。
+            コンフィギュレーションについての詳しい情報は<xref linkend="sub:configurations"/>や
+            <xref linkend="artifacts_and_configurations"/>を参照してください。
+        </para>
         <table id='tab:configurations'>
-            <title>Javaプラグイン - 依存関係configuration<phrase role="original">Java plugin - dependency configurations</phrase></title>
+            <title>Javaプラグイン - 依存関係のコンフィギュレーション<phrase role="original">Java plugin - dependency configurations</phrase></title>
             <thead>
                 <tr>
                     <td>名前<phrase role="original">Name</phrase></td>
@@ -421,7 +430,7 @@
             </tr>
         </table>
         <figure>
-            <title>Javaプラグイン - 依存関係configuration<phrase role="original">Java plugin - dependency configurations</phrase></title>
+            <title>Javaプラグイン - 依存関係のコンフィギュレーション<phrase role="original">Java plugin - dependency configurations</phrase></title>
             <imageobject>
                 <imagedata fileref="img/javaPluginConfigurations.png"/>
             </imageobject>
@@ -430,10 +439,15 @@
 
     <section>
         <title>規約プロパティ<phrase role="original">Convention properties</phrase></title>
-        <para>
+        <para role="original">
             The Java plugin adds a number of convention properties to the project, shown below. You can use these properties
             in your build script as though they were properties of the project object (see
             <xref linkend="sub:more_about_convention_objects"/>).
+        </para>
+        <para>
+            Javaプラグインは、以下のような多くの規約プロパティをプロジェクトに追加します。
+            これらは、ビルドスクリプトの中で、あたかもprojectオブジェクトのプロパティであるかのように使うことができます
+            (<xref linkend="sub:more_about_convention_objects"/>参照)。
         </para>
 
         <table id='javaconventionDir'>
@@ -690,10 +704,15 @@
             </tr>
         </table>
 
-        <para>
+        <para role="original">
             These properties are provided by convention objects of type <apilink class="org.gradle.api.plugins.JavaPluginConvention"/>,
             <apilink class="org.gradle.api.plugins.BasePluginConvention"/> and
             <apilink class="org.gradle.api.plugins.ReportingBasePluginConvention"/>.
+        </para>
+        <para>
+            これらのプロパティは、<apilink class="org.gradle.api.plugins.JavaPluginConvention"/>、
+            <apilink class="org.gradle.api.plugins.BasePluginConvention"/>、
+            <apilink class="org.gradle.api.plugins.ReportingBasePluginConvention"/>などの型の規約オブジェクトによって提供されます。
         </para>
     </section>
 
