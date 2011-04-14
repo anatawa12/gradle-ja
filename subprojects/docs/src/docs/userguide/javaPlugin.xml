@@ -361,7 +361,7 @@
                 more detail in the following sections. Here is a brief example which changes the main Java and resource
                 source directories.
             </para>
-            <para>プロジェクトのレイアウトは、適切なソースセットを設定することでカスタマイズできます。これについては後続の節でより詳しく説明します。以下に、製品のJavaソースとリソースのソースディレクトリを変更する簡単な例を示します。
+            <para>プロジェクトのレイアウトは、適切なソースセットを設定することでカスタマイズできます。これについては後続の節でより詳しく説明します。以下に、mainのJavaソースとリソースのソースディレクトリを変更する簡単な例を示します。
             </para>
             <sample id="customJavaSourceLayout" dir="java/customizedLayout" title="Javaソースレイアウトのカスタマイズ / Custom Java source layout">
                 <sourcefile file="build.gradle" snippet="define-main"/>
@@ -718,26 +718,38 @@
 
     <section id="sec:source_sets">
         <title>ソースセットの利用<phrase role="original">Working with source sets</phrase></title>
-        <para>You can access the source sets of a project using the <literal>sourceSets</literal> property. This
+        <para role="original">You can access the source sets of a project using the <literal>sourceSets</literal> property. This
             is a container for the project's source sets, of type <apilink class="org.gradle.api.tasks.SourceSetContainer"/>.
             There is also a <literal>sourceSets()</literal> method, which you can pass a closure to which configures the
             source set container. The source set container works pretty much the same way as other containers, such
             as <literal>tasks</literal>.
+        <para>プロジェクトのソースセットには、<literal>sourceSets</literal>プロパティを使ってアクセスすることができます。
+        これはプロジェクトのソースセットのコンテナで、<apilink class="org.gradle.api.tasks.SourceSetContainer"/>型です。
+        また、<literal>sourceSets()</literal>というメソッドもあり、クロージャを渡してソースセットコンテナを設定することができます。
+        ソースセットコンテナは、<literal>tasks</literal>のような他のコンテナと同じように働きます。
+        </para>
         </para>
         <sample id="defineSourceSet" dir="userguide/java/sourceSets" title="ソースセットへのアクセス / Accessing a source set">
             <sourcefile file="build.gradle" snippet="access-source-set"/>
         </sample>
-        <para>To configure an existing source set, you simply use one of the above access methods to set the
+        <para role="original">To configure an existing source set, you simply use one of the above access methods to set the
             properties of the source set. The properties are described below. Here is an example which configures the
             main Java and resources directories:</para>
+        <para>既存のソースセットを設定するには、上記のアクセスメソッドの一つを使って、そのソースセットのプロパティを設定します。
+        プロパティについては後述します。以下に、mainのJavaソースとリソースディレクトリを設定する例を示します：</para>
         <sample id="configureSourceSet" dir="java/customizedLayout" title="ソースセットのソースディレクトリの設定 / Configuring the source directories of a source set">
             <sourcefile file="build.gradle" snippet="define-main"/>
         </sample>
-        <para>To define a new source set, you simply reference it in the <literal>sourceSets { }</literal> block.
+        <para role="original">To define a new source set, you simply reference it in the <literal>sourceSets { }</literal> block.
             When you define a source set, the Java plugin adds a number of tasks which assemble the classes for the
             source set, as shown in <xref linkend="java_source_set_tasks"/>. For example, if you add a source set called
             <literal>intTest</literal>, the Java plugin adds <literal>compileIntTestJava</literal>, <literal>processIntTestResources</literal>
             and <literal>intTestClasses</literal> tasks.
+        </para>
+        <para>新しいソースセットは、<literal>sourceSets { }</literal>ブロックの中でそれを参照するだけで定義できます。
+        ソースセットを定義すると、Javaプラグインは<xref linkend="java_source_set_tasks"/>に示したような、
+        そのソースセットのクラスを構築するためのタスクを追加します。
+        例えば、<literal>intTest</literal>というソースセットを追加すると、Javaプラグインは <literal>compileIntTestJava</literal>、<literal>processIntTestResources</literal>、そして<literal>intTestClasses</literal>タスクを追加します。
         </para>
         <sample id="defineSourceSet" dir="userguide/java/sourceSets" title="ソースセットの定義 / Defining a source set">
             <sourcefile file="build.gradle" snippet="define-source-set"/>
@@ -745,8 +757,11 @@
 
         <section>
             <title>ソースセットプロパティ<phrase role="original">Source set properties</phrase></title>
-            <para>The following table lists some of the important properties of a source set.
+            <para role="original">The following table lists some of the important properties of a source set.
                 You can find more details in the API documentation for <apilink class="org.gradle.api.tasks.SourceSet"/>.
+            </para>
+            <para>以下の表は、ソースセットの重要なプロパティの一覧です。
+            さらに詳しくは、<apilink class="org.gradle.api.tasks.SourceSet"/>のAPIドキュメントをご覧ください。
             </para>
             <table>
                 <title>Javaプラグイン - ソースセットプロパティ<phrase role="original">Java plugin - source set properties</phrase></title>
@@ -908,19 +923,23 @@
 
         <section>
             <title>ソースセットの実例<phrase role="original">Some source set examples</phrase></title>
-            <para>Using dependency configurations to define the source set classpath:</para>
+            <para role="original">Using dependency configurations to define the source set classpath:</para>
+            <para>依存関係のコンフィギュレーションを使って、ソースセットのクラスパスを定義します：</para>
             <sample id="configureSourceSet" dir="userguide/java/sourceSets" title="ソースセットのクラスパスを定義 / Defining the classpath of a source set">
                 <sourcefile file="build.gradle" snippet="classpath-using-configurations"/>
             </sample>
-            <para>Adding a JAR containing the classes of a source set:</para>
+            <para role="original">Adding a JAR containing the classes of a source set:</para>
+            <para>ソースセットのクラスを含んだJARを追加します：</para>
             <sample id="configureSourceSet" dir="userguide/java/sourceSets" title="ソースセットのJARを生成 / Assembling a JAR for a source set">
                 <sourcefile file="build.gradle" snippet="jar"/>
             </sample>
-            <para>Generating Javadoc for a source set:</para>
+            <para role="original">Generating Javadoc for a source set:</para>
+            <para>ソースセットのJavadocを生成します：</para>
             <sample id="configureSourceSet" dir="userguide/java/sourceSets" title="ソースセットのJavadocを生成 / Generating the Javadoc for a source set">
                 <sourcefile file="build.gradle" snippet="javadoc"/>
             </sample>
-            <para>Adding a test suite to run the tests in a source set:</para>
+            <para role="original">Adding a test suite to run the tests in a source set:</para>
+            <para>ソースセットに含まれるテストを実行するテストスイートを追加します：</para>
             <sample id="configureSourceSet" dir="userguide/java/sourceSets" title="ソースセットのテストを実行 / Running tests in a source set">
                 <sourcefile file="build.gradle" snippet="test"/>
             </sample>
@@ -929,12 +948,17 @@
 
     <section id='sec:javadoc'>
         <title>Javadoc<phrase role="original">Javadoc</phrase></title>
-        <para>The <literal>javadoc</literal> task is an instance of <apilink class="org.gradle.api.tasks.javadoc.Javadoc"/>.
+        <para role="original">The <literal>javadoc</literal> task is an instance of <apilink class="org.gradle.api.tasks.javadoc.Javadoc"/>.
             It supports the core javadoc options and the options of the standard doclet described in the
             <ulink url='http://java.sun.com/j2se/1.5.0/docs/tooldocs/windows/javadoc.html#referenceguide'>reference documentation</ulink>
             of the Javadoc executable.
             For a complete list of supported Javadoc options consult the API documentation of the following classes:
             <apilink class="org.gradle.external.javadoc.CoreJavadocOptions"/> and <apilink class="org.gradle.external.javadoc.StandardJavadocDocletOptions"/>. 
+        </para>
+        <para><literal>javadoc</literal>タスクは<apilink class="org.gradle.api.tasks.javadoc.Javadoc"/>のインスタンスです。
+        javadocの主なオプションと、javadocコマンドの<ulink url='http://download.oracle.com/javase/1.5.0/docs/tooldocs/windows/javadoc.html#referenceguide'>リファレンスガイド</ulink>に記載されている標準docletのオプションをサポートしています。
+        サポートしているjavadocオプションの完全なリストについては、次のクラスのAPIドキュメントを参照してください: 
+            <apilink class="org.gradle.external.javadoc.CoreJavadocOptions"/>および<apilink class="org.gradle.external.javadoc.StandardJavadocDocletOptions"/>。
         </para>
         <table>
             <title>Javaプラグイン - Javadocプロパティ<phrase role="original">Java plugin - Javadoc properties</phrase></title>
@@ -976,9 +1000,12 @@
 
     <section id='sec:clean'>
         <title>Clean<phrase role="original">Clean</phrase></title>
-        <para>The <literal>clean</literal> task is an instance of <apilink class="org.gradle.api.tasks.Delete"/>. It
+        <para role="original">The <literal>clean</literal> task is an instance of <apilink class="org.gradle.api.tasks.Delete"/>. It
             simply removes the directory denoted by its <literal>dir</literal>
             property.
+        </para>
+        <para><literal>clean</literal>タスクは<apilink class="org.gradle.api.tasks.Delete"/>のインスタンスです。
+        <literal>dir</literal>プロパティで示されるディレクトリを削除します。
         </para>
         <table>
             <title>Javaプラグイン - Cleanプロパティ<phrase role="original">Java plugin - Clean properties</phrase></title>
@@ -1001,9 +1028,13 @@
 
     <section id='sec:resources'>
         <title>リソース<phrase role="original">Resources</phrase></title>
-        <para>The Java plugin uses the <apilink class="org.gradle.api.tasks.Copy"/> task for resource handling. It adds an
+        <para role="original">The Java plugin uses the <apilink class="org.gradle.api.tasks.Copy"/> task for resource handling. It adds an
             instance for each source set in the project. You can find out more about the copy task in
             <xref linkend="sec:copying_files"/>.
+        </para>
+        <para>Javaプラグインは、リソースの処理に<apilink class="org.gradle.api.tasks.Copy"/>タスクを使います。
+        プロジェクトの各ソースセットに対して一つのインスタンスを追加します。
+        copyタスクの詳細については、<xref linkend="sec:copying_files"/>をご覧ください。
         </para>
         <table>
             <title>Javaプラグイン- processResourcesプロパティ<phrase role="original">Java plugin - ProcessResources properties</phrase></title>
@@ -1033,9 +1064,13 @@
 
     <section id='sec:compile'>
         <title>CompileJava<phrase role="original">CompileJava</phrase></title>
-        <para>The Java plugin adds a <apilink class="org.gradle.api.tasks.compile.Compile"/> instance for each
+        <para role="original">The Java plugin adds a <apilink class="org.gradle.api.tasks.compile.Compile"/> instance for each
             source set in the project. The compile task delegates to Ant's javac task to do the compile. You can set most
             of the properties of the Ant javac task.
+        </para>
+        <para>Javaプラグインは、プロジェクトの各ソースセットに対して一つの<apilink class="org.gradle.api.tasks.compile.Compile"/>インスタンスを追加します。
+        compileタスクは、実際のコンパイル作業をAntのjavacタスクに委譲します。
+        Antのjavacタスクの大部分のプロパティが設定可能です。
         </para>
         <table>
             <title>Javaプラグイン - Compileプロパティ<phrase role="original">Java plugin - Compile properties</phrase></title>
@@ -1072,10 +1107,15 @@
 
     <section id='sec:java_test'>
         <title>Test<phrase role="original">Test</phrase></title>
-        <para>The <literal>test</literal> task is an instance of <apilink class="org.gradle.api.tasks.testing.Test"/>.
+        <para role="original">The <literal>test</literal> task is an instance of <apilink class="org.gradle.api.tasks.testing.Test"/>.
             It automatically detects and executes all unit tests in the <literal>test</literal> source set.
             It also generates a report once test execution is complete. JUnit and TestNG are both supported.
             Have a look at <apilink class="org.gradle.api.tasks.testing.Test"/> for the complete API.
+        </para>
+        <para><literal>test</literal>タスクは<apilink class="org.gradle.api.tasks.testing.Test"/>のインスタンスです。
+        このタスクは、<literal>test</literal>ソースセットに含まれるすべてのユニットテストを自動的に検出し、実行します。
+        また、テストの実行が完了するとレポートを生成します。JUnitとTestNGの両方がサポートされています。
+        完全なAPIについては、<apilink class="org.gradle.api.tasks.testing.Test"/>を見てください。
         </para>
 
         <section>
@@ -1233,43 +1273,64 @@
 
     <section>
         <title>Jar<phrase role="original">Jar</phrase></title>
-        <para>The <literal>jar</literal> task creates a JAR file containing the class files and resources of the
+        <para role="original">The <literal>jar</literal> task creates a JAR file containing the class files and resources of the
             project. The JAR file is declared as an artifact in the <literal>archives</literal> dependency
             configuration. This means that the JAR is available in the classpath of a dependent project. If you upload
             your project into a repository, this JAR is declared as part of the dependency descriptor. You can learn
             more about how to work with archives in <xref linkend="sec:archives"/> and artifact configurations in
             <xref linkend="artifact_management"/>.
         </para>
+        <para><literal>jar</literal>タスクは、プロジェクトのクラスファイルとリソースを含んだJARファイルを生成します。このJARファイルは<literal>archives</literal>という依存関係のコンフィギュレーションで、アーティファクトとして宣言されています。
+        これは、（このプロジェクトに）依存しているプロジェクトのクラスパスでこのJARが利用可能ということです。
+        プロジェクトをリポジトリにアップロードする場合、このJARは依存関係のディスクリプタの一部として宣言されます。
+        アーカイブの扱いについては<xref linkend="sec:archives"/>、アーティファクトの設定については<xref linkend="artifact_management"/>で、さらに詳しく学ぶことができます。
+        </para>
         <section id='sub:manifest'>
             <title>Manifest<phrase role="original">Manifest</phrase></title>
-            <para>Each jar or war object has a <literal>manifest</literal>
+            <para role="original">Each jar or war object has a <literal>manifest</literal>
                 property with a separate instance of <apilink class="org.gradle.api.java.archives.Manifest"/>.
                 When the archive is generated, a corresponding <literal>MANIFEST.MF</literal> file is written into the
                 archive.
             </para>
+            <para>各jarやwarオブジェクトは、それぞれ<apilink class="org.gradle.api.java.archives.Manifest"/>のインスタンスである<literal>manifest</literal>プロパティを持ちます。
+            アーカイブが生成されるとき、対応する<literal>MANIFEST.MF</literal>ファイルがアーカイブ内に作成されます。
+            </para>
             <sample id="manifest" dir="userguide/tutorial/manifest" title="MANIFEST.MFのカスタマイズ / Customization of MANIFEST.MF">
                 <sourcefile file="build.gradle" snippet="add-to-manifest"/>
             </sample>
-            <para>You can create stand alone instances of a <classname>Manifest</classname>. You can use that for example,
+            <para role="original">You can create stand alone instances of a <classname>Manifest</classname>. You can use that for example,
                 to share manifest information between jars.
+            </para>
+            <para>独立した<classname>Manifest</classname>インスタンスを生成することもできます。
+            これは例えば、複数のjar間でマニフェスト情報を共有する目的などに利用できます。
             </para>
             <sample id="manifest" dir="userguide/tutorial/manifest" title="manifestオブジェクトの作成 / Creating a manifest object.">
                 <sourcefile file="build.gradle" snippet="custom-manifest"/>
             </sample>
-            <para>You can merge other manifests into any <classname>Manifest</classname>
+            <para role="original">You can merge other manifests into any <classname>Manifest</classname>
                 object. The other manifests might
                 be either described by a file path or, like in the example above, by a reference to another <classname>Manifest</classname> object.
+            </para>
+            <para><classname>Manifest</classname>オブジェクトに他のマニフェストをマージすることもできます。
+            マージ対象のマニフェストは、ファイルパス、または上の例のように別の<classname>Manifest</classname>オブジェクトの参照によって指定できます。
             </para>
             <sample id="manifest" dir="userguide/tutorial/manifest" title="特定のアーカイブ用にMANIFEST.MFを分離 / Separate MANIFEST.MF for a particular archive">
                 <sourcefile file="build.gradle" snippet="merge"/>
             </sample>
-            <para>Manifest are merged in the order they are declared by the <literal>from</literal> statement. If
+            <para role="original">Manifest are merged in the order they are declared by the <literal>from</literal> statement. If
             the based manifest and the merged manifest both define values for the same key, the merged manifest wins by default.
             You can fully customize the merge behavior behavior by adding <literal>eachEntry</literal> actions in which
                 you have access to a <apilink class="org.gradle.api.java.archives.ManifestMergeDetails"/> instance for each entry
                 of the resulting manifest. The merge is not immediately triggered by the from statement. It is done lazily,
                 either when generating the jar, or by calling <literal>writeTo</literal> or <literal>effectiveManifest</literal></para>
-            <para>You can easily write a manifest to disk.
+            <para>マニフェストは<literal>from</literal>文で宣言された順にマージされます。
+            元のマニフェストとマージするマニフェストの双方に同じキーを持つ値が定義されている場合、デフォルトではマージするマニフェストのものが有効になります。
+            マージの振る舞いは、マージで生成されるマニフェストの各エントリに対する<apilink class="org.gradle.api.java.archives.ManifestMergeDetails"/>インスタンスにアクセスする、<literal>eachEntry</literal>アクションを追加することによって自在にカスタマイズ可能です。
+            マージはfrom文によって即座に実行されるわけではありません。
+            jarの生成時、または<literal>writeTo</literal>や <literal>effectiveManifest</literal>の呼び出し時に、遅延して実行されます。</para>
+            <para role="original">You can easily write a manifest to disk.
+            </para>
+            <para>マニフェストをディスクに書き出すのは簡単です。
             </para>
             <sample id="manifest" dir="userguide/tutorial/manifest" title="特定のアーカイブ用にMANIFEST.MFを分離 / Separate MANIFEST.MF for a particular archive">
                 <sourcefile file="build.gradle" snippet="write"/>
@@ -1277,9 +1338,12 @@
         </section>
         <section id='sub:metainf'>
             <title>MetaInf<phrase role="original">MetaInf</phrase></title>
-            <para>The convention object of the Java plugin has a <literal>metaInf</literal> property pointing to a list of
+            <para role="original">The convention object of the Java plugin has a <literal>metaInf</literal> property pointing to a list of
                 <classname>FileSet</classname> objects. With these file sets you can define which files should be in the
                 <filename>META-INF</filename> directory of a JAR or a WAR archive.
+            </para>
+            <para>Javaプラグインの規約オブジェクトには、<classname>FileSet</classname>オブジェクトのリストを指す<literal>metaInf</literal>プロパティがあります。
+            このファイルセットを使って、JARやWARアーカイブの<filename>META-INF</filename>ディレクトリに含めるファイルを定義することができます。
             </para>
             <programlisting><![CDATA[
 metaInf << new FileSet(someDir)
