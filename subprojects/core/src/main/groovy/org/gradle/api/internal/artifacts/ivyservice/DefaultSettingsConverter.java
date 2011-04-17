@@ -17,7 +17,6 @@
 package org.gradle.api.internal.artifacts.ivyservice;
 
 import org.apache.commons.lang.StringUtils;
-import org.apache.ivy.core.cache.DefaultRepositoryCacheManager;
 import org.apache.ivy.core.cache.RepositoryCacheManager;
 import org.apache.ivy.core.module.descriptor.ModuleDescriptor;
 import org.apache.ivy.core.settings.IvySettings;
@@ -37,7 +36,10 @@ import org.gradle.util.Clock;
 import org.gradle.util.WrapUtil;
 
 import java.io.File;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
 
 /**
  * @author Hans Dockter
@@ -76,13 +78,9 @@ public class DefaultSettingsConverter implements SettingsConverter {
             return ivySettings;
         }
         Clock clock = new Clock();
-        ChainResolver userResolverChain = createUserResolverChain(Collections.<DependencyResolver>emptyList(), internalRepository);
-        ClientModuleResolver clientModuleResolver = createClientModuleResolver(new HashMap<String, ModuleDescriptor>(), userResolverChain);
-        ChainResolver outerChain = createOuterChain(userResolverChain, clientModuleResolver);
 
         IvySettings ivySettings = createIvySettings(gradleUserHome);
-        initializeResolvers(ivySettings, getAllResolvers(Collections.<DependencyResolver>emptyList(), publishResolvers, internalRepository, userResolverChain, clientModuleResolver, outerChain));
-        ivySettings.setDefaultResolver(CLIENT_MODULE_CHAIN_NAME);
+        initializeResolvers(ivySettings, getAllResolvers(Collections.<DependencyResolver>emptyList(), publishResolvers));
         logger.debug("Timing: Ivy convert for publish took {}", clock.getTime());
         return ivySettings;
     }
@@ -105,12 +103,10 @@ public class DefaultSettingsConverter implements SettingsConverter {
     }
 
     private List<DependencyResolver> getAllResolvers(List<DependencyResolver> classpathResolvers,
-                                                     List<DependencyResolver> otherResolvers, DependencyResolver internalRepository, 
-                                                     ChainResolver userResolverChain, ClientModuleResolver clientModuleResolver,
-                                                     ChainResolver outerChain) {
+                                                     List<DependencyResolver> otherResolvers, DependencyResolver... resolvers) {
         List<DependencyResolver> allResolvers = new ArrayList<DependencyResolver>(otherResolvers);
         allResolvers.addAll(classpathResolvers);
-        allResolvers.addAll(WrapUtil.toList(internalRepository, outerChain, clientModuleResolver, userResolverChain));
+        allResolvers.addAll(WrapUtil.toList(resolvers));
         return allResolvers;
     }
 
@@ -162,8 +158,12 @@ public class DefaultSettingsConverter implements SettingsConverter {
     private void initializeResolvers(IvySettings ivySettings, List<DependencyResolver> allResolvers) {
         for (DependencyResolver dependencyResolver : allResolvers) {
             ivySettings.addResolver(dependencyResolver);
-            if (dependencyResolver.getRepositoryCacheManager() instanceof DefaultRepositoryCacheManager) {
-                ((DefaultRepositoryCacheManager) dependencyResolver.getRepositoryCacheManager()).setSettings(ivySettings);
+            RepositoryCacheManager cacheManager = dependencyResolver.getRepositoryCacheManager();
+            // Validate that each resolver is sharing the same cache instance (ignoring caches which don't actually cache anything)
+            if (cacheManager != ivySettings.getDefaultRepositoryCacheManager()
+                    && !(cacheManager instanceof NoOpRepositoryCacheManager)
+                    && !(cacheManager instanceof LocalFileRepositoryCacheManager)) {
+                throw new IllegalStateException(String.format("Unexpected cache manager %s for repository %s (%s)", cacheManager, dependencyResolver.getName(), dependencyResolver));
             }
             if (dependencyResolver instanceof RepositoryResolver) {
                 Repository repository = ((RepositoryResolver) dependencyResolver).getRepository();

@@ -15,8 +15,8 @@
  */
 package org.gradle.tooling.internal.consumer;
 
-import org.gradle.tooling.internal.protocol.ConnectionFactoryVersion3;
+import org.gradle.tooling.internal.protocol.ConnectionFactoryVersion4;
 
 public interface ToolingImplementationLoader {
-    ConnectionFactoryVersion3 create(Distribution distribution);
+    ConnectionFactoryVersion4 create(Distribution distribution);
 }

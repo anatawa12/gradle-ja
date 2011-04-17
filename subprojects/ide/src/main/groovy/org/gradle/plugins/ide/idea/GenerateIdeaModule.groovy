@@ -52,46 +52,27 @@ public class GenerateIdeaModule extends XmlGeneratorTask<Module> {
     IdeaModule module
 
     //TODO SF: IMPORTANT
-    //for the sake of backwards compatibility there are lots of hacks here.
-    // - overridden methods with no implementation
-    // - configureDomainObjectNow() method that is called after projects evaluated
-    // - delegating getters & setters
-    //Once we decide to break backwards compatibility below madness will be gone
+    //Once we decide to break backwards compatibility below hacky delegating getters/setters will be gone
     //and the implementation of this task will dwindle into few lines of code or disappear completely
 
     @Override protected Module create() {
-        Module xmlModule = new Module(xmlTransformer)
+        Module xmlModule = new Module(xmlTransformer, module.pathFactory)
         return xmlModule
     }
 
     @Override protected void configure(Module xmlModule) {
-        //do nothing, we configure the object at configuration time
-    }
-
-    @Override public void configureDomainObject() {
-        //just like above
-    }
-
-    public void configureDomainObjectNow() {
-        if (getInputFile().exists()) {
-            domainObject = generator.read(getInputFile());
-        } else {
-            domainObject = generator.defaultInstance();
-        }
-        beforeConfigured.execute(domainObject);
-        getModule().applyXmlModule(domainObject)
-        afterConfigured.execute(domainObject);
+        getModule().mergeXmlModule(xmlModule)
     }
 
     /**
      * The content root directory of the module.
      */
     File getModuleDir() {
-        module.moduleDir
+        module.contentRoot
     }
 
-    void setModuleDir(File moduleDir) {
-        module.moduleDir = moduleDir
+    void setModuleDir(File contentRoot) {
+        module.contentRoot = contentRoot
     }
 
     /**
@@ -228,7 +209,7 @@ public class GenerateIdeaModule extends XmlGeneratorTask<Module> {
      * }
      *
      * ideaModule {
-     *   scopes.COMPILE.plus += configurations.provided
+     *   scopes.PROVIDED.plus += configurations.provided
      * }
      * </pre>
      */
@@ -246,8 +227,6 @@ public class GenerateIdeaModule extends XmlGeneratorTask<Module> {
      * If you really need to change the output file name it is much easier to do it via the <b>moduleName</b> property.
      * <p>
      * Please refer to documentation on <b>moduleName</b> property. In IntelliJ IDEA the module name is the same as the name of the *.iml file.
-     *
-     * @return
      */
     File getOutputFile() {
         return module.outputFile
@@ -277,8 +256,6 @@ public class GenerateIdeaModule extends XmlGeneratorTask<Module> {
      * </pre>
      * <p>
      * <b>since</b> 1.0-milestone-2
-     * <p>
-     * @return
      */
     String getModuleName() {
         return module.name

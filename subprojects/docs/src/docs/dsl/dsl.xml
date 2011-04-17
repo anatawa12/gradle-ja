@@ -191,10 +191,10 @@
                 <td>org.gradle.plugins.ide.idea.GenerateIdeaModule</td>
             </tr>
             <tr>
-                <td>org.gradle.plugins.ide.idea.IdeaProject</td>
+                <td>org.gradle.plugins.ide.idea.GenerateIdeaProject</td>
             </tr>
             <tr>
-                <td>org.gradle.plugins.ide.idea.IdeaWorkspace</td>
+                <td>org.gradle.plugins.ide.idea.GenerateIdeaWorkspace</td>
             </tr>
             <tr>
                 <td>org.gradle.api.tasks.bundling.Jar</td>

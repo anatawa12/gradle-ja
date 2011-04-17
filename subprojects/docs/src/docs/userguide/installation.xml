@@ -56,7 +56,7 @@
     </listitem>
     <listitem>
         <para role="original">The binary sources. This is for reference only. If you want to build Gradle you need to download the source distribution
-            or checkout the sources from the source repository. See the <ulink url="website:build.html">Gradle web site</ulink> for details).
+            or checkout the sources from the source repository. See the <ulink url="website:build.html">Gradle web site</ulink> for details.
         </para>
         <para>Gradleバイナリのソースコード。これは参照専用のものです。Gradleをビルドするには、ソースを別途ダウンロードするかリポジトリからチェックアウトする必要があります。詳しくは<ulink url="website:build.html">GradleのWebサイト</ulink>を参照してください。</para> 
     </listitem>
@@ -91,11 +91,11 @@ Gradleは、<command>gradle</command>コマンドを使って実行されます�
 
 <screen>
 ------------------------------------------------------------
-Gradle 1.0-milestone-1
+Gradle 1.0-milestone-2
 ------------------------------------------------------------
 
-Gradle build time: Sunday, 27 February 2011 11:20:57 AM EST
-Groovy: 1.7.8
+Gradle build time: Thursday, 7 April 2011 04:24:33 PM EST
+Groovy: 1.7.10
 Ant: Apache Ant(TM) version 1.8.2 compiled on December 20 2010
 Ivy: 2.2.0
 JVM: 1.6.0_22 (Sun Microsystems Inc. 17.1-b03)

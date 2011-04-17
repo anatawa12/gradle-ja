@@ -568,8 +568,24 @@
             <para>これで、依存関係を取得するリポジトリとして、複数のディレクトリが追加されました。このフラットディレクトリ・リゾルバのみ使うのであれば、依存関係定義ですべての属性を定義する必要はありません。<xref linkend='para:dependencies_with_empty_attributes'/>をご参照ください。</para>
         </section>
         <section>
-            <title>定義済みリポジトリについての補足<phrase role="original">More about preconfigured repositories</phrase></title>
-            <para role="original">The methods above for creating preconfigured repositories share some common behavior. For all of them, defining
+            <title>Ivy repositories</title>
+            <para>To use an Ivy repository:</para>
+            <sample id="ivyRepository" dir="userguide/artifacts/defineRepository" title="Ivy repository">
+                <sourcefile file="build.gradle" snippet="ivy-repo"/>
+            </sample>
+            <para>See <apilink class="org.gradle.api.artifacts.dsl.IvyArtifactRepository"/> for details.</para>
+            <section>
+                <title>Accessing password protected Ivy repositories</title>
+                <para>To access an Ivy repository which uses basic authentication, you specify the username and password to use when you define the repository:
+                </para>
+                <sample id="ivyRepository" dir="userguide/artifacts/defineRepository" title="Ivy repository">
+                    <sourcefile file="build.gradle" snippet="authenticated-ivy-repo"/>
+                </sample>
+            </section>
+        </section>
+        <section>
+            <title>More about preconfigured repositories</title>
+            <para>The methods above for creating preconfigured repositories share some common behavior. For all of them, defining
                 a name for the repository is optional. If no name is defined a default name is calculated, depending on the
                 type of the repository. You might want to assign a name, if you want to access the declared repository. For example
                 if you want to use it also for uploading your project artifacts. An explicit name might also be helpful when
@@ -582,11 +598,10 @@
             <para>リポジトリ定義メソッドに引き渡す値は、必ずしも文字列である必要はなく、どんな型のオブジェクトでも渡すことができます。実際には、引き渡されたオブジェクトを<code>toString</code>で変換した結果が使用されるのです。</para>
         </section>
         <section id='sub:cache'>
-            <title>キャッシュ<phrase role="original">Cache</phrase></title>
-            <para role="original">When Gradle downloads dependencies from remote repositories it stores them in a local cache located at
-                <literal>USER_HOME/.gradle/cache</literal>. When Gradle downloads dependencies from one of its
-                predefined local resolvers (e.g. Flat Directory resolver), the cache is not used as an intermediate
-                storage for dependency artifacts. The cache is always used for caching module descriptors.
+            <title>Cache</title>
+            <para>When Gradle downloads artifacts from remote repositories it stores them in a local cache located at
+                <literal>USER_HOME/.gradle/cache</literal>. When Gradle downloads artifacts from one of its
+                predefined local resolvers (e.g. flat directory resolver), the cache is not used.
             </para>
             <para>リモートリポジトリからダウンロードされた依存関係は、<literal>USER_HOME/.gradle/cache</literal>にローカルキャッシュとして保存されます。一方、定義済みのローカルリゾルバ(フラットディレクトリ・リゾルバなど)から依存関係を取得した場合、ローカルキャッシュは依存ファイルの中間ストレージとしては使用されません。ただし、どちらの場合も、依存関係のディスクリプタは常にローカルキャッシュに保存されます。</para>
         </section>

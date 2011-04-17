@@ -37,8 +37,8 @@ class IdeaPluginTest extends Specification {
 
         then:
         assertThatCleanIdeaDependsOnDeleteTask(project, project.cleanIdeaProject)
-        IdeaProject ideaProjectTask = project.ideaProject
-        ideaProjectTask instanceof IdeaProject
+        GenerateIdeaProject ideaProjectTask = project.ideaProject
+        ideaProjectTask instanceof GenerateIdeaProject
         ideaProjectTask.outputFile == new File(project.projectDir, project.name + ".ipr")
         ideaProjectTask.subprojects == project.rootProject.allprojects
         ideaProjectTask.javaVersion == JavaVersion.VERSION_1_6.toString()
@@ -53,7 +53,7 @@ class IdeaPluginTest extends Specification {
         applyPluginToProjects()
 
         then:
-        project.ideaWorkspace instanceof IdeaWorkspace
+        project.ideaWorkspace instanceof GenerateIdeaWorkspace
         assertThatCleanIdeaDependsOnDeleteTask(project, project.cleanIdeaWorkspace)
 
         childProject.tasks.findByName('ideaWorkspace') == null

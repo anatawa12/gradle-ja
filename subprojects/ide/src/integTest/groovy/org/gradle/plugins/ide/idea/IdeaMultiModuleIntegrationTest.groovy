@@ -28,6 +28,52 @@ class IdeaMultiModuleIntegrationTest extends AbstractIdeIntegrationTest {
     public final TestResources testResources = new TestResources()
 
     @Test
+    void buildsCorrectModuleDependencies() {
+        def settingsFile = file("master/settings.gradle")
+        settingsFile << """
+include 'api'
+include 'shared:api', 'shared:model'
+include 'util'
+        """
+
+        def buildFile = file("master/build.gradle")
+        buildFile << """
+allprojects {
+    apply plugin: 'java'
+    apply plugin: 'idea'
+}
+
+project(':api') {
+    dependencies {
+        compile project(':shared:api')
+        testCompile project(':shared:model')
+    }
+}
+
+project(':shared:model') {
+    configurations {
+        utilities { extendsFrom testCompile }
+    }
+    dependencies {
+        utilities project(':util')
+    }
+    ideaModule {
+        scopes.TEST.plus.add(configurations.utilities)
+    }
+}
+"""
+
+        //when
+        executer.usingBuildScript(buildFile).usingSettingsFile(settingsFile).withTasks("ideaModule").run()
+
+        //then
+        def apiDeps = parseImlDependencies(project: 'master/api', "api.iml")
+        ['shared-api', 'model'].each { assert apiDeps.contains(it) }
+        def modelDeps = parseImlDependencies(project: 'master/shared/model', "model.iml")
+        ['util'].each { assert modelDeps.contains(it) }
+    }
+
+    @Test
     void dealsWithDuplicatedModuleNames() {
       /*
       This is the multi-module project structure the integration test works with:
@@ -226,5 +272,26 @@ project(':api') {
 
         //then
         assert getFile(project: 'master/api', 'api.iml').exists()
+    }
+
+    @Test
+    void doesNotCreateDuplicateEntriesInIpr() {
+        def settingsFile = file("master/settings.gradle")
+        settingsFile << "include 'api', 'iml'"
+
+        def buildFile = file("master/build.gradle")
+        buildFile << """
+allprojects {
+    apply plugin: 'java'
+    apply plugin: 'idea'
+}
+"""
+
+        //when
+        2.times { executer.usingBuildScript(buildFile).usingSettingsFile(settingsFile).withTasks("ideaProject").run() }
+
+        //then
+        String content = getFile(project: 'master', 'master.ipr').text
+        assert content.count('filepath="$PROJECT_DIR$/api/api.iml"') == 1
     }
 }
