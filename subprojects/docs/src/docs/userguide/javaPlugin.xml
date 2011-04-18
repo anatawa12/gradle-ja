@@ -75,11 +75,15 @@
                 <td>
                     <literal>compileJava</literal>
                 </td>
-                <td>All tasks which produce the compile classpath. This includes the <literal>jar</literal> task for
-                    project dependencies included in the <literal>compile</literal> configuration.
+                <td>コンパイル時クラスパスを作り出すすべてのタスク。
+                <literal>compile</literal>コンフィギュレーションに含まれる、
+                プロジェクトの依存関係のための<literal>jar</literal>タスクを含む
+                <phrase role="original">All tasks which produce the compile classpath. This includes the <literal>jar</literal> task for
+                    project dependencies included in the <literal>compile</literal> configuration.</phrase>
                 </td>
                 <td><apilink class="org.gradle.api.tasks.compile.Compile"/></td>
-                <td>Compiles production Java source files using javac.</td>
+                <td>javacを使って製品Javaソースファイルをコンパイルする
+                <phrase role="original">Compiles production Java source files using javac.</phrase></td>
             </tr>
             <tr>
                 <td>
@@ -87,28 +91,34 @@
                 </td>
                 <td>-</td>
                 <td><apilink class="org.gradle.api.tasks.Copy"/></td>
-                <td>Copies production resources into the production classes directory.</td>
+                <td>製品リソースを製品クラスディレクトリにコピーする
+                <phrase role="original">Copies production resources into the production classes directory.</phrase></td>
             </tr>
             <tr>
                 <td>
                     <literal>classes</literal>
                 </td>
                 <td>
-                    <literal>compileJava</literal> and <literal>processResources</literal>.
-                    Some plugins add additional compilation tasks.
+                    <literal>compileJava</literal> と <literal>processResources</literal>。
+                    一部のプラグインはさらにコンパイルタスクを追加する
+                    <phrase role="original"><literal>compileJava</literal> and <literal>processResources</literal>.
+                    Some plugins add additional compilation tasks.</phrase>
                 </td>
                 <td><apilink class="org.gradle.api.Task"/></td>
-                <td>Assembles the production classes directory.</td>
+                <td>製品クラスディレクトリを構築する
+                <phrase role="original">Assembles the production classes directory.</phrase></td>
             </tr>
             <tr>
                 <td>
                     <literal>compileTestJava</literal>
                 </td>
                 <td>
-                    <literal>compile</literal>, plus all tasks which produce the test compile classpath.
+                    <literal>compile</literal>、そしてテストのコンパイル時クラスパスを作り出すすべてのタスク
+                    <phrase role="original"><literal>compile</literal>, plus all tasks which produce the test compile classpath.</phrase>
                 </td>
                 <td><apilink class="org.gradle.api.tasks.compile.Compile"/></td>
-                <td>Compiles test Java source files using javac.</td>
+                <td>javacを使ってテストJavaソースファイルをコンパイルする
+                <phrase role="original">Compiles test Java source files using javac.</phrase></td>
             </tr>
             <tr>
                 <td>
@@ -116,18 +126,21 @@
                 </td>
                 <td>-</td>
                 <td><apilink class="org.gradle.api.tasks.Copy"/></td>
-                <td>Copies test resources into the test classes directory.</td>
+                <td>テストリソースをテストクラスディレクトリにコピーする
+                <phrase role="original">Copies test resources into the test classes directory.</phrase></td>
             </tr>
             <tr>
                 <td>
                     <literal>testClasses</literal>
                 </td>
                 <td>
-                    <literal>compileTestJava</literal> and <literal>processTestResources</literal>.
-                    Some plugins add additional test compilation tasks.
+                    <literal>compileTestJava</literal> と <literal>processTestResources</literal>。一部のプラグインはさらにテストコンパイルタスクを追加する
+                    <phrase role="original"><literal>compileTestJava</literal> and <literal>processTestResources</literal>.
+                    Some plugins add additional test compilation tasks.</phrase>
                 </td>
                 <td><apilink class="org.gradle.api.Task"/></td>
-                <td>Assembles the test classes directory.</td>
+                <td>テストクラスディレクトリを構築する
+                <phrase role="original">Assembles the test classes directory.</phrase></td>
             </tr>
             <tr>
                 <td>
@@ -137,7 +150,8 @@
                     <literal>compile</literal>
                 </td>
                 <td><apilink class="org.gradle.api.tasks.bundling.Jar"/></td>
-                <td>Assembles the JAR file</td>
+                <td>JARファイルを構築する
+                <phrase role="original">Assembles the JAR file</phrase></td>
             </tr>
             <tr>
                 <td>
@@ -145,29 +159,36 @@
                 </td>
                 <td><literal>compile</literal></td>
                 <td><apilink class="org.gradle.api.tasks.javadoc.Javadoc"/></td>
-                <td>Generates API documentation for the production Java source, using Javadoc </td>
+                <td>Javadocを使って製品JavaソースのAPIドキュメントを生成する
+                <phrase role="original">Generates API documentation for the production Java source, using Javadoc </phrase></td>
             </tr>
             <tr>
                 <td>
                     <literal>test</literal>
                 </td>
                 <td>
-                    <literal>compile</literal>,
+                    <literal>compile</literal> と
+                    <literal>compileTest</literal>、そしてテストの実行時クラスパスを作り出すすべてのタスク
+                    <phrase role="original"><literal>compile</literal>,
                     <literal>compileTest</literal>,
-                    plus all tasks which produce the test runtime classpath.
+                    plus all tasks which produce the test runtime classpath.</phrase>
                 </td>
                 <td><apilink class="org.gradle.api.tasks.testing.Test"/></td>
-                <td>Runs the unit tests using JUnit or TestNG.</td>
+                <td>JUnitかTestNGを使ってユニットテストを実行する
+                <phrase role="original">Runs the unit tests using JUnit or TestNG.</phrase></td>
             </tr>
             <tr>
                 <td>
                     <literal>uploadArchives</literal>
                 </td>
                 <td>
-                    The tasks which produce the artifacts in the <literal>archives</literal> configuration, including <literal>jar</literal>.
+                    <literal>archives</literal>コンフィギュレーションのアーティファクトを生成するタスク
+                    （ <literal>jar</literal>を含む）
+                    <phrase role="original">The tasks which produce the artifacts in the <literal>archives</literal> configuration, including <literal>jar</literal>.</phrase>
                 </td>
                 <td><apilink class="org.gradle.api.tasks.Upload"/></td>
-                <td>Uploads the artifacts in the <literal>archives</literal> configuration, including the JAR file.</td>
+                <td><literal>archives</literal> コンフィギュレーションのアーティファクト（JARファイルを含む）をアップロードする
+                <phrase role="original">Uploads the artifacts in the <literal>archives</literal> configuration, including the JAR file.</phrase></td>
             </tr>
             <tr>
                 <td>
@@ -175,7 +196,7 @@
                 </td>
                 <td>-</td>
                 <td><apilink class="org.gradle.api.tasks.Delete"/></td>
-                <td>Deletes the project build directory.</td>
+                <td>プロジェクトのビルドディレクトリを削除する<phrase role="original">Deletes the project build directory.</phrase></td>
             </tr>
             <tr>
                 <td>
@@ -183,9 +204,11 @@
                 </td>
                 <td>-</td>
                 <td><apilink class="org.gradle.api.tasks.Delete"/></td>
-                <td>Deletes the output files produced by the specified task. For example <literal>cleanJar</literal>
+                <td>指定したタスクが生成する出力ファイルを削除する。
+                例えば<literal>cleanJar</literal>は<literal>jar</literal>タスクが作ったJARファイルを削除し、<literal>cleanTest</literal>は<literal>test</literal>タスクが作ったテスト結果を削除する。
+                <phrase role="original">Deletes the output files produced by the specified task. For example <literal>cleanJar</literal>
                     will delete the JAR file created by the <literal>jar</literal> task, and
-                    <literal>cleanTest</literal> will delete the test results created by the <literal>test</literal> task.
+                    <literal>cleanTest</literal> will delete the test results created by the <literal>test</literal> task.</phrase>
                 </td>
             </tr>
         </table>
