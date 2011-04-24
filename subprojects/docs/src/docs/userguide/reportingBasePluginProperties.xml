@@ -25,7 +25,8 @@
             <filename>reports</filename>
         </td>
         <td>
-            The name of the directory to generate reports into, relative to the build directory.
+            レポートを生成するディレクトリ名。ビルドディレクトリへの相対パス
+            <phrase role="original">The name of the directory to generate reports into, relative to the build directory.</phrase>
         </td>
     </tr>
     <tr>
@@ -39,7 +40,8 @@
             <filename><replaceable>buildDir</replaceable>/<replaceable>reportsDirName</replaceable></filename>
         </td>
         <td>
-            The directory to generate reports into.
+            レポートを生成するディレクトリ
+            <phrase role="original">The directory to generate reports into.</phrase>
         </td>
     </tr>
 </tgroup>

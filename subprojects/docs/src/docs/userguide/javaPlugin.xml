@@ -230,10 +230,12 @@
                     <literal>compile<replaceable>SourceSet</replaceable>Java</literal>
                 </td>
                 <td>
-                    All tasks which produce the source set's compile classpath.
+                    このソースセットのコンパイル時クラスパスを作り出すすべてのタスク
+                    <phrase role="original">All tasks which produce the source set's compile classpath.</phrase>
                 </td>
                 <td><apilink class="org.gradle.api.tasks.compile.Compile"/></td>
-                <td>Compiles the given source set's Java source files using javac.</td>
+                <td>javacを使って特定のソースセットのJavaソースファイルをコンパイルする
+                <phrase role="original">Compiles the given source set's Java source files using javac.</phrase></td>
             </tr>
             <tr>
                 <td>
@@ -241,19 +243,23 @@
                 </td>
                 <td>-</td>
                 <td><apilink class="org.gradle.api.tasks.Copy"/></td>
-                <td>Copies the given source set's resources into the classes directory.</td>
+                <td>特定のソースセットのリソースをそのクラスディレクトリにコピーする
+                <phrase role="original">Copies the given source set's resources into the classes directory.</phrase></td>
             </tr>
             <tr>
                 <td>
                     <literal><replaceable>sourceSet</replaceable>Classes</literal>
                 </td>
                 <td>
-                    <literal>compile<replaceable>SourceSet</replaceable>Java</literal> and
+                    <literal>compile<replaceable>SourceSet</replaceable>Java</literal> と
+                    <literal>process<replaceable>SourceSet</replaceable>Resources</literal>。一部のプラグインはさらにこのソースセットのコンパイルタスクを追加する
+                    <phrase role="original"><literal>compile<replaceable>SourceSet</replaceable>Java</literal> and
                     <literal>process<replaceable>SourceSet</replaceable>Resources</literal>.
-                    Some plugins add additional compilation tasks for the source set.
+                    Some plugins add additional compilation tasks for the source set.</phrase>
                 </td>
                 <td><apilink class="org.gradle.api.Task"/></td>
-                <td>Assembles the given source set's classes directory.</td>
+                <td>特定のソースセットのクラスディレクトリを構築する
+                <phrase role="original">Assembles the given source set's classes directory.</phrase></td>
             </tr>
         </table>
         
@@ -275,74 +281,92 @@
                     <literal>assemble</literal>
                 </td>
                 <td>
-                    All archive tasks in the project, including <literal>jar</literal>. Some plugins add additional
-                    archive tasks to the project.
+                    <literal>jar</literal>を含む、プロジェクトのすべてのアーカイブタスク。
+                    一部のプラグインはプロジェクトにさらにアーカイブタスクを追加する
+                    <phrase role="original">All archive tasks in the project, including <literal>jar</literal>. Some plugins add additional
+                    archive tasks to the project.</phrase>
                 </td>
                 <td><apilink class="org.gradle.api.Task"/></td>
-                <td>Assembles all the archives in the project.</td>
+                <td>プロジェクトのすべてのアーカイブを構築する
+                <phrase role="original">Assembles all the archives in the project.</phrase></td>
             </tr>
             <tr>
                 <td>
                     <literal>check</literal>
                 </td>
                 <td>
-                    All verification tasks in the project, including <literal>test</literal>. Some plugins add
-                    additional verification tasks to the project.
+                    <literal>test</literal>を含む、プロジェクトのすべての検証タスク。
+                    一部のプラグインはプロジェクトにさらに検証タスクを追加する
+                    <phrase role="original">All verification tasks in the project, including <literal>test</literal>. Some plugins add
+                    additional verification tasks to the project.</phrase>
                 </td>
                 <td><apilink class="org.gradle.api.Task"/></td>
-                <td>Performs all verification tasks in the project.</td>
+                <td>プロジェクトのすべての検証タスクを実行する
+                <phrase role="original">Performs all verification tasks in the project.</phrase></td>
             </tr>
             <tr>
                 <td>
                     <literal>build</literal>
                 </td>
                 <td>
-                    <literal>check</literal> and <literal>assemble</literal>
+                    <literal>check</literal> と <literal>assemble</literal>
+                    <phrase role="original"><literal>check</literal> and <literal>assemble</literal></phrase>
                 </td>
                 <td><apilink class="org.gradle.api.Task"/></td>
-                <td>Performs a full build of the project.</td>
+                <td>プロジェクトのフルビルドを実行する
+                <phrase role="original">Performs a full build of the project.</phrase></td>
             </tr>
             <tr>
                 <td>
                     <literal>buildNeeded</literal>
                 </td>
                 <td>
-                    <literal>build</literal> and <literal>build</literal> tasks in all project lib dependencies of the
-                    <literal>testRuntime</literal> configuration.
+                    <literal>build</literal> と、<literal>testRuntime</literal>コンフィギュレーションのプロジェクトライブラリ依存先すべての
+                    <literal>build</literal>タスク                   
+                    <phrase role="original"><literal>build</literal> and <literal>build</literal> tasks in all project lib dependencies of the
+                    <literal>testRuntime</literal> configuration.</phrase>
                 </td>
                 <td><apilink class="org.gradle.api.Task"/></td>
-                <td>Performs a full build of the project and all projects it depends on.</td>
+                <td>このプロジェクトと、このプロジェクトが依存しているすべてのプロジェクトのフルビルドを実行する。
+                <phrase role="original">Performs a full build of the project and all projects it depends on.</phrase></td>
             </tr>
             <tr>
                 <td>
                     <literal>buildDependents</literal>
                 </td>
                 <td>
-                    <literal>build</literal> and <literal>build</literal> tasks in all projects with a project lib
-                    dependency on this project in a <literal>testRuntime</literal> configuration.
+                    <literal>build</literal> と、<literal>testRuntime</literal>コンフィギュレーションのプロジェクトライブラリ依存先がこのプロジェクトであるすべてのプロジェクトの
+                    <literal>build</literal>タスク 
+                    <phrase role="original"><literal>build</literal> and <literal>build</literal> tasks in all projects with a project lib
+                    dependency on this project in a <literal>testRuntime</literal> configuration.</phrase>
                 </td>
                 <td><apilink class="org.gradle.api.Task"/></td>
-                <td>Performs a full build of the project and all projects which depend on it.</td>
+                <td>このプロジェクトと、このプロジェクトに依存しているすべてのプロジェクトのフルビルドを実行する。
+                <phrase role="original">Performs a full build of the project and all projects which depend on it.</phrase></td>
             </tr>
             <tr>
                 <td>
                     <literal>build<replaceable>ConfigurationName</replaceable></literal>
                 </td>
                 <td>
-                    The tasks which produce the artifacts in configuration <replaceable>ConfigurationName</replaceable>.
+                    <replaceable>ConfigurationName</replaceable>コンフィギュレーションのアーティファクトを作り出すタスク
+                    <phrase role="original">The tasks which produce the artifacts in configuration <replaceable>ConfigurationName</replaceable>.</phrase>
                 </td>
                 <td><apilink class="org.gradle.api.Task"/></td>
-                <td>Assembles the artifacts in the specified configuration.</td>
+                <td>指定されたコンフィギュレーションのアーティファクトを構築する
+                <phrase role="original">Assembles the artifacts in the specified configuration.</phrase></td>
             </tr>
             <tr>
                 <td>
                     <literal>upload<replaceable>ConfigurationName</replaceable></literal>
                 </td>
                 <td>
-                    The tasks which uploads the artifacts in configuration <replaceable>ConfigurationName</replaceable>.
+                    <replaceable>ConfigurationName</replaceable>コンフィギュレーションのアーティファクトをアップロードするタスク
+                    <phrase role="original">The tasks which uploads the artifacts in configuration <replaceable>ConfigurationName</replaceable>.</phrase>
                 </td>
                 <td><apilink class="org.gradle.api.tasks.Upload"/></td>
-                <td>Assembles and uploads the artifacts in the specified configuration.</td>
+                <td>指定されたコンフィギュレーションのアーティファクトを構築しアップロードする
+                <phrase role="original">Assembles and uploads the artifacts in the specified configuration.</phrase></td>
             </tr>
         </table>
 
@@ -418,38 +442,44 @@
                 <td>compile</td>
                 <td>-</td>
                 <td>compileJava</td>
-                <td>Compile time dependencies</td>
+                <td>コンパイル時の依存関係
+                <phrase role="original">Compile time dependencies</phrase></td>
             </tr>
             <tr>
                 <td>runtime</td>
                 <td>compile</td>
                 <td>-</td>
-                <td>Runtime dependencies</td>
+                <td>実行時の依存関係
+                <phrase role="original">Runtime dependencies</phrase></td>
             </tr>
             <tr>
                 <td>testCompile</td>
                 <td>compile</td>
                 <td>compileTestJava</td>
-                <td>Additional dependencies for compiling tests.</td>
+                <td>テストのコンパイル時の追加依存関係
+                <phrase role="original">Additional dependencies for compiling tests.</phrase></td>
             </tr>
             <tr>
                 <td>testRuntime</td>
                 <td>runtime, testCompile</td>
                 <td>test</td>
-                <td>Additional dependencies for running tests only.</td>
+                <td>テストの実行時の追加依存関係
+                <phrase role="original">Additional dependencies for running tests only.</phrase></td>
             </tr>
             <tr>
                 <td>archives</td>
                 <td>-</td>
                 <td>uploadArchives</td>
-                <td>Artifacts (e.g. jars) produced by this project.</td>
+                <td>このプロジェクトが生成するアーティファクト(jarファイルなど)
+                <phrase role="original">Artifacts (e.g. jars) produced by this project.</phrase></td>
             </tr>
             <tr>
                 <td>default</td>
                 <td>runtime, archives</td>
                 <td>-</td>
-                <td>Artifacts produced <literal>and</literal> dependencies required by this project.
-                </td>
+                <td>このプロジェクトが生成するアーティファクトと、必要とする依存関係
+                <phrase role="original">Artifacts produced <literal>and</literal> dependencies required by this project.
+                </phrase></td>
             </tr>
         </table>
         <figure>
@@ -495,7 +525,8 @@
                     <literal>test-results</literal>
                 </td>
                 <td>
-                    The name of the directory to generate test result .xml files into, relative to the build directory.
+                    テスト結果の.xmlファイルを生成するディレクトリ名。ビルドディレクトリへの相対パス
+                    <phrase role="original">The name of the directory to generate test result .xml files into, relative to the build directory.</phrase>
                 </td>
             </tr>
             <tr>
@@ -509,7 +540,7 @@
                     <literal><replaceable>buildDir</replaceable>/<replaceable>testResultsDirName</replaceable></literal>
                 </td>
                 <td>
-                    The directory to generate test result .xml files into.
+                    テスト結果の.xmlファイルを生成するディレクトリ<phrase role="original">The directory to generate test result .xml files into.</phrase>
                 </td>
             </tr>
             <tr>
@@ -523,7 +554,8 @@
                     <literal>tests</literal>
                 </td>
                 <td>
-                    The name of the directory to generate the test report into, relative to the reports directory.
+                    テストレポートを生成するディレクトリ名。レポートディレクトリへの相対パス
+                    <phrase role="original">The name of the directory to generate the test report into, relative to the reports directory.</phrase>
                 </td>
             </tr>
             <tr>
@@ -537,7 +569,8 @@
                     <literal><replaceable>reportsDir</replaceable>/<literal>testReportDirName</literal></literal>
                 </td>
                 <td>
-                    The directory to generate the test report into.
+                    テストレポートを生成するディレクトリ
+                    <phrase role="original">The directory to generate the test report into.</phrase>
                 </td>
             </tr>
             <tr>
@@ -551,7 +584,8 @@
                     <literal>libs</literal>
                 </td>
                 <td>
-                    The name of the directory to generate libraries into, relative to the build directory.
+                    ライブラリを生成するディレクトリ名。ビルドディレクトリへの相対パス
+                    <phrase role="original">The name of the directory to generate libraries into, relative to the build directory.</phrase>
                 </td>
             </tr>
             <tr>
@@ -565,7 +599,8 @@
                     <literal><replaceable>buildDir</replaceable>/<replaceable>libsDirName</replaceable></literal>
                 </td>
                 <td>
-                    The directory to generate libraries into.
+                    ライブラリを生成するディレクトリ
+                    <phrase role="original">The directory to generate libraries into.</phrase>
                 </td>
             </tr>
             <tr>
@@ -579,7 +614,8 @@
                     <literal>distributions</literal>
                 </td>
                 <td>
-                    The name of the directory to generate distributions into, relative to the build directory.
+                    ディストリビューションを生成するディレクトリ名。ビルドディレクトリへの相対パス
+                    <phrase role="original">The name of the directory to generate distributions into, relative to the build directory.</phrase>
                 </td>
             </tr>
             <tr>
@@ -593,7 +629,8 @@
                     <literal><replaceable>buildDir</replaceable>/<replaceable>distsDirName</replaceable></literal>
                 </td>
                 <td>
-                    The directory to generate distributions into.
+                    ディストリビューションを生成するディレクトリ
+                    <phrase role="original">The directory to generate distributions into.</phrase>
                 </td>
             </tr>
             <tr>
@@ -607,7 +644,8 @@
                     <literal>docs</literal>
                 </td>
                 <td>
-                    The name of the directory to generate documentation into, relative to the build directory.
+                    ドキュメントを生成するディレクトリ名。ビルドディレクトリへの相対パス
+                    <phrase role="original">The name of the directory to generate documentation into, relative to the build directory.</phrase>
                 </td>
             </tr>
             <tr>
@@ -621,7 +659,8 @@
                     <literal><replaceable>buildDir</replaceable>/<replaceable>docsDirName</replaceable></literal>
                 </td>
                 <td>
-                    The directory to generate documentation into.
+                    ドキュメントを生成するディレクトリ
+                    <phrase role="original">The directory to generate documentation into.</phrase>
                 </td>
             </tr>
             <tr>
@@ -635,7 +674,8 @@
                     <literal>dependency-cache</literal>
                 </td>
                 <td>
-                    The name of the directory to use to cache source dependency information, relative to the build directory.
+                    ソースの依存関係情報をキャッシュするのに使用するディレクトリ名。ビルドディレクトリへの相対パス
+                    <phrase role="original">The name of the directory to use to cache source dependency information, relative to the build directory.</phrase>
                 </td>
             </tr>
             <tr>
@@ -649,7 +689,8 @@
                     <literal><replaceable>buildDir</replaceable>/<replaceable>dependencyCacheDirName</replaceable></literal>
                 </td>
                 <td>
-                    The directory to use to cache source dependency information.
+                    ソースの依存関係情報をキャッシュするのに使用するディレクトリ
+                    <phrase role="original">The directory to use to cache source dependency information.</phrase>
                 </td>
             </tr>
         </table>
@@ -669,32 +710,39 @@
                     <literal>sourceSets</literal>
                 </td>
                 <td><apilink class="org.gradle.api.tasks.SourceSetContainer"/> (read-only)</td>
-                <td>Not null</td>
-                <td>Contains the project's source sets.</td>
+                <td>非null<phrase role="original">Not null</phrase></td>
+                <td>プロジェクトのソースセット
+                <phrase role="original">Contains the project's source sets.</phrase></td>
             </tr>
             <tr>
                 <td>
                     <literal>sourceCompatibility</literal>
                 </td>
-                <td><apilink class="org.gradle.api.JavaVersion"/>. Can also set using a String or a Number, eg
-                    <literal>'1.5'</literal> or <literal>1.5</literal>.
+                <td><apilink class="org.gradle.api.JavaVersion"/>。
+                StringやNumberで設定することも可能。例：                    <literal>'1.5'</literal> や <literal>1.5</literal>
+                    <phrase role="original"><apilink class="org.gradle.api.JavaVersion"/>. Can also set using a String or a Number, eg
+                    <literal>'1.5'</literal> or <literal>1.5</literal>.</phrase>
                 </td>
                 <td>
                     <literal>1.5</literal>
                 </td>
-                <td>Java version compatibility to use when compiling Java source.</td>
+                <td>Javaソースのコンパイル時に使用するJavaバージョン互換性
+                <phrase role="original">Java version compatibility to use when compiling Java source.</phrase></td>
             </tr>
             <tr>
                 <td>
                     <literal>targetCompatibility</literal>
                 </td>
-                <td><apilink class="org.gradle.api.JavaVersion"/>. Can also set using a String or Number, eg
-                    <literal>'1.5'</literal> or <literal>1.5</literal>.
+                <td><apilink class="org.gradle.api.JavaVersion"/>。
+                StringやNumberで設定することも可能。例：                    <literal>'1.5'</literal> や <literal>1.5</literal>
+                    <phrase role="original"><apilink class="org.gradle.api.JavaVersion"/>. Can also set using a String or Number, eg
+                    <literal>'1.5'</literal> or <literal>1.5</literal>.</phrase>
                 </td>
                 <td>
                     <literal><replaceable>sourceCompatibility</replaceable></literal>
                 </td>
-                <td>Java version to generate classes for.</td>
+                <td>クラス生成のターゲットJavaバージョン
+                <phrase role="original">Java version to generate classes for.</phrase></td>
             </tr>
             <tr>
                 <td>
@@ -704,15 +752,17 @@
                     <classname>String</classname>
                 </td>
                 <td><literal><replaceable>projectName</replaceable></literal></td>
-                <td>The basename to use for archives, such as JAR or ZIP files.</td>
+                <td>JARやZIPファイルのようなアーカイブに使用するベース名
+                <phrase role="original">The basename to use for archives, such as JAR or ZIP files.</phrase></td>
             </tr>
             <tr>
                 <td>
                     <literal>manifest</literal>
                 </td>
                 <td><apilink class="org.gradle.api.java.archives.Manifest"/></td>
-                <td>an empty manifest</td>
-                <td>The manifest to include in all JAR files.</td>
+                <td>空のマニフェスト<phrase role="original">an empty manifest</phrase></td>
+                <td>すべてのJARファイルを含むマニフェスト
+                <phrase role="original">The manifest to include in all JAR files.</phrase></td>
             </tr>
             <tr>
                 <td>
@@ -722,8 +772,9 @@
                     <classname>List</classname>
                 </td>
                 <td><literal>[]</literal></td>
-                <td>A set of <link linkend="sec:file_collections">file collections</link> which specify the files to
-                    include in the <filename>META-INF</filename> directory or all JAR files.</td>
+                <td><filename>META-INF</filename>ディレクトリやJARファイルに含めるファイルを指定する、<link linkend="sec:file_collections">ファイルコレクション</link>のセット
+                <phrase role="original">A set of <link linkend="sec:file_collections">file collections</link> which specify the files to
+                    include in the <filename>META-INF</filename> directory or all JAR files.</phrase></td>
             </tr>
         </table>
 
@@ -804,10 +855,11 @@
                         <classname>String</classname> (read-only)
                     </td>
                     <td>
-                        Not null
+                        非null<phrase role="original">Not null</phrase>
                     </td>
                     <td>
-                        The name of the source set, used to identify it.
+                        このソースセットを識別するための名前
+                        <phrase role="original">The name of the source set, used to identify it.</phrase>
                     </td>
                 </tr>
                 <tr>
@@ -821,7 +873,8 @@
                         <literal><replaceable>buildDir</replaceable>/classes/<replaceable>name</replaceable></literal>
                     </td>
                     <td>
-                        The directory to generate the classes of this source set into.
+                        このソースセットのクラスを生成するディレクトリ
+                        <phrase role="original">The directory to generate the classes of this source set into.</phrase>
                     </td>
                 </tr>
                 <tr>
@@ -832,10 +885,12 @@
                         <apilink class="org.gradle.api.file.FileCollection"/>
                     </td>
                     <td>
-                        <literal>compile</literal> Configuration.
+                        <literal>compile</literal>コンフィギュレーション
+                        <phrase role="original"><literal>compile</literal> Configuration.</phrase>
                     </td>
                     <td>
-                        The classpath to use when compiling the source files of this source set.
+                        このソースセットのソースファイルのコンパイル時クラスパス
+                        <phrase role="original">The classpath to use when compiling the source files of this source set.</phrase>
                     </td>
                 </tr>
                 <tr>
@@ -846,10 +901,12 @@
                         <apilink class="org.gradle.api.file.FileCollection"/>
                     </td>
                     <td>
-                        <literal>classesDir</literal> + <literal>runtime</literal> Configuration.
+                        <literal>classesDir</literal> + <literal>runtime</literal>コンフィギュレーション
+                        <phrase role="original"><literal>classesDir</literal> + <literal>runtime</literal> Configuration.</phrase>
                     </td>
                     <td>
-                        The classpath to use when executing the classes of this source set.
+                        このソースセットのクラスの実行時クラスパス
+                        <phrase role="original">The classpath to use when executing the classes of this source set.</phrase>
                     </td>
                 </tr>
                 <tr>
@@ -860,11 +917,13 @@
                         <apilink class="org.gradle.api.file.SourceDirectorySet"/> (read-only)
                     </td>
                     <td>
-                        Not null
+                        非null<phrase role="original">Not null</phrase>
                     </td>
                     <td>
-                        The Java source files of this source set. Contains only <filename>.java</filename> files
-                        found in the Java source directories, and excludes all other files.
+                        このソースセットのJavaソースファイル。
+                        Javaソースディレクトリ内の<filename>.java</filename>ファイルのみを含み、その他のファイルは含まない
+                        <phrase role="original">The Java source files of this source set. Contains only <filename>.java</filename> files
+                        found in the Java source directories, and excludes all other files.</phrase>
                     </td>
                 </tr>
                 <tr>
@@ -872,13 +931,16 @@
                         <literal>java.srcDirs</literal>
                     </td>
                     <td>
-                        <classname>Set&lt;File></classname>. Can set using anything described in <xref linkend="sec:specifying_multiple_files"/>.
+                        <classname>Set&lt;File></classname>。
+                        設定には<xref linkend="sec:specifying_multiple_files"/>で述べる方法ならどれでも使用可
+                        <phrase role="original"><classname>Set&lt;File></classname>. Can set using anything described in <xref linkend="sec:specifying_multiple_files"/>.</phrase>
                     </td>
                     <td>
                         <literal>[<replaceable>projectDir</replaceable>/src/<replaceable>name</replaceable>/java]</literal>
                     </td>
                     <td>
-                        The source directories containing the Java source files of this source set.
+                        このソースセットのJavaソースファイルを含むソースディレクトリ
+                        <phrase role="original">The source directories containing the Java source files of this source set.</phrase>
                     </td>
                 </tr>
                 <tr>
@@ -889,12 +951,15 @@
                         <apilink class="org.gradle.api.file.SourceDirectorySet"/> (read-only)
                     </td>
                     <td>
-                        Not null
+                        非null<phrase role="original">Not null</phrase>
                     </td>
                     <td>
-                        The resources of this source set. Contains only resources, and excludes any
+                        このソースセットのリソース。
+                        リソースのみを含み、リソースソースディレクトリ内の<filename>.java</filename>ファイルは含まない。
+                        Groovyプラグインのような他のプラグインでは、このコレクションから除外されるタイプがさらに追加される。
+                        <phrase role="original">The resources of this source set. Contains only resources, and excludes any
                         <filename>.java</filename> files found in the resource source directories. Other plugins,
-                        such as the Groovy plugin, exclude additional types of files from this collection.
+                        such as the Groovy plugin, exclude additional types of files from this collection.</phrase>
                     </td>
                 </tr>
                 <tr>
@@ -902,13 +967,15 @@
                         <literal>resources.srcDirs</literal>
                     </td>
                     <td>
-                        <classname>Set&lt;File></classname>. Can set using anything described in <xref linkend="sec:specifying_multiple_files"/>.
+                        <classname>Set&lt;File></classname>。
+                        設定には<xref linkend="sec:specifying_multiple_files"/>で述べる方法ならどれでも使用可<phrase role="original"><classname>Set&lt;File></classname>. Can set using anything described in <xref linkend="sec:specifying_multiple_files"/>.</phrase>
                     </td>
                     <td>
                         <literal>[<replaceable>projectDir</replaceable>/src/<replaceable>name</replaceable>/resources]</literal>
                     </td>
                     <td>
-                        The source directories containing the resources of this source set.
+                        このソースセットのリソースを含むソースディレクトリ
+                        <phrase role="original">The source directories containing the resources of this source set.</phrase>
                     </td>
                 </tr>
                 <tr>
@@ -922,8 +989,10 @@
                         <literal>java</literal>
                     </td>
                     <td>
-                        All <filename>.java</filename> files of this source set. Some plugins, such as the Groovy plugin,
-                        add additional Java source files to this collection.
+                        このソースセットのすべての<filename>.java</filename>ファイル。
+                        Groovyプラグインのような一部のプラグインでは、さらに追加のJavaソースファイルがこのコレクションに追加される。
+                        <phrase role="original">All <filename>.java</filename> files of this source set. Some plugins, such as the Groovy plugin,
+                        add additional Java source files to this collection.</phrase>
                     </td>
                 </tr>
                 <tr>
@@ -937,8 +1006,11 @@
                         <literal>resources + java</literal>
                     </td>
                     <td>
-                        All source files of this source set. This include all resource files and all Java source files.
-                        Some plugins, such as the Groovy plugin, add additional source files to this collection.
+                        このソースセットのすべてのソースファイル。
+                        すべてのリソースファイルとJavaソースファイルが含まれる。
+                        Groovyプラグインのような一部のプラグインでは、さらに追加のソースファイルがこのコレクションに追加される。
+                        <phrase role="original">All source files of this source set. This include all resource files and all Java source files.
+                        Some plugins, such as the Groovy plugin, add additional source files to this collection.</phrase>
                     </td>
                 </tr>
             </table>
@@ -1001,7 +1073,9 @@
             </tr>
             <tr>
                 <td><literal>source</literal></td>
-                <td><apilink class="org.gradle.api.file.FileTree"/>. Can set using anything described in <xref linkend="sec:specifying_multiple_files"/>.</td>
+                <td><apilink class="org.gradle.api.file.FileTree"/>。
+                設定には<xref linkend="sec:specifying_multiple_files"/>で述べる方法ならどれでも使用可
+                <phrase role="original"><apilink class="org.gradle.api.file.FileTree"/>. Can set using anything described in <xref linkend="sec:specifying_multiple_files"/>.</phrase></td>
                 <td><literal>sourceSets.main.allJava</literal></td>
             </tr>
             <tr>
@@ -1016,7 +1090,8 @@
                     <literal>title</literal>
                 </td>
                 <td><classname>String</classname></td>
-                <td>The name and version of the project</td>
+                <td>プロジェクトの名前とバージョン
+                <phrase role="original">The name and version of the project</phrase></td>
             </tr>
         </table>
     </section>
@@ -1072,14 +1147,18 @@
                 <td>
                     <literal>srcDirs</literal>
                 </td>
-                <td><classname>Object</classname>. Can set using anything described in <xref linkend="sec:specifying_multiple_files"/>.</td>
+                <td><classname>Object</classname>。
+                設定には<xref linkend="sec:specifying_multiple_files"/>で述べる方法ならどれでも使用可
+                <phrase role="original"><classname>Object</classname>. Can set using anything described in <xref linkend="sec:specifying_multiple_files"/>.</phrase></td>
                 <td><literal><replaceable>sourceSet</replaceable>.resources</literal></td>
             </tr>
             <tr>
                 <td>
                     <literal>destinationDir</literal>
                 </td>
-                <td><classname>File</classname>. Can set using anything described in <xref linkend="sec:locating_files"/>.</td>
+                <td><classname>File</classname>。
+                設定には<xref linkend="sec:locating_files"/>で述べる方法ならどれでも使用可
+                <phrase role="original"><classname>File</classname>. Can set using anything described in <xref linkend="sec:locating_files"/>.</phrase></td>
                 <td><literal><replaceable>sourceSet</replaceable>.classesDir</literal></td>
             </tr>
         </table>
@@ -1115,7 +1194,9 @@
                 <td>
                     <literal>source</literal>
                 </td>
-                <td><apilink class="org.gradle.api.file.FileTree"/>. Can set using anything described in <xref linkend="sec:specifying_multiple_files"/>.</td>
+                <td><apilink class="org.gradle.api.file.FileTree"/>。
+                設定には<xref linkend="sec:specifying_multiple_files"/>で述べる方法ならどれでも使用可
+                <phrase role="original"><apilink class="org.gradle.api.file.FileTree"/>. Can set using anything described in <xref linkend="sec:specifying_multiple_files"/>.</phrase></td>
                 <td><literal><replaceable>sourceSet</replaceable>.java</literal></td>
             </tr>
             <tr>
