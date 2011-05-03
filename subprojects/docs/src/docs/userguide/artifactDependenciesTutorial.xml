@@ -17,76 +17,98 @@
     <title>アーティファクトの基本<phrase role="original">Artifact Basics</phrase></title>
 
     <note>
-        <para>This chapter is currently under construction.</para>
-        <para>For all the details of artifact handling see <xref linkend="artifact_management"/>.</para>
+        <para role="original">This chapter is currently under construction.</para>
+        <para>この章は現在執筆途中です。</para>
+        <para role="original">For all the details of artifact handling see <xref linkend="artifact_management"/>.</para>
+        <para>アーティファクトの扱いについての詳細は<xref linkend="artifact_management"/>を参照してください。</para>
     </note>
 
-    <para>This chapter introduces some of the basics of artifact handling in Gradle.</para>
+    <para role="original">This chapter introduces some of the basics of artifact handling in Gradle.</para>
+    <para>この章では、Gradleにおけるアーティファクト(成果物)の扱いの基本を紹介します。</para>
 
     <section id="sec:artifact_configurations">
-        <title>Artifact configurations</title>
-        <para>Artifacts are grouped into <firstterm>configurations</firstterm>. A configuration is simply a set of files
+        <title>アーティファクトのコンフィギュレーション<phrase role="original">Artifact configurations</phrase></title>
+        <para role="original">Artifacts are grouped into <firstterm>configurations</firstterm>. A configuration is simply a set of files
             with a name. You can use them to declare the external dependencies your project has, or to declare the
             artifacts which your project publishes.</para>
-        <para>To define a configuration:</para>
-        <sample id="defineConfiguration" dir="userguide/artifacts/defineConfiguration" title="Definition of a configuration">
+        <para>アーティファクトは<firstterm>コンフィギュレーション</firstterm>にグループ化されます。
+        コンフィギュレーションは単にファイルの集合に名前を付けたものです。
+        これは、プロジェクトが持つ外部依存関係を宣言したり、
+        プロジェクトが公開するアーティファクトを宣言するためなどに使うことができます。</para>
+        <para role="original">To define a configuration:</para>
+        <para>コンフィギュレーションを定義するには:</para>
+        <sample id="defineConfiguration" dir="userguide/artifacts/defineConfiguration" title="コンフィギュレーションの定義 / Definition of a configuration">
             <sourcefile file="build.gradle" snippet="define-configuration"/>
         </sample>
-        <para>To access a configuration:</para>
-        <sample id="defineConfiguration" dir="userguide/artifacts/defineConfiguration" title="Accessing a configuration">
+        <para role="original">To access a configuration:</para>
+        <para>コンフィギュレーションにアクセスするには:</para>
+        <sample id="defineConfiguration" dir="userguide/artifacts/defineConfiguration" title="コンフィギュレーションへのアクセス / Accessing a configuration">
             <sourcefile file="build.gradle" snippet="lookup-configuration"/>
         </sample>
-        <para>To configure a configuration:</para>
-        <sample id="defineConfiguration" dir="userguide/artifacts/defineConfiguration" title="Configuration of a configuration">
+        <para role="original">To configure a configuration:</para>
+        <para>コンフィギュレーションを設定するには:</para>
+        <sample id="defineConfiguration" dir="userguide/artifacts/defineConfiguration" title="コンフィギュレーションの設定 / Configuration of a configuration">
             <sourcefile file="build.gradle" snippet="configure-configuration"/>
         </sample>
     </section>
 
     <section>
-        <title>Repositories</title>
-        <para>Artifacts are stored in <firstterm>repositories</firstterm>.</para>
-        <para>To use maven central repository:</para>
-        <sample id="defineRepository" dir="userguide/artifacts/defineRepository" title="Usage of Maven central repository">
+        <title>リポジトリ<phrase role="original">Repositories</phrase></title>
+        <para role="original">Artifacts are stored in <firstterm>repositories</firstterm>.</para>
+        <para>アーティファクトは<firstterm>リポジトリ</firstterm>に保存されます。</para>
+        <para role="original">To use maven central repository:</para>
+        <para>mavenセントラルリポジトリを使うには:</para>
+        <sample id="defineRepository" dir="userguide/artifacts/defineRepository" title="Mavenセントラルリポジトリの利用 / Usage of Maven central repository">
             <sourcefile file="build.gradle" snippet="maven-central"/>
         </sample>
-        <para>To use a local directory:</para>
-        <sample id="defineRepository" dir="userguide/artifacts/defineRepository" title="Usage of a local directory">
+        <para role="original">To use a local directory:</para>
+        <para>ローカルリポジトリを使うには:</para>
+        <sample id="defineRepository" dir="userguide/artifacts/defineRepository" title="ローカルリポジトリの利用 / Usage of a local directory">
             <sourcefile file="build.gradle" snippet="flat-dir"/>
         </sample>
-        <para>You can also use any Ivy resolver. You can have multiple repositories.</para>
-        <para>To access a repository:</para>
-        <sample id="defineRepository" dir="userguide/artifacts/defineRepository" title="Accessing a repository">
+        <para role="original">You can also use any Ivy resolver. You can have multiple repositories.</para>
+        <para>Ivyのリゾルバなら何でも利用できます。複数のリポジトリを持つことも可能です。</para>
+        <para role="original">To access a repository:</para>
+        <para>リポジトリにアクセスするには:</para>
+        <sample id="defineRepository" dir="userguide/artifacts/defineRepository" title="リポジトリへのアクセス / Accessing a repository">
             <sourcefile file="build.gradle" snippet="lookup-resolver"/>
         </sample>
-        <para>To configure a repository:</para>
-        <sample id="defineRepository" dir="userguide/artifacts/defineRepository" title="Configuration of a repository">
+        <para role="original">To configure a repository:</para>
+        <para>リポジトリを設定するには:</para>
+        <sample id="defineRepository" dir="userguide/artifacts/defineRepository" title="リポジトリの設定 / Configuration of a repository">
             <sourcefile file="build.gradle" snippet="configure-resolver"/>
         </sample>
     </section>
 
     <section>
-        <title>External dependencies</title>
-        <para>To define an external dependency, you add a dependency to a configuration:</para>
-        <sample id="externalDependencies" dir="userguide/artifacts/externalDependencies" title="Definition of an external dependency">
+        <title>外部依存関係<phrase role="original">External dependencies</phrase></title>
+        <para role="original">To define an external dependency, you add a dependency to a configuration:</para>
+        <para>外部依存関係を定義するには、コンフィギュレーションに依存関係を追加します:</para>
+        <sample id="externalDependencies" dir="userguide/artifacts/externalDependencies" title="外部依存関係の定義 / Definition of an external dependency">
             <sourcefile file="build.gradle" snippet="define-dependency"/>
         </sample>
-        <para><literal>group</literal> and <literal>version</literal> are optional</para>
-        <para>TBD - configuring an external dependency</para>
-        <para>To use the external dependencies of a configuration:</para>
-        <sample id="externalDependencies" dir="userguide/artifacts/externalDependencies"  title="Usage of external dependency of a configuration">
+        <para role="original"><literal>group</literal> and <literal>version</literal> are optional</para>
+        <para><literal>group</literal>と<literal>version</literal>はオプション</para>
+        <para role="original">TBD - configuring an external dependency</para>
+        <para>TBD - 外部依存関係の設定</para>
+        <para role="original">To use the external dependencies of a configuration:</para>
+        <para>コンフィギュレーションの外部依存関係を使うには:</para>
+        <sample id="externalDependencies" dir="userguide/artifacts/externalDependencies"  title="コンフィギュレーションの外部依存関係の利用 / Usage of external dependency of a configuration">
             <sourcefile file="build.gradle" snippet="use-configuration"/>
             <output args="-q listJars"/>
         </sample>
     </section>
 
     <section>
-        <title>Artifact publishing</title>
+        <title>アーティファクトの公開<phrase role="original">Artifact publishing</phrase></title>
         <para>TBD</para>
     </section>
 
     <section>
         <title>API</title>
-        <para>Configurations are contained in a <apilink class="org.gradle.api.artifacts.ConfigurationContainer"/>.
+        <para role="original">Configurations are contained in a <apilink class="org.gradle.api.artifacts.ConfigurationContainer"/>.
             Each configuration implements the <apilink class="org.gradle.api.artifacts.Configuration"/>.</para>
+        <para>コンフィギュレーションは<apilink class="org.gradle.api.artifacts.ConfigurationContainer"/>に格納されます。
+            各コンフィギュレーションは<apilink class="org.gradle.api.artifacts.Configuration"/>を実装しています。</para>
     </section>
 </chapter>
