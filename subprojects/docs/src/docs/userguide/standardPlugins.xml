@@ -14,11 +14,11 @@
   ~ limitations under the License.
   -->
 <chapter id="standard_plugins">
-    <title>Standard Gradle plugins</title>
+    <title>標準Gradleプラグイン<phrase role="original">Standard Gradle plugins</phrase></title>
     <para>There are a number of plugins included in the Gradle distribution. These are listed below.
     </para>
     <section>
-        <title>Language plugins</title>
+        <title>言語プラグイン<phrase role="original">Language plugins</phrase></title>
         <para>These plugins add support for various languages which can be compiled and executed in the JVM.</para>
         <table>
             <title>Language plugins</title>
@@ -75,7 +75,7 @@
         </table>
     </section>
     <section>
-        <title>Integration plugins</title>
+        <title>統合プラグイン<phrase role="original">Integration plugins</phrase></title>
         <para>These plugins provide some integration with various build and runtime technologies.</para>
         <table>
             <title>Integration plugins</title>
@@ -151,7 +151,7 @@
         </table>
     </section>
     <section>
-        <title>Software development plugins</title>
+        <title>ソフトウェア開発プラグイン<phrase role="original">Software development plugins</phrase></title>
         <para>These plugins provide help with your software development process.</para>
         <table>
             <title>Software development plugins</title>
@@ -223,7 +223,7 @@
         </table>
     </section>
     <section>
-        <title>Base plugins</title>
+        <title>ベースプラグイン<phrase role="original">Base plugins</phrase></title>
         <para>These plugins form the basic building blocks which the other plugins are assembled from. They are
             available for you to use in your build files, and are listed here for completeness. However, be aware that
             they are not yet considered part of Gradle's public API. As such, these plugins are not documented in the
@@ -260,7 +260,7 @@
         </table>
     </section>
     <section>
-        <title>Third party plugins</title>
+        <title>サードパーティプラグイン<phrase role="original">Third party plugins</phrase></title>
         <para>You can find a list of external plugins on the
             <ulink url="http://gradle.codehaus.org/Plugins">wiki</ulink>.
         </para>
