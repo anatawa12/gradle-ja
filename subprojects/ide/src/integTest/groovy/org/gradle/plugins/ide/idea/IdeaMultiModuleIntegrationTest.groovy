@@ -130,7 +130,6 @@ project(':services:utilities') {
 
         //when
         executer.usingBuildScript(buildFile).usingSettingsFile(settingsFile).withTasks("idea").run()
-//        println(getTestDir())
 
         //then
         assertIprContainsCorrectModules()
@@ -257,8 +256,11 @@ project(':contrib') {
 
         def buildFile = file("master/build.gradle")
         buildFile << """
+subprojects {
+  apply plugin: 'java'
+}
+
 project(':api') {
-    apply plugin: 'java'
     apply plugin: 'idea'
 
     dependencies {

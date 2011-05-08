@@ -15,34 +15,42 @@
  */
 package org.gradle.api.internal.tasks
 
+import org.gradle.api.Task
 import org.gradle.api.internal.file.DefaultSourceDirectorySet
 import org.gradle.api.internal.file.FileResolver
-import org.gradle.api.internal.file.UnionFileTree
 import org.gradle.api.tasks.SourceSet
 import org.junit.Test
-import static org.gradle.util.Matchers.*
+import static org.gradle.util.Matchers.isEmpty
 import static org.hamcrest.Matchers.*
-import static org.junit.Assert.*
-import org.gradle.api.Task
+import static org.junit.Assert.assertThat
 
 class DefaultSourceSetTest {
     private final FileResolver fileResolver = [resolve: {it as File}] as FileResolver
     private final TaskResolver taskResolver = [resolveTask: {name -> [getName: {name}] as Task}] as TaskResolver
 
+    private DefaultSourceSet sourceSet(String name) {
+        def s = new DefaultSourceSet(name, fileResolver, taskResolver)
+        s.classes = new DefaultSourceSetOutput(s.displayName, fileResolver, taskResolver)
+        return s
+    }
+
     @Test
     public void hasUsefulDisplayName() {
-        SourceSet sourceSet = new DefaultSourceSet('int-test', fileResolver, taskResolver)
+        SourceSet sourceSet = sourceSet('int-test')
         assertThat(sourceSet.toString(), equalTo('source set int test'));
     }
 
     @Test public void defaultValues() {
-        SourceSet sourceSet = new DefaultSourceSet('set-name', fileResolver, taskResolver)
+        SourceSet sourceSet = sourceSet('set-name')
 
         assertThat(sourceSet.classesDir, nullValue())
         assertThat(sourceSet.classes.files, isEmpty())
         assertThat(sourceSet.classes.displayName, equalTo('set name classes'))
         assertThat(sourceSet.classes.toString(), equalTo('set name classes'))
         assertThat(sourceSet.classes.buildDependencies.getDependencies(null), isEmpty())
+
+        assertThat(sourceSet.classes.classesDir, nullValue())
+        assertThat(sourceSet.classes.resourcesDir, nullValue())
 
         assertThat(sourceSet.compileClasspath, nullValue())
 
@@ -63,23 +71,24 @@ class DefaultSourceSetTest {
 
         assertThat(sourceSet.java.filter.includes, equalTo(['**/*.java'] as Set))
         assertThat(sourceSet.java.filter.excludes, isEmpty())
-        
 
-        assertThat(sourceSet.allJava, instanceOf(UnionFileTree))
+        assertThat(sourceSet.allJava, instanceOf(DefaultSourceDirectorySet))
         assertThat(sourceSet.allJava, isEmpty())
         assertThat(sourceSet.allJava.displayName, equalTo('set name Java source'))
         assertThat(sourceSet.allJava.toString(), equalTo('set name Java source'))
-        assertThat(sourceSet.allJava.sourceTrees, not(isEmpty()))
+        assertThat(sourceSet.allJava.source, hasItem(sourceSet.java))
+        assertThat(sourceSet.allJava.filter.includes, equalTo(['**/*.java'] as Set))
+        assertThat(sourceSet.allJava.filter.excludes, isEmpty())
 
-        assertThat(sourceSet.allSource, instanceOf(UnionFileTree))
+        assertThat(sourceSet.allSource, instanceOf(DefaultSourceDirectorySet))
         assertThat(sourceSet.allSource, isEmpty())
         assertThat(sourceSet.allSource.displayName, equalTo('set name source'))
         assertThat(sourceSet.allSource.toString(), equalTo('set name source'))
-        assertThat(sourceSet.allSource.sourceTrees, not(isEmpty()))
+        assertThat(sourceSet.allSource.source, hasItem(sourceSet.java))
     }
 
     @Test public void constructsTaskNamesUsingSourceSetName() {
-        SourceSet sourceSet = new DefaultSourceSet('set-name', fileResolver, taskResolver)
+        SourceSet sourceSet = sourceSet('set-name')
 
         assertThat(sourceSet.classesTaskName, equalTo('setNameClasses'))
         assertThat(sourceSet.getCompileTaskName('java'), equalTo('compileSetNameJava'))
@@ -91,7 +100,7 @@ class DefaultSourceSetTest {
     }
 
     @Test public void mainSourceSetUsesSpecialCaseTaskNames() {
-        SourceSet sourceSet = new DefaultSourceSet('main', fileResolver, taskResolver)
+        SourceSet sourceSet = sourceSet('main')
 
         assertThat(sourceSet.classesTaskName, equalTo('classes'))
         assertThat(sourceSet.getCompileTaskName('java'), equalTo('compileJava'))
@@ -103,20 +112,20 @@ class DefaultSourceSetTest {
     }
 
     @Test public void canConfigureResources() {
-        SourceSet sourceSet = new DefaultSourceSet('main', fileResolver, taskResolver)
+        SourceSet sourceSet = sourceSet('main')
         sourceSet.resources { srcDir 'src/resources' }
-        assertThat(sourceSet.resources.srcDirs, equalTo([new File('src/resources')] as Set))
+        assertThat(sourceSet.resources.srcDirs, equalTo([new File('src/resources').canonicalFile] as Set))
     }
     
     @Test public void canConfigureJavaSource() {
-        SourceSet sourceSet = new DefaultSourceSet('main', fileResolver, taskResolver)
+        SourceSet sourceSet = sourceSet('main')
         sourceSet.java { srcDir 'src/java' }
-        assertThat(sourceSet.java.srcDirs, equalTo([new File('src/java')] as Set))
+        assertThat(sourceSet.java.srcDirs, equalTo([new File('src/java').canonicalFile] as Set))
     }
 
     @Test
     public void classesCollectionTracksChangesToClassesDir() {
-        SourceSet sourceSet = new DefaultSourceSet('set-name', fileResolver, taskResolver)
+        SourceSet sourceSet = sourceSet('set-name')
         assertThat(sourceSet.classes.files, isEmpty())
 
         sourceSet.classesDir = new File('classes')
@@ -127,7 +136,7 @@ class DefaultSourceSetTest {
 
     @Test
     public void classesCollectionDependenciesTrackChangesToCompileTasks() {
-        SourceSet sourceSet = new DefaultSourceSet('set-name', fileResolver, taskResolver)
+        SourceSet sourceSet = sourceSet('set-name')
         assertThat(sourceSet.classes.buildDependencies.getDependencies(null), isEmpty())
 
         sourceSet.classesDir = new File('classes')

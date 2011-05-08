@@ -91,15 +91,15 @@ Gradleは、<command>gradle</command>コマンドを使って実行されます�
 
 <screen>
 ------------------------------------------------------------
-Gradle 1.0-milestone-2
+Gradle 1.0-milestone-3
 ------------------------------------------------------------
 
-Gradle build time: Thursday, 7 April 2011 04:24:33 PM EST
+Gradle build time: Monday, 25 April 2011 5:24:40 PM EST
 Groovy: 1.7.10
 Ant: Apache Ant(TM) version 1.8.2 compiled on December 20 2010
 Ivy: 2.2.0
 JVM: 1.6.0_22 (Sun Microsystems Inc. 17.1-b03)
-OS: Linux 2.6.35-23-generic amd64
+OS: Linux 2.6.35-28-generic amd64
 </screen>
 
 </section>

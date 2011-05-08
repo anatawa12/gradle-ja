@@ -78,8 +78,8 @@ class IdeaPluginTest extends Specification {
         project.ideaProject.javaVersion == project.sourceCompatibility.toString()
 
         GenerateIdeaModule ideaModuleTask = project.ideaModule
-        ideaModuleTask.sourceDirs == project.sourceSets.main.allSource.sourceTrees.srcDirs.flatten() as Set
-        ideaModuleTask.testSourceDirs == project.sourceSets.test.allSource.sourceTrees.srcDirs.flatten() as Set
+        ideaModuleTask.sourceDirs == project.sourceSets.main.allSource.srcDirs
+        ideaModuleTask.testSourceDirs == project.sourceSets.test.allSource.srcDirs
         def configurations = project.configurations
         ideaModuleTask.scopes == [
                 COMPILE: [plus: [configurations.compile], minus: []],
@@ -107,6 +107,27 @@ class IdeaPluginTest extends Specification {
         project.cleanIdea instanceof Task
         childProject.cleanIdea instanceof Task
     }
+
+     def "adds single entry libraries from source sets"() {
+        when:
+        applyPluginToProjects()
+        project.apply(plugin: 'java')
+
+        project.sourceSets.main.output.dirs (generated: 'generated-folder' )
+        project.sourceSets.main.output.dirs (ws: 'ws-generated' )
+
+        project.sourceSets.test.output.dirs (generated: 'generated-test' )
+        project.sourceSets.test.output.dirs (resources: 'test-resources' )
+
+        then:
+        def runtime = project.ideaModule.module.singleEntryLibraries.RUNTIME
+        runtime.any { it.name.contains('generated-folder') }
+        runtime.any { it.name.contains('ws-generated') }
+
+        def test = project.ideaModule.module.singleEntryLibraries.TEST
+        test.any { it.name.contains('generated-test') }
+        test.any { it.name.contains('test-resources') }
+     }
 
     private void assertThatIdeaModuleIsProperlyConfigured(Project project) {
         GenerateIdeaModule ideaModuleTask = project.ideaModule

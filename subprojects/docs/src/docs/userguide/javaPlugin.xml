@@ -1045,7 +1045,7 @@
         <title>Javadoc<phrase role="original">Javadoc</phrase></title>
         <para role="original">The <literal>javadoc</literal> task is an instance of <apilink class="org.gradle.api.tasks.javadoc.Javadoc"/>.
             It supports the core javadoc options and the options of the standard doclet described in the
-            <ulink url='http://java.sun.com/j2se/1.5.0/docs/tooldocs/windows/javadoc.html#referenceguide'>reference documentation</ulink>
+            <ulink url='http://download.oracle.com/javase/1.5.0/docs/tooldocs/windows/javadoc.html#referenceguide'>reference documentation</ulink>
             of the Javadoc executable.
             For a complete list of supported Javadoc options consult the API documentation of the following classes:
             <apilink class="org.gradle.external.javadoc.CoreJavadocOptions"/> and <apilink class="org.gradle.external.javadoc.StandardJavadocDocletOptions"/>. 
@@ -1159,7 +1159,7 @@
                 <td><classname>File</classname>。
                 設定には<xref linkend="sec:locating_files"/>で述べる方法ならどれでも使用可
                 <phrase role="original"><classname>File</classname>. Can set using anything described in <xref linkend="sec:locating_files"/>.</phrase></td>
-                <td><literal><replaceable>sourceSet</replaceable>.classesDir</literal></td>
+                <td><literal><replaceable>sourceSet</replaceable>output.resourcesDir</literal></td>
             </tr>
         </table>
     </section>

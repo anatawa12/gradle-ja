@@ -155,7 +155,7 @@
                 <td>
                     <literal>-</literal>
                 </td>
-                <td><apilink class="org.gradle.plugins.ide.eclipse.EclipseProject"/></td>
+                <td><apilink class="org.gradle.plugins.ide.eclipse.GenerateEclipseProject"/></td>
                 <td>Generates the <filename>.project</filename> file.</td>
             </tr>
             <tr>
@@ -165,7 +165,7 @@
                 <td>
                     <literal>-</literal>
                 </td>
-                <td><apilink class="org.gradle.plugins.ide.eclipse.EclipseClasspath"/></td>
+                <td><apilink class="org.gradle.plugins.ide.eclipse.GenerateEclipseClasspath"/></td>
                 <td>Generates the <filename>.classpath</filename> file.</td>
             </tr>
             <tr>
@@ -175,7 +175,7 @@
                 <td>
                     <literal>-</literal>
                 </td>
-                <td><apilink class="org.gradle.plugins.ide.eclipse.EclipseJdt"/></td>
+                <td><apilink class="org.gradle.plugins.ide.eclipse.GenerateEclipseJdt"/></td>
                 <td>Generates the <filename>.settings/org.eclipse.jdt.core.prefs</filename> file.</td>
             </tr>
             <tr>
@@ -185,7 +185,7 @@
                 <td>
                     <literal>-</literal>
                 </td>
-                <td><apilink class="org.gradle.plugins.ide.eclipse.EclipseWtpComponent"/></td>
+                <td><apilink class="org.gradle.plugins.ide.eclipse.GenerateEclipseWtpComponent"/></td>
                 <td>Generates the <filename>.settings/org.eclipse.wst.common.component</filename> file.</td>
             </tr>
             <tr>
@@ -196,7 +196,7 @@
                     <literal>-</literal>
                 </td>
                 <td>
-                    <apilink class="org.gradle.plugins.ide.eclipse.EclipseWtpFacet"/>
+                    <apilink class="org.gradle.plugins.ide.eclipse.GenerateEclipseWtpFacet"/>
                 </td>
                 <td>Generates the <filename>.settings/org.eclipse.wst.common.project.facet.core.xml</filename> file.</td>
             </tr>
@@ -500,31 +500,31 @@
                     </tr>
                 </thead>
                 <tr>
-                    <td><apilink class="org.gradle.plugins.ide.eclipse.EclipseProject"/></td>
+                    <td><apilink class="org.gradle.plugins.ide.eclipse.GenerateEclipseProject"/></td>
                     <td><apilink class="org.gradle.plugins.ide.eclipse.model.Project"/></td>
                     <td><apilink class="org.gradle.plugins.ide.eclipse.model.Project"/></td>
                     <td><apilink class="org.gradle.api.artifacts.maven.XmlProvider"/></td>
                 </tr>
                 <tr>
-                    <td><apilink class="org.gradle.plugins.ide.eclipse.EclipseClasspath"/></td>
+                    <td><apilink class="org.gradle.plugins.ide.eclipse.GenerateEclipseClasspath"/></td>
                     <td><apilink class="org.gradle.plugins.ide.eclipse.model.Classpath"/></td>
                     <td><apilink class="org.gradle.plugins.ide.eclipse.model.Classpath"/></td>
                     <td><apilink class="org.gradle.api.artifacts.maven.XmlProvider"/></td>
                 </tr>
                 <tr>
-                    <td><apilink class="org.gradle.plugins.ide.eclipse.EclipseJdt"/></td>
+                    <td><apilink class="org.gradle.plugins.ide.eclipse.GenerateEclipseJdt"/></td>
                     <td><apilink class="org.gradle.plugins.ide.eclipse.model.Jdt"/></td>
                     <td><apilink class="org.gradle.plugins.ide.eclipse.model.Jdt"/></td>
                     <td><apilink class="org.gradle.api.artifacts.maven.XmlProvider"/></td>
                 </tr>
                 <tr>
-                    <td><apilink class="org.gradle.plugins.ide.eclipse.EclipseWtpComponent"/></td>
+                    <td><apilink class="org.gradle.plugins.ide.eclipse.GenerateEclipseWtpComponent"/></td>
                     <td><apilink class="org.gradle.plugins.ide.eclipse.model.WtpComponent"/></td>
                     <td><apilink class="org.gradle.plugins.ide.eclipse.model.WtpComponent"/></td>
                     <td><apilink class="org.gradle.api.artifacts.maven.XmlProvider"/></td>
                 </tr>
                 <tr>
-                    <td><apilink class="org.gradle.plugins.ide.eclipse.EclipseWtpFacet"/></td>
+                    <td><apilink class="org.gradle.plugins.ide.eclipse.GenerateEclipseWtpFacet"/></td>
                     <td><apilink class="org.gradle.plugins.ide.eclipse.model.WtpFacet"/></td>
                     <td><apilink class="org.gradle.plugins.ide.eclipse.model.WtpFacet"/></td>
                     <td><apilink class="org.gradle.api.artifacts.maven.XmlProvider"/></td>

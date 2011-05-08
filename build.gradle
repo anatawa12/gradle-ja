@@ -18,6 +18,7 @@ import org.gradle.build.samples.WrapperProjectCreator
 import org.gradle.build.Version
 import org.gradle.build.Install
 import org.gradle.build.Git
+import org.gradle.build.Releases
 import java.util.jar.Attributes
 import org.gradle.api.internal.artifacts.dependencies.DefaultSelfResolvingDependency
 
@@ -27,10 +28,11 @@ import org.gradle.api.internal.artifacts.dependencies.DefaultSelfResolvingDepend
  * following properties can be set:
  *
  * Uploading distributions to Gradle's release and snapshot repository at codehaus: artifactoryUserName, artifactoryUserPassword
- * Uploading the userguide and the javadoc to Gradle's website: websiteFtpUserName, websiteFtpUserPassword
+ * Uploading the userguide and the javadoc to Gradle's website: websiteScpUserName, websiteScpUserPassword
  * Using the build to create a new distribution and install it on the local machine: gradle_installPath
  */
 
+releases = new Releases(project(':core').file('src/releases.xml'), project)
 version = new Version(project)
 
 defaultTasks 'assemble'
@@ -446,7 +448,6 @@ task srcZip(type: Zip) {
             include 'gradle/'
             include 'src/'
             include '*.gradle'
-            include 'gradle.properties'
             include 'wrapper/'
             include 'gradlew.bat'
         }
@@ -574,6 +575,9 @@ task release {
     description = 'Builds, tests and uploads the release artifacts'
     group = 'release'
     dependsOn releaseVersion, tag, releaseArtifacts, testedDists, uploadArchives, uploadDists, ':docs:uploadDocs'
+    doLast {
+        releases.incrementNextVersion()
+    }
 }
 
 task wrapper(type: Wrapper) {

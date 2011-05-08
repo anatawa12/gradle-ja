@@ -18,9 +18,10 @@ package org.gradle.plugins.ide.idea.model
 
 import org.gradle.plugins.ide.idea.IdeaPlugin
 import org.gradle.util.ConfigureUtil
+import org.gradle.plugins.ide.internal.XmlFileContentMerger
 
 /**
- * Model for idea project.
+ * Enables fine-tuning project details (*.ipr file) of the Idea plugin
  * <p>
  * Example of use with a blend of all possible properties.
  * Bear in mind that usually you don't have configure idea module directly because Gradle configures it for free!
@@ -29,33 +30,61 @@ import org.gradle.util.ConfigureUtil
  * apply plugin: 'java'
  * apply plugin: 'idea'
  *
- * project {
+ * idea {
+ *   project {
+ *     //if you want to set specific java version for the idea project
+ *     javaVersion = '1.5'
  *
- *   //if you want to set specific java version for the idea project
- *   javaVersion = '1.5'
+ *     //you can update the source wildcards
+ *     wildcards += '!?*.ruby'
  *
- *   //you can update the source wildcards
- *   wildcards += '!?*.ruby'
+ *     //you can update the project list that will make the modules list in the *.ipr
+ *     //subprojects -= project(':someProjectThatWillBeExcluded')
  *
- *   //you can update the project list that will make the modules list in the *.ipr
- *   //subprojects -= project(':someProjectThatWillBeExcluded')
+ *     //you can change the output file
+ *     outputFile = new File(outputFile.parentFile, 'someBetterName.ipr')
+ *   }
+ * }
+ * </pre>
  *
- *   //you can change the output file
- *   outputFile = new File(outputFile.parentFile, 'someBetterName.ipr')
+ * For tackling edge cases users can perform advanced configuration on resulting xml file.
+ * It is also possible to affect the way idea plugin merges the existing configuration
+ * via beforeMerged and whenMerged closures.
+ * <p>
+ * beforeMerged and whenMerged closures receive {@link Project} object
+ * <p>
+ * Examples of advanced configuration:
  *
- *   //you can apply advanced logic to the xml generation/merging
- *   ipr {
+ * <pre autoTested=''>
+ * apply plugin: 'java'
+ * apply plugin: 'idea'
  *
- *     //you can tinker with the output *.ipr file before it's written to file
- *     withXml {
- *       def node = it.asNode()
- *       node.appendNode('iLove', 'tinkering with the output *.ipr file!')
+ * idea {
+ *   project {
+ *     ipr {
+ *       //you can tinker with the output *.ipr file before it's written out
+ *       withXml {
+ *         def node = it.asNode()
+ *         node.appendNode('iLove', 'tinkering with the output *.ipr file!')
+ *       }
+ *
+ *       //closure executed after *.ipr content is loaded from existing file
+ *       //but before gradle build information is merged
+ *       beforeMerged { project ->
+ *         //you can tinker with {@link Project}
+ *       }
+ *
+ *       //closure executed after *.ipr content is loaded from existing file
+ *       //and after gradle build information is merged
+ *       whenMerged { project ->
+*         //you can tinker with {@link Project}
+ *       }
  *     }
  *   }
  * }
  * </pre>
  *
- * Author: Szczepan Faber, created at: 4/4/11
+ * @author Szczepan Faber, created at: 4/4/11
  */
 class IdeaProject {
 
@@ -100,12 +129,11 @@ class IdeaProject {
 
     //******
 
-    Project xmlProject
     PathFactory pathFactory
-    IdeaProjectIpr ipr
+    XmlFileContentMerger ipr
 
     void mergeXmlProject(Project xmlProject) {
-        this.xmlProject = xmlProject
+        ipr.beforeMerged.execute(xmlProject)
         def modulePaths = getSubprojects().inject(new LinkedHashSet()) { result, subproject ->
             if (subproject.plugins.hasPlugin(IdeaPlugin)) {
                 File imlFile = subproject.ideaModule.outputFile
@@ -114,5 +142,6 @@ class IdeaProject {
             result
         }
         xmlProject.configure(modulePaths, getJavaVersion(), getWildcards())
+        ipr.whenMerged.execute(xmlProject)
     }
 }

@@ -21,7 +21,8 @@ import org.gradle.plugins.ide.idea.model.IdeaModule
 import org.gradle.plugins.ide.idea.model.Module
 
 /**
- * Generates an IDEA module file.
+ * Generates an IDEA module file. If you want to fine tune the idea configuration
+ * please refer to more interesting examples in {@link IdeaModule}.
  * <p>
  * Example how to use scopes property to enable 'provided' dependencies in the output *.iml file:
  * <pre autoTested=''>
@@ -38,7 +39,10 @@ import org.gradle.plugins.ide.idea.model.Module
  * }
  *
  * ideaModule {
- *   scopes.COMPILE.plus += configurations.provided
+ *   scopes.PROVIDED.plus += configurations.provided
+ *   doLast {
+ *     //in case you need to do something after the generation...
+ *   }
  * }
  * </pre>
  *
@@ -56,8 +60,7 @@ public class GenerateIdeaModule extends XmlGeneratorTask<Module> {
     //and the implementation of this task will dwindle into few lines of code or disappear completely
 
     @Override protected Module create() {
-        Module xmlModule = new Module(xmlTransformer, module.pathFactory)
-        return xmlModule
+        new Module(xmlTransformer, module.pathFactory)
     }
 
     @Override protected void configure(Module xmlModule) {
@@ -117,7 +120,7 @@ public class GenerateIdeaModule extends XmlGeneratorTask<Module> {
     }
 
     void setInheritOutputDirs(Boolean inheritOutputDirs) {
-        module.inheritOutputDirs
+        module.inheritOutputDirs = inheritOutputDirs
     }
 
     /**
@@ -128,7 +131,7 @@ public class GenerateIdeaModule extends XmlGeneratorTask<Module> {
     }
 
     void setOutputDir(File outputDir) {
-        module.outputDir
+        module.outputDir = outputDir
     }
 
     /**
@@ -139,7 +142,7 @@ public class GenerateIdeaModule extends XmlGeneratorTask<Module> {
     }
 
     void setTestOutputDir(File testOutputDir) {
-        module.testOutputDir
+        module.testOutputDir = testOutputDir
     }
 
     /**
@@ -182,16 +185,16 @@ public class GenerateIdeaModule extends XmlGeneratorTask<Module> {
      * {@code GRADLE_USER_HOME} variable to point to the Gradle user home dir.
      */
     Map<String, File> getVariables() {
-        module.variables
+        module.pathVariables
     }
 
     void setVariables(Map<String, File> variables) {
-        module.variables = variables
+        module.pathVariables = variables
     }
 
     /**
-     * The keys of this map are the Intellij scopes. Each key points to another map that has two keys, plus and minus.
-     * The values of those keys are sets of  {@link org.gradle.api.artifacts.Configuration}  objects. The files of the
+     * The keys of this map are the IDEA scopes. Each key points to another map that has two keys, plus and minus.
+     * The values of those keys are collections of {@link org.gradle.api.artifacts.Configuration} objects. The files of the
      * plus configurations are added minus the files from the minus configurations. See example below...
      * <p>
      * Example how to use scopes property to enable 'provided' dependencies in the output *.iml file:
@@ -213,11 +216,11 @@ public class GenerateIdeaModule extends XmlGeneratorTask<Module> {
      * }
      * </pre>
      */
-    Map<String, Map<String, Configuration>> getScopes() {
+    Map<String, Map<String, Collection<Configuration>>> getScopes() {
         module.scopes
     }
 
-    Map<String, Map<String, Configuration>> setScopes(Map<String, Map<String, Configuration>> scopes) {
+    void setScopes(Map<String, Map<String, Collection<Configuration>>> scopes) {
         module.scopes = scopes
     }
 
