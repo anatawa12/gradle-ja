@@ -13,12 +13,35 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
+aetherVersion = "1.11"
+mavenVersion = "3.0.3"
+wagonVersion = "1.0-beta-7"
+
+configurations {
+    compile.exclude module: "netty"
+}
+
 dependencies {
     groovy libraries.groovy_depends
 
     compile project(':core')
     compile project(':plugins')
     compile libraries.slf4j_api
+
+    compile "org.sonatype.aether:aether-api:$aetherVersion"
+    compile "org.sonatype.aether:aether-util:$aetherVersion"
+    compile "org.sonatype.aether:aether-impl:$aetherVersion"
+    compile "org.sonatype.aether:aether-connector-file:$aetherVersion"
+    compile "org.sonatype.aether:aether-connector-asynchttpclient:$aetherVersion"
+    compile "org.sonatype.aether:aether-connector-wagon:$aetherVersion"
+    compile "org.apache.maven:maven-aether-provider:$mavenVersion"
+    compile "org.apache.maven.wagon:wagon-ssh:$wagonVersion"
+    compile "org.apache.maven.wagon:wagon-http-lightweight:$wagonVersion"
+    compile "org.apache.maven:maven-settings-builder:$mavenVersion"
+    compile "org.sonatype.pmaven:pmaven-common:0.8-20100325@jar"
+    compile "org.sonatype.pmaven:pmaven-groovy:0.8-20100325@jar"
+    compile "org.codehaus.plexus:plexus-component-annotations:1.5.2@jar"
 
     testCompile project(path: ':core', configuration: 'testFixtures')
     testRuntime project(path: ':core', configuration: 'testFixturesRuntime')

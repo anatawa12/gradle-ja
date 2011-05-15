@@ -38,34 +38,21 @@ dependencies {
 
     testCompile project(path: ':core', configuration: 'testFixtures')
     testRuntime project(path: ':core', configuration: 'testFixturesRuntime')
-    testFixtures sourceSets.test.classes
+    testFixtures sourceSets.test.output
 }
+
+sourceSets.main.output.dirs(generated: "$buildDir/generated-resources/main")
 
 task reportResources << {
     copy {
         from(configurations.reports)
-        into "${sourceSets.main.classesDir}/org/gradle/api/internal/tasks/testing/junit/report"
+        into "${sourceSets.main.output.dirs.generated}/org/gradle/api/internal/tasks/testing/junit/report"
     }
 }
 
 classes.dependsOn reportResources
-
-task ideResources(type: Copy) {
-    from(configurations.reports)
-    into "${ideDir}/resources/test/org/gradle/api/internal/tasks/testing/junit/report"
-}
-
-ide.dependsOn ideResources
-
-ideaModule {
-    dependsOn ideResources
-    scopes.RUNTIME.plus.add(configurations.detachedConfiguration(new DefaultSelfResolvingDependency(files(new File(ideDir, "resources/test/")))))
-}
-
-eclipseClasspath {
-    dependsOn ideResources
-    plusConfigurations.add(configurations.detachedConfiguration(new DefaultSelfResolvingDependency(files(new File(ideDir, "resources/test/")))))
-}
+ideaModule.dependsOn reportResources
+eclipseClasspath.dependsOn reportResources
 
 test {
     exclude 'org/gradle/api/internal/tasks/testing/junit/ATestClass*.*'

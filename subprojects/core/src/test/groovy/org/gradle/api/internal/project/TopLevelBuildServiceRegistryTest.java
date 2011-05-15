@@ -17,13 +17,11 @@
 package org.gradle.api.internal.project;
 
 import org.gradle.StartParameter;
-import org.gradle.api.artifacts.dsl.RepositoryHandler;
 import org.gradle.api.internal.ClassPathRegistry;
 import org.gradle.api.internal.ExceptionAnalyser;
 import org.gradle.api.internal.Factory;
 import org.gradle.api.internal.GradleInternal;
 import org.gradle.api.internal.artifacts.dsl.DefaultPublishArtifactFactory;
-import org.gradle.api.internal.artifacts.dsl.DefaultRepositoryHandlerFactory;
 import org.gradle.api.internal.artifacts.dsl.PublishArtifactFactory;
 import org.gradle.api.internal.tasks.execution.ExecuteAtMostOnceTaskExecuter;
 import org.gradle.api.internal.tasks.TaskExecuter;
@@ -144,12 +142,6 @@ public class TopLevelBuildServiceRegistryTest {
     }
 
     @Test
-    public void providesARepositoryHandlerFactory() {
-        allowGetCoreImplClassLoader();
-        assertThat(factory.getFactory(RepositoryHandler.class), instanceOf(DefaultRepositoryHandlerFactory.class));
-    }
-
-    @Test
     public void providesAScriptCompilerFactory() {
         expectListenerManagerCreated();
         assertThat(factory.get(ScriptCompilerFactory.class), instanceOf(DefaultScriptCompilerFactory.class));
@@ -198,7 +190,7 @@ public class TopLevelBuildServiceRegistryTest {
 
     @Test
     public void providesAWorkerProcessFactory() {
-        allowGetRootClassLoader();
+        allowGetPluginClassLoader();
         assertThat(factory.getFactory(WorkerProcessBuilder.class), instanceOf(DefaultWorkerProcessFactory.class));
     }
 
@@ -239,9 +231,9 @@ public class TopLevelBuildServiceRegistryTest {
         }});
     }
 
-    private void allowGetRootClassLoader() {
+    private void allowGetPluginClassLoader() {
         context.checking(new Expectations() {{
-            allowing(classLoaderRegistry).getRootClassLoader();
+            allowing(classLoaderRegistry).getPluginsClassLoader();
             will(returnValue(new ClassLoader() {
             }));
         }});

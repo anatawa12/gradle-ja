@@ -28,6 +28,7 @@ import org.gradle.plugins.ide.eclipse.internal.EclipseNameDeduper
 import org.gradle.plugins.ide.internal.IdePlugin
 import org.gradle.plugins.ide.eclipse.model.*
 import org.gradle.plugins.ide.internal.XmlFileContentMerger
+import org.gradle.plugins.ide.eclipse.internal.LinkedResourcesCreator
 
 /**
  * <p>A plugin which generates Eclipse files.</p>
@@ -86,15 +87,15 @@ class EclipsePlugin extends IdePlugin {
             //model:
             model.project = projectModel
 
-            projectModel.sourceSets = project.hasProperty('sourceSets')?  project.sourceSets : [] as Iterable
-            projectModel.provideRelativePath = { project.relativePath(it) }
-
             projectModel.name = project.name
             projectModel.conventionMapping.comment = { project.description }
 
             project.plugins.withType(JavaBasePlugin) {
                 projectModel.buildCommand "org.eclipse.jdt.core.javabuilder"
                 projectModel.natures "org.eclipse.jdt.core.javanature"
+                projectModel.conventionMapping.linkedResources = {
+                    new LinkedResourcesCreator().links(project)
+                }
             }
 
             project.plugins.withType(GroovyBasePlugin) {
@@ -142,12 +143,13 @@ class EclipsePlugin extends IdePlugin {
                 classpath = model.classpath
                 classpath.file = new XmlFileContentMerger(xmlTransformer)
 
-                classpath.sourceSets = project.sourceSets //TODO SF - should be a convenience property? - same applies to eclipseProject.sourceSets
+                classpath.sourceSets = project.sourceSets
+
                 classpath.containers 'org.eclipse.jdt.launching.JRE_CONTAINER'
 
                 project.plugins.withType(JavaPlugin) {
                     classpath.plusConfigurations = [project.configurations.testRuntime]
-                    classpath.conventionMapping.internalClassFolders = {
+                    classpath.conventionMapping.classFolders = {
                         def dirs = project.sourceSets.main.output.dirs.values() + project.sourceSets.test.output.dirs.values()
                         dirs.collect { project.relativePath(it)} .findAll { !it.contains('..') }
                     }
