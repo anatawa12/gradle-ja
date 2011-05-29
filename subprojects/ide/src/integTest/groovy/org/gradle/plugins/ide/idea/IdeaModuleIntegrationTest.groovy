@@ -182,8 +182,8 @@ idea {
 apply plugin: "java"
 apply plugin: "idea"
 
-sourceSets.main.output.dirs (generated: "$buildDir/generated/main")
-sourceSets.test.output.dirs (test: "$buildDir/ws/test")
+sourceSets.main.output.dir "$buildDir/generated/main"
+sourceSets.test.output.dir "$buildDir/ws/test"
 '''
         def iml = parseFile(print: true, 'root.iml')
 
@@ -193,5 +193,33 @@ sourceSets.test.output.dirs (test: "$buildDir/ws/test")
         def classesDirs = iml.component.orderEntry.library.CLASSES.root.@url.collect { it.text() }
         assert classesDirs.any { it.contains ('generated/main') }
         assert classesDirs.any { it.contains ('ws/test') }
+    }
+
+    @Test
+    void "the 'buildBy' task be executed"() {
+        //when
+        runIdeaTask '''
+apply plugin: "java"
+apply plugin: "idea"
+
+sourceSets.main.output.dir "$buildDir/generated/main", buildBy: 'generateForMain'
+sourceSets.test.output.dir "$buildDir/generated/test", buildBy: 'generateForTest'
+
+def tasksExecuted = []
+
+task generateForMain << {
+    tasksExecuted << 'generateForMain'
+}
+
+task generateForTest << {
+    tasksExecuted << 'generateForTest'
+}
+
+idea.doLast {
+    assert tasksExecuted.contains('generateForMain')
+    assert tasksExecuted.contains('generateForTest')
+}
+'''
+        //then no exception is thrown
     }
 }

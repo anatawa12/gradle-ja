@@ -24,18 +24,15 @@ import org.gradle.initialization.DefaultCommandLineConverter;
 import org.gradle.messaging.concurrent.CompositeStoppable;
 import org.gradle.messaging.concurrent.DefaultExecutorFactory;
 import org.gradle.messaging.concurrent.Stoppable;
+import org.gradle.messaging.remote.Address;
 import org.gradle.messaging.remote.ConnectEvent;
-import org.gradle.messaging.remote.internal.ConnectException;
-import org.gradle.messaging.remote.internal.Connection;
-import org.gradle.messaging.remote.internal.TcpIncomingConnector;
-import org.gradle.messaging.remote.internal.TcpOutgoingConnector;
+import org.gradle.messaging.remote.internal.*;
 import org.gradle.util.GUtil;
 import org.gradle.util.GradleVersion;
 import org.gradle.util.Jvm;
 import org.gradle.util.UncheckedException;
 
 import java.io.*;
-import java.net.URI;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -57,26 +54,26 @@ public class DaemonConnector {
      * @return The connection, or null if not running.
      */
     public Connection<Object> maybeConnect() {
-        URI uri = loadDaemonAddress();
-        if (uri == null) {
+        Address address = loadDaemonAddress();
+        if (address == null) {
             return null;
         }
         try {
-            return new TcpOutgoingConnector(getClass().getClassLoader()).connect(uri);
+            return new TcpOutgoingConnector<Object>(new DefaultMessageSerializer<Object>(getClass().getClassLoader())).connect(address);
         } catch (ConnectException e) {
             // Ignore
             return null;
         }
     }
 
-    private URI loadDaemonAddress() {
+    private Address loadDaemonAddress() {
         try {
             FileInputStream inputStream = new FileInputStream(getRegistryFile());
             try {
                 // Acquire shared lock on file while reading it
                 inputStream.getChannel().lock(0, Long.MAX_VALUE, true);
-                DataInputStream dataInputStream = new DataInputStream(inputStream);
-                return new URI(dataInputStream.readUTF());
+                ObjectInputStream objectInputStream = new ObjectInputStream(inputStream);
+                return (Address) objectInputStream.readObject();
             } finally {
                 // Also releases the lock
                 inputStream.close();
@@ -146,12 +143,12 @@ public class DaemonConnector {
      */
     void accept(final IncomingConnectionHandler handler) {
         DefaultExecutorFactory executorFactory = new DefaultExecutorFactory();
-        TcpIncomingConnector incomingConnector = new TcpIncomingConnector(executorFactory, getClass().getClassLoader());
+        TcpIncomingConnector<Object> incomingConnector = new TcpIncomingConnector<Object>(executorFactory, new DefaultMessageSerializer<Object>(getClass().getClassLoader()));
         final CompletionHandler finished = new CompletionHandler();
 
         LOGGER.lifecycle("Awaiting requests.");
 
-        URI uri = incomingConnector.accept(new Action<ConnectEvent<Connection<Object>>>() {
+        Address address = incomingConnector.accept(new Action<ConnectEvent<Connection<Object>>>() {
             public void execute(ConnectEvent<Connection<Object>> connectionConnectEvent) {
                 try {
                     finished.onStartActivity();
@@ -163,7 +160,7 @@ public class DaemonConnector {
             }
         });
 
-        storeDaemonAddress(uri);
+        storeDaemonAddress(address);
 
         boolean stopped = finished.awaitStop();
         if (!stopped) {
@@ -174,7 +171,7 @@ public class DaemonConnector {
         getRegistryFile().delete();
     }
 
-    private void storeDaemonAddress(URI uri) {
+    private void storeDaemonAddress(Address address) {
         try {
             File registryFile = getRegistryFile();
             registryFile.getParentFile().mkdirs();
@@ -182,9 +179,9 @@ public class DaemonConnector {
             try {
                 // Lock file while writing to it
                 outputStream.getChannel().lock();
-                DataOutputStream dataOutputStream = new DataOutputStream(outputStream);
-                dataOutputStream.writeUTF(uri.toString());
-                dataOutputStream.flush();
+                ObjectOutputStream objectOutputStream = new ObjectOutputStream(outputStream);
+                objectOutputStream.writeObject(address);
+                objectOutputStream.flush();
             } finally {
                 // Also releases the lock
                 outputStream.close();

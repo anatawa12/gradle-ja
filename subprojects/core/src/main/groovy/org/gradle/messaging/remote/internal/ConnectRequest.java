@@ -16,16 +16,16 @@
 
 package org.gradle.messaging.remote.internal;
 
-import java.net.URI;
+import org.gradle.messaging.remote.Address;
 
 public class ConnectRequest extends Message {
-    private final URI destinationAddress;
+    private final Address destinationAddress;
 
-    public ConnectRequest(URI destinationAddress) {
+    public ConnectRequest(Address destinationAddress) {
         this.destinationAddress = destinationAddress;
     }
 
-    public URI getDestinationAddress() {
+    public Address getDestinationAddress() {
         return destinationAddress;
     }
 }

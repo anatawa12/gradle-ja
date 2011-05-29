@@ -172,7 +172,6 @@ project(':api') {
         assert project.linkedResources.link.location.text().contains('someGroovySrc') : 'should contain linked resource for folder that is not beneath the project dir'
     }
 
-
     @Issue("GRADLE-1402")
     @Test
     void "should put sourceSet's output dir on classpath"() {
@@ -184,13 +183,41 @@ project(':api') {
 apply plugin: "java"
 apply plugin: "eclipse"
 
-sourceSets.main.output.dirs (generated: "$buildDir/generated/main")
-sourceSets.test.output.dirs (testGenerated: "$buildDir/generated/test")
+sourceSets.main.output.dir "$buildDir/generated/main"
+sourceSets.test.output.dir "$buildDir/generated/test"
 '''
         //then
         def out = parseClasspathFile(print: true)
         def libPaths = out.classpathentry.findAll { it.@kind.text() == 'lib' }.collect { it.@path.text() }
         assert libPaths == ['build/generated/main', 'build/generated/test']
+    }
+
+    @Test
+    void "the 'buildBy' task be executed"() {
+        //when
+        runEclipseTask '''
+apply plugin: "java"
+apply plugin: "eclipse"
+
+sourceSets.main.output.dir "$buildDir/generated/main", buildBy: 'generateForMain'
+sourceSets.test.output.dir "$buildDir/generated/test", buildBy: 'generateForTest'
+
+def tasksExecuted = []
+
+task generateForMain << {
+    tasksExecuted << 'generateForMain'
+}
+
+task generateForTest << {
+    tasksExecuted << 'generateForTest'
+}
+
+eclipse.doLast {
+    assert tasksExecuted.contains('generateForMain')
+    assert tasksExecuted.contains('generateForTest')
+}
+'''
+        //then no exception is thrown
     }
 
     protected def contains(String ... contents) {

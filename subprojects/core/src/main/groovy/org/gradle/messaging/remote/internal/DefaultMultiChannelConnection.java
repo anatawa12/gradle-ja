@@ -17,63 +17,60 @@
 package org.gradle.messaging.remote.internal;
 
 import org.gradle.api.GradleException;
-import org.gradle.messaging.concurrent.*;
+import org.gradle.messaging.concurrent.CompositeStoppable;
+import org.gradle.messaging.concurrent.ExecutorFactory;
+import org.gradle.messaging.concurrent.StoppableExecutor;
 import org.gradle.messaging.dispatch.*;
+import org.gradle.messaging.remote.Address;
 import org.slf4j.LoggerFactory;
 
-import java.net.URI;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.concurrent.*;
-import java.util.concurrent.locks.Lock;
-import java.util.concurrent.locks.ReentrantLock;
+import java.util.concurrent.TimeUnit;
 
 class DefaultMultiChannelConnection implements MultiChannelConnection<Object> {
-    private final URI sourceAddress;
-    private final URI destinationAddress;
-    private final EndOfStreamDispatch outgoingDispatch;
-    private final AsyncDispatch<Object> outgoingQueue;
-    private final AsyncReceive<Object> incomingReceive;
-    private final EndOfStreamFilter incomingDispatch;
+    private final Address sourceAddress;
+    private final Address destinationAddress;
     private final IncomingDemultiplex incomingDemux;
     private final StoppableExecutor executor;
     private final Connection<Object> connection;
+    private final ProtocolStack<Object> stack;
+    private final DiscardingFailureHandler<Object> failureHandler;
 
-    DefaultMultiChannelConnection(ExecutorFactory executorFactory, String displayName, final Connection<Object> connection, URI sourceAddress, URI destinationAddress) {
+    DefaultMultiChannelConnection(ExecutorFactory executorFactory, String displayName, final Connection<Object> connection, Address sourceAddress, Address destinationAddress) {
         this.connection = connection;
         this.executor = executorFactory.create(displayName);
 
         this.sourceAddress = sourceAddress;
         this.destinationAddress = destinationAddress;
 
-        // Outgoing pipeline: <source> -> <channel-mux> -> <end-of-stream-dispatch> -> <async-queue> -> <ignore-failures> -> <connection>
-        outgoingQueue = new AsyncDispatch<Object>(executor);
-        outgoingQueue.dispatchTo(wrapFailures(connection));
-        outgoingDispatch = new EndOfStreamDispatch(new ChannelMessageMarshallingDispatch(outgoingQueue));
-
-        // Incoming pipeline: <connection> -> <async-receive> -> <ignore-failures> -> <end-of-stream-filter> -> <channel-demux> -> <channel-async-queue> -> <ignore-failures> -> <handler>
-        incomingDemux = new IncomingDemultiplex();
-        incomingDispatch = new EndOfStreamFilter(incomingDemux, new Runnable() {
+        Dispatch<Object> outgoing = connection;
+        Receive<Object> incoming = new EndOfStreamReceive(connection);
+        Protocol<Object> endOfStream = new EndOfStreamHandshakeProtocol(new Runnable() {
             public void run() {
                 requestStop();
             }
         });
-        incomingReceive = new AsyncReceive<Object>(executor, wrapFailures(new ChannelMessageUnmarshallingDispatch(incomingDispatch)));
-        incomingReceive.receiveFrom(new EndOfStreamReceive(connection));
+        Protocol<Object> channel = new ChannelMultiplexProtocol();
+        failureHandler = new DiscardingFailureHandler<Object>(LoggerFactory.getLogger(DefaultMultiChannelConnector.class));
+
+        stack = new ProtocolStack<Object>(outgoing, incoming, executor, failureHandler, failureHandler, failureHandler, endOfStream, channel);
+
+        // Incoming pipeline: <connection> -> <async-receive> -> <ignore-failures> -> <end-of-stream-filter> -> <channel-demux> -> <channel-async-queue> -> <ignore-failures> -> <handler>
+        incomingDemux = new IncomingDemultiplex(executor);
+        stack.receiveOn(incomingDemux);
     }
 
     private Dispatch<Object> wrapFailures(Dispatch<Object> dispatch) {
-        return new DiscardOnFailureDispatch<Object>(dispatch, LoggerFactory.getLogger(DefaultMultiChannelConnector.class));
+        return new FailureHandlingDispatch<Object>(dispatch, failureHandler);
     }
 
-    public URI getLocalAddress() {
+    public Address getLocalAddress() {
         if (sourceAddress == null) {
             throw new UnsupportedOperationException();
         }
         return sourceAddress;
     }
 
-    public URI getRemoteAddress() {
+    public Address getRemoteAddress() {
         if (destinationAddress == null) {
             throw new UnsupportedOperationException();
         }
@@ -81,7 +78,7 @@ class DefaultMultiChannelConnection implements MultiChannelConnection<Object> {
     }
 
     public void requestStop() {
-        outgoingDispatch.stop();
+        stack.requestStop();
     }
 
     public void addIncomingChannel(Object channelKey, Dispatch<Object> dispatch) {
@@ -89,20 +86,14 @@ class DefaultMultiChannelConnection implements MultiChannelConnection<Object> {
     }
 
     public Dispatch<Object> addOutgoingChannel(Object channelKey) {
-        return new OutgoingMultiplex(channelKey, outgoingDispatch);
+        return new OutgoingMultiplex(channelKey, stack);
     }
 
     public void stop() {
         executor.execute(new Runnable() {
             public void run() {
-                // End-of-stream handshake
                 requestStop();
-                incomingDispatch.stop();
-
-                // Flush queues (should be empty)
-                incomingReceive.requestStop();
-                outgoingQueue.requestStop();
-                new CompositeStoppable(outgoingQueue, connection, incomingReceive, incomingDemux).stop();
+                new CompositeStoppable(stack, connection, incomingDemux).stop();
             }
         });
         try {
@@ -112,62 +103,4 @@ class DefaultMultiChannelConnection implements MultiChannelConnection<Object> {
         }
     }
 
-    private class IncomingDemultiplex implements Dispatch<Object>, Stoppable {
-        private final Lock queueLock = new ReentrantLock();
-        private final Map<Object, AsyncDispatch<Object>> incomingQueues
-                = new HashMap<Object, AsyncDispatch<Object>>();
-
-        public void dispatch(Object message) {
-            ChannelMessage channelMessage = (ChannelMessage) message;
-            Dispatch<Object> channel = findChannel(channelMessage.getChannel());
-            channel.dispatch(channelMessage.getPayload());
-        }
-
-        public void addIncomingChannel(Object channel, Dispatch<Object> dispatch) {
-            AsyncDispatch<Object> queue = findChannel(channel);
-            queue.dispatchTo(dispatch);
-        }
-
-        private AsyncDispatch<Object> findChannel(Object channel) {
-            AsyncDispatch<Object> queue;
-            queueLock.lock();
-            try {
-                queue = incomingQueues.get(channel);
-                if (queue == null) {
-                    queue = new AsyncDispatch<Object>(executor);
-                    incomingQueues.put(channel, queue);
-                }
-            } finally {
-                queueLock.unlock();
-            }
-            return queue;
-        }
-
-        public void stop() {
-            Stoppable stopper;
-            queueLock.lock();
-            try {
-                stopper = new CompositeStoppable(incomingQueues.values());
-                incomingQueues.clear();
-            } finally {
-                queueLock.unlock();
-            }
-
-            stopper.stop();
-        }
-    }
-
-    private static class OutgoingMultiplex implements Dispatch<Object> {
-        private final Dispatch<Object> dispatch;
-        private final Object channelKey;
-
-        private OutgoingMultiplex(Object channelKey, Dispatch<Object> dispatch) {
-            this.channelKey = channelKey;
-            this.dispatch = dispatch;
-        }
-
-        public void dispatch(Object message) {
-            dispatch.dispatch(new ChannelMessage(channelKey, message));
-        }
-    }
 }

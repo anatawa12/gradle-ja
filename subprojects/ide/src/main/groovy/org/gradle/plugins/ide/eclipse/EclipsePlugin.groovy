@@ -25,10 +25,11 @@ import org.gradle.api.plugins.JavaPlugin
 import org.gradle.api.plugins.WarPlugin
 import org.gradle.api.plugins.scala.ScalaBasePlugin
 import org.gradle.plugins.ide.eclipse.internal.EclipseNameDeduper
-import org.gradle.plugins.ide.internal.IdePlugin
-import org.gradle.plugins.ide.eclipse.model.*
-import org.gradle.plugins.ide.internal.XmlFileContentMerger
 import org.gradle.plugins.ide.eclipse.internal.LinkedResourcesCreator
+import org.gradle.plugins.ide.internal.IdePlugin
+import org.gradle.plugins.ide.internal.XmlFileContentMerger
+import static java.util.Arrays.asList
+import org.gradle.plugins.ide.eclipse.model.*
 
 /**
  * <p>A plugin which generates Eclipse files.</p>
@@ -37,12 +38,17 @@ import org.gradle.plugins.ide.eclipse.internal.LinkedResourcesCreator
  */
 class EclipsePlugin extends IdePlugin {
     static final String ECLIPSE_TASK_NAME = "eclipse"
-    static final String CLEAN_ECLIPSE_TASK_NAME = "cleanEclipse"
     static final String ECLIPSE_PROJECT_TASK_NAME = "eclipseProject"
     static final String ECLIPSE_WTP_COMPONENT_TASK_NAME = "eclipseWtpComponent"
     static final String ECLIPSE_WTP_FACET_TASK_NAME = "eclipseWtpFacet"
     static final String ECLIPSE_CP_TASK_NAME = "eclipseClasspath"
     static final String ECLIPSE_JDT_TASK_NAME = "eclipseJdt"
+
+    Collection<String> getTaskNames() {
+        return asList(ECLIPSE_TASK_NAME, cleanName(ECLIPSE_TASK_NAME), ECLIPSE_PROJECT_TASK_NAME, cleanName(ECLIPSE_PROJECT_TASK_NAME),
+        ECLIPSE_WTP_COMPONENT_TASK_NAME, cleanName(ECLIPSE_WTP_COMPONENT_TASK_NAME), ECLIPSE_WTP_FACET_TASK_NAME, cleanName(ECLIPSE_WTP_FACET_TASK_NAME),
+        ECLIPSE_CP_TASK_NAME, cleanName(ECLIPSE_CP_TASK_NAME), ECLIPSE_JDT_TASK_NAME, cleanName(ECLIPSE_JDT_TASK_NAME))
+    }
 
     EclipseModel model = new EclipseModel()
 
@@ -133,7 +139,7 @@ class EclipsePlugin extends IdePlugin {
         model.classpath.conventionMapping.classesOutputDir = { new File(project.projectDir, 'bin') }
 
         project.plugins.withType(JavaBasePlugin) {
-            maybeAddTask(project, this, ECLIPSE_CP_TASK_NAME, GenerateEclipseClasspath) {
+            maybeAddTask(project, this, ECLIPSE_CP_TASK_NAME, GenerateEclipseClasspath) { task ->
                 //task properties:
                 description = "Generates the Eclipse classpath file."
                 inputFile = project.file('.classpath')
@@ -150,8 +156,11 @@ class EclipsePlugin extends IdePlugin {
                 project.plugins.withType(JavaPlugin) {
                     classpath.plusConfigurations = [project.configurations.testRuntime]
                     classpath.conventionMapping.classFolders = {
-                        def dirs = project.sourceSets.main.output.dirs.values() + project.sourceSets.test.output.dirs.values()
+                        def dirs = project.sourceSets.main.output.dirs + project.sourceSets.test.output.dirs
                         dirs.collect { project.relativePath(it)} .findAll { !it.contains('..') }
+                    }
+                    task.dependsOn {
+                        project.sourceSets.main.output.dirBuilders + project.sourceSets.test.output.dirBuilders
                     }
                 }
 

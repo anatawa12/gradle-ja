@@ -25,17 +25,14 @@ import org.gradle.api.invocation.Gradle;
  */
 public class ModelBuildingAdapter extends BuildAdapter {
 
-    EclipsePluginApplier applier;
     ModelBuilder builder;
 
-    public ModelBuildingAdapter(EclipsePluginApplier applier, ModelBuilder builder) {
-        this.applier = applier;
+    public ModelBuildingAdapter(ModelBuilder builder) {
         this.builder = builder;
     }
 
     @Override
     public void projectsEvaluated(Gradle gradle) {
-        applier.apply((GradleInternal) gradle);
         builder.buildAll((GradleInternal) gradle);
     }
 }
