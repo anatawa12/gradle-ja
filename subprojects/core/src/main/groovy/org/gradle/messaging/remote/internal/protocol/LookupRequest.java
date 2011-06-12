@@ -41,4 +41,9 @@ public class LookupRequest extends DiscoveryMessage {
     public int hashCode() {
         return super.hashCode() ^ channel.hashCode();
     }
+
+    @Override
+    public String toString() {
+        return String.format("[LookupRequest channel: %s]", channel);
+    }
 }

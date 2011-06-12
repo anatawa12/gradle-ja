@@ -20,7 +20,8 @@ package org.gradle.api.dsl;
  * ConventionProperty can be assigned but <b>cannot</b> be mutated (even if the object is mutable!)
  * <p>
  * Understanding convention properties is important mostly for collections
- * because one might want to mutate the collection but it wouldn't work.
+ * because one might want to mutate the collection but it wouldn't work
+ * (actually mutating may work but it will be sensitive to the evaluation order).
  * <p>
  * Consider this example:
  *
@@ -32,6 +33,9 @@ package org.gradle.api.dsl;
  *
  *   //However, convention properties can be assigned:
  *   conventionProperty = ['a', 'b']  //OK
+ *
+ *   //Following may work but depends on the order of evaluation:
+ *   conventionProperty -= 'a'  //SENSITIVE
  *
  *   //Simple properties can be mutated or assigned:
  *   simpleProperty = ['1.5']  //OK

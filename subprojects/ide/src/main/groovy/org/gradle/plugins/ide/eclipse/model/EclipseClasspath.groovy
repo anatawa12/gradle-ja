@@ -1,5 +1,5 @@
 /*
- * Copyright 2010 the original author or authors.
+ * Copyright 2011 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,9 +17,9 @@ package org.gradle.plugins.ide.eclipse.model
 
 import org.gradle.api.artifacts.Configuration
 import org.gradle.api.tasks.SourceSet
+import org.gradle.plugins.ide.api.XmlFileContentMerger
 import org.gradle.plugins.ide.eclipse.model.internal.ClasspathFactory
 import org.gradle.util.ConfigureUtil
-import org.gradle.plugins.ide.internal.XmlFileContentMerger
 
 /**
  * Enables fine-tuning classpath details (.classpath file) of the Eclipse plugin
@@ -42,10 +42,6 @@ import org.gradle.plugins.ide.internal.XmlFileContentMerger
  *   pathVariables 'GRADLE_HOME': file('/best/software/gradle'), 'TOMCAT_HOME': file('../tomcat')
  *
  *   classpath {
- *     //you can configure the sourceSets however Gradle simply uses current sourceSets
- *     //so it's probably best not to change it.
- *     //sourceSets =
- *
  *     //you can tweak the classpath of the eclipse project by adding extra configurations:
  *     plusConfigurations += configurations.provided
  *
@@ -56,7 +52,7 @@ import org.gradle.plugins.ide.internal.XmlFileContentMerger
  *     containers 'someFriendlyContainer', 'andYetAnotherContainer'
  *
  *     //customizing the classes output directory:
- *     classesOutputDir = file('build-eclipse')
+ *     defaultOutputDir = file('build-eclipse')
  *
  *     //default settings for dependencies sources/javadoc download:
  *     downloadSources = true
@@ -147,12 +143,11 @@ class EclipseClasspath {
     }
 
     /**
-     * The default output directory for eclipse generated files, eg classes.
+     * The default output directory where eclipse puts compiled classes
      * <p>
      * For example see docs for {@link EclipseClasspath}
      */
-    File classesOutputDir
-    //TODO SF: should be called 'defaultOutputFolder' as eclipse calls it?
+    File defaultOutputDir
 
     /**
      * Whether to download and add sources associated with the dependency jars. Defaults to true.
@@ -169,13 +164,6 @@ class EclipseClasspath {
     boolean downloadJavadoc = false
 
     /**
-     * Calculates, resolves & returns dependency entries of this classpath
-     */
-    public List<ClasspathEntry> resolveDependencies() {
-        return new ClasspathFactory().createEntries(this)
-    }
-
-    /**
      * Enables advanced configuration like tinkering with the output xml
      * or affecting the way existing .classpath content is merged with gradle build information
      * <p>
@@ -184,19 +172,31 @@ class EclipseClasspath {
      *
      * For example see docs for {@link EclipseProject}
      */
+
     void file(Closure closure) {
         ConfigureUtil.configure(closure, file)
     }
+    /**
+     * See {@link #file(Closure) }
+     */
+
+    XmlFileContentMerger file
 
     /******/
 
     org.gradle.api.Project project
-    XmlFileContentMerger file
     Map<String, File> pathVariables = [:]
     boolean projectDependenciesOnly = false
 
     //only folder paths internal to the project (e.g. beneath the project folder) are supported
     List<String> classFolders
+
+    /**
+     * Calculates, resolves & returns dependency entries of this classpath
+     */
+    public List<ClasspathEntry> resolveDependencies() {
+        return new ClasspathFactory().createEntries(this)
+    }
 
     void mergeXmlClasspath(Classpath xmlClasspath) {
         file.beforeMerged.execute(xmlClasspath)

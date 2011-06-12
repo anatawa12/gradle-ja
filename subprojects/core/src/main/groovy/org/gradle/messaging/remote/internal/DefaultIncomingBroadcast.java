@@ -19,13 +19,15 @@ import org.gradle.api.Action;
 import org.gradle.messaging.concurrent.CompositeStoppable;
 import org.gradle.messaging.concurrent.ExecutorFactory;
 import org.gradle.messaging.concurrent.Stoppable;
-import org.gradle.messaging.dispatch.AsyncReceive;
+import org.gradle.messaging.concurrent.StoppableExecutor;
 import org.gradle.messaging.dispatch.DiscardingFailureHandler;
+import org.gradle.messaging.dispatch.MethodInvocation;
 import org.gradle.messaging.dispatch.ReflectionDispatch;
 import org.gradle.messaging.remote.Address;
 import org.gradle.messaging.remote.ConnectEvent;
 import org.gradle.messaging.remote.internal.protocol.ChannelAvailable;
 import org.gradle.messaging.remote.internal.protocol.DiscoveryMessage;
+import org.gradle.util.IdGenerator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -40,18 +42,21 @@ public class DefaultIncomingBroadcast implements IncomingBroadcast, Stoppable {
     private final String group;
     private final Lock lock = new ReentrantLock();
     private final Set<String> channels = new HashSet<String>();
-    private final Set<Connection<Object>> connections = new HashSet<Connection<Object>>();
-    private final IncomingDemultiplex demultiplex;
-    private final AsyncReceive<Object> asyncReceive;
+    private final StoppableExecutor executor;
     private final Address address;
+    private final MessageHub hub;
 
-    public DefaultIncomingBroadcast(String group, Connection<DiscoveryMessage> connection, IncomingConnector<Object> incomingConnector, ExecutorFactory executorFactory) {
+    public DefaultIncomingBroadcast(String group, String nodeName, AsyncConnection<DiscoveryMessage> connection, IncomingConnector<Message> incomingConnector, ExecutorFactory executorFactory, IdGenerator<?> idGenerator, ClassLoader messagingClassLoader) {
         this.group = group;
+
+        executor = executorFactory.create("discovery broadcast");
         DiscardingFailureHandler<DiscoveryMessage> failureHandler = new DiscardingFailureHandler<DiscoveryMessage>(LOGGER);
-        protocolStack = new ProtocolStack<DiscoveryMessage>(connection, connection, executorFactory.create("discovery protocol"), failureHandler, failureHandler, failureHandler, new ChannelRegistrationProtocol());
-        demultiplex = new IncomingDemultiplex(executorFactory.create("channel demultiplex"));
-        asyncReceive = new AsyncReceive<Object>(executorFactory.create("channel receive"), demultiplex);
-        address = incomingConnector.accept(new IncomingConnectionAction());
+        protocolStack = new ProtocolStack<DiscoveryMessage>(executor, failureHandler, failureHandler, new ChannelRegistrationProtocol());
+        connection.dispatchTo(new GroupMessageFilter(group, protocolStack.getBottom()));
+        protocolStack.getBottom().dispatchTo(connection);
+
+        address = incomingConnector.accept(new IncomingConnectionAction(), true);
+        hub = new MessageHub("incoming broadcast", nodeName, executorFactory, idGenerator, messagingClassLoader);
     }
 
     public <T> void addIncoming(Class<T> type, T handler) {
@@ -59,35 +64,23 @@ public class DefaultIncomingBroadcast implements IncomingBroadcast, Stoppable {
         lock.lock();
         try {
             if (channels.add(channelKey)) {
-                protocolStack.dispatch(new ChannelAvailable(group, channelKey, address));
+                protocolStack.getTop().dispatch(new ChannelAvailable(group, channelKey, address));
             }
-            demultiplex.addIncomingChannel(channelKey, new MethodInvocationUnmarshallingDispatch(new ReflectionDispatch(handler), type.getClassLoader()));
         } finally {
             lock.unlock();
         }
+        hub.addIncoming(channelKey, new TypeCastDispatch<MethodInvocation, Object>(MethodInvocation.class, new ReflectionDispatch(handler)));
     }
 
     public void stop() {
-        lock.lock();
-        try {
-            new CompositeStoppable(protocolStack).add(connections).add(asyncReceive, demultiplex).stop();
-        } finally {
-            channels.clear();
-            connections.clear();
-            lock.unlock();
-        }
+        CompositeStoppable stoppable = new CompositeStoppable();
+        stoppable.add(protocolStack, hub, executor);
+        stoppable.stop();
     }
 
-    private class IncomingConnectionAction implements Action<ConnectEvent<Connection<Object>>> {
-        public void execute(ConnectEvent<Connection<Object>> connectionConnectEvent) {
-            lock.lock();
-            try {
-                connections.add(connectionConnectEvent.getConnection());
-                asyncReceive.receiveFrom(connectionConnectEvent.getConnection());
-            } finally {
-                lock.unlock();
-            }
+    private class IncomingConnectionAction implements Action<ConnectEvent<Connection<Message>>> {
+        public void execute(ConnectEvent<Connection<Message>> connectionConnectEvent) {
+            hub.addConnection(connectionConnectEvent.getConnection());
         }
     }
-
 }

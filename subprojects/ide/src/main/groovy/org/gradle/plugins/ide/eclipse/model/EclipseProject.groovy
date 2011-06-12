@@ -1,5 +1,5 @@
 /*
- * Copyright 2010 the original author or authors.
+ * Copyright 2011 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,8 +16,8 @@
 package org.gradle.plugins.ide.eclipse.model
 
 import org.gradle.api.InvalidUserDataException
+import org.gradle.plugins.ide.api.XmlFileContentMerger
 import org.gradle.util.ConfigureUtil
-import org.gradle.plugins.ide.internal.XmlFileContentMerger
 
 /**
  * Enables fine-tuning project details (.project file) of the Eclipse plugin
@@ -50,7 +50,7 @@ import org.gradle.plugins.ide.internal.XmlFileContentMerger
  *     //if you want to append some extra build command:
  *     buildCommand 'buildThisLovelyProject'
  *     //if you want to append a build command with parameters:
- *     buildCommand argumentOne: "I'm first", argumentTwo: "I'm second", 'buildItWithTheArguments'
+ *     buildCommand 'buildItWithTheArguments', argumentOne: "I'm first", argumentTwo: "I'm second"
  *
  *     //if you want to create an extra link in the eclipse project,
  *     //by location uri:
@@ -223,7 +223,6 @@ class EclipseProject {
         if (illegalArgs) {
             throw new InvalidUserDataException("You provided illegal argument for a link: $illegalArgs. Valid link args are: $validKeys")
         }
-        //TODO SF: move validation here, update tests
         linkedResources << new Link(args.name, args.type, args.location, args.locationUri)
     }
 
@@ -240,8 +239,12 @@ class EclipseProject {
         ConfigureUtil.configure(closure, file)
     }
 
-    /*****/
+    /**
+     * See {@link #file(Closure) }
+     */
     XmlFileContentMerger file
+
+    /*****/
 
     void mergeXmlProject(Project xmlProject) {
         file.beforeMerged.execute(xmlProject)

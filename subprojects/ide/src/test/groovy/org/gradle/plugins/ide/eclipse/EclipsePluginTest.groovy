@@ -23,6 +23,7 @@ import org.gradle.api.internal.project.DefaultProject
 import org.gradle.api.tasks.Delete
 import org.gradle.plugins.ide.eclipse.model.BuildCommand
 import org.gradle.plugins.ide.eclipse.model.Facet
+import org.gradle.plugins.ide.eclipse.model.Facet.FacetType
 import org.gradle.plugins.ide.eclipse.model.WbResource
 import org.gradle.util.HelperUtil
 import spock.lang.Specification
@@ -82,8 +83,37 @@ class EclipsePluginTest extends Specification {
                         'org.eclipse.wst.common.modulecore.ModuleCoreNature',
                         'org.eclipse.jem.workbench.JavaEMFNature'])
         checkEclipseClasspath([project.configurations.testRuntime])
-        checkEclipseWtpComponent()
-        checkEclipseWtpFacet()
+        checkEclipseWtpComponentForWar()
+        checkEclipseWtpFacet([
+                new Facet(FacetType.fixed, "jst.java", null),
+                new Facet(FacetType.fixed, "jst.web", null),
+                new Facet(FacetType.installed, "jst.web", "2.4"),
+                new Facet(FacetType.installed, "jst.java", "5.0")])
+    }
+
+    def applyToEarProject_shouldHaveWebProjectAndClasspathTask() {
+        when:
+        project.apply(plugin: 'java')
+        project.apply(plugin: 'ear')
+        eclipsePlugin.apply(project)
+
+        then:
+        assertThatCleanEclipseDependsOn(project, project.cleanEclipseProject)
+        assertThatCleanEclipseDependsOn(project, project.cleanEclipseClasspath)
+        assertThatCleanEclipseDependsOn(project, project.cleanEclipseWtpComponent)
+        assertThatCleanEclipseDependsOn(project, project.cleanEclipseWtpFacet)
+        checkEclipseProjectTask([
+                new BuildCommand('org.eclipse.wst.common.project.facet.core.builder'),
+                new BuildCommand('org.eclipse.wst.validation.validationbuilder')],
+                ['org.eclipse.jdt.core.javanature',
+                        'org.eclipse.wst.common.project.facet.core.nature',
+                        'org.eclipse.wst.common.modulecore.ModuleCoreNature',
+                        'org.eclipse.jem.workbench.JavaEMFNature'])
+        checkEclipseClasspath([project.configurations.testRuntime])
+        checkEclipseWtpComponentForEar()
+        checkEclipseWtpFacet([
+                new Facet(FacetType.fixed, "jst.ear", null),
+                new Facet(FacetType.installed, "jst.ear", "5.0")])
     }
 
     def applyToScalaProject_shouldHaveProjectAndClasspathTaskForScala() {
@@ -130,7 +160,7 @@ class EclipsePluginTest extends Specification {
 
         then:
         eclipsePlugin.model.classpath
-        eclipsePlugin.model.classpath.classesOutputDir
+        eclipsePlugin.model.classpath.defaultOutputDir
     }
 
     def "configures internal class folders"() {
@@ -154,7 +184,7 @@ class EclipsePluginTest extends Specification {
     private void checkEclipseProjectTask(List buildCommands, List natures) {
         GenerateEclipseProject eclipseProjectTask = project.eclipseProject
         assert eclipseProjectTask instanceof GenerateEclipseProject
-        assert project.eclipse.taskDependencies.getDependencies(project.eclipse).contains(eclipseProjectTask)
+        assert project.tasks.eclipse.taskDependencies.getDependencies(project.tasks.eclipse).contains(eclipseProjectTask)
         assert eclipseProjectTask.buildCommands == buildCommands
         assert eclipseProjectTask.natures == natures
         assert eclipseProjectTask.links == [] as Set
@@ -165,9 +195,9 @@ class EclipsePluginTest extends Specification {
     }
 
     private void checkEclipseClasspath(def configurations) {
-        GenerateEclipseClasspath eclipseClasspath = project.eclipseClasspath
+        GenerateEclipseClasspath eclipseClasspath = project.tasks.eclipseClasspath
         assert eclipseClasspath instanceof GenerateEclipseClasspath
-        assert project.eclipse.taskDependencies.getDependencies(project.eclipse).contains(eclipseClasspath)
+        assert project.tasks.eclipse.taskDependencies.getDependencies(project.tasks.eclipse).contains(eclipseClasspath)
         assert eclipseClasspath.sourceSets == project.sourceSets
         assert eclipseClasspath.plusConfigurations == configurations
         assert eclipseClasspath.minusConfigurations == []
@@ -178,27 +208,28 @@ class EclipsePluginTest extends Specification {
 
     private void checkEclipseJdt() {
         GenerateEclipseJdt eclipseJdt = project.eclipseJdt
-        assert project.eclipse.taskDependencies.getDependencies(project.eclipse).contains(eclipseJdt)
+        assert project.tasks.eclipse.taskDependencies.getDependencies(project.tasks.eclipse).contains(eclipseJdt)
         assert eclipseJdt.sourceCompatibility == project.sourceCompatibility
         assert eclipseJdt.targetCompatibility == project.targetCompatibility
         assert eclipseJdt.outputFile == project.file('.settings/org.eclipse.jdt.core.prefs')
     }
 
-    private void checkEclipseWtpFacet() {
+    private void checkEclipseWtpFacet(def facets) {
         GenerateEclipseWtpFacet eclipseWtpFacet = project.eclipseWtpFacet
         assert eclipseWtpFacet instanceof GenerateEclipseWtpFacet
-        assert project.eclipse.taskDependencies.getDependencies(project.eclipse).contains(eclipseWtpFacet)
+        assert project.tasks.eclipse.taskDependencies.getDependencies(project.tasks.eclipse).contains(eclipseWtpFacet)
         assert eclipseWtpFacet.inputFile == project.file('.settings/org.eclipse.wst.common.project.facet.core.xml')
         assert eclipseWtpFacet.outputFile == project.file('.settings/org.eclipse.wst.common.project.facet.core.xml')
-        assert eclipseWtpFacet.facets == [new Facet("jst.web", "2.4"), new Facet("jst.java", "5.0")]
+        assert eclipseWtpFacet.facets == facets
     }
 
-    private void checkEclipseWtpComponent() {
+    private void checkEclipseWtpComponentForWar() {
         def eclipseWtpComponent = project.eclipseWtpComponent
         assert eclipseWtpComponent instanceof GenerateEclipseWtpComponent
-        assert project.eclipse.taskDependencies.getDependencies(project.eclipse).contains(eclipseWtpComponent)
+        assert project.tasks.eclipse.taskDependencies.getDependencies(project.tasks.eclipse).contains(eclipseWtpComponent)
         assert eclipseWtpComponent.sourceDirs == project.sourceSets.main.allSource.srcDirs
-        assert eclipseWtpComponent.plusConfigurations == [project.configurations.runtime] as Set
+        assert eclipseWtpComponent.component.rootConfigurations == [] as Set
+        assert eclipseWtpComponent.component.libConfigurations == [project.configurations.runtime] as Set
         assert eclipseWtpComponent.minusConfigurations == [project.configurations.providedRuntime] as Set
         assert eclipseWtpComponent.deployName == project.name
         assert eclipseWtpComponent.contextPath == project.war.baseName
@@ -206,6 +237,26 @@ class EclipsePluginTest extends Specification {
         assert eclipseWtpComponent.outputFile == project.file('.settings/org.eclipse.wst.common.component')
         assert eclipseWtpComponent.variables == [:]
         assert eclipseWtpComponent.resources == [new WbResource('/', project.convention.plugins.war.webAppDirName)]
+        assert eclipseWtpComponent.component.classesDeployPath == "/WEB-INF/classes"
+        assert eclipseWtpComponent.component.libDeployPath == "/WEB-INF/lib"
+    }
+
+    private void checkEclipseWtpComponentForEar() {
+        def eclipseWtpComponent = project.eclipseWtpComponent
+        assert eclipseWtpComponent instanceof GenerateEclipseWtpComponent
+        assert project.tasks.eclipse.taskDependencies.getDependencies(project.tasks.eclipse).contains(eclipseWtpComponent)
+        assert eclipseWtpComponent.sourceDirs == project.sourceSets.main.allSource.srcDirs
+        assert eclipseWtpComponent.component.rootConfigurations == [project.configurations.deploy] as Set
+        assert eclipseWtpComponent.component.libConfigurations == [project.configurations.earlib] as Set
+        assert eclipseWtpComponent.minusConfigurations == [] as Set
+        assert eclipseWtpComponent.deployName == project.name
+        assert eclipseWtpComponent.contextPath == null
+        assert eclipseWtpComponent.inputFile == project.file('.settings/org.eclipse.wst.common.component')
+        assert eclipseWtpComponent.outputFile == project.file('.settings/org.eclipse.wst.common.component')
+        assert eclipseWtpComponent.variables == [:]
+        assert eclipseWtpComponent.resources == []
+        assert eclipseWtpComponent.component.classesDeployPath == "/"
+        assert eclipseWtpComponent.component.libDeployPath == "/lib"
     }
 
     void assertThatCleanEclipseDependsOn(Project project, Task dependsOnTask) {

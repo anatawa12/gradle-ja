@@ -16,57 +16,37 @@
 package org.gradle.tooling.internal.provider
 
 import org.gradle.api.Project
-import org.gradle.api.Task
-import org.gradle.api.tasks.TaskContainer
+import org.gradle.api.internal.AbstractTask
+import org.gradle.tooling.internal.DefaultEclipseProject
+import org.gradle.util.HelperUtil
 import spock.lang.Specification
 
 class TasksFactoryTest extends Specification {
     final Project project = Mock()
-    final org.gradle.tooling.internal.protocol.eclipse.EclipseProjectVersion3 eclipseProject = Mock()
-    final TaskContainer tasks = Mock()
-    final TasksFactory factory = new TasksFactory()
+    final org.gradle.tooling.internal.protocol.eclipse.EclipseProjectVersion3 eclipseProject = new DefaultEclipseProject(null, null, null, null, [])
+    final task = HelperUtil.createTask(AbstractTask)
 
-    def "builds the tasks for a project"() {
-        def taskA = task('a')
-        def taskB = task('b')
+    def "does not return tasks"() {
+        TasksFactory factory = new TasksFactory(false)
 
         when:
-        def result = factory.create(project, eclipseProject, new EclipsePluginApplierResult())
+        factory.allTasks = [:]
+        factory.allTasks.put(project, [task] as Set)
+        def tasks = factory.getTasks(project)
 
         then:
-        result.size() == 2
-        result[0].path == ':a'
-        result[0].name == 'a'
-        result[0].description == 'task a'
-        result[0].project == eclipseProject
-        result[1].name == 'b'
-        1 * project.tasks >> tasks
-        tasks.iterator() >> [taskA, taskB].iterator()
+        tasks.empty
     }
 
-    def "skips applied tasks"() {
-        def taskA = task('a')
-        def taskB = task('b')
-
-        1 * project.tasks >> tasks
-        tasks.iterator() >> [taskA, taskB].iterator()
-
-        def applierResult = new EclipsePluginApplierResult()
-        applierResult.rememberTasks(":", ['b'])
+    def "returns tasks"() {
+        TasksFactory factory = new TasksFactory(true)
 
         when:
-        def result = factory.create(project, eclipseProject, applierResult)
+        factory.allTasks = [:]
+        factory.allTasks.put(project, [task] as Set)
+        def tasks = factory.getTasks(project)
 
         then:
-        result.size() == 1
-        result[0].path == ':a'
-    }
-
-    def task(String name) {
-        Task task = Mock()
-        _ * task.path >> ":$name"
-        _ * task.name >> name
-        _ * task.description >> "task $name"
-        return task
+        tasks.size() == 1
     }
 }

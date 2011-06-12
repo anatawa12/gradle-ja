@@ -51,6 +51,8 @@ configurations {
 }
 
 idea {
+    pathVariables CUSTOM_VARIABLE: file('customModuleContentRoot').parentFile
+
     module {
         name = 'foo'
         contentRoot = file('customModuleContentRoot')
@@ -68,7 +70,6 @@ idea {
         testOutputDir = file('muchBetterTestOutputDir')
 
         javaVersion = '1.6'
-        pathVariables = [CUSTOM_VARIABLE: file('customModuleContentRoot').parentFile]
 
         iml {
             generateTo = file('customImlFolder')
@@ -198,28 +199,17 @@ sourceSets.test.output.dir "$buildDir/ws/test"
     @Test
     void "the 'buildBy' task be executed"() {
         //when
-        runIdeaTask '''
+        def result = runIdeaTask('''
 apply plugin: "java"
 apply plugin: "idea"
 
 sourceSets.main.output.dir "$buildDir/generated/main", buildBy: 'generateForMain'
 sourceSets.test.output.dir "$buildDir/generated/test", buildBy: 'generateForTest'
 
-def tasksExecuted = []
-
-task generateForMain << {
-    tasksExecuted << 'generateForMain'
-}
-
-task generateForTest << {
-    tasksExecuted << 'generateForTest'
-}
-
-idea.doLast {
-    assert tasksExecuted.contains('generateForMain')
-    assert tasksExecuted.contains('generateForTest')
-}
-'''
-        //then no exception is thrown
+task generateForMain << {}
+task generateForTest << {}
+''')
+        //then
+        result.assertTasksExecuted(':generateForMain', ':generateForTest', ':ideaModule', ':ideaProject', ':ideaWorkspace', ':idea')
     }
 }

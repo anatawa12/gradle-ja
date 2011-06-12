@@ -29,7 +29,6 @@ import spock.lang.Specification
 class IdeaPluginTest extends Specification {
     private final DefaultProject project = HelperUtil.createRootProject()
     private final Project childProject = HelperUtil.createChildProject(project, "child", new File("."))
-    private final IdeaPlugin ideaPlugin = new IdeaPlugin()
 
     def "adds 'ideaProject' task to root project"() {
         when:
@@ -40,7 +39,7 @@ class IdeaPluginTest extends Specification {
         GenerateIdeaProject ideaProjectTask = project.ideaProject
         ideaProjectTask instanceof GenerateIdeaProject
         ideaProjectTask.outputFile == new File(project.projectDir, project.name + ".ipr")
-        ideaProjectTask.subprojects == project.rootProject.allprojects
+        ideaProjectTask.ideaProject.modules == [project.convention.plugins.idea.module, childProject.convention.plugins.idea.module]
         ideaProjectTask.javaVersion == JavaVersion.VERSION_1_6.toString()
         ideaProjectTask.wildcards == ['!?*.java', '!?*.groovy'] as Set
 
@@ -54,7 +53,9 @@ class IdeaPluginTest extends Specification {
 
         then:
         project.ideaWorkspace instanceof GenerateIdeaWorkspace
-        assertThatCleanIdeaDependsOnDeleteTask(project, project.cleanIdeaWorkspace)
+        assert project.cleanIdeaWorkspace instanceof Delete
+        assert !project.cleanIdea.taskDependencies.getDependencies(project.cleanIdea).contains(project.cleanIdeaWorkspace)
+
 
         childProject.tasks.findByName('ideaWorkspace') == null
         childProject.tasks.findByName('cleanIdeaWorkspace') == null
@@ -147,7 +148,7 @@ class IdeaPluginTest extends Specification {
     }
 
     private applyPluginToProjects() {
-        ideaPlugin.apply(project)
-        ideaPlugin.apply(childProject)
+        project.apply plugin: 'idea'
+        childProject.apply plugin: 'idea'
     }
 }

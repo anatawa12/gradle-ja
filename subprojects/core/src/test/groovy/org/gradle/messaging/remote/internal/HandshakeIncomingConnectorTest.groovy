@@ -23,6 +23,7 @@ import org.gradle.api.Action
 import java.util.concurrent.Executor
 import org.gradle.messaging.remote.ConnectEvent
 import org.gradle.messaging.remote.Address
+import org.gradle.messaging.remote.internal.protocol.ConnectRequest
 
 class HandshakeIncomingConnectorTest extends Specification {
     private final Address localAddress = Mock()
@@ -35,11 +36,11 @@ class HandshakeIncomingConnectorTest extends Specification {
         Action<ConnectEvent<Connection<Message>>> action = Mock()
 
         when:
-        def address = connector.accept(action)
+        def address = connector.accept(action, false)
 
         then:
         address == new CompositeAddress(localAddress, 0L)
-        1 * target.accept(!null) >> localAddress
+        1 * target.accept(!null, false) >> localAddress
         0 * target._
     }
 
@@ -47,13 +48,13 @@ class HandshakeIncomingConnectorTest extends Specification {
         Action<ConnectEvent<Connection<Message>>> action = Mock()
 
         when:
-        def address1 = connector.accept(action)
-        def address2 = connector.accept(action)
+        def address1 = connector.accept(action, false)
+        def address2 = connector.accept(action, false)
 
         then:
         address1 == new CompositeAddress(localAddress, 0L)
         address2 == new CompositeAddress(localAddress, 1L)
-        1 * target.accept(!null) >> localAddress
+        1 * target.accept(!null, false) >> localAddress
         0 * target._
     }
     
@@ -62,9 +63,9 @@ class HandshakeIncomingConnectorTest extends Specification {
         Address remoteAddress = Mock()
         def wrappedAction
         def handshakeRunnable
-        1 * target.accept(!null) >> { wrappedAction = it[0]; localAddress }
+        1 * target.accept(!null, false) >> { wrappedAction = it[0]; localAddress }
 
-        def address = connector.accept(action)
+        def address = connector.accept(action, false)
 
         when:
         wrappedAction.execute(new ConnectEvent<Connection<Message>>(connection, localAddress, remoteAddress))

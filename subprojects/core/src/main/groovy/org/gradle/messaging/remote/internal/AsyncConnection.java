@@ -15,7 +15,6 @@
  */
 package org.gradle.messaging.remote.internal;
 
-import org.gradle.messaging.concurrent.AsyncStoppable;
 import org.gradle.messaging.dispatch.Dispatch;
 
 /**
@@ -23,11 +22,18 @@ import org.gradle.messaging.dispatch.Dispatch;
  *
  * <p>Implementations must be thread-safe.
  */
-public interface AsyncConnection<T> extends Dispatch<T>, AsyncStoppable {
+public interface AsyncConnection<T> extends Dispatch<T> {
     /**
-     * Adds a handler to receive incoming messages. The handler does not need to be thread-safe.
+     * Dispatches a message to this connection. The implementation should not block.
+     *
+     * @param message The message.
+     */
+    void dispatch(T message);
+
+    /**
+     * Adds a handler to receive incoming messages. The handler does not need to be thread-safe. The handler should not block.
      *
      * @param handler The handler.
      */
-    void receiveOn(Dispatch<? super T> handler);
+    void dispatchTo(Dispatch<? super T> handler);
 }

@@ -17,7 +17,7 @@
 package org.gradle.plugins.ide.idea.model
 
 import org.gradle.api.internal.XmlTransformer
-import org.gradle.plugins.ide.internal.XmlFileContentMerger
+import org.gradle.plugins.ide.api.XmlFileContentMerger
 
 /**
  * Models the generation/parsing/merging capabilities of idea module
@@ -32,7 +32,8 @@ class IdeaModuleIml extends XmlFileContentMerger {
         super(xmlTransformer)
         this.generateTo = generateTo
     }
-/**
+
+    /**
      * Folder where the *.iml file will be generated to
      * <p>
      * For example see docs for {@link IdeaModule}

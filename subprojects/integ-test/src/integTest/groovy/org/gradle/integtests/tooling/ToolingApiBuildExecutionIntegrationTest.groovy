@@ -196,5 +196,4 @@ dependencies {
         then:
         !project.tasks.empty
     }
-
 }

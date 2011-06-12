@@ -19,7 +19,6 @@ package org.gradle.api.tasks;
 import org.gradle.api.file.FileCollection;
 
 import java.io.File;
-import java.util.Collection;
 import java.util.Map;
 
 /**
@@ -69,6 +68,8 @@ import java.util.Map;
  *     generated.text = "message=Stay happy!"
  *   }
  * }
+ *
+ * //java plugin task 'classes' and 'testClasses' will automatically depend on relevant tasks registered by 'buildBy'
  *
  * //eclipse/idea plugins will automatically depend on 'generateMyResources'
  * //because the output dir was registered with 'buildBy' information
@@ -135,21 +136,12 @@ public interface SourceSetOutput extends FileCollection {
     void dir(Object dir);
 
     /**
-     * Returns a *new instance* of collection with all the dirs registered with with #dir method.
+     * Returns all dirs registered with with #dir method.
      * Each file is resolved as {@link org.gradle.api.Project#file(Object)}
      * <p>
      * See example at {@link SourceSetOutput}
      *
      * @return a new instance of registered dirs with resolved files
      */
-    Collection<File> getDirs();
-
-    /**
-     * Returns a collection with all the 'buildBy' elements that were registered using #dir method.
-     * <p>
-     * See example at {@link SourceSetOutput}
-     *
-     * @return a new instance of registered dirs with resolved files
-     */
-    Collection getDirBuilders();
+    FileCollection getDirs();
 }

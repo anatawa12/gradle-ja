@@ -1,5 +1,5 @@
 /*
- * Copyright 2010 the original author or authors.
+ * Copyright 2011 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,10 +17,10 @@
 package org.gradle.plugins.ide.eclipse.model
 
 import org.gradle.api.artifacts.Configuration
+import org.gradle.api.dsl.ConventionProperty
+import org.gradle.plugins.ide.api.XmlFileContentMerger
 import org.gradle.plugins.ide.eclipse.model.internal.WtpComponentFactory
 import org.gradle.util.ConfigureUtil
-import org.gradle.api.dsl.ConventionProperty
-import org.gradle.plugins.ide.internal.XmlFileContentMerger
 
 /**
  * Enables fine-tuning wtp component details of the Eclipse plugin
@@ -123,11 +123,28 @@ class EclipseWtpComponent {
     Set<File> sourceDirs
 
     /**
-     * The configurations whose files are to be transformed into dependent-module elements.
+     * The configurations whose files are to be transformed into dependent-module elements with a deploy path of '/'.
      * <p>
      * For examples see docs for {@link EclipseWtp}
      */
-    Set<Configuration> plusConfigurations
+    Set<Configuration> rootConfigurations = []
+
+    /**
+     * The configurations whose files are to be transformed into dependent-module elements with a deploy path of #libDeployPath.
+     * <p>
+     * For examples see docs for {@link EclipseWtp}
+     */
+    Set<Configuration> libConfigurations
+
+    /**
+     * Synonym for {@link #libConfigurations}.
+     */
+    Set<Configuration> getPlusConfigurations() {
+        getLibConfigurations()
+    }
+    void setPlusConfigurations(Set<Configuration> plusConfigurations) {
+        setLibConfigurations(plusConfigurations)
+    }
 
     /**
      * The configurations whose files are to be excluded from dependent-module elements.
@@ -158,7 +175,6 @@ class EclipseWtpComponent {
      * @param args A map that must contain a deployPath and sourcePath key with corresponding values.
      */
     void resource(Map<String, String> args) {
-        //TODO SF validation
         resources.add(new WbResource(args.deployPath, args.sourcePath))
     }
 
@@ -177,7 +193,6 @@ class EclipseWtpComponent {
      * @param args A map that must contain a 'name' and 'value' key with corresponding values.
      */
     void property(Map<String, String> args) {
-        //TODO SF validation
         properties.add(new WbProperty(args.name, args.value))
     }
 
@@ -189,21 +204,38 @@ class EclipseWtpComponent {
     String contextPath
 
     /**
+     * The deploy path for classes.
+     * <p>
+     * For examples see docs for {@link EclipseWtp}
+     */
+    String classesDeployPath = "/WEB-INF/classes"
+
+    /**
+     * The deploy path for libraries.
+     * <p>
+     * For examples see docs for {@link EclipseWtp}
+     */
+    String libDeployPath = "/WEB-INF/lib"
+
+    /**
      * Enables advanced configuration like tinkering with the output xml
      * or affecting the way existing wtp component file content is merged with gradle build information
      * <p>
      * The object passed to whenMerged{} and beforeMerged{} closures is of type {@link WtpComponent}
      * <p>
-     *
-     * For example see docs for {@link EclipseWtp}
+     * For example see docs for {@link EclipseWtpComponent}
      */
     void file(Closure closure) {
         ConfigureUtil.configure(closure, file)
     }
 
+    /**
+     * See {@link #file(Closure) }
+     */
+    XmlFileContentMerger file
+
     //********
 
-    XmlFileContentMerger file
     org.gradle.api.Project project
 
     /**

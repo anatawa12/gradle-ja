@@ -1,5 +1,5 @@
 /*
- * Copyright 2010 the original author or authors.
+ * Copyright 2011 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,9 +20,9 @@ import org.gradle.api.JavaVersion
 import org.gradle.api.Project
 import org.gradle.api.internal.ClassGenerator
 import org.gradle.api.plugins.JavaPlugin
+import org.gradle.plugins.ide.api.XmlFileContentMerger
 import org.gradle.plugins.ide.idea.internal.IdeaNameDeduper
 import org.gradle.plugins.ide.internal.IdePlugin
-import org.gradle.plugins.ide.internal.XmlFileContentMerger
 import org.gradle.plugins.ide.idea.model.*
 
 /**
@@ -65,9 +65,11 @@ class IdeaPlugin extends IdePlugin {
     private configureIdeaWorkspace(Project project) {
         if (isRoot(project)) {
             def task = project.task('ideaWorkspace', description: 'Generates an IDEA workspace file (IWS)', type: GenerateIdeaWorkspace) {
+                workspace = new IdeaWorkspace(iws: new XmlFileContentMerger(xmlTransformer))
+                model.workspace = workspace
                 outputFile = new File(project.projectDir, project.name + ".iws")
             }
-            addWorker(task)
+            addWorker(task, false)
         }
     }
 
@@ -106,9 +108,12 @@ class IdeaPlugin extends IdePlugin {
                 model.project = ideaProject
 
                 ideaProject.outputFile = new File(project.projectDir, project.name + ".ipr")
-                ideaProject.javaVersion = JavaVersion.VERSION_1_6.toString()
+                ideaProject.javaVersion = JavaVersion.VERSION_1_6
                 ideaProject.wildcards = ['!?*.java', '!?*.groovy'] as Set
-                ideaProject.subprojects = project.rootProject.allprojects
+                ideaProject.conventionMapping.modules = {
+                    project.rootProject.allprojects.findAll { it.plugins.hasPlugin(IdeaPlugin) }.collect { it.convention.plugins.idea.module }
+                }
+
                 ideaProject.conventionMapping.pathFactory = {
                     new PathFactory().addPathVariable('PROJECT_DIR', outputFile.parentFile)
                 }
@@ -126,7 +131,7 @@ class IdeaPlugin extends IdePlugin {
 
     private configureIdeaProjectForJava(Project project) {
         if (isRoot(project)) {
-            project.ideaProject {
+            project.convention.plugins.idea.project {
                 javaVersion = project.sourceCompatibility
             }
         }
@@ -148,7 +153,7 @@ class IdeaPlugin extends IdePlugin {
                     TEST: project.sourceSets.test.output.dirs
             ] }
             dependsOn {
-                project.sourceSets.main.output.dirBuilders + project.sourceSets.test.output.dirBuilders
+                project.sourceSets.main.output.dirs + project.sourceSets.test.output.dirs
             }
         }
     }

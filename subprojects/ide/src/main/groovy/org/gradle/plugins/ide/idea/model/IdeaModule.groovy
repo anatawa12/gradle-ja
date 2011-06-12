@@ -16,10 +16,11 @@
 
 package org.gradle.plugins.ide.idea.model
 
+import org.gradle.api.JavaVersion
 import org.gradle.api.artifacts.Configuration
+import org.gradle.api.dsl.ConventionProperty
 import org.gradle.plugins.ide.idea.model.internal.IdeaDependenciesProvider
 import org.gradle.util.ConfigureUtil
-import org.gradle.api.dsl.ConventionProperty
 
 /**
  * Enables fine-tuning module details (*.iml file) of the Idea plugin
@@ -42,6 +43,10 @@ import org.gradle.api.dsl.ConventionProperty
  * }
  *
  * idea {
+ *
+ *   //if you want parts of paths in resulting files (*.iml, etc.) to be replaced by variables (Files)
+ *   pathVariables GRADLE_HOME: file('~/cool-software/gradle')
+ *
  *   module {
  *     //if for some reason you want to add an extra sourceDirs
  *     sourceDirs += file('some-extra-source-folder')
@@ -74,9 +79,6 @@ import org.gradle.api.dsl.ConventionProperty
  *
  *     //and hate reading sources :)
  *     downloadSources = false
- *
- *     //if you want parts of paths in resulting *.iml to be replaced by variables (Files)
- *     pathVariables = [GRADLE_HOME: file('~/cool-software/gradle')]
  *   }
  * }
  * </pre>
@@ -224,7 +226,7 @@ class IdeaModule {
 
     /**
      * If true, output directories for this module will be located below the output directory for the project;
-     * otherwise, they will be set to the directories specified by {@link #outputDir} and {@link #testOutputDir}.
+     * otherwise, they will be set to the directories specified by #outputDir and #testOutputDir.
      * <p>
      * For example see docs for {@link IdeaModule}
      */
@@ -259,7 +261,11 @@ class IdeaModule {
      * <p>
      * For example see docs for {@link IdeaModule}
      */
-    String javaVersion = Module.INHERITED
+    JavaVersion javaVersion
+
+    void setJavaVersion(Object javaVersion) {
+        this.javaVersion = JavaVersion.toVersion(javaVersion)
+    }
 
     /**
      * Enables advanced configuration like tinkering with the output xml
@@ -271,14 +277,13 @@ class IdeaModule {
         ConfigureUtil.configure(closure, getIml())
     }
 
-    //TODO SF: most likely what's above should be a part of an interface and what's below should not be exposed.
-    //For now, below methods are protected - same applies to new model
-
-    org.gradle.api.Project project
-    PathFactory pathFactory
-    IdeaModuleIml iml
-    Map<String, Collection<File>> singleEntryLibraries
-
+    /**
+     * Configures output *.iml file. It's <b>optional</b> because the task should configure it correctly for you
+     * (including making sure it is unique in the multi-module build).
+     * If you really need to change the output file name (or the module name) it is much easier to do it via the <b>moduleName</b> property!
+     * <p>
+     * Please refer to documentation on <b>moduleName</b> property. In IntelliJ IDEA the module name is the same as the name of the *.iml file.
+     */
     File getOutputFile() {
         new File((File) iml.getGenerateTo(), getName() + ".iml")
     }
@@ -287,6 +292,16 @@ class IdeaModule {
         name = newOutputFile.name.replaceFirst(/\.iml$/,"");
         iml.generateTo = newOutputFile.parentFile
     }
+
+    /**
+     * See {@link #iml(Closure) }
+     */
+    IdeaModuleIml iml
+
+    org.gradle.api.Project project
+    PathFactory pathFactory
+
+    Map<String, Collection<File>> singleEntryLibraries
 
     Set<Path> getSourcePaths() {
         getSourceDirs().findAll { it.exists() }.collect { path(it) }

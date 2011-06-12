@@ -18,17 +18,20 @@ package org.gradle.messaging.remote.internal;
 import org.gradle.messaging.concurrent.CompositeStoppable;
 import org.gradle.messaging.concurrent.ExecutorFactory;
 import org.gradle.messaging.concurrent.Stoppable;
-import org.gradle.messaging.dispatch.*;
+import org.gradle.messaging.concurrent.StoppableExecutor;
+import org.gradle.messaging.dispatch.DiscardingFailureHandler;
+import org.gradle.messaging.dispatch.Dispatch;
+import org.gradle.messaging.dispatch.DispatchFailureHandler;
+import org.gradle.messaging.dispatch.ProxyDispatchAdapter;
 import org.gradle.messaging.remote.Address;
 import org.gradle.messaging.remote.internal.protocol.ChannelAvailable;
 import org.gradle.messaging.remote.internal.protocol.DiscoveryMessage;
 import org.gradle.messaging.remote.internal.protocol.LookupRequest;
+import org.gradle.util.IdGenerator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
@@ -36,50 +39,51 @@ import java.util.concurrent.locks.ReentrantLock;
 public class DefaultOutgoingBroadcast implements OutgoingBroadcast, Stoppable {
     private static final Logger LOGGER = LoggerFactory.getLogger(DefaultOutgoingBroadcast.class);
     private final String group;
-    private final OutgoingConnector<Object> outgoingConnector;
-    private final ExecutorFactory executor;
-    private final ProtocolStack<DiscoveryMessage> protocolStack;
+    private final OutgoingConnector<Message> outgoingConnector;
+    private final ProtocolStack<DiscoveryMessage> discoveryBroadcast;
     private final Lock lock = new ReentrantLock();
-    private final Set<String> pending = new HashSet<String>();
-    private final Map<String, AsyncDispatch<MethodInvocation>> channels = new HashMap<String, AsyncDispatch<MethodInvocation>>();
-    private final Map<Address, Connection<Object>> connections = new HashMap<Address, Connection<Object>>();
+    private final StoppableExecutor executor;
+    private final Set<String> channels = new HashSet<String>();
+    private final Set<Address> connections = new HashSet<Address>();
+    private final MessageHub hub;
 
-    public DefaultOutgoingBroadcast(String group, Connection<DiscoveryMessage> channel, OutgoingConnector<Object> outgoingConnector, ExecutorFactory executor) {
+    public DefaultOutgoingBroadcast(String group, String nodeName, AsyncConnection<DiscoveryMessage> connection, OutgoingConnector<Message> outgoingConnector, ExecutorFactory executorFactory, final IdGenerator<?> idGenerator, ClassLoader messagingClassLoader) {
         this.group = group;
         this.outgoingConnector = outgoingConnector;
-        this.executor = executor;
-        DiscardingFailureHandler<DiscoveryMessage> failureHandler = new DiscardingFailureHandler<DiscoveryMessage>(LOGGER);
-        protocolStack = new ProtocolStack<DiscoveryMessage>(channel, channel, executor.create("discovery protocol"), failureHandler, failureHandler, failureHandler, new ChannelLookupProtocol());
-        protocolStack.receiveOn(new DiscoveryMessageDispatch());
+        DispatchFailureHandler<Object> failureHandler = new DiscardingFailureHandler<Object>(LOGGER);
+
+        hub = new MessageHub("outgoing broadcast", nodeName, executorFactory, idGenerator, messagingClassLoader);
+
+        executor = executorFactory.create("broadcast lookup");
+        discoveryBroadcast = new ProtocolStack<DiscoveryMessage>(executor, failureHandler, failureHandler, new ChannelLookupProtocol());
+        connection.dispatchTo(new GroupMessageFilter(group, discoveryBroadcast.getBottom()));
+        discoveryBroadcast.getBottom().dispatchTo(connection);
+        discoveryBroadcast.getTop().dispatchTo(new DiscoveryMessageDispatch());
     }
 
     public <T> T addOutgoing(Class<T> type) {
         String channelKey = type.getName();
         lock.lock();
         try {
-            AsyncDispatch<MethodInvocation> channel = channels.get(channelKey);
-            if (channel == null) {
-                channel = new AsyncDispatch<MethodInvocation>(executor.create(String.format("outgoing %s", type.getSimpleName())));
-                channels.put(channelKey, channel);
-                if (pending.add(channelKey)) {
-                    protocolStack.dispatch(new LookupRequest(group, channelKey));
-                }
+            if (channels.add(channelKey)) {
+                discoveryBroadcast.getTop().dispatch(new LookupRequest(group, channelKey));
             }
-            return new ProxyDispatchAdapter<T>(type, channel).getSource();
         } finally {
             lock.unlock();
         }
+        return new ProxyDispatchAdapter<T>(type, hub.addMulticastOutgoing(channelKey)).getSource();
     }
 
     public void stop() {
+        CompositeStoppable stoppable = new CompositeStoppable();
         lock.lock();
         try {
-            new CompositeStoppable().add(protocolStack).add(channels.values()).add(connections.values()).stop();
+            stoppable.add(hub).add(discoveryBroadcast).add(executor);
         } finally {
-            channels.clear();
             connections.clear();
             lock.unlock();
         }
+        stoppable.stop();
     }
 
     private class DiscoveryMessageDispatch implements Dispatch<DiscoveryMessage> {
@@ -87,33 +91,21 @@ public class DefaultOutgoingBroadcast implements OutgoingBroadcast, Stoppable {
             if (message instanceof ChannelAvailable) {
                 ChannelAvailable available = (ChannelAvailable) message;
                 Address serviceAddress = available.getAddress();
-                AsyncDispatch<MethodInvocation> channel = null;
-                Connection<Object> connection = null;
                 lock.lock();
                 try {
-                    if (pending.remove(available.getChannel())) {
-                        channel = channels.get(available.getChannel());
+                    if (!channels.contains(available.getChannel())) {
+                        return;
                     }
-                    connection = connections.get(serviceAddress);
-                } finally {
-                    lock.unlock();
-                }
-                if (channel == null) {
-                    return;
-                }
-
-                if (connection == null) {
-                    connection = outgoingConnector.connect(serviceAddress);
-                }
-
-                lock.lock();
-                try {
-                    connections.put(serviceAddress, connection);
+                    if (connections.contains(serviceAddress)) {
+                        return;
+                    }
+                    connections.add(serviceAddress);
                 } finally {
                     lock.unlock();
                 }
 
-                channel.dispatchTo(new MethodInvocationMarshallingDispatch(new OutgoingMultiplex(available.getChannel(), connection)));
+                Connection<Message> syncConnection = outgoingConnector.connect(serviceAddress);
+                hub.addConnection(syncConnection);
             }
         }
     }
