@@ -22,7 +22,7 @@
         properties and methods. This is really different to what you are used to with Ant targets. Such enhanced tasks are
         either provided by you or are provided by Gradle.
     </para>
-    <para>「<xref linkend='tutorial_using_tasks'/>」の入門的なチュートリアルで、簡単なタスクの作り方、後からタスクにアクションを追加する方法、タスク間の依存関係を定義する方法などについて学びました。これらは全て、単純なタスクについての話です。しかし、Gradleはタスクという概念をもっと進化させています。拡張タスク、つまり自身のプロパティやメソッドを持ったタスクを使うことができるのです。これは、今まで使われてきたAntのtargetとは全く異なる概念です。拡張タスクは、Gradleがデフォルトで用意しているものもありますし、自分自身で新たに作成することもできます。</para>
+    <para>「<xref linkend='tutorial_using_tasks'/>」の入門的なチュートリアルでは、簡単なタスクの作り方や、後からタスクにアクションを追加する方法について学びました。さらに、タスク間の依存関係を定義する方法についても学びました。単純なタスクについてはこんなところですが、Gradleはタスクという概念をもっと進化させています。<firstterm>拡張タスク</firstterm>、つまり自身のプロパティやメソッドを持ったタスクを使うことができるのです。これは、今まで使われてきたAntのtargetとは全く異なる概念です。拡張タスクは、Gradleがデフォルトで用意しているものもありますし、自分自身で新たに作成することもできます。</para>
     <section>
         <title>タスクの定義<phrase role="original">Defining tasks</phrase></title>
         <para role="original">We have already seen how to define tasks using a keyword style in <xref linkend="tutorial_using_tasks"/>.
@@ -75,53 +75,63 @@
         <para>そのほかの方法については、<apilink class="org.gradle.api.tasks.TaskContainer"/>をご参照ください。</para>
     </section>
     <section id='sec:configuring_tasks'>
-        <title>Configuring tasks</title>
-        <para>As an example, let's look at the <classname>Copy</classname> task provided by Gradle. To create a
+        <title>タスクを設定する<phrase role="original">Configuring tasks</phrase></title>
+        <para role="original">As an example, let's look at the <classname>Copy</classname> task provided by Gradle. To create a
             <classname>Copy</classname> task for your build, you can declare in your build script:
         </para>
-        <sample id="declareTask" dir="userguide/tasks/configureUsingClosure" title="Creating a copy task">
+        <para>例として、Gradleに用意されている<classname>Copy</classname>タスクを見てみましょう。<classname>Copy</classname>タスクを自分のビルドで作成するには、ビルドスクリプトで次のように宣言します。</para>
+        <sample id="declareTask" dir="userguide/tasks/configureUsingClosure" title="copyタスクの作成 / Creating a copy task">
             <sourcefile file="build.gradle" snippet="declare-task"/>
         </sample>
-        <para>This creates a copy task with no default behavior.
+        <para role="original">This creates a copy task with no default behavior.
             The task can be configured using its API (see <apilink class="org.gradle.api.tasks.Copy"/>).
 			The following examples show several different ways to achieve the same configuration.
         </para>
-        <sample id="configureUsingVar" dir="userguide/tasks/configureUsingVar" title="Configuring a task - various ways">
+        <para>作成されたコピータスクには、デフォルトでは何の動作も設定されていません。タスクは、タスクのAPI(<apilink class="org.gradle.api.tasks.Copy"/>参照)を使って設定することができます。次のいくつかの例は、どれも同じ設定を行うものです。</para>
+        <sample id="configureUsingVar" dir="userguide/tasks/configureUsingVar" title="タスクの設定 - 様々な方法 / Configuring a task - various ways">
             <sourcefile file="build.gradle"/>
         </sample>
-        <para>This is similar to the way we would normally configure objects in Java. You have to repeat the context
+        <para role="original">This is similar to the way we would normally configure objects in Java. You have to repeat the context
             (<literal>myCopy</literal>) in the configuration statement every time. This is a redundancy and not very
             nice to read.
         </para>
-        <para>There is a more convenient way of doing this.
+        <para>これは、普段私たちがJavaオブジェクトを設定するのと同じ方法で設定する方法です。この方法では、設定処理を呼び出すたびに同じコンテキスト(<literal>myCopy</literal>)を何度も書く必要があります。これは冗長だし、あまり可読性もよくありません。</para>
+        <para role="original">There is a more convenient way of doing this.
         </para>
-        <sample id="configureUsingLiterateStyle" dir="userguide/tasks/configureUsingLiterateStyle" title="Configuring a task - fluent interface">
+        <para>もっと便利な方法があります。</para>
+        <sample id="configureUsingLiterateStyle" dir="userguide/tasks/configureUsingLiterateStyle" title="タスクの設定 - 流れるインターフェース / Configuring a task - fluent interface">
             <sourcefile file="build.gradle"/>
         </sample>
-        <para>You might know this approach from the Hibernates Criteria Query API or JMock. Of course the API of a task
+        <para role="original">You might know this approach from the Hibernates Criteria Query API or JMock. Of course the API of a task
             has to support this. The <literal>from</literal>, <literal>to</literal> and <literal>include</literal>
             methods all return an object that may be used to chain to additional configuration methods. Gradle's build-in tasks usually
             support this configuration style.
         </para>
-        <para>But there is yet another way of configuring a task. It also preserves the context and it is arguably the
+        <para>Hibernateのクライテリアクエリや、JMockでこの種のインターフェースに触れたことがあるかもしれません。タスクのAPIでも、当然このインターフェースをサポートする必要があるでしょう。<literal>from</literal>, <literal>to</literal> and <literal>include</literal>の各設定メソッドはすべて、設定メソッドを呼び出せるオブジェクトを返します。そのため、設定メソッドを追加してつなげていくことができるのです。Gradleの組み込みタスクは、大抵このスタイルの設定方法をサポートしています。</para>
+        <para role="original">But there is yet another way of configuring a task. It also preserves the context and it is arguably the
             most readable. It is usually our favorite.
         </para>
-        <sample id="configureUsingClosure" dir="userguide/tasks/configureUsingClosure" title="Configuring a task - with closure">
+        <para>しかし、まだ別の設定方法があります。この方法もやはりコンテキストを保持するもので、おそらく最も可読性の高い方法でしょう。私たちは、通常はこの方法を好んで使っています。</para>
+        <sample id="configureUsingClosure" dir="userguide/tasks/configureUsingClosure" title="タスクの設定 - クロージャの使用 / Configuring a task - with closure">
             <sourcefile file="build.gradle"/>
         </sample>
-        <para>This works for <emphasis>any</emphasis> task. Line 3 of the example is just a shortcut for the
+        <para role="original">This works for <emphasis>any</emphasis> task. Line 3 of the example is just a shortcut for the
             <literal>tasks.getByName()</literal> method. It is important to note that if you pass a closure to the
             <literal>getByName()</literal> method, this closure is applied to <emphasis>configure</emphasis> the task.
         </para>
-        <para>There is a slightly different ways of doing this.</para>
-        <sample id="configureUsingConfigure" dir="userguide/tasks/configureUsingConfigure" title="Configuring a task - with configure() method">
+        <para>この方法は、<emphasis>あらゆる</emphasis>タスクで使用できます。3行目のコードは、<literal>tasks.getByName()</literal>の単なるショートカットに過ぎません。大事なことは、<literal>getByName()</literal>メソッドにクロージャを渡すと、そのクロージャがタスクを設定するために使われるという点です。</para>
+        <para role="original">There is a slightly different ways of doing this.</para>
+        <para>少しだけ違う書き方もあります。</para>
+        <sample id="configureUsingConfigure" dir="userguide/tasks/configureUsingConfigure" title="タスクの設定 - configure()メソッド / Configuring a task - with configure() method">
             <sourcefile file="build.gradle"/>
         </sample>
-        <para>Every task has a <literal>configure()</literal> method, which you can pass a closure for configuring the task.
+        <para role="original">Every task has a <literal>configure()</literal> method, which you can pass a closure for configuring the task.
             Gradle uses this style for configuring objects in many places, not just for tasks.
         </para>
-        <para>You can also use a configuration closure when you define a task.</para>
-        <sample id="defineAndConfigure" dir="userguide/tasks/defineAndConfigure" title="Defining a task with closure">
+        <para>すべてのタスクは<literal>configure()</literal>メソッドを持っており、このメソッドにタスクを設定するためのクロージャを渡すことができます。Gradleでは、このスタイルでオブジェクトを設定することが、タスクに限らずよくあります。</para>
+        <para role="original">You can also use a configuration closure when you define a task.</para>
+        <para>また、タスクを定義するときに、同時に設定クロージャを使うこともできます。</para>
+        <sample id="defineAndConfigure" dir="userguide/tasks/defineAndConfigure" title="クロージャを伴うタスク定義 / Defining a task with closure">
             <sourcefile file="build.gradle" snippet="no-description"/>
         </sample>
     </section>
