@@ -16,25 +16,20 @@
 
 package org.gradle.api.publication.maven.internal
 
+import org.gradle.api.publication.maven.internal.model.DefaultMavenArtifact
+import org.gradle.api.publication.maven.internal.model.DefaultMavenAuthentication
+import org.gradle.api.publication.maven.internal.model.DefaultMavenPublication
+import org.gradle.api.publication.maven.internal.model.DefaultMavenRepository
 import org.gradle.util.Resources
 import org.gradle.util.TemporaryFolder
 import org.gradle.util.TestFile
 import org.junit.Rule
 import org.sonatype.aether.repository.LocalRepository
 import spock.lang.Specification
-import spock.lang.Ignore
 
 /**
  * @author: Szczepan Faber, created at: 5/12/11
  */
-@Ignore
-//TODO SF
-//This is ignored because I'm having trouble running it from the gradle build (java.lang.VerifyError)
-//so far I figured that the offending dependency is maven-ant-tasks pulled as a transitive dependency of :core
-//However, excluding maven-ant-tasks is:
-// - impossible (e.g. I wasn't able to do it in a non-hacky way :)
-// - troublesome because when I exclude it then I face the ClassNotFound errors.
-//One of the duplicate classes in multiple jars: org.apache.maven.model.Model in maven-ant-tasks.jar and in maven-model.jar
 class DefaultMavenPublisherTest extends Specification {
 
     @Rule def dir = new TemporaryFolder()
@@ -86,6 +81,27 @@ class DefaultMavenPublisherTest extends Specification {
         def deployed = new File("$dir.testDir/remote-repository/gradleware/test/fooArtifact/1.1/fooArtifact-1.1.jar")
         deployed.exists()
         deployed.bytes == sampleJar().bytes
+    }
+
+    def "deploys snapshot along with maven stuff"() {
+        def fakeRemoteRepo = new DefaultMavenRepository(url: new File("$dir.testDir/remote-repository").toURI())
+
+        def publication = new DefaultMavenPublication(groupId: "gradleware.test", artifactId: "fooArtifact", version: "1.1-SNAPSHOT")
+        def artifact = new DefaultMavenArtifact(classifier: "", extension: "jar", file: sampleJar())
+        publication.mainArtifact = artifact
+
+        when:
+        publisher.deploy(publication, fakeRemoteRepo)
+
+        then:
+        def deployedDir = new File("$dir.testDir/remote-repository/gradleware/test/fooArtifact/1.1-SNAPSHOT")
+        def files = deployedDir.list() as List
+        ['maven-metadata.xml', 'maven-metadata.xml.md5', 'maven-metadata.xml.sha1'].each {
+            assert files.contains(it)
+        }
+        assert files.any { it =~ /fooArtifact-1.1-.*\.jar/ }
+        assert files.any { it =~ /fooArtifact-1.1-.*\.jar.sha1/ }
+        assert files.any { it =~ /fooArtifact-1.1-.*\.jar.md5/ }
     }
 
     def "deploys artifact with classifier"() {

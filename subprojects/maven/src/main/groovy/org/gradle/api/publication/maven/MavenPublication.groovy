@@ -16,6 +16,7 @@
 package org.gradle.api.publication.maven
 
 interface MavenPublication {
+    MavenRepository getRepository()
     String getModelVersion()
     String getGroupId()
     String getArtifactId()
@@ -23,7 +24,7 @@ interface MavenPublication {
     String getPackaging()
     String getDescription()
     MavenArtifact getMainArtifact()
-    Set<MavenArtifact> getSubArtifacts()
-    Set<MavenDependency> getDependencies()
+    List<MavenArtifact> getSubArtifacts()
+    List<MavenDependency> getDependencies()
     MavenPomCustomizer getPom()
 }

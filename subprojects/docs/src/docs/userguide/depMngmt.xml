@@ -344,8 +344,17 @@
                 <apilink class="org.gradle.api.artifacts.dsl.DependencyHandler" method="gradleApi"/> method. This is
                 useful when you are developing custom Gradle tasks or plugins.</para>
             <para><apilink class="org.gradle.api.artifacts.dsl.DependencyHandler" method="gradleApi"/>メソッドを使って、使用しているバージョンのGradleAPIに依存していることを宣言できます。これは、カスタムのGradleタスクやプラグインを開発するときに便利です。</para>
-            <sample id="gradle-api-dependencies" dir="java/multiproject/buildSrc" title="Gradle API依存 / Gradle API dependencies">
+            <sample id="gradle-api-dependencies" dir="customPlugin" title="Gradle API dependencies">
                 <sourcefile file="build.gradle" snippet="gradle-api-dependencies"/>
+            </sample>
+        </section>
+        <section>
+            <title>Gradle's Groovy Dependency</title>
+            <para>You can declare a dependency on the Groovy that is distributed with Gradle by using the
+                <apilink class="org.gradle.api.artifacts.dsl.DependencyHandler" method="localGroovy"/> method. This is
+                useful when you are developing custom Gradle tasks or plugins in Groovy.</para>
+            <sample id="local-groovy-dependencies" dir="customPlugin" title="Gradle's Groovy dependencies">
+                <sourcefile file="build.gradle" snippet="local-groovy-dependencies"/>
             </sample>
         </section>
         <section id='sub:exclude_transitive_dependencies'>

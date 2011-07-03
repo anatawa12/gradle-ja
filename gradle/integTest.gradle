@@ -37,17 +37,19 @@ integTestTasks = tasks.withType(Test).matching { it.name.toLowerCase().endsWith(
 rootProject.integTests << integTestTasks
 
 integTestTasks.all {
-    dependsOn ':intTestImage'
+    dependsOn ':intTestImage', project(":docs").samples
     testClassesDir = sourceSets.integTest.output.classesDir
     classpath = sourceSets.integTest.runtimeClasspath
     testSrcDirs = []
     jvmArgs '-XX:+HeapDumpOnOutOfMemoryError'
 
+    testResultsDir = file("${project.testResultsDir}/$name")
+    testReportDir = file("${project.testReportDir}/$name")
+    
     doFirst {
-        testResultsDir = file("${project.testResultsDir}/$name")
-        testReportDir = file("${project.testReportDir}/$name")
         systemProperties['integTest.gradleHomeDir'] = integTestImageDir.absolutePath
         systemProperties['integTest.gradleUserHomeDir'] = integTestUserDir.absolutePath
+        systemProperties['integTest.samplesdir'] = project(":docs").samplesDir.absolutePath
     }
 }
 
@@ -67,6 +69,9 @@ task integTest(type: Test) {
         systemProperties['org.gradle.integtest.executer'] = integTestMode
     }
 }
+
+
+tasks.findByName("check")?.dependsOn(integTest)
 
 class IntegTestPlugin implements Plugin<Project> {
     public void apply(Project project) {

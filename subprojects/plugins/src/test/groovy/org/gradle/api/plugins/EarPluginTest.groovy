@@ -28,6 +28,7 @@ import org.junit.Test
 import static org.gradle.util.Matchers.dependsOn
 import static org.hamcrest.Matchers.*
 import static org.junit.Assert.*
+import static org.gradle.util.TextUtil.toPlatformLineSeparators
 
 /**
  * @author David Gileadi
@@ -35,23 +36,20 @@ import static org.junit.Assert.*
 class EarPluginTest {
     private Project project
     private EarPlugin earPlugin
-    private static final String TEST_APP_XML
-
-    static {
-        TEST_APP_XML = '<?xml version="1.0" encoding="UTF-8"?>\n' +
-            '<application xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://java.sun.com/xml/ns/javaee" xmlns:application="http://java.sun.com/xml/ns/javaee/application_5.xsd" xsi:schemaLocation="http://java.sun.com/xml/ns/javaee http://java.sun.com/xml/ns/javaee/application_5.xsd" version="5">\n' +
-            '  <display-name>Application</display-name>\n' +
-            '  <module>\n' +
-            '    <web>\n' +
-            '      <web-uri>Web.war</web-uri>\n' +
-            '      <context-root>/</context-root>\n' +
-            '    </web>\n' +
-            '  </module>\n' +
-            '  <module>\n' +
-            '    <ejb>jrules-bres-session-wl100-6.7.3.jar</ejb>\n' +
-            '  </module>\n' +
-            '</application>'
-    }
+    private static final String TEST_APP_XML = toPlatformLineSeparators('<?xml version="1.0" encoding="UTF-8"?>\n' +
+        '<application xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://java.sun.com/xml/ns/javaee" xmlns:application="http://java.sun.com/xml/ns/javaee/application_5.xsd" xsi:schemaLocation="http://java.sun.com/xml/ns/javaee http://java.sun.com/xml/ns/javaee/application_5.xsd" version="5">\n' +
+        '  <display-name>Application</display-name>\n' +
+        '  <module>\n' +
+        '    <web>\n' +
+        '      <web-uri>Web.war</web-uri>\n' +
+        '      <context-root>/</context-root>\n' +
+        '    </web>\n' +
+        '  </module>\n' +
+        '  <module>\n' +
+        '    <ejb>jrules-bres-session-wl100-6.7.3.jar</ejb>\n' +
+        '  </module>\n' +
+        '</application>')
+    
 
     @Before
     public void setUp() {
@@ -156,10 +154,8 @@ class EarPluginTest {
 
         execute project.tasks[EarPlugin.EAR_TASK_NAME]
 
-        def ear = project.zipTree("build/libs/${project.name}.ear")
-        assertFalse ear.isEmpty()
-        assertNotNull ear.files.find { it.name == "test2.txt" }
-        assertNotNull ear.files.find { it.name == "test.txt" }
+        inEar "test2.txt"
+        inEar "META-INF/test.txt"
     }
 
     @Test public void supportsRenamedAppDir() {
@@ -170,10 +166,7 @@ class EarPluginTest {
         project.convention.plugins.ear.appDirName = "src/main/myapp"
 
         execute project.tasks[EarPlugin.EAR_TASK_NAME]
-
-        def ear = project.zipTree("build/libs/${project.name}.ear")
-        assertFalse ear.isEmpty()
-        assertNotNull ear.files.find { it.name == "test.txt" }
+        inEar "test.txt"
     }
 
     @Test public void supportsRenamingLibDir() {
@@ -192,19 +185,15 @@ class EarPluginTest {
         }
 
         execute project.tasks[EarPlugin.EAR_TASK_NAME]
-
-        def ear = project.zipTree("build/libs/${project.name}.ear")
-        assertFalse ear.isEmpty()
-        assertNotNull ear.files.find { it.path.endsWith("APP-INF/lib/child.jar") }
+        
+        inEar "APP-INF/lib/child.jar"
     }
 
     @Test public void supportsGeneratingDeploymentDescriptor() {
         earPlugin.apply(project)
         execute project.tasks[EarPlugin.EAR_TASK_NAME]
 
-        def ear = project.zipTree("build/libs/${project.name}.ear")
-        assertFalse ear.isEmpty()
-        assertNotNull ear.files.find { it.path.endsWith "META-INF/application.xml" }
+        inEar "META-INF/application.xml"
     }
 
     @Test public void avoidsOverwritingDeploymentDescriptor() {
@@ -214,9 +203,7 @@ class EarPluginTest {
         earPlugin.apply(project)
         execute project.tasks[EarPlugin.EAR_TASK_NAME]
 
-        def ear = project.zipTree("build/libs/${project.name}.ear")
-        assertFalse ear.isEmpty()
-        assertNotNull ear.files.find { it.path.endsWith("META-INF/application.xml") && it.text == TEST_APP_XML }
+        assert inEar("META-INF/application.xml").text == TEST_APP_XML
     }
 
     @Test public void supportsRenamingDeploymentDescriptor() {
@@ -226,9 +213,7 @@ class EarPluginTest {
         }
         execute project.tasks[EarPlugin.EAR_TASK_NAME]
 
-        def ear = project.zipTree("build/libs/${project.name}.ear")
-        assertFalse ear.isEmpty()
-        assertNotNull ear.files.find { it.path.endsWith "META-INF/myapp.xml" }
+        inEar "META-INF/myapp.xml"
     }
 
     @Test public void avoidsOverwritingRenamedDeploymentDescriptor() {
@@ -240,10 +225,7 @@ class EarPluginTest {
             fileName = "myapp.xml"
         }
         execute project.tasks[EarPlugin.EAR_TASK_NAME]
-
-        def ear = project.zipTree("build/libs/${project.name}.ear")
-        assertFalse ear.isEmpty()
-        assertNotNull ear.files.find { it.path.endsWith("META-INF/myapp.xml") && it.text == TEST_APP_XML }
+        assert inEar("META-INF/myapp.xml").text == TEST_APP_XML
     }
 
     private void execute(Task task) {
@@ -255,5 +237,11 @@ class EarPluginTest {
         for (Action action : task.actions) {
             action.execute(task)
         }
+    }
+    
+    File inEar(path) {
+        def ear = project.zipTree("build/libs/${project.name}.ear")
+        assert !ear.empty
+        ear.matching { include path }.singleFile
     }
 }

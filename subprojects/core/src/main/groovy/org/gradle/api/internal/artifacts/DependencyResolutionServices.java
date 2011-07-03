@@ -27,5 +27,5 @@ public interface DependencyResolutionServices {
 
     DependencyHandler getDependencyHandler();
 
-    Factory<RepositoryHandler> getPublishRepositoryHandlerFactory();
+    Factory<ArtifactPublicationServices> getPublishServicesFactory();
 }

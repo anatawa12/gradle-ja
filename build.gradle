@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 
-import org.gradle.build.samples.WrapperProjectCreator
 import org.gradle.build.Version
 import org.gradle.build.Install
 import org.gradle.build.Git
@@ -301,7 +300,7 @@ idea {
         Node runConfig = runManagerConfig.configuration.find { it.'@type' == 'JUnit'}
 
         Node vmParameters = runConfig.option.find { it.'@name' == 'VM_PARAMETERS' }
-        vmParameters.'@value' = "\"-DintegTest.gradleHomeDir=${intTestImage.destinationDir}\" -ea -Dorg.gradle.integtest.executer=embedded"
+        vmParameters.'@value' = "\"-DintegTest.gradleHomeDir=${intTestImage.destinationDir}\" -ea -Dorg.gradle.integtest.executer=embedded -XX:MaxPermSize=256m -Xmx512m"
 
         // Add an application configuration
         runManagerConfig.'@selected' = 'Application.Gradle'
@@ -385,6 +384,31 @@ task test(overwrite: true, dependsOn: groovyProjects()*.test)
 task uploadArchives(dependsOn: publishedProjects()*.uploadArchives)
 task publishLocalArchives(dependsOn: publishedProjects()*.publishLocalArchives)
 
+task aggregateTestResults {
+    testReportDir = file("${reportsDir}/tests")
+    testResultsDir = file("${buildDir}/test-results")
+
+    doFirst {
+        assert (!testReportDir.exists() || testReportDir.deleteDir()) && testReportDir.mkdirs()
+
+        copy {
+            into testResultsDir
+            subprojects.each { subproject ->
+                subproject.tasks.withType(Test).each { task ->
+                    if (task.testResultsDir.exists()) {
+                        from (task.testResultsDir) {
+                            include "TEST-*.xml"
+                        }
+                    }
+                }
+            }
+        }
+
+        def report = new org.gradle.api.internal.tasks.testing.junit.report.DefaultTestReport(testReportDir: testReportDir, testResultsDir: testResultsDir)
+        report.generateReport()
+    }
+}
+
 zipRootFolder = "$archivesBaseName-${-> version}"
 
 binDistImage = copySpec {
@@ -463,13 +487,12 @@ artifacts {
 }
 
 task intTestImage(type: Sync) {
-    dependsOn allZip.taskDependencies
-    with allDistImage
+    dependsOn "launcher:startScripts"
+    with binDistImage
     integTestGradleHome = file("$buildDir/integ test")
     into integTestGradleHome
     doLast { task ->
         ant.chmod(dir: "$integTestGradleHome/bin", perm: "ugo+rx", includes: "**/*")
-        WrapperProjectCreator.createProject(new File(integTestGradleHome, 'samples'), binZip.archivePath.parentFile, version.toString())
     }
 }
 
@@ -599,21 +622,21 @@ def runtimeProjects() {
 }
 
 def pluginProjects() {
-    ['plugins', 'codeQuality', 'jetty', 'antlr', 'wrapper', 'osgi', 'maven', 'ide', 'announce', 'scala', 'sonar'].collect {
+    ['plugins', 'codeQuality', 'jetty', 'antlr', 'wrapper', 'osgi', 'maven', 'ide', 'announce', 'scala', 'sonar', 'signing'].collect {
         project(it)
     }
 }
 
-switch (System.getProperty("user.name")) {
-    case "pniederw":
-        allprojects {
-            tasks.withType(Test) {
-                maxParallelForks = 1
-                forkEvery = 0
-            }
-        }
-        break
-    default:
-        break
-}
+//switch (System.getProperty("user.name")) {
+//    case "pniederw":
+//        allprojects {
+//            tasks.withType(Test) {
+//                maxParallelForks = 1
+//                forkEvery = 0
+//            }
+//        }
+//        break
+//    default:
+//        break
+//}
 

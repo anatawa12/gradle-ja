@@ -15,21 +15,21 @@
  */
 package org.gradle.api.internal.artifacts
 
+import org.gradle.StartParameter
+import org.gradle.api.artifacts.ConfigurationContainer
 import org.gradle.api.artifacts.maven.MavenFactory
+import org.gradle.api.internal.ClassGenerator
+import org.gradle.api.internal.DomainObjectContext
+import org.gradle.api.internal.IConventionAware
+import org.gradle.api.internal.artifacts.configurations.DefaultConfigurationContainer
+import org.gradle.api.internal.artifacts.configurations.DependencyMetaDataProvider
+import org.gradle.api.internal.artifacts.dsl.DefaultRepositoryHandler
+import org.gradle.api.internal.artifacts.dsl.dependencies.ProjectFinder
 import org.gradle.api.internal.artifacts.ivyservice.ResolverFactory
-import spock.lang.Specification
+import org.gradle.api.internal.file.FileResolver
 import org.gradle.api.internal.project.ServiceRegistry
 import org.gradle.logging.LoggingManagerInternal
-import org.gradle.api.internal.file.FileResolver
-import org.gradle.api.internal.artifacts.configurations.DependencyMetaDataProvider
-import org.gradle.api.internal.artifacts.dsl.dependencies.ProjectFinder
-import org.gradle.api.internal.DomainObjectContext
-import org.gradle.api.internal.ClassGenerator
-import org.gradle.api.internal.artifacts.dsl.DefaultRepositoryHandler
-
-import org.gradle.api.artifacts.ConfigurationContainer
-
-import org.gradle.api.internal.IConventionAware
+import spock.lang.Specification
 
 class DefaultDependencyManagementServicesTest extends Specification {
     final ServiceRegistry parent = Mock()
@@ -39,11 +39,11 @@ class DefaultDependencyManagementServicesTest extends Specification {
     final ClassGenerator classGenerator = Mock()
     final DomainObjectContext domainObjectContext = Mock()
     final TestRepositoryHandler repositoryHandler = Mock()
-    final ConfigurationContainerFactory containerFactory = Mock()
     final ConfigurationContainer configurationContainer = Mock()
+    final StartParameter startParameter = Mock()
     final DefaultDependencyManagementServices services = new DefaultDependencyManagementServices(parent)
 
-    def providesAResolverFactory() {
+    def "provides a ResolverFactory"() {
         given:
         _ * parent.getFactory(LoggingManagerInternal.class)
 
@@ -51,17 +51,17 @@ class DefaultDependencyManagementServicesTest extends Specification {
         services.get(ResolverFactory.class) != null
     }
 
-    def providesAMavenFactory() {
+    def "provides a MavenFactory"() {
         expect:
         services.get(MavenFactory.class) != null
     }
 
-    def createDependencyResolutionServices() {
+    def "can create dependency resolution services"() {
         given:
-        1 * parent.get(ConfigurationContainerFactory.class) >> containerFactory
-        1 * parent.get(ClassGenerator.class) >> classGenerator
+        _ * parent.get(ClassGenerator.class) >> classGenerator
+        _ * parent.get(StartParameter.class) >> startParameter
         1 * classGenerator.newInstance(DefaultRepositoryHandler.class, _, _, _) >> repositoryHandler
-        1 * containerFactory.createConfigurationContainer(_, _, _) >> configurationContainer
+        1 * classGenerator.newInstance(DefaultConfigurationContainer.class, !null, classGenerator, domainObjectContext) >> configurationContainer
 
         when:
         def resolutionServices = services.create(fileResolver, dependencyMetaDataProvider, projectFinder, domainObjectContext)
@@ -70,25 +70,43 @@ class DefaultDependencyManagementServicesTest extends Specification {
         resolutionServices.resolveRepositoryHandler != null
         resolutionServices.configurationContainer != null
         resolutionServices.dependencyHandler != null
-        resolutionServices.publishRepositoryHandlerFactory != null
+        resolutionServices.publishServicesFactory != null
     }
 
-    def publishResolverHandlerSharesConventionMappingAndConfigurationContainerWithResolveResolverHandler() {
+    def "publish ResolverHandler shares ConventionMapping and ConfigurationContainer with resolve ResolverHandler"() {
         TestRepositoryHandler publishRepositoryHandler = Mock()
 
         given:
-        _ * parent.get(ConfigurationContainerFactory.class) >> containerFactory
+        _ * parent.get(StartParameter.class) >> startParameter
         _ * parent.get(ClassGenerator.class) >> classGenerator
         2 * classGenerator.newInstance(DefaultRepositoryHandler.class, _, _, _) >>> [repositoryHandler, publishRepositoryHandler]
-        1 * containerFactory.createConfigurationContainer(_, _, _) >> configurationContainer
+        1 * classGenerator.newInstance(DefaultConfigurationContainer.class, !null, classGenerator, domainObjectContext) >> configurationContainer
 
         when:
         def resolutionServices = services.create(fileResolver, dependencyMetaDataProvider, projectFinder, domainObjectContext)
-        def publishResolveHandler = resolutionServices.publishRepositoryHandlerFactory.create()
+        def publishResolverHandler = resolutionServices.publishServicesFactory.create().repositoryHandler
 
         then:
+        publishResolverHandler == publishRepositoryHandler
         1 * publishRepositoryHandler.setConfigurationContainer(configurationContainer)
         1 * publishRepositoryHandler.setConventionMapping({!null})
+    }
+
+    def "publish services provide an IvyService"() {
+        TestRepositoryHandler publishRepositoryHandler = Mock()
+
+        given:
+        _ * parent.get(StartParameter.class) >> startParameter
+        _ * parent.get(ClassGenerator.class) >> classGenerator
+        2 * classGenerator.newInstance(DefaultRepositoryHandler.class, _, _, _) >>> [repositoryHandler, publishRepositoryHandler]
+        1 * classGenerator.newInstance(DefaultConfigurationContainer.class, !null, classGenerator, domainObjectContext) >> configurationContainer
+
+        when:
+        def resolutionServices = services.create(fileResolver, dependencyMetaDataProvider, projectFinder, domainObjectContext)
+        def ivyService = resolutionServices.publishServicesFactory.create().ivyService
+
+        then:
+        ivyService != null
     }
 }
 

@@ -39,7 +39,7 @@ import org.gradle.util.ConfigureUtil
  *     wildcards += '!?*.ruby'
  *
  *     //you can change the modules of the the *.ipr
- *     //modules = project(':someProject').convention.plugins.idea.module
+ *     //modules = project(':someProject').idea.module
  *
  *     //you can change the output file
  *     outputFile = new File(outputFile.parentFile, 'someBetterName.ipr')
@@ -134,11 +134,6 @@ class IdeaProject {
      * See {@link #ipr(Closure) }
      */
     XmlFileContentMerger ipr
-
-    //******
-    //TODO SF decide if IDE model classes need interfaces. If no update the javadoc.
-    //Public DSL above. Internals below.
-    //******
 
     PathFactory pathFactory
 

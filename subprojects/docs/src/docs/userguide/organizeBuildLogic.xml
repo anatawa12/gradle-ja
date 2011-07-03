@@ -124,8 +124,8 @@
     </section>
     
     <section id='sec:build_sources'>
-        <title><filename>buildSrc</filename>プロジェクトでソースをビルドする<phrase role="original">Build sources in the <filename>buildSrc</filename> project</phrase></title>
-        <para role="original">If you run Gradle, it checks for the existence of a directory called <filename>buildSrc</filename>. Just put
+        <title>Build sources in the <filename>buildSrc</filename> project</title>
+        <para>When you run Gradle, it checks for the existence of a directory called <filename>buildSrc</filename>. Just put
             your build source code in this directory and stick to the layout convention for a Java/Groovy project (see
             <xref linkend='javalayout'/>). Gradle then automatically compiles and tests this code and puts it in
             the classpath of your build script. You don't need to provide any further instruction. This can be a good
@@ -133,14 +133,25 @@
         </para>
         <para>Gradleは実行されたときに<filename>buildSrc</filename>というディレクトリがないか確認します。ビルドで使いたいソースコードを、Java/Groovyプロジェクトのレイアウト(<xref linkend='javalayout'/>参照)にしたがってそのディレクトリに置いておけば、Gradleはそのコードを自動的にコンパイル、テストしてビルドスクリプトのクラスパスに追加してくれるのです。カスタムタスクやプラグインを追加するいい方法になるでしょう。</para>
         <para role="original">For multi-project builds there can be only one <filename>buildSrc</filename> directory, which has to be
-            in the root project.
+            in the root project directory.
         </para>
         <para>マルチプロジェクトのビルドでは、ルートプロジェクトに一つだけ<filename>buildSrc</filename>ディレクトリを作成できます。</para>
-        <para role="original">This is probably good enough for most of the cases. If you need more flexibility, you can provide a
+        <para>Listed below is the default build script that Gradle applies to the <filename>buildSrc</filename> project:</para>
+        <figure>
+            <title>Default buildSrc build script</title>
+            <programlisting><xi:include href='../../../../../subprojects/core/src/main/resources/org/gradle/initialization/defaultBuildSourceScript.txt' parse='text'/></programlisting>
+        </figure>
+        <para>This is probably good enough for most cases. If you need more flexibility, you can provide your own
             <filename>build.gradle</filename> and a <filename>settings.gradle</filename> file in the
             <filename>buildSrc</filename> directory. If you like, you can even have a multi-project build in there.
+            Gradle applies the default build script regardless of whether there is one specified. This means you only need to
+            declare the extra things you need. Below is an example. Notice that this example does not need to declare a dependency on the Gradle
+            API, as this is done by the default build script:
         </para>
         <para>ほとんどのケースではこれで十分なはずですが、もっと柔軟性が必要なときは、<filename>build.gradle</filename>と<filename>settings.gradle</filename>を<filename>buildSrc</filename>ディレクトリに置いてプロジェクトを設定することもできます。やりたいならそのディレクトリにマルチプロジェクトを構築することさえできるのです。</para>
+        <sample id="customBuildSrcBuild" dir="java/multiproject" title="Custom buildSrc build script">
+            <sourcefile file="buildSrc/build.gradle"/>
+        </sample>
     </section>
 
     <section id="sec:external_build">

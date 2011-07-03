@@ -192,7 +192,7 @@ public class TopLevelBuildServiceRegistryTest {
 
     @Test
     public void providesAWorkerProcessFactory() {
-        context.checking(new Expectations(){{
+        context.checking(new Expectations() {{
             allowing(parent).get(MessagingServer.class);
             will(returnValue(messagingServer));
         }});
