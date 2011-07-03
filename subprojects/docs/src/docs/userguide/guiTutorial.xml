@@ -14,7 +14,7 @@
   ~ limitations under the License.
   -->
 <chapter id="tutorial_gradle_gui">
-    <title>Using the Gradle Graphical User Interface</title>
+    <title>Gradleのグラフィカルユーザーインターフェースを使う<phrase role="original">Using the Gradle Graphical User Interface</phrase></title>
     <para>In addition to supporting a traditional command line interface, gradle offers
     a graphical user interface.  This is a stand alone user interface that can be launched with the
     <command>--gui</command> option.</para>
