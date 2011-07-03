@@ -14,7 +14,7 @@
   ~ limitations under the License.
   -->
 <chapter id="tutorial_gradle_command_line">
-    <title>コマンドラインでGradleを使用する<phrase role="original">Using the Gradle Command-Line</phrase></title>
+    <title>Gradleのコマンドラインを使う<phrase role="original">Using the Gradle Command-Line</phrase></title>
     <para role="original">This chapter introduces the basics of the Gradle command-line. You run a build using the
         <command>gradle</command> command, which you have already seen in action in previous chapters.</para>
     <para>本章では、Gradleのコマンドラインインターフェースについて基本的なところを見ていきます。前回までの章で既に動作をみてきましたが、Gradleのビルドは<command>gradle</command>コマンドで実行します。</para>
