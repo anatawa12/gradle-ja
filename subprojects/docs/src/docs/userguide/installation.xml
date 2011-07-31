@@ -88,8 +88,7 @@ some zip front ends for Mac OS X don't restore the file permissions properly.
 <command>gradle -v</command>. The output shows gradle version and also local environment configuration (groovy and jvm version, etc.).
     The displayed gradle version should match the distribution you have downloaded.
 </para>
-Gradleは、<command>gradle</command>コマンドを使って実行されます。Gradleが正しくインストールされていることを確認するには、<command>gradle -v</command>と入力してください。以下のような出力になれば大丈夫です。
-
+Gradleは、<command>gradle</command>コマンドで実行します。Gradleが正しくインストールされていることを確認するには、<command>gradle -v</command>と入力してください。Gradleのバージョンとローカルの実行環境(groovyやjvmのバージョンなど)が表示されます。表示されたgradleのバージョンが、ダウンロードした配布物のバージョンと一致していることを確認してください。
 </section>
 
 <section>
