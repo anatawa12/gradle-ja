@@ -21,6 +21,7 @@ import org.gradle.api.dsl.ConventionProperty
 import org.gradle.plugins.ide.api.XmlFileContentMerger
 import org.gradle.plugins.ide.eclipse.model.internal.WtpComponentFactory
 import org.gradle.util.ConfigureUtil
+import org.gradle.plugins.ide.eclipse.model.internal.FileReferenceFactory
 
 /**
  * Enables fine-tuning wtp component details of the Eclipse plugin
@@ -232,11 +233,11 @@ class EclipseWtpComponent {
     /**
      * See {@link #file(Closure) }
      */
-    XmlFileContentMerger file
+    final XmlFileContentMerger file
 
     //********
 
-    org.gradle.api.Project project
+    final org.gradle.api.Project project
 
     /**
      * The variables to be used for replacing absolute path in dependent-module elements.
@@ -245,9 +246,20 @@ class EclipseWtpComponent {
      */
     Map<String, File> pathVariables = [:]
 
+    EclipseWtpComponent(org.gradle.api.Project project, XmlFileContentMerger file) {
+        this.project = project
+        this.file = file
+    }
+
     void mergeXmlComponent(WtpComponent xmlComponent) {
         file.beforeMerged.execute(xmlComponent)
         new WtpComponentFactory().configure(this, xmlComponent)
         file.whenMerged.execute(xmlComponent)
+    }
+
+    FileReferenceFactory getFileReferenceFactory() {
+        def referenceFactory = new FileReferenceFactory()
+        pathVariables.each { name, dir -> referenceFactory.addPathVariable(name, dir) }
+        return referenceFactory
     }
 }

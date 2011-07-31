@@ -15,22 +15,25 @@
  */
 package org.gradle.api.internal.artifacts.configurations;
 
+import org.gradle.api.DomainObjectSet;
 import org.gradle.api.UnknownDomainObjectException;
 import org.gradle.api.artifacts.Configuration;
 import org.gradle.api.artifacts.ConfigurationContainer;
 import org.gradle.api.artifacts.Dependency;
 import org.gradle.api.artifacts.UnknownConfigurationException;
-import org.gradle.api.internal.AutoCreateDomainObjectContainer;
+import org.gradle.api.internal.AbstractNamedDomainObjectContainer;
 import org.gradle.api.internal.ClassGenerator;
 import org.gradle.api.internal.DomainObjectContext;
 import org.gradle.api.internal.artifacts.IvyService;
 
 import java.util.Collection;
+import java.util.Set;
+import groovy.lang.Closure;
 
 /**
  * @author Hans Dockter
  */
-public class DefaultConfigurationContainer extends AutoCreateDomainObjectContainer<Configuration> 
+public class DefaultConfigurationContainer extends AbstractNamedDomainObjectContainer<Configuration> 
         implements ConfigurationContainer, ConfigurationsProvider {
     public static final String DETACHED_CONFIGURATION_DEFAULT_NAME = "detachedConfiguration";
     
@@ -41,17 +44,30 @@ public class DefaultConfigurationContainer extends AutoCreateDomainObjectContain
     private int detachedConfigurationDefaultNameCounter = 1;
 
     public DefaultConfigurationContainer(IvyService ivyService, ClassGenerator classGenerator, DomainObjectContext context) {
-        super(Configuration.class, classGenerator);
+        super(Configuration.class, classGenerator, new Configuration.Namer());
         this.ivyService = ivyService;
         this.classGenerator = classGenerator;
         this.context = context;
     }
 
     @Override
-    protected Configuration create(String name) {
+    protected Configuration doCreate(String name) {
         return classGenerator.newInstance(DefaultConfiguration.class, context.absoluteProjectPath(name), name, this, ivyService);
     }
 
+    // Override deprecated version from DomainObjectCollection (through AbstractNamedDomainObjectContainer)
+    public Set<Configuration> getAll() {
+        return this;
+    }
+
+    public Configuration add(String name) {
+        return create(name);
+    }
+
+    public Configuration add(String name, Closure closure) {
+        return create(name, closure);
+    }
+    
     @Override
     public String getTypeDisplayName() {
         return "configuration";
@@ -71,8 +87,9 @@ public class DefaultConfigurationContainer extends AutoCreateDomainObjectContain
         String name = DETACHED_CONFIGURATION_DEFAULT_NAME + detachedConfigurationDefaultNameCounter++;
         DefaultConfiguration detachedConfiguration = new DefaultConfiguration(name, name,
                 detachedConfigurationsProvider, ivyService);
+        DomainObjectSet<Dependency> detachedDependencies = detachedConfiguration.getDependencies();
         for (Dependency dependency : dependencies) {
-            detachedConfiguration.addDependency(dependency.copy());
+            detachedDependencies.add(dependency.copy());
         }
         detachedConfigurationsProvider.setTheOnlyConfiguration(detachedConfiguration);
         return detachedConfiguration;

@@ -69,7 +69,7 @@ idea {
         outputDir = file('muchBetterOutputDir')
         testOutputDir = file('muchBetterTestOutputDir')
 
-        javaVersion = '1.6'
+        jdkName = '1.6'
 
         iml {
             generateTo = file('customImlFolder')
@@ -101,8 +101,7 @@ idea {
     }
 
     @Test
-    void plusMinusConfigurationsAreCorrectlyApplied() {
-        file('foo.jar', 'bar.jar')
+    void "plus minus configurations work fine for self resolving file dependencies"() {
         //when
         runTask 'idea', '''
 apply plugin: "java"
@@ -112,17 +111,19 @@ configurations {
   bar
   foo
   foo.extendsFrom(bar)
+  baz
 }
 
 dependencies {
   bar files('bar.jar')
-  foo files('foo.jar')
+  foo files('foo.jar', 'foo2.jar', 'foo3.jar')
+  baz files('foo3.jar')
 }
 
 idea {
     module {
         scopes.COMPILE.plus += configurations.foo
-        scopes.COMPILE.minus += configurations.bar
+        scopes.COMPILE.minus += [configurations.bar, configurations.baz]
     }
 }
 '''
@@ -130,7 +131,10 @@ idea {
 
         //then
         assert content.contains('foo.jar')
+        assert content.contains('foo2.jar')
+
         assert !content.contains('bar.jar')
+        assert !content.contains('foo3.jar')
     }
 
     @Test
@@ -160,7 +164,7 @@ idea {
         excludeDirs = [project.file('folderThatIsExcludedNow')] as Set
         iml {
             beforeMerged { it.excludeFolders.clear() }
-            whenMerged   { it.javaVersion = '1.33'   }
+            whenMerged   { it.jdkName = '1.33'   }
         }
     }
 }
@@ -211,5 +215,38 @@ task generateForTest << {}
 ''')
         //then
         result.assertTasksExecuted(':generateForMain', ':generateForTest', ':ideaModule', ':ideaProject', ':ideaWorkspace', ':idea')
+    }
+
+    @Test
+    void "enables toggling javadoc and sources off"() {
+        //given
+        def repoDir = file("repo")
+        publishArtifact(repoDir, "coolGroup", "niceArtifact")
+        publishArtifact(repoDir, "coolGroup", "niceArtifact", null, "sources")
+        publishArtifact(repoDir, "coolGroup", "niceArtifact", null, "javadoc")
+
+        //when
+        runIdeaTask """
+apply plugin: 'java'
+apply plugin: 'idea'
+
+repositories {
+    mavenRepo(name: "repo", urls: "${repoDir.toURI()}")
+}
+
+dependencies {
+    compile 'coolGroup:niceArtifact:1.0'
+}
+
+idea.module {
+    downloadSources = false
+    downloadJavadoc = false
+}
+"""
+        def content = getFile([:], 'root.iml').text
+
+        //then
+        assert !content.contains('niceArtifact-1.0-sources.jar')
+        assert !content.contains('niceArtifact-1.0-javadoc.jar')
     }
 }

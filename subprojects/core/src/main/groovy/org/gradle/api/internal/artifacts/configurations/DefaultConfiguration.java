@@ -17,13 +17,11 @@
 package org.gradle.api.internal.artifacts.configurations;
 
 import groovy.lang.Closure;
-import org.gradle.api.Action;
-import org.gradle.api.InvalidUserDataException;
-import org.gradle.api.Project;
-import org.gradle.api.Task;
+import org.gradle.api.*;
 import org.gradle.api.artifacts.*;
 import org.gradle.api.file.FileCollection;
-import org.gradle.api.internal.DefaultDomainObjectContainer;
+import org.gradle.api.internal.CompositeDomainObjectSet;
+import org.gradle.api.internal.DefaultDomainObjectSet;
 import org.gradle.api.internal.artifacts.DefaultExcludeRule;
 import org.gradle.api.internal.artifacts.IvyService;
 import org.gradle.api.internal.file.AbstractFileCollection;
@@ -33,6 +31,7 @@ import org.gradle.api.internal.tasks.TaskDependencyResolveContext;
 import org.gradle.api.specs.Spec;
 import org.gradle.api.specs.Specs;
 import org.gradle.api.tasks.TaskDependency;
+import org.gradle.util.DeprecationLogger;
 import org.gradle.util.WrapUtil;
 
 import java.io.File;
@@ -52,10 +51,17 @@ public class DefaultConfiguration extends AbstractFileCollection implements Conf
 
     private IvyService ivyService;
 
-    private DefaultDomainObjectContainer<Dependency> dependencies =
-            new DefaultDomainObjectContainer<Dependency>(Dependency.class);
+    private DefaultDomainObjectSet<Dependency> dependencies =
+            new DefaultDomainObjectSet<Dependency>(Dependency.class);
 
-    private Set<PublishArtifact> artifacts = new LinkedHashSet<PublishArtifact>();
+    private CompositeDomainObjectSet<Dependency> allDependencies =
+            new CompositeDomainObjectSet<Dependency>(Dependency.class, dependencies);
+
+    private DefaultDomainObjectSet<PublishArtifact> artifacts =
+            new DefaultDomainObjectSet<PublishArtifact>(PublishArtifact.class);
+
+    private CompositeDomainObjectSet<PublishArtifact> allArtifacts =
+            new CompositeDomainObjectSet<PublishArtifact>(PublishArtifact.class, artifacts);
 
     private Set<ExcludeRule> excludeRules = new LinkedHashSet<ExcludeRule>();
 
@@ -72,6 +78,8 @@ public class DefaultConfiguration extends AbstractFileCollection implements Conf
         this.name = name;
         this.configurationsProvider = configurationsProvider;
         this.ivyService = ivyService;
+        dependencies.beforeChange(new VetoContainerChangeAction());
+        artifacts.beforeChange(new VetoContainerChangeAction());
     }
 
     public String getName() {
@@ -100,6 +108,10 @@ public class DefaultConfiguration extends AbstractFileCollection implements Conf
 
     public Configuration setExtendsFrom(Set<Configuration> extendsFrom) {
         throwExceptionIfNotInUnresolvedState();
+        for (Configuration configuration : this.extendsFrom) {
+            allArtifacts.removeCollection(configuration.getAllArtifacts());
+            allDependencies.removeCollection(configuration.getAllDependencies());
+        }
         this.extendsFrom = new HashSet<Configuration>();
         for (Configuration configuration : extendsFrom) {
             extendsFrom(configuration);
@@ -116,6 +128,8 @@ public class DefaultConfiguration extends AbstractFileCollection implements Conf
                         configuration, configuration.getHierarchy()));
             }
             this.extendsFrom.add(configuration);
+            allArtifacts.addCollection(configuration.getAllArtifacts());
+            allDependencies.addCollection(configuration.getAllDependencies());
         }
         return this;
     }
@@ -262,55 +276,48 @@ public class DefaultConfiguration extends AbstractFileCollection implements Conf
         return getAllArtifactFiles().getBuildDependencies();
     }
 
-    public Set<Dependency> getDependencies() {
-        return dependencies.getAll();
+    public DomainObjectSet<Dependency> getDependencies() {
+        return dependencies;
     }
 
-    public Set<Dependency> getAllDependencies() {
-        return Configurations.getDependencies(getHierarchy(), Specs.<Dependency>satisfyAll());
+    public DomainObjectSet<Dependency> getAllDependencies() {
+        return allDependencies;
     }
 
-    public <T extends Dependency> Set<T> getDependencies(Class<T> type) {
-        return filter(type, getDependencies());
+    public <T extends Dependency> DomainObjectSet<T> getDependencies(Class<T> type) {
+        return dependencies.withType(type);
     }
 
-    private <T extends Dependency> Set<T> filter(Class<T> type, Set<Dependency> dependencySet) {
-        Set<T> matches = new LinkedHashSet<T>();
-        for (Dependency dependency : dependencySet) {
-            if (type.isInstance(dependency)) {
-                matches.add(type.cast(dependency));
-            }
-        }
-        return matches;
-    }
-
-    public <T extends Dependency> Set<T> getAllDependencies(Class<T> type) {
-        return filter(type, getAllDependencies());
+    public <T extends Dependency> DomainObjectSet<T> getAllDependencies(Class<T> type) {
+        return allDependencies.withType(type);
     }
 
     public void addDependency(Dependency dependency) {
+        DeprecationLogger.nagUser("Configuration.addDependency()", "getDependencies().add()");
         throwExceptionIfNotInUnresolvedState();
-        dependencies.addObject(dependency);
+        dependencies.add(dependency);
     }
 
     public Configuration addArtifact(PublishArtifact artifact) {
+        DeprecationLogger.nagUser("Configuration.addArtifact()", "getArtifacts().add()");
         throwExceptionIfNotInUnresolvedState();
         artifacts.add(artifact);
         return this;
     }
 
     public Configuration removeArtifact(PublishArtifact artifact) {
+        DeprecationLogger.nagUser("Configuration.removeArtifact()", "getArtifacts().remove()");
         throwExceptionIfNotInUnresolvedState();
         artifacts.remove(artifact);
         return this;
     }
 
-    public Set<PublishArtifact> getArtifacts() {
-        return Collections.unmodifiableSet(artifacts);
+    public DomainObjectSet<PublishArtifact> getArtifacts() {
+        return artifacts;
     }
 
-    public Set<PublishArtifact> getAllArtifacts() {
-        return Configurations.getArtifacts(this.getHierarchy(), Specs.SATISFIES_ALL);
+    public DomainObjectSet<PublishArtifact> getAllArtifacts() {
+        return allArtifacts;
     }
 
     public FileCollection getAllArtifactFiles() {
@@ -377,9 +384,7 @@ public class DefaultConfiguration extends AbstractFileCollection implements Conf
         copiedConfiguration.transitive = transitive;
         copiedConfiguration.description = description;
 
-        for (PublishArtifact artifact : getAllArtifacts()) {
-            copiedConfiguration.addArtifact(artifact);
-        }
+        copiedConfiguration.getArtifacts().addAll(getAllArtifacts());
 
         // todo An ExcludeRule is a value object but we don't enforce immutability for DefaultExcludeRule as strong as we
         // should (we expose the Map). We should provide a better API for ExcludeRule (I don't want to use unmodifiable Map).
@@ -388,8 +393,9 @@ public class DefaultConfiguration extends AbstractFileCollection implements Conf
             copiedConfiguration.excludeRules.add(new DefaultExcludeRule(excludeRule.getExcludeArgs()));
         }
 
+        DomainObjectSet<Dependency> copiedDependencies = copiedConfiguration.getDependencies();
         for (Dependency dependency : dependencies) {
-            copiedConfiguration.addDependency(dependency.copy());
+            copiedDependencies.add(dependency.copy());
         }
         return copiedConfiguration;
     }
@@ -558,6 +564,12 @@ public class DefaultConfiguration extends AbstractFileCollection implements Conf
                     SelfResolvingDependency.class)) {
                 context.add(dependency);
             }
+        }
+    }
+
+    private class VetoContainerChangeAction implements Runnable {
+        public void run() {
+            throwExceptionIfNotInUnresolvedState();
         }
     }
 }

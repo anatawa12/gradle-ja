@@ -39,9 +39,11 @@ public interface Task {
     String getDescription();
 
     /**
-     * Returns the project which this task belongs to.
+     * Returns the element which this task belongs to.
      *
-     * @return The project.
+     * //TODO SF rename?
+     *
+     * @return The element.
      */
-    Project getProject();
+    Element getProject();
 }

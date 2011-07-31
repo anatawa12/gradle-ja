@@ -16,7 +16,6 @@
 
 package org.gradle.plugins.ide.idea.model
 
-import org.gradle.api.JavaVersion
 import org.gradle.plugins.ide.api.XmlFileContentMerger
 import org.gradle.util.ConfigureUtil
 
@@ -32,8 +31,9 @@ import org.gradle.util.ConfigureUtil
  *
  * idea {
  *   project {
- *     //if you want to set specific java version for the idea project
- *     javaVersion = '1.5'
+ *     //if you want to set specific jdk and language level
+ *     jdkName = '1.6'
+ *     languageLevel = '1.5'
  *
  *     //you can update the source wildcards
  *     wildcards += '!?*.ruby'
@@ -100,10 +100,18 @@ class IdeaProject {
      * <p>
      * See the examples in the docs for {@link IdeaProject}
      */
-    JavaVersion javaVersion
+    String jdkName
 
-    void setJavaVersion(Object javaVersion) {
-        this.javaVersion = JavaVersion.toVersion(javaVersion)
+    /**
+     * The java language level of the project.
+     * Pass a valid java number, i.e: '1.8' or language level in IDEA's format, i.e: 'JDK_1_5'
+     * <p>
+     * See the examples in the docs for {@link IdeaProject}
+     */
+    IdeaLanguageLevel languageLevel
+
+    void setLanguageLevel(Object languageLevel) {
+        this.languageLevel = new IdeaLanguageLevel(languageLevel)
     }
 
     /**
@@ -121,6 +129,14 @@ class IdeaProject {
     File outputFile
 
     /**
+     * The name of the IDEA project. It is a convenience property that returns the name of the output file (without the file extension).
+     * In idea, the project name is driven by the name of the 'ipr' file.
+     */
+    String getName() {
+       getOutputFile().name.replaceFirst(/\.ipr$/, '')
+    }
+
+    /**
      * Enables advanced configuration like tinkering with the output xml
      * or affecting the way existing *.ipr content is merged with gradle build information
      * <p>
@@ -133,16 +149,20 @@ class IdeaProject {
     /**
      * See {@link #ipr(Closure) }
      */
-    XmlFileContentMerger ipr
+    final XmlFileContentMerger ipr
 
     PathFactory pathFactory
+
+    IdeaProject(XmlFileContentMerger ipr) {
+        this.ipr = ipr
+    }
 
     void mergeXmlProject(Project xmlProject) {
         ipr.beforeMerged.execute(xmlProject)
         def modulePaths = getModules().collect {
-            new ModulePath(getPathFactory().relativePath('PROJECT_DIR', it.outputFile))
+            getPathFactory().relativePath('PROJECT_DIR', it.outputFile)
         }
-        xmlProject.configure(modulePaths, getJavaVersion(), getWildcards())
+        xmlProject.configure(modulePaths, getJdkName(), getLanguageLevel(), getWildcards())
         ipr.whenMerged.execute(xmlProject)
     }
 }

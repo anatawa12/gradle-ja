@@ -15,11 +15,11 @@
  */
 package org.gradle.plugins.ide.idea
 
-import org.gradle.api.JavaVersion
 import org.gradle.api.Project
 import org.gradle.api.Task
 import org.gradle.api.internal.project.DefaultProject
 import org.gradle.api.tasks.Delete
+import org.gradle.plugins.ide.idea.model.IdeaLanguageLevel
 import org.gradle.util.HelperUtil
 import spock.lang.Specification
 
@@ -29,6 +29,7 @@ import spock.lang.Specification
 class IdeaPluginTest extends Specification {
     private final DefaultProject project = HelperUtil.createRootProject()
     private final Project childProject = HelperUtil.createChildProject(project, "child", new File("."))
+    //TODO SF - fix deprecation warnings
 
     def "adds 'ideaProject' task to root project"() {
         when:
@@ -40,7 +41,8 @@ class IdeaPluginTest extends Specification {
         ideaProjectTask instanceof GenerateIdeaProject
         ideaProjectTask.outputFile == new File(project.projectDir, project.name + ".ipr")
         ideaProjectTask.ideaProject.modules == [project.idea.module, childProject.idea.module]
-        ideaProjectTask.javaVersion == JavaVersion.VERSION_1_6.toString()
+        ideaProjectTask.ideaProject.jdkName == "1.6"
+        ideaProjectTask.ideaProject.languageLevel.formatted == "JDK_1_6"
         ideaProjectTask.wildcards == ['!?*.java', '!?*.groovy'] as Set
 
         childProject.tasks.findByName('ideaProject') == null
@@ -76,7 +78,8 @@ class IdeaPluginTest extends Specification {
         project.apply(plugin: 'java')
 
         then:
-        project.ideaProject.javaVersion == project.sourceCompatibility.toString()
+        project.idea.project.jdkName == project.sourceCompatibility.toString()
+        project.idea.project.languageLevel.formatted == new IdeaLanguageLevel(project.sourceCompatibility).formatted
 
         GenerateIdeaModule ideaModuleTask = project.ideaModule
         ideaModuleTask.sourceDirs == project.sourceSets.main.allSource.srcDirs

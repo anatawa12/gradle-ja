@@ -76,7 +76,7 @@ class IdeaPlugin extends IdePlugin {
     private configureIdeaModule(Project project) {
         def task = project.task('ideaModule', description: 'Generates IDEA module files (IML)', type: GenerateIdeaModule) {
             def iml = new IdeaModuleIml(xmlTransformer, project.projectDir)
-            module = services.get(ClassGenerator).newInstance(IdeaModule, [project: project, iml: iml])
+            module = services.get(ClassGenerator).newInstance(IdeaModule, project, iml)
 
             model.module = module
 
@@ -103,12 +103,13 @@ class IdeaPlugin extends IdePlugin {
         if (isRoot(project)) {
             def task = project.task('ideaProject', description: 'Generates IDEA project file (IPR)', type: GenerateIdeaProject) {
                 def ipr = new XmlFileContentMerger(xmlTransformer)
-                ideaProject = services.get(ClassGenerator).newInstance(IdeaProject, [ipr: ipr])
+                ideaProject = services.get(ClassGenerator).newInstance(IdeaProject, ipr)
 
                 model.project = ideaProject
 
                 ideaProject.outputFile = new File(project.projectDir, project.name + ".ipr")
-                ideaProject.javaVersion = JavaVersion.VERSION_1_6
+                ideaProject.conventionMapping.jdkName = { JavaVersion.VERSION_1_6.toString() }
+                ideaProject.conventionMapping.languageLevel = { new IdeaLanguageLevel(JavaVersion.VERSION_1_6) }
                 ideaProject.wildcards = ['!?*.java', '!?*.groovy'] as Set
                 ideaProject.conventionMapping.modules = {
                     project.rootProject.allprojects.findAll { it.plugins.hasPlugin(IdeaPlugin) }.collect { it.idea.module }
@@ -131,8 +132,9 @@ class IdeaPlugin extends IdePlugin {
 
     private configureIdeaProjectForJava(Project project) {
         if (isRoot(project)) {
-            project.idea.project {
-                javaVersion = project.sourceCompatibility
+            project.idea.project.conventionMapping.jdkName   = { project.sourceCompatibility.toString() }
+            project.idea.project.conventionMapping.languageLevel = {
+                new IdeaLanguageLevel(project.sourceCompatibility)
             }
         }
     }

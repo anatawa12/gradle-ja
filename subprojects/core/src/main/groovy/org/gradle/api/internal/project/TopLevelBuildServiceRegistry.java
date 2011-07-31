@@ -57,8 +57,6 @@ import org.gradle.process.internal.WorkerProcessBuilder;
 import org.gradle.process.internal.child.WorkerProcessClassPathProvider;
 import org.gradle.util.*;
 
-import java.io.File;
-
 /**
  * Contains the singleton services which are shared by all builds executed by a single {@link org.gradle.GradleLauncher}
  * invocation.
@@ -106,11 +104,27 @@ public class TopLevelBuildServiceRegistry extends DefaultServiceRegistry impleme
     }
 
     protected ClassPathRegistry createClassPathRegistry() {
-        return new DefaultClassPathRegistry(new WorkerProcessClassPathProvider(get(CacheRepository.class)));
+        return new DefaultClassPathRegistry(
+                new DependencyClassPathProvider(get(ClassLoaderRegistry.class)),
+                new WorkerProcessClassPathProvider(get(CacheRepository.class)));
     }
-    
+
+    protected IsolatedAntBuilder createIsolatedAntBuilder() {
+        return new DefaultIsolatedAntBuilder(get(ClassPathRegistry.class), get(ClassLoaderFactory.class));
+    }
+
     protected ActorFactory createActorFactory() {
         return new DefaultActorFactory(get(ExecutorFactory.class));
+    }
+
+    protected IGradlePropertiesLoader createGradlePropertiesLoader() {
+        return new DefaultGradlePropertiesLoader(startParameter);
+    }
+
+    protected BuildLoader createBuildLoader() {
+        return new ProjectPropertySettingBuildLoader(
+                get(IGradlePropertiesLoader.class),
+                new InstantiatingBuildLoader(get(IProjectFactory.class)));
     }
 
     protected TaskExecuter createTaskExecuter() {
@@ -194,11 +208,13 @@ public class TopLevelBuildServiceRegistry extends DefaultServiceRegistry impleme
     }
 
     protected SettingsProcessor createSettingsProcessor() {
-        return new PropertiesLoadingSettingsProcessor(new
-                ScriptEvaluatingSettingsProcessor(
+        return new PropertiesLoadingSettingsProcessor(
+                new ScriptEvaluatingSettingsProcessor(
                     get(ScriptPluginFactory.class),
                     new SettingsFactory(
-                        new DefaultProjectDescriptorRegistry())));
+                        new DefaultProjectDescriptorRegistry()),
+                        get(IGradlePropertiesLoader.class)),
+                get(IGradlePropertiesLoader.class));
     }
 
     protected ExceptionAnalyser createExceptionAnalyser() {
@@ -235,12 +251,8 @@ public class TopLevelBuildServiceRegistry extends DefaultServiceRegistry impleme
 
     protected DependencyManagementServices createDependencyManagementServices() {
         ClassLoader coreImplClassLoader = get(ClassLoaderRegistry.class).getCoreImplClassLoader();
-        try {
-            Class<?> implClass = coreImplClassLoader.loadClass("org.gradle.api.internal.artifacts.DefaultDependencyManagementServices");
-            return (DependencyManagementServices) implClass.getConstructor(ServiceRegistry.class).newInstance(this);
-        } catch (Exception e) {
-            throw UncheckedException.asUncheckedException(e);
-        }
+        ServiceLocator serviceLocator = new ServiceLocator(coreImplClassLoader);
+        return serviceLocator.getFactory(DependencyManagementServices.class).newInstance(this);
     }
 
     public ServiceRegistryFactory createFor(Object domainObject) {
@@ -252,9 +264,6 @@ public class TopLevelBuildServiceRegistry extends DefaultServiceRegistry impleme
     }
 
     private class DependencyMetaDataProviderImpl implements DependencyMetaDataProvider {
-        public File getGradleUserHomeDir() {
-            return startParameter.getGradleUserHomeDir();
-        }
 
         public Module getModule() {
             return new DefaultModule("unspecified", "unspecified", Project.DEFAULT_VERSION, Project.DEFAULT_STATUS);

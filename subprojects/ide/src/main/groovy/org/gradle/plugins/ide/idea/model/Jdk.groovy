@@ -27,26 +27,20 @@ class Jdk {
     String languageLevel
     String projectJdkName
 
-    def Jdk(String javaVersion) {
-        if (javaVersion.startsWith("1.4")) {
+    def Jdk(String jdkName, IdeaLanguageLevel ideaLanguageLevel) {
+        if (jdkName.startsWith("1.4")) {
             assertKeyword = true
             jdk15 = false
-            languageLevel = 'JDK_1_4'
         }
-        else if (javaVersion.startsWith("1.5")) {
+        else if (jdkName >= '1.5') {
             assertKeyword = true
             jdk15 = true
-            languageLevel = 'JDK_1_5'
-        }
-        else if (javaVersion >= '1.6') {
-            assertKeyword = true
-            jdk15 = true
-            languageLevel = 'JDK_1_6'
         }
         else {
             assertKeyword = false
         }
-        projectJdkName = javaVersion
+        languageLevel = ideaLanguageLevel.formatted
+        projectJdkName = jdkName
     }
 
     def Jdk(assertKeyword, jdk15, languageLevel, projectJdkName) {

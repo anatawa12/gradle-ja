@@ -85,22 +85,10 @@ some zip front ends for Mac OS X don't restore the file permissions properly.
     <title>正しくインストールされたことをテストする<phrase role="original">Running and testing your installation</phrase></title>
 
 <para role="original">You run Gradle via the <command>gradle</command> command. To check if Gradle is properly installed just type
-<command>gradle -v</command> and you should get an output like:
+<command>gradle -v</command>. The output shows gradle version and also local environment configuration (groovy and jvm version, etc.).
+    The displayed gradle version should match the distribution you have downloaded.
 </para>
 Gradleは、<command>gradle</command>コマンドを使って実行されます。Gradleが正しくインストールされていることを確認するには、<command>gradle -v</command>と入力してください。以下のような出力になれば大丈夫です。
-
-<screen>
-------------------------------------------------------------
-Gradle 1.0-milestone-3
-------------------------------------------------------------
-
-Gradle build time: Monday, 25 April 2011 5:24:40 PM EST
-Groovy: 1.7.10
-Ant: Apache Ant(TM) version 1.8.2 compiled on December 20 2010
-Ivy: 2.2.0
-JVM: 1.6.0_22 (Sun Microsystems Inc. 17.1-b03)
-OS: Linux 2.6.35-28-generic amd64
-</screen>
 
 </section>
 

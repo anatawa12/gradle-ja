@@ -28,12 +28,12 @@ import org.gradle.api.specs.Specs;
 import org.gradle.api.tasks.TaskContainer;
 import org.gradle.api.tasks.TaskDependency;
 import org.gradle.util.HelperUtil;
+import org.gradle.util.JUnit4GroovyMockery;
 import org.gradle.util.TestClosure;
 import org.gradle.util.WrapUtil;
 import org.jmock.Expectations;
 import org.jmock.integration.junit4.JMock;
 import org.jmock.integration.junit4.JUnit4Mockery;
-import org.jmock.lib.legacy.ClassImposteriser;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -48,10 +48,7 @@ import static org.junit.Assert.*;
 
 @RunWith(JMock.class)
 public class DefaultConfigurationTest {
-    private JUnit4Mockery context = new JUnit4Mockery() {{
-        setImposteriser(ClassImposteriser.INSTANCE);
-    }};
-
+    private JUnit4Mockery context = new JUnit4GroovyMockery();
     private IvyService ivyServiceStub = context.mock(IvyService.class);
     private ConfigurationsProvider configurationContainer;
 
@@ -359,6 +356,9 @@ public class DefaultConfigurationTest {
             allowing(otherConfiguration).getHierarchy();
             will(returnValue(toSet()));
 
+            allowing(otherConfiguration).getAllArtifacts();
+            allowing(otherConfiguration).getAllDependencies();
+            
             allowing(otherConfTaskDependencyMock).getDependencies(with(any(Task.class)));
             will(returnValue(toSet(otherConfTaskMock)));
 
@@ -385,6 +385,10 @@ public class DefaultConfigurationTest {
         context.checking(new Expectations() {{
             allowing(otherConfiguration).getHierarchy();
             will(returnValue(toSet()));
+
+            allowing(otherConfiguration).getAllArtifacts();
+            will(returnValue(toDomainObjectSet(PublishArtifact.class, otherArtifact)));
+            allowing(otherConfiguration).getAllDependencies();
 
             allowing(otherConfiguration).getExtendsFrom();
             will(returnValue(toSet()));
@@ -465,6 +469,9 @@ public class DefaultConfigurationTest {
             allowing(otherConfiguration).getHierarchy();
             will(returnValue(toSet()));
 
+            allowing(otherConfiguration).getAllArtifacts();
+            allowing(otherConfiguration).getAllDependencies();
+            
             allowing(otherConfTaskDependencyMock).getDependencies(target);
             will(returnValue(toSet(otherConfTaskMock)));
         }});
@@ -512,7 +519,7 @@ public class DefaultConfigurationTest {
         final ConfigurationContainer configurationContainer = context.mock(ConfigurationContainer.class);
         final Configuration dependentConfig = context.mock(Configuration.class);
         final ProjectDependency projectDependency = context.mock(ProjectDependency.class);
-        final Set<ProjectDependency> projectDependencies = toSet(projectDependency);
+        final Set<ProjectDependency> projectDependencies = toDomainObjectSet(ProjectDependency.class, projectDependency);
 
 
         context.checking(new Expectations() {{
@@ -635,6 +642,35 @@ public class DefaultConfigurationTest {
     }
 
     @Test
+    public void artifactAddedAction() {
+        final TestClosure closure = context.mock(TestClosure.class);
+        final PublishArtifact artifact = HelperUtil.createPublishArtifact("name1", "ext1", "type1", "classifier1");
+
+        context.checking(new Expectations() {{
+            one(closure).call(artifact);
+        }});
+
+        configuration.getArtifacts().whenObjectAdded(HelperUtil.toClosure(closure));
+        configuration.addArtifact(artifact);
+    }
+
+    @Test
+    public void artifactRemovedAction() {
+        final TestClosure closure = context.mock(TestClosure.class);
+        final PublishArtifact artifact = HelperUtil.createPublishArtifact("name1", "ext1", "type1", "classifier1");
+
+        configuration.addArtifact(artifact);
+
+        context.checking(new Expectations() {{
+            one(closure).call(artifact);
+        }});
+
+        configuration.getArtifacts().whenObjectRemoved(HelperUtil.toClosure(closure));
+
+        configuration.removeArtifact(artifact);
+    }
+
+    @Test
     public void removeArtifact() {
         PublishArtifact artifact = HelperUtil.createPublishArtifact("name1", "ext1", "type1", "classifier1");
         configuration.addArtifact(artifact);
@@ -733,10 +769,10 @@ public class DefaultConfigurationTest {
         assertThat(copiedConfiguration.isVisible(), equalTo(configuration.isVisible()));
         assertThat(copiedConfiguration.isTransitive(), equalTo(configuration.isTransitive()));
         assertThat(copiedConfiguration.getDescription(), equalTo(configuration.getDescription()));
-        assertThat(copiedConfiguration.getAllArtifacts(), equalTo(configuration.getAllArtifacts()));
+        assertThat(asSet(copiedConfiguration.getAllArtifacts()), equalTo(asSet(configuration.getAllArtifacts())));
         assertThat(copiedConfiguration.getExcludeRules(), equalTo(configuration.getExcludeRules()));
         assertThat(copiedConfiguration.getExcludeRules().iterator().next(), not(sameInstance(configuration.getExcludeRules().iterator().next())));
-        assertThat(copiedConfiguration.getDependencies(), equalTo(expectedDependencies));
+        assertThat(WrapUtil.asSet(copiedConfiguration.getDependencies()), equalTo(WrapUtil.asSet(expectedDependencies)));
         assertNotSameInstances(copiedConfiguration.getDependencies(), expectedDependencies);
     }
 
@@ -878,12 +914,12 @@ public class DefaultConfigurationTest {
         });
         assertInvalidUserDataException(new Executer() {
             public void execute() {
-                configuration.addArtifact(context.mock(PublishArtifact.class));
+                configuration.addDependency(context.mock(Dependency.class));
             }
         });
         assertInvalidUserDataException(new Executer() {
             public void execute() {
-                configuration.addDependency(context.mock(Dependency.class));
+                configuration.getDependencies().add(context.mock(Dependency.class));
             }
         });
         assertInvalidUserDataException(new Executer() {
@@ -898,7 +934,17 @@ public class DefaultConfigurationTest {
         });
         assertInvalidUserDataException(new Executer() {
             public void execute() {
-                configuration.removeArtifact(context.mock(PublishArtifact.class, "removeeArtifact"));
+                configuration.addArtifact(context.mock(PublishArtifact.class));
+            }
+        });
+        assertInvalidUserDataException(new Executer() {
+            public void execute() {
+                configuration.removeArtifact(context.mock(PublishArtifact.class, "removeArtifact"));
+            }
+        });
+        assertInvalidUserDataException(new Executer() {
+            public void execute() {
+                configuration.getArtifacts().add(context.mock(PublishArtifact.class, "removeArtifact"));
             }
         });
     }

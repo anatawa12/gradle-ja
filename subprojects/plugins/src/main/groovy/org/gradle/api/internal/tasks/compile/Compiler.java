@@ -25,7 +25,5 @@ public interface Compiler {
 
     void setDestinationDir(File destinationDir);
 
-    void setClasspath(Iterable<File> classpath);
-
     WorkResult execute();
 }

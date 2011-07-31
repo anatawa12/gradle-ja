@@ -19,7 +19,9 @@ import org.gradle.api.artifacts.Configuration
 import org.gradle.api.tasks.SourceSet
 import org.gradle.plugins.ide.api.XmlFileContentMerger
 import org.gradle.plugins.ide.eclipse.model.internal.ClasspathFactory
+import org.gradle.plugins.ide.eclipse.model.internal.ExportedEntriesUpdater
 import org.gradle.util.ConfigureUtil
+import org.gradle.plugins.ide.eclipse.model.internal.FileReferenceFactory
 
 /**
  * Enables fine-tuning classpath details (.classpath file) of the Eclipse plugin
@@ -47,6 +49,9 @@ import org.gradle.util.ConfigureUtil
  *
  *     //you can also remove configurations from the classpath:
  *     minusConfigurations += configurations.someBoringConfig
+ *
+ *     //if you don't want some classpath entries 'exported' in eclipse
+ *     noExportConfigurations += configurations.provided
  *
  *     //if you want to append extra containers:
  *     containers 'someFriendlyContainer', 'andYetAnotherContainer'
@@ -123,14 +128,22 @@ class EclipseClasspath {
      */
     Collection<Configuration> minusConfigurations = []
 
-   /**
+    /**
+     * The included configurations (plusConfigurations) which files will not be exported.
+     * Only make sense if those configurations are also a part of {@link #plusConfigurations}
+     * <p>
+     * For example see docs for {@link EclipseClasspath}
+     */
+    Collection<Configuration> noExportConfigurations = []
+
+    /**
      * Containers to be added to the classpath
      * <p>
      * For example see docs for {@link EclipseClasspath}
      */
     Set<String> containers = new LinkedHashSet<String>()
 
-   /**
+    /**
      * Adds containers to the .classpath.
      * <p>
      * For example see docs for {@link EclipseClasspath}
@@ -172,30 +185,34 @@ class EclipseClasspath {
      *
      * For example see docs for {@link EclipseProject}
      */
-
     void file(Closure closure) {
         ConfigureUtil.configure(closure, file)
     }
-    /**
-     * See {@link #file(Closure) }
-     */
 
+    /**
+     * See {@link #file(Closure)}
+     */
     XmlFileContentMerger file
 
-    /******/
+    /** ****/
 
-    org.gradle.api.Project project
+    final org.gradle.api.Project project
     Map<String, File> pathVariables = [:]
     boolean projectDependenciesOnly = false
 
-    //only folder paths internal to the project (e.g. beneath the project folder) are supported
-    List<String> classFolders
+    List<File> classFolders
+
+    EclipseClasspath(org.gradle.api.Project project) {
+        this.project = project
+    }
 
     /**
      * Calculates, resolves & returns dependency entries of this classpath
      */
     public List<ClasspathEntry> resolveDependencies() {
-        return new ClasspathFactory().createEntries(this)
+        def entries = new ClasspathFactory().createEntries(this)
+        new ExportedEntriesUpdater().updateExported(entries, this.noExportConfigurations*.name)
+        return entries
     }
 
     void mergeXmlClasspath(Classpath xmlClasspath) {
@@ -203,5 +220,11 @@ class EclipseClasspath {
         def entries = resolveDependencies()
         xmlClasspath.configure(entries)
         file.whenMerged.execute(xmlClasspath)
+    }
+
+    FileReferenceFactory getFileReferenceFactory() {
+        def referenceFactory = new FileReferenceFactory()
+        pathVariables.each { name, dir -> referenceFactory.addPathVariable(name, dir) }
+        return referenceFactory
     }
 }

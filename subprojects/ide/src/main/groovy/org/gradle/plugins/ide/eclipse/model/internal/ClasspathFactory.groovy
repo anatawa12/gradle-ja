@@ -15,9 +15,10 @@
  */
 package org.gradle.plugins.ide.eclipse.model.internal
 
-import org.gradle.api.internal.artifacts.dependencies.DefaultExternalModuleDependency
-import org.gradle.api.specs.Spec
-import org.gradle.api.artifacts.*
+import org.gradle.plugins.ide.internal.IdeDependenciesExtractor
+import org.gradle.plugins.ide.internal.IdeDependenciesExtractor.IdeLocalFileDependency
+import org.gradle.plugins.ide.internal.IdeDependenciesExtractor.IdeProjectDependency
+import org.gradle.plugins.ide.internal.IdeDependenciesExtractor.IdeRepoFileDependency
 import org.gradle.plugins.ide.eclipse.model.*
 
 /**
@@ -25,157 +26,83 @@ import org.gradle.plugins.ide.eclipse.model.*
  */
 class ClasspathFactory {
 
+    interface ClasspathEntryBuilder {
+        void update(List<ClasspathEntry> entries, EclipseClasspath eclipseClasspath)
+    }
+
+    private final ClasspathEntryBuilder outputCreator = new ClasspathEntryBuilder() {
+        void update(List<ClasspathEntry> entries, EclipseClasspath eclipseClasspath) {
+            entries.add(new Output(eclipseClasspath.project.relativePath(eclipseClasspath.defaultOutputDir)))
+        }
+    }
+
+    private final ClasspathEntryBuilder containersCreator = new ClasspathEntryBuilder() {
+        void update(List<ClasspathEntry> entries, EclipseClasspath eclipseClasspath) {
+            eclipseClasspath.containers.each { container ->
+                Container entry = new Container(container)
+                entry.exported = true
+                entries << entry
+            }
+        }
+    }
+
+    private final ClasspathEntryBuilder projectDependenciesCreator = new ClasspathEntryBuilder() {
+        void update(List<ClasspathEntry> entries, EclipseClasspath eclipseClasspath) {
+            entries.addAll(dependenciesExtractor.extractProjectDependencies(eclipseClasspath.plusConfigurations, eclipseClasspath.minusConfigurations)
+                .collect { IdeProjectDependency it -> new ProjectDependencyBuilder().build(it.project, it.declaredConfiguration.name) })
+        }
+    }
+
+    private final ClasspathEntryBuilder librariesCreator = new ClasspathEntryBuilder() {
+        void update(List<ClasspathEntry> entries, EclipseClasspath classpath) {
+            def referenceFactory = classpath.fileReferenceFactory
+
+            dependenciesExtractor.extractRepoFileDependencies(
+                    classpath.project.configurations, classpath.plusConfigurations, classpath.minusConfigurations, classpath.downloadSources, classpath.downloadJavadoc)
+            .each { IdeRepoFileDependency it ->
+                entries << createLibraryEntry(it.file, it.sourceFile, it.javadocFile, it.declaredConfiguration.name, referenceFactory)
+            }
+
+            dependenciesExtractor.extractLocalFileDependencies(classpath.plusConfigurations, classpath.minusConfigurations)
+            .each { IdeLocalFileDependency it ->
+                entries << createLibraryEntry(it.file, null, null, it.declaredConfiguration.name, referenceFactory)
+            }
+        }
+    }
+
     private final sourceFoldersCreator = new SourceFoldersCreator()
+    private final IdeDependenciesExtractor dependenciesExtractor = new IdeDependenciesExtractor()
     private final classFoldersCreator = new ClassFoldersCreator()
 
     List<ClasspathEntry> createEntries(EclipseClasspath classpath) {
         def entries = []
-        entries.add(new Output(classpath.project.relativePath(classpath.defaultOutputDir)))
+        outputCreator.update(entries, classpath)
         sourceFoldersCreator.populateForClasspath(entries, classpath)
-        entries.addAll(getEntriesFromContainers(classpath.getContainers()))
-        entries.addAll(getDependencies(classpath))
+        containersCreator.update(entries, classpath)
+        if (classpath.projectDependenciesOnly) {
+            projectDependenciesCreator.update(entries, classpath)
+        } else {
+            projectDependenciesCreator.update(entries, classpath)
+            librariesCreator.update(entries, classpath)
+            entries.addAll(classFoldersCreator.create(classpath))
+        }
         return entries
     }
 
-    private List getEntriesFromContainers(Set containers) {
-        containers.collect { container ->
-            new Container(container, true, null, [] as Set)
-        }
-    }
-
-    private List getDependencies(EclipseClasspath classpath) {
-        if (classpath.projectDependenciesOnly) {
-            getModules(classpath)
+    private AbstractLibrary createLibraryEntry(File binary, File source, File javadoc, String declaredConfigurationName, FileReferenceFactory referenceFactory) {
+        def binaryRef = referenceFactory.fromFile(binary)
+        def sourceRef = referenceFactory.fromFile(source)
+        def javadocRef = referenceFactory.fromFile(javadoc)
+        def out
+        if (binaryRef.relativeToPathVariable) {
+            out = new Variable(binaryRef)
         } else {
-            getModules(classpath) + getLibraries(classpath) + classFoldersCreator.create(classpath)
+            out = new Library(binaryRef)
         }
-    }
-
-    protected List getModules(EclipseClasspath classpath) {
-        return getDependencies(classpath.plusConfigurations, classpath.minusConfigurations, { it instanceof org.gradle.api.artifacts.ProjectDependency })
-                .collect { projectDependency -> new ProjectDependencyBuilder().build(projectDependency.dependencyProject) }
-    }
-
-    protected Set getLibraries(EclipseClasspath classpath) {
-        def allResolvedDependencies = resolveDependencies(classpath.plusConfigurations, classpath.minusConfigurations)
-
-        Set sourceDependencies = getResolvableDependenciesForAllResolvedDependencies(allResolvedDependencies) { dependency ->
-            addSourceArtifact(dependency)
-        }
-        Map sourceFiles = classpath.downloadSources ? getFiles(classpath.project, sourceDependencies, "sources") : [:]
-
-        Set javadocDependencies = getResolvableDependenciesForAllResolvedDependencies(allResolvedDependencies) { dependency ->
-            addJavadocArtifact(dependency)
-        }
-        Map javadocFiles = classpath.downloadJavadoc ? getFiles(classpath.project, javadocDependencies, "javadoc") : [:]
-
-        List moduleLibraries = resolveFiles(classpath.plusConfigurations, classpath.minusConfigurations).collect { File binaryFile ->
-            File sourceFile = sourceFiles[binaryFile.name]
-            File javadocFile = javadocFiles[binaryFile.name]
-            createLibraryEntry(binaryFile, sourceFile, javadocFile, classpath.pathVariables)
-        }
-        moduleLibraries.addAll(getSelfResolvingFiles(getDependencies(classpath.plusConfigurations, classpath.minusConfigurations,
-                { it instanceof SelfResolvingDependency && !(it instanceof org.gradle.api.artifacts.ProjectDependency)}), classpath.pathVariables))
-        moduleLibraries
-    }
-
-    private getSelfResolvingFiles(Collection dependencies, Map<String, File> pathVariables) {
-        dependencies.collect { SelfResolvingDependency dependency ->
-            dependency.resolve().collect { File file ->
-                createLibraryEntry(file, null, null, pathVariables)
-            }
-        }.flatten()
-    }
-
-    AbstractLibrary createLibraryEntry(File binary, File source, File javadoc, Map<String, File> pathVariables) {
-        def usedVariableEntry = pathVariables.find { String name, File value -> binary.canonicalPath.startsWith(value.canonicalPath) }
-        if (usedVariableEntry) {
-            String name = usedVariableEntry.key
-            String value = usedVariableEntry.value.canonicalPath
-            String binaryPath = name + binary.canonicalPath.substring(value.length())
-            String sourcePath = source ? name + source.canonicalPath.substring(value.length()) : null
-            String javadocPath = javadoc ? name + javadoc.canonicalPath.substring(value.length()) : null
-            return new Variable(binaryPath, true, null, [] as Set, sourcePath, javadocPath)
-        }
-        new Library(binary.canonicalPath, true, null, [] as Set, source ? source.canonicalPath : null, javadoc ? javadoc.canonicalPath : null)
-    }
-
-    private Set<Dependency> getDependencies(Collection<Configuration> plusConfigurations, Collection<Configuration> minusConfigurations, Closure filter) {
-        def result = new LinkedHashSet()
-        for (plusConfiguration in plusConfigurations) {
-            result.addAll(plusConfiguration.allDependencies.findAll(filter))
-        }
-        for (minusConfiguration in minusConfigurations) {
-            result.removeAll(minusConfiguration.allDependencies.findAll(filter))
-        }
-        result
-    }
-
-    private Set<ResolvedDependency> resolveDependencies(Collection<Configuration> plusConfigurations, Collection<Configuration> minusConfigurations) {
-        def result = new LinkedHashSet()
-        for (plusConfiguration in plusConfigurations) {
-            result.addAll(getAllDeps(plusConfiguration.resolvedConfiguration.getFirstLevelModuleDependencies({ it instanceof ExternalDependency } as Spec)))
-        }
-        for (minusConfiguration in minusConfigurations) {
-            result.removeAll(getAllDeps(minusConfiguration.resolvedConfiguration.getFirstLevelModuleDependencies({ it instanceof ExternalDependency } as Spec)))
-        }
-        result
-    }
-
-    private Set<File> resolveFiles(Collection<Configuration> plusConfigurations, Collection<Configuration> minusConfigurations) {
-        def result = new LinkedHashSet()
-        for (plusConfiguration in plusConfigurations) {
-            result.addAll(plusConfiguration.files { it instanceof ExternalDependency })
-        }
-        for (minusConfiguration in minusConfigurations) {
-            result.removeAll(minusConfiguration.files { it instanceof ExternalDependency })
-        }
-        result
-    }
-
-    private getFiles(org.gradle.api.Project project, Set dependencies, String classifier) {
-        return project.configurations.detachedConfiguration((dependencies as Dependency[])).files.inject([:]) { result, sourceFile ->
-            String key = sourceFile.name.replace("-${classifier}.jar", '.jar')
-            result[key] = sourceFile
-            result
-        }
-    }
-
-    private List getResolvableDependenciesForAllResolvedDependencies(Set allResolvedDependencies, Closure configureClosure) {
-        return allResolvedDependencies.collect { ResolvedDependency resolvedDependency ->
-            def dependency = new DefaultExternalModuleDependency(resolvedDependency.moduleGroup, resolvedDependency.moduleName, resolvedDependency.moduleVersion,
-                    resolvedDependency.configuration)
-            dependency.transitive = false
-            configureClosure.call(dependency)
-            dependency
-        }
-    }
-
-    protected Set getAllDeps(Collection deps, Set allDeps = []) {
-        deps.each { ResolvedDependency resolvedDependency ->
-            def notSeenBefore = allDeps.add(resolvedDependency)
-            if (notSeenBefore) { // defend against circular dependencies
-                getAllDeps(resolvedDependency.children, allDeps)
-            }
-        }
-        allDeps
-    }
-
-    protected void addSourceArtifact(DefaultExternalModuleDependency dependency) {
-        dependency.artifact { artifact ->
-            artifact.name = dependency.name
-            artifact.type = 'source'
-            artifact.extension = 'jar'
-            artifact.classifier = 'sources'
-        }
-    }
-
-    protected void addJavadocArtifact(DefaultExternalModuleDependency dependency) {
-        dependency.artifact { artifact ->
-            artifact.name = dependency.name
-            artifact.type = 'javadoc'
-            artifact.extension = 'jar'
-            artifact.classifier = 'javadoc'
-        }
+        out.sourcePath = sourceRef
+        out.javadocPath = javadocRef
+        out.exported = true
+        out.declaredConfigurationName = declaredConfigurationName
+        out
     }
 }

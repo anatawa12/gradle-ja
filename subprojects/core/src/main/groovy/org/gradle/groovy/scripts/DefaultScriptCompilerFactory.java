@@ -18,7 +18,8 @@ package org.gradle.groovy.scripts;
 import org.gradle.cache.CacheRepository;
 import org.gradle.cache.PersistentCache;
 import org.gradle.util.HashUtil;
-import org.gradle.util.ReflectionUtil;
+import org.gradle.api.internal.Instantiator;
+import org.gradle.util.DirectInstantiator;
 
 import java.io.File;
 import java.util.HashMap;
@@ -92,7 +93,8 @@ public class DefaultScriptCompilerFactory implements ScriptCompilerFactory {
             }
             Class<? extends T> scriptClass = scriptCompilationHandler.loadFromDir(source, classLoader, classesDir,
                     scriptBaseClass);
-            return scriptBaseClass.cast(ReflectionUtil.newInstance(scriptClass, new Object[0]));
+            Instantiator instantiator = new DirectInstantiator();
+            return instantiator.newInstance(scriptClass);
         }
     }
 }

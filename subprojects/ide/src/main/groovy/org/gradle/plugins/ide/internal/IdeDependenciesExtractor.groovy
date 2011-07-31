@@ -27,73 +27,119 @@ import org.gradle.api.artifacts.*
 class IdeDependenciesExtractor {
 
     static class IdeDependency {
-        Project dependencyProject
-        File externalDependency
-        File externalDependencySource
-        File externalDependencyJavadoc
-        File internalDependency
+        Configuration declaredConfiguration
     }
 
-    List<IdeDependency> extract(ConfigurationContainer confContainer, Collection<Configuration> plusConfigurations, Collection<Configuration> minusConfigurations, boolean downloadSources, boolean downloadJavadoc) {
-        def out = []
+    static class IdeLocalFileDependency extends IdeDependency {
+        File file
+    }
 
-        getDependencies(plusConfigurations, minusConfigurations, { it instanceof ProjectDependency }).each { ProjectDependency it ->
-            out << new IdeDependency (dependencyProject: it.dependencyProject)
+    static class IdeRepoFileDependency extends IdeDependency {
+        File file
+        File sourceFile
+        File javadocFile
+    }
+
+    static class IdeProjectDependency extends IdeDependency {
+        Project project
+    }
+
+    List<IdeProjectDependency> extractProjectDependencies(Collection<Configuration> plusConfigurations, Collection<Configuration> minusConfigurations) {
+        LinkedHashMap<ProjectDependency, Configuration> depToConf = [:]
+        for (plusConfiguration in plusConfigurations) {
+            for (ProjectDependency dependency in plusConfiguration.allDependencies.findAll({ it instanceof ProjectDependency })) {
+                depToConf[dependency] = plusConfiguration
+            }
         }
+        for (minusConfiguration in minusConfigurations) {
+            for(minusDep in minusConfiguration.allDependencies.findAll({ it instanceof ProjectDependency })) {
+                if (minusDep instanceof ExternalDependency) {
+                    // This deals with dependencies that are defined in different scopes with different
+                    // artifacts. Right now we accept the fact, that in such a situation some artifacts
+                    // might be duplicated in Idea (they live in different scopes then).
+
+                    //TODO SF START - I think this code path should be removed.
+                    //I don't think it is ever executed because minusDep is never an instance of ExternalDependency
+                    //We only call this method for ProjectDependencies (see the callers of this method) for SelfResolvingDependencies (aka local files - no longer the case after refactoring)
+                    //So this path seems to be a dead code because non of above implementators ever implement the ExternalDependency interface.
+                    //All above is assuming that clients didn't create their own implementations of our public interfaces that satisfy this condition.
+                    //But I think it bloody unlikely someone was so hardcore to provide own implementations of SelfResolvingDependency, ProjectDependency, etc.
+                    //So, I think this code path should be removed but I cannot do it now as I'm refactoring something else in this area and I want to keep the demolition range short :)
+                    ExternalDependency removeCandidate = depToConf.keySet().find { it == minusDep }
+                    if (removeCandidate && removeCandidate.artifacts == minusDep.artifacts) {
+                        depToConf.remove(removeCandidate)
+                    }
+                    //END
+                } else {
+                    depToConf.remove(minusDep)
+                }
+            }
+        }
+        return depToConf.collect { projectDependency, conf ->
+            new IdeProjectDependency(project: projectDependency.dependencyProject, declaredConfiguration: conf)
+        }
+    }
+
+    List<IdeRepoFileDependency> extractRepoFileDependencies(ConfigurationContainer confContainer,
+                                                           Collection<Configuration> plusConfigurations, Collection<Configuration> minusConfigurations,
+                                                           boolean downloadSources, boolean downloadJavadoc) {
+        def out = []
 
         def allResolvedDependencies = resolveDependencies(plusConfigurations, minusConfigurations)
 
         Set sourceDependencies = getResolvableDependenciesForAllResolvedDependencies(allResolvedDependencies) { dependency ->
             addSourceArtifact(dependency)
         }
+
         Map<String, File> sourceFiles = downloadSources ? getFiles(confContainer.detachedConfiguration(sourceDependencies as Dependency[]), "sources") : [:]
 
         Set javadocDependencies = getResolvableDependenciesForAllResolvedDependencies(allResolvedDependencies) { dependency ->
             addJavadocArtifact(dependency)
         }
+
         Map<String, File> javadocFiles = downloadJavadoc ? getFiles(confContainer.detachedConfiguration(javadocDependencies as Dependency[]), "javadoc") : [:]
 
-        resolveFiles(plusConfigurations, minusConfigurations).collect { File binaryFile ->
+        resolveFiles(plusConfigurations, minusConfigurations).collect { File binaryFile, Configuration conf ->
             File sourceFile = sourceFiles[binaryFile.name]
             File javadocFile = javadocFiles[binaryFile.name]
-            out << new IdeDependency( externalDependency: binaryFile, externalDependencySource: sourceFile, externalDependencyJavadoc: javadocFile)
-        }
-        getSelfResolvingFiles(
-                getDependencies(plusConfigurations, minusConfigurations, { it instanceof SelfResolvingDependency && !(it instanceof org.gradle.api.artifacts.ProjectDependency)})
-        ).each {
-            out << new IdeDependency( internalDependency: it)
+            out << new IdeRepoFileDependency( file: binaryFile, sourceFile: sourceFile, javadocFile: javadocFile, declaredConfiguration: conf)
         }
 
-        return out
+        out
     }
 
-    private Set<File> resolveFiles(Collection<Configuration> plusConfigurations, Collection<Configuration> minusConfigurations) {
-        def result = new LinkedHashSet()
+    List<IdeLocalFileDependency> extractLocalFileDependencies(Collection<Configuration> plusConfigurations, Collection<Configuration> minusConfigurations) {
+        LinkedHashMap<File, Configuration> fileToConf = [:]
+        def filter = { it instanceof SelfResolvingDependency && !(it instanceof org.gradle.api.artifacts.ProjectDependency)}
+
         for (plusConfiguration in plusConfigurations) {
-            result.addAll(plusConfiguration.files { it instanceof ExternalDependency })
+            def deps = plusConfiguration.allDependencies.findAll(filter)
+            def files = deps.collect { it.resolve() }.flatten()
+            files.each { fileToConf[it] = plusConfiguration }
         }
         for (minusConfiguration in minusConfigurations) {
-            result.removeAll(minusConfiguration.files { it instanceof ExternalDependency })
+            def deps = minusConfiguration.allDependencies.findAll(filter)
+            def files = deps.collect { it.resolve() }.flatten()
+            files.each { fileToConf.remove(it) }
         }
-        result
+        return fileToConf.collect { file, conf ->
+            new IdeLocalFileDependency( file: file, declaredConfiguration: conf)
+        }
     }
 
-    private getSelfResolvingFiles(Collection dependencies) {
-        dependencies.collect { SelfResolvingDependency dependency ->
-            dependency.resolve().collect()
-        }.flatten()
-    }
-
-
-    private Set<Dependency> getDependencies(Collection<Configuration> plusConfigurations, Collection<Configuration> minusConfigurations, Closure filter) {
-        def result = new LinkedHashSet()
+    private Map<File, Configuration> resolveFiles(Collection<Configuration> plusConfigurations, Collection<Configuration> minusConfigurations) {
+        LinkedHashMap<File, Configuration> fileToConf = [:]
         for (plusConfiguration in plusConfigurations) {
-            result.addAll(plusConfiguration.allDependencies.findAll(filter))
+            for (file in plusConfiguration.files { it instanceof ExternalDependency }) {
+                fileToConf[file] = plusConfiguration
+            }
         }
         for (minusConfiguration in minusConfigurations) {
-            result.removeAll(minusConfiguration.allDependencies.findAll(filter))
+            for (file in minusConfiguration.files { it instanceof ExternalDependency }) {
+                fileToConf.remove(file)
+            }
         }
-        result
+        fileToConf
     }
 
     private Set<ResolvedDependency> resolveDependencies(Collection<Configuration> plusConfigurations, Collection<Configuration> minusConfigurations) {
@@ -107,7 +153,7 @@ class IdeDependenciesExtractor {
         result
     }
 
-    protected Set getAllDeps(Collection deps, Set allDeps = []) {
+    private Set getAllDeps(Collection deps, Set allDeps = []) {
         deps.each { ResolvedDependency resolvedDependency ->
             def notSeenBefore = allDeps.add(resolvedDependency)
             if (notSeenBefore) { // defend against circular dependencies
@@ -127,7 +173,7 @@ class IdeDependenciesExtractor {
         }
     }
 
-    protected void addSourceArtifact(DefaultExternalModuleDependency dependency) {
+    private void addSourceArtifact(DefaultExternalModuleDependency dependency) {
         dependency.artifact { artifact ->
             artifact.name = dependency.name
             artifact.type = 'source'
@@ -136,7 +182,7 @@ class IdeDependenciesExtractor {
         }
     }
 
-    protected void addJavadocArtifact(DefaultExternalModuleDependency dependency) {
+    private void addJavadocArtifact(DefaultExternalModuleDependency dependency) {
         dependency.artifact { artifact ->
             artifact.name = dependency.name
             artifact.type = 'javadoc'

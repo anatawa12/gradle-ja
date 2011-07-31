@@ -19,6 +19,7 @@ import groovy.lang.Closure;
 import org.gradle.api.file.FileCollection;
 import org.gradle.api.specs.Spec;
 import org.gradle.api.tasks.TaskDependency;
+import org.gradle.api.DomainObjectSet;
 
 import java.io.File;
 import java.util.Map;
@@ -48,6 +49,15 @@ public interface Configuration extends FileCollection {
      */
     String getName();
 
+    /**
+     * A {@link org.gradle.api.Namer} namer for configurations that returns {@link #getName()}.
+     */
+    static class Namer implements org.gradle.api.Namer<Configuration> {
+        public String determineName(Configuration c) {
+            return c.getName();
+        }
+    }
+    
     /**
      * Returns true if this is a visible configuration. A visible configuration is usable outside the project it belongs
      * to. The default value is true.
@@ -247,50 +257,60 @@ public interface Configuration extends FileCollection {
      *
      * @return the set of dependencies
      */
-    Set<Dependency> getDependencies();
+    DomainObjectSet<Dependency> getDependencies();
 
     /**
-     * Gets the complete set of dependencies including those contributed by
-     * superconfigurations.
+     * <p>Gets the complete set of dependencies including those contributed by
+     * superconfigurations.</p>
      *
-     * @return the set of dependencies
+     * @return the (read-only) set of dependencies
      */
-    Set<Dependency> getAllDependencies();
+    DomainObjectSet<Dependency> getAllDependencies();
 
     /**
-     * Gets the set of dependencies of type T directly contained in this configuration (ignoring superconfigurations).
+     * <p>Gets the set of dependencies of type T directly contained in this configuration (ignoring superconfigurations).</p>
+     * 
+     * <p>The returned set is live, in that any future dependencies added to this configuration that match the type will appear in the returned set.</p>
      *
      * @param type the dependency type
      * @param <T> the dependency type
-     * @return The set. Returns an empty set if there are no such dependencies.
+     * @return The (read-only) set.
      */
-    <T extends Dependency> Set<T> getDependencies(Class<T> type);
+    <T extends Dependency> DomainObjectSet<T> getDependencies(Class<T> type);
 
     /**
      * Gets the set of dependencies of type T for this configuration including those contributed by superconfigurations.
      *
+     * <p>The returned set is live, in that any future dependencies added to this configuration that match the type will appear in the returned set.</p>
+     * 
      * @param type the dependency type
      * @param <T> the dependency type
-     * @return The set. Returns an empty set if there are no such dependencies.
+     * @return The (read-only) set.
      */
-    <T extends Dependency> Set<T> getAllDependencies(Class<T> type);
+    <T extends Dependency> DomainObjectSet<T> getAllDependencies(Class<T> type);
 
     /**
      * Adds a dependency to this configuration.
      *
      * @param dependency The dependency to be added.
+     * @deprecated Use {@code add()} on {@link #getDependencies()} instead.
      */
+    @Deprecated
     void addDependency(Dependency dependency);
 
     /**
      * Returns the artifacts of this configuration excluding the artifacts of extended configurations.
+     * 
+     * @return The set.
      */
-    Set<PublishArtifact> getArtifacts();
+    DomainObjectSet<PublishArtifact> getArtifacts();
 
     /**
      * Returns the artifacts of this configuration including the artifacts of extended configurations.
+     * 
+     * @return The (read-only) set.
      */
-    Set<PublishArtifact> getAllArtifacts();
+    DomainObjectSet<PublishArtifact> getAllArtifacts();
 
     /**
      * Returns the artifacts of this configuration as a {@link FileCollection}, including artifacts of extended
@@ -327,7 +347,9 @@ public interface Configuration extends FileCollection {
      *
      * @param artifact The artifact.
      * @return this
+     * @deprecated Use {@code add()} on {@link #getArtifacts()} instead.
      */
+    @Deprecated
     Configuration addArtifact(PublishArtifact artifact);
 
     /**
@@ -335,7 +357,9 @@ public interface Configuration extends FileCollection {
      *
      * @param artifact The artifact.
      * @return this
+     * @deprecated Use {@code remove()} on {@link #getArtifacts()} instead.
      */
+    @Deprecated
     Configuration removeArtifact(PublishArtifact artifact);
 
     /**

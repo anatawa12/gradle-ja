@@ -21,14 +21,15 @@ package org.gradle.plugins.ide.eclipse.model
 class ProjectDependency extends AbstractClasspathEntry {
 
     String gradlePath
+    String declaredConfigurationName
 
     ProjectDependency(Node node) {
         super(node)
         assertPathIsValid()
     }
 
-    ProjectDependency(String path, boolean exported, String nativeLibraryLocation, Set accessRules, String gradlePath) {
-        super(path, exported, nativeLibraryLocation, accessRules)
+    ProjectDependency(String path, String gradlePath) {
+        super(path)
         assertPathIsValid()
         this.gradlePath = gradlePath
     }

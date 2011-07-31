@@ -233,7 +233,7 @@ public abstract class AbstractTask implements TaskInternal, DynamicObjectAware {
         return this;
     }
 
-    public void execute() {
+    public final void execute() {
         executer.execute(this, state);
         state.rethrowFailure();
     }
@@ -395,7 +395,7 @@ public abstract class AbstractTask implements TaskInternal, DynamicObjectAware {
     }
 
     public Task configure(Closure closure) {
-        return ConfigureUtil.configure(closure, this);
+        return ConfigureUtil.configure(closure, this, false);
     }
 
     public File getTemporaryDir() {
