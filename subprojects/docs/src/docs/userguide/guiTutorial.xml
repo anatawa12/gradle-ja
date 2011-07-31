@@ -15,39 +15,50 @@
   -->
 <chapter id="tutorial_gradle_gui">
     <title>Gradleのグラフィカルユーザーインターフェースを使う<phrase role="original">Using the Gradle Graphical User Interface</phrase></title>
-    <para>In addition to supporting a traditional command line interface, gradle offers
+    <para role="original">In addition to supporting a traditional command line interface, gradle offers
     a graphical user interface.  This is a stand alone user interface that can be launched with the
     <command>--gui</command> option.</para>
+    <para>伝統的なコマンドラインインターフェースに加え、Gradleはグラフィカルユーザーインターフェースも提供しています。これはスタンドアローンのインターフェースで、<command>--gui</command>オプションを使って起動できます。</para>
     <example>
-        <title>Launching the GUI</title>
+        <title>GUIの起動<phrase role="original">Launching the GUI</phrase></title>
         <programlisting><![CDATA[
 gradle --gui
 ]]></programlisting>
     </example>
-    <para>Note that this command blocks until the gradle GUI is closed.  Under *nix it is probably preferable to run
+    <para role="original">Note that this command blocks until the gradle GUI is closed.  Under *nix it is probably preferable to run
         this as a background task (<command>gradle --gui&amp;</command>)</para>
-    <para>If you run this from your gradle project working directory, you should see a tree of tasks.</para>
+    <para>このコマンドは、GUIをクローズするまでブロックされることに注意してください。*nixでは、バックグラウンドタスク(<command>gradle --gui&amp;</command>)で実行した方がいいかもしれません。</para>
+    <para role="original">If you run this from your gradle project working directory, you should see a tree of tasks.</para>
+    <para>このコマンドをgradleプロジェクトの作業ディレクトリで実行すると、タスクのツリーが表示されることが分かります。</para>
     <figure>
         <title>GUI Task Tree</title>
         <imageobject>
             <imagedata fileref="img/guiTaskTree.png" width="586px" depth="597px"/>
         </imageobject>
     </figure>
-    <para>It is preferable to run this command from your gradle project directory so that the settings of the UI will be
+    <para role="original">It is preferable to run this command from your gradle project directory so that the settings of the UI will be
         stored in your project directory. However, you can run it then change the working directory via the Setup tab in
         the UI.
     </para>
-    <para>The UI displays 4 tabs along the top and an output window along the bottom.</para>
+    <para>このコマンドは、自分のgradleプロジェクトのディレクトリで実行した方がいいでしょう。そうすれば、UI設定がプロジェクトのディレクトリに保存されるからです。しかし、コマンドを実行してから、UIのSetupタブで作業ディレクトリを変更することもできます。</para>
+    <para role="original">The UI displays 4 tabs along the top and an output window along the bottom.</para>
+    <para>UIには上部に4つのタブがあり、下部には出力を表示するウィンドウがあります。</para>
     <section>
         <title>Task Tree</title>
-        <para>
+        <para role="original">
             The Task Tree shows a hierarchical display of all projects and their tasks.
             Double clicking a task executes it.
         </para>
-        <para>
+        <para>Task Treeは、すべてのプロジェクトとタスクの階層構造を表示します。タスクをダブルクリックすると、そのタスクが実行されます。</para>
+        <para role="original">
             There is also a filter so that uncommon tasks can be hidden. You can toggle the filter via the Filter button. 
             Editing the filter allows you to configure which tasks and projects are shown. Hidden tasks show up in red.
             Note: newly created tasks will show up by default (versus being hidden by default).
+        </para>
+        <para>
+        また、フィルターも用意されているので、一般的でないタスクは非表示にすることができます。フィルターを有効にするかどうかはFilterボタンで切り替えできます。
+        フィルター編集画面では、どのタスクとプロジェクトを表示するかを設定します。非表示に設定されたタスクは赤色で強調されます。
+        注意: 新しく作成されたタスクは、デフォルトでは表示に設定されます（デフォルトで非表示に設定されるのではなく）。
         </para>
         <para>The Task Tree context menu provides the following options:</para>
         <itemizedlist>
