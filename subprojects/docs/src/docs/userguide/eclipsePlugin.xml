@@ -17,72 +17,101 @@
 <chapter id="eclipse_plugin">
     <title>Eclipse プラグイン<phrase role="original">The Eclipse Plugin</phrase></title>
     
-    <para>The Eclipse plugin generates files that are used by the <ulink url="http://eclipse.org">Eclipse IDE</ulink>, thus
+    <para role="original">The Eclipse plugin generates files that are used by the <ulink url="http://eclipse.org">Eclipse IDE</ulink>, thus
         making it possible to import the project into Eclipse (<guimenuitem>File</guimenuitem> - <guimenuitem>Import...</guimenuitem> - <guimenuitem>Existing Projects into Workspace</guimenuitem>).
         Both external dependencies (including associated source and javadoc files) and project dependencies are considered.</para>
+    <para>Eclipse プラグインは <ulink url="http://eclipse.org">Eclipse IDE</ulink> が利用するファイルを生成し、
+        (<guimenuitem>ファイル</guimenuitem> - <guimenuitem>インポート...</guimenuitem> - <guimenuitem>既存プロジェクトをワークスペースへ</guimenuitem> で)
+        Eclipse 内にプロジェクトをインポートできるようにします。
+        外部依存関係 (ソースと Javadoc も含む) とプロジェクト依存関係の両方が考慮されます。</para>
 
-    <para>Since 1.0-milestone-4 WTP-generating code was refactored into a separate plugin called <literal>eclipse-wtp</literal>.
+    <para role="original">Since 1.0-milestone-4 WTP-generating code was refactored into a separate plugin called <literal>eclipse-wtp</literal>.
         So if you are interested in WTP integration then only apply the <literal>eclipse-wtp</literal> plugin. Otherwise applying <literal>eclipse</literal> plugin is enough.
         This change was requested by eclipse users who take advantage of <literal>war</literal> or <literal>ear</literal> plugin
         but they don't use eclipse WTP. Internally, <literal>eclipse-wtp</literal> also applies the <literal>eclipse</literal> plugin so you should not apply both of those plugins.
     </para>
+    <para>1.0-milestone-4 以降、WTP生成コードはリファクタリングされ、<literal>eclipse-wtp</literal> プラグインに分離されました。
+        もしWTP が必要であれば、<literal>eclipse-wtp</literal> プラグインを適用するだけです。必要でなければ、<literal>eclipse</literal> プラグインを適用するだけでよいです。
+        この変更は WTP を利用せずに <literal>war</literal> プラグインや <literal>ear</literal> プラグインだけを利用するという Eclipse ユーザの要望によるものです。
+        <literal>eclipse-wtp</literal> プラグインは 内部的に <literal>eclipse</literal> プラグインも適用するので 両方を適用する必要はありません。
+    </para>
 
-    <para>What exactly the Eclipse plugin generates depends on which other plugins are used:</para>
+
+    <para role="original">What exactly the Eclipse plugin generates depends on which other plugins are used:</para>
+    <para>Eclipse プラグインが何を生成するかは どのプラグインと一緒に利用するかで決まります。</para>
     <table>
-        <title>Eclipse plugin behavior</title>
+        <title>Eclipse プラグインの振舞い<phrase role="original">Eclipse plugin behavior</phrase></title>
         <thead>
-            <tr><td>Plugin</td><td>Description</td></tr>
+            <tr><td>プラグイン<phrase role="original">Plugin</phrase></td><td>説明<phrase role="original">Description</phrase></td></tr>
         </thead>
         <tr>
-            <td>None</td><td>Generates minimal <filename>.project</filename> file.</td>
+            <td>なし<phrase role="original">None</phrase></td><td>最小構成の .project ファイルを生成します。
+            <phrase role="original">Generates minimal <filename>.project</filename> file.</phrase></td>
         </tr>
         <tr>
-            <td><link linkend="java_plugin">Java</link></td><td>Adds Java configuration to <filename>.project</filename>.
-            Generates <filename>.classpath</filename> and JDT settings file.</td>
+            <td><link linkend="java_plugin">Java</link></td><td>Java の構成を <filename>.project</filename> ファイルに追加します。
+            <filename>.classpath</filename> ファイルと JDT 設定ファイルを生成します。
+            <phrase role="original">Adds Java configuration to <filename>.project</filename>.
+            Generates <filename>.classpath</filename> and JDT settings file.</phrase></td>
         </tr>
         <tr>
-            <td><link linkend="groovy_plugin">Groovy</link></td><td>Adds Groovy configuration to <filename>.project</filename> file.</td>
+            <td><link linkend="groovy_plugin">Groovy</link></td><td>Groovy の構成を<filename>.project</filename> ファイルに追加します。
+            <phrase role="original">Adds Groovy configuration to <filename>.project</filename> file.</phrase></td>
         </tr>
         <tr>
-                <td><link linkend="scala_plugin">Scala</link></td><td>Adds Scala support to <filename>.project</filename> file.</td>
+            <td><link linkend="scala_plugin">Scala</link></td><td>Scala のサポートを <filename>.project</filename> ファイルに追加します。
+            <phrase role="original">Adds Scala support to <filename>.project</filename> file.</phrase></td>
         </tr>
         <tr>
-            <td><link linkend="war_plugin">War</link></td><td>Adds web application support to <filename>.project</filename> file.
-            Generates WTP settings files only if <literal>eclipse-wtp</literal> plugin was applied.</td>
+            <td><link linkend="war_plugin">War</link></td><td>WEBアプリケーションのサポートを <filename>.project</filename> ファイルに追加します。
+            <literal>eclipse-wtp</literal> プラグインを適用している場合のみ WTP 設定ファイルを生成します。
+            <phrase role="original">Adds web application support to <filename>.project</filename> file.
+            Generates WTP settings files only if <literal>eclipse-wtp</literal> plugin was applied.</phrase></td>
         </tr>
         <tr>
-            <td><link linkend="ear_plugin">Ear</link></td><td>Adds ear application support to <filename>.project</filename> file.
-            Generates WTP settings files only if <literal>eclipse-wtp</literal> plugin was applied.</td>
+            <td><link linkend="ear_plugin">Ear</link></td><td>
+            EAR アプリケーションのサポートを <filename>.project</filename> ファイルに追加します。
+            <literal>eclipse-wtp</literal> プラグインを適用している場合のみ WTP 設定ファイルを生成します。
+            <phrase role="original">Adds ear application support to <filename>.project</filename> file.
+            Generates WTP settings files only if <literal>eclipse-wtp</literal> plugin was applied.</phrase></td>
         </tr>
     </table>
 
-    <para>One focus of the Eclipse plugin is to be open to customization. Therfore it provides a standardized set of hooks
+    <para role="original">One focus of the Eclipse plugin is to be open to customization. Therfore it provides a standardized set of hooks
         for adding and removing content from the generated files.
+    </para>
+    <para>Eclipse プラグインの注目すべき点はカスタマイズが容易であることです。
+        生成されたファイルに内容を追加したり削除したりするための標準的なフックが用意されています。
     </para>
 
     <section>
-        <title>Usage</title>
-        <para>To use the Eclipse plugin, include this in your build script:</para>
-        <sample id="useEclipsePlugin" dir="eclipse" title="Using the Eclipse plugin">
+        <title>使用方法<phrase role="original">Usage</phrase></title>
+        <para role="original">To use the Eclipse plugin, include this in your build script:</para>
+        <para>Eclipseプラグインを使う為には、ビルドスクリプトに下記を含めます：</para>
+        <sample id="useEclipsePlugin" dir="eclipse" title="Eclipseプラグインの使用方法 / Using the Eclipse plugin">
             <sourcefile file="build.gradle" snippet="use-plugin"/>
         </sample>
-        <para>The Eclipse plugin adds a number of tasks to your projects. The main tasks that you will use
+        <para role="original">The Eclipse plugin adds a number of tasks to your projects. The main tasks that you will use
             are the <literal>eclipse</literal> and <literal>cleanEclipse</literal> tasks.
+        </para>
+        <para>Eclipseプラグインは多くのタスクをプロジェクトに追加しますが、主に利用するのは <literal>eclipse</literal> と <literal>cleanEclipse</literal>
+            タスクだけです。
         </para>
     </section>
     <section>
-        <title>Tasks</title>
+        <title>タスク<phrase role="original">Tasks</phrase></title>
 
-        <para>The Eclipse plugin adds the tasks shown below to a project.</para>
+        <para role="original">The Eclipse plugin adds the tasks shown below to a project.</para>
+        <para>Eclipseプラグインはプロジェクトに以下のタスクを追加します。</para>
 
         <table id='eclipsetasks'>
-            <title>Eclipse plugin - tasks</title>
+            <title>Eclipse プラグイン - タスク<phrase role="original">Eclipse plugin - tasks</phrase></title>
             <thead>
                 <tr>
-                    <td>Task name</td>
-                    <td>Depends on</td>
-                    <td>Type</td>
-                    <td>Description</td>
+                    <td>タスク名<phrase role="original">Task name</phrase></td>
+                    <td>依存先<phrase role="original">Depends on</phrase></td>
+                    <td>型<phrase role="original">Type</phrase></td>
+                    <td>説明<phrase role="original">Description</phrase></td>
                 </tr>
             </thead>
             <tr>
@@ -92,7 +121,8 @@
                 <td><literal>eclipseProject</literal>, <literal>eclipseClasspath</literal>, <literal>eclipseJdt</literal>,
                     <literal>eclipseWtpComponent</literal>, <literal>cleanEclipseWtpFacet</literal></td>
                 <td><apilink class="org.gradle.api.Task"/></td>
-                <td>Generates all Eclipse configuration files</td>
+                <td>Eclipseの全ての設定ファイルを生成します。
+                    <phrase role="original">Generates all Eclipse configuration files</phrase></td>
             </tr>
             <tr>
                 <td>
@@ -103,7 +133,8 @@
                     <literal>cleanEclipseWtpComponent</literal>, <literal>cleanEclipseWtpFacet</literal>
                 </td>
                 <td><apilink class="org.gradle.api.tasks.Delete"/></td>
-                <td>Removes all Eclipse configuration files</td>
+                <td>Eclipseの全ての設定ファイルを削除します。
+                    <phrase role="original">Removes all Eclipse configuration files</phrase></td>
             </tr>
             <tr>
                 <td>
@@ -113,7 +144,8 @@
                     <literal>-</literal>
                 </td>
                 <td><apilink class="org.gradle.api.tasks.Delete"/></td>
-                <td>Removes the <filename>.project</filename> file.</td>
+                <td><filename>.project</filename>ファイルを生成します。
+                    <phrase role="original">Generates the <filename>.project</filename> file.</phrase></td>
             </tr>
             <tr>
                 <td>
@@ -123,7 +155,8 @@
                     <literal>-</literal>
                 </td>
                 <td><apilink class="org.gradle.api.tasks.Delete"/></td>
-                <td>Removes the <filename>.classpath</filename> file.</td>
+                <td><filename>.classpath</filename>ファイルを生成します。
+                    <phrase role="original">Generates the <filename>.classpath</filename> file.</phrase></td>
             </tr>
             <tr>
                 <td>
@@ -133,7 +166,8 @@
                     <literal>-</literal>
                 </td>
                 <td><apilink class="org.gradle.api.tasks.Delete"/></td>
-                <td>Removes the <filename>.settings/org.eclipse.jdt.core.prefs</filename> file.</td>
+                <td><filename>.settings/org.eclipse.jdt.core.prefs</filename>ファイルを削除します。
+                    <phrase role="original">Removes the <filename>.settings/org.eclipse.jdt.core.prefs</filename> file.</phrase></td>
             </tr>
             <tr>
                 <td>
@@ -143,7 +177,8 @@
                     <literal>-</literal>
                 </td>
                 <td><apilink class="org.gradle.api.tasks.Delete"/></td>
-                <td>Removes the <filename>.settings/org.eclipse.wst.common.component</filename> file.</td>
+                <td><filename>.settings/org.eclipse.wst.common.component</filename>ファイルを削除します。
+                    <phrase role="original">Removes the <filename>.settings/org.eclipse.wst.common.component</filename> file.</phrase></td>
             </tr>
             <tr>
                 <td>
@@ -155,7 +190,8 @@
                 <td>
                     <apilink class="org.gradle.api.tasks.Delete"/>
                 </td>
-                <td>Removes the <filename>.settings/org.eclipse.wst.common.component</filename> file.
+                <td><filename>.settings/org.eclipse.wst.common.component</filename>ファイルを削除します。
+                    <phrase role="original">Removes the <filename>.settings/org.eclipse.wst.common.component</filename> file.</phrase>
                 </td>
             </tr>
             <tr>
@@ -166,7 +202,8 @@
                     <literal>-</literal>
                 </td>
                 <td><apilink class="org.gradle.plugins.ide.eclipse.GenerateEclipseProject"/></td>
-                <td>Generates the <filename>.project</filename> file.</td>
+                <td><filename>.project</filename>ファイルを生成します。
+                    <phrase role="original">Generates the <filename>.project</filename> file.</phrase></td>
             </tr>
             <tr>
                 <td>
@@ -176,7 +213,8 @@
                     <literal>-</literal>
                 </td>
                 <td><apilink class="org.gradle.plugins.ide.eclipse.GenerateEclipseClasspath"/></td>
-                <td>Generates the <filename>.classpath</filename> file.</td>
+                <td><filename>.classpath</filename>ファイルを生成します。 
+                    <phrase role="original">Generates the <filename>.classpath</filename> file.</phrase></td>
             </tr>
             <tr>
                 <td>
@@ -186,7 +224,8 @@
                     <literal>-</literal>
                 </td>
                 <td><apilink class="org.gradle.plugins.ide.eclipse.GenerateEclipseJdt"/></td>
-                <td>Generates the <filename>.settings/org.eclipse.jdt.core.prefs</filename> file.</td>
+                <td><filename>.settings/org.eclipse.jdt.core.prefs</filename>ファイルを生成します。
+                    <phrase role="original">Generates the <filename>.settings/org.eclipse.jdt.core.prefs</filename> file.</phrase></td>
             </tr>
             <tr>
                 <td>
@@ -196,7 +235,8 @@
                     <literal>-</literal>
                 </td>
                 <td><apilink class="org.gradle.plugins.ide.eclipse.GenerateEclipseWtpComponent"/></td>
-                <td>Generates the <filename>.settings/org.eclipse.wst.common.component</filename> file only if <literal>eclipse-wtp</literal> plugin was applied.</td>
+                <td><literal>eclipse-wtp</literal>が適用されている場合のみ <filename>.settings/org.eclipse.wst.common.component</filename>ファイルを生成します。
+                    <phrase role="original">Generates the <filename>.settings/org.eclipse.wst.common.component</filename> file only if <literal>eclipse-wtp</literal> plugin was applied.</phrase></td>
             </tr>
             <tr>
                 <td>
@@ -208,20 +248,21 @@
                 <td>
                     <apilink class="org.gradle.plugins.ide.eclipse.GenerateEclipseWtpFacet"/>
                 </td>
-                <td>Generates the <filename>.settings/org.eclipse.wst.common.project.facet.core.xml</filename> file only if <literal>eclipse-wtp</literal> plugin was applied.</td>
+                <td><literal>eclipse-wtp</literal>が適用されている場合のみ <filename>.settings/org.eclipse.wst.common.project.facet.core.xml</filename>ファイルを生成します。
+                    <phrase role="original">Generates the <filename>.settings/org.eclipse.wst.common.project.facet.core.xml</filename> file only if <literal>eclipse-wtp</literal> plugin was applied.</phrase></td>
             </tr>
         </table>
     </section>
     <section>
-        <title>Configuration</title>
+        <title>設定<phrase role="original">Configuration</phrase></title>
 
         <table id='eclipse-configuration'>
-            <title>Configuration of the eclipse plugin</title>
+            <title>Eclpiseプラグインの設定<phrase role="original">Configuration of the eclipse plugin</phrase></title>
             <thead>
                 <tr>
-                    <td>Model</td>
-                    <td>Reference name</td>
-                    <td>Description</td>
+                    <td>モデル<phrase role="original">Model</phrase></td>
+                    <td>参照名<phrase role="original">Reference name</phrase></td>
+                    <td>説明<phrase role="original">Description</phrase></td>
                 </tr>
             </thead>
             <tr>
@@ -229,89 +270,133 @@
                     <apilink class="org.gradle.plugins.ide.eclipse.model.EclipseModel"/>
                 </td>
                 <td><literal>eclipse</literal></td>
-                <td>Top level element that enables configuration of the eclipse plugin in a DSL-friendly fashion</td>
+                <td>DSLにあったやり方でEclipseプラグインの設定が可能なトップレベル要素 
+                    <phrase role="original">Top level element that enables configuration of the eclipse plugin in a DSL-friendly fashion</phrase></td>
             </tr>
             <tr>
                 <td>
                     <apilink class="org.gradle.plugins.ide.eclipse.model.EclipseProject"/>
                 </td>
                 <td><literal>eclipse.project</literal></td>
-                <td>Allows configuring project information</td>
+                <td>プロジェクトの情報を設定できます。
+                    <phrase role="original">Allows configuring project information</phrase></td>
             </tr>
             <tr>
                 <td>
                     <apilink class="org.gradle.plugins.ide.eclipse.model.EclipseClasspath"/>
                 </td>
                 <td><literal>eclipse.classpath</literal></td>
-                <td>Allows configuring classpath information</td>
+                <td>クラスパスの情報を設定できます。
+                    <phrase role="origainal">Allows configuring classpath information</phrase></td>
             </tr>
             <tr>
                 <td>
                     <apilink class="org.gradle.plugins.ide.eclipse.model.EclipseJdt"/>
                 </td>
                 <td><literal>eclipse.jdt</literal></td>
-                <td>Allows configuring jdt information (source/target java compatibility)</td>
+                <td>JDT の情報を設定できます。(source/target java互換)
+                    <phrase role="original">Allows configuring jdt information (source/target java compatibility)</phrase></td>
             </tr>
             <tr>
                 <td>
                     <apilink class="org.gradle.plugins.ide.eclipse.model.EclipseWtpComponent"/>
                 </td>
                 <td><literal>eclipse.wtp.component</literal></td>
-                <td>Allows configuring wtp component information only if <literal>eclipse-wtp</literal> plugin was applied.</td>
+                <td><literal>eclipse-wtp</literal>プラグインを適用した場合のみ、WTPコンポーネントの情報を設定できます。
+                    <phrase role="original">Allows configuring wtp component information only if <literal>eclipse-wtp</literal> plugin was applied.</phrase></td>
             </tr>
             <tr>
                 <td>
                     <apilink class="org.gradle.plugins.ide.eclipse.model.EclipseWtpFacet"/>
                 </td>
                 <td><literal>eclipse.wtp.facet</literal></td>
-                <td>Allows configuring wtp facet information only if <literal>eclipse-wtp</literal> plugin was applied.</td>
+                <td><literal>eclipse-wtp</literal>プラグインを適用した場合のみ、WTPファセットの情報を設定できます。
+                    <phrase role="original">Allows configuring wtp facet information only if <literal>eclipse-wtp</literal> plugin was applied.</phrase></td>
             </tr>
         </table>
     </section>
     <section>
-        <title>Customizing the generated files</title>
-        <para>The eclipse plugin provides the same hooks and behavior for customizing the generated files.</para>
-        <para>The tasks recognize existing Eclipse files, and merge them with the generated content.</para>
+        <title>生成されたファイルをカスタマイズする<phrase role="original">Customizing the generated files</phrase></title>
+        <para role="original">The tasks recognize existing Eclipse files, and merge them with the generated content.</para>
+        <para>このタスクは既存のEclipseファイルを認識し、生成した内容をEclipseファイルにマージします。</para>
         <section>
-            <title>Merging</title>
-            <para>Sections of existing Eclipse files that are also the target of generated content will be amended or overwritten,
+            <title>マージする<phrase role="original">Merging</phrase></title>
+            <para role="original">Sections of existing Eclipse files that are also the target of generated content will be amended or overwritten,
                  depending on the particular section. The remaining sections will be left as-is.</para>
+            <para>既存のEclipseファイルの対象のセクションだけを 生成された内容で 変更もしくは上書きされ、それ以外はそのまま残ります。</para>
             <section id="sec:complete-overwrite">
-                <title>Disabling merging with a complete overwrite</title>
-                <para>To completely overwrite existing Eclipse files, execute a clean task together with its corresponding generation task,
+                <title>マージせずに完全に上書きする<phrase role="original">Disabling merging with a complete overwrite</phrase></title>
+                <para role="original">To completely overwrite existing Eclipse files, execute a clean task together with its corresponding generation task,
                     for example <userinput>gradle cleanEclipse eclipse</userinput> (in that order). If you want to make this
                     the default behavior, add <code>eclipse.dependsOn(cleanEclipse)</code> to your build script. This makes it
                     unnecessary to execute the clean task explicitly.
                 </para>
-                <para>Complete overwrite works equally well for individual files, for example by executing <userinput> gradle cleanEclipseClasspath eclipseClasspath</userinput>.
+                <para>既存の Eclipse ファイルを完全に上書きしたい場合は、対応する生成タスクと一緒に clean タスクも実行します。
+                    例えば <userinput>gradle cleanEclipse eclipse</userinput> のように... (もちろん この順番で...)
+                    もし、この動きをデフォルトにしたい場合は、ビルドスクリプトに <code>eclipse.dependsOn(cleanEclipse)</code> を追加します。
+                    そうすれば 明示的に clean タスクを実行する必要はありません。
+                </para>
+                <para role="original">Complete overwrite works equally well for individual files, for example by executing <userinput> gradle cleanEclipseClasspath eclipseClasspath</userinput>.
+                </para>
+                <para>個々のファイルについても同じように完全に上書きすることができます。例えば、<userinput> gradle cleanEclipseClasspath eclipseClasspath</userinput> のように...
                 </para>
             </section>
         </section>
         <section>
-            <title>Hooking into the generation lifecycle</title>
-            <para>The Eclipse plugin provides domain classes modeling the sections of the Eclipse files
-                that are generated by Gradle. The generation lifecycle is as follows:
+            <title>生成ライフサイクルにフックする<phrase role="original">Hooking into the generation lifecycle</phrase></title>
+            <para>Eclipse プラグインは Gradle が生成する Eclipse ファイルのセクションをモデリングしたドメインクラスを提供します。
+                生成ライフサイクルは次の通りです。
+                <phrase role="original">The Eclipse plugin provides domain classes modeling the sections of the Eclipse files
+                that are generated by Gradle. The generation lifecycle is as follows:</phrase>
                 <orderedlist>
-                    <listitem>If there is an existing file, its whole XML content is parsed and stored in memory; otherwise, a default file is used in its place</listitem>
-                    <listitem>The domain objects are populated with the relevant content of the existing file</listitem>
-                    <listitem>The <code>beforeMerged</code> hook is executed</listitem>
-                    <listitem>The domain objects are populated with content from Gradle's build model, which may require merging with content from the existing file</listitem>
-                    <listitem>The <code>whenMerged</code> hook is executed</listitem>
-                    <listitem>All sections modeled by the domain objects are removed from the in-memory XML representation</listitem>
-                    <listitem>The domain objects inject their content into the in-memory XML representation</listitem>
-                    <listitem>The <code>withXml</code> hook is executed</listitem>
-                    <listitem>The in-memory XML representation is written to disk</listitem>
+                    <listitem>
+                        既存ファイルが存在する場合は、そのファイルの XML の内容を解析しメモリ上に読み込みます。存在しない場合 デフォルトファイルが使われます。
+                        <phrase role="original">If there is an existing file, its whole XML content is parsed and stored in memory; otherwise, a default file is used in its place</phrase>
+                    </listitem>
+                    <listitem>
+                        既存ファイルの内容をドメインオブジェクトに読み込ます。
+                        <phrase role="original">The domain objects are populated with the relevant content of the existing file</phrase>
+                    </listitem>
+                    <listitem>
+                        <code>beforeMerged</code> フックを実行します。
+                        <phrase role="original">The <code>beforeMerged</code> hook is executed</phrase>
+                    </listitem>
+                    <listitem>
+                        Gradle のビルドモデルの内容をドメインオブジェクトに読み込み、既存ファイルの内容をマージします。
+                        <phrase role="original">The domain objects are populated with content from Gradle's build model, which may require merging with content from the existing file</phrase>
+                    </listitem>
+                    <listitem>
+                        <code>whenMerged</code> フックを実行します。
+                        <phrase role="original">The <code>whenMerged</code> hook is executed</phrase>
+                    </listitem>
+                    <listitem>
+                        メモリ上のXML表現からドメインオブジェクトでモデル化されたセクションを全て削除します。
+                        <phrase role="original">All sections modeled by the domain objects are removed from the in-memory XML representation</phrase>
+                    </listitem>
+                    <listitem>
+                        メモリ上のXML表現にドメインオブジェクトの内容を挿入します。
+                        <phrase role="original">The domain objects inject their content into the in-memory XML representation</phrase>
+                    </listitem>
+                    <listitem>
+                        <code>withXml</code> フックを実行します。
+                        <phrase role="original">The <code>withXml</code> hook is executed</phrase>
+                    </listitem>
+                    <listitem>
+                        メモリ上のXML表現をディスクに書き込みます。
+                        <phrase role="original">The in-memory XML representation is written to disk</phrase>
+                    </listitem>
                 </orderedlist>
-                The following table lists the domain object used for each of the Eclipse model types:
+                <phrase role="original">The following table lists the domain object used for each of the Eclipse model types:</phrase>
+                以下は Eclipseモデルの型毎の利用ドメインオブジェクトの一覧表です。
             </para>
             <table id='eclipse-plugin-hooks'>
-                <title>Advanced configuration hooks</title>
+                <title>高度な構成フック<phrase role="original">Advanced configuration hooks</phrase></title>
                 <thead>
                     <tr>
-                        <td>Model</td>
-                        <td><literal>beforeMerged { arg -> }</literal> argument type</td>
-                        <td><literal>whenMerged { arg -> }</literal> argument type</td>
-                        <td><literal>withXml { arg -> }</literal> argument type</td>
+                        <td>モデル<phrase role="original">Model</phrase></td>
+                        <td><literal>beforeMerged { arg -> }</literal> 引数型<phrase role="original">argument type</phrase></td>
+                        <td><literal>whenMerged { arg -> }</literal> 引数型<phrase role="original">argument type</phrase></td>
+                        <td><literal>withXml { arg -> }</literal> 引数型<phrase role="original">argument type</phrase></td>
                     </tr>
                 </thead>
                 <tr>
@@ -346,13 +431,13 @@
                 </tr>
             </table>
             <section id="sec:partial-overwrite">
-                <title>Partial overwrite of existing content</title>
-                <para>A <link linkend="sec:complete-overwrite">complete overwrite</link> causes all existing content to be discarded,
+                <title>既存の内容の一部を上書きする<phrase role="original">Partial overwrite of existing content</phrase></title>
+                <para role="original">A <link linkend="sec:complete-overwrite">complete overwrite</link> causes all existing content to be discarded,
                     thereby losing any changes made directly in the IDE. The <code>beforeMerged</code> hook makes it possible
                     to overwrite just certain parts of the existing content. The following example removes all existing dependencies
                     from the <literal>Classpath</literal> domain object:
                     <sample id="partialOverwrites" dir="eclipse"
-                            title="Partial Overwrite for Classpath">
+                            title="classpath の一部を上書き / Partial Overwrite for Classpath">
                         <sourcefile file="build.gradle" snippet="module-before-merged"/>
                     </sample>
                     The resulting <literal>.classpath</literal> file will only contain Gradle-generated dependency entries, but
@@ -360,28 +445,61 @@
                     this is also the default behavior.) Other sections of the <literal>.classpath</literal> file will be either left as-is or merged.
                     The same could be done for the natures in the <literal>.project</literal> file:
                     <sample id="partialOverwritesProject" dir="eclipse"
-                            title="Partial Overwrite for Project">
+                            title="project の一部を上書き / Partial Overwrite for Project">
+                        <sourcefile file="build.gradle" snippet="project-before-merged"/>
+                    </sample>
+                </para>
+                <para><link linkend="sec:complete-overwrite">完全に上書き</link>してしまうと 既存の内容を全て破棄してしまいます。
+                    それにより IDE で直接変更した内容が消されてしまいます。<code>beforeMerged</code> フックを使えば 既存の内容の一部だけを上書きすることができます。
+                    次の例は 存在する全ての依存関係を <literal>classpath</literal> ドメインオブジェクトから削除します。
+                    <sample id="partialOverwrites" dir="eclipse"
+                            title="classpath の一部を上書き / Partial Overwrite for Classpath">
+                        <sourcefile file="build.gradle" snippet="module-before-merged"/>
+                    </sample>
+                    この例で生成された <literal>.classpath</literal> ファイルには Gradleによって生成された依存関係のエントリしか含みません。
+                    元のファイルにあった他の依存関係のエントリは全く含みません。(依存関係のエントリの場合はこれがデフォルトの振る舞いです。)
+                    <literal>.classpath</literal>ファイルの他のセクションは そのまま残るかマージされるでしょう。
+                    <literal>.project</literal> ファイルの ネーチャーでも同様です。
+                    <sample id="partialOverwritesProject" dir="eclipse"
+                            title="project の一部を上書き / Partial Overwrite for Project">
                         <sourcefile file="build.gradle" snippet="project-before-merged"/>
                     </sample>
                 </para>
             </section>
             <section>
-                <title>Modifying the fully populated domain objects</title>
-                <para>The <code>whenMerged</code> hook allows to manipulate the fully populated domain objects. Often this is the
+                <title>完全に populate されたドメインオブジェクトを変更する<phrase role="original">Modifying the fully populated domain objects</phrase></title>
+                <para role="original">The <code>whenMerged</code> hook allows to manipulate the fully populated domain objects. Often this is the
                     preferred way to customize Eclipse files. Here is how you would export all the dependencies of an Eclipse project:
                     <sample id="exportDependencies" dir="eclipse"
-                            title="Export Dependencies">
+                            title="依存関係のエクスポート / Export Dependencies">
+                        <sourcefile file="build.gradle" snippet="module-when-merged"/>
+                    </sample>
+                </para>
+                <para><code>whenMerged</code>フックは完全にデータが設定されたドメインオブジェクトを操作することができます。
+                    これは Eclipse のファイルをカスタマイズするのにはよい方法です。
+                    以下は Eclipse プロジェクトの全ての依存関係をエクスポートする方法です:
+                    <sample id="exportDependencies" dir="eclipse"
+                            title="依存関係のエクスポート / Export Dependencies">
                         <sourcefile file="build.gradle" snippet="module-when-merged"/>
                     </sample>
                 </para>
             </section>
             <section>
-                <title>Modifying the XML representation</title>
-                <para>The <code>withXml</code>hook allows to manipulate the in-memory XML representation just before the file gets written to disk.
+                <title>XML表現を変更する<phrase role="original">Modifying the XML representation</phrase></title>
+                <para role="original">The <code>withXml</code>hook allows to manipulate the in-memory XML representation just before the file gets written to disk.
                     Although Groovy's XML support makes up for a lot, this approach is less convenient than manipulating the domain objects.
                     In return, you get total control over the generated file, including sections not modeled by the domain objects.
                     <sample id="wtpWithXml" dir="eclipse"
-                            title="Customizing the XML">
+                            title="XML のカスタマイズ / Customizing the XML">
+                        <sourcefile file="build.gradle" snippet="wtp-with-xml"/>
+                        <test args="cleanEclipse eclipse"/>
+                    </sample>
+                </para>
+                <para><code>withXml</code>フックはディスクに書き出される直前のメモリ内の XML 表現を操作することができます。
+                    ただ、Groovy の XML サポートがいろいろと補ってくれたとしても、このアプローチはドメインオブジェクトを操作するほど便利ではありません。
+                    その代わりに、生成されたファイルを通して全ての操作が可能です。もちろん、ドメインオブジェクトにモデル化されなかったセクションも含みます。
+                    <sample id="wtpWithXml" dir="eclipse"
+                            title="XML のカスタマイズCustomizing the XML">
                         <sourcefile file="build.gradle" snippet="wtp-with-xml"/>
                         <test args="cleanEclipse eclipse"/>
                     </sample>
