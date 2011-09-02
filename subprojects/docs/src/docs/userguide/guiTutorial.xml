@@ -44,7 +44,7 @@ gradle --gui
     <para role="original">The UI displays 4 tabs along the top and an output window along the bottom.</para>
     <para>UIには上部に4つのタブがあり、下部には出力を表示するウィンドウがあります。</para>
     <section>
-        <title>Task Tree</title>
+        <title>Task Tree（タスク・ツリー）<phrase role="original">Task Tree</phrase></title>
         <para role="original">
             The Task Tree shows a hierarchical display of all projects and their tasks.
             Double clicking a task executes it.
@@ -60,42 +60,55 @@ gradle --gui
         フィルター編集画面では、どのタスクとプロジェクトを表示するかを設定します。非表示に設定されたタスクは赤色で強調されます。
         注意: 新しく作成されたタスクは、デフォルトでは表示に設定されます（デフォルトで非表示に設定されるのではなく）。
         </para>
-        <para>The Task Tree context menu provides the following options:</para>
+        <para role="original">The Task Tree context menu provides the following options:</para>
+        <para>タスクツリーのコンテキストメニューでは、以下の機能も使うことができます。</para>
         <itemizedlist>
-            <listitem><para>Execute ignoring dependencies. This does not require dependent projects to be rebuilt (same as the -a option).</para></listitem>
-            <listitem><para>Add tasks to the favorites (see Favorites tab)</para></listitem>
-            <listitem><para>Hide the selected tasks. This adds them to the filter.</para></listitem>
-            <listitem><para>Edit the build.gradle file.
+            <listitem><para role="original">Execute ignoring dependencies. This does not require dependent projects to be rebuilt (same as the -a option).</para>
+                <para>依存関係を無視したタスクの実行する。依存プロジェクトを再ビルドしません（-aオプションと同じ）。</para></listitem>
+            <listitem><para role="original">Add tasks to the favorites (see Favorites tab)</para>
+                <para>タスクをお気に入りに追加する（Favoritesを参照してください）。</para></listitem>
+            <listitem><para role="original">Hide the selected tasks. This adds them to the filter.</para>
+                <para>選択したタスクを隠す。タスクをフィルターに追加します。</para></listitem>
+            <listitem><para role="original">Edit the build.gradle file.
                 Note: this requires Java 1.6 or higher and requires that you have .gradle files associated in your OS.
-            </para></listitem>
+                </para>
+                <para>build.gradleファイルの編集。注意: この機能を使うには、1.6以上のバージョンのJavaが必要です。また、OS上で.gradleファイルの関連づけを設定しなければなりません。</para></listitem>
         </itemizedlist>        
     </section>
     <section>
-        <title>Favorites</title>
-        <para>
+        <title>Favorites（お気に入り）<phrase role="original">Favorites</phrase></title>
+        <para role="original">
             The Favorites tab is place to store commonly-executed commands. These can be complex commands
             (anything that's legal to gradle) and you can provide them with a display name. This is useful for creating,
             say, a custom build command that explicitly skips tests, documentation, and samples that you could call
             &quot;fast build&quot;.
         </para>
-        <para>
+        <para>Favoriteタブでは、よく実行するコマンドをお気に入りとして保存できます。保存するコマンドは複雑なもの（Gradleにとって正しいものならなんでもかまいません）でもよく、わかりやすい表示名をつけることもできます。お気に入りは、テストやドキュメンテーション、サンプル作成などを明示的にスキップする、&quot;急速なビルド&quot;と呼べるようなカスタムビルドを作成するのに便利だと言えます。
+        </para>
+        <para role="original">
             You can reorder favorites to your liking and even export them to disk so they can imported by others.
             If you edit them, you are given options to &quot;Always Show Live Output.&quot;
             This only applies if you have 'Only Show Output When Errors Occur'.
             This override always forces the output to be shown.
         </para>
+        お気に入りは、好きなように並び替えることができます。また、お気に入りをディスクにエクスポートしたり、そこから逆にインポートしたりすることも可能です。
+        お気に入りを追加、編集するとき、&quot;Always Show Live Output&quot;というオプションがあるはずです。
+        これは、'Only Show Output When Errors Occur'（エラー発生時のみ出力を表示する）設定を有効にしているときのみ適用されるオプションです。
+        このオプションを有効にすると、その設定を上書きし常に出力が表示されるようになります。
     </section>
     <section>
-        <title>Command Line</title>
-        <para>
+        <title>Command Line（コマンドライン）<phrase role="original">Command Line</phrase></title>
+        <para role="original">
             The Command Line tab is place to execute a single gradle command directly.
             Just enter whatever you would normally enter after 'gradle' on the command line.  This also provides
             a place to try out commands before adding them to favorites.
         </para>
+        Command Lineタブでは、ひとつのgradleコマンドを直接実行できます。いつも'gradle'のあとに入力しているコマンドを入力するだけです。お気に入りにコマンドを追加する前に、試しにそのコマンドを実行してみることもできます。
     </section>
     <section>
-        <title>Setup</title>
-        <para>The Setup tab allows configuration of some general settings.</para>
+        <title>Setup（セットアップ）<phrase role="original">Setup</phrase></title>
+        <para role="original">The Setup tab allows configuration of some general settings.</para>
+        <para>Setupタブは、一般的な設定を行うところです。</para>
         <figure>
             <title>GUI Setup</title>
             <imageobject>
@@ -106,30 +119,35 @@ gradle --gui
         <itemizedlist>
             <listitem>
                 <para>Current Directory</para>
-                <para>Defines the root directory of your gradle project (typically where build.gradle is located).</para>
+                <para role="original">Defines the root directory of your gradle project (typically where build.gradle is located).</para>
+                <para>gradleプロジェクトのルートディレクトリを設定します（典型的には、build.gradleが置かれているディレクトリになります）。</para>
             </listitem>
 
             <listitem>
                 <para>Stack Trace Output</para>
-                <para>
+                <para role="original">
                     This determines how much information to write out stack traces when errors occur.
                     Note: if you specify a stack trace level on either  the Command Line or Favorites tab, it will override
                     this stack trace level.
                 </para>
+                <para>ここでは、エラーが発生したとき、どれだけの情報をスタックトレースに書き出すかを設定します。注意: スタックトレースレベルをCommand LineタブやFavoritesタブで指定している場合、ここで設定したスタックトレースレベルは上書きされます。</para>
             </listitem>
 
             <listitem>
                 <para>Only Show Output When Errors Occur</para>
-                <para>Enabling this option hides any output when a task is executed unless the build fails.</para>
+                <para role="original">Enabling this option hides any output when a task is executed unless the build fails.</para>
+                <para>有効にすると、ビルドに失敗しない限り出力が表示されないようになります。</para>
             </listitem>
 
             <listitem>
-                <para>Use Custom Gradle Executor - Advanced feature</para>
-                <para>
+                <para role="original">Use Custom Gradle Executor - Advanced feature</para>
+                <para>Use Custom Gradle Executor - 高度な機能</para>
+                <para role="original">
                     This provides you with an alternate way to launch gradle commands.
                     This is useful if your project requires some extra setup that is done inside another batch file or shell script
                     (such as specifying an init script).
                 </para>
+                <para>gradleコマンドの実行方法を変更できます。これは、自分のプロジェクトが、バッチファイルやシェルスクリプトの中で追加的なセットアップをしてからgradleを呼び出しているときに便利です。</para>
             </listitem>
         </itemizedlist>
 
