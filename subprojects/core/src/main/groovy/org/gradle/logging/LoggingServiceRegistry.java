@@ -21,7 +21,7 @@ import org.gradle.api.internal.Factory;
 import org.gradle.api.internal.project.DefaultServiceRegistry;
 import org.gradle.api.specs.Spec;
 import org.gradle.api.specs.Specs;
-import org.gradle.initialization.CommandLineConverter;
+import org.gradle.cli.CommandLineConverter;
 import org.gradle.logging.internal.*;
 import org.gradle.util.TimeProvider;
 import org.gradle.util.TrueTimeProvider;
@@ -108,7 +108,8 @@ public class LoggingServiceRegistry extends DefaultServiceRegistry {
         Spec<FileDescriptor> terminalDetector;
         if (detectConsole) {
             StartParameter startParameter = new StartParameter();
-            terminalDetector = new TerminalDetector(startParameter.getGradleUserHomeDir());
+            JnaBootPathConfigurer jnaConfigurer = new JnaBootPathConfigurer(startParameter.getGradleUserHomeDir());
+            terminalDetector = new TerminalDetectorFactory().create(jnaConfigurer);
         } else {
             terminalDetector = Specs.satisfyNone();
         }

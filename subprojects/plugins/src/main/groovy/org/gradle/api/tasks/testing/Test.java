@@ -434,11 +434,17 @@ public class Test extends ConventionTask implements JavaForkOptions, PatternFilt
         return this;
     }
 
+    /**
+     * {@inheritDoc}
+     */
     public Test include(Spec<FileTreeElement> includeSpec) {
         patternSet.include(includeSpec);
         return this;
     }
 
+    /**
+     * {@inheritDoc}
+     */
     public Test include(Closure includeSpec) {
         patternSet.include(includeSpec);
         return this;
@@ -464,11 +470,17 @@ public class Test extends ConventionTask implements JavaForkOptions, PatternFilt
         return this;
     }
 
+    /**
+     * {@inheritDoc}
+     */
     public Test exclude(Spec<FileTreeElement> excludeSpec) {
         patternSet.exclude(excludeSpec);
         return this;
     }
 
+    /**
+     * {@inheritDoc}
+     */
     public Test exclude(Closure excludeSpec) {
         patternSet.exclude(excludeSpec);
         return this;
@@ -755,7 +767,7 @@ public class Test extends ConventionTask implements JavaForkOptions, PatternFilt
      * @return The maximum number of forked test processes.
      */
     public int getMaxParallelForks() {
-        return maxParallelForks;
+        return getDebug() ? 1 : maxParallelForks;
     }
 
     /**
@@ -779,16 +791,6 @@ public class Test extends ConventionTask implements JavaForkOptions, PatternFilt
     @InputFiles
     @Input // Also marked as input to force tests to run when the set of candidate class files changes 
     public FileTree getCandidateClassFiles() {
-        PatternSet patterns = new PatternSet();
-        patterns.copyFrom(patternSet);
-        if (!isScanForTestClasses()) {
-            if (patterns.getIncludes().isEmpty()) {
-                patterns.include("**/*Tests.class", "**/*Test.class");
-            }
-            if (patterns.getExcludes().isEmpty()) {
-                patterns.exclude("**/Abstract*.class");
-            }
-        }
-        return getProject().fileTree(getTestClassesDir()).matching(patterns);
+        return getProject().fileTree(getTestClassesDir()).matching(patternSet);
     }
 }

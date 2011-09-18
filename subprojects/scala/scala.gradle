@@ -14,16 +14,12 @@
  * limitations under the License.
  */
 dependencies {
-    groovy libraries.groovy_depends
+    groovy libraries.groovy
 
     compile project(':core')
     compile project(':plugins')
 
-    testCompile project(path: ':core', configuration: 'testFixtures')
-    testCompile project(path: ':plugins', configuration: 'testFixtures')
     testCompile libraries.slf4j_api
-    testRuntime project(path: ':core', configuration: 'testFixturesRuntime')
 }
 
-
-
+useTestFixtures(project: ":plugins") // includes core test fixtures

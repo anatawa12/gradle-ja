@@ -21,6 +21,7 @@ import org.gradle.integtests.fixtures.HttpServer
 import org.hamcrest.Matchers
 import org.junit.Rule
 import org.junit.Test
+import org.mortbay.jetty.HttpStatus
 
 public class IvyPublishIntegrationTest {
     @Rule
@@ -40,7 +41,7 @@ group = 'org.gradle'
 uploadArchives {
     repositories {
         ivy {
-            artifactPattern "build/repo/[organisation]/[module]/[revision]/[artifact]-[revision](-[classifier]).[ext]"
+            url "build/repo/"
         }
     }
 }
@@ -65,15 +66,15 @@ group = 'org.gradle'
 uploadArchives {
     repositories {
         ivy {
-            artifactPattern "http://localhost:${server.port}/[organisation]/[module]/[revision]/[artifact]-[revision](-[classifier]).[ext]"
+            url "http://localhost:${server.port}"
         }
     }
 }
 """
         def uploadedJar = dist.testFile('uploaded.jar')
         def uploadedIvy = dist.testFile('uploaded.xml')
-        server.expectPut('/org.gradle/publish/2/publish-2.jar', uploadedJar)
-        server.expectPut('/org.gradle/publish/2/ivy-2.xml', uploadedIvy)
+        server.expectPut('/org.gradle/publish/2/publish-2.jar', uploadedJar, HttpStatus.ORDINAL_200_OK)
+        server.expectPut('/org.gradle/publish/2/ivy-2.xml', uploadedIvy, HttpStatus.ORDINAL_201_Created)
 
         executer.withTasks("uploadArchives").run()
 
@@ -93,10 +94,9 @@ group = 'org.gradle'
 uploadArchives {
     repositories {
         ivy {
-            userName = 'user'
-            password = 'password'
-            realm = 'test'
-            artifactPattern "http://localhost:${server.port}/[organisation]/[module]/[revision]/[artifact]-[revision](-[classifier]).[ext]"
+            userName 'user'
+            password 'password'
+            url "http://localhost:${server.port}"
         }
     }
 }
@@ -116,13 +116,14 @@ uploadArchives {
     @Test
     public void reportsFailedPublishToHttpRepository() {
         server.start()
+        server.addBroken("/")
 
         dist.testFile("build.gradle") << """
 apply plugin: 'java'
 uploadArchives {
     repositories {
         ivy {
-            artifactPattern "http://localhost:${server.port}/[module]/[revision]/[artifact]-[revision](-[classifier]).[ext]"
+            url "http://localhost:${server.port}"
         }
     }
 }
@@ -131,7 +132,7 @@ uploadArchives {
         def result = executer.withTasks("uploadArchives").runWithFailure()
         result.assertHasDescription('Execution failed for task \':uploadArchives\'.')
         result.assertHasCause('Could not publish configuration \':archives\'.')
-        result.assertThatCause(Matchers.containsString('Received status code 404 from server: Not Found'))
+        result.assertThatCause(Matchers.containsString('Received status code 500 from server: broken'))
 
         server.stop()
 
@@ -140,4 +141,36 @@ uploadArchives {
         result.assertHasCause('Could not publish configuration \':archives\'.')
         result.assertHasCause('java.net.ConnectException: Connection refused')
     }
+
+        @Test
+        public void usesFirstConfiguredPatternForPublication() {
+            server.start()
+
+            dist.testFile("settings.gradle").text = 'rootProject.name = "publish"'
+            dist.testFile("build.gradle") << """
+    apply plugin: 'java'
+    version = '2'
+    group = 'org.gradle'
+    uploadArchives {
+        repositories {
+            ivy {
+                artifactPattern "http://localhost:${server.port}/primary/[module]/[artifact]-[revision].[ext]"
+                artifactPattern "http://localhost:${server.port}/alternative/[module]/[artifact]-[revision].[ext]"
+                ivyPattern "http://localhost:${server.port}/primary-ivy/[module]/ivy-[revision].xml"
+                ivyPattern "http://localhost:${server.port}/secondary-ivy/[module]/ivy-[revision].xml"
+            }
+        }
+    }
+    """
+            def uploadedJar = dist.testFile('uploaded.jar')
+            def uploadedIvy = dist.testFile('uploaded.xml')
+            server.expectPut('/primary/publish/publish-2.jar', uploadedJar, HttpStatus.ORDINAL_200_OK)
+            server.expectPut('/primary-ivy/publish/ivy-2.xml', uploadedIvy, HttpStatus.ORDINAL_201_Created)
+
+            executer.withTasks("uploadArchives").run()
+
+            uploadedJar.assertIsCopyOf(dist.testFile('build/libs/publish-2.jar'))
+            uploadedIvy.assertIsFile()
+        }
+
 }

@@ -19,23 +19,13 @@ import org.gradle.util.TestFile
 import java.util.regex.Pattern
 
 class EclipseClasspathFixture {
-    final TestFile userHomeDir
     final TestFile projectDir
-    final String userHomeDirVar
+    final TestFile userHomeDir
     Node classpath
 
-    EclipseClasspathFixture(TestFile userHomeDir, TestFile projectDir) {
-        this(null, userHomeDir, projectDir)
-    }
-
-    private EclipseClasspathFixture(String userHomeDirVar, TestFile userHomeDir, TestFile projectDir) {
-        this.userHomeDirVar = userHomeDirVar
-        this.userHomeDir = userHomeDir
+    EclipseClasspathFixture(TestFile projectDir, TestFile userHomeDir) {
         this.projectDir = projectDir
-    }
-
-    EclipseClasspathFixture withHomeDir(String homeDirVar) {
-        return new EclipseClasspathFixture(homeDirVar, userHomeDir, projectDir)
+        this.userHomeDir = userHomeDir
     }
 
     Node getClasspath() {
@@ -76,21 +66,35 @@ class EclipseClasspathFixture {
         }
 
         void assertHasCachedJar(String group, String module, String version) {
-            assert entry.@path ==~ cachedArtifact(group, module, version)
+            assert entry.@path ==~ Pattern.quote("${userHomeDir.absolutePath.replace(File.separator, '/')}/caches/artifacts/${group}/${module}/") + "\\w+/jars/" + Pattern.quote("${module}-${version}.jar")
+        }
+
+        void assertHasSource(File jar) {
+            assert entry.@sourcepath == jar.absolutePath.replace(File.separator, '/')
+        }
+
+        void assertHasSource(String jar) {
+            assert entry.@sourcepath == jar
         }
 
         void assertHasCachedSource(String group, String module, String version) {
-            assert entry.@sourcepath ==~ cachedArtifact(group, module, version, "sources")
+            assert entry.@sourcepath ==~ Pattern.quote("${userHomeDir.absolutePath.replace(File.separator, '/')}/caches/artifacts/${group}/${module}/") + "\\w+/sources/" + Pattern.quote("${module}-${version}-sources.jar")
         }
 
         void assertHasNoSource() {
             assert !entry.@sourcepath
         }
 
-        void assertHasCachedJavadoc(String group, String module, String version) {
+        void assertHasJavadoc(File file) {
             assert entry.attributes
             assert entry.attributes[0].attribute[0].@name == 'javadoc_location'
-            assert entry.attributes[0].attribute[0].@value ==~ cachedArtifact(group, module, version, "javadoc")
+            assert entry.attributes[0].attribute[0].@value == file.absolutePath.replace(File.separator, '/')
+        }
+
+        void assertHasJavadoc(String file) {
+            assert entry.attributes
+            assert entry.attributes[0].attribute[0].@name == 'javadoc_location'
+            assert entry.attributes[0].attribute[0].@value == file
         }
 
         void assertHasNoJavadoc() {
@@ -103,18 +107,6 @@ class EclipseClasspathFixture {
 
         void assertNotExported() {
             assert !entry.@exported
-        }
-
-        final Pattern cachedArtifact(group, module, version, classifier = null) {
-            def dir
-            if (userHomeDirVar) {
-                dir = userHomeDirVar
-            } else {
-                dir = userHomeDir.absolutePath.replace(File.separator, '/')
-            }
-            def type = classifier == 'javadoc' ? 'javadocs' : classifier ?: "jars"
-            String regexp = Pattern.quote(dir) + Pattern.quote("/caches/artifacts/${group}/${module}/") + '[a-f0-9]+' + Pattern.quote("/${type}/${module}-${version}${classifier ? '-' + classifier : ''}.jar")
-            return Pattern.compile(regexp)
         }
     }
 }

@@ -16,14 +16,11 @@
 
 package org.gradle.tooling.internal.idea;
 
-import org.gradle.api.GradleException;
 import org.gradle.tooling.model.DomainObjectSet;
+import org.gradle.tooling.model.GradleProject;
 import org.gradle.tooling.model.HierarchicalElement;
 import org.gradle.tooling.model.Task;
-import org.gradle.tooling.model.idea.IdeaDependency;
-import org.gradle.tooling.model.idea.IdeaModule;
-import org.gradle.tooling.model.idea.IdeaProject;
-import org.gradle.tooling.model.idea.IdeaSourceDirectory;
+import org.gradle.tooling.model.idea.*;
 import org.gradle.tooling.model.internal.ImmutableDomainObjectSet;
 
 import java.io.File;
@@ -42,16 +39,14 @@ public class DefaultIdeaModule implements Serializable, IdeaModule {
 //    public static final long serialVersionUID = 1L;
 
     private String name;
-    private List<File> contentRoots = new LinkedList<File>();
+    private List<IdeaContentRoot> contentRoots = new LinkedList<IdeaContentRoot>();
     private IdeaProject parent;
-    boolean inheritOutputDirs;
-    File outputDir;
-    File testOutputDir;
-    File moduleFileDir;
-    List<IdeaSourceDirectory> sourceDirectories = new LinkedList<IdeaSourceDirectory>();
-    List<IdeaSourceDirectory> testDirectories = new LinkedList<IdeaSourceDirectory>();
-    List<File> excludeDirectories = new LinkedList<File>();
-    List<IdeaDependency> dependencies = new LinkedList<IdeaDependency>();
+
+    private File moduleFileDir;
+    private List<IdeaDependency> dependencies = new LinkedList<IdeaDependency>();
+    private GradleProject gradleProject;
+
+    private IdeaCompilerOutput compilerOutput;
 
     public String getName() {
         return name;
@@ -62,11 +57,11 @@ public class DefaultIdeaModule implements Serializable, IdeaModule {
         return this;
     }
 
-    public List<File> getContentRoots() {
-        return contentRoots;
+    public DomainObjectSet<? extends IdeaContentRoot> getContentRoots() {
+        return new ImmutableDomainObjectSet<IdeaContentRoot>(contentRoots);
     }
 
-    public DefaultIdeaModule setContentRoots(List<File> contentRoots) {
+    public DefaultIdeaModule setContentRoots(List<IdeaContentRoot> contentRoots) {
         this.contentRoots = contentRoots;
         return this;
     }
@@ -93,60 +88,6 @@ public class DefaultIdeaModule implements Serializable, IdeaModule {
         return this;
     }
 
-    public Boolean getInheritOutputDirs() {
-        return inheritOutputDirs;
-    }
-
-    public DefaultIdeaModule setInheritOutputDirs(boolean inheritOutputDirs) {
-        this.inheritOutputDirs = inheritOutputDirs;
-        return this;
-    }
-
-    public File getOutputDir() {
-        return outputDir;
-    }
-
-    public DefaultIdeaModule setOutputDir(File outputDir) {
-        this.outputDir = outputDir;
-        return this;
-    }
-
-    public File getTestOutputDir() {
-        return testOutputDir;
-    }
-
-    public DefaultIdeaModule setTestOutputDir(File testOutputDir) {
-        this.testOutputDir = testOutputDir;
-        return this;
-    }
-
-    public DomainObjectSet<? extends IdeaSourceDirectory> getSourceDirectories() {
-        return new ImmutableDomainObjectSet<IdeaSourceDirectory>(sourceDirectories);
-    }
-
-    public DefaultIdeaModule setSourceDirectories(List<IdeaSourceDirectory> sourceDirectories) {
-        this.sourceDirectories = sourceDirectories;
-        return this;
-    }
-
-    public DomainObjectSet<? extends IdeaSourceDirectory> getTestDirectories() {
-        return new ImmutableDomainObjectSet<IdeaSourceDirectory>(testDirectories);
-    }
-
-    public DefaultIdeaModule setTestDirectories(List<IdeaSourceDirectory> testDirectories) {
-        this.testDirectories = testDirectories;
-        return this;
-    }
-
-    public List<File> getExcludeDirectories() {
-        return excludeDirectories;
-    }
-
-    public DefaultIdeaModule setExcludeDirectories(List<File> excludeDirectories) {
-        this.excludeDirectories = excludeDirectories;
-        return this;
-    }
-
     public DomainObjectSet<IdeaDependency> getDependencies() {
         return new ImmutableDomainObjectSet<IdeaDependency>(dependencies);
     }
@@ -168,17 +109,32 @@ public class DefaultIdeaModule implements Serializable, IdeaModule {
         return null;
     }
 
+    public GradleProject getGradleProject() {
+        return gradleProject;
+    }
+
+    public DefaultIdeaModule setGradleProject(GradleProject gradleProject) {
+        this.gradleProject = gradleProject;
+        return this;
+    }
+
+    public IdeaCompilerOutput getCompilerOutput() {
+        return compilerOutput;
+    }
+
+    public DefaultIdeaModule setCompilerOutput(IdeaCompilerOutput compilerOutput) {
+        this.compilerOutput = compilerOutput;
+        return this;
+    }
+
     @Override
     public String toString() {
-        return "DefaultIdeaModule{"
+        return "IdeaModule{"
                 + "name='" + name + '\''
-                + ", inheritOutputDirs=" + inheritOutputDirs
-                + ", outputDir=" + outputDir
-                + ", testOutputDir=" + testOutputDir
+                + ", gradleProject='" + gradleProject + '\''
+                + ", contentRoots=" + contentRoots
+                + ", compilerOutput=" + compilerOutput
                 + ", moduleFileDir=" + moduleFileDir
-                + ", sourceDirectories count=" + sourceDirectories.size()
-                + ", testDirectories count=" + testDirectories.size()
-                + ", excludeDirectories count=" + excludeDirectories.size()
                 + ", dependencies count=" + dependencies.size()
                 + '}';
     }

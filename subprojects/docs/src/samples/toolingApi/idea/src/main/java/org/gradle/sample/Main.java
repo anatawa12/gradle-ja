@@ -1,7 +1,7 @@
 package org.gradle.sample;
 
-import org.gradle.tooling.GradleConnector;
-import org.gradle.tooling.ProjectConnection;
+import org.gradle.tooling.*;
+import org.gradle.tooling.model.*;
 import org.gradle.tooling.model.idea.*;
 
 import java.io.File;
@@ -15,6 +15,7 @@ public class Main {
             connector.useInstallation(new File(args[0]));
         }
 
+        //TODO SF make it a multimodule project
         ProjectConnection connection = connector.connect();
         try {
             IdeaProject project = connection.getModel(IdeaProject.class);
@@ -28,28 +29,32 @@ public class Main {
                 System.out.println("  " + module);
                 System.out.println("  module details:");
 
-                System.out.println("    source dirs:");
-                for (IdeaSourceDirectory dir: module.getSourceDirectories()) {
-                    System.out.println("      " + dir);
+                System.out.println("    tasks from associated gradle project:");
+                for (GradleTask task: module.getGradleProject().getTasks()) {
+                    System.out.println("      " + task.getName());
                 }
 
-                System.out.println("    test dirs:");
-                for (IdeaSourceDirectory dir: module.getTestDirectories()) {
-                    System.out.println("      " + dir);
-                }
+                for (IdeaContentRoot root: module.getContentRoots()) {
+                    System.out.println("    Content root: " + root.getRootDirectory());
+                    System.out.println("    source dirs:");
+                    for (IdeaSourceDirectory dir: root.getSourceDirectories()) {
+                        System.out.println("      " + dir);
+                    }
 
-                System.out.println("    exclude dirs:");
-                for (File dir: module.getExcludeDirectories()) {
-                    System.out.println("      " + dir);
+                    System.out.println("    test dirs:");
+                    for (IdeaSourceDirectory dir: root.getTestDirectories()) {
+                        System.out.println("      " + dir);
+                    }
+
+                    System.out.println("    exclude dirs:");
+                    for (File dir: root.getExcludeDirectories()) {
+                        System.out.println("      " + dir);
+                    }
                 }
 
                 System.out.println("    dependencies:");
                 for (IdeaDependency dependency: module.getDependencies()) {
-                    if (dependency instanceof IdeaLibraryDependency) {
-                        System.out.println("      library: " + dependency);
-                    } else if (dependency instanceof IdeaModuleDependency) {
-                        System.out.println("      module: " + dependency);
-                    }
+                    System.out.println("      * " + dependency);
                 }
             }
         } finally {

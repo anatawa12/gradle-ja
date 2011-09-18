@@ -28,8 +28,10 @@ import org.jmock.integration.junit4.JUnit4Mockery;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
+import java.util.Collection;
 import java.util.Iterator;
 import java.util.LinkedHashSet;
+import java.util.List;
 
 import static org.gradle.util.WrapUtil.*;
 import static org.hamcrest.Matchers.*;
@@ -246,6 +248,29 @@ public class DefaultDomainObjectCollectionTest {
     }
 
     @Test
+    public void findAllRetainsIterationOrder() {
+        container.add("a");
+        container.add("b");
+        container.add("c");
+
+        Collection<CharSequence> collection = container.findAll(HelperUtil.toClosure("{ it != 'b' }"));
+        assertThat(collection, instanceOf(List.class));
+        assertThat(collection, equalTo((Collection) toList("a", "c")));
+    }
+
+    @Test
+    public void findAllDoesNotReturnALiveCollection() {
+        container.add("a");
+        container.add("b");
+        container.add("c");
+
+        Collection<CharSequence> collection = container.findAll(HelperUtil.toClosure("{ it != 'b' }"));
+
+        container.add("d");
+        assertThat(collection, equalTo((Collection) toList("a", "c")));
+    }
+    
+    @Test
     public void callsActionWhenObjectAdded() {
         final Action<CharSequence> action = context.mock(Action.class);
 
@@ -289,25 +314,6 @@ public class DefaultDomainObjectCollectionTest {
         container.add("a");
     }
 
-    
-    /*
-        Commented out because there is no longer an implicit replace due to domain object collections
-        now implementing the semantics of collection, which is incompatible with this. - LD.
-    */
-    // @Test
-    // public void callsRemoveActionWhenObjectReplaced() {
-    //     final Action<CharSequence> action = context.mock(Action.class);
-    //     final String original = "a";
-    // 
-    //     context.checking(new Expectations() {{
-    //         one(action).execute(with(sameInstance(original)));
-    //     }});
-    // 
-    //     container.whenObjectRemoved(action);
-    //     container.add(original);
-    //     container.add("a");
-    // }
-
     @Test
     public void callsRemoveActionWhenObjectRemoved() {
         final Action<CharSequence> action = context.mock(Action.class);
@@ -320,6 +326,25 @@ public class DefaultDomainObjectCollectionTest {
         container.whenObjectRemoved(action);
         container.add(original);
         assertTrue(container.remove(original));
+    }
+
+    @Test
+    public void callsRemoveActionWhenObjectRemovedUsingIterator() {
+        final Action<CharSequence> action = context.mock(Action.class);
+
+        container.whenObjectRemoved(action);
+        container.add("a");
+        container.add("b");
+
+        Iterator<CharSequence> iterator = container.iterator();
+        iterator.next();
+        iterator.next();
+
+        context.checking(new Expectations() {{
+            one(action).execute("b");
+        }});
+
+        iterator.remove();
     }
 
     @Test
@@ -456,6 +481,23 @@ public class DefaultDomainObjectCollectionTest {
         }});
 
         container.remove("a");
+    }
+
+    @Test
+    public void callsVetoActionBeforeObjectIsRemovedUsingIterator() {
+        final Runnable action = context.mock(Runnable.class);
+
+        container.add("a");
+        container.beforeChange(action);
+
+        Iterator<CharSequence> iterator = container.iterator();
+        iterator.next();
+
+        context.checking(new Expectations() {{
+            one(action).run();
+        }});
+
+        iterator.remove();
     }
 
     @Test

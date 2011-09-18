@@ -19,6 +19,7 @@ import org.gradle.StartParameter;
 import org.gradle.api.internal.GradleDistributionLocator;
 import org.gradle.api.internal.project.ServiceRegistry;
 import org.gradle.api.internal.project.TopLevelBuildServiceRegistry;
+import org.gradle.cache.internal.CacheFactory;
 import org.gradle.configuration.GradleLauncherMetaData;
 import org.gradle.initialization.BuildClientMetaData;
 
@@ -36,6 +37,11 @@ public class TestTopLevelBuildServiceRegistry extends TopLevelBuildServiceRegist
         return new GradleLauncherMetaData();
     }
 
+    @Override
+    protected CacheFactory createCacheFactory() {
+        return new InMemoryCacheFactory();
+    }
+
     protected GradleDistributionLocator createGradleDistributionLocator() {
         return new GradleDistributionLocator() {
             public File getGradleHome() {
@@ -43,5 +49,4 @@ public class TestTopLevelBuildServiceRegistry extends TopLevelBuildServiceRegist
             }
         };
     }
-
 }

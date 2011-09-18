@@ -16,27 +16,34 @@
 
 package org.gradle.tooling.model.idea;
 
-import org.gradle.tooling.model.BuildableElement;
 import org.gradle.tooling.model.DomainObjectSet;
+import org.gradle.tooling.model.GradleProject;
+import org.gradle.tooling.model.HasGradleProject;
 import org.gradle.tooling.model.HierarchicalElement;
-
-import java.io.File;
-import java.util.List;
 
 /**
  * Represents information about the IntelliJ IDEA module
  *
  * @since 1.0-rc-1
  */
-public interface IdeaModule extends BuildableElement, HierarchicalElement {
+public interface IdeaModule extends HierarchicalElement, HasGradleProject {
 
     /**
      * All content roots. Most idea modules have a single content root.
      *
      * @return content roots
      */
-    List<File> getContentRoots();
-    //TODO SF - this is no good. It requires better modelling because src/test/exclude folders are per content root
+    DomainObjectSet<? extends IdeaContentRoot> getContentRoots();
+
+    /**
+     * The gradle project that is associated with this module.
+     * Typically, a single module corresponds to a single gradle project.
+     * <p>
+     * See {@link HasGradleProject}
+     *
+     * @return associated gradle project
+     */
+    GradleProject getGradleProject();
 
     /**
      * Returns the project of this module.
@@ -55,57 +62,9 @@ public interface IdeaModule extends BuildableElement, HierarchicalElement {
     IdeaProject getProject();
 
     /**
-     * the folder containing module file (*.iml)
-     *
-     * @return module file dir
+     * information about idea compiler output (output dirs, inheritance of output dir, etc.)
      */
-    File getModuleFileDir(); //TODO SF - this property is a bit awkward but it seems Denis needs it...
-
-    /**
-     * whether current module should inherit project's output directory.
-     *
-     * @return inherit output dirs flag
-     * @see #getOutputDir()
-     * @see #getTestOutputDir()
-     */
-    Boolean getInheritOutputDirs();
-
-    /**
-     * directory to store module's production classes and resources.
-     *
-     * @return directory to store production output. non-<code>null</code> if
-     *            {@link #getInheritOutputDirs()} returns <code>'false'</code>
-     */
-    File getOutputDir();
-
-    /**
-     * directory to store module's test classes and resources.
-     *
-     * @return directory to store test output. non-<code>null</code> if
-     *            {@link #getInheritOutputDirs()} returns <code>'false'</code>
-     */
-    File getTestOutputDir();
-
-    /**
-     * source dirs.
-     *
-     * @return source dirs
-     */
-    DomainObjectSet<? extends IdeaSourceDirectory> getSourceDirectories();
-
-    /**
-     * test dirs.
-     *
-     * @return test dirs
-     */
-    DomainObjectSet<? extends IdeaSourceDirectory> getTestDirectories();
-
-    /**
-     * exclude dirs
-     *
-     * @return exclude dirs
-     */
-    List<File> getExcludeDirectories();
+    IdeaCompilerOutput getCompilerOutput();
 
     /**
      * dependencies of this module (i.e. module dependencies, library dependencies, etc.)

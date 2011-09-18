@@ -19,11 +19,15 @@ package org.gradle.api.internal.artifacts.ivyservice;
 import org.apache.ivy.Ivy;
 import org.apache.ivy.core.module.descriptor.ModuleDescriptor;
 import org.apache.ivy.core.report.ResolveReport;
+import org.apache.ivy.core.resolve.IvyNode;
 import org.apache.ivy.core.resolve.ResolveOptions;
 import org.apache.ivy.util.Message;
 import org.gradle.api.artifacts.*;
 import org.gradle.api.internal.CachingDirectedGraphWalker;
 import org.gradle.api.internal.DirectedGraphWithEdgeValues;
+import org.gradle.api.internal.Factory;
+import org.gradle.api.internal.artifacts.ArtifactDependencyResolver;
+import org.gradle.api.internal.artifacts.configurations.ConfigurationInternal;
 import org.gradle.api.specs.Spec;
 import org.gradle.api.specs.Specs;
 import org.gradle.util.Clock;
@@ -37,18 +41,23 @@ import java.util.*;
 /**
  * @author Hans Dockter
  */
-public class DefaultIvyDependencyResolver implements IvyDependencyResolver {
+public class DefaultIvyDependencyResolver implements ArtifactDependencyResolver {
     private static Logger logger = LoggerFactory.getLogger(DefaultIvyDependencyResolver.class);
+    private final ModuleDescriptorConverter moduleDescriptorConverter;
+    private final Factory<Ivy> ivyFactory;
+    private final IvyReportConverter ivyReportTranslator;
 
-    private IvyReportConverter ivyReportTranslator;
-
-    public DefaultIvyDependencyResolver(IvyReportConverter ivyReportTranslator) {
+    public DefaultIvyDependencyResolver(IvyReportConverter ivyReportTranslator, ModuleDescriptorConverter moduleDescriptorConverter, Factory<Ivy> ivyFactory) {
         this.ivyReportTranslator = ivyReportTranslator;
+        this.moduleDescriptorConverter = moduleDescriptorConverter;
+        this.ivyFactory = ivyFactory;
         Message.setDefaultLogger(new IvyLoggingAdaper());
     }
 
-    public ResolvedConfiguration resolve(Configuration configuration, Ivy ivy, ModuleDescriptor moduleDescriptor) {
+    public ResolvedConfiguration resolve(ConfigurationInternal configuration) {
         Clock clock = new Clock();
+        Ivy ivy = ivyFactory.create();
+        ModuleDescriptor moduleDescriptor = moduleDescriptorConverter.convert(configuration.getAll(), configuration.getModule(), ivy.getSettings());
         ResolveOptions resolveOptions = createResolveOptions(configuration);
         ResolveReport resolveReport;
         try {
@@ -74,8 +83,17 @@ public class DefaultIvyDependencyResolver implements IvyDependencyResolver {
         private IvyConversionResult conversionResult;
         private final CachingDirectedGraphWalker<ResolvedDependency, ResolvedArtifact> walker
                 = new CachingDirectedGraphWalker<ResolvedDependency, ResolvedArtifact>(new ResolvedDependencyArtifactsGraph());
+        private final ResolveReport resolveReport;
+
+        public LenientConfiguration getLenientConfiguration() {
+            if (!hasError) {
+                return new DelegatingLenientConfiguration(this);
+            }
+            return new LenientConfigurationImpl(this, resolveReport, configuration, ivyReportTranslator);
+        }
 
         public ResolvedConfigurationImpl(ResolveReport resolveReport, Configuration configuration) {
+            this.resolveReport = resolveReport;
             this.hasError = resolveReport.hasError();
             if (this.hasError) {
                 this.problemMessages = resolveReport.getAllProblemMessages();
@@ -93,18 +111,26 @@ public class DefaultIvyDependencyResolver implements IvyDependencyResolver {
 
         public void rethrowFailure() throws ResolveException {
             if (hasError) {
-                Formatter formatter = new Formatter();
-                for (String msg : problemMessages) {
-                    formatter.format("    - %s%n", msg);
+                // Note: this list does not include all the failures, but it's better than nothing
+                List<Throwable> unresolvedFailures = new ArrayList<Throwable>();
+                IvyNode[] unresolved = resolveReport.getConfigurationReport(configuration.getName()).getUnresolvedDependencies();
+                for (IvyNode node : unresolved) {
+                    unresolvedFailures.add(node.getProblem());
                 }
-                throw new ResolveException(configuration, formatter.toString());
+
+                throw new ResolveException(configuration, problemMessages, unresolvedFailures);
             }
         }
 
         public Set<File> getFiles(Spec<Dependency> dependencySpec) {
+            Set<ResolvedDependency> firstLevelModuleDependencies = getFirstLevelModuleDependencies(dependencySpec);
+            return getFiles(firstLevelModuleDependencies, this.conversionResult);
+        }
+
+        Set<File> getFiles(Set<ResolvedDependency> firstLevelModuleDependencies, IvyConversionResult conversionResult) {
             Set<ResolvedArtifact> artifacts = new LinkedHashSet<ResolvedArtifact>();
 
-            for (ResolvedDependency resolvedDependency : getFirstLevelModuleDependencies(dependencySpec)) {
+            for (ResolvedDependency resolvedDependency : firstLevelModuleDependencies) {
                 artifacts.addAll(resolvedDependency.getParentArtifacts(conversionResult.getRoot()));
                 walker.add(resolvedDependency);
             }
@@ -130,7 +156,11 @@ public class DefaultIvyDependencyResolver implements IvyDependencyResolver {
 
         public Set<ResolvedDependency> getFirstLevelModuleDependencies(Spec<Dependency> dependencySpec) {
             rethrowFailure();
-            Set<ModuleDependency> allDependencies = configuration.getAllDependencies(ModuleDependency.class);
+            return getFirstLevelModuleDependencies(dependencySpec, conversionResult);
+        }
+
+        Set<ResolvedDependency> getFirstLevelModuleDependencies(Spec<Dependency> dependencySpec, IvyConversionResult conversionResult) {
+            Set<ModuleDependency> allDependencies = configuration.getAllDependencies().withType(ModuleDependency.class);
             Set<ModuleDependency> selectedDependencies = Specs.filterIterable(allDependencies, dependencySpec);
 
             Set<ResolvedDependency> result = new LinkedHashSet<ResolvedDependency>();

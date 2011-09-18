@@ -33,10 +33,9 @@ class EclipseClasspathIntegrationTest extends AbstractEclipseIntegrationTest {
     @Test
     void "classpath contains library entries for external and file dependencies"() {
         //given
-        def repoDir = file("repo")
-        publishArtifact(repoDir, "coolGroup", "niceArtifact")
-        publishArtifact(repoDir, "coolGroup", "niceArtifact", null, "sources")
-        publishArtifact(repoDir, "coolGroup", "niceArtifact", null, "javadoc")
+        def jar = mavenRepo.module('coolGroup', 'niceArtifact', '1.0').publishArtifact()
+        def srcJar = mavenRepo.module('coolGroup', 'niceArtifact', '1.0', 'sources').publishArtifact()
+        mavenRepo.module('coolGroup', 'niceArtifact', '1.0', 'javadoc').publishArtifact()
 
         //when
         runEclipseTask """
@@ -44,33 +43,72 @@ apply plugin: 'java'
 apply plugin: 'eclipse'
 
 repositories {
-    mavenRepo(name: "repo", urls: "${repoDir.toURI()}")
+    maven { url "${mavenRepo.rootDir.toURI()}" }
+    mavenCentral()
 }
 
 dependencies {
     compile 'coolGroup:niceArtifact:1.0'
+    compile 'commons-lang:commons-lang:2.6'
     compile files('lib/dep.jar')
 }
 """
 
         //then
         def libraries = classpath.libs
-        assert libraries.size() == 2
-        libraries[0].assertHasCachedJar("coolGroup", "niceArtifact", "1.0")
-        libraries[0].assertHasCachedSource("coolGroup", "niceArtifact", "1.0")
+        assert libraries.size() == 3
+        libraries[0].assertHasJar(jar)
+        libraries[0].assertHasSource(srcJar)
         libraries[0].assertHasNoJavadoc()
-        libraries[1].assertHasJar(file('lib/dep.jar'))
-        libraries[1].assertHasNoSource()
+        libraries[1].assertHasCachedJar('commons-lang', 'commons-lang', '2.6')
+        libraries[1].assertHasCachedSource('commons-lang', 'commons-lang', '2.6')
         libraries[1].assertHasNoJavadoc()
+        libraries[2].assertHasJar(file('lib/dep.jar'))
+        libraries[2].assertHasNoSource()
+        libraries[2].assertHasNoJavadoc()
+    }
+
+    @Test
+    @Issue("GRADLE-1622")
+    void "classpath contains entries for dependencies that only differ by classifier"() {
+        given:
+        def baseJar = mavenRepo.module('coolGroup', 'niceArtifact', '1.0').publishArtifact()
+        def extraJar = mavenRepo.module('coolGroup', 'niceArtifact', '1.0', 'extra').publishArtifactOnly()
+        def testsJar = mavenRepo.module('coolGroup', 'niceArtifact', '1.0', 'tests').publishArtifactOnly()
+        def anotherJar = mavenRepo.module('coolGroup', 'another', '1.0').publishArtifact()
+
+        when:
+        runEclipseTask """
+apply plugin: 'java'
+apply plugin: 'eclipse'
+
+repositories {
+    maven { url "${mavenRepo.rootDir.toURI()}" }
+}
+
+dependencies {
+    compile 'coolGroup:niceArtifact:1.0'
+    compile 'coolGroup:niceArtifact:1.0:extra'
+    testCompile 'coolGroup:another:1.0'
+    testCompile 'coolGroup:niceArtifact:1.0:tests'
+}
+"""
+
+        then:
+        def libraries = classpath.libs
+        assert libraries.size() == 4
+        libraries[0].assertHasJar(extraJar)
+        libraries[1].assertHasJar(anotherJar)
+        libraries[2].assertHasJar(baseJar)
+        libraries[3].assertHasJar(testsJar)
     }
 
     @Test
     void "substitutes path variables into library paths"() {
         //given
-        def repoDir = file("repo")
-        publishArtifact(repoDir, "coolGroup", "niceArtifact")
-        publishArtifact(repoDir, "coolGroup", "niceArtifact", null, "sources")
-        publishArtifact(repoDir, "coolGroup", "niceArtifact", null, "javadoc")
+        mavenRepo.module('coolGroup', 'niceArtifact', '1.0').publishArtifact()
+        mavenRepo.module('coolGroup', 'niceArtifact', '1.0', 'sources').publishArtifact()
+        mavenRepo.module('coolGroup', 'niceArtifact', '1.0', 'javadoc').publishArtifact()
 
         //when
         runEclipseTask """
@@ -78,7 +116,7 @@ apply plugin: 'java'
 apply plugin: 'eclipse'
 
 repositories {
-    mavenRepo(name: "repo", urls: "${repoDir.toURI()}")
+    maven { url "${mavenRepo.rootDir.toURI()}" }
 }
 
 dependencies {
@@ -87,18 +125,18 @@ dependencies {
 }
 
 eclipse {
-    pathVariables HOME_DIR: gradle.gradleUserHomeDir
+    pathVariables REPO_DIR: file('${mavenRepo.rootDir.toURI()}')
     pathVariables LIB_DIR: file('lib')
     classpath.downloadJavadoc = true
 }
 """
 
         //then
-        def libraries = classpath.withHomeDir('HOME_DIR').vars
+        def libraries = classpath.vars
         assert libraries.size() == 2
-        libraries[0].assertHasCachedJar("coolGroup", "niceArtifact", "1.0")
-        libraries[0].assertHasCachedSource("coolGroup", "niceArtifact", "1.0")
-        libraries[0].assertHasCachedJavadoc("coolGroup", "niceArtifact", "1.0")
+        libraries[0].assertHasJar('REPO_DIR/coolGroup/niceArtifact/1.0/niceArtifact-1.0.jar')
+        libraries[0].assertHasSource('REPO_DIR/coolGroup/niceArtifact/1.0/niceArtifact-1.0-sources.jar')
+        libraries[0].assertHasJavadoc('REPO_DIR/coolGroup/niceArtifact/1.0/niceArtifact-1.0-javadoc.jar')
         libraries[1].assertHasJar('LIB_DIR/dep.jar')
     }
 
@@ -227,9 +265,8 @@ eclipse.classpath {
     @Test
     void "handles plus minus configurations for external deps"() {
         //given
-        def repoDir = file("repo")
-        publishArtifact(repoDir, "coolGroup", "coolArtifact", "unwantedArtifact")
-        publishArtifact(repoDir, "coolGroup", "unwantedArtifact")
+        def jar = mavenRepo.module('coolGroup', 'coolArtifact', '1.0').dependsOn('coolGroup', 'unwantedArtifact', '1.0').publishArtifact()
+        mavenRepo.module('coolGroup', 'unwantedArtifact', '1.0').publishArtifact()
 
         //when
         runEclipseTask """
@@ -242,7 +279,7 @@ configurations {
 }
 
 repositories {
-    mavenRepo(name: "repo", urls: "${repoDir.toURI()}")
+    maven { url "${mavenRepo.rootDir.toURI()}" }
 }
 
 dependencies {
@@ -259,16 +296,15 @@ eclipse.classpath {
         //then
         def libraries = classpath.libs
         assert libraries.size() == 1
-        libraries[0].assertHasCachedJar("coolGroup", "coolArtifact", "1.0")
+        libraries[0].assertHasJar(jar)
     }
 
     @Test
     void "can toggle javadoc and sources on"() {
         //given
-        def repoDir = file("repo")
-        publishArtifact(repoDir, "coolGroup", "niceArtifact")
-        publishArtifact(repoDir, "coolGroup", "niceArtifact", null, "sources")
-        publishArtifact(repoDir, "coolGroup", "niceArtifact", null, "javadoc")
+        def jar = mavenRepo.module('coolGroup', 'niceArtifact', '1.0').publishArtifact()
+        def srcJar = mavenRepo.module('coolGroup', 'niceArtifact', '1.0', 'sources').publishArtifact()
+        def javadocJar = mavenRepo.module('coolGroup', 'niceArtifact', '1.0', 'javadoc').publishArtifact()
 
         //when
         runEclipseTask """
@@ -276,7 +312,7 @@ apply plugin: 'java'
 apply plugin: 'eclipse'
 
 repositories {
-    mavenRepo(name: "repo", urls: "${repoDir.toURI()}")
+    maven { url "${mavenRepo.rootDir.toURI()}" }
 }
 
 dependencies {
@@ -292,18 +328,17 @@ eclipse.classpath {
         //then
         def libraries = classpath.libs
         assert libraries.size() == 1
-        libraries[0].assertHasCachedJar("coolGroup", "niceArtifact", "1.0")
-        libraries[0].assertHasCachedSource("coolGroup", "niceArtifact", "1.0")
-        libraries[0].assertHasCachedJavadoc("coolGroup", "niceArtifact", "1.0")
+        libraries[0].assertHasJar(jar)
+        libraries[0].assertHasSource(srcJar)
+        libraries[0].assertHasJavadoc(javadocJar)
     }
 
     @Test
     void "can toggle javadoc and sources off"() {
         //given
-        def repoDir = file("repo")
-        publishArtifact(repoDir, "coolGroup", "niceArtifact")
-        publishArtifact(repoDir, "coolGroup", "niceArtifact", null, "sources")
-        publishArtifact(repoDir, "coolGroup", "niceArtifact", null, "javadoc")
+        def jar = mavenRepo.module('coolGroup', 'niceArtifact', '1.0').publishArtifact()
+        mavenRepo.module('coolGroup', 'niceArtifact', '1.0', 'sources').publishArtifact()
+        mavenRepo.module('coolGroup', 'niceArtifact', '1.0', 'javadoc').publishArtifact()
 
         //when
         runEclipseTask """
@@ -311,7 +346,7 @@ apply plugin: 'java'
 apply plugin: 'eclipse'
 
 repositories {
-    mavenRepo(name: "repo", urls: "${repoDir.toURI()}")
+    maven { url "${mavenRepo.rootDir.toURI()}" }
 }
 
 dependencies {
@@ -327,7 +362,7 @@ eclipse.classpath {
         //then
         def libraries = classpath.libs
         assert libraries.size() == 1
-        libraries[0].assertHasCachedJar("coolGroup", "niceArtifact", "1.0")
+        libraries[0].assertHasJar(jar)
         libraries[0].assertHasNoSource()
         libraries[0].assertHasNoJavadoc()
     }

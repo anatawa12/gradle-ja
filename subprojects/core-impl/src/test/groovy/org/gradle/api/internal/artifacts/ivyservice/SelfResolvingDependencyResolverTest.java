@@ -16,21 +16,24 @@
 package org.gradle.api.internal.artifacts.ivyservice;
 
 import org.apache.ivy.Ivy;
-import org.apache.ivy.core.module.descriptor.ModuleDescriptor;
-import org.gradle.api.artifacts.Configuration;
+import org.gradle.api.artifacts.DependencySet;
 import org.gradle.api.artifacts.ResolvedArtifact;
 import org.gradle.api.artifacts.ResolvedConfiguration;
 import org.gradle.api.artifacts.ResolvedDependency;
 import org.gradle.api.file.FileCollection;
-import org.gradle.api.internal.artifacts.DependencyInternal;
 import org.gradle.api.internal.artifacts.DependencyResolveContext;
+import org.gradle.api.internal.artifacts.ArtifactDependencyResolver;
+import org.gradle.api.internal.artifacts.configurations.ConfigurationInternal;
+import org.gradle.api.internal.artifacts.dependencies.AbstractDependency;
 import org.gradle.api.specs.Specs;
+import org.gradle.util.JUnit4GroovyMockery;
 import org.hamcrest.Description;
 import org.jmock.Expectations;
 import org.jmock.api.Action;
 import org.jmock.api.Invocation;
 import org.jmock.integration.junit4.JMock;
 import org.jmock.integration.junit4.JUnit4Mockery;
+import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -40,33 +43,40 @@ import java.text.ParseException;
 
 import static org.gradle.util.WrapUtil.toLinkedSet;
 import static org.gradle.util.WrapUtil.toSet;
-import static org.gradle.util.WrapUtil.toDomainObjectSet;
 import static org.hamcrest.Matchers.*;
 import static org.junit.Assert.assertThat;
 
 @RunWith(JMock.class)
 public class SelfResolvingDependencyResolverTest {
-    private final JUnit4Mockery context = new JUnit4Mockery();
-    private final IvyDependencyResolver delegate = context.mock(IvyDependencyResolver.class);
+    private final JUnit4Mockery context = new JUnit4GroovyMockery();
+    private final ArtifactDependencyResolver delegate = context.mock(ArtifactDependencyResolver.class);
     private final ResolvedConfiguration resolvedConfiguration = context.mock(ResolvedConfiguration.class);
-    private final Configuration configuration = context.mock(Configuration.class);
+    private final ConfigurationInternal configuration = context.mock(ConfigurationInternal.class);
     private final Ivy ivy = Ivy.newInstance();
-    private final ModuleDescriptor moduleDescriptor = context.mock(ModuleDescriptor.class);
+    private final DependencySet dependencies = context.mock(DependencySet.class);
 
     private final SelfResolvingDependencyResolver resolver = new SelfResolvingDependencyResolver(delegate);
+
+    @Before
+    public void setup() {
+        context.checking(new Expectations() {{
+            allowing(configuration).getAllDependencies();
+            will(returnValue(dependencies));
+        }});
+    }
 
     @Test
     public void wrapsResolvedConfigurationProvidedByDelegate() {
         context.checking(new Expectations() {{
-            one(delegate).resolve(configuration, ivy, moduleDescriptor);
+            one(delegate).resolve(configuration);
             will(returnValue(resolvedConfiguration));
-            allowing(configuration).getAllDependencies(DependencyInternal.class);
-            will(returnValue(toDomainObjectSet(DependencyInternal.class)));
+            allowing(dependencies).iterator();
+            will(returnIterator());
             allowing(configuration).isTransitive();
             will(returnValue(true));
         }});
 
-        ResolvedConfiguration configuration = resolver.resolve(this.configuration, ivy, moduleDescriptor);
+        ResolvedConfiguration configuration = resolver.resolve(this.configuration);
         assertThat(configuration, not(sameInstance(resolvedConfiguration)));
 
         final File file = new File("file");
@@ -81,18 +91,18 @@ public class SelfResolvingDependencyResolverTest {
     
     @Test
     public void addsFilesFromSelfResolvingDependenciesBeforeFilesFromResolvedConfiguration() {
-        final DependencyInternal dependency = context.mock(DependencyInternal.class);
+        final AbstractDependency dependency = context.mock(AbstractDependency.class);
 
         context.checking(new Expectations() {{
-            one(delegate).resolve(configuration, ivy, moduleDescriptor);
+            one(delegate).resolve(configuration);
             will(returnValue(resolvedConfiguration));
-            allowing(configuration).getAllDependencies(DependencyInternal.class);
-            will(returnValue(toDomainObjectSet(DependencyInternal.class, dependency)));
+            allowing(dependencies).iterator();
+            will(returnIterator(dependency));
             allowing(configuration).isTransitive();
             will(returnValue(true));
         }});
 
-        ResolvedConfiguration actualResolvedConfiguration = resolver.resolve(this.configuration, ivy, moduleDescriptor);
+        ResolvedConfiguration actualResolvedConfiguration = resolver.resolve(this.configuration);
         assertThat(actualResolvedConfiguration, not(sameInstance(resolvedConfiguration)));
 
         final File configFile = new File("from config");
@@ -126,10 +136,8 @@ public class SelfResolvingDependencyResolverTest {
     @Test
     public void testGetModuleDependencies() throws IOException, ParseException {
         context.checking(new Expectations() {{
-            one(delegate).resolve(configuration, ivy, moduleDescriptor);
+            one(delegate).resolve(configuration);
             will(returnValue(resolvedConfiguration));
-            allowing(configuration).getAllDependencies(DependencyInternal.class);
-            will(returnValue(toDomainObjectSet(DependencyInternal.class)));
             allowing(configuration).isTransitive();
             will(returnValue(true));
         }});
@@ -141,17 +149,15 @@ public class SelfResolvingDependencyResolverTest {
             will(returnValue(toSet(resolvedDependency)));
         }});
 
-        assertThat(resolver.resolve(this.configuration, ivy, moduleDescriptor).getFirstLevelModuleDependencies(),
+        assertThat(resolver.resolve(this.configuration).getFirstLevelModuleDependencies(),
                 equalTo(toSet(resolvedDependency)));
     }
 
     @Test
     public void testGetResolvedArtifacts() {
         context.checking(new Expectations() {{
-            one(delegate).resolve(configuration, ivy, moduleDescriptor);
+            one(delegate).resolve(configuration);
             will(returnValue(resolvedConfiguration));
-            allowing(configuration).getAllDependencies(DependencyInternal.class);
-            will(returnValue(toDomainObjectSet(DependencyInternal.class)));
             allowing(configuration).isTransitive();
             will(returnValue(true));
         }});
@@ -163,7 +169,7 @@ public class SelfResolvingDependencyResolverTest {
             will(returnValue(toSet(resolvedArtifact)));
         }});
 
-        assertThat(resolver.resolve(this.configuration, ivy, moduleDescriptor).getResolvedArtifacts(),
+        assertThat(resolver.resolve(this.configuration).getResolvedArtifacts(),
                 equalTo(toSet(resolvedArtifact)));
     }
 

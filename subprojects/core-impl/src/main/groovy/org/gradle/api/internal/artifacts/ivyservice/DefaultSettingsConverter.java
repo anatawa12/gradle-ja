@@ -20,45 +20,35 @@ import org.apache.commons.lang.StringUtils;
 import org.apache.ivy.core.cache.RepositoryCacheManager;
 import org.apache.ivy.core.module.descriptor.ModuleDescriptor;
 import org.apache.ivy.core.settings.IvySettings;
-import org.apache.ivy.plugins.matcher.PatternMatcher;
 import org.apache.ivy.plugins.repository.Repository;
 import org.apache.ivy.plugins.repository.TransferEvent;
 import org.apache.ivy.plugins.repository.TransferListener;
 import org.apache.ivy.plugins.resolver.*;
 import org.gradle.api.internal.Factory;
-import org.gradle.api.logging.Logger;
-import org.gradle.api.logging.Logging;
+import org.gradle.api.internal.artifacts.repositories.InternalRepository;
 import org.gradle.logging.ProgressLogger;
 import org.gradle.logging.ProgressLoggerFactory;
-import org.gradle.util.Clock;
 import org.gradle.util.WrapUtil;
+import org.jfrog.wharf.ivy.model.WharfResolverMetadata;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * @author Hans Dockter
  */
 public class DefaultSettingsConverter implements SettingsConverter {
-    private static Logger logger = Logging.getLogger(DefaultSettingsConverter.class);
-
     private final ProgressLoggerFactory progressLoggerFactory;
     private final Factory<IvySettings> settingsFactory;
-    private final DependencyResolver internalRepository;
-    private final Map<String, ModuleDescriptor> clientModuleRegistry;
+    private final Map<String, DependencyResolver> resolversById = new HashMap<String, DependencyResolver>();
     private final TransferListener transferListener = new ProgressLoggingTransferListener();
     private IvySettings publishSettings;
     private IvySettings resolveSettings;
     private ChainResolver userResolverChain;
     private DependencyResolver outerChain;
 
-    public DefaultSettingsConverter(ProgressLoggerFactory progressLoggerFactory, Factory<IvySettings> settingsFactory, DependencyResolver internalRepository, Map<String, ModuleDescriptor> clientModuleRegistry) {
+    public DefaultSettingsConverter(ProgressLoggerFactory progressLoggerFactory, Factory<IvySettings> settingsFactory) {
         this.progressLoggerFactory = progressLoggerFactory;
         this.settingsFactory = settingsFactory;
-        this.internalRepository = internalRepository;
-        this.clientModuleRegistry = clientModuleRegistry;
     }
 
     private static String getLengthText(TransferEvent evt) {
@@ -79,31 +69,25 @@ public class DefaultSettingsConverter implements SettingsConverter {
     }
 
     public IvySettings convertForPublish(List<DependencyResolver> publishResolvers) {
-        Clock clock = new Clock();
         if (publishSettings == null) {
             publishSettings = settingsFactory.create();
         } else {
             publishSettings.getResolvers().clear();
         }
         initializeResolvers(publishSettings, publishResolvers);
-        logger.debug("Timing: Ivy convert for publish took {}", clock.getTime());
         return publishSettings;
     }
 
-    public IvySettings convertForResolve(List<DependencyResolver> dependencyResolvers) {
-        Clock clock = new Clock();
-
+    public IvySettings convertForResolve(List<DependencyResolver> dependencyResolvers, Map<String, ModuleDescriptor> clientModuleRegistry) {
         if (resolveSettings == null) {
             resolveSettings = settingsFactory.create();
             userResolverChain = createUserResolverChain();
-            DependencyResolver clientModuleResolver = createClientModuleResolver(userResolverChain);
+            DependencyResolver clientModuleResolver = createClientModuleResolver(clientModuleRegistry, userResolverChain);
             outerChain = createOuterChain(WrapUtil.toLinkedSet(clientModuleResolver, userResolverChain));
-            initializeResolvers(resolveSettings, WrapUtil.toList(internalRepository, userResolverChain, clientModuleResolver, outerChain));
+            initializeResolvers(resolveSettings, WrapUtil.toList(userResolverChain, clientModuleResolver, outerChain));
         }
         replaceResolvers(dependencyResolvers, userResolverChain);
-        initializeResolvers(resolveSettings, dependencyResolvers);
         resolveSettings.setDefaultResolver(outerChain.getName());
-        logger.debug("Timing: Ivy convert for resolve took {}", clock.getTime());
         return resolveSettings;
     }
 
@@ -118,31 +102,41 @@ public class DefaultSettingsConverter implements SettingsConverter {
         return clientModuleChain;
     }
 
-    private DependencyResolver createClientModuleResolver(DependencyResolver userResolverChain) {
+    private DependencyResolver createClientModuleResolver(Map<String, ModuleDescriptor> clientModuleRegistry, DependencyResolver userResolverChain) {
         return new ClientModuleResolver(CLIENT_MODULE_NAME, clientModuleRegistry, userResolverChain);
     }
 
     private ChainResolver createUserResolverChain() {
         ChainResolver chainResolver = new ChainResolver();
         chainResolver.setName(CHAIN_RESOLVER_NAME);
-        chainResolver.add(internalRepository);
-        // todo Figure out why Ivy thinks this is necessary. The IBiblio resolver has already this pattern which should be good enough. By doing this we let Maven semantics seep into our whole system.
-        chainResolver.setChangingPattern(".*-SNAPSHOT");
-        chainResolver.setChangingMatcher(PatternMatcher.REGEXP);
         chainResolver.setReturnFirst(true);
         chainResolver.setRepositoryCacheManager(new NoOpRepositoryCacheManager(chainResolver.getName()));
         return chainResolver;
     }
 
-    private void replaceResolvers(List<DependencyResolver> classpathResolvers, ChainResolver chainResolver) {
+    private void replaceResolvers(List<DependencyResolver> resolvers, ChainResolver chainResolver) {
         Collection<DependencyResolver> oldResolvers = new ArrayList<DependencyResolver>(chainResolver.getResolvers());
-        oldResolvers.remove(internalRepository);
         for (DependencyResolver resolver : oldResolvers) {
             resolveSettings.getResolvers().remove(resolver);
             chainResolver.getResolvers().remove(resolver);
         }
-        for (DependencyResolver classpathResolver : classpathResolvers) {
-            chainResolver.add(classpathResolver);
+        for (DependencyResolver resolver : resolvers) {
+            resolver.setSettings(resolveSettings);
+            DependencyResolver sharedResolver;
+            if (resolver instanceof InternalRepository) {
+                sharedResolver = resolver;
+            } else {
+                String id = new WharfResolverMetadata(resolver).getId();
+                sharedResolver = resolversById.get(id);
+                if (sharedResolver == null) {
+                    initializeResolvers(resolveSettings, WrapUtil.toList(resolver));
+                    assert resolveSettings.getResolver(resolver.getName()) == resolver;
+                    resolversById.put(id, resolver);
+                    sharedResolver = resolver;
+                }
+            }
+            resolveSettings.addResolver(sharedResolver);
+            chainResolver.add(sharedResolver);
         }
     }
 

@@ -15,9 +15,9 @@
  */
 package org.gradle.tooling.internal.provider
 
-import org.gradle.launcher.DaemonClient
+import org.gradle.launcher.daemon.client.DaemonClient
 import spock.lang.Specification
-import org.gradle.launcher.ReportedException
+import org.gradle.launcher.exec.ReportedException
 import org.gradle.tooling.internal.protocol.BuildExceptionVersion1
 import org.gradle.initialization.GradleLauncherAction
 import org.gradle.tooling.internal.protocol.BuildOperationParametersVersion1

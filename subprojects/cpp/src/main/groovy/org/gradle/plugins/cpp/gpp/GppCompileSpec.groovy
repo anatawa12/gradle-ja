@@ -21,6 +21,7 @@ import org.gradle.plugins.binaries.tasks.Compile
 import org.gradle.plugins.binaries.model.CompileSpec
 
 import org.gradle.api.file.SourceDirectorySet
+import org.gradle.api.file.FileCollection
 
 import org.gradle.api.internal.project.ProjectInternal
 import org.gradle.process.internal.DefaultExecAction
@@ -55,6 +56,9 @@ class GppCompileSpec implements CompileSpec, StandardCppCompiler {
         }
 
         task.outputs.file { getOutputFile() }
+
+        // problem: will break if a source set is removed
+        binary.sourceSets.withType(CppSourceSet).all { from(it) }
     }
 
     String getName() {
@@ -90,15 +94,28 @@ class GppCompileSpec implements CompileSpec, StandardCppCompiler {
     }
 
     void from(CppSourceSet sourceSet) {
-        includes sourceSet.headers
+        includes sourceSet.exportedHeaders
         source sourceSet.source
         libs sourceSet.libs
+
+        sourceSet.nativeDependencySets.all { deps ->
+            includes deps.includeRoots
+            source deps.files
+        }
     }
 
     void includes(SourceDirectorySet dirs) {
         task.inputs.files dirs
         setting {
             it.args(*dirs.srcDirs.collect { "-I${it.absolutePath}" })
+        }
+    }
+
+    // special filecollection version because filecollection may be buildable
+    void includes(FileCollection includeRoots) {
+        task.inputs.files includeRoots
+        setting {
+            it.args(*includeRoots.collect { "-I${it.absolutePath}" })
         }
     }
 
@@ -110,6 +127,14 @@ class GppCompileSpec implements CompileSpec, StandardCppCompiler {
     }
 
     void source(Iterable<File> files) {
+        task.inputs.files files
+        setting {
+            it.args(*files*.absolutePath)
+        }
+    }
+
+    // special filecollection version because filecollection may be buildable
+    void source(FileCollection files) {
         task.inputs.files files
         setting {
             it.args(*files*.absolutePath)

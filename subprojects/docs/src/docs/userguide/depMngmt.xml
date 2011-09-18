@@ -579,11 +579,28 @@
         </section>
         <section>
             <title>Ivy repositories</title>
-            <para>To use an Ivy repository:</para>
+            <para>To use an Ivy repository with a standard layout:</para>
             <sample id="ivyRepository" dir="userguide/artifacts/defineRepository" title="Ivy repository">
-                <sourcefile file="build.gradle" snippet="ivy-repo"/>
+                <sourcefile file="build.gradle" snippet="ivy-repo-with-maven-layout"/>
             </sample>
-            <para>See <apilink class="org.gradle.api.artifacts.dsl.IvyArtifactRepository"/> for details.</para>
+            <para>See <apilink class="org.gradle.api.artifacts.repositories.IvyArtifactRepository"/> for details.</para>
+            <section>
+                <title>Defining custom patterns for an Ivy repository</title>
+                <para>To define an Ivy repository with a non-standard layout, you can define a pattern layout for the repository:
+                </para>
+                <sample id="ivyRepository" dir="userguide/artifacts/defineRepository" title="Ivy repository with pattern layout">
+                    <sourcefile file="build.gradle" snippet="ivy-repo-with-pattern-layout"/>
+                </sample>
+            </section>
+            <section>
+                <title>Defining different artifact and ivy file locations for an Ivy repository</title>
+                <para>To define an Ivy repository which fetches ivy files and artifacts from different locations, you can explicitly define complete URL patterns
+                      for artifacts and ivy files:
+                </para>
+                <sample id="ivyRepository" dir="userguide/artifacts/defineRepository" title="Ivy repository with custom patterns">
+                    <sourcefile file="build.gradle" snippet="ivy-repo-with-custom-pattern"/>
+                </sample>
+            </section>
             <section>
                 <title>Accessing password protected Ivy repositories</title>
                 <para>To access an Ivy repository which uses basic authentication, you specify the username and password to use when you define the repository:
@@ -610,8 +627,8 @@
         <section id='sub:cache'>
             <title>Cache</title>
             <para>When Gradle downloads artifacts from remote repositories it stores them in a local cache located at
-                <literal>USER_HOME/.gradle/cache</literal>. When Gradle downloads artifacts from one of its
-                predefined local resolvers (e.g. flat directory resolver), the cache is not used.
+                <filename><replaceable>USER_HOME</replaceable>/.gradle/caches/artifacts</filename>. When Gradle downloads artifacts from a
+                local repository (e.g. maven local, or a flat directory repository), the cache is not used.
             </para>
             <para>リモートリポジトリからダウンロードされた依存関係は、<literal>USER_HOME/.gradle/cache</literal>にローカルキャッシュとして保存されます。一方、定義済みのローカルリゾルバ(フラットディレクトリ・リゾルバなど)から依存関係を取得した場合、ローカルキャッシュは依存ファイルの中間ストレージとしては使用されません。ただし、どちらの場合も、依存関係のディスクリプタは常にローカルキャッシュに保存されます。</para>
         </section>

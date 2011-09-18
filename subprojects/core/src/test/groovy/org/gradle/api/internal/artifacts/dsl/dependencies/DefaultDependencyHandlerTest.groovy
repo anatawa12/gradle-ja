@@ -26,7 +26,6 @@ import org.gradle.api.artifacts.*
 import static org.hamcrest.Matchers.equalTo
 import static org.hamcrest.Matchers.sameInstance
 import static org.junit.Assert.assertThat
-import org.gradle.api.DomainObjectSet
 
 /**
  * @author Hans Dockter
@@ -41,7 +40,7 @@ class DefaultDependencyHandlerTest {
     private DependencyFactory dependencyFactoryStub = context.mock(DependencyFactory)
     private Configuration configurationMock = context.mock(Configuration)
     private ProjectFinder projectFinderDummy = context.mock(ProjectFinder)
-    private DomainObjectSet<Dependency> dependenciesMock = context.mock(DomainObjectSet)
+    private DependencySet dependenciesMock = context.mock(DependencySet)
 
     private DefaultDependencyHandler dependencyHandler = new DefaultDependencyHandler(
             configurationContainerStub, dependencyFactoryStub, projectFinderDummy)
@@ -78,6 +77,31 @@ class DefaultDependencyHandlerTest {
         }
         def dependency = dependencyHandler.add(TEST_CONF_NAME, someNotation) {
             force = true    
+        }
+        assertThat(dependency, equalTo(returnedDependency))
+        assertThat(dependency.force, equalTo(true))
+    }
+
+    @Test
+    void create() {
+        String someNotation = "someNotation"
+        Dependency dependencyDummy = context.mock(Dependency)
+        context.checking {
+            allowing(dependencyFactoryStub).createDependency(someNotation); will(returnValue(dependencyDummy))
+        }
+
+        assertThat(dependencyHandler.create(someNotation), equalTo(dependencyDummy))
+    }
+
+    @Test
+    void createWithClosure() {
+        String someNotation = "someNotation"
+        DefaultExternalModuleDependency returnedDependency = HelperUtil.createDependency("group", "name", "1.0")
+        context.checking {
+            allowing(dependencyFactoryStub).createDependency(someNotation); will(returnValue(returnedDependency))
+        }
+        def dependency = dependencyHandler.create(someNotation) {
+            force = true
         }
         assertThat(dependency, equalTo(returnedDependency))
         assertThat(dependency.force, equalTo(true))

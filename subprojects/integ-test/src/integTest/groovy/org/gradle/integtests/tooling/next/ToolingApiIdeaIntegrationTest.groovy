@@ -17,21 +17,9 @@ package org.gradle.integtests.tooling.next
 
 import org.gradle.integtests.fixtures.MavenRepository
 import org.gradle.integtests.tooling.fixture.ToolingApiSpecification
-import org.gradle.tooling.model.idea.IdeaLibraryDependency
-import org.gradle.tooling.model.idea.IdeaModule
-import org.gradle.tooling.model.idea.IdeaModuleDependency
-import org.gradle.tooling.model.idea.IdeaProject
+import org.gradle.tooling.model.idea.*
 
 class ToolingApiIdeaModelIntegrationTest extends ToolingApiSpecification {
-
-    def setup() {
-//        toolingApi.withConnector {
-//            it.useInstallation(new File(dist.gradleHomeDir.absolutePath))
-//            it.embedded(false)
-//            it.daemonMaxIdleTime(300, TimeUnit.SECONDS)
-//            DaemonGradleExecuter.registerDaemon(dist.userHomeDir)
-//        }
-    }
 
     def "builds the model even if idea plugin not applied"() {
         def projectDir = dist.testDir
@@ -69,7 +57,6 @@ idea.project {
         IdeaProject project = withConnection { connection -> connection.getModel(IdeaProject.class) }
 
         then:
-        project.languageLevel.isJDK_1_5()
         project.languageLevel.level == "JDK_1_5"
         project.jdkName == '1.6'
     }
@@ -108,18 +95,17 @@ idea.module.testOutputDir = file('someTestDir')
         def module = project.children[0]
 
         then:
-        module.contentRoots == [projectDir]
+        module.contentRoots.size() == 1
+        module.contentRoots[0].rootDirectory == projectDir
         module.parent instanceof IdeaProject
         module.parent == project
         module.parent == module.project
         module.children.empty
         module.description == null
 
-        !module.inheritOutputDirs
-        module.outputDir == projectDir.file('someDir')
-        module.testOutputDir == projectDir.file('someTestDir')
-
-        module.moduleFileDir == dist.testDir
+        !module.compilerOutput.inheritOutputDirs
+        module.compilerOutput.outputDir == projectDir.file('someDir')
+        module.compilerOutput.testOutputDir == projectDir.file('someTestDir')
     }
 
     def "provides source dir information"() {
@@ -141,16 +127,17 @@ idea.module.testOutputDir = file('someTestDir')
 
         when:
         IdeaProject project = withConnection { connection -> connection.getModel(IdeaProject.class) }
-        def module = project.children[0]
+        IdeaModule module = project.children[0]
+        IdeaContentRoot root = module.contentRoots[0]
 
         then:
-        module.sourceDirectories.size() == 2
-        module.sourceDirectories.any { it.directory == projectDir.file('src/main/java') }
-        module.sourceDirectories.any { it.directory == projectDir.file('src/main/resources') }
+        root.sourceDirectories.size() == 2
+        root.sourceDirectories.any { it.directory == projectDir.file('src/main/java') }
+        root.sourceDirectories.any { it.directory == projectDir.file('src/main/resources') }
 
-        module.testDirectories.size() == 2
-        module.testDirectories.any { it.directory == projectDir.file('src/test/java') }
-        module.testDirectories.any { it.directory == projectDir.file('src/test/resources') }
+        root.testDirectories.size() == 2
+        root.testDirectories.any { it.directory == projectDir.file('src/test/java') }
+        root.testDirectories.any { it.directory == projectDir.file('src/test/resources') }
     }
 
     def "provides exclude dir information"() {
@@ -167,7 +154,7 @@ idea.module.excludeDirs += file('foo')
         def module = project.children[0]
 
         then:
-        module.excludeDirectories.any { it.path.endsWith 'foo' }
+        module.contentRoots[0].excludeDirectories.any { it.path.endsWith 'foo' }
     }
 
     def "provides dependencies"() {
@@ -188,7 +175,7 @@ project(':impl') {
     apply plugin: 'idea'
 
     repositories {
-        mavenRepo urls: "${fakeRepo.toURI()}"
+        maven { url "${fakeRepo.toURI()}" }
     }
 
     dependencies {
@@ -207,7 +194,7 @@ project(':impl') {
 
         then:
         def libs = module.dependencies
-        IdeaLibraryDependency lib = libs.find {it instanceof IdeaLibraryDependency}
+        IdeaSingleEntryLibraryDependency lib = libs.find {it instanceof IdeaSingleEntryLibraryDependency}
 
         lib.file.exists()
         lib.file.path.endsWith('coolLib-1.0.jar')
@@ -218,9 +205,104 @@ project(':impl') {
         lib.javadoc.exists()
         lib.javadoc.path.endsWith('coolLib-1.0-javadoc.jar')
 
-        lib.scope.toString() == 'TEST'
+        lib.scope.scope == 'TEST'
 
         IdeaModuleDependency mod = libs.find {it instanceof IdeaModuleDependency}
-        mod.dependencyModuleName == 'api'
+        mod.dependencyModule == project.modules.find { it.name == 'api'}
+        mod.scope.scope == 'COMPILE'
+    }
+
+    def "makes sure module names are unique"() {
+        def projectDir = dist.testDir
+        projectDir.file('build.gradle').text = """
+subprojects {
+    apply plugin: 'java'
+}
+
+project(':impl') {
+    dependencies {
+        compile project(':api')
+    }
+}
+
+project(':contrib:impl') {
+    dependencies {
+        compile project(':contrib:api')
+    }
+}
+"""
+        projectDir.file('settings.gradle').text = "include 'api', 'impl', 'contrib:api', 'contrib:impl'"
+
+        when:
+        IdeaProject project = withConnection { connection -> connection.getModel(IdeaProject.class) }
+
+        then:
+        def allNames = project.modules*.name
+        allNames.unique().size() == 6
+
+        IdeaModule impl = project.modules.find { it.name == 'impl' }
+        IdeaModule contribImpl = project.modules.find { it.name == 'contrib-impl' }
+
+        impl.dependencies[0].dependencyModule        == project.modules.find { it.name == 'api' }
+        contribImpl.dependencies[0].dependencyModule == project.modules.find { it.name == 'contrib-api' }
+    }
+
+    def "module has access to gradle project and its tasks"() {
+        def projectDir = dist.testDir
+        projectDir.file('build.gradle').text = """
+subprojects {
+    apply plugin: 'java'
+}
+
+task rootTask {}
+
+project(':impl') {
+    task implTask {}
+}
+"""
+        projectDir.file('settings.gradle').text = "include 'api', 'impl'; rootProject.name = 'root'"
+
+        when:
+        IdeaProject project = withConnection { connection -> connection.getModel(IdeaProject.class) }
+
+        then:
+        def impl = project.modules.find { it.name == 'impl'}
+        def root = project.modules.find { it.name == 'root'}
+
+        root.gradleProject.tasks.find { it.name == 'rootTask' && it.path == ':rootTask' && it.project == root.gradleProject }
+        !root.gradleProject.tasks.find { it.name == 'implTask' }
+
+        impl.gradleProject.tasks.find { it.name == 'implTask' && it.path == ':impl:implTask' && it.project == impl.gradleProject}
+        !impl.gradleProject.tasks.find { it.name == 'rootTask' }
+    }
+
+    def "offline model should not resolve GAV dependencies"() {
+        def projectDir = dist.testDir
+
+        projectDir.file('build.gradle').text = """
+subprojects {
+    apply plugin: 'java'
+}
+
+project(':impl') {
+    apply plugin: 'idea'
+
+    dependencies {
+        compile project(':api')
+        testCompile 'i.dont:Exist:2.4'
+    }
+}
+"""
+        projectDir.file('settings.gradle').text = "include 'api', 'impl'"
+
+        when:
+        BasicIdeaProject project = withConnection { connection -> connection.getModel(BasicIdeaProject.class) }
+        def impl = project.children.find { it.name == 'impl' }
+
+        then:
+        def libs = impl.dependencies
+        libs.size() == 1
+        IdeaModuleDependency d = libs[0]
+        d.dependencyModule == project.modules.find { it.name == 'api' }
     }
 }

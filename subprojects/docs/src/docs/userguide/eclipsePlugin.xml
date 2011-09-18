@@ -328,7 +328,7 @@
                 <title>マージせずに完全に上書きする<phrase role="original">Disabling merging with a complete overwrite</phrase></title>
                 <para role="original">To completely overwrite existing Eclipse files, execute a clean task together with its corresponding generation task,
                     for example <userinput>gradle cleanEclipse eclipse</userinput> (in that order). If you want to make this
-                    the default behavior, add <code>eclipse.dependsOn(cleanEclipse)</code> to your build script. This makes it
+                    the default behavior, add <code>tasks.eclipse.dependsOn(cleanEclipse)</code> to your build script. This makes it
                     unnecessary to execute the clean task explicitly.
                 </para>
                 <para>既存の Eclipse ファイルを完全に上書きしたい場合は、対応する生成タスクと一緒に clean タスクも実行します。
@@ -403,13 +403,13 @@
                     <td><apilink class="org.gradle.plugins.ide.eclipse.model.EclipseProject"/></td>
                     <td><apilink class="org.gradle.plugins.ide.eclipse.model.Project"/></td>
                     <td><apilink class="org.gradle.plugins.ide.eclipse.model.Project"/></td>
-                    <td><apilink class="org.gradle.api.artifacts.maven.XmlProvider"/></td>
+                    <td><apilink class="org.gradle.api.XmlProvider"/></td>
                 </tr>
                 <tr>
                     <td><apilink class="org.gradle.plugins.ide.eclipse.model.EclipseClasspath"/></td>
                     <td><apilink class="org.gradle.plugins.ide.eclipse.model.Classpath"/></td>
                     <td><apilink class="org.gradle.plugins.ide.eclipse.model.Classpath"/></td>
-                    <td><apilink class="org.gradle.api.artifacts.maven.XmlProvider"/></td>
+                    <td><apilink class="org.gradle.api.XmlProvider"/></td>
                 </tr>
                 <tr>
                     <td><apilink class="org.gradle.plugins.ide.eclipse.model.EclipseJdt"/></td>
@@ -421,13 +421,13 @@
                     <td><apilink class="org.gradle.plugins.ide.eclipse.model.EclipseWtpComponent"/></td>
                     <td><apilink class="org.gradle.plugins.ide.eclipse.model.WtpComponent"/></td>
                     <td><apilink class="org.gradle.plugins.ide.eclipse.model.WtpComponent"/></td>
-                    <td><apilink class="org.gradle.api.artifacts.maven.XmlProvider"/></td>
+                    <td><apilink class="org.gradle.api.XmlProvider"/></td>
                 </tr>
                 <tr>
                     <td><apilink class="org.gradle.plugins.ide.eclipse.model.EclipseWtpFacet"/></td>
                     <td><apilink class="org.gradle.plugins.ide.eclipse.model.WtpFacet"/></td>
                     <td><apilink class="org.gradle.plugins.ide.eclipse.model.WtpFacet"/></td>
-                    <td><apilink class="org.gradle.api.artifacts.maven.XmlProvider"/></td>
+                    <td><apilink class="org.gradle.api.XmlProvider"/></td>
                 </tr>
             </table>
             <section id="sec:partial-overwrite">

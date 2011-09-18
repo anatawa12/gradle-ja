@@ -33,13 +33,13 @@ class WrapperProjectIntegrationTest extends AbstractIntegrationTest {
     @Before
     public void createBuildScript() {
         file("build.gradle") << """
+            import org.gradle.api.tasks.wrapper.Wrapper
             task wrapper(type: Wrapper) {
-                gradleVersion = '$distribution.version'
-                urlRoot = '${distribution.binDistribution.parentFile.toURI().toURL()}'
                 zipBase = Wrapper.PathBase.PROJECT
                 zipPath = 'wrapper'
                 archiveBase = Wrapper.PathBase.PROJECT
                 archivePath = 'dist'
+                distributionUrl = '${distribution.binDistribution.toURI().toURL()}'
                 distributionBase = Wrapper.PathBase.PROJECT
                 distributionPath = 'dist'
             }

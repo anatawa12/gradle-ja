@@ -58,7 +58,7 @@ class DistributionIntegrationTest {
         contentsDir.file('src/org/gradle/api/Project.java').assertIsFile()
         contentsDir.file('src/org/gradle/initialization/defaultBuildSourceScript.txt').assertIsFile()
         contentsDir.file('src/org/gradle/gradleplugin/userinterface/swing/standalone/BlockingApplication.java').assertIsFile()
-        contentsDir.file('src/org/gradle/wrapper/Wrapper.java').assertIsFile()
+        contentsDir.file('src/org/gradle/wrapper/WrapperExecutor.java').assertIsFile()
 
         // Samples
         contentsDir.file('samples/java/quickstart/build.gradle').assertIsFile()
@@ -97,6 +97,7 @@ class DistributionIntegrationTest {
         contentsDir.file('LICENSE').assertIsFile()
 
         // Libs
+        assertIsGradleJar(contentsDir.file("lib/gradle-cli-${version}.jar"))
         assertIsGradleJar(contentsDir.file("lib/gradle-core-${version}.jar"))
         assertIsGradleJar(contentsDir.file("lib/gradle-ui-${version}.jar"))
         assertIsGradleJar(contentsDir.file("lib/gradle-launcher-${version}.jar"))
@@ -104,6 +105,7 @@ class DistributionIntegrationTest {
         assertIsGradleJar(contentsDir.file("lib/gradle-wrapper-${version}.jar"))
 
         // Plugins
+        assertIsGradleJar(contentsDir.file("lib/plugins/gradle-core-impl-${version}.jar"))
         assertIsGradleJar(contentsDir.file("lib/plugins/gradle-plugins-${version}.jar"))
         assertIsGradleJar(contentsDir.file("lib/plugins/gradle-ide-${version}.jar"))
         assertIsGradleJar(contentsDir.file("lib/plugins/gradle-scala-${version}.jar"))
@@ -116,6 +118,7 @@ class DistributionIntegrationTest {
         assertIsGradleJar(contentsDir.file("lib/plugins/gradle-osgi-${version}.jar"))
         assertIsGradleJar(contentsDir.file("lib/plugins/gradle-signing-${version}.jar"))
         assertIsGradleJar(contentsDir.file("lib/plugins/gradle-cpp-${version}.jar"))
+        assertIsGradleJar(contentsDir.file("lib/plugins/gradle-ear-${version}.jar"))
 
         // Docs
         contentsDir.file('getting-started.html').assertIsFile()
@@ -134,7 +137,7 @@ class DistributionIntegrationTest {
         TestFile contentsDir = dist.testDir.file("gradle-$version")
 
         // Build self using wrapper in source distribution
-        executer.inDirectory(contentsDir).usingExecutable('gradlew').withTasks('binZip').run()
+        executer.withDeprecationChecksDisabled().inDirectory(contentsDir).usingExecutable('gradlew').withTasks('binZip').run()
 
         File binZip = contentsDir.file('build/distributions').listFiles()[0]
         Expand unpack = new Expand()

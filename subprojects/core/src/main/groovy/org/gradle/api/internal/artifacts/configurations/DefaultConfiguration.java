@@ -1,5 +1,5 @@
 /*
- * Copyright 2010 the original author or authors.
+ * Copyright 2011 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,15 +22,15 @@ import org.gradle.api.artifacts.*;
 import org.gradle.api.file.FileCollection;
 import org.gradle.api.internal.CompositeDomainObjectSet;
 import org.gradle.api.internal.DefaultDomainObjectSet;
-import org.gradle.api.internal.artifacts.DefaultExcludeRule;
-import org.gradle.api.internal.artifacts.IvyService;
+import org.gradle.api.internal.artifacts.*;
 import org.gradle.api.internal.file.AbstractFileCollection;
 import org.gradle.api.internal.tasks.AbstractTaskDependency;
-import org.gradle.api.internal.tasks.TaskDependencyInternal;
 import org.gradle.api.internal.tasks.TaskDependencyResolveContext;
 import org.gradle.api.specs.Spec;
 import org.gradle.api.specs.Specs;
 import org.gradle.api.tasks.TaskDependency;
+import org.gradle.listener.ListenerBroadcast;
+import org.gradle.listener.ListenerManager;
 import org.gradle.util.DeprecationLogger;
 import org.gradle.util.WrapUtil;
 
@@ -39,7 +39,7 @@ import java.util.*;
 
 import static org.apache.ivy.core.module.descriptor.Configuration.Visibility;
 
-public class DefaultConfiguration extends AbstractFileCollection implements Configuration {
+public class DefaultConfiguration extends AbstractFileCollection implements ConfigurationInternal {
     private final String path;
     private final String name;
 
@@ -48,24 +48,18 @@ public class DefaultConfiguration extends AbstractFileCollection implements Conf
     private Set<Configuration> extendsFrom = new LinkedHashSet<Configuration>();
     private String description;
     private ConfigurationsProvider configurationsProvider;
-
-    private IvyService ivyService;
-
-    private DefaultDomainObjectSet<Dependency> dependencies =
-            new DefaultDomainObjectSet<Dependency>(Dependency.class);
-
-    private CompositeDomainObjectSet<Dependency> allDependencies =
-            new CompositeDomainObjectSet<Dependency>(Dependency.class, dependencies);
-
-    private DefaultDomainObjectSet<PublishArtifact> artifacts =
-            new DefaultDomainObjectSet<PublishArtifact>(PublishArtifact.class);
-
-    private CompositeDomainObjectSet<PublishArtifact> allArtifacts =
-            new CompositeDomainObjectSet<PublishArtifact>(PublishArtifact.class, artifacts);
-
+    private final ArtifactDependencyResolver dependencyResolver;
+    private final ListenerManager listenerManager;
+    private final DependencyMetaDataProvider metaDataProvider;
+    private final DefaultDependencySet dependencies;
+    private final CompositeDomainObjectSet<Dependency> inheritedDependencies;
+    private final DefaultDependencySet allDependencies;
+    private final DefaultPublishArtifactSet artifacts;
+    private final CompositeDomainObjectSet<PublishArtifact> inheritedArtifacts;
+    private final DefaultPublishArtifactSet allArtifacts;
+    private final ConfigurationResolvableDependencies resolvableDependencies = new ConfigurationResolvableDependencies();
+    private final ListenerBroadcast<DependencyResolutionListener> resolutionListenerBroadcast;
     private Set<ExcludeRule> excludeRules = new LinkedHashSet<ExcludeRule>();
-
-    private final ConfigurationTaskDependency taskDependency = new ConfigurationTaskDependency();
 
     // This lock only protects the following fields
     private final Object lock = new Object();
@@ -73,13 +67,27 @@ public class DefaultConfiguration extends AbstractFileCollection implements Conf
     private ResolvedConfiguration cachedResolvedConfiguration;
 
     public DefaultConfiguration(String path, String name, ConfigurationsProvider configurationsProvider,
-                                IvyService ivyService) {
+                                ArtifactDependencyResolver dependencyResolver, ListenerManager listenerManager, DependencyMetaDataProvider metaDataProvider) {
         this.path = path;
         this.name = name;
         this.configurationsProvider = configurationsProvider;
-        this.ivyService = ivyService;
-        dependencies.beforeChange(new VetoContainerChangeAction());
-        artifacts.beforeChange(new VetoContainerChangeAction());
+        this.dependencyResolver = dependencyResolver;
+        this.listenerManager = listenerManager;
+        this.metaDataProvider = metaDataProvider;
+        resolutionListenerBroadcast = listenerManager.createAnonymousBroadcaster(DependencyResolutionListener.class);
+
+        DefaultDomainObjectSet<Dependency> ownDependencies = new DefaultDomainObjectSet<Dependency>(Dependency.class);
+        ownDependencies.beforeChange(new VetoContainerChangeAction());
+
+        dependencies = new DefaultDependencySet(String.format("%s dependencies", getDisplayName()), ownDependencies);
+        inheritedDependencies = new CompositeDomainObjectSet<Dependency>(Dependency.class, ownDependencies);
+        allDependencies = new DefaultDependencySet(String.format("%s all dependencies", getDisplayName()), inheritedDependencies);
+
+        DefaultDomainObjectSet<PublishArtifact> ownArtifacts = new DefaultDomainObjectSet<PublishArtifact>(PublishArtifact.class);
+        ownArtifacts.beforeChange(new VetoContainerChangeAction());
+        artifacts = new DefaultPublishArtifactSet(String.format("%s artifacts", getDisplayName()), ownArtifacts);
+        inheritedArtifacts = new CompositeDomainObjectSet<PublishArtifact>(PublishArtifact.class, ownArtifacts);
+        allArtifacts = new DefaultPublishArtifactSet(String.format("%s all artifacts", getDisplayName()), inheritedArtifacts);
     }
 
     public String getName() {
@@ -90,6 +98,10 @@ public class DefaultConfiguration extends AbstractFileCollection implements Conf
         synchronized (lock) {
             return state;
         }
+    }
+
+    public Module getModule() {
+        return metaDataProvider.getModule();
     }
 
     public boolean isVisible() {
@@ -109,8 +121,8 @@ public class DefaultConfiguration extends AbstractFileCollection implements Conf
     public Configuration setExtendsFrom(Set<Configuration> extendsFrom) {
         throwExceptionIfNotInUnresolvedState();
         for (Configuration configuration : this.extendsFrom) {
-            allArtifacts.removeCollection(configuration.getAllArtifacts());
-            allDependencies.removeCollection(configuration.getAllDependencies());
+            inheritedArtifacts.removeCollection(configuration.getAllArtifacts());
+            inheritedDependencies.removeCollection(configuration.getAllDependencies());
         }
         this.extendsFrom = new HashSet<Configuration>();
         for (Configuration configuration : extendsFrom) {
@@ -128,8 +140,8 @@ public class DefaultConfiguration extends AbstractFileCollection implements Conf
                         configuration, configuration.getHierarchy()));
             }
             this.extendsFrom.add(configuration);
-            allArtifacts.addCollection(configuration.getAllArtifacts());
-            allDependencies.addCollection(configuration.getAllDependencies());
+            inheritedArtifacts.addCollection(configuration.getAllArtifacts());
+            inheritedDependencies.addCollection(configuration.getAllDependencies());
         }
         return this;
     }
@@ -209,7 +221,7 @@ public class DefaultConfiguration extends AbstractFileCollection implements Conf
     public ResolvedConfiguration getResolvedConfiguration() {
         synchronized (lock) {
             if (state == State.UNRESOLVED) {
-                cachedResolvedConfiguration = ivyService.resolve(this);
+                cachedResolvedConfiguration = dependencyResolver.resolve(this);
                 if (cachedResolvedConfiguration.hasError()) {
                     state = State.RESOLVED_WITH_FAILURES;
                 } else {
@@ -221,7 +233,7 @@ public class DefaultConfiguration extends AbstractFileCollection implements Conf
     }
 
     public TaskDependency getBuildDependencies() {
-        return taskDependency;
+        return allDependencies.getBuildDependencies();
     }
 
     /**
@@ -240,7 +252,7 @@ public class DefaultConfiguration extends AbstractFileCollection implements Conf
 
             private void addTaskDependenciesFromProjectsIDependOn(final String taskName,
                                                                   final TaskDependencyResolveContext context) {
-                Set<ProjectDependency> projectDependencies = getAllDependencies(ProjectDependency.class);
+                Set<ProjectDependency> projectDependencies = getAllDependencies().withType(ProjectDependency.class);
                 for (ProjectDependency projectDependency : projectDependencies) {
                     Task nextTask = projectDependency.getDependencyProject().getTasks().findByName(taskName);
                     if (nextTask != null) {
@@ -263,7 +275,7 @@ public class DefaultConfiguration extends AbstractFileCollection implements Conf
     }
 
     private static boolean doesConfigurationDependOnProject(Configuration configuration, Project project) {
-        Set<ProjectDependency> projectDependencies = configuration.getAllDependencies(ProjectDependency.class);
+        Set<ProjectDependency> projectDependencies = configuration.getAllDependencies().withType(ProjectDependency.class);
         for (ProjectDependency projectDependency : projectDependencies) {
             if (projectDependency.getDependencyProject().equals(project)) {
                 return true;
@@ -273,22 +285,25 @@ public class DefaultConfiguration extends AbstractFileCollection implements Conf
     }
 
     public TaskDependency getBuildArtifacts() {
-        return getAllArtifactFiles().getBuildDependencies();
+        DeprecationLogger.nagUser("Configuration.getBuildArtifacts()", "getAllArtifacts().getBuildDependencies()");
+        return allArtifacts.getBuildDependencies();
     }
 
-    public DomainObjectSet<Dependency> getDependencies() {
+    public DependencySet getDependencies() {
         return dependencies;
     }
 
-    public DomainObjectSet<Dependency> getAllDependencies() {
+    public DependencySet getAllDependencies() {
         return allDependencies;
     }
 
     public <T extends Dependency> DomainObjectSet<T> getDependencies(Class<T> type) {
+        DeprecationLogger.nagUser("Configuration.getDependencies(type)", "getDependencies().withType(type)");
         return dependencies.withType(type);
     }
 
     public <T extends Dependency> DomainObjectSet<T> getAllDependencies(Class<T> type) {
+        DeprecationLogger.nagUser("Configuration.getAllDependencies(type)", "getAllDependencies().withType(type)");
         return allDependencies.withType(type);
     }
 
@@ -312,16 +327,17 @@ public class DefaultConfiguration extends AbstractFileCollection implements Conf
         return this;
     }
 
-    public DomainObjectSet<PublishArtifact> getArtifacts() {
+    public PublishArtifactSet getArtifacts() {
         return artifacts;
     }
 
-    public DomainObjectSet<PublishArtifact> getAllArtifacts() {
+    public PublishArtifactSet getAllArtifacts() {
         return allArtifacts;
     }
 
     public FileCollection getAllArtifactFiles() {
-        return new ArtifactsFileCollection();
+        DeprecationLogger.nagUser("Configuration.getAllArtifactFiles()", "getAllArtifacts().getFiles()");
+        return allArtifacts.getFiles();
     }
 
     public Set<ExcludeRule> getExcludeRules() {
@@ -347,13 +363,8 @@ public class DefaultConfiguration extends AbstractFileCollection implements Conf
         return String.format("configuration '%s'", path);
     }
 
-    public Configuration getConfiguration(Dependency dependency) {
-        for (Configuration configuration : getHierarchy()) {
-            if (configuration.getDependencies().contains(dependency)) {
-                return configuration;
-            }
-        }
-        return null;
+    public ResolvableDependencies getIncoming() {
+        return resolvableDependencies;
     }
 
     public Configuration copy() {
@@ -375,7 +386,7 @@ public class DefaultConfiguration extends AbstractFileCollection implements Conf
     private DefaultConfiguration createCopy(Set<Dependency> dependencies) {
         DetachedConfigurationsProvider configurationsProvider = new DetachedConfigurationsProvider();
         DefaultConfiguration copiedConfiguration = new DefaultConfiguration(path + "Copy", name + "Copy",
-                configurationsProvider, ivyService);
+                configurationsProvider, dependencyResolver, listenerManager, metaDataProvider);
         configurationsProvider.setTheOnlyConfiguration(copiedConfiguration);
         // state, cachedResolvedConfiguration, and extendsFrom intentionally not copied - must re-resolve copy
         // copying extendsFrom could mess up dependencies when copy was re-resolved
@@ -408,39 +419,13 @@ public class DefaultConfiguration extends AbstractFileCollection implements Conf
         return copyRecursive(Specs.<Dependency>convertClosureToSpec(dependencySpec));
     }
 
+    public DependencyResolutionListener getDependencyResolutionBroadcast() {
+        return resolutionListenerBroadcast.getSource();
+    }
+
     private void throwExceptionIfNotInUnresolvedState() {
         if (getState() != State.UNRESOLVED) {
             throw new InvalidUserDataException("You can't change a configuration which is not in unresolved state!");
-        }
-    }
-
-    class ArtifactsFileCollection extends AbstractFileCollection {
-        private final TaskDependencyInternal taskDependency = new AbstractTaskDependency() {
-            public void resolve(TaskDependencyResolveContext context) {
-                for (Configuration configuration : getExtendsFrom()) {
-                    context.add(configuration.getBuildArtifacts());
-                }
-                for (PublishArtifact publishArtifact : getArtifacts()) {
-                    context.add(publishArtifact);
-                }
-            }
-        };
-
-        public String getDisplayName() {
-            return String.format("%s artifacts", DefaultConfiguration.this);
-        }
-
-        @Override
-        public TaskDependency getBuildDependencies() {
-            return taskDependency;
-        }
-
-        public Set<File> getFiles() {
-            Set<File> files = new LinkedHashSet<File>();
-            for (PublishArtifact artifact : getAllArtifacts()) {
-                files.add(artifact.getFile());
-            }
-            return files;
         }
     }
 
@@ -463,6 +448,11 @@ public class DefaultConfiguration extends AbstractFileCollection implements Conf
             };
         }
 
+        @Override
+        public TaskDependency getBuildDependencies() {
+            return DefaultConfiguration.this.getBuildDependencies();
+        }
+
         public Spec<Dependency> getDependencySpec() {
             return dependencySpec;
         }
@@ -480,22 +470,6 @@ public class DefaultConfiguration extends AbstractFileCollection implements Conf
                 return resolvedConfiguration.getFiles(dependencySpec);
             }
         }
-    }
-
-    public Action<? super Dependency> whenDependencyAdded(Action<? super Dependency> action) {
-        return dependencies.whenObjectAdded(action);
-    }
-
-    public void whenDependencyAdded(Closure closure) {
-        dependencies.whenObjectAdded(closure);
-    }
-
-    public void allDependencies(Action<? super Dependency> action) {
-        dependencies.all(action);
-    }
-
-    public void allDependencies(Closure action) {
-        dependencies.all(action);
     }
 
     /**
@@ -549,27 +523,48 @@ public class DefaultConfiguration extends AbstractFileCollection implements Conf
         return reply.toString();
     }
 
-
-    private class ConfigurationTaskDependency extends AbstractTaskDependency {
-        @Override
-        public String toString() {
-            return String.format("build dependencies %s", DefaultConfiguration.this);
-        }
-
-        public void resolve(TaskDependencyResolveContext context) {
-            for (Configuration configuration : getExtendsFrom()) {
-                context.add(configuration);
-            }
-            for (SelfResolvingDependency dependency : DefaultConfiguration.this.getDependencies(
-                    SelfResolvingDependency.class)) {
-                context.add(dependency);
-            }
-        }
-    }
-
     private class VetoContainerChangeAction implements Runnable {
         public void run() {
             throwExceptionIfNotInUnresolvedState();
+        }
+    }
+
+    private class ConfigurationResolvableDependencies implements ResolvableDependencies {
+        public String getName() {
+            return name;
+        }
+
+        public String getPath() {
+            return path;
+        }
+
+        @Override
+        public String toString() {
+            return String.format("dependencies '%s'", path);
+        }
+
+        public FileCollection getFiles() {
+            return DefaultConfiguration.this.fileCollection(Specs.<Dependency>satisfyAll());
+        }
+
+        public DependencySet getDependencies() {
+            return getAllDependencies();
+        }
+
+        public void beforeResolve(Action<? super ResolvableDependencies> action) {
+            resolutionListenerBroadcast.add("beforeResolve", action);
+        }
+
+        public void beforeResolve(Closure action) {
+            resolutionListenerBroadcast.add("beforeResolve", action);
+        }
+
+        public void afterResolve(Action<? super ResolvableDependencies> action) {
+            resolutionListenerBroadcast.add("afterResolve", action);
+        }
+
+        public void afterResolve(Closure action) {
+            resolutionListenerBroadcast.add("afterResolve", action);
         }
     }
 }

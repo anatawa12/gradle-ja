@@ -16,6 +16,8 @@
 
 package org.gradle.tooling.internal.idea;
 
+import org.gradle.tooling.model.idea.IdeaDependencyScope;
+import org.gradle.tooling.model.idea.IdeaModule;
 import org.gradle.tooling.model.idea.IdeaModuleDependency;
 
 import java.io.Serializable;
@@ -25,29 +27,29 @@ import java.io.Serializable;
  */
 public class DefaultIdeaModuleDependency implements IdeaModuleDependency, Serializable {
 
-    private String scope;
-    private String dependencyModuleName;
+    private IdeaDependencyScope scope;
+    private IdeaModule dependencyModule;
     private boolean exported;
 
-    public String getScope() {
+    public IdeaDependencyScope getScope() {
         return scope;
     }
 
-    public DefaultIdeaModuleDependency setScope(String scope) {
+    public DefaultIdeaModuleDependency setScope(IdeaDependencyScope scope) {
         this.scope = scope;
         return this;
     }
 
-    public String getDependencyModuleName() {
-        return dependencyModuleName;
+    public IdeaModule getDependencyModule() {
+        return dependencyModule;
     }
 
-    public DefaultIdeaModuleDependency setDependencyModuleName(String dependencyModuleName) {
-        this.dependencyModuleName = dependencyModuleName;
+    public DefaultIdeaModuleDependency setDependencyModule(IdeaModule dependencyModule) {
+        this.dependencyModule = dependencyModule;
         return this;
     }
 
-    public Boolean getExported() {
+    public boolean getExported() {
         return exported;
     }
 
@@ -60,7 +62,7 @@ public class DefaultIdeaModuleDependency implements IdeaModuleDependency, Serial
     public String toString() {
         return "DefaultIdeaModuleDependency{"
                  + "scope='" + scope + '\''
-                 + ", dependencyModuleName='" + dependencyModuleName + '\''
+                 + ", dependencyModule name='" + dependencyModule.getName() + '\''
                  + ", exported=" + exported
                  + '}';
     }

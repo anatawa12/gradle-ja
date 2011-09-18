@@ -16,6 +16,7 @@
 
 package org.gradle.plugins.ide.idea
 
+import java.util.regex.Pattern
 import junit.framework.AssertionFailedError
 import org.custommonkey.xmlunit.Diff
 import org.custommonkey.xmlunit.ElementNameAndAttributeQualifier
@@ -25,7 +26,7 @@ import org.gradle.plugins.ide.AbstractIdeIntegrationTest
 import org.gradle.util.TestFile
 import org.junit.Rule
 import org.junit.Test
-import java.util.regex.Pattern
+import org.gradle.util.OperatingSystem
 
 class IdeaIntegrationTest extends AbstractIdeIntegrationTest {
     @Rule
@@ -113,7 +114,7 @@ apply plugin: "java"
 apply plugin: "idea"
 
 repositories {
-    mavenRepo urls: "${repoDir.toURI()}"
+    maven { url "${repoDir.toURI()}" }
 }
 
 dependencies {
@@ -160,7 +161,7 @@ apply plugin: 'idea'
 
 def hookActivated = 0
 
-ideaModule {
+idea.module.iml {
     withXml { hookActivated++ }
 }
 
@@ -181,7 +182,7 @@ apply plugin: 'java'
 apply plugin: 'idea'
 
 repositories {
-    mavenRepo urls: "${repoDir.toURI()}"
+    maven { url "${repoDir.toURI()}" }
 }
 
 configurations {
@@ -209,7 +210,7 @@ apply plugin: 'java'
 apply plugin: 'idea'
 
 repositories {
-    mavenRepo urls: "${repoDir.toURI()}"
+    maven { url "${repoDir.toURI()}" }
 }
 
 dependencies {
@@ -230,7 +231,7 @@ dependencies {
 apply plugin: 'java'
 apply plugin: 'idea'
 
-ideaModule {
+idea.module {
     inheritOutputDirs = false
     outputDir = file('foo-out')
     testOutputDir = file('foo-out-test')
@@ -286,6 +287,24 @@ idea.project {
 """)
     }
 
+    @Test
+    void showDecentMessageWhenInputFileWasTinkeredWith() {
+        //given
+        file('root.iml') << 'messed up iml file'
+
+        file('build.gradle') << '''
+apply plugin: "java"
+apply plugin: "idea"
+'''
+        file('settings.gradle') << 'rootProject.name = "root"'
+
+        //when
+        def failure = executer.withTasks('idea').runWithFailure()
+
+        //then
+        failure.output.contains("Perhaps this file was tinkered with?")
+    }
+
     private void assertHasExpectedContents(String path) {
         TestFile file = testDir.file(path).assertIsFile()
         TestFile expectedFile = testDir.file("expectedFiles/${path}.xml").assertIsFile()
@@ -301,6 +320,11 @@ idea.project {
         try {
             XMLAssert.assertXMLEqual(diff, true)
         } catch (AssertionFailedError e) {
+            if (OperatingSystem.current().unix) {
+                def process = ["diff", expectedFile.absolutePath, file.absolutePath].execute()
+                process.consumeProcessOutput(System.out, System.err)
+                process.waitFor()
+            }
             throw new AssertionFailedError("generated file '$path' does not contain the expected contents: ${e.message}.\nExpected:\n${expectedXml}\nActual:\n${actualXml}").initCause(e)
         }
     }

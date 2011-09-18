@@ -41,47 +41,79 @@ startScriptsDir = new File("$buildDir/startScripts")
 archivesBaseName = 'gradle'
 
 libraries = [
-        ant: 'org.apache.ant:ant:1.8.2@jar',
+    ant: dependencies.module('org.apache.ant:ant:1.8.2') {
+        dependency 'org.apache.ant:ant-launcher:1.8.2@jar'
+    },
+    asm: 'asm:asm-all:3.3.1@jar',
+    commons_io: 'commons-io:commons-io:1.4@jar',
+    commons_lang: 'commons-lang:commons-lang:2.6@jar',
+    commons_collections: 'commons-collections:commons-collections:3.2.1@jar',
+    ivy: 'org.apache.ivy:ivy:2.2.0@jar',
+    jcip: "net.jcip:jcip-annotations:1.0@jar",
+]
+
+// Logging
+libraries.slf4j_api = 'org.slf4j:slf4j-api:1.6.2@jar'
+libraries.jcl_to_slf4j = dependencies.module('org.slf4j:jcl-over-slf4j:1.6.2') {
+    dependency libraries.slf4j_api
+}
+libraries.jul_to_slf4j = dependencies.module('org.slf4j:jul-to-slf4j:1.6.2') {
+    dependency libraries.slf4j_api
+}
+libraries.log4j_to_slf4j = dependencies.module('org.slf4j:log4j-over-slf4j:1.6.2') {
+    dependency libraries.slf4j_api
+}
+libraries.logback_core = 'ch.qos.logback:logback-core:0.9.29@jar'
+libraries.logback_classic = dependencies.module('ch.qos.logback:logback-classic:0.9.29') {
+    dependency libraries.logback_core
+    dependency libraries.slf4j_api
+}
+
+// Jetty
+libraries.servlet_api = "org.mortbay.jetty:servlet-api:2.5-20081211@jar"
+libraries.jetty_util = dependencies.module("org.mortbay.jetty:jetty-util:6.1.25") {
+    dependency libraries.slf4j_api
+    dependency libraries.servlet_api
+}
+libraries.jetty = dependencies.module("org.mortbay.jetty:jetty:6.1.25") {
+    dependency libraries.jetty_util
+    dependency libraries.servlet_api
+}
+
+libraries.commons_httpclient = dependencies.module('commons-httpclient:commons-httpclient:3.1') {
+    dependency libraries.jcl_to_slf4j
+    dependency "commons-codec:commons-codec:1.2@jar"
+}
+
+libraries.maven_ant_tasks = dependencies.module("org.apache.maven:maven-ant-tasks:2.1.3") {
+    libraries.ant
+}
+
+libraries += [
         ant_junit: 'org.apache.ant:ant-junit:1.8.2@jar',
-        ant_launcher: 'org.apache.ant:ant-launcher:1.8.2@jar',
         ant_antlr: 'org.apache.ant:ant-antlr:1.8.2@jar',
         antlr: 'antlr:antlr:2.7.7@jar',
-        asm_all: 'asm:asm-all:3.3.1@jar',
         commons_cli: 'commons-cli:commons-cli:1.2@jar',
-        commons_io: 'commons-io:commons-io:1.4@jar',
-        commons_lang: 'commons-lang:commons-lang:2.6@jar',
         dom4j: 'dom4j:dom4j:1.6.1@jar',
-        guava: 'com.google.guava:guava:r08@jar',
+        guava: 'com.google.guava:guava:r09@jar',
         groovy: 'org.codehaus.groovy:groovy-all:1.7.10@jar',
-        ivy: 'org.apache.ivy:ivy:2.2.0@jar',
         jaxen: 'jaxen:jaxen:1.1@jar',
-        slf4j_api: 'org.slf4j:slf4j-api:1.6.1@jar',
-        jcl_to_slf4j: 'org.slf4j:jcl-over-slf4j:1.6.1@jar',
-        jul_to_slf4j: 'org.slf4j:jul-to-slf4j:1.6.1@jar',
-        log4j_to_slf4j: 'org.slf4j:log4j-over-slf4j:1.6.1@jar',
-        logback_classic: 'ch.qos.logback:logback-classic:0.9.28@jar',
-        logback_core: 'ch.qos.logback:logback-core:0.9.28@jar',
+        jcip: "net.jcip:jcip-annotations:1.0",
         jna: 'net.java.dev.jna:jna:3.2.2@jar',
         junit: 'junit:junit:4.8.2',
         xmlunit: 'xmlunit:xmlunit:1.3',
 ]
 
-libraries.spock = ['org.spockframework:spock-core:0.5-groovy-1.7@jar',
-        libraries.groovy,
-        'org.hamcrest:hamcrest-core:1.1@jar',
-        'cglib:cglib-nodep:2.2',
-        'org.objenesis:objenesis:1.2']
-libraries.jmock = ['org.jmock:jmock:2.5.1@jar',
-        'org.hamcrest:hamcrest-core:1.1@jar',
-        'org.hamcrest:hamcrest-library:1.1@jar',
-        'org.jmock:jmock-junit4:2.5.1@jar',
-        'org.jmock:jmock-legacy:2.5.1@jar',
+libraries.spock = ['org.spockframework:spock-core:0.5-groovy-1.7',
         'org.objenesis:objenesis:1.2',
         'cglib:cglib-nodep:2.2']
-libraries.groovy_depends = [libraries.groovy, libraries.commons_cli]
-libraries.jetty_depends = ["org.mortbay.jetty:jetty:6.1.25@jar",
-        "org.mortbay.jetty:jetty-util:6.1.25@jar",
-        "org.mortbay.jetty:servlet-api:2.5-20081211@jar"]
+libraries.jmock = ['org.jmock:jmock:2.5.1',
+        'org.hamcrest:hamcrest-core:1.1',
+        'org.hamcrest:hamcrest-library:1.1',
+        'org.jmock:jmock-junit4:2.5.1',
+        'org.jmock:jmock-legacy:2.5.1',
+        'org.objenesis:objenesis:1.2',
+        'cglib:cglib-nodep:2.2']
 
 allprojects {
     group = 'org.gradle'
@@ -94,13 +126,14 @@ allprojects {
     repositories {
         mavenRepo(urls: 'http://repo.gradle.org/gradle/libs')
         ivy {
-            name = 'jfrog'
             artifactPattern('http://repo.jfrog.org/artifactory/gradle-plugins-snapshots/[organisation]/[module]/[revision]/[artifact]-[revision](-[classifier]).[ext]')
 //        artifactPattern('http://repo.jfrog.org/artifactory/gradle-ivy-local/[organisation]/[module]/ivy-[revision].xml')
         }
     }
 
     version = this.version
+    
+    apply from: "$rootDir/gradle/conventions-dsl.gradle"
 }
 
 configure(groovyProjects()) {
@@ -126,9 +159,6 @@ configurations {
     plugins {
         visible = false
     }
-    coreImpl {
-        visible = false
-    }
     testRuntime {
         extendsFrom runtime
         extendsFrom plugins
@@ -136,9 +166,9 @@ configurations {
 }
 
 dependencies {
-    runtime runtimeProjects()
+    runtime project(':launcher')
     plugins pluginProjects()
-    coreImpl project(':coreImpl')
+    plugins project(':coreImpl')
 }
 
 evaluationDependsOn(':docs')
@@ -196,9 +226,6 @@ binDistImage = copySpec {
         from configurations.runtime
         into('plugins') {
             from configurations.plugins - configurations.runtime
-        }
-        into('core-impl') {
-            from configurations.coreImpl - configurations.runtime
         }
     }
 }
@@ -285,7 +312,7 @@ def guessMaxForks() {
     return Math.max(2, (int) (processors / 2))
 }
 
-task testedDists(dependsOn: [assemble, check, integTests])
+task testedDists(dependsOn: [assemble, check])
 
 task nightlyBuild(dependsOn: [clean, testedDists, ':docs:uploadDocs'])
 
@@ -352,7 +379,7 @@ gradle.taskGraph.whenReady {graph ->
 
 // A marker task which causes the release version to be used when it is present in the task graph
 task releaseVersion
-//TODO SF - this task name is inconsitent because other releaseXxx tasks actually upload some content somewhere. Should be called something like 'markReleaseVersion'
+//TODO SF - this task name is inconsistent because other releaseXxx tasks actually upload some content somewhere. Should be called something like 'markReleaseVersion'
 
 def tagNow() {
     def git = new Git(project)
@@ -371,7 +398,7 @@ task testedTag(dependsOn: testedDists) << {
 
 task releaseArtifacts {
     description = 'Builds the release artifacts'
-    //TODO SF - this task name is inconsitent because other releaseXxx tasks actually upload some content somewhere. Should be called something like 'buildReleaseArtifacts'
+    //TODO SF - this task name is inconsistent because other releaseXxx tasks actually upload some content somewhere. Should be called something like 'buildReleaseArtifacts'
     group = 'release'
     dependsOn releaseVersion, assemble, ':docs:websiteDocs'
 }
@@ -404,10 +431,6 @@ def groovyProjects() {
 
 def publishedProjects() {
     [project(':core'), project(':toolingApi'), project(':wrapper')]
-}
-
-def runtimeProjects() {
-    groovyProjects() - pluginProjects() - [project(':integTest'), project(':coreImpl')]
 }
 
 def pluginProjects() {

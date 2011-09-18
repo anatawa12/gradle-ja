@@ -17,6 +17,15 @@
 package org.gradle.wrapper;
 
 import java.io.File;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.util.Arrays;
+import java.util.Map;
+import java.util.Properties;
+
+import org.gradle.cli.CommandLineParserFactory;
+import org.gradle.cli.CommandLineParser;
+import org.gradle.cli.SystemPropertiesCommandLineConverter;
 
 /**
  * @author Hans Dockter
@@ -29,21 +38,59 @@ public class GradleWrapperMain {
     public static final String GRADLE_USER_HOME_ENV_KEY = "GRADLE_USER_HOME";
 
     public static void main(String[] args) throws Exception {
-        addSystemProperties(args);
+        File wrapperJar = wrapperJar();
+        File propertiesFile = wrapperProperties(wrapperJar);
+        File rootDir = rootDir(wrapperJar);
+
+        Properties systemProperties = System.getProperties();
+        systemProperties.putAll(parseSystemPropertiesFromArgs(args));
         
+        addSystemProperties(rootDir);
+
         boolean alwaysDownload = Boolean.parseBoolean(System.getenv(ALWAYS_DOWNLOAD_ENV));
         boolean alwaysUnpack = Boolean.parseBoolean(System.getenv(ALWAYS_UNPACK_ENV));
 
-        new Wrapper().execute(
+        WrapperExecutor.forWrapperPropertiesFile(propertiesFile, System.out).execute(
                 args,
                 new Install(alwaysDownload, alwaysUnpack, new Download(), new PathAssembler(gradleUserHome())),
                 new BootstrapMainStarter());
     }
 
-    private static void addSystemProperties(String[] args) {
-        System.getProperties().putAll(SystemPropertiesHandler.getSystemProperties(args));
+    private static Map<String, String> parseSystemPropertiesFromArgs(String[] args) {
+        SystemPropertiesCommandLineConverter converter = new SystemPropertiesCommandLineConverter();
+        converter.setCommandLineParserFactory(new CommandLineParserFactory() {
+            public CommandLineParser create() {
+                return new CommandLineParser().allowUnknownOptions();
+            }
+        }); 
+        
+        return converter.convert(Arrays.asList(args));
+    }
+    
+    private static void addSystemProperties(File rootDir) {
         System.getProperties().putAll(SystemPropertiesHandler.getSystemProperties(new File(gradleUserHome(), "gradle.properties")));
-        System.getProperties().putAll(SystemPropertiesHandler.getSystemProperties(new File("gradle.properties")));
+        System.getProperties().putAll(SystemPropertiesHandler.getSystemProperties(new File(rootDir, "gradle.properties")));
+    }
+
+    private static File rootDir(File wrapperJar) {
+        return wrapperJar.getParentFile().getParentFile().getParentFile();
+    }
+
+    private static File wrapperProperties(File wrapperJar) {
+        return new File(wrapperJar.getParent(), wrapperJar.getName().replaceFirst("\\.jar$", ".properties"));
+    }
+
+    private static File wrapperJar() {
+        URI location;
+        try {
+            location = GradleWrapperMain.class.getProtectionDomain().getCodeSource().getLocation().toURI();
+        } catch (URISyntaxException e) {
+            throw new RuntimeException(e);
+        }
+        if (!location.getScheme().equals("file")) {
+            throw new RuntimeException(String.format("Cannot determine classpath for wrapper Jar from codebase '%s'.", location));
+        }
+        return new File(location.getPath());
     }
 
     private static File gradleUserHome() {

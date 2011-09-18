@@ -15,6 +15,7 @@
  */
 package org.gradle.util;
 
+import org.gradle.api.internal.DirectInstantiator;
 import org.gradle.api.internal.Factory;
 import org.gradle.api.internal.Instantiator;
 import org.gradle.api.internal.project.ServiceRegistry;
@@ -53,7 +54,7 @@ public class ServiceLocator implements ServiceRegistry {
     public <T> ServiceFactory<T> getFactory(final Class<T> serviceType) throws UnknownServiceException {
         ServiceFactory<T> factory = findFactory(serviceType);
         if (factory == null) {
-            throw new UnknownServiceException(serviceType, String.format("No implementation class specified for service '%s'.", serviceType.getName()));
+            throw new UnknownServiceException(serviceType, String.format("Could not find meta-data resource 'META-INF/services/%s' for service '%s'.", serviceType.getName(), serviceType.getName()));
         }
         return factory;
     }

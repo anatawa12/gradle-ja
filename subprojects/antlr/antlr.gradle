@@ -13,19 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-apply plugin: 'groovy'
-
 dependencies {
-    groovy libraries.groovy_depends
+    groovy libraries.groovy
 
     compile project(':core')
     compile project(':plugins')
 
-    compile libraries.slf4j_api,
-            libraries.ant,
-            libraries.ant_antlr,
-            libraries.antlr
-
-    testCompile project(path: ':core', configuration: 'testFixtures')
-    testRuntime project(path: ':core', configuration: 'testFixturesRuntime')
+    compile libraries.slf4j_api
+    compile libraries.ant
+    compile libraries.ant_antlr
+    compile libraries.antlr
 }
+
+useTestFixtures()

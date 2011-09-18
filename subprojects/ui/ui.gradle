@@ -14,26 +14,21 @@
  * limitations under the License.
  */
 
-apply from: "$rootDir/gradle/integTest.gradle"
-
 dependencies {
     compile project(':core')
     compile project(':openApi')
 
-    groovy libraries.groovy_depends
+    groovy libraries.groovy
 
-    compile libraries.dom4j,
-            libraries.commons_io,
-            libraries.slf4j_api
+    compile libraries.dom4j
+    compile libraries.commons_io
+    compile libraries.slf4j_api
 
     runtime libraries.jaxen
-
-    testCompile project(path: ':core', configuration: 'testFixtures')
-    testRuntime project(path: ':core', configuration: 'testFixturesRuntime')
-
-    integTestCompile project(path: ':core', configuration: 'integTestFixtures')
 }
 
 test {
     jvmArgs '-Xms128m', '-Xmx256m', '-XX:MaxPermSize=128m', '-XX:+HeapDumpOnOutOfMemoryError'
 }
+
+useTestFixtures()

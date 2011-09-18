@@ -22,11 +22,14 @@ import org.junit.Rule
 import org.gradle.cache.CacheRepository
 import org.gradle.cache.CacheBuilder
 import org.gradle.cache.PersistentCache
+import org.gradle.cache.DirectoryCacheBuilder
+import org.gradle.api.internal.classpath.ModuleRegistry
 
 class WorkerProcessClassPathProviderTest extends Specification {
-    @Rule public final TemporaryFolder tmpDir = new TemporaryFolder()
-    private final CacheRepository cacheRepository = Mock()
-    private final WorkerProcessClassPathProvider provider = new WorkerProcessClassPathProvider(cacheRepository)
+    @Rule final TemporaryFolder tmpDir = new TemporaryFolder()
+    final CacheRepository cacheRepository = Mock()
+    final ModuleRegistry moduleRegistry = Mock()
+    final WorkerProcessClassPathProvider provider = new WorkerProcessClassPathProvider(cacheRepository, moduleRegistry)
 
     def returnsNullForUnknownClasspath() {
         expect:
@@ -36,27 +39,27 @@ class WorkerProcessClassPathProviderTest extends Specification {
     def createsTheWorkerClasspathOnDemand() {
         def cacheDir = tmpDir.dir
         def classesDir = cacheDir.file('classes')
-        CacheBuilder cacheBuilder = Mock()
+        DirectoryCacheBuilder cacheBuilder = Mock()
         PersistentCache cache = Mock()
+        def initializer = null
 
         when:
         def classpath = provider.findClassPath('WORKER_MAIN')
 
         then:
         1 * cacheRepository.cache('workerMain') >> cacheBuilder
-        1 * cacheBuilder.open() >> cache
-        1 * cache.isValid() >> false
-        1 * cache.markValid()
+        1 * cacheBuilder.withInitializer(!null) >> { args -> initializer = args[0]; return cacheBuilder }
+        1 * cacheBuilder.open() >> { initializer.execute(cache); return cache }
         _ * cache.getBaseDir() >> cacheDir
         0 * cache._
         classpath == [classesDir] as Set
         classesDir.listFiles().length != 0
     }
 
-    def reusesTheCacheClasspath() {
+    def reusesTheCachedClasspath() {
         def cacheDir = tmpDir.dir
         def classesDir = cacheDir.file('classes')
-        CacheBuilder cacheBuilder = Mock()
+        DirectoryCacheBuilder cacheBuilder = Mock()
         PersistentCache cache = Mock()
 
         when:
@@ -64,8 +67,8 @@ class WorkerProcessClassPathProviderTest extends Specification {
 
         then:
         1 * cacheRepository.cache('workerMain') >> cacheBuilder
+        1 * cacheBuilder.withInitializer(!null) >> cacheBuilder
         1 * cacheBuilder.open() >> cache
-        1 * cache.isValid() >> true
         _ * cache.getBaseDir() >> cacheDir
         0 * cache._
         classpath == [classesDir] as Set

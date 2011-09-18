@@ -16,6 +16,8 @@
 package org.gradle.plugins.cpp;
 
 import org.gradle.plugins.binaries.model.Library;
+import org.gradle.plugins.binaries.model.HeaderExportingSourceSet;
+import org.gradle.plugins.binaries.model.NativeDependencyCapableSourceSet;
 
 import org.gradle.api.Named;
 import org.gradle.api.DomainObjectSet;
@@ -23,20 +25,22 @@ import org.gradle.api.file.SourceDirectorySet;
 
 import groovy.lang.Closure;
 
+import java.util.Map;
+
 /**
  * A representation of a unit of cpp source
  */
-public interface CppSourceSet extends Named {
+public interface CppSourceSet extends HeaderExportingSourceSet, NativeDependencyCapableSourceSet, Named {
 
     /**
      * The headers.
      */
-    SourceDirectorySet getHeaders();
+    SourceDirectorySet getExportedHeaders();
 
     /**
      * The headers.
      */
-    CppSourceSet headers(Closure closure);
+    CppSourceSet exportedHeaders(Closure closure);
 
     /**
      * The source.
@@ -52,5 +56,10 @@ public interface CppSourceSet extends Named {
      * Libs this source set requires
      */
     DomainObjectSet<Library> getLibs();
+    
+    /**
+     * Add a dependency to this source set
+     */
+    void dependency(Map<?, ?> dep);
 
 }
