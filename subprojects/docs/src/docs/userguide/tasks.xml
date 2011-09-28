@@ -22,14 +22,14 @@
         properties and methods. This is really different to what you are used to with Ant targets. Such enhanced tasks are
         either provided by you or are provided by Gradle.
     </para>
-    <para>「<xref linkend='tutorial_using_tasks'/>」の入門的なチュートリアルでは、簡単なタスクの作り方や、後からタスクにアクションを追加する方法について学びました。さらに、タスク間の依存関係を定義する方法についても学びました。単純なタスクについてはこんなところですが、Gradleはタスクという概念をもっと進化させています。<firstterm>拡張タスク</firstterm>、つまり自身のプロパティやメソッドを持ったタスクを使うことができるのです。これは、今まで使われてきたAntのtargetとは全く異なる概念です。拡張タスクは、Gradleがデフォルトで用意しているものもありますし、自分自身で新たに作成することもできます。</para>
+    <para>「<xref linkend='tutorial_using_tasks'/>」の入門的なチュートリアルでは、簡単なタスクの作り方や、後からタスクにアクションを追加する方法について学びました。さらに、タスク間の依存関係を定義する方法についても学びました。単純なタスクについてはこんなところですが、Gradleはタスクという概念をもっと進化させています。<firstterm>拡張タスク</firstterm>、つまり自身のプロパティやメソッドを持ったタスクを使うことができるのです。これは、今まで使われてきたAntのターゲットとは全く異なる概念です。拡張タスクは、Gradleがデフォルトで用意しているものもありますし、自分自身で新たに作成することもできます。</para>
     <section>
         <title>タスクの定義<phrase role="original">Defining tasks</phrase></title>
         <para role="original">We have already seen how to define tasks using a keyword style in <xref linkend="tutorial_using_tasks"/>.
             There are a few variations on this style, which you may need to use in certain situations. For example,
             the keyword style does not work in expressions.
         </para>
-        <para>「<xref linkend="tutorial_using_tasks"/>」で、キーワードを使ったタスク定義を紹介しました。ただ、タスクを定義する方法はその他にも少しだけ存在します。これらの方法を使うことになる場面もあるでしょう。たとえば、式の中ではキーワード形式の定義方法を使うことができません。</para>
+        <para>「<xref linkend="tutorial_using_tasks"/>」で、キーワードを使ったタスク定義を紹介しましたが、タスクの定義方法は他にも少しあります。ときには、それらの方法が必要になることもあるでしょう。たとえば、式の中ではキーワード形式の定義方法を使うことができません。</para>
         <sample id="defineAsExpression" dir="userguide/tasks/defineAsExpression" title="タスクを定義する / Defining tasks">
             <sourcefile file="build.gradle"/>
         </sample>
@@ -75,7 +75,7 @@
         <para>そのほかの方法については、<apilink class="org.gradle.api.tasks.TaskContainer"/>をご参照ください。</para>
     </section>
     <section id='sec:configuring_tasks'>
-        <title>タスクを設定する<phrase role="original">Configuring tasks</phrase></title>
+        <title>タスクの設定を変更する<phrase role="original">Configuring tasks</phrase></title>
         <para role="original">As an example, let's look at the <classname>Copy</classname> task provided by Gradle. To create a
             <classname>Copy</classname> task for your build, you can declare in your build script:
         </para>
@@ -111,7 +111,7 @@
         <para role="original">But there is yet another way of configuring a task. It also preserves the context and it is arguably the
             most readable. It is usually our favorite.
         </para>
-        <para>しかし、まだ別の設定方法があります。この方法もやはりコンテキストを保持するもので、おそらく最も可読性の高い方法でしょう。私たちは、通常はこの方法を好んで使っています。</para>
+        <para>しかし、まだ別の設定方法があります。この方法もやはりコンテキストを保持するもので、おそらく最も可読性の高い方法でしょう。私たちは、普段この方法を好んで使っています。</para>
         <sample id="configureUsingClosure" dir="userguide/tasks/configureUsingClosure" title="タスクの設定 - クロージャの使用 / Configuring a task - with closure">
             <sourcefile file="build.gradle"/>
         </sample>
@@ -128,7 +128,7 @@
         <para role="original">Every task has a <literal>configure()</literal> method, which you can pass a closure for configuring the task.
             Gradle uses this style for configuring objects in many places, not just for tasks.
         </para>
-        <para>すべてのタスクは<literal>configure()</literal>メソッドを持っており、このメソッドにタスクを設定するためのクロージャを渡すことができます。Gradleでは、このスタイルでオブジェクトを設定することが、タスクに限らずよくあります。</para>
+        <para>すべてのタスクは<literal>configure()</literal>メソッドを持っており、このメソッドにタスクを設定するためのクロージャを渡すことができます。Gradleでは、このスタイルでオブジェクトを設定することが(タスクに限らず)よくあります。</para>
         <para role="original">You can also use a configuration closure when you define a task.</para>
         <para>また、タスクを定義するときに、同時に設定クロージャを使うこともできます。</para>
         <sample id="defineAndConfigure" dir="userguide/tasks/defineAndConfigure" title="クロージャを伴うタスク定義 / Defining a task with closure">
@@ -136,8 +136,8 @@
         </sample>
     </section>
     <section id='sec:adding_dependencies_to_tasks'>
-        <title>Adding dependencies to a task</title>
-        <para>There are several ways you can define the dependencies of a task. In
+        <title>タスクに依存関係を追加する<phrase role="original">Adding dependencies to a task</phrase></title>
+        <para role="original">There are several ways you can define the dependencies of a task. In
             <xref linkend='sec:task_dependencies'/>
             you were introduced to defining dependencies using task names. Task names can refer to tasks in the same
             project as the task, or to tasks in other projects. To refer to a task in another project, you prefix the
@@ -147,100 +147,117 @@
             to
             <literal>projectB:taskY</literal>:
         </para>
-        <sample id="addDependencyUsingPath" dir="userguide/tasks/addDependencyUsingPath" title="Adding dependency on task from another project">
+        <para>タスクの依存関係を定義する方法はいくつかあります。<xref linkend='sec:task_dependencies'/>では、タスク名を使って依存関係を定義する方法を紹介しました。タスク名を使うと、同じプロジェクトのタスク、または別のプロジェクトのタスクも参照できます。別のプロジェクトのタスクを参照するには、タスク名に、そのタスクが属しているプロジェクトのパスをプレフィックスとして付けてください。次の例では、<literal>projectA:taskX</literal>から<literal>projectB:taskY</literal>への依存関係を定義しています。</para>
+        <sample id="addDependencyUsingPath" dir="userguide/tasks/addDependencyUsingPath" title="別プロジェクトのタスクとの依存関係を定義する / Adding dependency on task from another project">
             <sourcefile file="build.gradle"/>
             <output args="-q taskX"/>
         </sample>
-        <para>Instead of using a task name, you can define a dependency using a
+        <para role="original">Instead of using a task name, you can define a dependency using a
             <classname>Task</classname> object, as shown in this example:
         </para>
-        <sample id="addDependencyUsingTask" dir="userguide/tasks/addDependencyUsingTask" title="Adding dependency using task object">
+        <para>タスク名を使う代わりに、次の例のように、<classname>Task</classname>オブジェクトを使って依存関係を定義することも出来ます。</para>
+        <sample id="addDependencyUsingTask" dir="userguide/tasks/addDependencyUsingTask" title="taskオブジェクトを使った依存関係定義 / Adding dependency using task object">
             <sourcefile file="build.gradle"/>
             <output args="-q taskX"/>
         </sample>
-        <para>For more advanced uses, you can define a task dependency using a closure. When evaluated, the closure is
+        <para role="original">For more advanced uses, you can define a task dependency using a closure. When evaluated, the closure is
             passed the task whose dependencies are being calculated. The closure should return a single
             <classname>Task</classname> or collection of <classname>Task</classname> objects, which are then treated
             as dependencies of the task. The following example adds a dependency from <literal>taskX</literal>
             to all the tasks in the project whose name starts with <literal>lib</literal>:
         </para>
-        <sample id="addDependencyUsingClosure" dir="userguide/tasks/addDependencyUsingClosure" title="Adding dependency using closure">
+        <para>より上級ユーザー向けの方法として、クロージャを使って依存関係を定義することが出来ます。評価フェーズ時に、そのクロージャは、依存関係を算出中のタスクに渡されます。そのクロージャは、一つのTaskオブジェクトかTaskオブジェクトのコレクションを返さなければなりません。返されたタスクが依存タスクとして設定されます。次の例では、taskXから、名前がlibで始まる全てのタスクへの依存関係を設定しています。</para>
+        <sample id="addDependencyUsingClosure" dir="userguide/tasks/addDependencyUsingClosure" title="クロージャを使った依存関係定義 / Adding dependency using closure">
             <sourcefile file="build.gradle"/>
             <output args="-q taskX"/>
         </sample>
-        <para>For more information about task dependencies, see the <apilink class="org.gradle.api.Task"/> API.</para>
+        <para role="original">For more information about task dependencies, see the <apilink class="org.gradle.api.Task"/> API.</para>
+        <para>さらにタスクの依存関係に関する情報を得るには、<apilink class="org.gradle.api.Task"/> APIを参照してください。</para>
     </section>
     <section>
-        <title>Adding a description to a task</title>
-        <para>You can add a description to your task. This description is for example displayed when executing
+        <title>タスクに説明書きを追加する<phrase role="original">Adding a description to a task</phrase></title>
+        <para role="original">You can add a description to your task. This description is for example displayed when executing
             <userinput>gradle tasks</userinput>.
         </para>
-        <sample id="describeTask" dir="userguide/tasks/defineAndConfigure" title="Adding a description to a task">
+        <para>定義したタスクに、説明書きを追加できます。追加した説明は、たとえば<userinput>gradle tasks</userinput>を実行したときなどに表示されます。</para>
+        <sample id="describeTask" dir="userguide/tasks/defineAndConfigure" title="タスクに説明書きを追加する / Adding a description to a task">
             <sourcefile file="build.gradle"/>
         </sample>
     </section>
     <section>
-        <title>Replacing tasks</title>
-        <para>Sometimes you want to replace a task. For example if you want to exchange a task added by the Java plugin
+        <title>タスクの置き換え<phrase role="original">Replacing tasks</phrase></title>
+        <para role="original">Sometimes you want to replace a task. For example if you want to exchange a task added by the Java plugin
             with a custom task of a different type. You can achieve this with:
         </para>
-        <sample id="replaceTask" dir="userguide/tutorial/replaceTask" title="Overwriting a task">
+        <para>ときには、タスクを置き換えたくなることがあります。例えば、Javaプラグインによって追加されたタスクを、別のタイプのカスタムタスクに入れ替えたいといった場合です。これは、次のようにして実現できます。</para>
+        <sample id="replaceTask" dir="userguide/tutorial/replaceTask" title="タスクの上書き / Overwriting a task">
             <sourcefile file="build.gradle"/>
             <output args="-q copy"/>
         </sample>
-        <para>Here we replace a task of type <literal>Copy</literal> with a simple task. When creating the simple
+        <para role="original">Here we replace a task of type <literal>Copy</literal> with a simple task. When creating the simple
             task, you have to set the <literal>overwrite</literal> property to true. Otherwise Gradle throws an
             exception, saying that a task with such a name already exists.
         </para>
+        <para>ここでは、<literal>Copy</literal>タイプのタスクを、シンプルな別のタスクに置き換えています。タスクを作成するときに、<literal>overwrite</literal>プロパティをtrueにセットしなければなりません。そうしないと、Gradleは例外を投げ、すでに同名のタスクが定義済みだと警告してきます。</para>
     </section>
     <section>
-        <title>Skipping tasks</title>
-        <para>Gradle offers multiple ways to skip the execution of a task.</para>
-
+        <title>タスクをスキップする<phrase role="original">Skipping tasks</phrase></title>
+        <para role="original">Gradle offers multiple ways to skip the execution of a task.</para>
+        <para>Gradleは、タスクの実行をスキップする方法を複数用意しています。</para>
         <section>
-            <title>Using a predicate</title>
-            <para>You can use the <literal>onlyIf()</literal> method to attach a predicate to a task. The task's
+            <title>述語を使う<phrase role="original">Using a predicate</phrase></title>
+            <para role="original">You can use the <literal>onlyIf()</literal> method to attach a predicate to a task. The task's
                 actions are only executed if the predicate evaluates to true. You implement the predicate as a closure.
                 The closure is passed the task as a parameter, and should return true if the task should execute
                 and false if the task should be skipped. The predicate is evaluated just before the task is due
                 to be executed.
                 </para>
-            <sample id="taskOnlyIf" dir="userguide/tutorial/taskOnlyIf" title="Skipping a task using a predicate">
+                <para><literal>onlyIf()</literal>メソッドを使って、タスクに述語を付けることができます。タスクは、付加された述語がtrueと評価されたときのみ実行されます。述語は、一つのクロージャとして実装します。そのクロージャには、対象のタスクが引数に渡されます。タスクが実行されるべきならこのクロージャはtrueを返し、スキップされるべきならfalseを返さなければなりません。述語は、タスクが実行される直前に評価されます。</para>
+                <sample id="taskOnlyIf" dir="userguide/tutorial/taskOnlyIf" title="述語でタスクをスキップ / Skipping a task using a predicate">
                 <sourcefile file="build.gradle"/>
                 <output args="hello -PskipHello"/>
             </sample>
         </section>
 
         <section>
-        <title>Using StopExecutionException</title>
-        <para>If the rules for skipping a task can't be expressed with predicate, you can use the
+        <title>StopExecutionExceptionを使う<phrase role="original">Using StopExecutionException</phrase></title>
+        <para role="original">If the rules for skipping a task can't be expressed with predicate, you can use the
             <apilink class="org.gradle.api.tasks.StopExecutionException"/>. If this exception is thrown by an action,
             the further execution of this action as well as the execution of
             any following action of this task is skipped. The build continues with executing the next task.
         </para>
-        <sample id="stopExecutionException" dir="userguide/tutorial/stopExecutionException" title="Skipping tasks with StopExecutionException">
+        <para>タスクスキップのルールが述語で表現できない場合、<apilink class="org.gradle.api.tasks.StopExecutionException"/>を使うことができます。この例外がタスクのアクションから投げられたら、実行中のアクション、およびそのタスクの残りのアクションはすべてスキップされます。ビルド自体は継続されるので、次のタスクが実行されることになります。</para>
+        <sample id="stopExecutionException" dir="userguide/tutorial/stopExecutionException" title="StopExecutionExceptionでタスクをスキップ / Skipping tasks with StopExecutionException">
             <sourcefile file="build.gradle"/>
             <output args="-q myTask"/>
         </sample>
-        <para>This feature is helpful if you work with tasks provided by Gradle. It allows you to add
+        <para role="original">This feature is helpful if you work with tasks provided by Gradle. It allows you to add
             <emphasis>conditional</emphasis> execution of the built-in actions of such a task.
             <footnote>
-                <para>You might be wondering why there is neither an import for the
+                <para role="original">You might be wondering why there is neither an import for the
                     <literal>StopExecutionException</literal>
                     nor do we access it via its fully qualified name. The reason is, that Gradle adds a set of default imports
                     to your script. These imports are customizable (see <xref linkend='ide_support'/>).
                 </para>
             </footnote>
         </para>
+        <para>この機能は、Gradleが標準提供しているタスクが絡んでいるときに役に立ちます。このようなビルドインのタスクを、<emphasis>条件付き</emphasis>で実行させることができるのです。
+            <footnote>
+                <para>
+                    なぜimport文も完全修飾名も使用せずStopExecutionExceptionにアクセスできているのか不思議に思われたかもしれません。これは、Gradleがデフォルトでスクリプトにいくつかのimportを追加しているからです。このimportのセットはカスタマイズ可能です(<xref linkend='ide_support'/>参照)。
+                </para>
+            </footnote>
+        </para>
         </section>
 
         <section>
-        <title>Enabling and disabling tasks</title>
-        <para>Every task has also an <literal>enabled</literal>
+        <title>タスクの有効化と無効化<phrase role="original">Enabling and disabling tasks</phrase></title>
+        <para role="original">Every task has also an <literal>enabled</literal>
             flag which defaults to <literal>true</literal>. Setting it to <literal>false</literal> prevents the
             execution of any of the task's actions.
         </para>
-        <sample id="disableTask" dir="userguide/tutorial/disableTask" title="Enabling and disabling tasks">
+        <para>すべてのタスクは、<literal>enabled</literal>フラグを持っており、デフォルトではtrueに設定されています。このフラグをfalseにすると、そのタスクのすべてのアクションが実行されなくなります。</para>
+        <sample id="disableTask" dir="userguide/tutorial/disableTask" title="タスクの有効化と無効化 / Enabling and disabling tasks">
             <sourcefile file="build.gradle"/>
             <output args="disableMe"/>
         </sample>
@@ -248,46 +265,52 @@
     </section>
 
     <section>
-        <title>Skipping tasks that are up-to-date</title>
-        <para>If you are using one of the tasks that come with Gradle, such as a task added by the Java plugin,
+        <title>UP-TO-DATEなタスクをスキップする<phrase role="original">Skipping tasks that are up-to-date</phrase></title>
+        <para role="original">If you are using one of the tasks that come with Gradle, such as a task added by the Java plugin,
             you might have noticed that Gradle will skip tasks that are up-to-date. This behaviour is also available
             for your tasks, not just for built-in tasks.
         </para>
+        <para>JavaプラグインのようなGradleが提供しているタスクを使ったとき、Gradleがup-to-date(最新状態)のタスクをスキップすることに気づかれたかもしれません。この動作は、ビルドインのタスクだけでなく、任意のタスクに組み込むことができます。</para>
         <section id="sec:task_inputs_outputs">
-            <title>Declaring a task's inputs and outputs</title>
-            <para>
+            <title>タスクの入力物と出力物を宣言する<phrase role="original">Declaring a task's inputs and outputs</phrase></title>
+            <para role="original">
                 Let's have a look at an example. Here our task generates several output files from a source XML file. Let's
                 run it a couple of times.
             </para>
-            <sample id="generatorTask" dir="userguide/tasks/incrementalBuild/noInputsAndOutputs" title="A generator task">
+            <para>一つ例を見てみましょう。ここでは、定義したタスクが、XMLのソースファイルを元にいくつかのファイルを出力しています。このタスクを、何度か実行してみます。</para>
+            <sample id="generatorTask" dir="userguide/tasks/incrementalBuild/noInputsAndOutputs" title="生成タスク / A generator task">
                 <sourcefile file="build.gradle"/>
                 <output args="transform" ignoreExtraLines="true"/>
                 <output args="transform" ignoreExtraLines="true"/>
             </sample>
-            <para>Notice that Gradle executes this task a second time, and does not skip the task even though nothing has
+            <para role="original">Notice that Gradle executes this task a second time, and does not skip the task even though nothing has
                 changed. Our example task was defined using an action closure. Gradle has no idea what the closure does and
                 cannot automatically figure out whether the task is up-to-date or not. To use Gradle's up-to-date checking,
                 you need to declare the inputs and outputs of the task.
             </para>
-            <para>Each task has an <literal>inputs</literal> and <literal>outputs</literal> property, which you use to
+            <para>タスクを2回目に実行したとき、なにも変更されていないにもかかわらず、タスクの実行がスキップされなかったことに注目してください。この例にあるタスクでは、ひとつのクロージャを使ってアクションを定義していますが、Gradleにはこのクロージャが何をしているか知る手段がなく、タスクがUP-TO-DATEなのかどうかを自動的に決定することができないのです。GradleのUP-TO-DATEチェックを使うには、タスクの入力と出力を宣言する必要があります。</para>
+            <para role="original">Each task has an <literal>inputs</literal> and <literal>outputs</literal> property, which you use to
                 declare the inputs and outputs of the task. Below, we have changed our example to declare that it takes
                 the source XML file as an input and produces output to a destination directory. Let's run it a couple
                 of times.
             </para>
-            <sample id="incrementalTask" dir="userguide/tasks/incrementalBuild/inputsAndOutputs" title="Declaring the inputs and outputs of a task">
+            <para>すべてのタスクには<literal>inputs</literal>プロパティと<literal>outputs</literal>プロパティがあります。これが入力と出力を宣言するために使うプロパティです。次の例では、先ほどの例を修正し、このタスクがXMLのソースファイルを入力とし、あるディレクトリに出力ファイルを生成することを宣言しています。</para>
+            <sample id="incrementalTask" dir="userguide/tasks/incrementalBuild/inputsAndOutputs" title="タスクの入力と出力を宣言 / Declaring the inputs and outputs of a task">
                 <sourcefile file="build.gradle"/>
                 <output args="transform" outputFile="generatorTask.out" ignoreExtraLines="true"/>
                 <output args="transform" ignoreExtraLines="true"/>
             </sample>
-            <para>Now, Gradle knows which files to check to determine whether the task is up-to-date or not.</para>
+            <para role="original">Now, Gradle knows which files to check to determine whether the task is up-to-date or not.</para>
+            <para>これで、GradleはタスクがUP-TO-DATEなのかどうかを決定するため、どのファイルをチェックするべきか知ることができます。</para>
 
-            <para>The task's <literal>inputs</literal> property is of type <apilink class="org.gradle.api.tasks.TaskInputs"/>.
+            <para role="original">The task's <literal>inputs</literal> property is of type <apilink class="org.gradle.api.tasks.TaskInputs"/>.
                 The task's <literal>outputs</literal> property is of type <apilink class="org.gradle.api.tasks.TaskOutputs"/>.
             </para>
+            <para>タスクのinputsプロパティは<apilink class="org.gradle.api.tasks.TaskInputs"/>型、outputsプロパティは<apilink class="org.gradle.api.tasks.TaskOutputs"/>型です。</para>
         </section>
         <section>
-            <title>How does it work?</title>
-            <para>
+            <title>どのように動作するのか？<phrase role="original">How does it work?</phrase></title>
+            <para role="original">
                 Before a task is executed for the first time, Gradle takes a snapshot of the inputs. This snapshot contains
                 the set of input files and a hash of the contents of each file. Gradle then executes the task. If the
                 task completes successfully, Gradle takes a snapshot of the outputs. This snapshot contains the set of
@@ -295,43 +318,49 @@
                 deleted in the output directories of the task. Gradle persists both snapshots for next time the task
                 is executed.
             </para>
-            <para>
+            <para>タスクが初回に実行されるとき、実行前にGradleは入力物のスナップショットをとります。このスナップショットには、入力ファイルのセットと、それぞれのファイル内容のハッシュが含まれています。Gradleは、その後、タスクを実行します。もしタスクが正常に終了すれば、Gradleは出力物のスナップショットを保存します。このスナップショットには、やはり出力ファイルのセットと、それぞれのファイル内容のハッシュが含まれていて、Gradleが、出力ディレクトリ内でファイルが作成または変更、削除されたことを検知するために使用されます。Gradleは、次回そのタスクが実行されたときのために、双方のスナップショットを保管します。</para>
+            <para role="original">
                 Each time after that, before the task is executed, Gradle takes a new snapshot of the inputs and outputs.
                 If the new snapshots are the same as the previous snapshots, Gradle assumes that the outputs are up to
                 date and skips the task. If they are not the same, Gradle executes the task. Gradle persists both snapshots
                 for next time the task is executed.
             </para>
+            <para>この後は、タスクが実行される前に毎回、入力物と出力物のスナップショットを新しく作成します。もし、新しいスナップショットが、前回のスナップショットと同じなら、Gradleは出力がUP-TO-DATEだと見なし、タスクをスキップします。スナップショットが異なっていれば、Gradleはタスクを実行し、次回実行されるときのためにスナップショットを保存しなおします。</para>
         </section>
     </section>
 
     <section>
-        <title>Task rules</title>
-        <para>Sometimes you want to have a task which behavior depends on a large or infinite number value range
+        <title>タスクルール<phrase role="original">Task rules</phrase></title>
+        <para role="original">Sometimes you want to have a task which behavior depends on a large or infinite number value range
             of parameters. A very nice and expressive way to provide such tasks are task rules:
         </para>
-        <sample id="taskRule" dir="userguide/tasks/addRules" title="Task rule">
+        <para>ときには、広範囲、または無限大な範囲のパラメータに応じた動作を行うタスクを定義したくなることがあります。このようなタスクを定義するための、表現力のあるよい方法がタスクルールです。</para>
+        <sample id="taskRule" dir="userguide/tasks/addRules" title="タスクルール / Task rule">
             <sourcefile file="build.gradle" snippet="task-rule"/>
             <output args="-q pingServer1"/>
         </sample>
-        <para>The String parameter is used as a description for the rule. This description is shown when running
+        <para role="original">The String parameter is used as a description for the rule. This description is shown when running
             for example <userinput>gradle tasks</userinput>.
         </para>
-        <para>Rules not just work for calling tasks from the command line. You can also create dependsOn relations
+        <para>文字列が引数に渡されていますが、これはルールの説明として使用されます。例えば、<userinput>gradle tasks</userinput>を実行したときなどに表示されます。</para>
+        <para role="original">Rules not just work for calling tasks from the command line. You can also create dependsOn relations
             on rule based tasks:
         </para>
-        <sample id="taskRuleDependsOn" dir="userguide/tasks/addRules" title="Dependency on rule based tasks">
+        <para>ルールは、ただコマンドラインからのタスク呼び出しにのみ使えるものではありません。dependsOnによる依存関係定義のときも、ルールベースのタスクを使うことができます。</para>
+        <sample id="taskRuleDependsOn" dir="userguide/tasks/addRules" title="ルールベース・タスクの依存関係 / Dependency on rule based tasks">
             <sourcefile file="build.gradle"/>
             <output args="-q groupPing"/>
         </sample>
     </section>
     <section id='sec:the_idea_behind_gradle_tasks'>
-        <title>Summary</title>
-        <para>If you are coming from Ant, such an enhanced Gradle task as <emphasis>Copy</emphasis> looks like a mixture
+        <title>まとめ<phrase role="original">Summary</phrase></title>
+        <para role="original">If you are coming from Ant, such an enhanced Gradle task as <emphasis>Copy</emphasis> looks like a mixture
             between an Ant target and an Ant task. And this is actually the case. The separation that Ant does between
             tasks and targets is not done by Gradle. The simple Gradle tasks are like Ant's targets and the enhanced
             Gradle tasks also include the Ant task aspects. All of Gradle's tasks share a common API and you can create
             dependencies between them. Such a task might be nicer to configure than an Ant task.
             It makes full use of the type system, is more expressive and easier to maintain.
         </para>
+        <para>以前にAntを使ったことがあれば、<emphasis>Copy</emphasis>のような拡張タスクは、Antのターゲットとタスクの間をとったようなものに見えるでしょう。その認識は実際、正しいものだと言えます。Antにあったタスクとターゲットの違いは、Gradleにはないということです。単純なGradleのタスクはAntのターゲットのようなものだし、拡張タスクはAntタスクの性質を含んでいます。すべてのGradleタスクは、同じのAPIを共有していて、タスク間の依存関係を定義することができます。このため、GradleのタスクはAntタスクに比べて、より設定しやすいものになっているでしょう。Gradleのタスクは、型システムをフル活用しており、より表現力豊かで、メンテナンス性もよくなっています。</para>
     </section>
 </chapter>
