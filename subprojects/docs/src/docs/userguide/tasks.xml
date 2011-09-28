@@ -13,7 +13,7 @@
   ~ See the License for the specific language governing permissions and
   ~ limitations under the License.
   -->
-<chapter id='more_about_tasks'>
+<chapter id='more_about_tasks' xml:lang="ja">
     <title>タスク詳解<phrase role="original">More about Tasks</phrase></title>
     <para role="original">In the introductory tutorial (<xref linkend='tutorial_using_tasks'/>) you have learned how to
         create simple tasks. You have also learned how to add additional behavior to these tasks later on. And you have
