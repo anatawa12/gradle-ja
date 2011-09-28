@@ -13,7 +13,7 @@
   ~ See the License for the specific language governing permissions and
   ~ limitations under the License.
   -->
-<chapter id="tutorial_groovy_projects">
+<chapter id="tutorial_groovy_projects" xml:lang="ja">
     <title>Groovyクイックスタート<phrase role="original">Groovy Quickstart</phrase></title>
 
     <para role="original">To build a Groovy project, you use the <firstterm>Groovy plugin</firstterm>. This plugin extends the Java

@@ -13,7 +13,7 @@
   ~ See the License for the specific language governing permissions and
   ~ limitations under the License.
   -->
-<chapter id='osgi_plugin' xmlns:xi="http://www.w3.org/2001/XInclude">
+<chapter id='osgi_plugin' xmlns:xi="http://www.w3.org/2001/XInclude" xml:lang="ja">
     <title>OSGiプラグイン<phrase role="original">The OSGi Plugin</phrase></title>
     <para role="original">The OSGi plugin provides a factory method to create an
         <apilink class="org.gradle.api.plugins.osgi.OsgiManifest"/> object. <literal>OsgiManifest</literal> extends

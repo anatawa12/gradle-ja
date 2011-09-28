@@ -13,7 +13,7 @@
   ~ See the License for the specific language governing permissions and
   ~ limitations under the License.
   -->
-<chapter id="standard_plugins">
+<chapter id="standard_plugins" xml:lang="ja">
     <title>標準Gradleプラグイン<phrase role="original">Standard Gradle plugins</phrase></title>
     <para>There are a number of plugins included in the Gradle distribution. These are listed below.
     </para>

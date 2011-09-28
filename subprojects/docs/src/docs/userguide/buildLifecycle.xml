@@ -13,7 +13,7 @@
   ~ See the License for the specific language governing permissions and
   ~ limitations under the License.
   -->
-<chapter id='build_lifecycle' xmlns:xi="http://www.w3.org/2001/XInclude">
+<chapter id='build_lifecycle' xmlns:xi="http://www.w3.org/2001/XInclude" xml:lang="ja">
     <title>ビルドのライフサイクル<phrase role="original">The Build Lifecycle</phrase></title>
     <para role="original">We said earlier, that the core of Gradle is a language for dependency based programming. In Gradle terms this
         means that you can define tasks and dependencies between tasks. Gradle guarantees that these tasks are executed

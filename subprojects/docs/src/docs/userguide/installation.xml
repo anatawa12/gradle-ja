@@ -14,7 +14,7 @@
   ~ limitations under the License.
   -->
 
-<chapter id="installation">
+<chapter id="installation" xml:lang="ja">
     <title>Gradleのインストール<phrase role="original">Installing Gradle</phrase></title>
 
 <section>

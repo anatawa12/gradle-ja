@@ -13,7 +13,7 @@
   ~ See the License for the specific language governing permissions and
   ~ limitations under the License.
   -->
-<chapter id='organizing_build_logic' xmlns:xi="http://www.w3.org/2001/XInclude">
+<chapter id='organizing_build_logic' xmlns:xi="http://www.w3.org/2001/XInclude" xml:lang="ja">
     <title>ビルドロジックの体系化<phrase role="original">Organizing Build Logic</phrase></title>
     <para role="original">Gradle offers a variety of ways to organize your build logic. First of all you can put your build logic
         directly in the action closure of a task. If a couple of tasks share the same logic you can extract this logic

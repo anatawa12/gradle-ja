@@ -13,7 +13,7 @@
   ~ See the License for the specific language governing permissions and
   ~ limitations under the License.
   -->
-<chapter id="jetty_plugin">
+<chapter id="jetty_plugin" xml:lang="ja">
     <title>The Jetty プラグイン<phrase role="original">The Jetty Plugin</phrase></title>
 
     <para role="original">The Jetty plugin extends the War plugin to add tasks which allow you to deploy your web application to a

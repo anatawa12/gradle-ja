@@ -13,7 +13,7 @@
   ~ See the License for the specific language governing permissions and
   ~ limitations under the License.
   -->
-<chapter id="artifact_dependencies_tutorial" xmlns:xi="http://www.w3.org/2001/XInclude">
+<chapter id="artifact_dependencies_tutorial" xmlns:xi="http://www.w3.org/2001/XInclude" xml:lang="ja">
     <title>アーティファクトの基本<phrase role="original">Artifact Basics</phrase></title>
 
     <note>

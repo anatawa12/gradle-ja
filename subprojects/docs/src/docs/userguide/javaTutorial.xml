@@ -13,7 +13,7 @@
   ~ See the License for the specific language governing permissions and
   ~ limitations under the License.
   -->
-<chapter id='tutorial_java_projects' xmlns:xi="http://www.w3.org/2001/XInclude">
+<chapter id='tutorial_java_projects' xmlns:xi="http://www.w3.org/2001/XInclude" xml:lang="ja">
     <title>Javaクイックスタート<phrase role="original">Java Quickstart</phrase></title>
 
     <section>

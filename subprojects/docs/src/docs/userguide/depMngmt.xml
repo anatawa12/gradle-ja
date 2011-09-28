@@ -13,7 +13,7 @@
   ~ See the License for the specific language governing permissions and
   ~ limitations under the License.
   -->
-<chapter id='dependency_management' xmlns:xi="http://www.w3.org/2001/XInclude">
+<chapter id='dependency_management' xmlns:xi="http://www.w3.org/2001/XInclude" xml:lang="ja">
     <title>依存関係の管理<phrase role="original">Dependency Management</phrase></title>
     <section id='sec:Introduction'>
         <title>はじめに<phrase role="original">Introduction</phrase></title>

@@ -13,7 +13,7 @@
   ~ See the License for the specific language governing permissions and
   ~ limitations under the License.
   -->
-<chapter id='gradle_wrapper'>
+<chapter id='gradle_wrapper' xml:lang="ja">
     <title>Gradle Wrapper<phrase role="original">The Gradle Wrapper</phrase></title>
     <para role="original">Gradle is a new tool. You can't expect it to be installed on machines beyond your sphere of influence. An
         example are continuous integration server where Gradle is not installed and where you have no admin rights for

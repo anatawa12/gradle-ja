@@ -14,7 +14,7 @@
   ~ limitations under the License.
   -->
 
-<chapter id="introduction">
+<chapter id="introduction" xml:lang="ja">
     <title>はじめに<phrase role="original">Introduction</phrase></title>
     <para role="original">We would like to introduce Gradle to you, a build system that we think is a quantum leap for build technology
         in the Java (JVM) world. Gradle provides:

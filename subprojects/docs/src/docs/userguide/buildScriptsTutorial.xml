@@ -13,7 +13,7 @@
   ~ See the License for the specific language governing permissions and
   ~ limitations under the License.
   -->
-<chapter id='tutorial_using_tasks' xmlns:xi="http://www.w3.org/2001/XInclude">
+<chapter id='tutorial_using_tasks' xmlns:xi="http://www.w3.org/2001/XInclude" xml:lang="ja">
     <title>ビルドスクリプトの基本<phrase role="original">Build Script Basics</phrase></title>
     <section><title>プロジェクトとタスク<phrase role="original">Projects and tasks</phrase></title>
     <para role="original">Everything in Gradle sits on top of two basic concepts: <firstterm>projects</firstterm> and <firstterm>tasks</firstterm>.</para>

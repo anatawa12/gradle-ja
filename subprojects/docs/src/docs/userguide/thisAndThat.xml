@@ -13,7 +13,7 @@
   ~ See the License for the specific language governing permissions and
   ~ limitations under the License.
   -->
-<chapter id='tutorial_this_and_that' xmlns:xi="http://www.w3.org/2001/XInclude">
+<chapter id='tutorial_this_and_that' xmlns:xi="http://www.w3.org/2001/XInclude" xml:lang="ja">
     <title>いろんなあれこれについてのチュートリアル<phrase role="original">Tutorial - 'This and That'</phrase></title>
     <section id='sec:directory_creation'>
         <title>ディレクトリの作成<phrase role="original">Directory creation</phrase></title>

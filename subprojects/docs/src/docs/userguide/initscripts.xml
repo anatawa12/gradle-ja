@@ -13,7 +13,7 @@
   ~ See the License for the specific language governing permissions and
   ~ limitations under the License.
   -->
-<chapter id='init_scripts' xmlns:xi="http://www.w3.org/2001/XInclude">
+<chapter id='init_scripts' xmlns:xi="http://www.w3.org/2001/XInclude" xml:lang="ja">
     <title>初期化スクリプト<phrase role="original">Initialization Scripts</phrase></title>
     <para role="original">Gradle provides a powerful mechanism to allow customizing the build based on the current environment.  This
         mechanism also supports tools that wish to integrate with Gradle.

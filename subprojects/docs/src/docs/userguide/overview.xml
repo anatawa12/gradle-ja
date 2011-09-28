@@ -13,7 +13,7 @@
   ~ See the License for the specific language governing permissions and
   ~ limitations under the License.
   -->
-<chapter id='overview' xmlns:xi="http://www.w3.org/2001/XInclude">
+<chapter id='overview' xmlns:xi="http://www.w3.org/2001/XInclude" xml:lang="ja">
     <title>概要<phrase role="original">Overview</phrase></title>
     <section id='sec:special_feature_of_gradle'>
         <title>特長<phrase role="original">Features</phrase></title>

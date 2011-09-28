@@ -13,7 +13,7 @@
   ~ See the License for the specific language governing permissions and
   ~ limitations under the License.
   -->
-<chapter id='logging' xmlns:xi="http://www.w3.org/2001/XInclude">
+<chapter id='logging' xmlns:xi="http://www.w3.org/2001/XInclude" xml:lang="ja">
     <title>ロギング<phrase role="original">Logging</phrase></title>
     <para role="original">The log is the main 'UI' of a build tool. If it is too verbose, real warnings and problems are easily hidden
         by this. On the other hand you need the relevant information for figuring out if things have gone wrong. Gradle

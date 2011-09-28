@@ -13,7 +13,7 @@
   ~ See the License for the specific language governing permissions and
   ~ limitations under the License.
   -->
-<chapter id='writing_build_scripts'>
+<chapter id='writing_build_scripts' xml:lang="ja">
     <title>ビルドスクリプトの記述<phrase role="original">Writing Build Scripts</phrase></title>
     <para role="original">This chapter looks at some of the details of writing a build script.</para>
     <para>本章では、ビルドスクリプトの記述についてもう少し詳しく見ていきます。</para>

@@ -13,7 +13,7 @@
   ~ See the License for the specific language governing permissions and
   ~ limitations under the License.
   -->
-<chapter id='application_plugin'>
+<chapter id='application_plugin' xml:lang="ja">
     <title>アプリケーション プラグイン<phrase role="original">The Application Plugin</phrase></title>
     <para role="original">The Gradle application plugin extends the language plugins with common application related tasks.
 	It allows running and bundling applications for the jvm.
