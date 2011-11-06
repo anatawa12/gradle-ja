@@ -125,24 +125,28 @@
             <para>依存関係の定義では、様々なライブラリが様々なバージョンのライブラリを要求します。これが依存関係の競合をよく引き起こすのです。つまり、同じライブラリの異なるバージョンが要求される場合があります。残念ながら、JVMではクラスパス上にバージョン違いの同じjarを混在させるのは、簡単なことではありません(<xref linkend='sub:dependency_management_and_java'/>参照)。Gradleは、どのようにバージョン競合を解決するかという戦略を提供します。デフォルトでは最新バージョンが使用されるようになっています。また、バージョン競合を解決する際には、依存関係をグラフにしたレポートを参照することが大きな助けになるでしょう。このようなレポートの生成が依存関係管理のもう一つの機能です。</para>
         </section>
         <section id='sub:dynamic_versions_and_changing_modules'>
-            <title>Dynamic Versions and Changing Modules</title>
-            <para>Sometimes, you always want to use the latest version of a particular dependency, or the latest in a range of versions.
+            <title>動的バージョンと変更性モジュール<phrase role="original">Dynamic Versions and Changing Modules</phrase></title>
+            <para role="original">Sometimes, you always want to use the latest version of a particular dependency, or the latest in a range of versions.
                 You can easily do this using a <emphasis>dynamic version</emphasis>. A dynamic version can be either a version range (eg. <literal>2.+</literal>)
                 or it can be a placeholder for the latest version available (eg. <literal>latest.integration</literal>).
             </para>
-            <para>Alternatively, sometimes the module you request can change over time, even for the same version.
+            <para>ある依存関係において、常に最新のバージョン、またはある範囲内での最新バージョンを使いたいという場合があります。これは、<emphasis>動的バージョン</emphasis>を使うことで簡単に実現可能です。動的バージョンは、<literal>2.+</literal>のように範囲指定することもできますし、最新バージョンを表すプレースホルダ(<literal>latest.integration</literal>のような)を使うこともできます。</para>
+            <para role="original">Alternatively, sometimes the module you request can change over time, even for the same version.
                 An example of this type of <emphasis>changing module</emphasis> is a maven <literal>SNAPSHOT</literal> module,
                 which always points at the latest artifacts published.
             </para>
-            <para>
+            <para>あるいは、同じバージョンを要求していても、時間が経つとその中身が変更されるモジュールもあります。mavenの<literal>SNAPSHOT</literal>モジュールがそのような<emphasis>変更性モジュール</emphasis>の一例です。このモジュールは、公開された最新のアーティファクトをポイントし続けます。</para>
+            <para role="original">
                 The main difference between a <emphasis>dynamic version</emphasis> and a <emphasis>changing module</emphasis> is
                 that when you resolve a <emphasis>dynamic version</emphasis>, you'll get the real, static version as the module name.
                 When you resolve a <emphasis>changing module</emphasis>, the artifacts are named using the version you requested,
                 but the underlying artifacts may change over time.
             </para>
-            <para>By default, Gradle caches dynamic versions for 24 hours. You can change this cache expiry time for a configuration using the resolution strategy.
+            <emphasis>動的バージョン</emphasis>と、<emphasis>変更性モジュール</emphasis>の主な違いは、動的バージョンが、実在する静的なバージョンのモジュール名に解決されることです。一方、<emphasis>変更性モジュール</emphasis>を使うとそうはなりません。取得したモジュールは、要求したバージョンで命名されますが、その中身は時間が経つと変更されているかもしれません。
+            <para role="original">By default, Gradle caches dynamic versions for 24 hours. You can change this cache expiry time for a configuration using the resolution strategy.
                 See <xref linkend='sub:controlling_caching'/> for details.
             </para>
+            <para>デフォルトでは、Gradleは動的バージョンを24時間キャッシュします。キャッシュの有効期間は、解決戦略を使ったコンフィグレーションで変更できます。詳しくは<xref linkend='sub:controlling_caching'/>を参照してください。</para>
         </section>
         <section id='sub:dependency_management_and_java'>
             <title>依存関係の管理とJava<phrase role="original">Dependency management and Java</phrase></title>
@@ -171,12 +175,8 @@
                 versions of the same jar to be used at runtime.
             </para>
             <para>
-            現在では、依存関係管理の分野には多くの活動があります。OSGiやJSR-294
-            <footnote>
-                <para>JSR 294: JavaTMプログラミング言語におけるモジュール化サポートの改善、<ulink url='http://jcp.org/en/jsr/detail?id=294'/>
-            　　</para>
-            </footnote>
-            です。OSGiはすでに利用可能、JSR-294はJava7に盛り込まれるのではないかと言われています。これらのテクノロジーはさまざまな多くの問題を取り扱うもので、同じjarの異なるバージョンを実行時に有効化するという、MavenでもIvyでも解決できない困難な問題にも対応しています。
+                現在では、依存関係管理の分野には多くの活動があります。OSGiやJSR-294(JavaTMプログラミング言語におけるモジュール化サポートの改善)です。
+                OSGiはすでに利用可能、JSR-294もJava7に盛り込まれることになっています。これらのテクノロジーはさまざまな多くの問題を取り扱うもので、同じjarの異なるバージョンを実行時に有効化するという、MavenでもIvyでも解決できない困難な問題にも対応しています。
             </para>
         </section>
     </section>
@@ -200,16 +200,24 @@
                 the configurations object is applied against its API. To learn more about this API have a look at
                 <apilink class='org.gradle.api.artifacts.ConfigurationContainer'/>.
             </para>
-            <para>To define a configuration:</para>
-            <sample id="defineConfiguration" dir="userguide/artifacts/defineConfiguration" title="Definition of a configuration">
+            <para>
+            依存関係は、コンフィギュレーションによりグループ化されます。コンフィギュレーションは名前(name)といくつかのプロパティを持っていて、それらを別のコンフィギュレーションから継承することもできます。
+            Javaプラグインを使用している場合、Gradleにより定義済みのコンフィギュレーションがいくつか追加されています。Javaプラグインは、さらにそれらのコンフィギュレーションをタスクに割り当てます。詳しくは<xref linkend='sec:java_plugin_and_dependency_management'/>をご参照ください。
+            もちろん、定義済みのコンフィギュレーションに加えて、自分でカスタムのコンフィギュレーションを定義することもできます。カスタムのコンフィギュレーションには様々な使い道があります。たとえば、ビルド時にもテスト時にも使用されない依存関係(配布物に同梱するオプションのJDBCドライバなど)を追加するときなどに便利です。定義されているコンフィギュレーションは<literal>configurations</literal>オブジェクトで管理されています。このオブジェクトに渡したクロージャは、コンフィギュレーションのAPIに対して適用されます。このオブジェクトに渡したクロージャは、コンフィギュレーションのAPIに対して適用されます。このAPIについてさらに詳しく学ぶには、<apilink class='org.gradle.api.artifacts.ConfigurationContainer'/>をご参照ください。
+            </para>
+            <para role="original">To define a configuration:</para>
+            <para>コンフィグレーションを定義するには:</para>
+            <sample id="defineConfiguration" dir="userguide/artifacts/defineConfiguration" title="コンフィグレーションの定義 / Definition of a configuration">
                 <sourcefile file="build.gradle" snippet="define-configuration"/>
             </sample>
-            <para>To access a configuration:</para>
-            <sample id="defineConfiguration" dir="userguide/artifacts/defineConfiguration" title="Accessing a configuration">
+            <para role="original">To access a configuration:</para>
+            <para>コンフィグレーションにアクセスするには:</para>
+            <sample id="defineConfiguration" dir="userguide/artifacts/defineConfiguration" title="コンフィグレーションへのアクセス / Accessing a configuration">
                 <sourcefile file="build.gradle" snippet="lookup-configuration"/>
             </sample>
-            <para>To configure a configuration:</para>
-            <sample id="defineConfiguration" dir="userguide/artifacts/defineConfiguration" title="Configuration of a configuration">
+            <para role="original">To configure a configuration:</para>
+            <para>コンフィグレーションを設定するには:</para>
+            <sample id="defineConfiguration" dir="userguide/artifacts/defineConfiguration" title="コンフィグレーションの設定 / Configuration of a configuration">
                 <sourcefile file="build.gradle" snippet="configure-configuration"/>
             </sample>
         </section>
@@ -295,8 +303,9 @@
                 an explicit extension (artifact only notation).</para>
                 <para>例にあるように、分類子は明示的に拡張子を指定(アーティファクトオンリー記法)しても使うことができます。</para>
             </section>
-            <para>To use the external dependencies of a configuration:</para>
-            <sample id="externalDependencies" dir="userguide/artifacts/externalDependencies"  title="Usage of external dependency of a configuration">
+            <para role="original">To use the external dependencies of a configuration:</para>
+            <para>コンフィグレーションの外部依存関係を使うには:</para>
+            <sample id="externalDependencies" dir="userguide/artifacts/externalDependencies"  title="コンフィグレーションの外部依存関係の使用 / Usage of external dependency of a configuration">
                 <sourcefile file="build.gradle" snippet="use-configuration"/>
                 <output args="-q listJars"/>
             </sample>
@@ -380,7 +389,7 @@
             </sample>
         </section>
         <section>
-            <title>Gradle's Groovy Dependency</title>
+            <title>Gradle同梱のGroovyへの依存<phrase role="original">Gradle's Groovy Dependency</phrase></title>
             <para role="original">You can declare a dependency on the Groovy that is distributed with Gradle by using the
                 <apilink class="org.gradle.api.artifacts.dsl.DependencyHandler" method="localGroovy"/> method. This is
                 useful when you are developing custom Gradle tasks or plugins in Groovy.</para>
@@ -410,19 +419,23 @@
             <para>コンフィギュレーションに対して除外設定した場合、そのコンフィギュレーション(とそれを継承したコンフィギュレーション)に属する依存関係すべてから、指定した推移的依存関係が取り除かれます。すべてのコンフィギュレーションから、ある依存関係を除外したい場合は、例にあるように、Groovyの展開演算子を使うことで簡単に実現できます。除外設定では、group名だけ、またはモジュール名だけで指定することもできますし、その両方で指定することもできます。APIドキュメントの<apilink class="org.gradle.api.artifacts.Dependency"/>と<apilink class="org.gradle.api.artifacts.Configuration"/>もご参照ください。</para>
         </section>
         <section id='sub:controlling_caching'>
-            <title>Fine-tuned control over dependency caching</title>
-            <para>You can fine-tune certain aspects of caching using the <literal>ResolutionStrategy</literal> for a configuration.</para>
-            <para>By default, Gradle caches dynamic versions for 24 hours. To change how long Gradle will cache the resolved version for a dynamic version, use:
+            <title>依存関係キャッシュ制御の微調整<phrase role="original">Fine-tuned control over dependency caching</phrase></title>
+            <para role="original">You can fine-tune certain aspects of caching using the <literal>ResolutionStrategy</literal> for a configuration.</para>
+            <para>コンフィグレーションの<literal>解決戦略</literal>を使って、キャッシュ制御の一部を微調整できます。</para>
+            <para role="original">By default, Gradle caches dynamic versions for 24 hours. To change how long Gradle will cache the resolved version for a dynamic version, use:
             </para>
-            <sample id="dynamic-version-cache-control" dir="userguide/artifacts/resolutionStrategy" title="Dynamic version cache control">
+            <para>デフォルトでは、Gradleは動的バージョンを24時間キャッシュします。Gradleが、どのくらいの間隔で動的バージョンを実際のバージョンに解決しにいくか設定するには、次のようにします。:</para>
+            <sample id="dynamic-version-cache-control" dir="userguide/artifacts/resolutionStrategy" title="動的バージョンのキャッシュ制御 / Dynamic version cache control">
                 <sourcefile file="build.gradle" snippet="dynamic-version-cache-control"/>
             </sample>
-            <para>By default, Gradle caches changing modules for 24 hours. To change how long Gradle will cache the meta-data and artifacts for a changing module, use:
+            <para role="original">By default, Gradle caches changing modules for 24 hours. To change how long Gradle will cache the meta-data and artifacts for a changing module, use:
             </para>
-            <sample id="changing-module-cache-control" dir="userguide/artifacts/resolutionStrategy" title="Changing module cache control">
+            <para>デフォルトでは、Gradleは変更性モジュールを24時間キャッシュします。Gradleが、どのくらいの感覚で変更性モジュールのメタデータとアーティファクトを取得しに行くか設定するには、次のようにします。:</para>
+            <sample id="changing-module-cache-control" dir="userguide/artifacts/resolutionStrategy" title="変更性モジュールのキャッシュ制御 / Changing module cache control">
                 <sourcefile file="build.gradle" snippet="changing-module-cache-control"/>
             </sample>
-            <para>For more details, take a look at the API documentation for <apilink class="org.gradle.api.artifacts.ResolutionStrategy"/>.</para>
+            <para role="original">For more details, take a look at the API documentation for <apilink class="org.gradle.api.artifacts.ResolutionStrategy"/>.</para>
+            <para>詳しくは、APIドキュメントの<apilink class="org.gradle.api.artifacts.ResolutionStrategy"/>をご参照ください。</para>
         </section>
         <section>
             <title>オプショナル属性<phrase role="original">Optional attributes</phrase></title>
@@ -600,12 +613,14 @@
             </sample>
             <section>
                 <title>パスワードで保護されたMavenリポジトリへのアクセス<phrase role="original">Accessing password protected Maven repositories</phrase></title>
-                <para>To access a Maven repository which uses basic authentication, you specify the username and password to use when you define the repository:
+                <para role="original">To access a Maven repository which uses basic authentication, you specify the username and password to use when you define the repository:
                 </para>
-                <sample id="mavenPasswordProtectedRepo" dir="userguide/artifacts/defineRepository" title="Accessing password protected Maven repository">
+                <para>BASIC認証で保護されたMavenリポジトリにアクセスするには、リポジトリを定義する際、ユーザー名とパスワードを指定します。</para>
+                <sample id="mavenPasswordProtectedRepo" dir="userguide/artifacts/defineRepository" title="パスワード保護されたMavenリポジトリへのアクセス / Accessing password protected Maven repository">
                     <sourcefile file="build.gradle" snippet="authenticated-maven-repo"/>
                 </sample>
-                <para>It is advisable to keep your username and password in <filename>gradle.properties</filename> rather than directly in the build file.</para>
+                <para role="original">It is advisable to keep your username and password in <filename>gradle.properties</filename> rather than directly in the build file.</para>
+                <para>ユーザー名、パスワードは、ビルドファイルに直接指定するより、<filename>gradle.properties</filename>に保存した方がいいでしょう。</para>
             </section>
         </section>
         <section id='sec:flat_dir_resolver'>
@@ -623,58 +638,65 @@
             <para>これで、依存関係を取得するリポジトリとして、複数のディレクトリが追加されました。このフラットディレクトリ・リゾルバのみ使うのであれば、依存関係定義ですべての属性を定義する必要はありません。<xref linkend='para:dependencies_with_empty_attributes'/>をご参照ください。</para>
         </section>
         <section>
-            <title>Ivy repositories</title>
-            <para>To use an Ivy repository with a standard layout:</para>
-            <sample id="ivyRepository" dir="userguide/artifacts/defineRepository" title="Ivy repository">
+            <title>Ivyリポジトリ<phrase role="original">Ivy repositories</phrase></title>
+            <para role="original">To use an Ivy repository with a standard layout:</para>
+            <para>標準レイアウトのIvyリポジトリを使うには、</para>
+            <sample id="ivyRepository" dir="userguide/artifacts/defineRepository" title="Ivyリポジトリ / Ivy repository">
                 <sourcefile file="build.gradle" snippet="ivy-repo-with-maven-layout"/>
             </sample>
-            <para>See <apilink class="org.gradle.api.artifacts.repositories.IvyArtifactRepository"/> for details.</para>
+            <para role="original">See <apilink class="org.gradle.api.artifacts.repositories.IvyArtifactRepository"/> for details.</para>
+            <para>詳しくは<apilink class="org.gradle.api.artifacts.repositories.IvyArtifactRepository"/>をご参照ください。</para>
             <section>
-                <title>Defining custom patterns for an Ivy repository</title>
-                <para>To define an Ivy repository with a non-standard layout, you can define a pattern layout for the repository:
+                <title>Ivyリポジトリのカスタムレイアウトを定義する<phrase role="original">Defining custom patterns for an Ivy repository</phrase></title>
+                <para role="original">To define an Ivy repository with a non-standard layout, you can define a pattern layout for the repository:
                 </para>
-                <sample id="ivyRepository" dir="userguide/artifacts/defineRepository" title="Ivy repository with pattern layout">
+                <para>標準でないレイアウトのIvyリポジトリを定義するには、レイアウトパターンを次のように定義します。</para>
+                <sample id="ivyRepository" dir="userguide/artifacts/defineRepository" title="Ivyリポジトリとレイアウトパターン / Ivy repository with pattern layout">
                     <sourcefile file="build.gradle" snippet="ivy-repo-with-pattern-layout"/>
                 </sample>
             </section>
             <section>
-                <title>Defining different artifact and ivy file locations for an Ivy repository</title>
-                <para>To define an Ivy repository which fetches ivy files and artifacts from different locations, you can explicitly define complete URL patterns
+                <title>アーティファクトとivyファイルの場所が異なるIvyリポジトリの定義<phrase role="original">Defining different artifact and ivy file locations for an Ivy repository</phrase></title>
+                <para role="original">To define an Ivy repository which fetches ivy files and artifacts from different locations, you can explicitly define complete URL patterns
                       for artifacts and ivy files:
                 </para>
-                <sample id="ivyRepository" dir="userguide/artifacts/defineRepository" title="Ivy repository with custom patterns">
+                <para>ivyファイルとアーティファクトを異なる場所からフェッチするIvyリポジトリを定義するには、アーティファクトとivyファイルの完全なURLを明示的に指定します。</para>
+                <sample id="ivyRepository" dir="userguide/artifacts/defineRepository" title="Ivyリポジトリとカスタムパターン / Ivy repository with custom patterns">
                     <sourcefile file="build.gradle" snippet="ivy-repo-with-custom-pattern"/>
                 </sample>
             </section>
             <section>
-                <title>Accessing password protected Ivy repositories</title>
-                <para>To access an Ivy repository which uses basic authentication, you specify the username and password to use when you define the repository:
+                <title>パスワードで保護されたIvyリポジトリへのアクセス<phrase role="original">Accessing password protected Ivy repositories</phrase></title>
+                <para role="original">To access an Ivy repository which uses basic authentication, you specify the username and password to use when you define the repository:
                 </para>
-                <sample id="ivyRepository" dir="userguide/artifacts/defineRepository" title="Ivy repository">
+                <para>BASIC認証で保護されたIvyリポジトリへアクセスするには、リポジトリ定義の際にユーザー名とパスワードを指定します。</para>
+                <sample id="ivyRepository" dir="userguide/artifacts/defineRepository" title="Ivyリポジトリ / Ivy repository">
                     <sourcefile file="build.gradle" snippet="authenticated-ivy-repo"/>
                 </sample>
             </section>
         </section>
         <section>
-            <title>Working with repositories</title>
-            <para>To access a repository:</para>
-            <sample id="defineRepository" dir="userguide/artifacts/defineRepository" title="Accessing a repository">
+            <title>リポジトリの操作<phrase role="original">Working with repositories</phrase></title>
+            <para role="original">To access a repository:</para>
+            <para>リポジトリにアクセスするには:</para>
+            <sample id="defineRepository" dir="userguide/artifacts/defineRepository" title="リポジトリアクセス / Accessing a repository">
                 <sourcefile file="build.gradle" snippet="lookup-resolver"/>
             </sample>
-            <para>To configure a repository:</para>
-            <sample id="defineRepository" dir="userguide/artifacts/defineRepository" title="Configuration of a repository">
+            <para role="original">To configure a repository:</para>
+            <para>リポジトリを設定するには:</para>
+            <sample id="defineRepository" dir="userguide/artifacts/defineRepository" title="リポジトリ設定 / Configuration of a repository">
                 <sourcefile file="build.gradle" snippet="configure-resolver"/>
             </sample>
         </section>
         <section>
-            <title>More about preconfigured repositories</title>
-            <para>The methods above for creating preconfigured repositories share some common behavior. For all of them, defining
+            <title>これまでに定義したリポジトリを振り返る<phrase role="original">More about preconfigured repositories</phrase></title>
+            <para role="original">The methods above for creating preconfigured repositories share some common behavior. For all of them, defining
                 a name for the repository is optional. If no name is defined a default name is calculated, depending on the
                 type of the repository. You might want to assign a name, if you want to access the declared repository. For example
                 if you want to use it also for uploading your project artifacts. An explicit name might also be helpful when
                 studying the debug output.
             </para>
-            <para>これまで紹介してきた定義済みリポジトリの追加メソッドには、一つの共通した性質があります。オプションとしてリポジトリ名を定義できるのです。もしリポジトリ名が定義されていなければ、リポジトリの形式に依存したデフォルトの名前が生成されます。リポジトリ定義にアクセスしたい場合には、名前を割り当てたくなるかもしれません。たとえば、プロジェクトのアーティファクトをアップロードする場合などです。明示的に命名すると、デバッグ出力を調査するときに役に立つこともあります。</para>
+            <para>これまで紹介してきた定義済みリポジトリの追加メソッドには、共通する性質があります。リポジトリ名の定義は、必須ではありません。もしリポジトリ名が定義されていなければ、リポジトリの形式に依存したデフォルトの名前が生成されます。リポジトリ定義にアクセスしたい場合には、名前を割り当てたくなるかもしれません。例えば、プロジェクトのアーティファクトをアップロードする場合にもリポジトリ名を使用します。明示的に命名すると、デバッグ出力を調査するときに役に立つこともあります。</para>
             <para role="original">The values passed as arguments to the repository methods can be of any type, not just String. The value
                 that is actually used, is the <code>toString</code> result of the argument object.
             </para>
@@ -682,11 +704,11 @@
         </section>
         <section id='sub:cache'>
             <title>Cache</title>
-            <para>When Gradle downloads artifacts from remote repositories it stores them in a local cache located at
+            <para role="original">When Gradle downloads artifacts from remote repositories it stores them in a local cache located at
                 <filename><replaceable>USER_HOME</replaceable>/.gradle/caches/artifacts</filename>. When Gradle downloads artifacts from a
                 local repository (e.g. maven local, or a flat directory repository), the cache is not used.
             </para>
-            <para>リモートリポジトリからダウンロードされた依存関係は、<literal>USER_HOME/.gradle/cache</literal>にローカルキャッシュとして保存されます。一方、定義済みのローカルリゾルバ(フラットディレクトリ・リゾルバなど)から依存関係を取得した場合、ローカルキャッシュは依存ファイルの中間ストレージとしては使用されません。ただし、どちらの場合も、依存関係のディスクリプタは常にローカルキャッシュに保存されます。</para>
+            <para>Gradleがリモートリポジトリからダウンロードしたアーティファクトは、<literal>USER_HOME/.gradle/caches/artifacts</literal>にローカルキャッシュとして保存されます。一方、ローカルリポジトリ(Mavenローカルリポジトリ、フラットディレクトリリポジトリなど)からアーティファクトをダウンロードした場合、キャッシュは使用されません。</para>
         </section>
         <section id='sub:more_about_ivy_resolvers'>
             <title>Ivyリゾルバについての補足<phrase role="original">More about Ivy resolvers</phrase></title>
