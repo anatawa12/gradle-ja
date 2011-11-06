@@ -19,7 +19,7 @@ package org.gradle.logging.internal;
 import org.apache.commons.io.IOUtils;
 import org.gradle.api.GradleException;
 import org.gradle.api.UncheckedIOException;
-import org.gradle.util.OperatingSystem;
+import org.gradle.os.OperatingSystem;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -27,8 +27,6 @@ import java.io.IOException;
 import java.io.InputStream;
 
 /**
- * TODO SF needs to be a part of a separate 'native' module
- *
  * @author: Szczepan Faber, created at: 9/12/11
  */
 public class JnaBootPathConfigurer {

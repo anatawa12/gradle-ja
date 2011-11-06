@@ -16,7 +16,7 @@
 package org.gradle.integtests
 
 import org.gradle.integtests.fixtures.ExecutionFailure
-import org.gradle.util.OperatingSystem
+import org.gradle.os.OperatingSystem
 import org.gradle.util.TestFile
 import org.junit.Assert
 import org.junit.Test
@@ -26,6 +26,9 @@ class CopyErrorIntegrationTest extends AbstractIntegrationTest {
     @Test
     public void reportsSymLinkWhichPointsToNothing() {
         if (OperatingSystem.current().isWindows()) {
+            return
+        }
+        if (System.getProperty("os.name").contains("unsupported")) {
             return
         }
 
@@ -50,6 +53,9 @@ class CopyErrorIntegrationTest extends AbstractIntegrationTest {
     @Test
     public void reportsUnreadableSourceDir() {
         if (OperatingSystem.current().isWindows()) {
+            return
+        }
+        if (System.getProperty("os.name").contains("unsupported")) {
             return
         }
 

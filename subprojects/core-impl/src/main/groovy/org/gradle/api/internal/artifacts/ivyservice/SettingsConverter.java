@@ -18,6 +18,7 @@ package org.gradle.api.internal.artifacts.ivyservice;
 import org.apache.ivy.core.module.descriptor.ModuleDescriptor;
 import org.apache.ivy.core.settings.IvySettings;
 import org.apache.ivy.plugins.resolver.DependencyResolver;
+import org.gradle.api.internal.artifacts.configurations.ResolutionStrategyInternal;
 
 import java.util.List;
 import java.util.Map;
@@ -26,11 +27,13 @@ import java.util.Map;
  * @author Hans Dockter
  */
 public interface SettingsConverter {
-    String CHAIN_RESOLVER_NAME = "chain";
-    String CLIENT_MODULE_CHAIN_NAME = "clientModuleChain";
-    String CLIENT_MODULE_NAME = "clientModule";
+    String USER_RESOLVER_CHAIN_NAME = "userResolverChain";
+    String TOP_LEVEL_RESOLVER_CHAIN_NAME = "topLevelResolverChain";
+    String CLIENT_MODULE_RESOLVER_NAME = "clientModuleResolver";
+    String ENTRY_POINT_RESOLVER = "entryPointResolver";
 
     IvySettings convertForPublish(List<DependencyResolver> publishResolvers);
 
-    IvySettings convertForResolve(List<DependencyResolver> classpathResolvers, Map<String, ModuleDescriptor> clientModuleRegistry);
+    IvySettings convertForResolve(List<DependencyResolver> classpathResolvers, DependencyResolver projectResolver,
+                                  Map<String, ModuleDescriptor> clientModuleRegistry, ResolutionStrategyInternal resolutionStrategy);
 }

@@ -17,24 +17,21 @@ package org.gradle.api.internal.artifacts.repositories;
 
 import org.apache.ivy.plugins.repository.file.FileRepository;
 import org.apache.ivy.plugins.resolver.DependencyResolver;
-import org.apache.ivy.plugins.resolver.DualResolver;
-import org.apache.ivy.plugins.resolver.IBiblioResolver;
-import org.apache.ivy.plugins.resolver.URLResolver;
 import org.gradle.api.InvalidUserDataException;
-import org.gradle.api.artifacts.ArtifactRepositoryContainer;
 import org.gradle.api.artifacts.repositories.MavenArtifactRepository;
 import org.gradle.api.internal.artifacts.ivyservice.LocalFileRepositoryCacheManager;
 import org.gradle.api.internal.file.FileResolver;
-import org.gradle.util.GUtil;
-import org.jfrog.wharf.ivy.resolver.IBiblioWharfResolver;
-import org.jfrog.wharf.ivy.resolver.UrlWharfResolver;
 
 import java.io.File;
 import java.net.URI;
 import java.util.*;
 
+import static org.gradle.util.GUtil.toList;
+
 public class DefaultMavenArtifactRepository implements MavenArtifactRepository, ArtifactRepositoryInternal {
     private final FileResolver fileResolver;
+    private String username;
+    private String password;
     private String name;
     private Object url;
     private List<Object> additionalUrls = new ArrayList<Object>();
@@ -49,6 +46,22 @@ public class DefaultMavenArtifactRepository implements MavenArtifactRepository, 
 
     public void setName(String name) {
         this.name = name;
+    }
+
+    public String getPassword() {
+        return password;
+    }
+
+    public void setPassword(String password) {
+        this.password = password;
+    }
+
+    public String getUserName() {
+        return username;
+    }
+
+    public void setUserName(String username) {
+        this.username = username;
     }
 
     public URI getUrl() {
@@ -72,7 +85,7 @@ public class DefaultMavenArtifactRepository implements MavenArtifactRepository, 
     }
 
     public void setArtifactUrls(Iterable<?> urls) {
-        additionalUrls = GUtil.addLists(urls);
+        additionalUrls = toList(urls);
     }
 
     public void createResolvers(Collection<DependencyResolver> resolvers) {
@@ -81,51 +94,44 @@ public class DefaultMavenArtifactRepository implements MavenArtifactRepository, 
             throw new InvalidUserDataException("You must specify a URL for a Maven repository.");
         }
 
-        IBiblioResolver resolver;
+        MavenResolver resolver = new MavenResolver();
+        resolver.setName(name);
 
         if (rootUri.getScheme().equalsIgnoreCase("file")) {
-            resolver = new IBiblioResolver();
             resolver.setRepository(new FileRepository());
-            resolver.setRoot(new File(rootUri).getAbsolutePath());
             resolver.setRepositoryCacheManager(new LocalFileRepositoryCacheManager(name));
+
+            resolver.setRoot(getFilePath(rootUri));
+            
+            Collection<URI> artifactUrls = getArtifactUrls();
+            for (URI repoUrl : artifactUrls) {
+                resolver.addArtifactUrl(getFilePath(repoUrl));
+            }
         } else {
-            IBiblioWharfResolver wharfResolver = new IBiblioWharfResolver();
-            wharfResolver.setSnapshotTimeout(IBiblioWharfResolver.DAILY);
-            resolver = wharfResolver;
-            resolver.setRoot(rootUri.toString());
+            resolver.setRepository(new CommonsHttpClientBackedRepository(username, password));
+            resolver.setRoot(getUriPath(rootUri));
+
+            Collection<URI> artifactUrls = getArtifactUrls();
+            for (URI repoUrl : artifactUrls) {
+                resolver.addArtifactUrl(getUriPath(repoUrl));
+            }
         }
-
-        resolver.setUsepoms(true);
-        resolver.setName(name);
-        resolver.setPattern(ArtifactRepositoryContainer.MAVEN_REPO_PATTERN);
-        resolver.setM2compatible(true);
-        resolver.setUseMavenMetadata(true);
-        resolver.setChecksums("");
-
-        Collection<URI> artifactUrls = getArtifactUrls();
-        if (artifactUrls.isEmpty()) {
-            resolver.setDescriptor(IBiblioResolver.DESCRIPTOR_OPTIONAL);
-            resolvers.add(resolver);
-            return;
+        resolvers.add(resolver);
+    }
+    
+    // TODO:DAZ Need to work out a way to mixin the CommonsHttp vs LocalFile stuff into Ivy vs Maven resolvers
+    private String getUriPath(URI uri) {
+        return normalisePath(uri.toString());
+    }
+    
+    private String getFilePath(URI fileUri) {
+        return normalisePath(new File(fileUri).getAbsolutePath());
+    }
+    
+    private String normalisePath(String path) {
+        if (path.endsWith("/")) {
+            return path;
         }
-
-        resolver.setName(name + "_poms");
-
-        URLResolver artifactResolver = new UrlWharfResolver();
-        artifactResolver.setName(name + "_jars");
-        artifactResolver.setM2compatible(true);
-        artifactResolver.setChecksums("");
-        artifactResolver.addArtifactPattern(rootUri.toString() + '/' + ArtifactRepositoryContainer.MAVEN_REPO_PATTERN);
-        for (URI repoUrl : artifactUrls) {
-            artifactResolver.addArtifactPattern(repoUrl.toString() + '/' + ArtifactRepositoryContainer.MAVEN_REPO_PATTERN);
-        }
-
-        DualResolver dualResolver = new DualResolver();
-        dualResolver.setName(name);
-        dualResolver.setIvyResolver(resolver);
-        dualResolver.setArtifactResolver(artifactResolver);
-        dualResolver.setDescriptor(DualResolver.DESCRIPTOR_OPTIONAL);
-
-        resolvers.add(dualResolver);
+        return path + "/";
     }
 }

@@ -16,7 +16,6 @@
 package org.gradle.integtests.tooling.fixture
 
 import java.util.concurrent.TimeUnit
-import org.gradle.integtests.fixtures.DaemonGradleExecuter
 import org.gradle.integtests.fixtures.GradleDistribution
 import org.gradle.integtests.fixtures.GradleDistributionExecuter
 import org.gradle.integtests.fixtures.internal.IntegrationTestHint
@@ -86,7 +85,6 @@ class ToolingApi {
             connector.useInstallation(new File(dist.gradleHomeDir.absolutePath))
             connector.embedded(false)
             connector.daemonMaxIdleTime(300, TimeUnit.SECONDS)
-            DaemonGradleExecuter.registerDaemon(dist.userHomeDir)
         }
         connectorConfigurers.each {
             it.call(connector)

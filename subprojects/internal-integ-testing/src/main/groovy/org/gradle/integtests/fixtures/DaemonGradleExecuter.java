@@ -17,42 +17,12 @@ package org.gradle.integtests.fixtures;
 
 import org.gradle.util.TestFile;
 
-import java.io.File;
 import java.util.*;
 
 public class DaemonGradleExecuter extends ForkingGradleExecuter {
-    private static final Set<File> DAEMONS = new HashSet<File>();
 
     public DaemonGradleExecuter(TestFile gradleHomeDir) {
         super(gradleHomeDir);
-    }
-
-    @Override
-    protected Map doRun(boolean expectFailure) {
-        registerDaemon(getUserHomeDir());
-        Map result = super.doRun(expectFailure);
-        String output = (String) result.get("output");
-        output = output.replace(String.format("Note: the Gradle build daemon is an experimental feature.%n"), "");
-        output = output.replace(String.format("As such, you may experience unexpected build failures. You may need to occasionally stop the daemon.%n"), "");
-        result.put("output", output);
-        return result;
-    }
-
-    public static void registerDaemon(final File userHomeDir) {
-//        assert userHomeDir != null;
-//        if (!DAEMONS.add(userHomeDir)) {
-//            return;
-//        }
-//        Runtime.getRuntime().addShutdownHook(new Thread(new Runnable() {
-//            public void run() {
-//                ExecHandleBuilder builder = new ExecHandleBuilder();
-//                builder.workingDir(new File(".").getAbsolutePath());
-//                builder.executable(Jvm.current().getJpsExecutable());
-//                builder.args("-lm");
-//                builder.setStandardOutput(new ByteArrayOutputStream());
-//                builder.build().start().waitForFinish();
-//            }
-//        }));
     }
 
     @Override
@@ -62,4 +32,21 @@ public class DaemonGradleExecuter extends ForkingGradleExecuter {
         args.addAll(super.getAllArgs());
         return args;
     }
+
+    public GradleHandle<DaemonGradleExecuter> createHandle() {
+        return new DaemonGradleHandle<DaemonGradleExecuter>(this);
+    }
+
+    protected static class DaemonGradleHandle<T extends DaemonGradleExecuter> extends ForkingGradleHandle<T> {
+        public DaemonGradleHandle(T executer) {
+            super(executer);
+        }
+
+        protected String transformStandardOutput(String output) {
+            output = output.replace(String.format("Note: the Gradle build daemon is an experimental feature.%n"), "");
+            output = output.replace(String.format("As such, you may experience unexpected build failures. You may need to occasionally stop the daemon.%n"), "");
+            return output;
+        }
+    }
+
 }

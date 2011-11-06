@@ -16,83 +16,32 @@
 
 package org.gradle.os.jna;
 
-import com.sun.jna.Library;
-import com.sun.jna.Native;
+import org.gradle.os.OperatingSystem;
+import org.gradle.os.ProcessEnvironment;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
- * Uses jna to update the environment variables
+ * Uses jna to update the environment variables.
  *
  * @author: Szczepan Faber, created at: 9/7/11
  */
 public class NativeEnvironment {
-
-    //CHECKSTYLE:OFF
-    public interface WinLibC extends Library {
-        public int _putenv(String name);
-        public int _chdir(String name);
-        public int _getcwd(byte[] out, int size);
-    }
-
-    public interface UnixLibC extends Library {
-        public int setenv(String name, String value, int overwrite);
-        public int unsetenv(String name);
-        public String getcwd(byte[] out, int size);
-        public int chdir(String dirAbsolutePath);
-
-    }
-    //CHECKSTYLE:ON
-
-    public static interface Posix {
-        int setenv(String name, String value, int overwrite);
-        int unsetenv(String name);
-        void setProcessDir(String dir);
-        String getProcessDir();
-    }
-
-    //2 bytes per unicode character, this should be enough to handle sane path lengths
-    private static final int LOTS_OF_BYTES = 2048;
-
-    public static class Windows implements Posix {
-        private final WinLibC libc = (WinLibC) Native.loadLibrary("msvcrt", WinLibC.class);
-
-        public int setenv(String name, String value, int overwrite) {
-            return libc._putenv(name + "=" + value);
-        }
-
-        public int unsetenv(String name) {
-            return libc._putenv(name + "=");
-        }
-
-        public void setProcessDir(String dir) {
-            libc._chdir(dir);
-        }
-
-        public String getProcessDir() {
-            byte[] out = new byte[LOTS_OF_BYTES];
-            libc._getcwd(out, LOTS_OF_BYTES);
-            return Native.toString(out);
-        }
-    }
-
-    public static class Unix implements Posix {
-        final UnixLibC libc = (UnixLibC) Native.loadLibrary("c", UnixLibC.class);
-
-        public int setenv(String name, String value, int overwrite) {
-            return libc.setenv(name, value, overwrite);
-        }
-
-        public int unsetenv(String name) {
-            return libc.unsetenv(name);
-        }
-
-        public void setProcessDir(String dir) {
-            libc.chdir(dir);
-        }
-
-        public String getProcessDir() {
-            byte[] out = new byte[LOTS_OF_BYTES];
-            libc.getcwd(out, LOTS_OF_BYTES);
-            return Native.toString(out);
+    private static final Logger LOGGER = LoggerFactory.getLogger(NativeEnvironment.class);
+    
+    public static ProcessEnvironment current() {
+        try {
+            if (OperatingSystem.current().isUnix()) {
+                return new Unix();
+            } else if (OperatingSystem.current().isWindows()) {
+                return new Windows();
+            } else {
+                LOGGER.warn("Unable to initialize native environment. Updating env variables and working directory will not be possible. Operating system: {}", OperatingSystem.current());
+                return new UnsupportedEnvironment();
+            }
+        } catch (LinkageError e) {
+            // Thrown when jna cannot initialize the native stuff
+            return new UnsupportedEnvironment();
         }
     }
 }

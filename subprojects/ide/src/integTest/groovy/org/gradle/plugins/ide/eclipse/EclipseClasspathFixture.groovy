@@ -17,11 +17,12 @@ package org.gradle.plugins.ide.eclipse
 
 import org.gradle.util.TestFile
 import java.util.regex.Pattern
+import org.gradle.api.internal.artifacts.ivyservice.ArtifactCacheMetaData
 
 class EclipseClasspathFixture {
     final TestFile projectDir
     final TestFile userHomeDir
-    Node classpath
+    private Node classpath
 
     EclipseClasspathFixture(TestFile projectDir, TestFile userHomeDir) {
         this.projectDir = projectDir
@@ -40,6 +41,18 @@ class EclipseClasspathFixture {
 
     List<Node> getEntries() {
         return getClasspath().classpathentry as List
+    }
+
+    String getOutput() {
+        return getClasspath().classpathentry.find { it.@kind == 'output' }.@path
+    }
+
+    List<String> getContainers() {
+        return getClasspath().classpathentry.findAll { it.@kind == 'con' }.collect { it.@path }
+    }
+
+    List<String> getProjects() {
+        return getClasspath().classpathentry.findAll { it.@kind == 'src' && it.@path.startsWith('/') }.collect { it.@path }
     }
 
     List<EclipseLibrary> getLibs() {
@@ -66,7 +79,7 @@ class EclipseClasspathFixture {
         }
 
         void assertHasCachedJar(String group, String module, String version) {
-            assert entry.@path ==~ Pattern.quote("${userHomeDir.absolutePath.replace(File.separator, '/')}/caches/artifacts/${group}/${module}/") + "\\w+/jars/" + Pattern.quote("${module}-${version}.jar")
+            assert entry.@path ==~ Pattern.quote("${userHomeDir.absolutePath.replace(File.separator, '/')}/caches/artifacts-${artifactCacheVersion}/${group}/${module}/") + "\\w+/jars/" + Pattern.quote("${module}-${version}.jar")
         }
 
         void assertHasSource(File jar) {
@@ -78,7 +91,11 @@ class EclipseClasspathFixture {
         }
 
         void assertHasCachedSource(String group, String module, String version) {
-            assert entry.@sourcepath ==~ Pattern.quote("${userHomeDir.absolutePath.replace(File.separator, '/')}/caches/artifacts/${group}/${module}/") + "\\w+/sources/" + Pattern.quote("${module}-${version}-sources.jar")
+            assert entry.@sourcepath ==~ Pattern.quote("${userHomeDir.absolutePath.replace(File.separator, '/')}/caches/artifacts-${artifactCacheVersion}/${group}/${module}/") + "\\w+/sources/" + Pattern.quote("${module}-${version}-sources.jar")
+        }
+
+        private def getArtifactCacheVersion() {
+            return ArtifactCacheMetaData.CACHE_LAYOUT_VERSION;
         }
 
         void assertHasNoSource() {

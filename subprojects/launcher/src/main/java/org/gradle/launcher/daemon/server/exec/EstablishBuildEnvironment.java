@@ -16,37 +16,41 @@
 package org.gradle.launcher.daemon.server.exec;
 
 import org.gradle.launcher.daemon.protocol.Build;
-import org.gradle.launcher.env.LenientEnvHacker;
+import org.gradle.os.ProcessEnvironment;
+import org.gradle.os.jna.NativeEnvironment;
+import org.gradle.util.GFileUtils;
 
-import java.util.Properties;
+import java.io.File;
 import java.util.Map;
+import java.util.Properties;
 
 /**
  * Aims to make the local environment the same as the client's environment.
  */
 public class EstablishBuildEnvironment extends BuildCommandOnly {
+    private final ProcessEnvironment processEnvironment = NativeEnvironment.current();
 
     protected void doBuild(DaemonCommandExecution execution, Build build) {
         Properties originalSystemProperties = new Properties();
         originalSystemProperties.putAll(System.getProperties());
+        File currentDir = GFileUtils.canonicalise(new File("."));
+
         Properties clientSystemProperties = new Properties();
         clientSystemProperties.putAll(build.getParameters().getSystemProperties());
         System.setProperties(clientSystemProperties);
 
-        LenientEnvHacker envHacker = new LenientEnvHacker();
         Map<String, String> originalEnv = System.getenv();
-        envHacker.setenv(build.getParameters().getEnvVariables());
+        processEnvironment.maybeSetEnvironment(build.getParameters().getEnvVariables());
 
-        //TODO SF I want explicit coverage for this feature
-        envHacker.setProcessDir(build.getParameters().getCurrentDir().getAbsolutePath());
+        processEnvironment.maybeSetProcessDir(build.getParameters().getCurrentDir());
 
-        execution.proceed();
-
-        System.setProperties(originalSystemProperties);
-        //TODO SF I'm not sure we should set the original env / work dir
-        // in theory if character encoding the native code emits doesn't match Java's modified UTF-16
-        // we're going to set some rubbish because we used native way to read the env
-        envHacker.setenv(originalEnv);
+        try {
+            execution.proceed();
+        } finally {
+            System.setProperties(originalSystemProperties);
+            processEnvironment.maybeSetEnvironment(originalEnv);
+            processEnvironment.maybeSetProcessDir(currentDir);
+        }
     }
 
 }

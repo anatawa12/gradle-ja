@@ -205,7 +205,7 @@
         </section>
     </section>
 
-    <section>
+    <section id="sec:dry_run">
         <title>空実行<phrase role="original">Dry Run</phrase></title>
         <para role="original">Sometimes you are interested in which tasks are executed in which order for a given set of tasks specified on the
             command line, but you don't want the tasks to be executed. You can use the <option>-m</option> option for this.

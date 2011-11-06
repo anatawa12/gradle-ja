@@ -18,7 +18,7 @@ package org.gradle.api.internal.artifacts.dsl
 
 import org.gradle.api.artifacts.Configuration
 import org.gradle.api.artifacts.UnknownConfigurationException
-
+import org.gradle.api.internal.artifacts.ArtifactDependencyResolver
 import org.gradle.api.internal.artifacts.configurations.DefaultConfigurationContainer
 import org.gradle.api.internal.artifacts.configurations.DependencyMetaDataProvider
 import org.gradle.listener.ListenerManager
@@ -30,7 +30,6 @@ import org.junit.runner.RunWith
 import org.gradle.api.internal.*
 import static org.hamcrest.Matchers.*
 import static org.junit.Assert.assertThat
-import org.gradle.api.internal.artifacts.ArtifactDependencyResolver
 
 /**
  * @author Hans Dockter
@@ -45,7 +44,9 @@ class DefaultConfigurationHandlerTest {
     private ListenerManager listenerManager = context.mock(ListenerManager.class)
     private DependencyMetaDataProvider metaDataProvider = context.mock(DependencyMetaDataProvider.class)
     private Instantiator instantiator = new ClassGeneratorBackedInstantiator(new AsmBackedClassGenerator(), new DirectInstantiator())
-    private DefaultConfigurationContainer configurationHandler = instantiator.newInstance(DefaultConfigurationContainer.class, dependencyResolver, instantiator, { name -> name } as DomainObjectContext, listenerManager, metaDataProvider)
+    private DefaultConfigurationContainer configurationHandler = instantiator.newInstance(DefaultConfigurationContainer.class,
+            dependencyResolver, instantiator, { name -> name } as DomainObjectContext,
+            listenerManager, metaDataProvider)
 
     @Before
     public void setup() {

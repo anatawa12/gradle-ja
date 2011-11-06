@@ -15,7 +15,6 @@
  */
 package org.gradle.api.internal.artifacts.repositories;
 
-import org.apache.ivy.core.IvyContext;
 import org.apache.ivy.core.cache.ArtifactOrigin;
 import org.apache.ivy.core.module.descriptor.Artifact;
 import org.apache.ivy.core.module.descriptor.DependencyArtifactDescriptor;
@@ -28,72 +27,49 @@ import org.apache.ivy.core.report.MetadataArtifactDownloadReport;
 import org.apache.ivy.core.resolve.DownloadOptions;
 import org.apache.ivy.core.resolve.ResolveData;
 import org.apache.ivy.core.resolve.ResolvedModuleRevision;
-import org.apache.ivy.plugins.repository.Resource;
-import org.apache.ivy.plugins.repository.file.FileRepository;
-import org.apache.ivy.plugins.repository.file.FileResource;
-import org.apache.ivy.plugins.resolver.BasicResolver;
-import org.apache.ivy.plugins.resolver.util.ResolvedResource;
-import org.gradle.api.artifacts.Module;
 import org.gradle.api.artifacts.ArtifactRepositoryContainer;
-import org.gradle.api.internal.artifacts.dsl.dependencies.ProjectFinder;
+import org.gradle.api.artifacts.Module;
+import org.gradle.api.internal.artifacts.ivyservice.AbstractLimitedDependencyResolver;
 import org.gradle.api.internal.artifacts.ivyservice.DefaultIvyDependencyPublisher;
 import org.gradle.api.internal.artifacts.ivyservice.ModuleDescriptorConverter;
-import org.gradle.api.internal.artifacts.ivyservice.NoOpRepositoryCacheManager;
-import org.gradle.api.internal.artifacts.ivyservice.moduleconverter.dependencies.DependencyDescriptorFactory;
+import org.gradle.api.internal.artifacts.ivyservice.moduleconverter.dependencies.ProjectDependencyDescriptor;
 import org.gradle.api.internal.project.ProjectInternal;
 import org.gradle.util.ReflectionUtil;
 
 import java.io.File;
-import java.io.IOException;
 import java.text.ParseException;
-import java.util.Collection;
-import java.util.Date;
-import java.util.Map;
 
 /**
  * @author Hans Dockter
  */
-public class DefaultInternalRepository extends BasicResolver implements InternalRepository {
+public class DefaultInternalRepository extends AbstractLimitedDependencyResolver implements InternalRepository {
     private final ModuleDescriptorConverter moduleDescriptorConverter;
-    private final ProjectFinder projectFinder;
 
-    public DefaultInternalRepository(ProjectFinder projectFinder, ModuleDescriptorConverter moduleDescriptorConverter) {
-        this.projectFinder = projectFinder;
+    public DefaultInternalRepository(ModuleDescriptorConverter moduleDescriptorConverter) {
         this.moduleDescriptorConverter = moduleDescriptorConverter;
         setName(ArtifactRepositoryContainer.INTERNAL_REPOSITORY_NAME);
-        setRepositoryCacheManager(new NoOpRepositoryCacheManager(getName()));
     }
 
-    @Override
     public ResolvedModuleRevision getDependency(DependencyDescriptor dd, ResolveData data) throws ParseException {
         ModuleDescriptor moduleDescriptor = findProject(dd);
         if (moduleDescriptor == null) {
             return data.getCurrentResolvedModuleRevision();
         }
 
-        IvyContext context = IvyContext.pushNewCopyContext();
-        try {
-            context.setDependencyDescriptor(dd);
-            context.setResolveData(data);
-            MetadataArtifactDownloadReport downloadReport = new MetadataArtifactDownloadReport(moduleDescriptor.getMetadataArtifact());
-            downloadReport.setDownloadStatus(DownloadStatus.NO);
-            downloadReport.setSearched(false);
-            return new ResolvedModuleRevision(this, this, moduleDescriptor, downloadReport);
-        } finally {
-            IvyContext.popContext();
-        }
+        MetadataArtifactDownloadReport downloadReport = new MetadataArtifactDownloadReport(moduleDescriptor.getMetadataArtifact());
+        downloadReport.setDownloadStatus(DownloadStatus.NO);
+        downloadReport.setSearched(false);
+        return new ResolvedModuleRevision(this, this, moduleDescriptor, downloadReport);
     }
 
     private ModuleDescriptor findProject(DependencyDescriptor descriptor) {
-        String projectPathValue = descriptor.getAttribute(DependencyDescriptorFactory.PROJECT_PATH_KEY);
-        if (projectPathValue == null) {
+        if (!(descriptor instanceof ProjectDependencyDescriptor)) {
             return null;
         }
-        ProjectInternal project = projectFinder.getProject(projectPathValue);
+        ProjectDependencyDescriptor projectDependencyDescriptor = (ProjectDependencyDescriptor) descriptor;
+        ProjectInternal project = projectDependencyDescriptor.getTargetProject();
         Module projectModule = project.getModule();
-        ModuleDescriptor projectDescriptor = moduleDescriptorConverter.convert(
-                project.getConfigurations(),
-                projectModule, IvyContext.getContext().getIvy().getSettings());
+        ModuleDescriptor projectDescriptor = moduleDescriptorConverter.convert(project.getConfigurations(), projectModule);
 
         for (DependencyArtifactDescriptor artifactDescriptor : descriptor.getAllDependencyArtifacts()) {
             for (Artifact artifact : projectDescriptor.getAllArtifacts()) {
@@ -109,17 +85,6 @@ public class DefaultInternalRepository extends BasicResolver implements Internal
         return projectDescriptor;
     }
 
-    @Override
-    protected ResolvedResource findArtifactRef(Artifact artifact, Date date) {
-        String path = artifact.getExtraAttribute(DefaultIvyDependencyPublisher.FILE_PATH_EXTRA_ATTRIBUTE);
-        if (path == null) {            
-            return null;
-        }
-        File file = new File(path);
-        return new ResolvedResource(new FileResource(new FileRepository(), file), artifact.getId().getRevision());
-    }
-
-    @Override
     public DownloadReport download(Artifact[] artifacts, DownloadOptions options) {
         DownloadReport dr = new DownloadReport();
         for (Artifact artifact : artifacts) {
@@ -139,25 +104,7 @@ public class DefaultInternalRepository extends BasicResolver implements Internal
         return dr;
     }
 
-    @Override
-    protected Resource getResource(String source) throws IOException {
+    public ArtifactOrigin locate(Artifact artifact) {
         return null;
-    }
-
-    @Override
-    protected Collection findNames(Map tokenValues, String token) {
-        return null;
-    }
-
-    @Override
-    protected long get(Resource resource, File dest) throws IOException {
-        return 0;
-    }
-
-    public ResolvedResource findIvyFileRef(DependencyDescriptor dd, ResolveData data) {
-        return null;
-    }
-
-    public void publish(Artifact artifact, File src, boolean overwrite) throws IOException {
     }
 }

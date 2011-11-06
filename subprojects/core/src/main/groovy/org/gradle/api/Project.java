@@ -850,6 +850,8 @@ public interface Project extends Comparable<Project> {
      * <li>An Object. Its {@code toString()} value is treated the same way as a String, as for {@link
      * #file(Object)}.</li> </ul>
      *
+     * <li>A {@link Task}. Converted to the task's output files.</li>
+     *
      * <p>The returned file collection is lazy, so that the paths are evaluated only when the contents of the file
      * collection are queried. The file collection is also live, so that it evaluates the above each time the contents
      * of the collection is queried.</p>
@@ -1019,7 +1021,51 @@ public interface Project extends Comparable<Project> {
 
     /**
      * <p>Returns the <code>AntBuilder</code> for this project. You can use this in your build file to execute ant
-     * tasks.</p>
+     * tasks. See example below.</p>
+     * <pre autoTested=''>
+     * task printChecksum {
+     *   doLast {
+     *     ant {
+     *       //using ant checksum task to store the file checksum in the checksumOut ant property
+     *       checksum(property: 'checksumOut', file: 'someFile.txt')
+     *
+     *       //we can refer to the ant property created by checksum task:
+     *       println "The checksum is: " + checksumOut
+     *     }
+     *
+     *     //we can refer to the ant property later as well:
+     *     println "I just love to print checksums: " + ant.checksumOut
+     *   }
+     * }
+     * </pre>
+     *
+     * Consider following example of ant target:
+     * <pre>
+     * &lt;target name='printChecksum'&gt;
+     *   &lt;checksum property='checksumOut'&gt;
+     *     &lt;fileset dir='.'&gt;
+     *       &lt;include name='agile.txt'/&gt;
+     *     &lt;/fileset&gt;
+     *   &lt;/checksum&gt;
+     *   &lt;echo&gt;The checksum is: ${checksumOut}&lt;/echo&gt;
+     * &lt;/target&gt;
+     * </pre>
+     *
+     * Here's how it would look like in gradle. Observe how the ant xml is represented in groovy by the ant builder
+     * <pre autoTested=''>
+     * task printChecksum {
+     *   doLast {
+     *     ant {
+     *       checksum(property: 'checksumOut') {
+     *         fileset(dir: '.') {
+     *           include name: 'agile1.txt'
+     *         }
+     *       }
+     *     }
+     *     logger.lifecycle("The checksum is $ant.checksumOut")
+     *   }
+     * }
+     * </pre>
      *
      * @return The <code>AntBuilder</code> for this project. Never returns null.
      */
@@ -1037,7 +1083,7 @@ public interface Project extends Comparable<Project> {
     /**
      * <p>Executes the given closure against the <code>AntBuilder</code> for this project. You can use this in your
      * build file to execute ant tasks. The <code>AntBuild</code> is passed to the closure as the closure's
-     * delegate.</p>
+     * delegate. See example in javadoc for {@link #getAnt()}</p>
      *
      * @param configureClosure The closure to execute against the <code>AntBuilder</code>.
      * @return The <code>AntBuilder</code>. Never returns null.
@@ -1047,6 +1093,8 @@ public interface Project extends Comparable<Project> {
     /**
      * Returns the configurations of this project.
      *
+     * <h3>Examples:</h3> See docs for {@link ConfigurationContainer}
+     *
      * @return The configuration of this project.
      */
     ConfigurationContainer getConfigurations();
@@ -1054,8 +1102,10 @@ public interface Project extends Comparable<Project> {
     /**
      * <p>Configures the dependency configurations for this project.
      *
-     * <p>This method executes the given closure against the {@link ConfigurationContainer} for this project. The {@link
-     * ConfigurationContainer} is passed to the closure as the closure's delegate.
+     * <p>This method executes the given closure against the {@link ConfigurationContainer}
+     * for this project. The {@link ConfigurationContainer} is passed to the closure as the closure's delegate.
+     *
+     * <h3>Examples:</h3> See docs for {@link ConfigurationContainer}
      *
      * @param configureClosure the closure to use to configure the dependency configurations.
      */
@@ -1063,6 +1113,7 @@ public interface Project extends Comparable<Project> {
 
     /**
      * Returns a handler for assigning artifacts produced by the project to configurations.
+     * <h3>Examples:</h3>See docs for {@link ArtifactHandler}
      */
     ArtifactHandler getArtifacts();
 
@@ -1071,6 +1122,24 @@ public interface Project extends Comparable<Project> {
      *
      * <p>This method executes the given closure against the {@link ArtifactHandler} for this project. The {@link
      * ArtifactHandler} is passed to the closure as the closure's delegate.
+     *
+     * <p>Example:
+     * <pre autoTested=''>
+     * configurations {
+     *   //declaring new configuration that will be used to associate with artifacts
+     *   schema
+     * }
+     *
+     * task schemaJar(type: Jar) {
+     *   //some imaginary task that creates a jar artifact with the schema
+     * }
+     *
+     * //associating the task that produces the artifact with the configuration
+     * artifacts {
+     *   //configuration name and the task:
+     *   schema schemaJar
+     * }
+     * </pre>
      *
      * @param configureClosure the closure to use to configure the published artifacts.
      */
@@ -1339,6 +1408,9 @@ public interface Project extends Comparable<Project> {
      * Returns the dependency handler of this project. The returned dependency handler instance can be used for adding
      * new dependencies. For accessing already declared dependencies, the configurations can be used.
      *
+     * <h3>Examples:</h3>
+     * See docs for {@link DependencyHandler}
+     *
      * @return the dependency handler. Never returns null.
      * @see #getConfigurations()
      */
@@ -1349,6 +1421,9 @@ public interface Project extends Comparable<Project> {
      *
      * <p>This method executes the given closure against the {@link DependencyHandler} for this project. The {@link
      * DependencyHandler} is passed to the closure as the closure's delegate.
+     *
+     * <h3>Examples:</h3>
+     * See docs for {@link DependencyHandler}
      *
      * @param configureClosure the closure to use to configure the dependencies.
      */

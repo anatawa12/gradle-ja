@@ -25,6 +25,7 @@ import org.gradle.api.UncheckedIOException;
 import org.gradle.api.file.DeleteAction;
 import org.gradle.api.internal.file.IdentityFileResolver;
 import org.gradle.api.internal.file.copy.DeleteActionImpl;
+import org.gradle.os.OperatingSystem;
 import org.gradle.os.PosixUtil;
 import org.gradle.process.ExecResult;
 import org.gradle.process.internal.DefaultExecAction;
@@ -225,6 +226,17 @@ public class TestFile extends File implements TestFileContext {
             FileUtils.copyURLToFile(resource, this);
         } catch (IOException e) {
             throw new UncheckedIOException(e);
+        }
+    }
+    
+    public void moveToDirectory(File target) {
+        if (target.exists() && !target.isDirectory()) {
+                throw new UncheckedIOException(String.format("Target '%s' is not a directory", target));
+        }
+        try {
+            FileUtils.moveFileToDirectory(this, target, true);
+        } catch (IOException e) {
+            throw new UncheckedIOException(String.format("Could not move test file '%s' to directory '%s'", this, target), e);
         }
     }
 

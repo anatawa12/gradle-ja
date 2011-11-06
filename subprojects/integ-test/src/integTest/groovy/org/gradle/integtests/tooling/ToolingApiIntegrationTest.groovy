@@ -16,14 +16,19 @@
 package org.gradle.integtests.tooling
 
 import org.gradle.integtests.fixtures.BasicGradleDistribution
-import org.gradle.integtests.tooling.fixture.ToolingApiSpecification
+import org.gradle.integtests.fixtures.GradleDistribution
+import org.gradle.integtests.tooling.fixture.ToolingApi
 import org.gradle.tooling.GradleConnector
 import org.gradle.tooling.UnsupportedVersionException
 import org.gradle.tooling.model.Project
 import org.gradle.util.GradleVersion
 import org.gradle.util.TestFile
+import org.junit.Rule
+import spock.lang.Specification
 
-class ToolingApiIntegrationTest extends ToolingApiSpecification {
+class ToolingApiIntegrationTest extends Specification {
+    @Rule public final GradleDistribution dist = new GradleDistribution()
+    final ToolingApi toolingApi = new ToolingApi(dist)
     final BasicGradleDistribution otherVersion = dist.previousVersion('1.0-milestone-3')
     TestFile projectDir = dist.testDir
 

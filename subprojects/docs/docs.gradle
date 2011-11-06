@@ -20,6 +20,7 @@ import org.gradle.build.docs.AssembleSamplesDocTask
 import org.gradle.build.docs.dsl.docbook.AssembleDslDocTask
 import org.gradle.build.docs.dsl.ExtractDslMetaDataTask
 import org.gradle.build.GenerateReleasesXml
+import org.gradle.os.OperatingSystem
 
 apply plugin: 'base'
 apply from: "${rootDir}/gradle/ssh.gradle"
@@ -45,7 +46,6 @@ srcDocsDir = file('src/docs')
 userguideSrcDir = new File(srcDocsDir, 'userguide')
 cssSrcDir = new File(srcDocsDir, 'css')
 dslSrcDir = new File(srcDocsDir, 'dsl')
-
 docsDir = file("$buildDir/docs")
 userguideDir = new File(docsDir, 'userguide')
 distDocsDir = new File(buildDir, 'distDocs')
@@ -53,6 +53,18 @@ samplesDir = file("$buildDir/samples")
 docbookSrc = new File(project.buildDir, 'src')
 samplesSrcDir = file('src/samples')
 websiteDocs = new File(buildDir, 'websiteDocs')
+
+outputs = [:]
+outputs.samples = files(samplesDir) {
+    builtBy 'samples'
+}
+outputs.distDocs = files(distDocsDir) {
+    builtBy 'distDocs'
+}
+outputs.docs = files(docsDir) {
+    builtBy 'javadoc', 'groovydoc', 'userguide', 'dslHtml'
+}
+
 
 tasks.withType(Docbook2Xhtml) {
     dependsOn userguideStyleSheets
@@ -113,7 +125,7 @@ task samplesDocs(type: Docbook2Xhtml, dependsOn: samplesDocbook) {
     stylesheetName = 'standaloneHtml.xsl'
 }
 
-task dslMetaData(type: ExtractDslMetaDataTask) {
+task dslMetaData(type: ExtractDslMetaDataTask) {  //TODO SF: parseSourceCode
     source { groovydoc.source }
     destFile = new File(docbookSrc, 'dsl-meta-data.bin')
 }
@@ -252,6 +264,7 @@ task checkstyleApi(type: Checkstyle) {
     resultFile = file("$checkstyleResultsDir/checkstyle-api.xml")
 }
 
+//TODO SF - generates for java as well, rename to codedoc?
 task groovydoc(type: Groovydoc) {
     group = 'documentation'
     source groovyProjects().collect {project -> project.sourceSets.main.groovy + project.sourceSets.main.java }

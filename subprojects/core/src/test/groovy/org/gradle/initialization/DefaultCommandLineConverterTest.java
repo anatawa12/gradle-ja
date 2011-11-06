@@ -17,10 +17,10 @@
 package org.gradle.initialization;
 
 import org.gradle.CacheUsage;
-import org.gradle.cli.CommandLineArgumentException;
 import org.gradle.StartParameter;
 import org.gradle.api.internal.artifacts.ProjectDependenciesBuildInstruction;
 import org.gradle.api.logging.LogLevel;
+import org.gradle.cli.CommandLineArgumentException;
 import org.gradle.groovy.scripts.UriScriptSource;
 import org.gradle.util.GUtil;
 import org.gradle.util.TemporaryFolder;
@@ -66,8 +66,10 @@ public class DefaultCommandLineConverterTest {
     private boolean expectedColorOutput = true;
     private StartParameter actualStartParameter;
     private boolean expectedProfile;
+    private File expectedProjectCacheDir;
 
     private final DefaultCommandLineConverter commandLineConverter = new DefaultCommandLineConverter();
+    private boolean expectedContinue;
 
     @Test
     public void withoutAnyOptions() {
@@ -97,6 +99,8 @@ public class DefaultCommandLineConverterTest {
         assertEquals(expectedExcludedTasks, startParameter.getExcludedTaskNames());
         assertEquals(expectedInitScripts, startParameter.getInitScripts());
         assertEquals(expectedProfile, startParameter.isProfile());
+        assertEquals(expectedContinue, startParameter.isContinueOnFailure());
+        assertEquals(expectedProjectCacheDir, startParameter.getProjectCacheDir());
     }
 
     private void checkConversion(final boolean embedded, String... args) {
@@ -123,9 +127,8 @@ public class DefaultCommandLineConverterTest {
 
     @Test
     public void withSpecifiedProjectCacheDir() {
-        actualStartParameter = new StartParameter();
-        commandLineConverter.convert(asList("--project-cache-dir", ".foo"), actualStartParameter);
-        assertEquals(".foo", actualStartParameter.getProjectCacheDir());
+        expectedProjectCacheDir = new File(currentDir, ".foo");
+        checkConversion("--project-cache-dir", ".foo");
     }
 
     @Test
@@ -352,6 +355,12 @@ public class DefaultCommandLineConverterTest {
     public void withProfile() {
         expectedProfile = true;
         checkConversion("--profile");
+    }
+
+    @Test
+    public void withContinue() {
+        expectedContinue = true;
+        checkConversion("--continue");
     }
 
     @Test(expected = CommandLineArgumentException.class)

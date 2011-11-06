@@ -19,13 +19,9 @@ import org.gradle.api.logging.Logger;
 import org.gradle.api.logging.Logging;
 import org.gradle.initialization.BuildClientMetaData;
 import org.gradle.initialization.GradleLauncherAction;
+import org.gradle.launcher.daemon.protocol.*;
 import org.gradle.launcher.exec.BuildActionParameters;
 import org.gradle.launcher.exec.GradleLauncherActionExecuter;
-import org.gradle.launcher.daemon.protocol.Build;
-import org.gradle.launcher.daemon.protocol.Result;
-import org.gradle.launcher.daemon.protocol.Failure;
-import org.gradle.launcher.daemon.protocol.Success;
-import org.gradle.launcher.daemon.protocol.DaemonBusy;
 import org.gradle.logging.internal.OutputEvent;
 import org.gradle.logging.internal.OutputEventListener;
 import org.gradle.messaging.remote.internal.Connection;
@@ -90,38 +86,43 @@ public class DaemonClient implements GradleLauncherActionExecuter<BuildActionPar
         while(true) {
             Connection<Object> connection = connector.connect();
 
-            Result result = runBuild(new Build(action, parameters), connection);
+            Result<T> result = runBuild(new Build(action, parameters), connection);
             if (result instanceof DaemonBusy) {
                 continue; // try a different daemon
             } else if (result instanceof Failure) {
                 // Could potentially distinguish between CommandFailure and DaemonFailure here.
                 throw ((Failure)result).getValue();
             } else if (result instanceof Success) {
-                return (T) result.getValue();
+                return result.getValue();
             } else {
                 throw new IllegalStateException(String.format("Daemon returned %s for which there is no strategy to handle (i.e. is an unknown Result type)", result));
             }
         }
     }
 
-    private Result runBuild(Build build, Connection<Object> connection) {
+    private <T> Result<T> runBuild(Build build, Connection<Object> connection) {
+        DaemonClientInputForwarder inputForwarder = new DaemonClientInputForwarder(System.in, build.getClientMetaData(), connection);
         try {
-            //TODO SF - this may fail. We should handle it and have tests for that. It means the server is gone.
+            //TODO - this may fail. We should handle it and have tests for that. It means the server is gone.
             connection.dispatch(build);
+            inputForwarder.start();
             while (true) {
                 Object object = connection.receive();
                 
                 if (object == null) {
-                    throw new IllegalStateException(String.format("Daemon returned null after we sent %s", build));
+                    throw new DaemonDisappearedException(build, connection);
                 } else if (object instanceof OutputEvent) {
                     outputEventListener.onOutput((OutputEvent) object);
                 } else if (object instanceof Result) {
-                    return (Result) object;
+                    @SuppressWarnings("unchecked")
+                    Result<T> result = (Result<T>) object;
+                    return result;
                 } else {
                     throw new IllegalStateException(String.format("Daemon returned %s (type: %s) for which there is no strategy to handle", object, object.getClass()));
                 }
             }
         } finally {
+            inputForwarder.stop();
             connection.stop();
         }
     }

@@ -20,9 +20,6 @@ import org.apache.commons.lang.builder.EqualsBuilder;
 import org.apache.commons.lang.builder.HashCodeBuilder;
 import org.gradle.api.internal.artifacts.ProjectDependenciesBuildInstruction;
 import org.gradle.api.logging.LogLevel;
-import org.gradle.execution.BuildExecuter;
-import org.gradle.execution.DefaultBuildExecuter;
-import org.gradle.execution.DryRunBuildExecuter;
 import org.gradle.groovy.scripts.ScriptSource;
 import org.gradle.groovy.scripts.StringScriptSource;
 import org.gradle.groovy.scripts.UriScriptSource;
@@ -75,7 +72,6 @@ public class StartParameter {
     private CacheUsage cacheUsage = CacheUsage.ON;
     private ScriptSource buildScriptSource;
     private ScriptSource settingsScriptSource;
-    private BuildExecuter buildExecuter;
     private ProjectSpec defaultProjectSelector;
     private LogLevel logLevel = LogLevel.LIFECYCLE;
     private ShowStacktrace showStacktrace = ShowStacktrace.INTERNAL_EXCEPTIONS;
@@ -85,23 +81,24 @@ public class StartParameter {
     private boolean noOpt;
     private boolean colorOutput = true;
     private boolean profile;
-    private String projectCacheDir = ".gradle";
+    private boolean continueOnFailure;
+    private File projectCacheDir;
 
     /**
-     * Sets the project's cache location.
+     * Sets the project's cache location. Set to null to use the default location.
      *
      * @param projectCacheDir
      */
-    public void setProjectCacheDir(String projectCacheDir) {
+    public void setProjectCacheDir(File projectCacheDir) {
         this.projectCacheDir = projectCacheDir;
     }
 
     /**
      * Returns the project's cache dir.
      *
-     * @return project's cache dir
+     * @return project's cache dir, or null if the default location is to be used.
      */
-    public String getProjectCacheDir() {
+    public File getProjectCacheDir() {
         return projectCacheDir;
     }
 
@@ -141,7 +138,6 @@ public class StartParameter {
         startParameter.buildScriptSource = buildScriptSource;
         startParameter.settingsScriptSource = settingsScriptSource;
         startParameter.initScripts = new ArrayList<File>(initScripts); 
-        startParameter.buildExecuter = buildExecuter;
         startParameter.defaultProjectSelector = defaultProjectSelector;
         startParameter.logLevel = logLevel;
         startParameter.colorOutput = colorOutput;
@@ -150,6 +146,7 @@ public class StartParameter {
         startParameter.noOpt = noOpt;
         startParameter.profile = profile;
         startParameter.projectCacheDir = projectCacheDir;
+        startParameter.continueOnFailure = continueOnFailure;
         return startParameter;
     }
 
@@ -167,6 +164,7 @@ public class StartParameter {
         startParameter.logLevel = logLevel;
         startParameter.colorOutput = colorOutput;
         startParameter.profile = profile;
+        startParameter.continueOnFailure = continueOnFailure;
         return startParameter;
     }
 
@@ -261,35 +259,6 @@ public class StartParameter {
     }
 
     /**
-     * <p>Returns the {@link BuildExecuter} to use for the build.</p>
-     *
-     * @return The {@link BuildExecuter}. Never returns null.
-     */
-    public BuildExecuter getBuildExecuter() {
-        BuildExecuter executer = buildExecuter;
-        if (executer == null) {
-            executer = new DefaultBuildExecuter(taskNames, excludedTaskNames);
-        }
-        if (dryRun) {
-            executer = new DryRunBuildExecuter(executer);
-        }
-        return executer;
-    }
-
-    /**
-     * <p>Sets the {@link BuildExecuter} to use for the build. You can use the method to change the algorithm used to
-     * execute the build, by providing your own {@code BuildExecuter} implementation.</p>
-     *
-     * <p> Set to null to use the default executer. When this property is set to a non-null value, the taskNames and
-     * mergedBuild properties are ignored.</p>
-     *
-     * @param buildExecuter The executer to use, or null to use the default executer.
-     */
-    public void setBuildExecuter(BuildExecuter buildExecuter) {
-        this.buildExecuter = buildExecuter;
-    }
-
-    /**
      * Returns the names of the tasks to execute in this build. When empty, the default tasks for the project will be
      * executed.
      *
@@ -305,9 +274,8 @@ public class StartParameter {
      *
      * @param taskNames the names of the tasks to execute in this build.
      */
-    public void setTaskNames(Collection<String> taskNames) {
-        this.taskNames = !GUtil.isTrue(taskNames) ? new ArrayList<String>() : new ArrayList<String>(taskNames);
-        buildExecuter = null;
+    public void setTaskNames(Iterable<String> taskNames) {
+        this.taskNames = GUtil.toList(taskNames);
     }
 
     /**
@@ -324,8 +292,8 @@ public class StartParameter {
      *
      * @param excludedTaskNames The task names. Can be null.
      */
-    public void setExcludedTaskNames(Collection<String> excludedTaskNames) {
-        this.excludedTaskNames = !GUtil.isTrue(excludedTaskNames) ? new HashSet<String>() : new HashSet<String>(excludedTaskNames);
+    public void setExcludedTaskNames(Iterable<String> excludedTaskNames) {
+        this.excludedTaskNames = GUtil.toSet(excludedTaskNames);
     }
 
     /**
@@ -550,6 +518,20 @@ public class StartParameter {
         return profile;
     }
 
+    /**
+     * Specifies whether the build should continue on task failure. The default is false.
+     */
+    public boolean isContinueOnFailure() {
+        return continueOnFailure;
+    }
+
+    /**
+     * Specifies whether the build should continue on task failure. The default is false.
+     */
+    public void setContinueOnFailure(boolean continueOnFailure) {
+        this.continueOnFailure = continueOnFailure;
+    }
+
     @Override
     public String toString() {
         return "StartParameter{"
@@ -563,7 +545,6 @@ public class StartParameter {
                 + ", cacheUsage=" + cacheUsage
                 + ", buildScriptSource=" + buildScriptSource
                 + ", settingsScriptSource=" + settingsScriptSource
-                + ", buildExecuter=" + buildExecuter
                 + ", defaultProjectSelector=" + defaultProjectSelector
                 + ", logLevel=" + logLevel
                 + ", showStacktrace=" + showStacktrace

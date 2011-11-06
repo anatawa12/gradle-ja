@@ -16,6 +16,8 @@
 package org.gradle.integtests.fixtures
 
 import org.gradle.util.TestFile
+import junit.framework.AssertionFailedError
+import java.util.regex.Pattern
 
 class IvyRepository {
     final TestFile rootDir
@@ -24,8 +26,8 @@ class IvyRepository {
         this.rootDir = rootDir
     }
 
-    String getPattern() {
-        return "[organisation]/[module]/[revision]/[artifact]-[revision].[ext]"
+    URI getUri() {
+        return rootDir.toURI()
     }
 
     IvyModule module(String organisation, String module, Object revision = '1.0') {
@@ -40,6 +42,8 @@ class IvyModule {
     final String module
     final String revision
     final List dependencies = []
+    final Map<String, Map> configurations = [:]
+    final List artifacts = []
     int publishCount
 
     IvyModule(TestFile moduleDir, String organisation, String module, String revision) {
@@ -47,6 +51,19 @@ class IvyModule {
         this.organisation = organisation
         this.module = module
         this.revision = revision
+        artifact([:])
+        configurations['runtime'] = [extendsFrom: [], transitive: true]
+        configurations['default'] = [extendsFrom: ['runtime'], transitive: true]
+    }
+
+    /**
+     * Adds an additional artifact to this module.
+     * @param options Can specify any of name, type or classifier
+     * @return this
+     */
+    IvyModule artifact(Map<String, ?> options) {
+        artifacts << [name: options.name ?: module, type: options.type ?: 'jar', classifier: options.classifier ?: null]
+        return this
     }
 
     IvyModule dependsOn(String organisation, String module, String revision) {
@@ -54,49 +71,120 @@ class IvyModule {
         return this
     }
 
+    IvyModule nonTransitive(String config) {
+        configurations[config].transitive = false
+        return this
+    }
+
     File getIvyFile() {
         return moduleDir.file("ivy-${revision}.xml")
     }
 
-    File getJarFile() {
+    TestFile getJarFile() {
         return moduleDir.file("$module-${revision}.jar")
     }
 
+    /**
+     * Publishes ivy.xml plus all artifacts with different content to previous publication.
+     */
     void publishWithChangedContent() {
         publishCount++
-        publishArtifact()
+        publish()
     }
 
-    File publishArtifact() {
+    /**
+     * Publishes ivy.xml plus all artifacts
+     */
+    void publish() {
         moduleDir.createDir()
 
         ivyFile.text = """<?xml version="1.0" encoding="UTF-8"?>
-<ivy-module version="1.0">
+<ivy-module version="1.0" xmlns:m="http://ant.apache.org/ivy/maven">
 	<info organisation="${organisation}"
 		module="${module}"
 		revision="${revision}"
 	/>
-	<configurations>
-		<conf name="runtime" visibility="public"/>
-		<conf name="default" visibility="public" extends="runtime"/>
-	</configurations>
+	<configurations>"""
+        configurations.each { name, config ->
+            ivyFile << "<conf name='$name' visibility='public'"
+            if (config.extendsFrom) {
+                ivyFile << " extends='${config.extendsFrom.join(',')}'"
+            }
+            if (!config.transitive) {
+                ivyFile << " transitive='false'"
+            }
+            ivyFile << "/>"
+        }
+	ivyFile << """</configurations>
 	<publications>
-		<artifact name="${module}" type="jar" ext="jar" conf="*"/>
+"""
+        artifacts.each { artifact ->
+            file(artifact) << "add some content so that file size isn't zero: $publishCount"
+            ivyFile << """<artifact name="${artifact.name}" type="${artifact.type}" ext="${artifact.type}" conf="*" m:classifier="${artifact.classifier ?: ''}"/>
+"""
+        }
+        ivyFile << """
 	</publications>
 	<dependencies>
 """
         dependencies.each { dep ->
-            ivyFile << """
-        <dependency org="${dep.organisation}" name="${dep.module}" rev="${dep.revision}"/>
+            ivyFile << """<dependency org="${dep.organisation}" name="${dep.module}" rev="${dep.revision}"/>
 """
         }
         ivyFile << """
     </dependencies>
 </ivy-module>
         """
+    }
 
-        jarFile << "add some content so that file size isn't zero: $publishCount"
+    private File file(def artifact) {
+        return moduleDir.file("${artifact.name}-${revision}${artifact.classifier ? '-' + artifact.classifier : ''}.${artifact.type}")
+    }
 
-        return jarFile
+    /**
+     * Asserts that exactly the given artifacts have been published.
+     */
+    void assertArtifactsPublished(String... names) {
+        assert moduleDir.list() as Set == names as Set
+    }
+
+    IvyDescriptor getIvy() {
+        return new IvyDescriptor(ivyFile)
+    }
+}
+
+class IvyDescriptor {
+    final Map<String, IvyConfiguration> configurations = [:]
+
+    IvyDescriptor(File ivyFile) {
+        def ivy = new XmlParser().parse(ivyFile)
+        ivy.dependencies.dependency.each { dep ->
+            def configName = dep.@conf ?: "default"
+            def matcher = Pattern.compile("(\\w+)->\\w+").matcher(configName)
+            if (matcher.matches()) {
+                configName = matcher.group(1)
+            }
+            def config = configurations[configName]
+            if (!config) {
+                config = new IvyConfiguration()
+                configurations[configName] = config
+            }
+            config.addDependency(dep.@org, dep.@name, dep.@rev)
+        }
+    }
+}
+
+class IvyConfiguration {
+    final dependencies = []
+
+    void addDependency(String org, String module, String revision) {
+        dependencies << [org: org, module: module, revision: revision]
+    }
+
+    void assertDependsOn(String org, String module, String revision) {
+        def dep = [org: org, module: module, revision: revision]
+        if (!dependencies.find { it == dep}) {
+            throw new AssertionFailedError("Could not find expected dependency $dep. Actual: $dependencies")
+        }
     }
 }

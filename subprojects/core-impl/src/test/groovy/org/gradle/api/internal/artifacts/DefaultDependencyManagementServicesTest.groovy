@@ -28,9 +28,11 @@ import org.gradle.api.internal.artifacts.dsl.dependencies.ProjectFinder
 import org.gradle.api.internal.file.FileResolver
 import org.gradle.api.internal.project.ServiceRegistry
 import org.gradle.cache.CacheRepository
+import org.gradle.cache.internal.FileLockManager
 import org.gradle.listener.ListenerManager
 import org.gradle.logging.LoggingManagerInternal
 import org.gradle.logging.ProgressLoggerFactory
+import org.gradle.util.TimeProvider
 import spock.lang.Specification
 
 class DefaultDependencyManagementServicesTest extends Specification {
@@ -56,6 +58,8 @@ class DefaultDependencyManagementServicesTest extends Specification {
         ClassPathRegistry classPathRegistry = Mock()
         _ * parent.get(ClassPathRegistry) >> classPathRegistry
         _ * parent.get(ListenerManager) >> listenerManager
+        _ * parent.get(FileLockManager) >> Mock(FileLockManager)
+        _ * parent.get(TimeProvider) >> Mock(TimeProvider)
     }
 
     def "can create dependency resolution services"() {
@@ -63,7 +67,8 @@ class DefaultDependencyManagementServicesTest extends Specification {
         _ * parent.get(Instantiator.class) >> instantiator
         _ * parent.get(StartParameter.class) >> startParameter
         1 * instantiator.newInstance(DefaultRepositoryHandler.class, _, _) >> repositoryHandler
-        1 * instantiator.newInstance(DefaultConfigurationContainer.class, !null, instantiator, domainObjectContext, listenerManager, dependencyMetaDataProvider) >> configurationContainer
+        1 * instantiator.newInstance(DefaultConfigurationContainer.class, !null, instantiator,
+                domainObjectContext, listenerManager, dependencyMetaDataProvider) >> configurationContainer
 
         when:
         def resolutionServices = services.create(fileResolver, dependencyMetaDataProvider, projectFinder, domainObjectContext)
@@ -91,14 +96,14 @@ class DefaultDependencyManagementServicesTest extends Specification {
         publishResolverHandler == publishRepositoryHandler
     }
 
-    def "publish services provide an IvyService"() {
+    def "publish services provide an ArtifactPublisher"() {
         given:
         _ * parent.get(StartParameter.class) >> startParameter
         _ * parent.get(Instantiator.class) >> instantiator
 
         when:
         def resolutionServices = services.create(fileResolver, dependencyMetaDataProvider, projectFinder, domainObjectContext)
-        def ivyService = resolutionServices.publishServicesFactory.create().ivyService
+        def ivyService = resolutionServices.publishServicesFactory.create().artifactPublisher
 
         then:
         ivyService != null

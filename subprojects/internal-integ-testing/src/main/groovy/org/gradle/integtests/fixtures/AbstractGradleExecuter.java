@@ -15,8 +15,11 @@
  */
 package org.gradle.integtests.fixtures;
 
+import java.io.ByteArrayInputStream;
 import java.io.File;
+import java.io.InputStream;
 import java.util.*;
+import org.gradle.util.Jvm;
 
 public abstract class AbstractGradleExecuter implements GradleExecuter {
     private final List<String> args = new ArrayList<String>();
@@ -30,10 +33,12 @@ public abstract class AbstractGradleExecuter implements GradleExecuter {
     private List<File> initScripts = new ArrayList<File>();
     private String executable;
     private File userHomeDir;
+    private File javaHome;
     private File buildScript;
     private File projectDir;
     private String buildScriptText;
     private File settingsFile;
+    private InputStream stdin;
 
     public GradleExecuter reset() {
         args.clear();
@@ -50,7 +55,9 @@ public abstract class AbstractGradleExecuter implements GradleExecuter {
         searchUpwards = false;
         executable = null;
         userHomeDir = null;
+        javaHome = null;
         environmentVars.clear();
+        stdin = null;
         return this;
     }
 
@@ -96,11 +103,18 @@ public abstract class AbstractGradleExecuter implements GradleExecuter {
             executer.withDependencyList();
         }
         executer.withUserHomeDir(userHomeDir);
+        if (stdin != null) {
+            executer.withStdIn(stdin);
+        }
     }
 
     public GradleExecuter usingBuildScript(File buildScript) {
         this.buildScript = buildScript;
         return this;
+    }
+
+    public File getBuildScript() {
+        return buildScript;
     }
 
     public GradleExecuter usingBuildScript(String scriptText) {
@@ -118,6 +132,10 @@ public abstract class AbstractGradleExecuter implements GradleExecuter {
         return this;
     }
 
+    public File getSettingsFile() {
+        return settingsFile;
+    }
+
     public GradleExecuter usingInitScript(File initScript) {
         initScripts.add(initScript);
         return this;
@@ -132,6 +150,15 @@ public abstract class AbstractGradleExecuter implements GradleExecuter {
         return this;
     }
 
+    public File getJavaHome() {
+        return javaHome == null ? Jvm.current().getJavaHome() : javaHome;
+    }
+
+    public GradleExecuter withJavaHome(File javaHome) {
+        this.javaHome = javaHome;
+        return this;
+    }
+
     public GradleExecuter usingExecutable(String script) {
         this.executable = script;
         return this;
@@ -139,6 +166,20 @@ public abstract class AbstractGradleExecuter implements GradleExecuter {
 
     public String getExecutable() {
         return executable;
+    }
+
+    public GradleExecuter withStdIn(String text) {
+        this.stdin = new ByteArrayInputStream(text.getBytes());
+        return this;
+    }
+
+    public GradleExecuter withStdIn(InputStream stdin) {
+        this.stdin = stdin;
+        return this;
+    }
+
+    public InputStream getStdin() {
+        return stdin == null ? new ByteArrayInputStream(new byte[0]) : stdin;
     }
 
     public GradleExecuter withSearchUpwards() {

@@ -18,14 +18,12 @@ package org.gradle.api.internal.artifacts.ivyservice;
 import org.apache.ivy.Ivy;
 import org.apache.ivy.core.module.descriptor.ModuleDescriptor;
 import org.apache.ivy.plugins.resolver.DependencyResolver;
-import org.gradle.api.internal.Factory;
+import org.gradle.api.internal.artifacts.configurations.ResolutionStrategyInternal;
 import org.gradle.api.internal.artifacts.configurations.ResolverProvider;
 
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Map;
 
-public class ResolveIvyFactory implements Factory<Ivy> {
+public class ResolveIvyFactory {
     private final IvyFactory ivyFactory;
     private final ResolverProvider resolverProvider;
     private final DependencyResolver internalRepository;
@@ -40,10 +38,7 @@ public class ResolveIvyFactory implements Factory<Ivy> {
         this.clientModuleRegistry = clientModuleRegistry;
     }
 
-    public Ivy create() {
-        List<DependencyResolver> resolvers = new ArrayList<DependencyResolver>();
-        resolvers.add(internalRepository);
-        resolvers.addAll(resolverProvider.getResolvers());
-        return ivyFactory.createIvy(settingsConverter.convertForResolve(resolvers, clientModuleRegistry));
+    public Ivy create(ResolutionStrategyInternal resolutionStrategy) {
+        return ivyFactory.createIvy(settingsConverter.convertForResolve(resolverProvider.getResolvers(), internalRepository, clientModuleRegistry, resolutionStrategy));
     }
 }

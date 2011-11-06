@@ -16,21 +16,21 @@
 package org.gradle.cache.internal
 
 import org.gradle.CacheUsage
+import org.gradle.api.Action
+import org.gradle.cache.DefaultSerializer
+import org.gradle.cache.internal.CacheFactory.CrossVersionMode
+import org.gradle.cache.internal.btree.BTreePersistentIndexedCache
 import org.gradle.util.TemporaryFolder
 import org.junit.Rule
 import spock.lang.Specification
-import org.gradle.cache.internal.btree.BTreePersistentIndexedCache
-import org.gradle.api.Action
-
-import org.gradle.cache.DefaultSerializer
-import org.gradle.cache.internal.CacheFactory.CrossVersionMode
 
 class DefaultCacheFactoryTest extends Specification {
     @Rule
     public final TemporaryFolder tmpDir = new TemporaryFolder()
     final Action<?> opened = Mock()
     final Action<?> closed = Mock()
-    private final DefaultCacheFactory factoryFactory = new DefaultCacheFactory() {
+    final ProcessMetaDataProvider metaDataProvider = Mock()
+    private final DefaultCacheFactory factoryFactory = new DefaultCacheFactory(new DefaultFileLockManager(metaDataProvider)) {
         @Override
         void onOpen(Object cache) {
             opened.execute(cache)
@@ -40,6 +40,11 @@ class DefaultCacheFactoryTest extends Specification {
         void onClose(Object cache) {
             closed.execute(cache)
         }
+    }
+
+    def setup() {
+        _ * metaDataProvider.processIdentifier >> '123'
+        _ * metaDataProvider.processDisplayName >> 'process'
     }
 
     def cleanup() {

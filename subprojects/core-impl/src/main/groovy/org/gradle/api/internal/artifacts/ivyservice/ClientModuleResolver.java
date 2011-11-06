@@ -16,29 +16,25 @@
 
 package org.gradle.api.internal.artifacts.ivyservice;
 
-import org.apache.ivy.core.IvyContext;
+import org.apache.ivy.core.cache.ArtifactOrigin;
 import org.apache.ivy.core.module.descriptor.Artifact;
 import org.apache.ivy.core.module.descriptor.DependencyDescriptor;
 import org.apache.ivy.core.module.descriptor.ModuleDescriptor;
+import org.apache.ivy.core.report.DownloadReport;
 import org.apache.ivy.core.report.DownloadStatus;
 import org.apache.ivy.core.report.MetadataArtifactDownloadReport;
+import org.apache.ivy.core.resolve.DownloadOptions;
 import org.apache.ivy.core.resolve.ResolveData;
 import org.apache.ivy.core.resolve.ResolvedModuleRevision;
-import org.apache.ivy.plugins.repository.Resource;
-import org.apache.ivy.plugins.resolver.BasicResolver;
 import org.apache.ivy.plugins.resolver.DependencyResolver;
-import org.apache.ivy.plugins.resolver.util.ResolvedResource;
 import org.gradle.api.artifacts.ClientModule;
 
-import java.io.File;
-import java.util.Collection;
-import java.util.Date;
 import java.util.Map;
 
 /**
  * @author Hans Dockter
  */
-public class ClientModuleResolver extends BasicResolver {
+public class ClientModuleResolver extends AbstractLimitedDependencyResolver {
     private Map<String, ModuleDescriptor> moduleRegistry;
     private DependencyResolver userResolver;
 
@@ -46,49 +42,25 @@ public class ClientModuleResolver extends BasicResolver {
         setName(name);
         this.moduleRegistry = moduleRegistry;
         this.userResolver = userResolver;
-        setRepositoryCacheManager(new NoOpRepositoryCacheManager(name));
     }
 
     public ResolvedModuleRevision getDependency(DependencyDescriptor dde, ResolveData data) {
         if (dde.getExtraAttribute(ClientModule.CLIENT_MODULE_KEY) == null) {
-            return null;
+            return data.getCurrentResolvedModuleRevision();
         }
 
-        IvyContext context = IvyContext.pushNewCopyContext();
-        try {
-            context.setDependencyDescriptor(dde);
-            context.setResolveData(data);
-            ModuleDescriptor moduleDescriptor = moduleRegistry.get(dde.getExtraAttribute(ClientModule.CLIENT_MODULE_KEY));
-            MetadataArtifactDownloadReport downloadReport = new MetadataArtifactDownloadReport(moduleDescriptor.getMetadataArtifact());
-            downloadReport.setDownloadStatus(DownloadStatus.NO);
-            downloadReport.setSearched(false);
-            return new ResolvedModuleRevision(userResolver, userResolver, moduleDescriptor, downloadReport);
-        } finally {
-            IvyContext.popContext();
-        }
+        ModuleDescriptor moduleDescriptor = moduleRegistry.get(dde.getExtraAttribute(ClientModule.CLIENT_MODULE_KEY));
+        MetadataArtifactDownloadReport downloadReport = new MetadataArtifactDownloadReport(moduleDescriptor.getMetadataArtifact());
+        downloadReport.setDownloadStatus(DownloadStatus.NO);
+        downloadReport.setSearched(false);
+        return new ResolvedModuleRevision(userResolver, userResolver, moduleDescriptor, downloadReport);
     }
 
-    public ResolvedResource findIvyFileRef(DependencyDescriptor dd, ResolveData data) {
-        return null;
+    public DownloadReport download(Artifact[] artifacts, DownloadOptions options) {
+        throw new UnsupportedOperationException();
     }
 
-    protected Collection findNames(Map tokenValues, String token) {
-        return null;
+    public ArtifactOrigin locate(Artifact artifact) {
+        throw new UnsupportedOperationException();
     }
-
-    protected ResolvedResource findArtifactRef(Artifact artifact, Date date) {
-        return null;
-    }
-
-    protected long get(Resource resource, File dest) {
-        return resource.getContentLength();
-    }
-
-    protected Resource getResource(String s) {
-        return null;
-    }
-
-    public void publish(Artifact artifact, File src, boolean overwrite) {
-    }
-
 }

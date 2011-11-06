@@ -22,7 +22,10 @@ import org.gradle.api.artifacts.*;
 import org.gradle.api.file.FileCollection;
 import org.gradle.api.internal.CompositeDomainObjectSet;
 import org.gradle.api.internal.DefaultDomainObjectSet;
-import org.gradle.api.internal.artifacts.*;
+import org.gradle.api.internal.artifacts.ArtifactDependencyResolver;
+import org.gradle.api.internal.artifacts.DefaultDependencySet;
+import org.gradle.api.internal.artifacts.DefaultExcludeRule;
+import org.gradle.api.internal.artifacts.DefaultPublishArtifactSet;
 import org.gradle.api.internal.file.AbstractFileCollection;
 import org.gradle.api.internal.tasks.AbstractTaskDependency;
 import org.gradle.api.internal.tasks.TaskDependencyResolveContext;
@@ -65,15 +68,20 @@ public class DefaultConfiguration extends AbstractFileCollection implements Conf
     private final Object lock = new Object();
     private State state = State.UNRESOLVED;
     private ResolvedConfiguration cachedResolvedConfiguration;
+    private final DefaultResolutionStrategy resolutionStrategy;
 
     public DefaultConfiguration(String path, String name, ConfigurationsProvider configurationsProvider,
-                                ArtifactDependencyResolver dependencyResolver, ListenerManager listenerManager, DependencyMetaDataProvider metaDataProvider) {
+                                ArtifactDependencyResolver dependencyResolver, ListenerManager listenerManager,
+                                DependencyMetaDataProvider metaDataProvider, DefaultResolutionStrategy resolutionStrategy) {
         this.path = path;
         this.name = name;
         this.configurationsProvider = configurationsProvider;
         this.dependencyResolver = dependencyResolver;
         this.listenerManager = listenerManager;
         this.metaDataProvider = metaDataProvider;
+        assert resolutionStrategy != null : "Cannot create configuration with null resolutionStrategy";
+        this.resolutionStrategy = resolutionStrategy;
+
         resolutionListenerBroadcast = listenerManager.createAnonymousBroadcaster(DependencyResolutionListener.class);
 
         DefaultDomainObjectSet<Dependency> ownDependencies = new DefaultDomainObjectSet<Dependency>(Dependency.class);
@@ -202,11 +210,11 @@ public class DefaultConfiguration extends AbstractFileCollection implements Conf
         return fileCollection(dependencySpecClosure).getFiles();
     }
 
-    public Set<File> files(Spec<Dependency> dependencySpec) {
+    public Set<File> files(Spec<? super Dependency> dependencySpec) {
         return fileCollection(dependencySpec).getFiles();
     }
 
-    public FileCollection fileCollection(Spec<Dependency> dependencySpec) {
+    public FileCollection fileCollection(Spec<? super Dependency> dependencySpec) {
         return new ConfigurationFileCollection(dependencySpec);
     }
 
@@ -285,7 +293,7 @@ public class DefaultConfiguration extends AbstractFileCollection implements Conf
     }
 
     public TaskDependency getBuildArtifacts() {
-        DeprecationLogger.nagUser("Configuration.getBuildArtifacts()", "getAllArtifacts().getBuildDependencies()");
+        DeprecationLogger.nagUserOfReplacedMethod("Configuration.getBuildArtifacts()", "getAllArtifacts().getBuildDependencies()");
         return allArtifacts.getBuildDependencies();
     }
 
@@ -298,30 +306,30 @@ public class DefaultConfiguration extends AbstractFileCollection implements Conf
     }
 
     public <T extends Dependency> DomainObjectSet<T> getDependencies(Class<T> type) {
-        DeprecationLogger.nagUser("Configuration.getDependencies(type)", "getDependencies().withType(type)");
+        DeprecationLogger.nagUserOfReplacedMethod("Configuration.getDependencies(type)", "getDependencies().withType(type)");
         return dependencies.withType(type);
     }
 
     public <T extends Dependency> DomainObjectSet<T> getAllDependencies(Class<T> type) {
-        DeprecationLogger.nagUser("Configuration.getAllDependencies(type)", "getAllDependencies().withType(type)");
+        DeprecationLogger.nagUserOfReplacedMethod("Configuration.getAllDependencies(type)", "getAllDependencies().withType(type)");
         return allDependencies.withType(type);
     }
 
     public void addDependency(Dependency dependency) {
-        DeprecationLogger.nagUser("Configuration.addDependency()", "getDependencies().add()");
+        DeprecationLogger.nagUserOfReplacedMethod("Configuration.addDependency()", "getDependencies().add()");
         throwExceptionIfNotInUnresolvedState();
         dependencies.add(dependency);
     }
 
     public Configuration addArtifact(PublishArtifact artifact) {
-        DeprecationLogger.nagUser("Configuration.addArtifact()", "getArtifacts().add()");
+        DeprecationLogger.nagUserOfReplacedMethod("Configuration.addArtifact()", "getArtifacts().add()");
         throwExceptionIfNotInUnresolvedState();
         artifacts.add(artifact);
         return this;
     }
 
     public Configuration removeArtifact(PublishArtifact artifact) {
-        DeprecationLogger.nagUser("Configuration.removeArtifact()", "getArtifacts().remove()");
+        DeprecationLogger.nagUserOfReplacedMethod("Configuration.removeArtifact()", "getArtifacts().remove()");
         throwExceptionIfNotInUnresolvedState();
         artifacts.remove(artifact);
         return this;
@@ -336,7 +344,7 @@ public class DefaultConfiguration extends AbstractFileCollection implements Conf
     }
 
     public FileCollection getAllArtifactFiles() {
-        DeprecationLogger.nagUser("Configuration.getAllArtifactFiles()", "getAllArtifacts().getFiles()");
+        DeprecationLogger.nagUserOfReplacedMethod("Configuration.getAllArtifactFiles()", "getAllArtifacts().getFiles()");
         return allArtifacts.getFiles();
     }
 
@@ -368,25 +376,25 @@ public class DefaultConfiguration extends AbstractFileCollection implements Conf
     }
 
     public Configuration copy() {
-        return createCopy(getDependencies());
+        return createCopy(getDependencies(), false);
     }
 
     public Configuration copyRecursive() {
-        return createCopy(getAllDependencies());
+        return createCopy(getAllDependencies(), true);
     }
 
-    public Configuration copy(Spec<Dependency> dependencySpec) {
-        return createCopy(Specs.filterIterable(getDependencies(), dependencySpec));
+    public Configuration copy(Spec<? super Dependency> dependencySpec) {
+        return createCopy(Specs.filterIterable(getDependencies(), dependencySpec), false);
     }
 
-    public Configuration copyRecursive(Spec<Dependency> dependencySpec) {
-        return createCopy(Specs.filterIterable(getAllDependencies(), dependencySpec));
+    public Configuration copyRecursive(Spec<? super Dependency> dependencySpec) {
+        return createCopy(Specs.filterIterable(getAllDependencies(), dependencySpec), true);
     }
 
-    private DefaultConfiguration createCopy(Set<Dependency> dependencies) {
+    private DefaultConfiguration createCopy(Set<Dependency> dependencies, boolean recursive) {
         DetachedConfigurationsProvider configurationsProvider = new DetachedConfigurationsProvider();
         DefaultConfiguration copiedConfiguration = new DefaultConfiguration(path + "Copy", name + "Copy",
-                configurationsProvider, dependencyResolver, listenerManager, metaDataProvider);
+                configurationsProvider, dependencyResolver, listenerManager, metaDataProvider, resolutionStrategy);
         configurationsProvider.setTheOnlyConfiguration(copiedConfiguration);
         // state, cachedResolvedConfiguration, and extendsFrom intentionally not copied - must re-resolve copy
         // copying extendsFrom could mess up dependencies when copy was re-resolved
@@ -399,9 +407,17 @@ public class DefaultConfiguration extends AbstractFileCollection implements Conf
 
         // todo An ExcludeRule is a value object but we don't enforce immutability for DefaultExcludeRule as strong as we
         // should (we expose the Map). We should provide a better API for ExcludeRule (I don't want to use unmodifiable Map).
-        // As soon as DefaultExcludeRule is truly immutable, we don't need to create a new instance of DefaultExcludeRule. 
-        for (ExcludeRule excludeRule : getExcludeRules()) {
-            copiedConfiguration.excludeRules.add(new DefaultExcludeRule(excludeRule.getExcludeArgs()));
+        // As soon as DefaultExcludeRule is truly immutable, we don't need to create a new instance of DefaultExcludeRule.
+        Set<Configuration> excludeRuleSources = new LinkedHashSet<Configuration>();
+        excludeRuleSources.add(this);
+        if (recursive) {
+            excludeRuleSources.addAll(getHierarchy());
+        }
+
+        for (Configuration excludeRuleSource : excludeRuleSources) {
+            for (ExcludeRule excludeRule : excludeRuleSource.getExcludeRules()) {
+                copiedConfiguration.excludeRules.add(new DefaultExcludeRule(excludeRule.getExcludeArgs()));
+            }
         }
 
         DomainObjectSet<Dependency> copiedDependencies = copiedConfiguration.getDependencies();
@@ -423,6 +439,10 @@ public class DefaultConfiguration extends AbstractFileCollection implements Conf
         return resolutionListenerBroadcast.getSource();
     }
 
+    public DefaultResolutionStrategy getResolutionStrategy() {
+        return resolutionStrategy;
+    }
+
     private void throwExceptionIfNotInUnresolvedState() {
         if (getState() != State.UNRESOLVED) {
             throw new InvalidUserDataException("You can't change a configuration which is not in unresolved state!");
@@ -430,9 +450,9 @@ public class DefaultConfiguration extends AbstractFileCollection implements Conf
     }
 
     class ConfigurationFileCollection extends AbstractFileCollection {
-        private Spec<Dependency> dependencySpec;
+        private Spec<? super Dependency> dependencySpec;
 
-        private ConfigurationFileCollection(Spec<Dependency> dependencySpec) {
+        private ConfigurationFileCollection(Spec<? super Dependency> dependencySpec) {
             this.dependencySpec = dependencySpec;
         }
 
@@ -453,7 +473,7 @@ public class DefaultConfiguration extends AbstractFileCollection implements Conf
             return DefaultConfiguration.this.getBuildDependencies();
         }
 
-        public Spec<Dependency> getDependencySpec() {
+        public Spec<? super Dependency> getDependencySpec() {
             return dependencySpec;
         }
 

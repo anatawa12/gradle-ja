@@ -221,9 +221,10 @@ task generateForTest << {}
     void "enables toggling javadoc and sources off"() {
         //given
         def repoDir = file("repo")
-        publishArtifact(repoDir, "coolGroup", "niceArtifact")
-        publishArtifact(repoDir, "coolGroup", "niceArtifact", null, "sources")
-        publishArtifact(repoDir, "coolGroup", "niceArtifact", null, "javadoc")
+        def module = maven(repoDir).module("coolGroup", "niceArtifact")
+        module.artifact(classifier: 'sources')
+        module.artifact(classifier: 'javadoc')
+        module.publish()
 
         //when
         runIdeaTask """
@@ -251,10 +252,10 @@ idea.module {
     }
 
     @Test
-    void "does not break when dependency unresolved"() {
+    void "does not break when some dependencies cannot be resolved"() {
         //given
         def repoDir = file("repo")
-        publishArtifact(repoDir, "groupOne", "artifactTwo")
+        maven(repoDir).module("groupOne", "artifactTwo").publish()
 
         file("settings.gradle") << "include 'someApiProject', 'impl'\n"
         file('someDependency.jar').createFile()
@@ -286,6 +287,5 @@ project(':impl') {
         assert content.count("artifactTwo-1.0.jar") == 1
         assert content.count("someApiProject") == 1
         assert content.count("unresolved dependency - i.dont#Exist;1.0") == 1
-        //TODO SF might do similar test for eclipse
     }
 }

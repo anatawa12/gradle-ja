@@ -15,8 +15,9 @@
  */
 package org.gradle.messaging.remote.internal
 
-import org.gradle.api.Action
+import org.gradle.messaging.concurrent.DefaultExecutorFactory
 import java.util.concurrent.LinkedBlockingQueue
+import java.util.concurrent.CountDownLatch
 
 import spock.lang.*
 import spock.util.concurrent.*
@@ -29,11 +30,20 @@ class DisconnectAwareConnectionDecoratorTest extends Specification {
     def rawConnection = new Connection() {
         void stop() { disconnect() }
         void requestStop() { disconnect() }
-        def receive() { messageQueue.take().first() }
+        def receive() { 
+            def val = messageQueue.take().first()
+            if (val == null) {
+                messageQueue.put([null])
+            }
+            val
+        }
         void dispatch(message) {}
     }
-
-    def connection = new DisconnectAwareConnectionDecorator(rawConnection)
+    def connection
+    
+    def connection() {
+        new DisconnectAwareConnectionDecorator(rawConnection, new DefaultExecutorFactory().create("test"))
+    }
 
     void sendMessage(message = 1) {
         messageQueue.put([message])
@@ -47,21 +57,22 @@ class DisconnectAwareConnectionDecoratorTest extends Specification {
         connection.receive()
     }
 
-    def uncollectedMessagesHolder = new BlockingVariable(3) // allow 3 seconds for the disconnect handler to fire
+    def disconnectedHolder = new BlockingVariable(3) // allow 3 seconds for the disconnect handler to fire
 
-    def onDisconnect(Closure action = { uncollectedMessagesHolder.set(it.uncollectedMessages) }) {
-        connection.onDisconnect(action as Action)
+    def onDisconnect(Closure action = { disconnectedHolder.set(true) }) {
+        connection.onDisconnect(action)
     }
 
-    def getUncollectedMessages() {
+    boolean isDisconnectHandlerDidFire() {
         try {
-            uncollectedMessagesHolder.get()
+            disconnectedHolder.get()
         } catch (SpockTimeoutError e) {
-            null
+            false
         }
     }
 
     def setup() {
+        connection = connection()
         onDisconnect() // install the default handler
     }
 
@@ -81,10 +92,10 @@ class DisconnectAwareConnectionDecoratorTest extends Specification {
         disconnect()
 
         then:
-        uncollectedMessages == [1]
+        disconnectHandlerDidFire
 
         and:
-        receive() == null
+        receive() == 1
     }
 
     def "disconnect before sending any messages"() {
@@ -92,18 +103,19 @@ class DisconnectAwareConnectionDecoratorTest extends Specification {
         disconnect()
 
         then:
-        uncollectedMessages == []
+        disconnectHandlerDidFire
 
         and:
         receive() == null
     }
 
-    def "stop while there are unreceived messages"() {
+    def "stopping connection does not fire handler"() {
         given:
         sendMessage(1)
         sendMessage(2)
 
         when:
+        sleep 1000 // wait for the messages to be consumed by the buffer
         connection.stop()
 
         then:
@@ -112,41 +124,42 @@ class DisconnectAwareConnectionDecoratorTest extends Specification {
         receive() == null
 
         and:
-        uncollectedMessages == null // i.e. disconnect handler never fires
+        !disconnectHandlerDidFire
     }
 
-    def "received + uncollected at time of disconnection is all of the messages"() {
-        given:
-        def toSend = 1..100
-        def receieved = new BlockingVariable(3)
 
+    @Timeout(10)
+    def "receive does not return null until disconnect handler set and complete"() {
+        given:
+        connection = connection() // default connection has the default disconnect handler, create a new one with no handler
+        disconnect()
+        
+        def disconnectLatch = new CountDownLatch(1)
+        def receiveLatch = new CountDownLatch(1)
+        
         and:
-        Thread.start {
-            def messages = []
-            while (true) {
-                def message = receive()
-                if (message == null) {
-                    break
-                } else {
-                    messages << message
-                }
-                sleep 100 // to ensure messages are being sent faster than received
-            }
-            receieved.set(messages)
-        }
+        def received = []
+        Thread.start { received << receive(); receiveLatch.countDown() }
 
         when:
-        Thread.start {
-            toSend.each { sendMessage(it) }
-            sleep 2000 // wait for some messages to be received
-            disconnect()
-        }
+        sleep 1000
 
         then:
-        receieved.get() + uncollectedMessages == toSend
-        
-        where: // run this ten times to give it more of a shake (probably unnecessary and should be removed at some point)
-        iteration << [0,1,2,3,4,5,6,7,8,9]
+        received.empty // receive() should be blocked, waiting for the disconnect handler
+
+        when:
+        onDisconnect { disconnectLatch.await(); }
+
+        then:
+        received.empty // receive() should still be blocked because the disconnect handler hasn't completed
+
+        when:
+        disconnectLatch.countDown()
+        receiveLatch.await()
+
+        then:
+        received.size() == 1
+        received[0] == null
     }
 
     def cleanup() {

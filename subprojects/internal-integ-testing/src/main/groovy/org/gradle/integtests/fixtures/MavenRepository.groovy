@@ -18,6 +18,7 @@ package org.gradle.integtests.fixtures
 import java.security.MessageDigest
 import java.text.SimpleDateFormat
 import org.gradle.util.TestFile
+import junit.framework.AssertionFailedError
 
 /**
  * A fixture for dealing with Maven repositories.
@@ -29,9 +30,13 @@ class MavenRepository {
         this.rootDir = rootDir
     }
 
-    MavenModule module(String groupId, String artifactId, Object version = '1.0', String classifier = null, String type = 'jar') {
+    URI getUri() {
+        return rootDir.toURI()
+    }
+
+    MavenModule module(String groupId, String artifactId, Object version = '1.0') {
         def artifactDir = rootDir.file("${groupId.replace('.', '/')}/$artifactId/$version")
-        return new MavenModule(artifactDir, groupId, artifactId, version as String, classifier, type)
+        return new MavenModule(artifactDir, groupId, artifactId, version as String)
     }
 }
 
@@ -40,20 +45,18 @@ class MavenModule {
     final String groupId
     final String artifactId
     final String version
-    final String type
+    private String type = 'jar'
     private final List dependencies = []
-    final String classifier
     int publishCount = 1
     final updateFormat = new SimpleDateFormat("yyyyMMddHHmmss")
     final timestampFormat = new SimpleDateFormat("yyyyMMdd.HHmmss")
+    private final List artifacts = []
 
-    MavenModule(TestFile moduleDir, String groupId, String artifactId, String version, String classifier = null, String type = 'jar') {
+    MavenModule(TestFile moduleDir, String groupId, String artifactId, String version) {
         this.moduleDir = moduleDir
         this.groupId = groupId
         this.artifactId = artifactId
         this.version = version
-        this.classifier = classifier
-        this.type = type
     }
 
     MavenModule dependsOn(String dependencyArtifactId) {
@@ -66,19 +69,46 @@ class MavenModule {
         return this
     }
 
-    void assertArtifactsDeployed(String... names) {
+    /**
+     * Specifies the type of the main artifact.
+     */
+    MavenModule hasType(String type) {
+        this.type = type
+        return this
+    }
+
+    /**
+     * Adds an additional artifact to this module.
+     * @param options Can specify any of: type or classifier
+     */
+    MavenModule artifact(Map<String, ?> options) {
+        artifacts << options
+        return this
+    }
+
+    /**
+     * Asserts that exactly the given artifacts have been deployed, along with their checksum files
+     */
+    void assertArtifactsPublished(String... names) {
         def artifactNames = names
         if (version.endsWith('-SNAPSHOT')) {
             def metaData = new XmlParser().parse(moduleDir.file('maven-metadata.xml'))
             def timestamp = metaData.versioning.snapshot.timestamp[0].text().trim()
             def build = metaData.versioning.snapshot.buildNumber[0].text().trim()
             artifactNames = names.collect { it.replace('-SNAPSHOT', "-${timestamp}-${build}")}
+            artifactNames.add("maven-metadata.xml")
         }
+        Set actual = moduleDir.list() as Set
         for (name in artifactNames) {
-            moduleDir.file(name).assertIsFile()
-            moduleDir.file("${name}.md5").assertIsFile()
-            moduleDir.file("${name}.sha1").assertIsFile()
+            assert actual.remove(name)
+            assert actual.remove("${name}.md5" as String)
+            assert actual.remove("${name}.sha1" as String)
         }
+        assert actual.isEmpty()
+    }
+
+    MavenPom getPom() {
+        return new MavenPom(pomFile)
     }
 
     File getPomFile() {
@@ -86,16 +116,25 @@ class MavenModule {
     }
 
     TestFile getArtifactFile() {
-        def fileName = "$artifactId-${publishArtifactVersion}.${type}"
-        if (classifier) {
-            fileName = "$artifactId-$publishArtifactVersion-${classifier}.${type}"
+        return artifactFile([:])
+    }
+
+    TestFile artifactFile(Map<String, ?> options) {
+        def artifact = toArtifact(options)
+        def fileName = "$artifactId-${publishArtifactVersion}.${artifact.type}"
+        if (artifact.classifier) {
+            fileName = "$artifactId-$publishArtifactVersion-${artifact.classifier}.${artifact.type}"
         }
         return moduleDir.file(fileName)
     }
 
-    void publishWithChangedContent() {
+    /**
+     * Publishes the pom.xml plus main artifact, plus any additional artifacts for this module, with changed content to any
+     * previous publication.
+     */
+    MavenModule publishWithChangedContent() {
         publishCount++
-        publishArtifact()
+        return publish()
     }
 
     String getPublishArtifactVersion() {
@@ -106,7 +145,10 @@ class MavenModule {
         return new Date(updateFormat.parse("20100101120000").time + publishCount * 1000)
     }
 
-    File publishArtifact() {
+    /**
+     * Publishes the pom.xml plus main artifact, plus any additional artifacts for this module.
+     */
+    MavenModule publish() {
         moduleDir.createDir()
 
         if (version.endsWith("-SNAPSHOT")) {
@@ -144,7 +186,7 @@ class MavenModule {
       <groupId>$dependency.groupId</groupId>
       <artifactId>$dependency.artifactId</artifactId>
       <version>$dependency.version</version>
-    </dependency>
+    </dependency>3.2.1
   </dependencies>"""
         }
 
@@ -152,16 +194,25 @@ class MavenModule {
 
         createHashFiles(pomFile)
 
-        return publishArtifactOnly()
+        artifacts.each { artifact ->
+            publishArtifact(artifact)
+        }
+        publishArtifact([:])
+        return this
     }
 
-    File publishArtifactOnly() {
-        def jarFile = artifactFile
-        jarFile << "add some content so that file size isn't zero: $publishCount"
+    private File publishArtifact(Map<String, ?> artifact) {
+        def artifactFile = artifactFile(artifact)
+        artifactFile << "add some content so that file size isn't zero: $publishCount"
+        createHashFiles(artifactFile)
+        return artifactFile
+    }
 
-        createHashFiles(jarFile)
-
-        return jarFile
+    private Map<String, Object> toArtifact(Map<String, ?> options) {
+        options = new HashMap<String, Object>(options)
+        def artifact = [type: options.remove('type') ?: type, classifier: options.remove('classifier') ?: null]
+        assert options.isEmpty() : "Unknown options : ${options.keySet()}"
+        return artifact
     }
 
     private void createHashFiles(File file) {
@@ -173,5 +224,43 @@ class MavenModule {
         MessageDigest messageDigest = MessageDigest.getInstance(algorithm)
         messageDigest.update(file.bytes)
         return new BigInteger(1, messageDigest.digest()).toString(16)
+    }
+}
+
+class MavenPom {
+    final Map<String, MavenScope> scopes = [:]
+
+    MavenPom(File pomFile) {
+        def pom = new XmlParser().parse(pomFile)
+        pom.dependencies.dependency.each { dep ->
+            def scopeElement = dep.scope
+            def scopeName = scopeElement ? scopeElement.text() : "runtime"
+            def scope = scopes[scopeName]
+            if (!scope) {
+                scope = new MavenScope()
+                scopes[scopeName] = scope
+            }
+            scope.addDependency(dep.groupId.text(), dep.artifactId.text(), dep.version.text())
+        }
+    }
+
+}
+
+class MavenScope {
+    final dependencies = []
+
+    void addDependency(String groupId, String artifactId, String version) {
+        dependencies << [groupId: groupId, artifactId: artifactId, version: version]
+    }
+
+    void assertDependsOnArtifacts(String... artifactIds) {
+        assert dependencies.collect { it.artifactId} as Set == artifactIds as Set
+    }
+
+    void assertDependsOn(String groupId, String artifactId, String version) {
+        def dep = [groupId: groupId, artifactId: artifactId, version: version]
+        if (!dependencies.find { it == dep }) {
+            throw new AssertionFailedError("Could not find expected dependency $dep. Actual: $dependencies")
+        }
     }
 }

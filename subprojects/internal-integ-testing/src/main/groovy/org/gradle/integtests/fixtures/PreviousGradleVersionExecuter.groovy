@@ -1,5 +1,5 @@
 /*
- * Copyright 2009 the original author or authors.
+ * Copyright 2011 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,20 +15,24 @@
  */
 package org.gradle.integtests.fixtures
 
+import org.gradle.CacheUsage
+import org.gradle.api.Action
+import org.gradle.cache.PersistentCache
+import org.gradle.cache.internal.CacheFactory.CrossVersionMode
+import org.gradle.cache.internal.DefaultCacheFactory
+import org.gradle.cache.internal.DefaultFileLockManager
+import org.gradle.cache.internal.DefaultProcessMetaDataProvider
+import org.gradle.cache.internal.FileLockManager.LockMode
+import org.gradle.launcher.daemon.registry.DaemonRegistry
+import org.gradle.os.OperatingSystem
+import org.gradle.os.jna.NativeEnvironment
+import org.gradle.util.DistributionLocator
+import org.gradle.util.GradleVersion
 import org.gradle.util.Jvm
 import org.gradle.util.TestFile
-import org.gradle.util.GradleVersion
-import org.gradle.util.DistributionLocator
-import org.gradle.util.OperatingSystem
-import org.gradle.cache.PersistentCache
-import org.gradle.cache.internal.DefaultCacheFactory
-import org.gradle.CacheUsage
-import org.gradle.cache.internal.FileLockManager.LockMode
-import org.gradle.cache.internal.CacheFactory.CrossVersionMode
-import org.gradle.api.Action
 
 public class PreviousGradleVersionExecuter extends AbstractGradleExecuter implements BasicGradleDistribution {
-    private static final CACHE_FACTORY = new DefaultCacheFactory().create()
+    private static final CACHE_FACTORY = new DefaultCacheFactory(new DefaultFileLockManager(new DefaultProcessMetaDataProvider(NativeEnvironment.current()))).create()
     private final GradleDistribution dist
     final GradleVersion version
     private final TestFile versionDir
@@ -57,6 +61,10 @@ public class PreviousGradleVersionExecuter extends AbstractGradleExecuter implem
         return version == GradleVersion.version('0.9-rc-1') ? jvm.isJava6Compatible() : jvm.isJava5Compatible()
     }
 
+    DaemonRegistry getDaemonRegistry() {
+        throw new UnsupportedOperationException()
+    }
+    
     boolean daemonSupported() {
         if (OperatingSystem.current().isWindows()) {
             // On windows, daemon is ok for anything > 1.0-milestone-3
@@ -67,8 +75,16 @@ public class PreviousGradleVersionExecuter extends AbstractGradleExecuter implem
         }
     }
 
+    boolean isOpenApiSupported() {
+        return version >= GradleVersion.version('0.9-rc-1')
+    }
+
+    boolean isToolingApiSupported() {
+        return version >= GradleVersion.version('1.0-milestone-3')
+    }
+
     boolean wrapperCanExecute(String version) {
-        if (version == '0.8') {
+        if (version == '0.8' || this.version == GradleVersion.version('0.8')) {
             return false
         }
         if (this.version == GradleVersion.version('0.9.1')) {

@@ -124,6 +124,26 @@
             </para>
             <para>依存関係の定義では、様々なライブラリが様々なバージョンのライブラリを要求します。これが依存関係の競合をよく引き起こすのです。つまり、同じライブラリの異なるバージョンが要求される場合があります。残念ながら、JVMではクラスパス上にバージョン違いの同じjarを混在させるのは、簡単なことではありません(<xref linkend='sub:dependency_management_and_java'/>参照)。Gradleは、どのようにバージョン競合を解決するかという戦略を提供します。デフォルトでは最新バージョンが使用されるようになっています。また、バージョン競合を解決する際には、依存関係をグラフにしたレポートを参照することが大きな助けになるでしょう。このようなレポートの生成が依存関係管理のもう一つの機能です。</para>
         </section>
+        <section id='sub:dynamic_versions_and_changing_modules'>
+            <title>Dynamic Versions and Changing Modules</title>
+            <para>Sometimes, you always want to use the latest version of a particular dependency, or the latest in a range of versions.
+                You can easily do this using a <emphasis>dynamic version</emphasis>. A dynamic version can be either a version range (eg. <literal>2.+</literal>)
+                or it can be a placeholder for the latest version available (eg. <literal>latest.integration</literal>).
+            </para>
+            <para>Alternatively, sometimes the module you request can change over time, even for the same version.
+                An example of this type of <emphasis>changing module</emphasis> is a maven <literal>SNAPSHOT</literal> module,
+                which always points at the latest artifacts published.
+            </para>
+            <para>
+                The main difference between a <emphasis>dynamic version</emphasis> and a <emphasis>changing module</emphasis> is
+                that when you resolve a <emphasis>dynamic version</emphasis>, you'll get the real, static version as the module name.
+                When you resolve a <emphasis>changing module</emphasis>, the artifacts are named using the version you requested,
+                but the underlying artifacts may change over time.
+            </para>
+            <para>By default, Gradle caches dynamic versions for 24 hours. You can change this cache expiry time for a configuration using the resolution strategy.
+                See <xref linkend='sub:controlling_caching'/> for details.
+            </para>
+        </section>
         <section id='sub:dependency_management_and_java'>
             <title>依存関係の管理とJava<phrase role="original">Dependency management and Java</phrase></title>
             <para role="original">Traditionally, Java has offered no support at all for dealing with libraries and versions. There are
@@ -145,11 +165,7 @@
             </para>
             <para>どちらも、jarの依存関係を記述したXMLのメタデータを使用します。そのメタデータと実際のjarファイルをリポジトリに保管する点も同じです。また、どちらも、jarファイルのバージョンが競合すれば、それを解決するための手段をなにかしら提供しています。IvyとMavenの違いは、私たちが考えるに、柔軟性やメンテナンス性です。加えて、IvyはMavenの管理する依存関係を完全にサポートしています。Ivyを使用すれば、IvyとMaven、両方の領域を取り扱うことができるのです。私たちはIvyが大好きで、Gradleも依存関係を管理するために内部でIvyを使用しています。Ivyは、一般的にはAntとXMLのメタデータから使用されますが、APIも用意されています。Gradleは、そのAPIを通してIvyを深いレベルで統合しているのです。このことで、Ivyそれ自体では提供していないような新しい概念を構築することができました。</para>
             <para role="original">Right now there is a lot of movement in the field of dependency handling. There is OSGi and there is
-                JSR-294.
-                <footnote>
-                    <para role="original">JSR 294: Improved Modularity Support in the JavaTM Programming Language, <ulink url='http://jcp.org/en/jsr/detail?id=294'/>
-                    </para>
-                </footnote>
+                JSR-294, Improved Modularity Support in the JavaTM Programming Language.
                 OSGi is available already, JSR-294 is supposed to be shipped with Java 7. These technologies
                 deal, amongst many other things, also with a painful problem which is neither solved by Maven nor by Ivy. This is enabling different
                 versions of the same jar to be used at runtime.
@@ -174,7 +190,7 @@
         <section id='sub:configurations'>
             <title>コンフィギュレーション<phrase role="original">Configurations</phrase></title>
             <para role="original">Dependencies are grouped in configurations. Configurations have a name, a number of other properties,
-                and they can extend each other. For examples see: <xref linkend='sec:artifact_configurations'/>.
+                and they can extend each other.
                 If you use the Java plugin, Gradle adds a number of pre-defined configurations to your build. The
                 plugin also assigns configurations to tasks. See <xref linkend='sec:java_plugin_and_dependency_management'/>
                 for details. Of course you can add your add custom configurations on top of that. There are many use cases
@@ -184,8 +200,18 @@
                 the configurations object is applied against its API. To learn more about this API have a look at
                 <apilink class='org.gradle.api.artifacts.ConfigurationContainer'/>.
             </para>
-            <para>依存関係は、コンフィギュレーションによりグループ化されます。コンフィギュレーションは名前(name)といくつかのプロパティを持っていて、それらを別のコンフィギュレーションから継承することもできます(例:<xref linkend='sec:artifact_configurations'/>)。Javaプラグインを使用している場合、Gradleにより定義済みのコンフィギュレーションがいくつか追加されています。Javaプラグインは、さらにそれらのコンフィギュレーションをタスクに割り当てます。詳しくは<xref linkend='sec:java_plugin_and_dependency_management'/>をご参照ください。もちろん、定義済みのコンフィギュレーションに加えて、自分でカスタムのコンフィギュレーションを定義することもできます。カスタムのコンフィギュレーションには様々な使い道があります。たとえば、ビルド時にもテスト時にも使用されない依存関係(配布物に同梱するオプションのJDBCドライバなど)を追加するときなどに便利です。定義されているコンフィギュレーションは<literal>configurations</literal>オブジェクトで管理されています。このオブジェクトに渡したクロージャは、コンフィギュレーションのAPIに対して適用されます。このAPIについてさらに詳しく学ぶには、<apilink class='org.gradle.api.artifacts.ConfigurationContainer'/>をご参照ください。
-</para>
+            <para>To define a configuration:</para>
+            <sample id="defineConfiguration" dir="userguide/artifacts/defineConfiguration" title="Definition of a configuration">
+                <sourcefile file="build.gradle" snippet="define-configuration"/>
+            </sample>
+            <para>To access a configuration:</para>
+            <sample id="defineConfiguration" dir="userguide/artifacts/defineConfiguration" title="Accessing a configuration">
+                <sourcefile file="build.gradle" snippet="lookup-configuration"/>
+            </sample>
+            <para>To configure a configuration:</para>
+            <sample id="defineConfiguration" dir="userguide/artifacts/defineConfiguration" title="Configuration of a configuration">
+                <sourcefile file="build.gradle" snippet="configure-configuration"/>
+            </sample>
         </section>
         <section id='sub:module_dependencies'>
             <title>モジュール依存関係<phrase role="original">Module dependencies</phrase></title>
@@ -269,6 +295,11 @@
                 an explicit extension (artifact only notation).</para>
                 <para>例にあるように、分類子は明示的に拡張子を指定(アーティファクトオンリー記法)しても使うことができます。</para>
             </section>
+            <para>To use the external dependencies of a configuration:</para>
+            <sample id="externalDependencies" dir="userguide/artifacts/externalDependencies"  title="Usage of external dependency of a configuration">
+                <sourcefile file="build.gradle" snippet="use-configuration"/>
+                <output args="-q listJars"/>
+            </sample>
         </section>
         <section id='sub:client_module_dependencies'>
             <title>クライアントモジュール依存関係<phrase role="original">Client module dependencies</phrase></title>
@@ -377,6 +408,21 @@
                 <apilink class="org.gradle.api.artifacts.Configuration"/>.
             </para>
             <para>コンフィギュレーションに対して除外設定した場合、そのコンフィギュレーション(とそれを継承したコンフィギュレーション)に属する依存関係すべてから、指定した推移的依存関係が取り除かれます。すべてのコンフィギュレーションから、ある依存関係を除外したい場合は、例にあるように、Groovyの展開演算子を使うことで簡単に実現できます。除外設定では、group名だけ、またはモジュール名だけで指定することもできますし、その両方で指定することもできます。APIドキュメントの<apilink class="org.gradle.api.artifacts.Dependency"/>と<apilink class="org.gradle.api.artifacts.Configuration"/>もご参照ください。</para>
+        </section>
+        <section id='sub:controlling_caching'>
+            <title>Fine-tuned control over dependency caching</title>
+            <para>You can fine-tune certain aspects of caching using the <literal>ResolutionStrategy</literal> for a configuration.</para>
+            <para>By default, Gradle caches dynamic versions for 24 hours. To change how long Gradle will cache the resolved version for a dynamic version, use:
+            </para>
+            <sample id="dynamic-version-cache-control" dir="userguide/artifacts/resolutionStrategy" title="Dynamic version cache control">
+                <sourcefile file="build.gradle" snippet="dynamic-version-cache-control"/>
+            </sample>
+            <para>By default, Gradle caches changing modules for 24 hours. To change how long Gradle will cache the meta-data and artifacts for a changing module, use:
+            </para>
+            <sample id="changing-module-cache-control" dir="userguide/artifacts/resolutionStrategy" title="Changing module cache control">
+                <sourcefile file="build.gradle" snippet="changing-module-cache-control"/>
+            </sample>
+            <para>For more details, take a look at the API documentation for <apilink class="org.gradle.api.artifacts.ResolutionStrategy"/>.</para>
         </section>
         <section>
             <title>オプショナル属性<phrase role="original">Optional attributes</phrase></title>
@@ -554,13 +600,12 @@
             </sample>
             <section>
                 <title>パスワードで保護されたMavenリポジトリへのアクセス<phrase role="original">Accessing password protected Maven repositories</phrase></title>
-            	<para role="original">To access a password protected Maven repository (basic authentication) you need to use one of Ivy features:</para>
-                <para>パスワードで保護(BASIC認証)されたMavenリポジトリへアクセスするには、Ivyの機能を使う必要があります。</para>
-                <sample id="mavenPasswordProtectedRepo" dir="userguide/artifacts/defineRepository" title="パスワードで保護されたMavenリポジトリへのアクセス / Accessing password protected Maven repository">
-	                <sourcefile file="build.gradle" snippet="maven-password-protected-repo"/>
-        	    </sample>
-        	    <para role="original">Host name should not include <literal>"http://"</literal> prefix. It is advisable to keep your login and password in <filename>gradle.properties</filename> rather than directly in the build file.</para>
-                <para>ホスト名に「<literal>http://</literal>」を含めてはいけません。ログイン情報とパスワードは、ビルドファイルに直接書くよりは<filename>gradle.properties</filename>に書くのがお勧めです。</para>
+                <para>To access a Maven repository which uses basic authentication, you specify the username and password to use when you define the repository:
+                </para>
+                <sample id="mavenPasswordProtectedRepo" dir="userguide/artifacts/defineRepository" title="Accessing password protected Maven repository">
+                    <sourcefile file="build.gradle" snippet="authenticated-maven-repo"/>
+                </sample>
+                <para>It is advisable to keep your username and password in <filename>gradle.properties</filename> rather than directly in the build file.</para>
             </section>
         </section>
         <section id='sec:flat_dir_resolver'>
@@ -609,6 +654,17 @@
                     <sourcefile file="build.gradle" snippet="authenticated-ivy-repo"/>
                 </sample>
             </section>
+        </section>
+        <section>
+            <title>Working with repositories</title>
+            <para>To access a repository:</para>
+            <sample id="defineRepository" dir="userguide/artifacts/defineRepository" title="Accessing a repository">
+                <sourcefile file="build.gradle" snippet="lookup-resolver"/>
+            </sample>
+            <para>To configure a repository:</para>
+            <sample id="defineRepository" dir="userguide/artifacts/defineRepository" title="Configuration of a repository">
+                <sourcefile file="build.gradle" snippet="configure-resolver"/>
+            </sample>
         </section>
         <section>
             <title>More about preconfigured repositories</title>
