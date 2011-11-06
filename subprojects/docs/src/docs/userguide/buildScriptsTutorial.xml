@@ -263,13 +263,15 @@
         <para>ここで大事なことは、releaseタスクが実行予定にあるという事実を、releaseタスクが実行される前に利用できる点です。releaseタスクが<emphasis>プライマリ</emphasis>タスク、つまりgradleコマンドに引き渡されているタスクでなくてもかまいません。</para>
     </section>
     <section>
-        <title>Where to next?</title>
-        <para>
+        <title>次のステップは？<phrase role="original">Where to next?</phrase></title>
+        <para role="original">
             In this chapter, we have had a first look at tasks. But this is not the end of the story for tasks. If you want to jump into more of the details,
             have a look at <xref linkend='more_about_tasks'/>.
         </para>
-        <para>
+        <para>この章で、私たちは初めてタスクというものに触れました。しかし、タスクについての話はこれで全部ではありません。さらに詳しくタスクについて知りたい場合は、<xref linkend='more_about_tasks'/>を見てみてください。</para>
+        <para role="original">
             Otherwise, continue on to the tutorials in <xref linkend="tutorial_java_projects"/> and <xref linkend="artifact_dependencies_tutorial"/>.
         </para>
+        そうでなければ、<xref linkend="tutorial_java_projects"/>と<xref linkend="artifact_dependencies_tutorial"/>に進み、チュートリアルを続けてください。
     </section>
 </chapter>
