@@ -34,19 +34,19 @@
 
     <section>
         <title>ソースセット<phrase role="original">Source sets</phrase></title>
-        <para>The Java plugin introduces the concept of a <firstterm>source set</firstterm>. A source set is simply a group of
+        <para role="original">The Java plugin introduces the concept of a <firstterm>source set</firstterm>. A source set is simply a group of
             source files which are compiled and executed together. These source files may include Java source files and
             resource files. Other plugins add the ability to include Groovy and Scala source files in a source set.
             A source set has an associated compile classpath, and runtime classpath.
         </para>
         <para>Javaプラグインは<firstterm>ソースセット</firstterm>の概念を導入します。ソースセットは、一緒にコンパイルされ実行されるソースファイルのグループです。このソースファイルには、Javaソースファイルとリソースファイルを含むことができます。他のプラグインは、ソースセットにGroovyやScalaのソースファイルを含めることを可能にします。ソースセットは、それぞれに関連づけられたコンパイル時クラスパスと実行時クラスパスを持ちます。
         </para>
-        <para>
+        <para role="original">
             One use for source sets is to group source files into logical groups which describe their purpose. For example,
             you might use a source set to define an integration test suite, or you might use separate source sets to define
             the API and implementation classes of your project.
         </para>
-        <para>ソースセットは、統合テストスイートやプロジェクトのAPIクラスを定義したり、異なるJavaバージョンでコンパイルする必要があるソースを分離することなどに使うことができます。
+        <para>ソースセットを使うと、ソースファイルを論理的なグループに分割し、それぞれ別個の目的を持たせることもできます。例えば、統合テストスイートやプロジェクトのAPIクラスを定義したり、異なるJavaバージョンでコンパイルする必要があるソースを分離することなどに使うことができます。
         </para>
         <para role="original">The Java plugin defines two standard source sets, called <literal>main</literal> and <literal>test</literal>.
             The <literal>main</literal> source set contains your production source code, which is compiled and assembled
@@ -478,8 +478,9 @@
                 <td>default</td>
                 <td>runtime</td>
                 <td>-</td>
-                <td>The default configuration used by a project dependency on this project. Contains the artifacts and
-                    dependencies required by this project at runtime.
+                <td>このプロジェクトに依存するプロジェクトが使用する、デフォルトのコンフィグレーション。アーティファクトと、このプロジェクトが実行時に要求する依存関係が含まれる。
+                    <phrase role="original">The default configuration used by a project dependency on this project. Contains the artifacts and
+                    dependencies required by this project at runtime.</phrase>
                 </td>
             </tr>
         </table>
@@ -489,28 +490,29 @@
                 <imagedata fileref="img/javaPluginConfigurations.png"/>
             </imageobject>
         </figure>
-        <para>For each source set you add to the project, the Java plugins adds the following dependency configurations:</para>
+        <para role="original">For each source set you add to the project, the Java plugins adds the following dependency configurations:</para>
+        <para>プロジェクトに追加されたそれぞれのソースセットに対し、Javaプラグインは次の依存関係コンフィグレーションを追加します。</para>
         <table id="java_source_set_configurations">
-            <title>Java plugin - source set dependency configurations</title>
+            <title>Javaプラグイン - ソースセットの依存関係コンフィグレーション<phrase role="original">Java plugin - source set dependency configurations</phrase></title>
             <thead>
                 <tr>
-                    <td>Name</td>
-                    <td>Extends</td>
-                    <td>Used by tasks</td>
-                    <td>Meaning</td>
+                    <td>名前<phrase role="original">Name</phrase></td>
+                    <td>拡張元<phrase role="original">Extends</phrase></td>
+                    <td>利用するタスク<phrase role="original">Used by tasks</phrase></td>
+                    <td>意味<phrase role="original">Meaning</phrase></td>
                 </tr>
             </thead>
             <tr>
                 <td><replaceable>sourceSet</replaceable>Compile</td>
                 <td>-</td>
                 <td>compile<replaceable>SourceSet</replaceable>Java</td>
-                <td>Compile time dependencies for the given source set</td>
+                <td>対象ソースセットのコンパイル時依存関係<phrase role="original">Compile time dependencies for the given source set</phrase></td>
             </tr>
             <tr>
                 <td><replaceable>sourceSet</replaceable>Runtime</td>
                 <td><replaceable>sourceSet</replaceable>Compile</td>
                 <td>-</td>
-                <td>Runtime time dependencies for the given source set</td>
+                <td>対象ソースセットの実行時依存関係<phrase role="original">Runtime time dependencies for the given source set</phrase></td>
             </tr>
         </table>
     </section>
@@ -884,7 +886,8 @@
                         Not null
                     </td>
                     <td>
-                        The output files of the source set, containing its compiled classes and resources.
+                        このソースセットに対する出力ファイル。コンパイルされたクラスファイルやリソースを含む。
+                        <phrase role="original">The output files of the source set, containing its compiled classes and resources.</phrase>
                     </td>
                 </tr>
                 <tr>
@@ -913,7 +916,8 @@
                         <literal><replaceable>buildDir</replaceable>/resources/<replaceable>name</replaceable></literal>
                     </td>
                     <td>
-                        The directory to generate the resources of this source set into.
+                        このソースセットのリソースを生成するディレクトリ
+                        <phrase role="original">The directory to generate the resources of this source set into.</phrase>
                     </td>
                 </tr>
                 <tr>
@@ -924,7 +928,8 @@
                         <apilink class="org.gradle.api.file.FileCollection"/>
                     </td>
                     <td>
-                        <literal>compile<replaceable>SourceSet</replaceable></literal> configuration.
+                        <literal>compile<replaceable>SourceSet</replaceable></literal>コンフィグレーション
+                        <phrase role="original"><literal>compile<replaceable>SourceSet</replaceable></literal> configuration.</phrase>
                     </td>
                     <td>
                         このソースセットのソースファイルのコンパイル時クラスパス
@@ -939,7 +944,8 @@
                         <apilink class="org.gradle.api.file.FileCollection"/>
                     </td>
                     <td>
-                        <literal>output</literal> + <literal>runtime<replaceable>SourceSet</replaceable></literal> configuration.
+                        <literal>output</literal> + <literal>runtime<replaceable>SourceSet</replaceable></literal>コンフィグレーション
+                        <phrase role="original"><literal>output</literal> + <literal>runtime<replaceable>SourceSet</replaceable></literal> configuration.</phrase>
                     </td>
                     <td>
                         このソースセットのクラスの実行時クラスパス
@@ -1054,33 +1060,40 @@
         </section>
 
         <section>
-            <title>Defining new source sets</title>
-            <para>To define a new source set, you simply reference it in the <literal>sourceSets { }</literal> block. Here's an example:
+            <title>新しいソースセットの定義<phrase role="original">Defining new source sets</phrase></title>
+            <para role="original">To define a new source set, you simply reference it in the <literal>sourceSets { }</literal> block. Here's an example:
             </para>
-            <sample id="defineSourceSet" dir="userguide/java/sourceSets" title="Defining a source set">
+            <para>新しいソースセットは、sourceSets { }ブロックの中でそれを参照するだけで定義できます。以下がその例です。:</para>
+            <sample id="defineSourceSet" dir="userguide/java/sourceSets" title="ソースセットの定義 / Defining a source set">
                 <sourcefile file="build.gradle" snippet="define-source-set"/>
             </sample>
-            <para>
+            <para role="original">
                 When you define a new source set, the Java plugin adds some dependency configurations for the
                 source set, as shown in <xref linkend="java_source_set_configurations"/>. You can use these configurations to
                 define the compile and runtime dependencies of the source set.
             </para>
-            <sample id="sourceSetDependencies" dir="userguide/java/sourceSets" title="Defining source set dependencies">
+            <para>
+                ソースセットを定義すると、Javaプラグインは、そのソースセットのために<xref linkend="java_source_set_configurations"/>で示した依存関係のコンフィグレーションを追加します。これらのコンフィグレーションを、そのソースセットのコンパイル時や実行時の依存関係を定義するために使うことができます。
+            </para>
+            <sample id="sourceSetDependencies" dir="userguide/java/sourceSets" title="ソースセットの依存関係定義 / Defining source set dependencies">
                 <sourcefile file="build.gradle" snippet="source-set-dependencies"/>
             </sample>
-            <para>
+            <para role="original">
                 The Java plugin also adds a number of tasks which assemble the classes for the
                 source set, as shown in <xref linkend="java_source_set_tasks"/>. For example, for a source set called
                 <literal>intTest</literal>, you can run <userinput>gradle intTestClasses</userinput> to compile the
                 int test classes.
             </para>
-            <sample id="compileSourceSet" dir="userguide/java/sourceSets" title="Compiling a source set">
+            <para>
+                また、Javaプラグインは、<xref linkend="java_source_set_tasks"/>に示したような、 そのソースセットのクラスを構築するためのタスクを追加します。 例えば、intTestというソースセットを追加すると、<userinput>gradle intTestClasses</userinput>と実行することでそのソースセットのクラスをコンパイルできるようになります。
+                </para>
+                <sample id="compileSourceSet" dir="userguide/java/sourceSets" title="ソースセットのコンパイル / Compiling a source set">
                 <output args="intTestClasses"/>
             </sample>
         </section>
 
         <section>
-            <title>Some source set examples</title>
+            <title>ソースセットの実例<phrase role="original">Some source set examples</phrase></title>
             <para role="original">Adding a JAR containing the classes of a source set:</para>
             <para>ソースセットのクラスを含んだJARを追加します：</para>
             <sample id="configureSourceSet" dir="userguide/java/sourceSets" title="ソースセットのJARを生成 / Assembling a JAR for a source set">
