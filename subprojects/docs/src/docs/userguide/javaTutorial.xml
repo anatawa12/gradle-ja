@@ -316,17 +316,19 @@
     </section>
 
     <section>
-        <title>Where to next?</title>
-        <para>
+        <title>次のステップは？<phrase role="original">Where to next?</phrase></title>
+        <para role="original">
             In this chapter, you have seen how to do some of the things you commonly need to build a Java based
             project. This chapter is not exhaustive, and there are many other things you can do with Java projects in
             Gradle.
             You can find out more about the Java plugin in <xref linkend="java_plugin"/>, and you can find more sample
             Java projects in the <filename>samples/java</filename> directory in the Gradle distribution.
         </para>
-        <para>
+        <para>この章では、Javaベースのプロジェクトをビルドするときに、一般的に必要になる作業のやり方を見てきました。この章は、Javaプロジェクトについて完全に網羅しているわけではありません。Gradleでできることはもっとたくさんあります。Javaプロジェクトについて更に掘り下げたい場合は、<xref linkend="java_plugin"/>で詳しく知ることができます。また、Gradleの配布物に含まれる<filename>sample/java</filename>にはもっと多くのサンプルがあります。</para>
+        <para role="original">
             Otherwise, continue on to <xref linkend="artifact_dependencies_tutorial"/>.
         </para>
+        <para>そうでない場合は、続けて<xref linkend="artifact_dependencies_tutorial"/>に進んでください。</para>
         <para>
         </para>
     </section>
