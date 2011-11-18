@@ -1,24 +1,32 @@
 <chapter id="artifact_dependencies_tutorial" xml:lang="ja">
     <title>依存関係管理の基本 <phrase role="original">Dependency Management Basics</phrase></title>
-    <para>
+    <para role="original">
         This chapter introduces some of the basics of dependency management in Gradle.
+    </para>
+    <para>
+        本章では、Gradleにおける依存関係の管理について、基本的なところを紹介します。
     </para>
 
     <section>
-        <title>What is dependency management?</title>
-        <para>
+        <title>依存関係の管理とは <phrase role="original">What is dependency management?</phrase></title>
+        <para role="original">
             Very roughly, dependency management is made up of two pieces. Firstly, Gradle needs to
             know about the things that your project needs to build or run, in order to find them. We call these incoming
             files the <firstterm>dependencies</firstterm> of the project.
             Secondly, Gradle needs to build and upload the things that your project produces. We call these outgoing files
             the <firstterm>publications</firstterm> of the project. Let's look at these two pieces in more detail:
         </para>
-        <para>Most projects are not completely self-contained. They need files built by other projects in order to
+        <para>
+            おおざっぱに言って、依存関係の管理とは二つの部分に分けられます。まず、Gradleは、あなたのプロジェクトをビルドしたり実行したりするのに必要なファイルが何かを判定し、それらを見つけてこなければなりません。これらの入力ファイルを、プロジェクトの<firstterm>依存関係</firstterm>と呼びます。
+            次に、Gradleはあなたのプロジェクトをビルドし、生成されたものをアップロードする必要があります。これらの出力ファイルを、プロジェクトの<firstterm>公開物</firstterm>と呼びます。
+        </para>
+        <para role="original">Most projects are not completely self-contained. They need files built by other projects in order to
             be compiled or tested and so on. For example, in order to use Hibernate in my project, I need to include some
             Hibernate jars in the classpath when I compile my source. To run my tests, I might also need to include some
             additional jars in the test classpath, such as a particular JDBC driver or the Ehcache jars.
         </para>
-        <para>
+        <para>ほとんどのプロジェクトは、完全に自己完結しているわけではありません。コンパイル、テスト、その他諸々のために、他のプロジェクトがビルドするファイルを必要とするものです。例えば、Hibernateを自分のプロジェクトで使うために、ソースコードのコンパイル時にHibernateのjarファイルをいくつか取り込む、といった具合です。テストをするためには、さらにいくつかのjarファイル、JDBCドライバやEhcacheのjarをテスト時クラスパスに追加する必要があるかもしれません。</para>
+        <para role="original">
             These incoming files form the dependencies of the project.
             Gradle allows you to tell it what the dependencies of your project are, so that it can take care of
             finding these dependencies, and making them available in your build.
@@ -27,30 +35,48 @@
             We call this process <firstterm>dependency resolution</firstterm>.
         </para>
         <para>
+        これらの入力ファイルは、プロジェクトの依存関係から読み込まれます。
+        Gradleにプロジェクトの依存関係を教えて、プロジェクトが依存しているファイルを見つけたり、ビルド時にそれらを使えるようにできます。
+        依存ファイルは、リモートのMavenやIvyのリポジトリからダウンロードされるかもしれませんし、ローカルのディレクトリにあるかもしれません。また、マルチプロジェクトの場合、別のプロジェクトにビルドさせる必要があることもあります。
+        </para>
+        <para role="original">
             Often, the dependencies of a project will themselves have dependencies. For example, Hibernate core requires
             several other libraries to be present on the classpath with it runs. So, when Gradle runs the tests for your
             project, it also needs to find these dependencies and make them available. We call these <firstterm>transitive dependencies</firstterm>.
         </para>
-        <para>
+        <para>また、依存しているファイルが、それ自身の依存関係を持っていることが多々あります。例えば、Hibernateコアは、実行時にいくつかの別のライブラリをクラスパスに含めなければなりません。なので、Gradleがあなたのプロジェクトのテストを走らせるときには、それらの依存関係も見つけてきて、使用できるようにしなければならないのです。これを、<firstterm>推移的な依存関係</firstterm>と呼びます。</para>
+        <para role="original">
             The main purpose of most projects is to build some files that are to be used outside the project.
             For example, if your project produces a java library, you need to build a jar, and maybe a source jar and
             some documentation, and publish them somewhere.
         </para>
-        <para>These outgoing files form the publications of the project. Gradle also takes care of this important work for you. You declare the
+        <para>
+        ほとんどのプロジェクトは、ファイルを作成し、それらをプロジェクトの外部で使うということを主な目的としています。
+        例えば、もしあなたのプロジェクトがJavaライブラリを作成するものならば、あなたはjarを作成し、ときにはソースjarやドキュメントも作成し、どこかにそれらを公開しなければなりません。
+        </para>
+        <para role="original">These outgoing files form the publications of the project. Gradle also takes care of this important work for you. You declare the
             publications of your project, and Gradle take care of building them and publishing them somewhere.
             Exactly what "publishing" means depends on what you want to do. You might want to copy the files to a local directory,
             or upload them to a remote Maven or Ivy repository. Or you might use the files in another project in the same
             multi-project build.
             We call this process <firstterm>publication</firstterm>.
         </para>
+        <para>
+        これらの出力ファイルは、プロジェクトの公開物から読み込まれます。Gradleは、あなたのために、この重要な仕事も引き受けてくれます。プロジェクトの公開物を宣言すれば、Gradleはそれらのビルドと、任意の場所への公開を引き受けてくれます。
+        「公開する」ということの正確な意味は、何をしたいのかによって異なります。ローカルディレクトリにファイルをコピーしたいかもしれませんし、リモートのMavenやIvyのリポジトリにアップロードしたいかもしれません。また、マルチプロジェクトの場合、別プロジェクトからそのファイルを使いたいという場合もあります。
+        これらの処理を、<firstterm>公開</firstterm>と呼んでいます。
+        </para>
     </section>
 
     <section>
-        <title>Declaring your dependencies</title>
-        <para>
+        <title>依存関係の宣言 <phrase role="original">Declaring your dependencies</phrase></title>
+        <para role="original">
             Let's look at some dependency declarations. Here's a basic build script:
         </para>
-        <sample id="basicDependencyDeclarations" dir="userguide/artifacts/dependencyBasics" title="Declaring dependencies">
+        <para>
+            さて、では依存関係の宣言についていくつか見ていきましょう。ここに、ある基本的なビルドスクリプトがあります。
+        </para>
+        <sample id="basicDependencyDeclarations" dir="userguide/artifacts/dependencyBasics" title="依存関係の宣言 / Declaring dependencies">
             <sourcefile file="build.gradle"/>
         </sample>
         <para>What's going on here? This build script says a few things about the project.
