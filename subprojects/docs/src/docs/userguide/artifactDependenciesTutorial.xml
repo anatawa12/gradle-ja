@@ -79,7 +79,7 @@
         <sample id="basicDependencyDeclarations" dir="userguide/artifacts/dependencyBasics" title="依存関係の宣言 / Declaring dependencies">
             <sourcefile file="build.gradle"/>
         </sample>
-        <para>What's going on here? This build script says a few things about the project.
+        <para role="original">What's going on here? This build script says a few things about the project.
             Firstly, it states that Hibernate core 3.6.7.Final is required
             to compile the project's production source. By implication, Hibernate core and its dependencies are also required
             at runtime.
@@ -87,154 +87,223 @@
             It also tells Gradle to look in the Maven central repository for any dependencies that are required.
             The following sections go into the details.
         </para>
+        <para>
+            一体、何が起きるでしょうか。このビルドスクリプトがプロジェクトについて述べていることはわずかです。まず、このプロジェクトはソースコードをコンパイルするためにHibernate core 3.6.7を使用すると言っています。それはすなわち、実行時にHibernate coreとその依存関係が必要になるということでもあります。
+            このスクリプトはまた、バージョン4.0以上のJUnitのどれかを、プロジェクトのテストをコンパイルするのに必要とするとも言っています。さらに、Gradleに、全ての依存関係を見つけるのにMavenのセントラルリポジトリを探すように指示しています。次の節で、それぞれの詳細について見ていきましょう。
+        </para>
     </section>
 
     <section>
-        <title>Dependency configurations</title>
-        <para>Dependencies are grouped into <firstterm>configurations</firstterm>. A configuration is simply a set of dependencies
+        <title>依存関係のコンフィグレーション <phrase role="original">Dependency configurations</phrase></title>
+        <para role="original">Dependencies are grouped into <firstterm>configurations</firstterm>. A configuration is simply a set of dependencies
             with a name. You can use them to declare the external dependencies of your project. As we will see later, they are also
             used to declare the publications of your project.</para>
-        <para>
+        <para>依存関係は、<firstterm>コンフィグレーション</firstterm>によってグループ化されます。コンフィグレーションとは、ただ単に依存関係のセットに名前をつけただけのものです。プロジェクトが外部に依存しているものが何か宣言するため、このコンフィグレーションを使うことができます。また、後で見るように、コンフィグレーションはプロジェクトが外部に公開するものを宣言するためにも使用されます。
+        </para>
+        <para role="original">
             The Java plugin defines a number of standard configurations. These configurations represent the classpaths that the
             Java plugin uses. Some are listed below, and you can find more details in <xref linkend="tab:configurations"/>.
+        </para>
+        <para>
+            Javaプラグインは、いくつかの標準コンフィグレーションを定義します。これらのコンフィグレーションは、Javaプラグインが使用するクラスパスを表すものです。いくつかを以下にリストしました。詳細については、<xref linkend="tab:configurations"/>を参照してください。
         </para>
         <variablelist>
             <varlistentry>
                 <term>compile</term>
                 <listitem>
-                    <para>Defines the dependencies required to compile the production source of the project.</para>
+                    <para role="original">Defines the dependencies required to compile the production source of the project.</para>
+                    <para>プロジェクトのプロダクトコードをコンパイルするのに必要な依存関係を定義する。</para>
                 </listitem>
             </varlistentry>
             <varlistentry>
                 <term>runtime</term>
                 <listitem>
-                    <para>
+                    <para role="original">
                         Defines the dependencies required by the production classes at runtime. By default, also includes the
                         compile time dependencies.
+                    </para>
+                    <para>
+                        プロダクトのクラスを実行するときに必要になる依存関係を定義する。デフォルトで、コンパイル時の依存関係もここに含まれる。
                     </para>
                 </listitem>
             </varlistentry>
             <varlistentry>
                 <term>testCompile</term>
                 <listitem>
-                    <para>
+                    <para role="original">
                         Defines the dependencies required to compile the test source of the project. By default, also includes
                         the compiled production classes and the compile time dependencies.
+                    </para>
+                    <para>
+                    プロジェクトのテストコードをコンパイルするのに必要な依存関係を定義する。デフォルトで、コンパイルされたプロダクトクラスと、コンパイル時の依存関係も含まれる。
                     </para>
                 </listitem>
             </varlistentry>
             <varlistentry>
                 <term>testRuntime</term>
                 <listitem>
-                    <para>
+                    <para role="original">
                         The dependencies required to run the tests. By default, also includes the compile, runtime and test compile
                         dependencies.
+                    </para>
+                    <para>
+                        テストを実行するのに必要な依存関係。デフォルトで、compile、runtime、testCompileの各依存関係もここに含まれる。
                     </para>
                 </listitem>
             </varlistentry>
         </variablelist>
 
-        <para>
+        <para role="original">
             Various plugins add further standard configurations. You can also define your own custom configurations to use in your
             build. Please see <xref linkend="sub:configurations"/> for the details of defining and customizing dependency configurations.
+        </para>
+        <para>
+            多くのプラグインが、このような標準コンフィグレーションを追加します。また、自分のビルドに使うためのカスタムコンフィギュレーションを独自に定義することもできます。依存関係のコンフィグレーション定義やカスタマイズの詳細については、<xref linkend="sub:configurations"/>を参照してください。
         </para>
     </section>
 
     <section>
-        <title>External dependencies</title>
-        <para>There are various types of dependencies that you can declare. One such type is an <firstterm>external dependency</firstterm>.
+        <title>外部依存関係 <phrase role="original">External dependencies</phrase></title>
+        <para role="original">There are various types of dependencies that you can declare. One such type is an <firstterm>external dependency</firstterm>.
             This a dependency on some files built outside the current build, and stored in a repository of some kind, such as Maven central, or
             a corporate Maven or Ivy repository, or a directory in the local file system.
         </para>
         <para>
+            定義できる依存関係には、さまざまなタイプがあります。そのうちの一つが、<firstterm>外部依存関係</firstterm>です。これは、現在のビルドの外部でビルドされ、MavenセントラルリポジトリやIvyリポジトリ、ローカルファイルシステムなどに保存されているファイルへの依存関係です。</para>
+        <para role="original">
             To define an external dependency, you add it to a dependency configuration:
         </para>
-        <sample id="externalDependencies" dir="userguide/artifacts/externalDependencies" title="Definition of an external dependency">
+        <para>
+            外部依存関係を定義するには、それを依存関係のコンフィグレーションに追加します。
+        </para>
+        <sample id="externalDependencies" dir="userguide/artifacts/externalDependencies" title="外部依存関係の定義 / Definition of an external dependency">
             <sourcefile file="build.gradle" snippet="define-dependency"/>
         </sample>
-        <para>
+        <para role="original">
             An external dependency is identified using <literal>group</literal>, <literal>name</literal> and <literal>version</literal> attributes.
             Depending on which kind of repository you are using, <literal>group</literal> and <literal>version</literal> may be optional.
         </para>
-        <para>There is a shortcut form for declaring external dependencies, which uses a string of the form <literal>"<replaceable>group</replaceable>:<replaceable>name</replaceable>:<replaceable>version</replaceable>"</literal>.
+        <para>
+            外部依存関係は、<literal>group</literal>属性、<literal>name</literal>属性、そして<literal>version</literal>属性を用いて定義します。
+            使用しているリポジトリの種類によっては、<literal>group</literal>属性と<literal>version</literal>属性はオプショナルになるかもしれません。
         </para>
-        <sample id="externalDependencies" dir="userguide/artifacts/externalDependencies" title="Shortcut definition of an external dependency">
+        <para role="original">There is a shortcut form for declaring external dependencies, which uses a string of the form <literal>"<replaceable>group</replaceable>:<replaceable>name</replaceable>:<replaceable>version</replaceable>"</literal>.
+        </para>
+        <para>外部依存関係を定義するときは、ショートカット形式を使うこともできます。<literal>"<replaceable>group</replaceable>:<replaceable>name</replaceable>:<replaceable>version</replaceable>"</literal>という文字列を使う形式です。
+        </para>
+        <sample id="externalDependencies" dir="userguide/artifacts/externalDependencies" title="外部依存関係定義のショートカット形式 / Shortcut definition of an external dependency">
             <sourcefile file="build.gradle" snippet="define-dependency-shortcut"/>
         </sample>
-        <para>To find out more about defining and working with dependencies, have a look at <xref linkend="sec:how_to_declare_your_dependencies"/>.</para>
+        <para role="original">To find out more about defining and working with dependencies, have a look at <xref linkend="sec:how_to_declare_your_dependencies"/>.</para>
+        <para>依存関係を定義して取り扱う方法について、詳しくは<xref linkend="sec:how_to_declare_your_dependencies"/>を見てください。</para>
     </section>
 
     <section>
-        <title>Repositories</title>
-        <para>
+        <title>リポジトリ <phrase role="original">Repositories</phrase></title>
+        <para role="original">
             How does Gradle find the files for external dependencies? Gradle looks for them in a <firstterm>repository</firstterm>.
             A repository is really just a collection of files, organized by <literal>group</literal>, <literal>name</literal> and
             <literal>version</literal>. Gradle understands several different repository formats, such as Maven and Ivy, and several
             different ways of accessing the repository, such as using the local file system or HTTP.
         </para>
-        <para>By default, Gradle does not define any repositories. You need to define at least one before you can use external dependencies.
+        <para>
+            Gradleは、どうやって外部依存関係を見つけるのでしょうか？　Gradleは、それらを<firstterm>リポジトリ</firstterm>から探します。リポジトリの実体は、ただのファイルの集合です。それらのファイルは、<literal>グループ</literal>、<literal>名前</literal>、そして<literal>バージョン</literal>によって分類されています。Gradleは、MavenやIvyなど、様々なリポジトリ形式に対応できます。また、ローカルファイルシステムやHTTPなど、リポジトリにアクセスするための手段についても様々なものを使うことができます。
+        </para>
+        <para role="original">By default, Gradle does not define any repositories. You need to define at least one before you can use external dependencies.
             One option is use the Maven central repository:</para>
-        <sample id="defineMavenCentral" dir="userguide/artifacts/defineRepository" title="Usage of Maven central repository">
+        <para>
+            デフォルトでは、Gradleはリポジトリを一切定義していません。外部依存関係を使うには、少なくとも一つのリポジトリを定義する必要があります。
+            選択肢の一つは、Mavenのセントラルリポジトリを使うことです。
+        </para>
+        <sample id="defineMavenCentral" dir="userguide/artifacts/defineRepository" title="Mavenセントラルリポジトリの使用 / Usage of Maven central repository">
             <sourcefile file="build.gradle" snippet="maven-central"/>
         </sample>
-        <para>Or a remote Maven repository:</para>
-        <sample id="defineRemoteMavenRepo" dir="userguide/artifacts/defineRepository" title="Usage of a remote Maven repository">
+        <para role="original">Or a remote Maven repository:</para>
+        <para>または、別のMavenリモートリポジトリを使います。</para>
+        <sample id="defineRemoteMavenRepo" dir="userguide/artifacts/defineRepository" title="リモートMavenリポジトリの使用 / Usage of a remote Maven repository">
             <sourcefile file="build.gradle" snippet="maven-like-repo"/>
         </sample>
-        <para>Or a remote Ivy repository:</para>
-        <sample id="defineRemoteIvyRepo" dir="userguide/artifacts/defineRepository" title="Usage of a remote Ivy directory">
+        <para role="original">Or a remote Ivy repository:</para>
+        <para>または、リモートのIvyリポジトリを使います。</para>
+        <sample id="defineRemoteIvyRepo" dir="userguide/artifacts/defineRepository" title="リモートIvyリポジトリの使用 / Usage of a remote Ivy directory">
             <sourcefile file="build.gradle" snippet="ivy-repo"/>
         </sample>
-        <para>You can also have repositories on the local file system. This works for both Maven and Ivy repositories.</para>
-        <sample id="defineRemoteIvyRepo" dir="userguide/artifacts/defineRepository" title="Usage of a local Ivy directory">
+        <para role="original">You can also have repositories on the local file system. This works for both Maven and Ivy repositories.</para>
+        <para>さらに、ローカルファイルシステム上にリポジトリを持つこともできます。これは、Maven、Ivy双方のリポジトリ形式で動作します。</para>
+        <sample id="defineRemoteIvyRepo" dir="userguide/artifacts/defineRepository" title="ローカルのIvyディレクトリを使う / Usage of a local Ivy directory">
             <sourcefile file="build.gradle" snippet="local-ivy-repo"/>
         </sample>
-        <para>A project can have multiple repositories. Gradle will look for a dependency in each repository in the order they are specified, stopping
+        <para role="original">A project can have multiple repositories. Gradle will look for a dependency in each repository in the order they are specified, stopping
             at the first repository that contains the requested module.
         </para>
-        <para>To find out more about defining and working with repositories, have a look at <xref linkend="sec:repositories"/>.</para>
+        <para>一つのプロジェクトが、複数のリポジトリを持つことができます。Gradleは、それぞれのリポジトリを、指定された順序で順に探しに行きます。要求されたモジュールが含まれる、最初のリポジトリを見つけるまで走査を続けます。</para>
+        <para role="original">To find out more about defining and working with repositories, have a look at <xref linkend="sec:repositories"/>.</para>
+        <para>リポジトリを定義し、取り扱う方法について、詳しくは<xref linkend="sec:repositories"/>を参照してください。</para>
     </section>
 
     <section>
-        <title>Publishing artifacts</title>
-        <para>
-            Dependency configurations are also used to publish files.<footnote><para>We think this is confusing, and we are gradually teasing apart the two concepts in the Gradle DSL.</para></footnote>
+        <title>アーティファクトの公開 <phrase role="original">Publishing artifacts</phrase></title>
+        <para role="original">
+            Dependency configurations are also used to publish files.<footnote><para role="original">We think this is confusing, and we are gradually teasing apart the two concepts in the Gradle DSL.</para></footnote>
             We call these files <firstterm>publication artifacts</firstterm>, or usually just <firstterm>artifacts</firstterm>.
         </para>
         <para>
+            依存関係のコンフィグレーションは、ファイルを公開するのにも使用します。<footnote><para>私たちは、これは混乱の元になると考えています。そのため、GradleのDSLでは、段階的に二つに概念に分けていくつもりです。</para></footnote>
+            これらのファイルを、<firstterm>公開アーティファクト</firstterm>、大体は単に<firstterm>アーティファクト</firstterm>と呼びます。
+        </para>
+        <para role="original">
             The plugins do a pretty good job of defining the artifacts of a project, so you usually don't need to do anything special to tell Gradle
             what needs to be published. However, you do need to tell Gradle where to publish the artifacts. You do this by attaching repositories
             to the <literal>uploadArchives</literal> task. Here's an example of publishing to a remote Ivy repository:
         </para>
-        <sample id="publishIvyRepository" dir="userguide/artifacts/uploading" title="Publishing to an Ivy repository">
+        <para>
+            プラグインが非常に適切にプロジェクトのアーティファクトを定義してくれるので、何を公開したいかGradleに教えるのに、特別何かする必要はほとんどの場合ありません。ただ、どこに公開したいかはGradleに教えてやる必要があります。これは、リポジトリを<literal>uploadArchives</literal>タスクに結びつけることで行います。次のコードは、リモートのIvyリポジトリに公開する例です。
+        </para>
+        <sample id="publishIvyRepository" dir="userguide/artifacts/uploading" title="Ivyリポジトリに公開する / Publishing to an Ivy repository">
             <sourcefile file="build.gradle" snippet="publish-repository"/>
         </sample>
-        <para>
+        <para role="original">
             Now, when you run <userinput>gradle uploadArchives</userinput>, Gradle will build and upload your Jar.
             Gradle will also generate and upload an <filename>ivy.xml</filename> as well.
         </para>
         <para>
+            これで<userinput>gradle uploadArchives</userinput>を走らせれば、Gradleがjarをビルドしてアップロードしてくれます。
+            さらに、<filename>ivy.xml</filename>も生成されてアップロードされます。
+        </para>
+        <para role="original">
             You can also publish to Maven repositories. The syntax is slightly different.<footnote>
-                <para>We are working to make the syntax consistent for resolving from and publishing to Maven repositories.</para>
+                <para role="original">We are working to make the syntax consistent for resolving from and publishing to Maven repositories.</para>
             </footnote>
             Note that you also need to apply the Maven plugin in order to publish to a Maven repository. In this instance, Gradle
             will generate and upload a <filename>pom.xml</filename>.
         </para>
-        <sample id="publishMavenRepository" dir="userguide/artifacts/maven" title="Publishing to a Maven repository">
+        <para>
+            Mavenリポジトリに公開することもできますが、その文法はすこし異なります<footnote><para>私たちは、Mavenリポジトリからの取得とMavenリポジトリへの公開を一貫した文法で行えるよう作業しているところです。</para></footnote>。
+            また、Mavenリポジトリへ公開するには、Mavenプラグインを使う必要もあるので注意してください。この場合、Gradleは<filename>pom.xml</filename>も生成してアップロードします。
+        </para>
+        <sample id="publishMavenRepository" dir="userguide/artifacts/maven" title="Mavenリポジトリへの公開 / Publishing to a Maven repository">
             <sourcefile file="build.gradle" snippet="upload-file"/>
         </sample>
-        <para>To find out more about publication, have a look at <xref linkend="artifact_management"/>.</para>
+        <para role="original">To find out more about publication, have a look at <xref linkend="artifact_management"/>.</para>
+        <para>アーティファクトの公開について、詳しくは<xref linkend="artifact_management"/>をご参照ください。</para>
     </section>
 
     <section>
-        <title>Where to next?</title>
-        <para>
+        <title>次のステップは？ <phrase role="original">Where to next?</phrase></title>
+        <para role="original">
             For all the details of dependency resolution, see <xref linkend="dependency_management"/>, and for artifact publication see <xref linkend="artifact_management"/>.
         </para>
         <para>
+            依存関係解決についての全ての詳細は、<xref linkend="dependency_management"/>に載っています。そして、アーティファクトの公開については<xref linkend="artifact_management"/>に載っています。
+        </para>
+        <para role="original">
             If you are interested in the DSL elements mentioned here, have a look at <apilink class="org.gradle.api.Project" method="configurations"/>,
             <apilink class="org.gradle.api.Project" method="repositories"/> and <apilink class="org.gradle.api.Project" method="dependencies"/>.
         </para>
-        <para>Otherwise, continue on to some of the other <link linkend="tutorials">tutorials</link>.</para>
+        <para>
+            本章で使ったDSLに興味があるのであれば、<apilink class="org.gradle.api.Project" method="configurations"/>や<apilink class="org.gradle.api.Project" method="repositories"/>、<apilink class="org.gradle.api.Project" method="dependencies"/>を見てください。
+        </para>
+        <para role="original">Otherwise, continue on to some of the other <link linkend="tutorials">tutorials</link>.</para>
+        <para>それ以外の場合は、<link linkend="tutorials">チュートリアル</link>から他のチュートリアルを進めてください。</para>
     </section>
 </chapter>
