@@ -1,5 +1,5 @@
-<chapter id="artifact_dependencies_tutorial">
-    <title>Dependency Management Basics</title>
+<chapter id="artifact_dependencies_tutorial" xml:lang="ja">
+    <title>依存関係管理の基本 <phrase role="original">Dependency Management Basics</phrase></title>
     <para>
         This chapter introduces some of the basics of dependency management in Gradle.
     </para>
