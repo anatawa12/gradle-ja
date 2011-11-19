@@ -49,7 +49,7 @@
         <para>この例では、<literal>tasks</literal>コレクションにタスクを追加しています。<literal>add()</literal>メソッドのバリエーションについては<apilink class="org.gradle.api.tasks.TaskContainer"/>をご参照ください。</para>
     </section>
     <section>
-        <title>タスクを探す<phrase role="original">Locating tasks</phrase></title>
+        <title>タスクを参照する<phrase role="original">Locating tasks</phrase></title>
         <para role="original">You often need to locate the tasks that you have defined in the build file, for example, to configure them
             or use them for dependencies. There are a number of ways you can do this. Firstly, each task is available as
             a property of the project, using the task name as the property name:
