@@ -15,19 +15,24 @@
   -->
 <chapter id="working_with_files" xml:lang="ja">
     <title>ファイルを取り扱う <phrase role="original">Working With Files</phrase></title>
-    <para>
+    <para role="original">
         Most builds work with files. Gradle adds some concepts and APIs to help you achieve this.
+    </para>
+    <para>
+        ファイルの取り扱いは、ほとんどのビルドで発生する作業です。なので、それを補助するため、Gradleはいくつかの概念とAPIを導入しています。
     </para>
 
     <section id="sec:locating_files">
-        <title>Locating files</title>
-        <para>You can locate a file relative to the project directory using the
+        <title>ファイルを参照する <phrase role="original">Locating files</phrase></title>
+        <para role="original">You can locate a file relative to the project directory using the
             <apilink class="org.gradle.api.Project" method="file(java.lang.Object)"/> method.
         </para>
-        <sample id="resolveFile" dir="userguide/files/file" title="Locating files">
+        <para><apilink class="org.gradle.api.Project" method="file(java.lang.Object)"/> メソッドで、プロジェクトディレクトリからの相対参照でファイルを取得できます。
+        </para>
+        <sample id="resolveFile" dir="userguide/files/file" title="ファイルを参照する / Locating files">
             <sourcefile file="build.gradle"/>
         </sample>
-        <para>You can pass any object to the <literal>file()</literal> method, and it will attempt to convert the value
+        <para role="original">You can pass any object to the <literal>file()</literal> method, and it will attempt to convert the value
             to an absolute <classname>File</classname> object. Usually, you would pass it a
             <classname>String</classname> or <classname>File</classname> instance. The supplied object's
             <literal>toString()</literal> value is used as the file path. If this path is an absolute path, it is used
@@ -35,24 +40,33 @@
             constructed by prepending the project directory path to the supplied path. The <literal>file()</literal>
             method also understands URLs, such as <literal>file:/some/path.xml</literal>.
         </para>
-        <para>Using this method is a useful way to convert some user provided value into an absolute <classname>File</classname>.
+        <para><literal>file()</literal>メソッドには、あらゆるオブジェクトを渡すことができます。渡したオブジェクトは、絶対参照の<classname>File</classname>に変換されます。大抵は<classname>String</classname>か<classname>File</classname>のインスタンスを渡すことになるでしょう。渡されたオブジェクトの<literal>toString()</literal>が呼ばれ、その返値がファイルパスとして使われます。もしそのパスが絶対パスだった場合、そのパスで<classname>File</classname>インスタンスが構築されます。そうでなければ、プロジェクトディレクリのパスを先頭に追加してから<classname>File</classname>インスタンスが構築されます。また、<literal>file()</literal>メソッドは<literal>file:/some/path.xml</literal>のようなURLにも対応しています。
+        </para>
+        <para role="original">Using this method is a useful way to convert some user provided value into an absolute <classname>File</classname>.
             It is preferable to using <literal>new File(somePath)</literal>, as <literal>file()</literal> always evaluates
             the supplied path relative to the project directory, which is fixed, rather than the current working
             directory, which can change depending on how the user runs Gradle.
         </para>
+        <para>
+            このメソッドを使って、ユーザーが指定した値を簡単に絶対参照の<classname>File</classname>インスタンスに変換できます。
+            これは、<classname>new File(somePath)</classname>を使うよりもよい方法でしょう。<literal>file()</literal>メソッドは、常にプロジェクトディレクリからの相対参照で解決されるからです。ワーキングディレクトリはGradleをどう実行したかによって変化しうるわけですが、それに依存せずにファイルを参照できます。
+        </para>
     </section>
 
     <section id="sec:file_collections">
-        <title>File collections</title>
+        <title>ファイルコレクション <phrase role="original">File collections</phrase></title>
 
-        <para>
+        <para role="original">
             A <firstterm>file collection</firstterm> is simply a set of files. It is represented by the
             <apilink class="org.gradle.api.file.FileCollection"/> interface. Many objects in the Gradle API implement
             this interface. For example, <link linkend="sub:configurations">dependency configurations</link> implement
             <literal>FileCollection</literal>.
         </para>
-
         <para>
+        <firstterm>ファイルコレクション</firstterm>は、単なるファイルの集合です。これは、<apilink class="org.gradle.api.file.FileCollection"/>インターフェースで表現されます。Gradle APIに含まれる多くのオブジェクトがこのインターフェースを実装しています。例えば、<link linkend="sub:configurations">依存関係のコンフィグレーション</link>もこの<literal>FileCollection</literal>インターフェースを実装しています。
+        </para>
+
+        <para role="original">
             One way to obtain a <literal>FileCollection</literal> instance is to use the
             <apilink class="org.gradle.api.Project" method="files(java.lang.Object...)"/> method. You can pass this method any number of
             objects, which are then converted into a set of <classname>File</classname> objects. The
@@ -61,61 +75,81 @@
             You can also pass collections, iterables, maps and arrays to the <literal>files()</literal> method. These are flattened
             and the contents converted to <classname>File</classname> instances.
         </para>
+        <para>
+            <literal>FileCollection</literal>を取得する方法の一つは、<apilink class="org.gradle.api.Project" method="files(java.lang.Object...)"/>メソッドを使うことです。このメソッドには任意の数のオブジェクトを渡すことができ、渡したオブジェクトは<classname>File</classname>オブジェクトの集合に変換されます。これらのオブジェクトは、<xref linkend="sec:locating_files"/>で述べた<literal>file()</literal>メソッドと同じように、プロジェクトディレクトリからの相対参照で解決されます。
+            また、コレクション、イテレーブル、マップ、配列を渡すこともできます。これらは、フラット化されてから、各要素が<classname>File</classname>インスタンスに変換されます。
+        </para>
 
-        <sample id="fileCollections" dir="userguide/files/fileCollections" title="Creating a file collection">
+        <sample id="fileCollections" dir="userguide/files/fileCollections" title="ファイルコレクションの作成 / Creating a file collection">
             <sourcefile file="build.gradle" snippet="simple-params"/>
         </sample>
 
-        <para>A file collection is iterable, and can be converted to a number of other types using the <literal>as</literal>
+        <para role="original">A file collection is iterable, and can be converted to a number of other types using the <literal>as</literal>
             operator. You can also add 2 file collections together using the <literal>+</literal> operator, or subtract one
             file collection from another using the <literal>-</literal> operator.
             Here are some examples of what you can do with a file collection.
         </para>
-        <sample id="fileCollections" dir="userguide/files/fileCollections" title="Using a file collection">
+        <para>
+            ファイルコレクションはイテレーブルです。さらに、<literal>as</literal>演算子で様々な型に変換することができます。
+            また、二つのファイルコレクションを<literal>+</literal>演算子で合成したり、<literal>-</literal>演算子でファイルコレクションから別のファイルコレクションの要素を取り除いたりすることができます。
+            次の例は、ファイルコレクションでどのようなことができるかを示すものです。
+        </para>
+        <sample id="fileCollections" dir="userguide/files/fileCollections" title="ファイルコレクションを使う / Using a file collection">
             <sourcefile file="build.gradle" snippet="usage"/>
             <test args="-q usage"/>
         </sample>
 
-        <para>You can also pass the <literal>files()</literal> method a closure or a <classname>Callable</classname>
+        <para role="original">You can also pass the <literal>files()</literal> method a closure or a <classname>Callable</classname>
             instance. This is called when the contents of the collection are queried, and its return value is converted
             to a set of <classname>File</classname> instances. The return value can be an object of any of the types
             supported by the <literal>files()</literal> method. This is a simple way to 'implement' the
             <classname>FileCollection</classname> interface.
         </para>
-        <sample id="fileCollections" dir="userguide/files/fileCollections" title="Implementing a file collection">
+        <para><literal>files()</literal>メソッドには、クロージャや<classname>Callable</classname>のインスタンスを渡すこともできます。
+            これはそのファイルコレクションの内容が要求されたときに実行され、返値が<classname>File</classname>インスタンスの集合に変換されます。返値は<literal>files()</literal>に渡すことができるオブジェクトならなんでも構いません。これは、<classname>FileCollection</classname>インタフェースを簡単に「実装する」方法とも言えます。
+        </para>
+        <sample id="fileCollections" dir="userguide/files/fileCollections" title="ファイルコレクションを実装する / Implementing a file collection">
             <sourcefile file="build.gradle" snippet="closure"/>
             <output args="-q list"/>
         </sample>
 
-        <para>
+        <para role="original">
             Some other types of things you can pass to <literal>files()</literal>:
+        </para>
+        <para>
+            他にもいくつか<literal>files()</literal>メソッドに渡せる型があります。
         </para>
         <variablelist>
             <varlistentry>
                 <term><classname>FileCollection</classname></term>
                 <listitem>
-                    <para>These are flattened and the contents included in the file collection.</para>
+                    <para role="original">These are flattened and the contents included in the file collection.</para>
+                    <para>フラット化されてから、その内容がファイルコレクションに追加される。</para>
                 </listitem>
             </varlistentry>
             <varlistentry>
                 <term><classname>Task</classname></term>
                 <listitem>
-                    <para>The output files of the task are included in the file collection.</para>
+                    <para role="original">The output files of the task are included in the file collection.</para>
+                    <para>タスクの出力ファイルがファイルコレクションに追加される。</para>
                 </listitem>
             </varlistentry>
         </variablelist>
 
-        <para>It is important to note that the content of a file collection is evaluated lazily, when it is needed.
+        <para role="original">It is important to note that the content of a file collection is evaluated lazily, when it is needed.
             This means you can, for example, create a <literal>FileCollection</literal> that represents files which
             will be created in the future by, say, some task.
+        </para>
+        <para>留意すべき重要な点は、ファイルコレクションの内容は、必要になったときに遅延評価されるということです。
+        これはつまり、例えば未来にタスクなどによって作られるであろうファイル群を表す<literal>FileCollection</literal>を作ることもできる、ということを意味します。
         </para>
 
     </section>
 
     <section id="sec:file_trees">
-        <title>File trees</title>
+        <title>ファイルツリー <phrase role="original">File trees</phrase></title>
 
-        <para>
+        <para role="original">
             A <firstterm>file tree</firstterm> is a collection of files arranged in a hierarchy. For example, a file tree
             might represent a directory tree or the contents of a ZIP file. It is represented
             by the <apilink class="org.gradle.api.file.FileTree"/> interface. The <literal>FileTree</literal> interface
@@ -123,43 +157,55 @@
             file collection. Several objects in Gradle implement the <literal>FileTree</literal> interface, such as
             <link linkend="sec:source_sets">source sets</link>.
         </para>
-
         <para>
+            ファイルツリーは、階層構造を持つファイルの集合です。例えば、ディレクトリツリーやZIPの中身を表すことができます。ファイルツリーは<apilink class="org.gradle.api.file.FileTree"/>インターフェースによって表現されます。<literal>FileTree</literal>インターフェースは<literal>FileCollection</literal>インターフェースを継承しています。なので、FileTreeはFileCollectionと全く同じ方法で取り扱うことができます。
+            いくつかのGradleオブジェクトは<literal>FileTree</literal>を実装しています。例えば、<link linkend="sec:source_sets">ソースセット</link>などです。
+        </para>
+
+        <para role="original">
             One way to obtain a <literal>FileTree</literal> instance is to use the
             <apilink class="org.gradle.api.Project" method="fileTree(java.util.Map)"/> method.
             This creates a <literal>FileTree</literal> defined with a base directory, and optionally some Ant-style
             include and exclude patterns.
         </para>
+        <para>
+            <literal>FileTree</literal>インスタンスを取得する方法の一つは、<apilink class="org.gradle.api.Project" method="fileTree(java.util.Map)"/>メソッドを使用することです。
+            このメソッドは、ベースディレクトリとAntスタイルのinclude/excludeパターンを指定して<literal>FileTree</literal>を構築します。
+        </para>
 
-        <sample id="fileTrees" dir="userguide/files/fileTrees" title="Creating a file tree">
+        <sample id="fileTrees" dir="userguide/files/fileTrees" title="ファイルツリーを作成する / Creating a file tree">
             <sourcefile file="build.gradle" snippet="define"/>
         </sample>
 
-        <para>You use a file tree in the same way you use a file collection. You can also visit the contents of the
+        <para role="original">You use a file tree in the same way you use a file collection. You can also visit the contents of the
             tree, and select a sub-tree using Ant-style patterns:
         </para>
-        <sample id="fileTrees" dir="userguide/files/fileTrees" title="Using a file tree">
+        <para>ファイルツリーは、ファイルコレクションと同じ方法で使うことができます。さらに、ツリー構造を辿ったり、Antスタイルのパターンを指定してサブツリーを選択することも可能です。</para>
+        <sample id="fileTrees" dir="userguide/files/fileTrees" title="ファイルツリーを使う / Using a file tree">
             <sourcefile file="build.gradle" snippet="use"/>
         </sample>
     </section>
 
     <section id="sec:archive_contents">
-        <title>Using the contents of an archive as a file tree</title>
+        <title>アーカイブの内容をファイルツリーとして使う <phrase role="original">Using the contents of an archive as a file tree</phrase></title>
 
-        <para>You can use the contents of an archive, such as a ZIP or TAR file, as a file tree. You do this using
+        <para role="original">You can use the contents of an archive, such as a ZIP or TAR file, as a file tree. You do this using
             the <apilink class="org.gradle.api.Project" method="zipTree"/> and
             <apilink class="org.gradle.api.Project" method="tarTree"/> methods. These methods return a <literal>FileTree</literal>
             instance which you can use like any other file tree or file collection. For example, you can use it to expand
             the archive by copying the contents, or to merge some archives into another.
         </para>
-        <sample id="fileTrees" dir="userguide/files/fileTrees" title="Using an archive as a file tree">
+        <para>ZIPやTARファイルなどのアーカイブを、ファイルツリーとして使うことができます。そのためのメソッドが、<apilink class="org.gradle.api.Project" method="zipTree"/>や<apilink class="org.gradle.api.Project" method="tarTree"/>です。これらのメソッドは、<literal>FileTree</literal>インスタンスを返すもので、返されたインスタンスは、他のファイルツリーやファイルコレクションと同様に扱うことができます。
+            例えば、内容をコピーすることでアーカイブを解凍したり、別のアーカイブとマージしたりできます。
+        </para>
+        <sample id="fileTrees" dir="userguide/files/fileTrees" title="アーカイブをファイルツリーとして使う / Using an archive as a file tree">
             <sourcefile file="build.gradle" snippet="archive-trees"/>
         </sample>
     </section>
 
     <section id="sec:specifying_multiple_files">
-        <title>Specifying a set of input files</title>
-        <para>Many objects in Gradle have properties which accept a set of input files. For example, the
+        <title>入力ファイルセットを指定する <phrase role="original">Specifying a set of input files</phrase></title>
+        <para role="original">Many objects in Gradle have properties which accept a set of input files. For example, the
             <apilink class="org.gradle.api.tasks.compile.Compile"/> task has a <literal>source</literal> property,
             which defines the source files to compile. You can set the value of this property using any of the types
             supported by the <link linkend="sec:file_collections">files()</link> method, which we have seen in above.
@@ -167,24 +213,31 @@
             collection, <classname>FileCollection</classname> or even a closure.
             Here are some examples:
         </para>
-        <sample id="inputFiles" dir="userguide/files/inputFiles" title="Specifying a set of files">
+        <para>多くのGradleオブジェクトが入力ファイルセットを格納できるプロパティを持っています。例えば、<apilink class="org.gradle.api.tasks.compile.Compile"/>タスクには<literal>source</literal>プロパティがあり、コンパイルするべきソースファイルの集合をそこに定義します。
+            このプロパティの値には、<literal>files()</literal>でサポートされている、上記の全ての型が使用可能です。
+            つまり、<classname>File</classname>、<literal>String</literal>、コレクション、<classname>FileCollection</classname>、クロージャでさえセット可能ということです。次の例を見てください。
+        </para>
+        <sample id="inputFiles" dir="userguide/files/inputFiles" title="ファイルセットを指定する / Specifying a set of files">
             <sourcefile file="build.gradle" snippet="set-input-files"/>
         </sample>
-        <para>Usually, there is a method with the same name as the property, which appends to the set of files. Again,
+        <para role="original">Usually, there is a method with the same name as the property, which appends to the set of files. Again,
             this method accepts any of the types supported by the <link linkend="sec:file_collections">files()</link>
             method.
         </para>
-        <sample id="inputFiles" dir="userguide/files/inputFiles" title="Specifying a set of files">
+        <para>大抵、そのプロパティと同名のメソッドも定義されていて、そのメソッドでファイルセットを追加できるようになっています。このメソッドにも<link linkend="sec:file_collections">files()</link>でサポートされている全ての型を渡すことができます。
+        </para>
+        <sample id="inputFiles" dir="userguide/files/inputFiles" title="ファイルセットを指定する / Specifying a set of files">
             <sourcefile file="build.gradle" snippet="add-input-files"/>
         </sample>
     </section>
 
     <section id="sec:copying_files">
-        <title>Copying files</title>
-        <para>You can use the <apilink class="org.gradle.api.tasks.Copy"/> task to copy files. The copy task is very flexible, and allows
+        <title>ファイルをコピーする <phrase role="original">Copying files</phrase></title>
+        <para role="original">You can use the <apilink class="org.gradle.api.tasks.Copy"/> task to copy files. The copy task is very flexible, and allows
             you to, for example, filter the contents of the files as they are copied, and to map the files names.
         </para>
-        <para>To use the <literal>Copy</literal> task, you must provide a set of source files to copy, and a destination directory to copy
+        <para><apilink class="org.gradle.api.tasks.Copy"/>タスクを使ってファイルをコピーできます。このタスクはとても柔軟で、コピーしたファイルの内容をフィルターにかけたり、ファイル名をマッピングで変換したりできます。</para>
+        <para role="original">To use the <literal>Copy</literal> task, you must provide a set of source files to copy, and a destination directory to copy
             the files to. You may also specify how to transform the files as they are copied. You do all this using a
             <firstterm>copy spec</firstterm>. A copy spec is represented by the <apilink class="org.gradle.api.file.CopySpec"/> interface. The
             <literal>Copy</literal> task implements this interface.
@@ -192,11 +245,13 @@
             method. To specify the destination directory, you use the <apilink class="org.gradle.api.file.CopySpec" method="into(java.lang.Object)"/>
             method.
         </para>
-        <sample id="copy" dir="userguide/files/copy" title="Copying files using the copy task">
+        <para><literal>Copy</literal>タスクを使うには、コピーすべきソースファイルと、コピー先のディレクトリを指定しなければなりません。また、コピー時にファイルを編集する場合は、それについても指定します。これらの指定は全て、<firstterm>Copy仕様</firstterm>を使って行います。Copy仕様は、<apilink class="org.gradle.api.file.CopySpec"/>インターフェースで表現されており、<literal>Copy</literal>タスクはこのインターフェースを実装したものです。ソースファイルの指定には、<apilink class="org.gradle.api.file.CopySpec" method="from(java.lang.Object...)"/>メソッドを使います。コピー先ディレクトリの指定には、<apilink class="org.gradle.api.file.CopySpec" method="into(java.lang.Object)"/>メソッドを使います。
+        </para>
+        <sample id="copy" dir="userguide/files/copy" title="Copyタスクでファイルをコピーする / Copying files using the copy task">
             <sourcefile file="build.gradle" snippet="copy-task"/>
             <test args="test"/>
         </sample>
-        <para>The <literal>from()</literal> method accepts any of the arguments that the
+        <para role="original">The <literal>from()</literal> method accepts any of the arguments that the
             <link linkend="sec:file_collections">files()</link> method does. When an argument resolves to a directory,
             everything under that directory (but not the directory itself) is recursively copied into the destination
             directory. When an argument resolves to a file, that file is copied into the destination directory.
@@ -205,58 +260,67 @@
             any of the arguments that the <link linkend="sec:locating_files">file()</link> method does. Here is another
             example:
         </para>
-        <sample id="copy" dir="userguide/files/copy" title="Specifying copy task source files and destination directory">
+        <para><literal>from()</literal>メソッドが受け付ける型は、<literal>files()</literal>メソッドと同じです。ディレクトリパスに解決されるような引数を渡した場合、そのディレクトリ以下の全て（ただし、そのディレクトリ自身は除く）が再帰的にターゲットディレクトリにコピーされます。渡した引数がファイルパスに解決された場合は、そのファイルが目的のディレクトリにコピーされます。
+            もし、引数に渡したパスにファイルがない場合、その引数は無視されます。
+            <literal>into()</literal>メソッドは、<literal>file()</literal>と同じ型を引数に取ります。以下にもう一つ例を挙げます。
+        </para>
+        <sample id="copy" dir="userguide/files/copy" title="Copyタスクのコピー元と宛先を指定する / Specifying copy task source files and destination directory">
             <sourcefile file="build.gradle" snippet="copy-task-2"/>
         </sample>
-        <para>You can select the files to copy using Ant-style include or exclude patterns, or using a closure:</para>
-        <sample id="copy" dir="userguide/files/copy" title="Selecting the files to copy">
+        <para role="original">You can select the files to copy using Ant-style include or exclude patterns, or using a closure:</para>
+        <para>Antスタイルのinclude/excludeパターンかクロージャを用いて、コピーするファイルを選択することができます。</para>
+        <sample id="copy" dir="userguide/files/copy" title="コピーするファイルを選択する / Selecting the files to copy">
             <sourcefile file="build.gradle" snippet="copy-task-with-patterns"/>
         </sample>
-        <para>You can also use the <apilink class="org.gradle.api.Project" method="copy"/> method to copy files. It works the
+        <para role="original">You can also use the <apilink class="org.gradle.api.Project" method="copy"/> method to copy files. It works the
             same way as the task.</para>
-        <sample id="copy" dir="userguide/files/copy" title="Copying files using the copy() method">
+        <para>また、<apilink class="org.gradle.api.Project" method="copy"/>メソッドを使ってファイルをコピーすることもできます。このメソッドもCopyタスクと同じように動作します。</para>
+        <sample id="copy" dir="userguide/files/copy" title="copy()メソッドでファイルをコピーする / Copying files using the copy() method">
             <sourcefile file="build.gradle" snippet="copy-method"/>
         </sample>
         <section>
-            <title>Renaming files</title>
-            <sample id="renameOnCopy" dir="userguide/files/copy" title="Renaming files as they are copied">
+            <title>ファイルをリネームする <phrase role="original">Renaming files</phrase></title>
+            <sample id="renameOnCopy" dir="userguide/files/copy" title="コピー時にファイルをリネームする / Renaming files as they are copied">
                 <sourcefile file="build.gradle" snippet="rename-files"/>
             </sample>
         </section>
         <section>
-            <title>Filtering files</title>
-            <sample id="filterOnCopy" dir="userguide/files/copy" title="Filtering files as they are copied">
+            <title>ファイルをフィルタリングする <phrase role="original">Filtering files</phrase></title>
+            <sample id="filterOnCopy" dir="userguide/files/copy" title="コピー時にファイルをフィルタリングする / Filtering files as they are copied">
                 <sourcefile file="build.gradle" snippet="filter-files"/>
             </sample>
         </section>
         <section>
-            <title>Using the <classname>CopySpec</classname> class</title>
-            <para>Copy specs form a hierarchy. A copy spec inherits its destination path, include patterns, exclude patterns, copy actions,
+            <title><classname>CopySpec</classname>クラスを使う <phrase role="original">Using the <classname>CopySpec</classname> class</phrase></title>
+            <para role="original">Copy specs form a hierarchy. A copy spec inherits its destination path, include patterns, exclude patterns, copy actions,
                 name mappings, filters.</para>
-            <sample id="nestedCopySpecs" dir="userguide/files/copy" title="Nested copy specs">
+            <para>コピー仕様は階層構造を構成でき、宛先パス、include/excludeパターン、コピー動作、ファイル名のマッピング、フィルターを継承できます。</para>
+            <sample id="nestedCopySpecs" dir="userguide/files/copy" title="入れ子構造のコピー仕様 / Nested copy specs">
                 <sourcefile file="build.gradle" snippet="nested-specs"/>
             </sample>
         </section>
     </section>
 
     <section id="sec:sync_task">
-        <title>Using the <literal>Sync</literal> task</title>
-        <para>The <apilink class="org.gradle.api.tasks.Sync"/> task extends the <literal>Copy</literal> task. When it
+        <title><literal>Sync</literal>タスクを使う <phrase role="original">Using the <literal>Sync</literal> task</phrase></title>
+        <para role="original">The <apilink class="org.gradle.api.tasks.Sync"/> task extends the <literal>Copy</literal> task. When it
             executes, it copies the source files into the destination directory, and then removes any files from the
             destination directory which it did not copy. This can be useful for doing things such as installing your
             application, creating an exploded copy of your archives, or maintaining a copy of the project's dependencies.
         </para>
-        <para>Here is an example which maintains a copy of the project's runtime dependencies in the <filename>build/libs</filename>
+        <para><apilink class="org.gradle.api.tasks.Sync"/>は<literal>Copy</literal>タスクを継承したタスクです。このタスクは、宛先ディレクトリにファイルをコピーし、その後、コピーしたファイル以外の全ファイルを宛先ディレクトリから削除します。これは、アプリケーションをインストールしたり、アーカイブを解凍したり、プロジェクトの依存関係のコピーをメンテナンスしたりするのに便利です。</para>
+        <para role="original">Here is an example which maintains a copy of the project's runtime dependencies in the <filename>build/libs</filename>
             directory.</para>
-        <sample id="syncDependencies" dir="userguide/files/sync" title="Using the Sync task to copy dependencies">
+        <para>次の例では、<filename>build/libs</filename>にある実行時依存関係のコピーをメンテナンスしています。</para>
+        <sample id="syncDependencies" dir="userguide/files/sync" title="Syncタスクで依存関係をコピーする / Using the Sync task to copy dependencies">
             <sourcefile file="build.gradle" snippet="copy-dependencies"/>
             <test args="libs"/>
         </sample>
     </section>
 
     <section id="sec:archives">
-        <title>Creating archives</title>
-        <para>
+        <title>アーカイブを作成する <phrase role="original">Creating archives</phrase></title>
+        <para role="original">
             A project can have as many as JAR archives as you want. You can also add WAR, ZIP and TAR archives to your project.
             Archives are created using the various archive tasks:
             <apilink class="org.gradle.api.tasks.bundling.Zip"/>,
@@ -265,63 +329,80 @@
             <apilink class="org.gradle.api.tasks.bundling.War"/>.
             They all work the same way, so let's look at how you create a ZIP file.
         </para>
-        <sample id="createZip" dir="userguide/files/archives" title="Creating a ZIP archive">
+        <para>
+            一つのプロジェクトで、JARファイルを好きなだけ作成することができます。WAR、ZIP、TARなどのアーカイブをプロジェクトに加えることもできます。
+            アーカイブは、
+            <apilink class="org.gradle.api.tasks.bundling.Zip"/>、
+            <apilink class="org.gradle.api.tasks.bundling.Tar"/>、
+            <apilink class="org.gradle.api.tasks.bundling.Jar"/>、
+            <apilink class="org.gradle.api.tasks.bundling.War"/>などのアーカイブタスクを使って作成します。
+            これらは全て同じ使い方なので、ここではZIPファイルの作成方法を見てみましょう。
+        </para>
+        <sample id="createZip" dir="userguide/files/archives" title="ZIPアーカイブの作成 / Creating a ZIP archive">
             <sourcefile file="build.gradle" snippet="zip"/>
         </sample>
         <tip>
-            <title>Why are you using the Java plugin?</title>
-            <para>The Java plugin adds a number of default values for the archive tasks. You can use the archive
+            <title>なぜJavaプラグインを使うのですか？ <phrase role="original">Why are you using the Java plugin?</phrase></title>
+            <para role="original">The Java plugin adds a number of default values for the archive tasks. You can use the archive
                 tasks without using the Java plugin, if you like. You will need to provide values for some additional
                 properties.
             </para>
+            <para>
+            Javaプラグインは、アーカイブタスクに多くのデフォルト値を追加します。必要なら、Javaプラグインなしでアーカイブタスクを使うことも可能です。その場合、いくつかのプロパティを自分で定義する必要があるでしょう。
+            </para>
         </tip>
 
-        <para>
+        <para role="original">
             The archive tasks all work exactly the same way as the <literal>Copy</literal> task, and implement the same
             <classname>CopySpec</classname> interface. As with the <literal>Copy</literal> task, you specify the input
             files using the <literal>from()</literal> method, and can optionally specify where they end up in the
             archive using the <literal>into()</literal> method. You can filter the contents of file, rename files, and
             all the other things you can do with a copy spec.
         </para>
+        <para>アーカイブタスクは、全て<literal>Copy</literal>タスクと全く同じように動作します。これらのタスクは、Copyタスク同様、<classname>CopySpec</classname>インターフェースを実装しています。<literal>Copy</literal>タスクと同じように<literal>from()</literal>メソッドで入力ファイルを指定し、必須ではありませんが<literal>into()</literal>メソッドで最終的にアーカイブが出力される場所を指定します。ファイルのフィルタリング、リネーム、その他コピー仕様で使える全てのオプションを使うことができます。</para>
 
         <section>
-            <title>Archive naming</title>
+            <title>アーカイブのネーミング <phrase role="original">Archive naming</phrase></title>
 
-            <para>The default name for a generated archive is <filename><replaceable>projectName</replaceable>-<replaceable>version</replaceable>.<replaceable>type</replaceable></filename>
+            <para role="original">The default name for a generated archive is <filename><replaceable>projectName</replaceable>-<replaceable>version</replaceable>.<replaceable>type</replaceable></filename>
                 For example:
             </para>
-            <sample id="archiveNaming" dir="userguide/files/archiveNaming" title="Creation of ZIP archive">
+            <para>作成されるアーカイブの名前は、デフォルトでは<filename><replaceable>projectName</replaceable>-<replaceable>version</replaceable>.<replaceable>type</replaceable></filename>です。例えば、</para>
+            <sample id="archiveNaming" dir="userguide/files/archiveNaming" title="ZIPアーカイブの作成 / Creation of ZIP archive">
                 <sourcefile file="build.gradle"/>
                 <output args="-q myZip"/>
             </sample>
 
-            <para>This adds a <classname>Zip</classname> archive task with the name <literal>myZip</literal> which produces
+            <para role="original">This adds a <classname>Zip</classname> archive task with the name <literal>myZip</literal> which produces
                 ZIP file<filename>zipProject-1.0.zip</filename>. It is important to distinguish between the name of the archive task
                 and the name of the archive generated by the archive task. The default name for archives can be
                 changed with the <literal>archivesBaseName</literal> project property. The name of the archive can also be
                 changed at any time later on.</para>
+            <para>ここでは、myZipという名前の<classname>Zip</classname>アーカイブタスクが、<filename>zipProject-1.-.zip</filename>というZIPファイルを作成しています。大事なことは、アーカイブタスクの名前と、そのタスクで作成したアーカイブ名に関連がないことです。デフォルトのアーカイブ名は、プロジェクトの<literal>archivesBaseName</literal>プロパティで変更できます。そのアーカイブ名も、後からいつでも変更可能です。</para>
 
-            <para>There are a number of properties which you can set on an archive task. These are listed below in <xref linkend="archiveTasksNamingProperties"/>.
+            <para role="original">There are a number of properties which you can set on an archive task. These are listed below in <xref linkend="archiveTasksNamingProperties"/>.
                 You can, for example, change the name of the archive:
             </para>
-            <sample id="zipWithCustomName" dir="userguide/tutorial/zipWithCustomName" title="Configuration of archive task - custom archive name">
+            <para>アーカイブタスクにセットできるプロパティはたくさんあります。それらを下の<xref linkend="archiveTasksNamingProperties"/>にリストしました。例えば、アーカイブの名前を変更したい場合は次のようにします。</para>
+            <sample id="zipWithCustomName" dir="userguide/tutorial/zipWithCustomName" title="アーカイブタスクの設定 - カスタムアーカイブ名 / Configuration of archive task - custom archive name">
                 <sourcefile file="build.gradle"/>
                 <output args="-q myZip"/>
             </sample>
-            <para>You can further customize the archive names:</para>
-            <sample id="zipWithArguments" dir="userguide/tutorial/zipWithArguments" title="Configuration of archive task - appendix &amp; classifier">
+            <para role="original">You can further customize the archive names:</para>
+            <para>アーカイブ名をさらにカスタマイズすることもできます。</para>
+            <sample id="zipWithArguments" dir="userguide/tutorial/zipWithArguments" title="アーカイブタスクの設定 - appendix &amp; classifier / Configuration of archive task - appendix &amp; classifier">
                 <sourcefile file="build.gradle"/>
                 <output args="-q myZip"/>
             </sample>
 
             <table id="archiveTasksNamingProperties">
-                <title>Archive tasks - naming properties</title>
+                <title>アーカイブタスク - ネーミングプロパティ <phrase role="original">Archive tasks - naming properties</phrase></title>
                 <thead>
                     <tr>
-                        <td>Property name</td>
-                        <td>Type</td>
-                        <td>Default value</td>
-                        <td>Description</td>
+                        <td>プロパティ名 <phrase role="original">Property name</phrase></td>
+                        <td>型 <phrase role="original">Type</phrase></td>
+                        <td>デフォルト値 <phrase role="original">Default value</phrase></td>
+                        <td>説明 <phrase role="original">Description</phrase></td>
                     </tr>
                 </thead>
                 <tr>
@@ -329,66 +410,69 @@
                     <td><classname>String</classname></td>
                     <td>
                         <filename><replaceable>baseName</replaceable>-<replaceable>appendix</replaceable>-<replaceable>version</replaceable>-<replaceable>classifier</replaceable>.<replaceable>extension</replaceable></filename>
-                        <para>If any of these properties is empty the trailing <filename>-</filename> is not added to the name.</para>
+                        <para role="original">If any of these properties is empty the trailing <filename>-</filename> is not added to the name.</para>
+                        <para>プロパティが空だった場合、それに伴う<filename>-</filename>も追加されない。</para>
                     </td>
-                    <td>The base file name of the generated archive</td>
+                    <td>生成されるアーカイブのベースファイル名 <phrase role="original">The base file name of the generated archive</phrase></td>
                 </tr>
                 <tr>
                     <td><literal>archivePath</literal></td>
                     <td><classname>File</classname></td>
                     <td><filename><replaceable>destinationDir</replaceable>/<replaceable>archiveName</replaceable></filename></td>
-                    <td>The absolute path of the generated archive.</td>
+                    <td>生成されるアーカイブの絶対パス <phrase role="original">The absolute path of the generated archive.</phrase></td>
                 </tr>
                 <tr>
                     <td><literal>destinationDir</literal></td>
                     <td><classname>File</classname></td>
-                    <td>Depends on the archive type. JARs and WARs are generated into <filename><replaceable>project.buildDir</replaceable>/libraries</filename>.
-                        ZIPs and TARs are generated into <filename><replaceable>project.buildDir</replaceable>/distributions</filename>.
+                    <td>アーカイブの種類に依存する。JAR、WARの場合は<filename><replaceable>project.buildDir</replaceable>/libraries</filename>。ZIP、TARの場合は<filename><replaceable>project.buildDir</replaceable>/distributions</filename>。<phrase role="original">Depends on the archive type. JARs and WARs are generated into <filename><replaceable>project.buildDir</replaceable>/libraries</filename>.
+                        ZIPs and TARs are generated into <filename><replaceable>project.buildDir</replaceable>/distributions</filename>.</phrase>
                     </td>
-                    <td>The directory to generate the archive into</td>
+                    <td>アーカイブが生成されるディレクトリ <phrase role="original">The directory to generate the archive into</phrase></td>
                 </tr>
                 <tr>
                     <td><literal>baseName</literal></td>
                     <td><classname>String</classname></td>
                     <td><filename><replaceable>project.name</replaceable></filename></td>
-                    <td>The base name portion of the archive file name.</td>
+                    <td>アーカイブ名の「ベース名」部 <phrase role="original">The base name portion of the archive file name.</phrase></td>
                 </tr>
                 <tr>
                     <td><literal>appendix</literal></td>
                     <td><classname>String</classname></td>
                     <td><literal>null</literal></td>
-                    <td>The appendix portion of the archive file name.</td>
+                    <td>アーカイブ名の「付加」部 <phrase role="original">The appendix portion of the archive file name.</phrase></td>
                 </tr>
                 <tr>
                     <td><literal>version</literal></td>
                     <td><classname>String</classname></td>
                     <td><filename><replaceable>project.version</replaceable></filename></td>
-                    <td>The version portion of the archive file name.</td>
+                    <td>アーカイブ名の「バージョン」部 <phrase role="original">The version portion of the archive file name.</phrase></td>
                 </tr>
                 <tr>
                     <td><literal>classifier</literal></td>
                     <td><classname>String</classname></td>
                     <td><literal>null</literal></td>
-                    <td>The classifier portion of the archive file name,</td>
+                    <td>アーカイブ名の「分類子」部 <phrase role="original">The classifier portion of the archive file name,</phrase></td>
                 </tr>
                 <tr>
                     <td><literal>extension</literal></td>
                     <td><classname>String</classname></td>
-                    <td>Depends on the archive type, and for TAR files, the compression type as well: <filename>zip</filename>, <filename>jar</filename>,
+                    <td>アーカイブの種類に依存する。TARファイルの場合、圧縮方法にも依存する。<phrase role="original">Depends on the archive type, and for TAR files, the compression type as well: </phrase><filename>zip</filename>, <filename>jar</filename>,
                         <filename>war</filename>, <filename>tar</filename>, <filename>tgz</filename> or <filename>tbz2</filename>.</td>
-                    <td>The extension of the archive file name.</td>
+                    <td>アーカイブ名の拡張子 <phrase role="original">The extension of the archive file name.</phrase></td>
                 </tr>
             </table>
         </section>
 
         <section>
-            <title>Sharing content between multiple archives</title>
-            <para>Using the <apilink class="org.gradle.api.Project" method="copySpec"/> method to share content between archives.</para>
+            <title>複数のアーカイブで中身を共有する <phrase role="original">Sharing content between multiple archives</phrase></title>
+            <para role="original">Using the <apilink class="org.gradle.api.Project" method="copySpec"/> method to share content between archives.</para>
+            <para><apilink class="org.gradle.api.Project" method="copySpec"/>メソッドを使ってアーカイブ間で中身を共有できます。</para>
         </section>
 
-        <para>Often you will want to publish an archive, so that it is usable from another project. This process is
+        <para role="original">Often you will want to publish an archive, so that it is usable from another project. This process is
             described in <xref linkend="artifact_management"/>
         </para>
+        <para>アーカイブを別のプロジェクトで使えるようにするために、そのアーカイブを公開したくなることがよくあります。この処理については、<xref linkend="artifact_management"/>に記載されています。</para>
 
     </section>
     
