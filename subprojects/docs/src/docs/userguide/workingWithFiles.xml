@@ -13,8 +13,8 @@
   ~ See the License for the specific language governing permissions and
   ~ limitations under the License.
   -->
-<chapter id="working_with_files">
-    <title>Working With Files</title>
+<chapter id="working_with_files" xml:lang="ja">
+    <title>ファイルを取り扱う <phrase role="original">Working With Files</phrase></title>
     <para>
         Most builds work with files. Gradle adds some concepts and APIs to help you achieve this.
     </para>
