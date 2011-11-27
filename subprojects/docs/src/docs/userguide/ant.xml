@@ -16,106 +16,168 @@
 <chapter id="ant" xml:lang="ja">
     <title>GradleからAntを使う<phrase role="original">Using Ant from Gradle</phrase></title>
 
-    <para>Gradle provides excellent integration with Ant. You can use individual Ant tasks or entire Ant builds in your
+    <para role="original">Gradle provides excellent integration with Ant. You can use individual Ant tasks or entire Ant builds in your
         Gradle builds. In fact, you will find that it's far easier and more powerful using Ant tasks in a Gradle build
         script, than it is to use Ant's XML format. You could even use Gradle simply as a powerful Ant task scripting
         tool.
     </para>
+    <para>Gradleは優れたAntとの統合機能を提供しています。
+        Gradleビルドの中で、個別のAntタスクや、Antビルド全体を利用することができます。
+        実際、AntのXMLフォーマットを利用するよりも、Gradleビルドの中でAntタスクを使う方がはるかに簡単でより強力であることに気づくでしょう。
+        Gradleを単に強力なAntスクリプティングツールとして使ってもよいくらいです。
+    </para>
 
-    <para>Ant can be divided into two layers. The first layer is the Ant language. It provides the syntax for the
+    <para role="original">Ant can be divided into two layers. The first layer is the Ant language. It provides the syntax for the
         <filename>build.xml</filename>, the handling of the targets, special constructs like macrodefs, and so on.
         In other words, everything except the Ant tasks and types. Gradle understands this language, and allows you to
         import your Ant <filename>build.xml</filename> directly into a Gradle project. You can then use the targets of
         your Ant build as if they were Gradle tasks.
     </para>
+    <para>Antは二つのレイヤーに分割できます。
+        第一のレイヤーはAnt言語で、<filename>build.xml</filename>の文法やターゲットの取り扱い、およびmacrodefのような特別な構成要素などを提供します。
+        別の言い方では、Antタスクとタイプを除くすべてのものです。
+        Gradleはこの言語を理解し、GradleプロジェクトにAntの<filename>build.xml</filename>を直接インポートすることを可能にしています。
+        そのため、AntビルドのターゲットをGradleのタスクであるかのように利用することができます。
+    </para>
 
-    <para>The second layer of Ant is its wealth of Ant tasks and types, like <literal>javac</literal>,
+    <para role="original">The second layer of Ant is its wealth of Ant tasks and types, like <literal>javac</literal>,
         <literal>copy</literal> or <literal>jar</literal>. For this layer Gradle provides integration
         simply by relying on Groovy, and the fantastic <literal>AntBuilder</literal>.
     </para>
+    <para>Antの第二のレイヤーは、<literal>javac</literal>や<literal>copy</literal>、<literal>jar</literal>といった豊富なAntタスクやタイプの資産です。
+    このレイヤーに対してはGroovyのすばらしい<literal>AntBuilder</literal>が利用できるため、Gradleはシンプルな統合機能を提供するのみです。
+    </para>
 
-    <para>Finally, since build scripts are Groovy scripts, you can always execute an Ant build as an external process.
+    <para role="original">Finally, since build scripts are Groovy scripts, you can always execute an Ant build as an external process.
         Your build script may contain statements like:<literal>"ant clean compile".execute()</literal>.
         <footnote>
-            <para>In Groovy you can execute Strings. To learn more about executing external processes with Groovy have a
+            <para role="original">In Groovy you can execute Strings. To learn more about executing external processes with Groovy have a
                 look in 'Groovy in Action' 9.3.2 or at the Groovy wiki
             </para>
         </footnote>
     </para>
+    <para>最後に、ビルドスクリプトはGroovyスクリプトなので、いつでもAntビルドを外部プロセスとして実行できます。
+        ビルドスクリプトは<literal>"ant clean compile".execute()</literal>のような実行文を含んでいてもかまいません。
+        <footnote>
+            <para>Groovyでは文字列をコマンドとして実行できます。
+                外部プロセスの実行について詳しく学ぶには、「Groovy in Action」の9.3.2節か、Groovy Wikiを参照してください。
+            </para>
+        </footnote>
+    </para>
 
-    <para>You can use Gradle's Ant integration as a path for migrating your build from Ant to Gradle. For example, you
+    <para role="original">You can use Gradle's Ant integration as a path for migrating your build from Ant to Gradle. For example, you
         could start by importing your existing Ant build. Then you could move your dependency declarations from the Ant
         script to your build file. Finally, you could move your tasks across to your build file, or replace them with
         some of Gradle's plugins. This process can be done in parts over time, and you can have a working Gradle build
         during the entire process.
     </para>
+    <para>GradleのAnt統合機能を、AntからGradleへのビルド移行パスとして利用することもできます。
+        例えば、既存のAntビルドをインポートするところから始めてもよいでしょう。
+        それから、依存関係の宣言をAntスクリプトから新しいビルドファイルへ移動していきます。
+        最後に、タスクを新しいビルドファイルへ移動するか、Gradleプラグインで置き換えます。
+        このプロセスは一部分づつ段階的に実施でき、プロセス全体を通してGradleによるビルドを利用できます。
+    </para>
 
     <section>
-        <title>Using Ant tasks and types in your build</title>
+        <title>ビルドでのAntタスクとタイプの利用<phrase role="original">Using Ant tasks and types in your build</phrase></title>
 
-        <para>In your build script, a property called <literal>ant</literal> is provided by Gradle. This is a reference
+        <para role="original">In your build script, a property called <literal>ant</literal> is provided by Gradle. This is a reference
             to an <apilink class="org.gradle.api.AntBuilder"/> instance. This <literal>AntBuilder</literal> is used to
             access Ant tasks, types and properties from your build script. There is a very simple mapping from Ant's
             <filename>build.xml</filename> format to Groovy, which is explained below.
         </para>
+        <para>ビルドスクリプトではGradleによってプロパティ<literal>ant</literal>が提供されます。
+            これは<apilink class="org.gradle.api.AntBuilder"/>インスタンスへの参照です。
+            この<literal>AntBuilder</literal>はビルドスクリプトからAntタスクやタイプ、プロパティへのアクセスに利用します。
+            Antの<filename>build.xml</filename>フォーマットからGroovyへのマッピングは非常に簡単です。
+            以下で説明します。
+        </para>
 
-        <para>You execute an Ant task by calling a method on the <literal>AntBuilder</literal> instance. You use the task
+        <para role="original">You execute an Ant task by calling a method on the <literal>AntBuilder</literal> instance. You use the task
             name as the method name. For example, you execute the Ant <literal>echo</literal> task by calling the
             <literal>ant.echo()</literal> method. The attributes of the Ant task are passed as Map parameters to the
             method. Below is an example which executes the <literal>echo</literal> task. Notice that we can also mix
             Groovy code and the Ant task markup. This can be extremely powerful.</para>
-        <sample id="useAntTask" dir="userguide/ant/useAntTask" title="Using an Ant task">
+        <para>Antタスクを実行するには、<literal>AntBuilder</literal>インスタンスのメソッドを呼び出します。
+            Antタスク名がメソッド名になります。
+            例えば、Antの<literal>echo</literal>タスクを実行する場合は、<literal>ant.echo()</literal>メソッドを呼び出します。
+            Antタスクの属性は、メソッドにMap型のパラメータとして渡します。
+            以下は<literal>echo</literal>タスクを実行するサンプルです。
+            GroovyコードとAntタスクのマークアップを混在できることに注意してください。
+            これは非常に強力です。</para>
+        <sample id="useAntTask" dir="userguide/ant/useAntTask" title="Antタスクの利用 / Using an Ant task">
             <sourcefile file="build.gradle"/>
             <output args="hello"/>
         </sample>
 
-        <para>
+        <para role="original">
             You pass nested text to an Ant task by passing it as a parameter of the task method call. In this example, we
             pass the message for the <literal>echo</literal> task as nested text:
         </para>
-        <sample id="taskWithNestedText" dir="userguide/ant/taskWithNestedText" title="Passing nested text to an Ant task">
+        <para>
+            Antタスクのメソッド呼び出しのパラメータとして渡してやることで、ネストされたテキストをAntタスクに渡すことができます。
+            この例では、<literal>echo</literal>タスクに対するメッセージをネストされたテキストとして渡しています。
+        </para>
+        <sample id="taskWithNestedText" dir="userguide/ant/taskWithNestedText" title="Antタスクにネストされたテキストを渡す / Passing nested text to an Ant task">
             <sourcefile file="build.gradle"/>
             <output args="hello"/>
         </sample>
 
-        <para>You pass nested elements to an Ant task inside a closure. Nested elements are defined in the same way
+        <para role="original">You pass nested elements to an Ant task inside a closure. Nested elements are defined in the same way
             as tasks, by calling a method with the same name as the element we want to define.</para>
-        <sample id="taskWithNestedElements" dir="userguide/ant/taskWithNestedElements" title="Passing nested elements to an Ant task">
+        <para>Antタスクにネストされた要素を渡す場合はクロージャの内部に記述します。
+            ネストされた要素はタスクと同じように、指定したい要素名と同じメソッドを呼び出すことで指定できます。</para>
+        <sample id="taskWithNestedElements" dir="userguide/ant/taskWithNestedElements" title="Antタスクにネストされた要素を渡す / Passing nested elements to an Ant task">
             <sourcefile file="build.gradle"/>
             <test args="zip"/>
         </sample>
 
-        <para>You can access Ant types in the same way that you access tasks, using the name of the type as the
+        <para role="original">You can access Ant types in the same way that you access tasks, using the name of the type as the
             method name. The method call returns the Ant data type, which you can then use directly in your build script. In the
             following example, we create an Ant <literal>path</literal> object, then iterate over the contents of it.</para>
-        <sample id="useAntType" dir="userguide/ant/useAntType" title="Using an Ant type">
+        <para>Antタスクにアクセスするのと同じ方法、すなわちタイプ名をメソッド名として利用することでAntタイプにアクセスできます。
+            メソッド呼び出しの戻り値はAntデータ型なので、ビルドスクリプトの中で直接利用できます。
+            次の例では、Antの<literal>path</literal>オブジェクトを生成し、その内容をすべてイテレートしています。</para>
+        <sample id="useAntType" dir="userguide/ant/useAntType" title="Antタイプの利用 / Using an Ant type">
             <sourcefile file="build.gradle"/>
             <test args="list"/>
         </sample>
 
-        <para>More information about <literal>AntBuilder</literal> can be found in 'Groovy in Action' 8.4 or at the
+        <para role="original">More information about <literal>AntBuilder</literal> can be found in 'Groovy in Action' 8.4 or at the
             <ulink url="http://groovy.codehaus.org/Using+Ant+from+Groovy">Groovy Wiki</ulink>
+        </para>
+        <para><literal>AntBuilder</literal>に関する詳細は「Groovy in Action」の8.4節、ないしは<ulink url="http://groovy.codehaus.org/Using+Ant+from+Groovy">Groovy Wiki</ulink>を参照してください。
         </para>
 
         <section>
-            <title>Using custom Ant tasks in your build</title>
-            <para>To make custom tasks available in your build, you use the <literal>typedef</literal> Ant task, just
+            <title>ビルドでカスタムAntタスクを使う<phrase role="original">Using custom Ant tasks in your build</phrase></title>
+            <para role="original">To make custom tasks available in your build, you use the <literal>typedef</literal> Ant task, just
                 as you would in a <literal>build.xml</literal> file. You can then refer to the custom Ant task as you
                 would a built-in Ant task.
             </para>
-            <sample id="useExternalAntTask" dir="userguide/ant/useExternalAntTask" title="Using a custom Ant task">
+            <para>ビルドでカスタムタスクを有効にするためには、
+                <literal>build.xml</literal>ファイルと同じくAntタスク<literal>taskdef</literal>を利用します。
+                これにより組み込みのAntタスクと同様にカスタムAntタスクが参照できるようになります。
+            </para>
+            <sample id="useExternalAntTask" dir="userguide/ant/useExternalAntTask" title="カスタムAntタスクの利用 / Using a custom Ant task">
                 <sourcefile file="build.gradle"/>
             </sample>
-            <para>
+            <para role="original">
                 You can use Gradle's dependency management to assemble the classpath to use for the custom tasks.
                 To do this, you need to define a custom configuration for the classpath, then add some dependencies 
                 to the configuration. This is described in more detail in <xref linkend='sec:how_to_declare_your_dependencies'/>.
             </para>
-            <sample id="useExternalAntTaskWithConfig" dir="userguide/ant/useExternalAntTaskWithConfig" title="Declaring the classpath for a custom Ant task">
+            <para>
+                カスタムタスクを利用するために必要なクラスパスの設定には、Gradleの依存関係管理機能が利用できます。
+                このために、クラスパスに対するカスタムコンフィグレーションを定義して、コンフィグレーションに対する依存関係を追加する必要があります。
+                詳細については<xref linkend='sec:how_to_declare_your_dependencies'/>に記述されています。
+            </para>
+            <sample id="useExternalAntTaskWithConfig" dir="userguide/ant/useExternalAntTaskWithConfig" title="カスタムAntタスクに対するクラスパスの宣言 / Declaring the classpath for a custom Ant task">
                 <sourcefile file="build.gradle" snippet="define-classpath"/>
             </sample>
-            <para>To use the classpath configuration, use the <literal>asPath</literal> property of the custom configuration.</para>
-            <sample id="useExternalAntTaskWithConfig" dir="userguide/ant/useExternalAntTaskWithConfig" title="Using a custom Ant task and dependency management together">
+            <para role="original">To use the classpath configuration, use the <literal>asPath</literal> property of the custom configuration.</para>
+            <para>クラスパスを設定するには、カスタムコンフィグレーションの<literal>asPath</literal>プロパティを利用します。</para>
+            <sample id="useExternalAntTaskWithConfig" dir="userguide/ant/useExternalAntTaskWithConfig" title="カスタムAntタスクと依存関係管理を併用 / Using a custom Ant task and dependency management together">
                 <sourcefile file="build.gradle" snippet="use-classpath"/>
                 <test args="check"/>
             </sample>
@@ -123,28 +185,36 @@
     </section>
 
     <section>
-        <title>Importing an Ant build</title>
-        <para>You can use the <literal>ant.importBuild()</literal> method to import an Ant build into your Gradle
+        <title>Antビルドのインポート<phrase role="original">Importing an Ant build</phrase></title>
+        <para role="original">You can use the <literal>ant.importBuild()</literal> method to import an Ant build into your Gradle
             project. When you import an Ant build, each Ant target is treated as a Gradle task. This means you can
             manipulate and execute the Ant targets in exactly the same way as Gradle tasks.
         </para>
-        <sample id="antHello" dir="userguide/ant/hello" title="Importing an Ant build">
+        <para><literal>ant.importBuild()</literal>メソッドを利用して、GradleプロジェクトにAntビルドをインポートできます。
+            Antビルドをインポートした場合、各AntターゲットはGradleのタスクとして扱われます。
+            つまり、AntターゲットとGradleタスクをまったく同一の方法で操作することができるということです。
+        </para>
+        <sample id="antHello" dir="userguide/ant/hello" title="Antビルドのインポート / Importing an Ant build">
             <sourcefile file="build.gradle"/>
             <sourcefile file="build.xml"/>
             <output args="hello"/>
         </sample>
-        <para>You can add a task which depends on an Ant target:
+        <para role="original">You can add a task which depends on an Ant target:
         </para>
-        <sample id="dependsOnAntTarget" dir="userguide/ant/dependsOnAntTarget" title="Task that depends on Ant target">
+        <para>Antターゲットに依存するタスクを追加することもできます:
+        </para>
+        <sample id="dependsOnAntTarget" dir="userguide/ant/dependsOnAntTarget" title="Antターゲットに依存するタスク / Task that depends on Ant target">
             <sourcefile file="build.gradle"/>
             <output args="intro"/>
         </sample>
-        <para>Or, you can add behaviour to an Ant target:</para>
-        <sample id="addBehaviourToAntTarget" dir="userguide/ant/addBehaviourToAntTarget" title="Adding behaviour to an Ant target">
+        <para role="original">Or, you can add behaviour to an Ant target:</para>
+        <para>Antターゲットにふるまいを追加することも可能です:</para>
+        <sample id="addBehaviourToAntTarget" dir="userguide/ant/addBehaviourToAntTarget" title="Antターゲットにふるまいを追加 / Adding behaviour to an Ant target">
             <sourcefile file="build.gradle"/>
             <output args="hello"/>
         </sample>
-        <para>It is also possible for an Ant target to depend on a Gradle task:</para>
+        <para role="original">It is also possible for an Ant target to depend on a Gradle task:</para>
+        <para>Gradleタスクに依存するAntターゲットを定義することも可能です:</para>
         <sample id="dependsOnTask" dir="userguide/ant/dependsOnTask" title="Ant target that depends on Gradle task">
             <sourcefile file="build.gradle"/>
             <sourcefile file="build.xml"/>
@@ -153,38 +223,52 @@
     </section>
 
     <section>
-        <title>Ant properties and references</title>
+        <title>Antプロパティとリファレンス<phrase role="original">Ant properties and references</phrase></title>
 
-        <para>There are several ways to set an Ant property, so that the property can be used by Ant tasks. You can
+        <para role="original">There are several ways to set an Ant property, so that the property can be used by Ant tasks. You can
             set the property directly on the <literal>AntBuilder</literal> instance. The Ant properties are also
             available as a Map which you can change. You can also use the Ant <literal>property</literal> task.
             Below are some examples of how to do this.
         </para>
-        <sample id="antProperties" dir="userguide/ant/properties" title="Setting an Ant property">
+        <para>Antタスクで利用できるようにAntプロパティを設定する方法は複数あります。
+            <literal>AntBuilder</literal>インスタンスのプロパティを直接設定できます。
+            Antプロパティは変更可能なMapとしても利用可能です。
+            Antの<literal>property</literal>タスクも利用できます。
+            以下はこれらをどのように実行するのかを示すサンプルです。
+        </para>
+        <sample id="antProperties" dir="userguide/ant/properties" title="Antプロパティの設定 / Setting an Ant property">
             <sourcefile file="build.gradle" snippet="set-property"/>
             <sourcefile file="build.xml" snippet="set-property"/>
         </sample>
-        <para>Many Ant tasks set properties when they execute. There are several ways to get the value of these properties.
+        <para role="original">Many Ant tasks set properties when they execute. There are several ways to get the value of these properties.
             You can get the property directly from the <literal>AntBuilder</literal> instance. The Ant properties are
             also available as a Map. Below are some examples.</para>
-        <sample id="antProperties" dir="userguide/ant/properties" title="Getting an Ant property">
+        <para>多くのAntタスクは実行時にプロパティを設定します。
+            これらのプロパティを取得する方法も複数あります。
+            <literal>AntBuilder</literal>インスタンスからプロパティを直接取得できます。
+            AntプロパティはMapとしても参照可能です。
+            以下はサンプルです。</para>
+        <sample id="antProperties" dir="userguide/ant/properties" title="Antプロパティの取得 / Getting an Ant property">
             <sourcefile file="build.xml" snippet="get-property"/>
             <sourcefile file="build.gradle" snippet="get-property"/>
         </sample>
-        <para>There are several ways to set an Ant reference:</para>
-        <sample id="antProperties" dir="userguide/ant/properties" title="Setting an Ant reference">
+        <para role="original">There are several ways to set an Ant reference:</para>
+        <para>Antリファレンスを設定する方法は複数あります:</para>
+        <sample id="antProperties" dir="userguide/ant/properties" title="Antリファレンスの設定 / Setting an Ant reference">
             <sourcefile file="build.gradle" snippet="set-reference"/>
             <sourcefile file="build.xml" snippet="set-reference"/>
         </sample>
-        <para>There are several ways to get an Ant reference:</para>
-        <sample id="antProperties" dir="userguide/ant/properties" title="Getting an Ant reference">
+        <para role="original">There are several ways to get an Ant reference:</para>
+        <para>Antリファレンスを取得する方法も複数あります:</para>
+        <sample id="antProperties" dir="userguide/ant/properties" title="Antリファレンスの取得 / Getting an Ant reference">
             <sourcefile file="build.xml" snippet="get-reference"/>
             <sourcefile file="build.gradle" snippet="get-reference"/>
         </sample>
     </section>
 
     <section>
-        <title>API</title>
-        <para>The Ant integration is provided by <apilink class="org.gradle.api.AntBuilder"/>.</para>
+        <title>API<phrase role="original">API</phrase></title>
+        <para role="original">The Ant integration is provided by <apilink class="org.gradle.api.AntBuilder"/>.</para>
+        <para>Ant統合機能は<apilink class="org.gradle.api.AntBuilder"/>によって提供されています。</para>
     </section>
 </chapter>
