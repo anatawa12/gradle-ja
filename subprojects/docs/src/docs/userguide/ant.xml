@@ -13,8 +13,8 @@
   ~ See the License for the specific language governing permissions and
   ~ limitations under the License.
   -->
-<chapter id="ant">
-    <title>Using Ant from Gradle</title>
+<chapter id="ant" xml:lang="ja">
+    <title>GradleからAntを使う<phrase role="original">Using Ant from Gradle</phrase></title>
 
     <para>Gradle provides excellent integration with Ant. You can use individual Ant tasks or entire Ant builds in your
         Gradle builds. In fact, you will find that it's far easier and more powerful using Ant tasks in a Gradle build
