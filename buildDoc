@@ -1,0 +1,3 @@
+#!/bin/bash
+
+gradlew :docs:docs -x :docs:userguidePdf

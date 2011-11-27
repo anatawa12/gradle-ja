@@ -17,49 +17,76 @@
     <title>Webアプリケーションクイックスタート<phrase role="original">Web Application Quickstart</phrase></title>
 
     <note>
-        <para>This chapter is a work in progress.</para>
+        <para role="original">This chapter is a work in progress.</para>
+        <para>この章は執筆途中です。</para>
     </note>
 
-    <para>This chapter introduces some of the Gradle's support for web applications. Gradle provides two plugins for web
+    <para role="original">This chapter introduces some of the Gradle's support for web applications. Gradle provides two plugins for web
         application developement: the War plugin and the Jetty plugin. The War plugin extends the Java plugin to build a
         WAR file for your project. The Jetty plugin extends the War plugin to allow you to deploy your web application
         to an embedded Jetty web container.
     </para>
+    <para>この章ではGradleのWebアプリケーションサポートについて紹介します。
+        GradleはWebアプリケーション開発に対応する2つのプラグイン、WarプラグインとJettyプラグインを提供しています。
+        WarプラグインはJavaプラグインを拡張して、プロジェクトでWARファイルのビルドができるようにします。
+        JettyプラグインはWarプラグインを拡張して、組み込みJettyコンテナにWebアプリケーションをデプロイできるようにします。
+    </para>
 
     <section>
-        <title>Building a WAR file</title>
-        <para>To build a WAR file, you apply the War plugin to your project:</para>
-        <sample id="webQuickstart" dir="webApplication/quickstart" includeLocation="true" title="War plugin">
+        <title>WARファイルのビルド<phrase role="original">Building a WAR file</phrase></title>
+        <para role="original">To build a WAR file, you apply the War plugin to your project:</para>
+        <para>WARファイルをビルドするために、プロジェクトにWarプラグインを適用します:</para>
+        <sample id="webQuickstart" dir="webApplication/quickstart" includeLocation="true" title="Warプラグイン / War plugin">
             <sourcefile file="build.gradle" snippet="use-war-plugin"/>
         </sample>
-        <para>This also applies the Java plugin to your project. Running <userinput>gradle build</userinput> will compile,
+        <para role="original">This also applies the Java plugin to your project. Running <userinput>gradle build</userinput> will compile,
             test and WAR your project. Gradle will look for the source files to include in the WAR file in
             <filename>src/main/webapp</filename>. Your compiled classes, and their runtime dependencies are also
             included in the WAR file.
         </para>
-        <tip><title>Groovy web applications</title><para>You can combine multiple plugins in a single project, so you
+        <para>これにより、プロジェクトにはJavaプラグインも適用されます。
+            <userinput>gradle build</userinput>を実行すれば、プロジェクトがコンパイル、テストされ、WARが生成されます。
+            Gradleは<filename>src/main/webapp</filename>にあるファイルからWARに含めるものを探します。
+            コンパイル済みクラスや実行時に必要となる依存ライブラリもWARに追加されます。
+        </para>
+        <tip><title>Groovy Webアプリケーション<phrase role="original">Groovy web applications</phrase></title>
+            <para role="original">You can combine multiple plugins in a single project, so you
             can use the War and Groovy plugins together to build a Groovy based web application. The appropriate groovy
-            libraries will be added to the WAR file for you.</para></tip>
+            libraries will be added to the WAR file for you.</para>
+            <para>単一のプロジェクト内で複数のプラグインを組み合わせることができるので、
+            GroovyベースのWebアプリケーションをビルドするためにWarプラグインとGroovyプラグインを同時に使えます。
+            その場合、適切なGroovyライブラリがWARファイルに追加されます。</para>
+        </tip>
     </section>
 
     <section>
-        <title>Running your web application</title>
-        <para>To run your web application, you apply the Jetty plugin to your project:</para>
-        <sample id="webQuickstart" dir="webApplication/quickstart" title="Running web application with Jetty plugin">
+        <title>Webアプリケーションの実行<phrase role="original">Running your web application</phrase></title>
+        <para role="original">To run your web application, you apply the Jetty plugin to your project:</para>
+        <para>Webアプリケーションを実行するためには、プロジェクトにJettyプラグインを適用します:</para>
+        <sample id="webQuickstart" dir="webApplication/quickstart" title="JettyプラグインによるWebアプリケーションの実行 / Running web application with Jetty plugin">
             <sourcefile file="build.gradle" snippet="use-jetty-plugin"/>
         </sample>
-        <para>This also applies the War plugin to your project. Running <userinput>gradle jettyRun</userinput> will
+        <para role="original">This also applies the War plugin to your project. Running <userinput>gradle jettyRun</userinput> will
             run your web application in an embedded Jetty web container. Running <userinput>gradle jettyRunWar</userinput>
             will build the WAR file, and then run it in an embedded web container.
         </para>
-        <para>TODO: which url, configure port, uses source files in place and can edit your files and reload.</para>
+        <para>これにより、プロジェクトにはWarプラグインも適用されます。
+            <userinput>gradle jettyRun</userinput>を実行すれば、組み込みJettyコンテナ上でWebアプリケーションが実行されます。
+            <userinput>gradle jettyRunWar</userinput>を実行するとWARファイルが生成され、その後組み込みWebコンテナで実行されます。
+        </para>
+        <para role="original">TODO: which url, configure port, uses source files in place and can edit your files and reload.</para>
+        <para>TODO: URLの確認方法、ポートの設定、ソースファイルの編集と動的リロードの方法など</para>
     </section>
 
     <section>
-        <title>Summary</title>
-        <para>You can find out more about the War plugin in <xref linkend="war_plugin"/> and the Jetty plugin in
+        <title>まとめ<phrase role="original">Summary</phrase></title>
+        <para role="original">You can find out more about the War plugin in <xref linkend="war_plugin"/> and the Jetty plugin in
             <xref linkend="jetty_plugin"/>. You can find more sample Java projects in the
             <filename>samples/webApplication</filename> directory in the Gradle distribution.
+        </para>
+        <para>Warプラグインについての詳細は<xref linkend="war_plugin"/>、
+            Jettyプラグインの詳細については<xref linkend="jetty_plugin"/>を参照してください。
+            Gradle配布物の<filename>samples/webApplication</filename>ディレクトリにサンプルJavaプロジェクトがあります。
         </para>
     </section>
 </chapter>
