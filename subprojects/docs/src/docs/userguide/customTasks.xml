@@ -13,8 +13,8 @@
   ~ See the License for the specific language governing permissions and
   ~ limitations under the License.
   -->
-<chapter id="custom_tasks">
-    <title>Writing Custom Task Classes</title>
+<chapter id="custom_tasks" xml:lang="ja">
+    <title>カスタムタスクの作成<phrase role="original">Writing Custom Task Classes</phrase></title>
 
     <para>Gradle supports two types of task. One such type is the simple task, where you define the task with an
         action closure. We have seen these in <xref linkend="tutorial_using_tasks"/>. For this type of task, the action
