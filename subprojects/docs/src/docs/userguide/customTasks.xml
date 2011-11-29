@@ -16,12 +16,18 @@
 <chapter id="custom_tasks" xml:lang="ja">
     <title>カスタムタスクの作成<phrase role="original">Writing Custom Task Classes</phrase></title>
 
-    <para>Gradle supports two types of task. One such type is the simple task, where you define the task with an
+    <para role="original">Gradle supports two types of task. One such type is the simple task, where you define the task with an
         action closure. We have seen these in <xref linkend="tutorial_using_tasks"/>. For this type of task, the action
         closure determines the behaviour of the task. This type of task is good for implementing one-off tasks in your
         build script.
     </para>
-    <para>
+    <para>Gradleは2種類のタスクをサポートしています。
+        そのひとつは単純タスクで、アクションクロージャでタスクを定義します。
+        これらは<xref linkend="tutorial_using_tasks"/>で説明してきたものです。
+        このタイプのタスクに対しては、タスクのふるまいはアクションクロージャによって決まります。
+        このタイプのタスクはビルドスクリプトで1回限りのタスクを実装するのに適しています。
+    </para>
+    <para role="original">
         The other type of task is the enhanced task, where the behaviour is built into the task, and the task
         provides some properties which you can use to configure the behaviour. We have seen these in
         <xref linkend="more_about_tasks"/>. Most Gradle plugins use enhanced tasks. With enhanced tasks, you don't need
@@ -30,35 +36,59 @@
         a piece of behaviour in many different places, possibly across different builds.
     </para>
     <para>
+        もうひとつは拡張タスクで、ふるまいがタスクの中に組み込まれており、ふるまいを制御することのできるプロパティが提供されます。
+        これらは<xref linkend="more_about_tasks"/>で説明してきたものです。
+        ほとんどのGradleプラグインは拡張タスクを利用します。
+        拡張タスクでは、単純タスクのようにふるまいを実装する必要はありません。
+        単にタスクを宣言し、プロパティを利用してタスクを制御するだけです。
+        この方法により、拡張タスクではふるまいの断片を多くの場所で再利用したり、場合によっては異なるビルドで横断的に再利用したりできます。
+    </para>
+    <para role="original">
         The behaviour and properties of an enhanced task is defined by the task's class. When you declare an enhanced task, you
         specify the type, or class of the task.
     </para>
     <para>
+        拡張タスクのふるまいやプロパティはタスクのクラスによって定義されます。
+        拡張タスクを宣言するときは、タスクのタイプやクラスを指定します。
+    </para>
+    <para role="original">
         Implementing your own custom task class in Gradle is easy.
         You can implement a custom task class in pretty much any language you like, provided it ends up compiled to bytecode.
         In our examples, we are going to use Groovy as the implementation language, but you could use, for example, Java
         or Scala. In general, using Groovy is the easiest option, because the Gradle API is designed to work well with Groovy.
     </para>
+    <para>
+        Gradleで独自のカスタムタスククラスを実装するのは簡単です。
+        カスタムタスククラスは、最終的にバイトコードにコンパイルされるなら、どんな言語でも好きなもので実装できます。
+        このサンプルでは実装言語としてGroovyを使いますが、例えばJavaやScalaを使うこともできます。
+        Gradle APIはGroovyとの親和性が高いように設計されているので、一般論としてGroovyが一番簡単な選択肢ではありますが。
+    </para>
 
     <section>
-        <title>Packaging a task class</title>
-        <para>There are several places where you can put the source for the task class.
+        <title>タスククラスのパッケージング<phrase role="original">Packaging a task class</phrase></title>
+        <para role="original">There are several places where you can put the source for the task class.
+        </para>
+        <para>タスククラスのソースを配置できる箇所はいくつかあります。
         </para>
         <variablelist>
             <varlistentry>
-                <term>Build script</term>
+                <term>ビルドスクリプト<phrase role="original">Build script</phrase></term>
                 <listitem>
-                    <para>You can include the task class directly in the build script. This has the benefit that the task class is
+                    <para role="original">You can include the task class directly in the build script. This has the benefit that the task class is
                         automatically compiled and included in the classpath of the build script without you having to do anything.
                         However, the task class is not visible outside the build script, and so you cannot reuse the task class
                         outside the build script it is defined in.
                     </para>
+                    <para>タスククラスをビルドスクリプトに直接含めることができます。
+                        この方法は、特に何もしなくてもタスククラスが自動的にコンパイルされ、ビルドスクリプトのクラスパスに追加されるというメリットがあります。
+                        しかし、タスククラスがビルドスクリプトの外部からは参照できないため、タスククラスを定義しているビルドスクリプトの外部では再利用できません。
+                    </para>
                 </listitem>
             </varlistentry>
             <varlistentry>
-                <term><filename>buildSrc</filename> project</term>
+                <term><filename>buildSrc</filename>プロジェクト<phrase role="original"><filename>buildSrc</filename> project</phrase></term>
                 <listitem>
-                    <para>You can put the source for the task class in the
+                    <para role="original">You can put the source for the task class in the
                         <filename><replaceable>rootProjectDir</replaceable>/buildSrc/src/main/groovy</filename> directory.
                         Gradle will take care of compiling and testing the task class and making it available on the
                         classpath of the build script. The task class is visible to every build script used by the build.
@@ -67,91 +97,132 @@
                         Using the <filename>buildSrc</filename> project approach keeps separate
                         the task declaration - that is, what the task should do - from the task implementation - that is,
                         how the task does it.</para>
-                    <para>
+                    <para>タスククラスのソースを
+                        <filename><replaceable>rootProjectDir</replaceable>/buildSrc/src/main/groovy</filename>ディレクトリに配置できます。
+                        Gradleがタスククラスのコンパイルとテストを実行し、ビルドスクリプトのクラスパス上で有効になるように取り計らってくれます。
+                        タスククラスはビルドで利用されるすべてのビルドスクリプトから参照可能です。
+                        しかし、ビルドの外部からは参照できないので、タスクが定義されているビルドの外部でタスククラスを再利用することはできません。
+                        <filename>buildSrc</filename>プロジェクトを使うアプローチでは、タスクの宣言「タスクが何を実行すべきか」と、タスクの実装「タスクがそれをどうやって実行するか」を分離できます。</para>
+                    <para role="original">
                         See <xref linkend="organizing_build_logic"/> for more details about the <filename>buildSrc</filename>
                         project.</para>
+                    <para>
+                        <filename>buildSrc</filename>プロジェクトの詳細については、<xref linkend="organizing_build_logic"/>を参照してください。
+                        </para>
                 </listitem>
             </varlistentry>
             <varlistentry>
-                <term>Standalone project</term>
+                <term>スタンドアロンプロジェクト<phrase role="original">Standalone project</phrase></term>
                 <listitem>
-                    <para>You can create a separate project for your task class. This project produces and
+                    <para role="original">You can create a separate project for your task class. This project produces and
                         publishes a JAR which you can then use in multiple builds and share with others. Generally, this JAR
                         might include some custom plugins, or bundle several related task classes into a single library. Or
                         some combination of the two.
                     </para>
+                    <para>タスククラスのために独立したプロジェクトを作ることもできます。
+                        このプロジェクトはJARを生成して発行するので、複数のビルドで利用したり、他のユーザーと共有することができます。
+                        一般に、このJARはカスタムプラグインを含むか、関連するいくつかのタスククラスを単一のライブラリにバンドルする場合があります。
+                        あるいは、その両方の組み合わせです。
+                        </para>
                 </listitem>
             </varlistentry>
         </variablelist>
-        <para> In our examples, we will start with the task class in the build script, to keep things simple.
+        <para role="original"> In our examples, we will start with the task class in the build script, to keep things simple.
             Then we will look at creating a standalone project.
+        </para>
+        <para>サンプルでは、簡単のためにビルドスクリプト内のタスククラスからはじめます。
+            その後、スタンドアロンプロジェクトについて説明します。
         </para>
     </section>
 
     <section>
-        <title>Writing a simple task class</title>
-        <para>To implement a custom task class, you extend <apilink class="org.gradle.api.DefaultTask"/>.
+        <title>単純タスクの作成<phrase role="original">Writing a simple task class</phrase></title>
+        <para role="original">To implement a custom task class, you extend <apilink class="org.gradle.api.DefaultTask"/>.
         </para>
-        <sample id="customTask" dir="userguide/tasks/customTask" title="Defining a custom task">
+        <para>カスタムタスククラスを実装するには、<apilink class="org.gradle.api.DefaultTask"/>を拡張します。
+        </para>
+        <sample id="customTask" dir="userguide/tasks/customTask" title="カスタムタスクの定義 / Defining a custom task">
             <sourcefile file="build.gradle" snippet="define-task"/>
         </sample>
 
-        <para>This task doesn't do anything useful, so let's add some behaviour. To do so, we add a method to the task
+        <para role="original">This task doesn't do anything useful, so let's add some behaviour. To do so, we add a method to the task
             and mark it with the <apilink class="org.gradle.api.tasks.TaskAction"/> annotation. Gradle will call the
             method when the task executes. You don't have to use a method to define the behaviour for the task. You
             could, for instance, call <literal>doFirst()</literal> or <literal>doLast()</literal> with a closure in the
             task constructor to add behaviour.
         </para>
-        <sample id="customTaskWithAction" dir="userguide/tasks/customTask" title="A hello world task">
+        <para>このタスクは何の役にも立たないので、ふるまいを追加してみましょう。
+            そのためには、タスクにメソッドを追加し、<apilink class="org.gradle.api.tasks.TaskAction"/>アノテーションでマークします。
+            タスクが実行されたときに、Gradleがこのメソッドを呼びます。
+            タスクのふるまいを定義するには、必ずしもメソッドを使う必要はありません。
+            例えば、タスクのコンストラクタでクロージャを引数として<literal>doFirst()</literal>や<literal>doLast()</literal>を呼ぶことでふるまいを追加することもできます。
+        </para>
+        <sample id="customTaskWithAction" dir="userguide/tasks/customTask" title="hello worldタスク / A hello world task">
             <sourcefile file="build.gradle" snippet="add-action"/>
             <output args="-q hello"/>
         </sample>
 
-        <para>Let's add a property to the task, so we can customize it. Tasks are simply POGOs, and when you declare a
+        <para role="original">Let's add a property to the task, so we can customize it. Tasks are simply POGOs, and when you declare a
             task, you can set the properties or call methods on the task object. Here we add a <literal>greeting</literal>
             property, and set the value when we declare the <literal>greeting</literal> task.
         </para>
-        <sample id="customTaskWithProperty" dir="userguide/tasks/customTaskWithProperty" title="A customizable hello world task">
+        <para>タスクにプロパティを追加して、カスタマイズできるようにしてみましょう。
+            タスクは単純なPOGOsで、タスクを宣言するときにプロパティをセットしたり、タスクオブジェクトのメソッドを呼んだりできます。
+            ここでは、<literal>greeting</literal>プロパティを追加して、<literal>greeting</literal>タスクを宣言するときにその値をセットしています。
+        </para>
+        <sample id="customTaskWithProperty" dir="userguide/tasks/customTaskWithProperty" title="カスタマイズ可能なhello worldタスク / A customizable hello world task">
             <sourcefile file="build.gradle" snippet="add-property"/>
             <output args="-q hello greeting"/>
         </sample>
     </section>
 
     <section>
-        <title>A standalone project</title>
-        <para>Now we will move our task to a standalone project, so we can publish it and share it with others.
+        <title>スタンドアロンプロジェクト<phrase role="original">A standalone project</phrase></title>
+        <para role="original">Now we will move our task to a standalone project, so we can publish it and share it with others.
             This project is simply a Groovy project that produces a JAR containing the task class.
             Here is a simple build script for the project. It applies the Groovy plugin, and adds the Gradle API
             as a compile-time dependency.
         </para>
+        <para>それでは、タスクをスタンドアロンプロジェクトに移動して、発行したり他ユーザーと共有したりできるようにしてみましょう。
+            このプロジェクトは単純なGroovyプロジェクトで、タスククラスを含むJARを生成します。
+            プロジェクトに対する簡単なビルドスクリプトがこちらです。
+        </para>
 
-        <sample id="customTaskStandalone" dir="customPlugin" title="A build for a custom task" includeLocation="true">
+        <sample id="customTaskStandalone" dir="customPlugin" title="カスタムタスクのビルド / A build for a custom task" includeLocation="true">
             <sourcefile file="build.gradle" snippet="use-plugin"/>
         </sample>
 
-        <para>We just follow the convention for where the source for the task class should go.</para>
+        <para role="original">We just follow the convention for where the source for the task class should go.</para>
+        <para>タスククラスのソースを配置する場所は規約に従いました。</para>
 
-        <sample id="customTaskStandalone" dir="customPlugin" title="A custom task">
+        <sample id="customTaskStandalone" dir="customPlugin" title="カスタムタスク / A custom task">
             <sourcefile file="src/main/groovy/org/gradle/GreetingTask.groovy"/>
         </sample>
 
         <section>
-            <title>Using your task class in another project</title>
-            <para>To use a task class in a build script, you need to add the class to the build script's classpath. To
+            <title>タスククラスを別のプロジェクトで使う<phrase role="original">Using your task class in another project</phrase></title>
+            <para role="original">To use a task class in a build script, you need to add the class to the build script's classpath. To
                 do this, you use a <literal>buildscript { }</literal> block, as described in <xref linkend="sec:external_dependencies"/>.
                 The following example shows how you might do this when the JAR containing the task class has been published
                 to a local repository:
             </para>
-            <sample id="usingCustomTask" dir="customPlugin" title="Using a custom task in another project">
+            <para>ビルドスクリプトでタスククラスを使うためには、ビルドスクリプトのクラスパスにタスククラスを追加する必要があります。
+                これを実行するには、<xref linkend="sec:external_dependencies"/>で説明されているとおり、<literal>buildscript { }</literal>ブロックを使います。
+                次のサンプルでは、タスククラスを含むJARをローカルリポジトリに発行した場合にどのようにすればよいかを示しています:
+            </para>
+            <sample id="usingCustomTask" dir="customPlugin" title="カスタムタスクを別のプロジェクトで使う / Using a custom task in another project">
                 <sourcefile file="usesCustomTask.gradle" snippet="use-task"/>
             </sample>
         </section>
         <section>
-            <title>Writing tests for your task class</title>
-            <para>You can use the <apilink class="org.gradle.testfixtures.ProjectBuilder"/> class to create
+            <title>タスククラスのテストの作成<phrase role="original">Writing tests for your task class</phrase></title>
+            <para role="original">You can use the <apilink class="org.gradle.testfixtures.ProjectBuilder"/> class to create
                 <apilink class="org.gradle.api.Project"/> instances to use when you test your task class.
             </para>
-            <sample id="customTaskStandalone" dir="customPlugin" title="Testing a custom task">
+            <para>タスククラスのテストのために、<apilink class="org.gradle.testfixtures.ProjectBuilder"/>クラスを利用して
+                <apilink class="org.gradle.api.Project"/>のインスタンスを生成することができます。
+            </para>
+            <sample id="customTaskStandalone" dir="customPlugin" title="カスタムタスクのテスト / Testing a custom task">
                 <sourcefile file="src/test/groovy/org/gradle/GreetingTaskTest.groovy" snippet="test-task"/>
             </sample>
         </section>
