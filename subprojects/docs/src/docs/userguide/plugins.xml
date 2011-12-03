@@ -13,8 +13,8 @@
   ~ See the License for the specific language governing permissions and
   ~ limitations under the License.
   -->
-<chapter id='plugins' xmlns:xi="http://www.w3.org/2001/XInclude">
-    <title>Using Plugins</title>
+<chapter id='plugins' xmlns:xi="http://www.w3.org/2001/XInclude"  xml:lang="ja">
+    <title>プラグインを使う<phrase role="original">Using Plugins</phrase></title>
     <para>Now we look at <emphasis>how</emphasis> Gradle provides build-by-convention and out of the box functionality.
         These features are decoupled from the core of Gradle, and are provided via plugins. Although the plugins are
         decoupled, we would like to point out that the Gradle core plugins are NEVER updated or changed for a
