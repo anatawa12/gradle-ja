@@ -354,8 +354,10 @@
                     <phrase role="original">The tasks which produce the artifacts in configuration <replaceable>ConfigurationName</replaceable>.</phrase>
                 </td>
                 <td><apilink class="org.gradle.api.Task"/></td>
-                <td>Assembles the artifacts in the specified configuration.
-                    The task is added by the Base plugin which is implicitly applied by the Java plugin.
+                <td>指定されたコンフィギュレーションのアーティファクトを構築する。
+                    このタスクは、Javaプラグインが暗黙的に適用するBaseプラグインにより追加される。
+                    <phrase role="original">Assembles the artifacts in the specified configuration.
+                        The task is added by the Base plugin which is implicitly applied by the Java plugin.</phrase>
                 </td>
             </tr>
             <tr>
@@ -367,8 +369,10 @@
                     <phrase role="original">The tasks which uploads the artifacts in configuration <replaceable>ConfigurationName</replaceable>.</phrase>
                 </td>
                 <td><apilink class="org.gradle.api.tasks.Upload"/></td>
-                <td>Assembles and uploads the artifacts in the specified configuration.
-                    The task is added by the Base plugin which is implicitly applied by the Java plugin.
+                <td>指定されたコンフィギュレーションのアーティファクトを構築しアップロードする。
+                    このタスクは、Javaプラグインが暗黙的に適用するBaseプラグインにより追加される。
+                    <phrase role="original">Assembles and uploads the artifacts in the specified configuration.
+                        The task is added by the Base plugin which is implicitly applied by the Java plugin.</phrase>
                 </td>
             </tr>
         </table>
@@ -426,8 +430,6 @@
         </para>
         <para>Javaプラグインは、以下のような多くの依存関係のコンフィギュレーションをプロジェクトに追加します。
         これらのコンフィギュレーションは<literal>compileJava</literal>や<literal>test</literal>といったタスクに割り当てられます。
-            コンフィギュレーションについての詳しい情報は<xref linkend="sub:configurations"/>や
-            <xref linkend="artifacts_and_configurations"/>を参照してください。
         </para>
         <table id='tab:configurations'>
             <title>Javaプラグイン - 依存関係のコンフィギュレーション<phrase role="original">Java plugin - dependency configurations</phrase></title>
