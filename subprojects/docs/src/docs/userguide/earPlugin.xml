@@ -13,8 +13,8 @@
   ~ See the License for the specific language governing permissions and
   ~ limitations under the License.
   -->
-<chapter id='ear_plugin' xmlns:xi="http://www.w3.org/2001/XInclude">
-    <title>The Ear Plugin</title>
+<chapter id='ear_plugin' xmlns:xi="http://www.w3.org/2001/XInclude" xml:lang="ja">
+    <title>Earプラグイン<phrase role="original">The Ear Plugin</phrase></title>
     <para>The Ear plugin adds support for assembling web application EAR files. It adds a default EAR archive task.
         It doesn't require the Java plugin, but for projects that also use the Java plugin it disables the default
         JAR archive generation.
