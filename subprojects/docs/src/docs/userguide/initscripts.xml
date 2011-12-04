@@ -13,7 +13,7 @@
   ~ See the License for the specific language governing permissions and
   ~ limitations under the License.
   -->
-<chapter id='init_scripts'>
+<chapter id='init_scripts' xml:lang="ja">
     <title>初期化スクリプト<phrase role="original">Initialization Scripts</phrase></title>
     <para role="original">Gradle provides a powerful mechanism to allow customizing the build based on the current environment.  This
         mechanism also supports tools that wish to integrate with Gradle.
@@ -21,29 +21,30 @@
     <para>Gradleは、実行環境に合わせてビルドをカスタマイズするためのパワフルな仕組みを提供しています。また、この仕組みにより、外部ツールがGradleを統合して使用するのを手助けします。</para>
     <section id='sec:basic_usage'>
         <title>基本的な使い方<phrase role="original">Basic usage</phrase></title>
-        <para role="original">Initialization scripts (a.k.a. <firstterm>init scripts</firstterm>) are similar to other scripts in Gradle.
-            These scripts, however, are run before the build starts.  Here are several possible uses:</para>
-        <para>初期化スクリプト(<firstterm>init scripts</firstterm>)は、Gradleで使う他のスクリプトファイルと同じようなものですが、ビルドの開始前に実行されます。使用する場面としては次のようなものがあります。</para>
+        <para><phrase role="original">Initialization scripts (a.k.a. <firstterm>init scripts</firstterm>) are similar to other scripts in Gradle.
+                These scripts, however, are run before the build starts.  Here are several possible uses:</phrase>
+        初期化スクリプト(<firstterm>init scripts</firstterm>)は、Gradleで使う他のスクリプトと似たものですが、ビルドの開始前に実行されます。使用する場面としては次のようなものがあります。
             <itemizedlist>
                 <listitem>
-                    <para>Set up enterprise-wide configuration, such as where to find custom plugins.</para>
+                    <para role="original">Set up enterprise-wide configuration, such as where to find custom plugins.</para>
+                    <para>企業内で適用される設定、たとえば、カスタムプラグインのダウンロード先などを設定する。</para>
                 </listitem>
                 <listitem>
-                    <para>Set up properties based on the current environment, such as a developer's machine vs. a
+                    <para role="original">Set up properties based on the current environment, such as a developer's machine vs. a
                         continuous integration server.
                     </para>
-                    <para>実行環境に依るプロパティをセットする。たとえば、開発者のマシンとインテグレーションサーバーで異なるプロパティをセットするなど。</para>
+                    <para>実行環境に依るプロパティをセットする。たとえば、開発者のマシンとインテグレーションサーバーで異なるプロパティをセットする。</para>
                 </listitem>
                 <listitem>
-                    <para>Supply personal information about the user that is required by the build, such as repository or database
+                    <para role="original">Supply personal information about the user that is required by the build, such as repository or database
                         authentication credentials.
                     </para>
-                    <para>ユーザーの個人情報をビルドにセットする。たとえば、リポジトリやデータベースの認証情報など。</para>
+                    <para>ビルド時に要求される、ユーザーの個人情報をセットする。リポジトリやデータベースの認証情報など。</para>
                 </listitem>
                 <listitem>
                     <para role="original">Define machine specific details, such as where JDKs are installed.
                     </para>
-                    <para>マシン固有の情報を定義する。たとえば、JDKのインストール場所など。</para>
+                    <para>マシン固有の情報を定義する。JDKのインストール場所など。</para>
                 </listitem>
                 <listitem>
                     <para role="original">Register build listeners.  External tools that wish to listen to Gradle events might find
@@ -57,64 +58,70 @@
                     <para>ビルドのロガーを登録する。Gradleがイベントを記録する方法をカスタマイズしたいことがあるかもしれません。</para>
                 </listitem>
             </itemizedlist>
-            One main limitation of init scripts is that they cannot access classes in the buildSrc project (see
-            <xref linkend='sec:build_sources'/> for details of this feature).
+            <phrase role="original">One main limitation of init scripts is that they cannot access classes in the buildSrc project (see
+            <xref linkend='sec:build_sources'/> for details of this feature).</phrase>
+            初期化スクリプトの主な制限は、buildSrcプロジェクトにアクセスできないことです（この機能の詳細は<xref linkend='sec:build_sources'/>を参照してください）。
         </para>
     </section>
     <section>
-        <title>Using an init script</title>
-        <para>There are several ways to use an init script:
+        <title>初期化スクリプトを使う <phrase role="original">Using an init script</phrase></title>
+        <para role="original">There are several ways to use an init script:
         </para>
+        <para>初期化スクリプトを使うには、いくつかの方法があります。</para>
         <itemizedlist>
             <listitem>
-                <para>Specify a file on the command line.  The command line option is <option>-I</option> or <option>--init-script</option> followed
+                <para role="original">Specify a file on the command line.  The command line option is <option>-I</option> or <option>--init-script</option> followed
                     by the path to the script.  The command line option can appear more than once, each time adding another init script.</para>
+                <para>コマンドラインでファイルを指定する。<option>-I</option>か<option>--init-script</option>オプションに初期化スクリプトのパスを渡します。このオプションを複数並べて、初期化スクリプトを追加していくこともできます。</para>
             </listitem>
             <listitem>
-                <para>Put a file called <filename>init.gradle</filename> in the <filename><replaceable>USER_HOME</replaceable>/.gradle/</filename> directory.</para>
+                <para role="original">Put a file called <filename>init.gradle</filename> in the <filename><replaceable>USER_HOME</replaceable>/.gradle/</filename> directory.</para>
+                <para><filename>init.gradle</filename>という名前のファイルを<filename><replaceable>USER_HOME</replaceable>/.gradle/</filename>ディレクトリに置く。</para>
             </listitem>
             <listitem>
-                <para>Put a file that ends with <filename>.gradle</filename> in the <filename><replaceable>USER_HOME</replaceable>/.gradle/init.d/</filename> directory.</para>
+                <para role="original">Put a file that ends with <filename>.gradle</filename> in the <filename><replaceable>USER_HOME</replaceable>/.gradle/init.d/</filename> directory.</para>
+                <para><filename>.gradle</filename>という拡張子のファイルを<filename><replaceable>USER_HOME</replaceable>/.gradle/init.d/</filename>ディレクトリに置く。</para>
             </listitem>
             <listitem>
-                <para>Put a file that ends with <filename>.gradle</filename> in the <filename><replaceable>GRADLE_HOME</replaceable>/init.d/</filename>
+                <para role="original">Put a file that ends with <filename>.gradle</filename> in the <filename><replaceable>GRADLE_HOME</replaceable>/init.d/</filename>
                     directory, in the Gradle distribution. This allows you to package up a custom Gradle distribution containing some custom build logic and plugins. You can
                     combine this with the <link linkend="gradle_wrapper">Gradle wrapper</link> as a way to make custom logic available to all builds
                     in your enterprise.
                 </para>
+                <para>.gradleという拡張子のファイルを<filename><replaceable>GRADLE_HOME</replaceable>/init.d/</filename>ディレクトリ、つまりGradleのディストリビューションの中に置く。この機能により、独自のビルドロジックとプラグインを入れたカスタムのGradleディストリビューションを作成できます。このカスタムディストリビューションと<link linkend="gradle_wrapper">Gradleラッパー</link>機能を組み合わせれば、企業内のすべてのビルドで独自のビルドロジックを使えるようにもできます。</para>
             </listitem>
         </itemizedlist>
-        <para>
+        <para role="original">
             If more than one init script is found they will all be executed, in the order specified above. Scripts in a given directory are executed
             in alphabetical order.
             This allows, for example, a tool to specify an init script on the command line and the user to put one in their home directory for defining
             the environment and both scripts will run when gradle is executed.
         </para>
+        <para>複数の初期化スクリプトが見つかった場合、そのすべてが上で記載した順番で実行されます。同じディレクトリのスクリプトはアルファベット順に実行されます。これにより、たとえば、ツールがコマンドラインで初期化スクリプトを指定し、ユーザーはホームディレクトリに環境設定のためのスクリプトを置いて、ビルド時にその両方を実行する、といったことが可能です。</para>
     </section>
     <section>
-        <title>Writing an init script</title>
-        <para>Similar to a Gradle build script, an init script is a groovy script. Each init script has a
+        <title>初期化スクリプトを記述する <phrase role="original">Writing an init script</phrase></title>
+        <para role="original">Similar to a Gradle build script, an init script is a groovy script. Each init script has a
             <apilink class="org.gradle.api.invocation.Gradle"/> instance associated with it. Any property reference
             and method call in the init script will delegate to this <classname>Gradle</classname> instance.
         </para>
-        <para>Each init script also implements the <apilink class="org.gradle.api.Script"/> interface.</para>
+        <para>Gradleのビルドスクリプトと同様、初期化スクリプトもGroovyスクリプトです。すべての初期化スクリプトに<apilink class="org.gradle.api.invocation.Gradle"/>のインスタンスが割り当てられ、初期化スクリプト内でのプロパティアクセス、メソッドコールはすべてこの<classname>Gradle</classname>インスタンスに委譲されます。</para>
+        <para role="original">Each init script also implements the <apilink class="org.gradle.api.Script"/> interface.</para>
+        <para>また、すべての初期化スクリプトは<apilink class="org.gradle.api.Script"/>インターフェースを実装しています。</para>
         <section>
-            <title>Configuring projects from an init script</title>
-            <para>You can use an init script to configure the projects in the build. This works in a similar way to configuring projects in a
+            <title>初期化スクリプトでプロジェクトを設定する <phrase role="original">Configuring projects from an init script</phrase></title>
+            <para role="original">You can use an init script to configure the projects in the build. This works in a similar way to configuring projects in a
                 multi-project build.
                 The following sample shows how to perform extra configuration from an init script <emphasis>before</emphasis> the projects are evaluated.
                 This sample uses this feature to configure an extra repository to be used only for certain environments.
             </para>
-            <sample id="initScriptConfiguration" dir="userguide/initScripts/configurationInjection" title="Using init script to perform extra configuration before projects are evaluated">
+            <para>初期化スクリプトを使ってプロジェクトの設定を変更することができます。これは、マルチプロジェクトでプロジェクトの設定を変更する方法と同じように動作します。次のサンプルは、プロジェクトが評価される<emphasis>前に</emphasis>、初期化スクリプトで追加的な設定を行うための方法を示すものです。このサンプルでは、ある環境でのみ使用する特別なリポジトリを設定しています。</para>
+            <sample id="initScriptConfiguration" dir="userguide/initScripts/configurationInjection" title="プロジェクト評価前に初期化スクリプトで追加的な設定を行う / Using init script to perform extra configuration before projects are evaluated">
                 <sourcefile file="build.gradle"/>
                 <sourcefile file="init.gradle"/>
                 <output args="--init-script init.gradle -q showRepos"/>
             </sample>
         </section>
-        <para>
-            <para>Gradleのビルドスクリプトと同じように、初期化スクリプトもGroovyスクリプトです。すべての初期化スクリプトに<apilink class="org.gradle.api.invocation.Gradle"/>のインスタンスが割り当てられ、初期化スクリプト内でのプロパティアクセス、メソッドコールはすべてこの<classname>Gradle</classname>インスタンスに委譲されます。</para>
-            <para>また、すべての初期化スクリプトは<apilink class="org.gradle.api.Script"/>インターフェースを実装しています。</para>
-        </para>
     </section>
     <section id='sec:custom_classpath'>
         <title>初期化スクリプトの外部依存関係<phrase role="original">External dependencies for the init script</phrase></title>
@@ -122,7 +129,7 @@
             build script. Init scripts can similarly have external dependencies defined.  You do this using the
             <literal>initscript()</literal> method, passing in a closure which declares the init script classpath.
         </para>
-        <para><xref linkend='sec:external_dependencies'/>でビルドスクリプトに依存関係を追加する方法が解説されていますが、初期化スクリプトにも似たような方法で依存関係を定義できます。そのためには、<literal>initscript()</literal>メソッドに、初期化スクリプトのクラスパスを宣言したクロージャを引き渡してください。</para>
+        <para><xref linkend='sec:external_dependencies'/>でビルドスクリプトに依存関係を追加する方法が解説されていますが、初期化スクリプトでも似たような方法で依存関係を定義できます。初期化スクリプトに依存関係を追加するには、<literal>initscript()</literal>メソッドに初期化スクリプトのクラスパスを宣言したクロージャを引き渡してください。</para>
         <sample id="declareExternalInitDependency" dir="userguide/initScripts/externalDependency" title="初期化スクリプトの外部依存関係定義 / Declaring external dependencies for an init script">
             <sourcefile file="init.gradle" snippet="declare-classpath"/>
         </sample>
