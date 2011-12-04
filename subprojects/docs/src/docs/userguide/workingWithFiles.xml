@@ -195,7 +195,7 @@
             instance which you can use like any other file tree or file collection. For example, you can use it to expand
             the archive by copying the contents, or to merge some archives into another.
         </para>
-        <para>ZIPやTARファイルなどのアーカイブを、ファイルツリーとして使うことができます。そのためのメソッドが、<apilink class="org.gradle.api.Project" method="zipTree"/>や<apilink class="org.gradle.api.Project" method="tarTree"/>です。これらのメソッドは、<literal>FileTree</literal>インスタンスを返すもので、返されたインスタンスは、他のファイルツリーやファイルコレクションと同様に扱うことができます。
+        <para>ZIPやTARファイルなどのアーカイブを、ファイルツリーとして使うことができます。そのためのメソッドが、<apilink class="org.gradle.api.Project" method="zipTree"/>や<apilink class="org.gradle.api.Project" method="tarTree(java.lang.Object)"/>です。これらのメソッドは、<literal>FileTree</literal>インスタンスを返すもので、返されたインスタンスは、他のファイルツリーやファイルコレクションと同様に扱うことができます。
             例えば、内容をコピーすることでアーカイブを解凍したり、別のアーカイブとマージしたりできます。
         </para>
         <sample id="fileTrees" dir="userguide/files/fileTrees" title="アーカイブをファイルツリーとして使う / Using an archive as a file tree">
