@@ -1,5 +1,5 @@
-<chapter id="custom_plugins">
-    <title>Writing Custom Plugins</title>
+<chapter id="custom_plugins" xml:lang="ja">
+    <title>カスタムプラグインの作成<phrase role="original">Writing Custom Plugins</phrase></title>
 
     <para>A Gradle plugin packages up reusable pieces of build logic, which can be used across many different
         projects and builds. Gradle allows you to implement your own custom plugins, so you can reuse your
