@@ -101,8 +101,8 @@
             <em>are</em> transitive.
         </para>
         <para>Earプラグインは2つの依存関係コンフィグレーションを追加します: <literal>deploy</literal>および<literal>earlib</literal>
-            <literal>deploy</literal>コンフィグレーションにおけるすべての依存関係はEARアーカイブのルートに配置され、それらは<em>推移的ではありません</em>。
-            <literal>earlib</literal>コンフィグレーションにおけるすべての依存関係はEARアーカイブの'lib'ディレクトリに配置され、<em>推移的です</em>。
+            <literal>deploy</literal>コンフィグレーションにおけるすべての依存関係はEARアーカイブのルートに配置され、それらは<emphasis>推移的ではありません</emphasis>。
+            <literal>earlib</literal>コンフィグレーションにおけるすべての依存関係はEARアーカイブの'lib'ディレクトリに配置され、<emphasis>推移的です</emphasis>。
         </para>
     </section>
 
@@ -197,8 +197,10 @@
             <sourcefile file="build.gradle"/>
             <test args="assemble"/>
         </sample>
-        <para>You can also use customization options that the <apilink class="org.gradle.plugins.ear.Ear"/>
+        <para role="original">You can also use customization options that the <apilink class="org.gradle.plugins.ear.Ear"/>
         	task provides, such as <literal>from</literal> and <literal>metaInf</literal>.
+        </para>
+        <para><literal>from</literal>や<literal>metaInf</literal>といった、<apilink class="org.gradle.plugins.ear.Ear"/>タスクが提供するカスタマイズオプションも利用できます。
         </para>
     </section>
     <section id='sec:using_custom_app_xml'>
