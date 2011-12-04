@@ -15,244 +15,188 @@
  */
 package org.gradle.api.internal.artifacts.ivyservice
 
-import java.util.concurrent.Callable
+import org.gradle.api.internal.Factory
 import org.gradle.cache.internal.FileLock
 import org.gradle.cache.internal.FileLockManager
 import org.gradle.cache.internal.FileLockManager.LockMode
+import org.gradle.util.ConcurrentSpecification
 import org.gradle.util.TemporaryFolder
 import org.junit.Rule
-import spock.lang.Specification
 
-class DefaultCacheLockingManagerTest extends Specification {
+class DefaultCacheLockingManagerTest extends ConcurrentSpecification {
     @Rule final TemporaryFolder tmpDir = new TemporaryFolder()
     final FileLockManager fileLockManager = Mock()
+    final ArtifactCacheMetaData metaData = Mock()
     final File cacheDir = tmpDir.file("cache-dir")
-    final DefaultCacheLockingManager lockingManager = new DefaultCacheLockingManager(fileLockManager)
+    final File cacheFile = cacheDir.file("cache-file.bin")
+    final FileLock lock = Mock()
+    DefaultCacheLockingManager lockingManager
 
-    def "executes action and returns result"() {
-        Callable<String> action = Mock()
+    def setup() {
+        _ * metaData.cacheDir >> cacheDir
+        lockingManager = new DefaultCacheLockingManager(fileLockManager, metaData)
+    }
+
+    def "executes cache action and returns result"() {
+        Factory<String> action = Mock()
 
         when:
-        def result = lockingManager.withCacheLock("some operation", action)
+        def result = lockingManager.useCache("some operation", action)
 
         then:
         result == 'result'
 
         and:
-        1 * action.call() >> 'result'
+        1 * action.create() >> 'result'
         0 * _._
     }
 
-    def "acquires file lock on first call to acquireLock"() {
-        Callable<String> action = Mock()
-        FileLock lock = Mock()
+    def "locks cache directory when a cache is used and releases lock at the end of the cache action"() {
+        Factory<String> action = Mock()
+        def cache = lockingManager.createCache(cacheFile, String, Integer)
 
         when:
-        lockingManager.withCacheLock("some operation", action)
+        lockingManager.useCache("some operation", action)
 
         then:
-        1 * fileLockManager.lock(cacheDir, LockMode.Exclusive, "artifact file $cacheDir", "some operation") >> lock
-        1 * action.call() >> {
-            lockingManager.getLockHolder(cacheDir).acquireLock()
-            lockingManager.getLockHolder(cacheDir).releaseLock()
+        1 * action.create() >> {
+            cache.get("key")
         }
+        1 * fileLockManager.lock(cacheDir, LockMode.Exclusive, "artifact cache '$cacheDir'", "some operation") >> lock
+        _ * lock.readFromFile(_)
+
+        and:
+        _ * lock.writeToFile(_)
         1 * lock.close()
         0 * _._
     }
 
-    def "releases file lock on last call to releaseLock"() {
-        Callable<String> action = Mock()
-        FileLock lock = Mock()
+    def "unlocks metadata file during long running operation"() {
+        Factory<String> action = Mock()
+        Factory<String> longRunningAction = Mock()
+        def cache = lockingManager.createCache(cacheFile, String, Integer)
 
         when:
-        lockingManager.withCacheLock("some operation", action)
+        lockingManager.useCache("some operation", action)
 
         then:
-        1 * fileLockManager.lock(cacheDir, LockMode.Exclusive, "artifact file $cacheDir", "some operation") >> lock
-        1 * action.call() >> {
-            lockingManager.getLockHolder(cacheDir).acquireLock()
-            lockingManager.getLockHolder(cacheDir).acquireLock()
-            lockingManager.getLockHolder(cacheDir).releaseLock()
-            lockingManager.getLockHolder(cacheDir).releaseLock()
+        1 * action.create() >> {
+            cache.get("key")
+            lockingManager.longRunningOperation("nested", longRunningAction)
+            cache.get("key")
         }
-        1 * lock.close()
+        1 * longRunningAction.create()
+        2 * fileLockManager.lock(cacheDir, LockMode.Exclusive, "artifact cache '$cacheDir'", "some operation") >> lock
+        _ * lock.readFromFile(_)
+        _ * lock.writeToFile(_)
+        2 * lock.close()
         0 * _._
     }
 
-    def "releases all locks when action completes"() {
-        Callable<String> action = Mock()
-        FileLock lock = Mock()
-
+    def "cannot run long running operation from outside cache action"() {
         when:
-        lockingManager.withCacheLock("some operation", action)
+        lockingManager.longRunningOperation("operation", Mock(Factory))
 
         then:
         IllegalStateException e = thrown()
-        e.message == 'Some artifact file locks were not released.'
-        
-        and:
-        1 * fileLockManager.lock(cacheDir, LockMode.Exclusive, "artifact file $cacheDir", "some operation") >> lock
-        1 * action.call() >> {
-            lockingManager.getLockHolder(cacheDir).acquireLock()
-            lockingManager.getLockHolder(cacheDir).acquireLock()
-        }
-        1 * lock.close()
-        0 * _._
+        e.message == 'Cannot start long running operation, as the artifact cache has not been locked.'
     }
 
-    def "cannot lock file when artifact cache is not locked"() {
-        given:
-        def lockHolder = lockingManager.getLockHolder(tmpDir.file("artifact"))
+    def "cannot use cache from within long running operation"() {
+        Factory<String> action = Mock()
+        Factory<String> longRunningAction = Mock()
+        def cache = lockingManager.createCache(cacheFile, String, Integer)
 
         when:
-        lockHolder.acquireLock()
-
-        then:
-        thrown(IllegalStateException)
-    }
-
-    def "cannot release lock when already released"() {
-        Callable<String> action = Mock()
-        FileLock lock = Mock()
-
-        when:
-        lockingManager.withCacheLock("some operation", action)
+        lockingManager.useCache("some operation", action)
 
         then:
         IllegalStateException e = thrown()
-        e.message == 'Cannot release artifact file lock, as the file is not locked.'
+        e.message == 'Cannot use cache outside a unit of work.'
 
         and:
-        1 * fileLockManager.lock(cacheDir, LockMode.Exclusive, "artifact file $cacheDir", "some operation") >> lock
-        1 * action.call() >> {
-            lockingManager.getLockHolder(cacheDir).acquireLock()
-            lockingManager.getLockHolder(cacheDir).releaseLock()
-            lockingManager.getLockHolder(cacheDir).releaseLock()
+        1 * action.create() >> {
+            lockingManager.longRunningOperation("nested", longRunningAction)
         }
-        1 * lock.close()
-        0 * _._
-    }
-    
-    def "cannot release lock when not locked"() {
-        Callable<String> action = Mock()
-
-        when:
-        lockingManager.withCacheLock("some operation", action)
-
-        then:
-        IllegalStateException e = thrown()
-        e.message == 'Cannot release artifact file lock, as the file is not locked.'
-
-        and:
-        1 * action.call() >> {
-            lockingManager.getLockHolder(cacheDir).releaseLock()
+        1 * longRunningAction.create() >> {
+            cache.get("key")
         }
         0 * _._
     }
 
-     def "does not lock metadata file until metadata file lock is used"() {
-        Callable<String> action = Mock()
-        FileLock lock = Mock()
+    def "can execute cache action from within long running operation"() {
+        Factory<String> action = Mock()
+        Factory<String> longRunningAction = Mock()
+        Factory<String> nestedAction = Mock()
+        def cache = lockingManager.createCache(cacheFile, String, Integer)
 
         when:
-        lockingManager.withCacheLock("some operation", action)
+        lockingManager.useCache("some operation", action)
 
         then:
-        1 * action.call() >> {
-            lockingManager.getCacheMetadataFileLock(cacheDir)
+        1 * action.create() >> {
+            cache.get("key")
+            lockingManager.longRunningOperation("nested", longRunningAction)
         }
+        1 * longRunningAction.create() >> {
+            lockingManager.useCache("nested 2", nestedAction)
+        }
+        1 * nestedAction.create() >> {
+            cache.get("key")
+        }
+        1 * fileLockManager.lock(cacheDir, LockMode.Exclusive, "artifact cache '$cacheDir'", "some operation") >> lock
+        1 * fileLockManager.lock(cacheDir, LockMode.Exclusive, "artifact cache '$cacheDir'", "nested 2") >> lock
+        _ * lock.readFromFile(_)
+        _ * lock.writeToFile(_)
+        2 * lock.close()
         0 * _._
+    }
+
+    def "can execute long running operation from within long running operation"() {
+        Factory<String> action = Mock()
+        Factory<String> longRunningAction = Mock()
+        Factory<String> nestedAction = Mock()
+        def cache = lockingManager.createCache(cacheFile, String, Integer)
 
         when:
-        lockingManager.withCacheLock("use metadata file", action)
+        lockingManager.useCache("some operation", action)
 
         then:
-        1 * fileLockManager.lock(cacheDir, LockMode.Exclusive, "metadata file ${cacheDir.name}", "use metadata file") >> lock
-        1 * lock.writeToFile(_)
-        1 * action.call() >> {
-            FileLock metadataLock = lockingManager.getCacheMetadataFileLock(cacheDir)
-            metadataLock.writeToFile(Mock(Runnable))
+        1 * action.create() >> {
+            cache.get("key")
+            lockingManager.longRunningOperation("nested", longRunningAction)
         }
+        1 * longRunningAction.create() >> {
+            lockingManager.longRunningOperation("nested 2", nestedAction)
+        }
+        1 * nestedAction.create()
+        1 * fileLockManager.lock(cacheDir, LockMode.Exclusive, "artifact cache '$cacheDir'", "some operation") >> lock
+        _ * lock.readFromFile(_)
+        _ * lock.writeToFile(_)
         1 * lock.close()
         0 * _._
     }
 
-    def "locks metadata file once for all uses of metadata file lock"() {
-        Callable<String> action = Mock()
-        FileLock lock = Mock()
+    def "can execute cache action from within cache action"() {
+        Factory<String> action = Mock()
+        Factory<String> nestedAction = Mock()
+        def cache = lockingManager.createCache(cacheFile, String, Integer)
 
         when:
-        lockingManager.withCacheLock("use metadata file", action)
+        lockingManager.useCache("some operation", action)
 
         then:
-        1 * fileLockManager.lock(cacheDir, LockMode.Exclusive, "metadata file ${cacheDir.name}", "use metadata file") >> lock
-        2 * lock.writeToFile(_)
-        2 * lock.readFromFile(_)
-        1 * action.call() >> {
-            FileLock metadataLock = lockingManager.getCacheMetadataFileLock(cacheDir)
-            metadataLock.writeToFile(Mock(Runnable))
-            metadataLock.writeToFile(Mock(Runnable))
-            metadataLock.readFromFile(Mock(Callable))
-            metadataLock.readFromFile(Mock(Callable))
+        1 * action.create() >> {
+            cache.get("key")
+            lockingManager.useCache("nested", nestedAction)
         }
+        1 * nestedAction.create() >> {
+            cache.get("key")
+        }
+        1 * fileLockManager.lock(cacheDir, LockMode.Exclusive, "artifact cache '$cacheDir'", "some operation") >> lock
+        _ * lock.readFromFile(_)
+        _ * lock.writeToFile(_)
         1 * lock.close()
         0 * _._
     }
-
-    def "can create metadata lock before cache is locked"() {
-        Callable<String> action = Mock()
-        FileLock lock = Mock()
-
-        when:
-        lockingManager.getCacheMetadataFileLock(new File(cacheDir, "metadata"))
-
-        then:
-        0 * _._
-
-        when:
-        lockingManager.withCacheLock("use metadata file", action)
-
-        then:
-        1 * fileLockManager.lock(cacheDir, LockMode.Exclusive, "metadata file ${cacheDir.name}", "use metadata file") >> lock
-        1 * lock.writeToFile(_)
-        1 * action.call() >> {
-            FileLock metadataLock = lockingManager.getCacheMetadataFileLock(cacheDir)
-            metadataLock.writeToFile(Mock(Runnable))
-        }
-        1 * lock.close()
-        0 * _._
-    }
-
-    def "can reuse metadata lock with different cache locks"() {
-        Callable<String> action = Mock()
-        FileLock lock = Mock()
-
-        when:
-        lockingManager.getCacheMetadataFileLock(new File(cacheDir, "metadata"))
-        lockingManager.withCacheLock("use metadata file", action)
-
-        then:
-        1 * fileLockManager.lock(cacheDir, LockMode.Exclusive, "metadata file ${cacheDir.name}", "use metadata file") >> lock
-        1 * lock.writeToFile(_)
-        1 * action.call() >> {
-            FileLock metadataLock = lockingManager.getCacheMetadataFileLock(cacheDir)
-            metadataLock.writeToFile(Mock(Runnable))
-        }
-        1 * lock.close()
-        0 * _._
-
-        when:
-        lockingManager.withCacheLock("use metadata file", action)
-
-        then:
-        1 * fileLockManager.lock(cacheDir, LockMode.Exclusive, "metadata file ${cacheDir.name}", "use metadata file") >> lock
-        1 * lock.writeToFile(_)
-        1 * action.call() >> {
-            FileLock metadataLock = lockingManager.getCacheMetadataFileLock(cacheDir)
-            metadataLock.writeToFile(Mock(Runnable))
-        }
-        1 * lock.close()
-        0 * _._
-    }
-
 }

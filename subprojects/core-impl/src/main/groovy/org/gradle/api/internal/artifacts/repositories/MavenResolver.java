@@ -15,49 +15,16 @@
  */
 package org.gradle.api.internal.artifacts.repositories;
 
-import org.apache.ivy.core.cache.ArtifactOrigin;
-import org.apache.ivy.core.module.descriptor.Artifact;
-import org.apache.ivy.core.module.descriptor.DependencyDescriptor;
-import org.apache.ivy.core.resolve.ResolveData;
-import org.apache.ivy.core.resolve.ResolvedModuleRevision;
 import org.apache.ivy.plugins.resolver.BasicResolver;
 import org.apache.ivy.plugins.resolver.IBiblioResolver;
-import org.gradle.api.internal.artifacts.ivyservice.dynamicversions.ChangingModuleRevision;
-import org.gradle.api.internal.artifacts.ivyservice.dynamicversions.ForceChangeDependencyDescriptor;
 
-import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.List;
 
 public class MavenResolver extends IBiblioResolver {
     public MavenResolver() {
-        setChangingPattern(null);
         setDescriptor(BasicResolver.DESCRIPTOR_OPTIONAL);
         setM2compatible(true);
-    }
-
-    @Override
-    public ResolvedModuleRevision getDependency(DependencyDescriptor dd, ResolveData data) throws ParseException {
-        if (dd.getDependencyRevisionId().getRevision().endsWith("SNAPSHOT")) {
-            // Force resolution with changing flag set
-            DependencyDescriptor changingDescriptor = ForceChangeDependencyDescriptor.forceChangingFlag(dd, true);
-
-            ResolvedModuleRevision changingModule = super.getDependency(changingDescriptor, data);
-
-            // Return a ChangingModuleRevision to indicate that this module is changing
-            return changingModule == null ? null : new ChangingModuleRevision(changingModule);
-        }
-        return super.getDependency(dd, data);
-    }
-
-    @Override
-    public ArtifactOrigin locate(Artifact artifact) {
-        // Only locate meta-data artifacts (this method _may_ be used for looking up parent POM - I'm not certain)
-        if (artifact.isMetadata()) {
-            return super.locate(artifact);
-        }
-        // Any other call is an attempt to locate source/javadoc jars, which we don't care about
-        return null;
     }
 
     public void addArtifactUrl(String url) {

@@ -16,7 +16,6 @@
 package org.gradle.integtests.resolve
 
 import org.gradle.integtests.fixtures.ExecutionFailure
-import org.gradle.integtests.fixtures.IvyRepository
 import org.gradle.integtests.fixtures.MavenRepository
 import org.gradle.integtests.fixtures.TestResources
 import org.gradle.integtests.fixtures.internal.AbstractIntegrationTest
@@ -80,7 +79,7 @@ subprojects {
 }
 project(':a') {
     repositories {
-        maven { url '${repo().uri}' }
+        maven { url '${repo.uri}' }
     }
     dependencies {
         compile 'org.gradle.test:external1:1.0'
@@ -92,11 +91,40 @@ project(':b') {
     }
 }
 """
-        repo().module('org.gradle.test', 'external1', '1.0').publish()
+        repo.module('org.gradle.test', 'external1', '1.0').publish()
 
         inTestDirectory().withTasks('a:listDeps').run()
         def result = inTestDirectory().withTasks('b:listDeps').runWithFailure()
-        result.assertThatCause(containsString('Module org.gradle.test:external1:1.0 not found.'))
+        result.assertThatCause(containsString('Could not find group:org.gradle.test, module:external1, version:1.0.'))
+    }
+
+    @Test
+    public void resolutionFailsForMissingArtifact() {
+        testFile('build.gradle') << """
+repositories {
+    maven { url '${repo.uri}' }
+}
+configurations {
+    compile; missingExt; missingClassifier
+}
+dependencies {
+    compile "org.gradle.test:lib:1.0"
+    missingExt "org.gradle.test:lib:1.0@zip"
+    missingClassifier "org.gradle.test:lib:1.0:classifier1"
+}
+task listJar << { configurations.compile.each { } }
+task listMissingExt << { configurations.missingExt.each { } }
+task listMissingClassifier << { configurations.missingClassifier.each { } }
+"""
+        repo.module('org.gradle.test', 'lib', '1.0').publish()
+
+        inTestDirectory().withTasks('listJar').run()
+
+        def result = inTestDirectory().withTasks('listMissingExt').runWithFailure()
+        result.assertThatCause(containsString("Artifact 'org.gradle.test:lib:1.0@zip' not found"))
+
+        result = inTestDirectory().withTasks('listMissingClassifier').runWithFailure()
+        result.assertThatCause(containsString("Artifact 'org.gradle.test:lib:1.0:classifier1@jar' not found"))
     }
 
     @Test
@@ -134,12 +162,11 @@ project(':b') {
 
         inTestDirectory().withTasks('a:listDeps').run()
         def result = inTestDirectory().withTasks('b:listDeps').runWithFailure()
-        result.assertThatCause(containsString('Module org.gradle.test:external1:1.0 not found.'))
+        result.assertThatCause(containsString('Could not find group:org.gradle.test, module:external1, version:1.0.'))
     }
 
     @Test
     public void exposesMetaDataAboutResolvedArtifactsInAFixedOrder() {
-        def repo = repo()
         def module = repo.module('org.gradle.test', 'lib', '1.0')
         module.artifact(type: 'zip')
         module.artifact(classifier: 'classifier')
@@ -188,7 +215,6 @@ task test << {
     @Test
     @Issue("GRADLE-1567")
     public void resolutionDifferentiatesBetweenArtifactsThatDifferOnlyInClassifier() {
-        def repo = repo()
         def module = repo.module('org.gradle.test', 'external1', '1.0')
         module.artifact(classifier: 'classifier1')
         module.artifact(classifier: 'classifier2')
@@ -231,7 +257,6 @@ project(':b') {
     @Test
     @Issue("GRADLE-739")
     public void singleConfigurationCanContainMultipleArtifactsThatOnlyDifferByClassifier() {
-        def repo = repo()
         def module = repo.module('org.gradle.test', 'external1', '1.0')
         module.artifact(classifier: 'baseClassifier')
         module.artifact(classifier: 'extendedClassifier')
@@ -285,7 +310,6 @@ task test << {
     @Test
     @Issue("GRADLE-739")
     public void canUseClassifiersCombinedWithArtifactWithNonStandardPackaging() {
-        def repo = repo()
         def module = repo.module('org.gradle.test', 'external1', '1.0')
         module.artifact(type: 'txt')
         module.artifact(classifier: 'baseClassifier', type: 'jar')
@@ -329,7 +353,6 @@ task test << {
     @Test
     @Issue("GRADLE-739")
     public void configurationCanContainMultipleArtifactsThatOnlyDifferByType() {
-        def repo = repo()
         def module = repo.module('org.gradle.test', 'external1', '1.0')
         module.artifact(type: 'zip')
         module.artifact(classifier: 'classifier')
@@ -366,8 +389,7 @@ task test << {
     }
 
     @Test
-    public void excludedDependenciesAreNotRetrieved() {
-        def repo = repo()
+    public void "dependencies that are excluded by a dependency are not retrieved"() {
         repo.module('org.gradle.test', 'one', '1.0').publish()
         repo.module('org.gradle.test', 'two', '1.0').publish()
         def module = repo.module('org.gradle.test', 'external1', '1.0')
@@ -394,7 +416,7 @@ dependencies {
 }
 
 def checkDeps(config, expectedDependencies) {
-    assert config.collect({ it.name }) as Set == expectedDependencies as Set
+    assert config*.name as Set == expectedDependencies as Set
 }
 
 task test << {
@@ -408,8 +430,75 @@ task test << {
     }
 
     @Test
+    public void "dependencies that are globally excluded are not retrieved"() {
+        repo.module('org.gradle.test', 'direct', '1.0').publish()
+        repo.module('org.gradle.test', 'transitive', '1.0').publish()
+        def module = repo.module('org.gradle.test', 'external', '1.0')
+        module.dependsOn('org.gradle.test', 'transitive', '1.0')
+        module.publish()
+
+        testFile('build.gradle') << """
+repositories {
+    maven { url '${repo.uri}' }
+}
+configurations {
+    excluded {
+        exclude module: 'direct'
+        exclude module: 'transitive'
+    }
+    extendedExcluded.extendsFrom excluded
+}
+dependencies {
+    excluded 'org.gradle.test:external:1.0'
+    excluded 'org.gradle.test:direct:1.0'
+}
+
+def checkDeps(config, expectedDependencies) {
+    assert config*.name as Set == expectedDependencies as Set
+}
+
+task test << {
+    checkDeps configurations.excluded, ['external-1.0.jar']
+    checkDeps configurations.extendedExcluded, ['external-1.0.jar']
+}
+"""
+        inTestDirectory().withTasks('test').run()
+    }
+
+    @Test
+    public void "does not attempt to resolve an excluded dependency"() {
+        def module = repo.module('org.gradle.test', 'external', '1.0')
+        module.dependsOn('org.gradle.test', 'unknown1', '1.0')
+        module.dependsOn('org.gradle.test', 'unknown2', '1.0')
+        module.publish()
+
+        testFile('build.gradle') << """
+repositories {
+    maven { url '${repo.uri}' }
+}
+configurations {
+    excluded {
+        exclude module: 'unknown2'
+    }
+}
+dependencies {
+    excluded 'org.gradle.test:external:1.0', { exclude module: 'unknown1' }
+    excluded 'org.gradle.test:unknown2:1.0'
+}
+
+def checkDeps(config, expectedDependencies) {
+    assert config*.name as Set == expectedDependencies as Set
+}
+
+task test << {
+    checkDeps configurations.excluded, ['external-1.0.jar']
+}
+"""
+        inTestDirectory().withTasks('test').run()
+    }
+
+    @Test
     public void nonTransitiveDependenciesAreNotRetrieved() {
-        def repo = repo()
         repo.module('org.gradle.test', 'one', '1.0').publish()
         repo.module('org.gradle.test', 'two', '1.0').publish()
         def module = repo.module('org.gradle.test', 'external1', '1.0')
@@ -419,7 +508,7 @@ task test << {
 
         testFile('build.gradle') << """
 repositories {
-    mavenRepo url: '${repo.uri}'
+    maven { url '${repo.uri}' }
 }
 configurations {
     transitive
@@ -453,7 +542,6 @@ task test << {
 
     @Test
     public void "configuration transitive = false overrides dependency transitive flag"() {
-        def repo = repo()
         repo.module('org.gradle.test', 'one', '1.0').publish()
         def module = repo.module('org.gradle.test', 'external1', '1.0')
         module.dependsOn('org.gradle.test', 'one', '1.0')
@@ -461,7 +549,7 @@ task test << {
 
         testFile('build.gradle') << """
 repositories {
-    mavenRepo url: '${repo.uri}'
+    maven { url '${repo.uri}' }
 }
 configurations {
     override { transitive = false }
@@ -481,9 +569,9 @@ task test << {
     /*
      * Originally, we were aliasing dependency descriptors that were identical. This caused alias errors when we subsequently modified one of these descriptors.
      */
+
     @Test
     public void addingClassifierToDuplicateDependencyDoesNotAffectOriginal() {
-        def repo = repo()
         def module = repo.module('org.gradle.test', 'external1', '1.0')
         module.artifact(classifier: 'withClassifier')
         module.publish()
@@ -520,8 +608,8 @@ task test << {
         failure.assertHasFileName("Build file '" + buildFile.getPath() + "'");
         failure.assertHasDescription("Execution failed for task ':listJars'");
         failure.assertThatCause(startsWith("Could not resolve all dependencies for configuration ':compile'"));
-        failure.assertThatCause(containsString("Module test:unknownProjectA:1.2 not found."));
-        failure.assertThatCause(containsString("Module test:unknownProjectB:2.1.5 not found."));
+        failure.assertThatCause(containsString("Could not find group:test, module:unknownProjectA, version:1.2."));
+        failure.assertThatCause(containsString("Could not find group:test, module:unknownProjectB, version:2.1.5."));
     }
 
     @Test
@@ -560,12 +648,8 @@ task test << {
         inTestDirectory().withTasks("test").run().assertTasksExecuted(":sub:jar", ":test");
     }
 
-    MavenRepository repo() {
+    def getRepo() {
         return maven(testFile('repo'))
-    }
-
-    IvyRepository ivyRepo() {
-        return new IvyRepository(testFile('ivy-repo'))
     }
 }
 

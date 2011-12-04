@@ -35,6 +35,7 @@ import org.gradle.initialization.DefaultGradleLauncherFactory;
 import org.gradle.launcher.daemon.registry.DaemonRegistry;
 import org.gradle.os.ProcessEnvironment;
 import org.gradle.os.jna.NativeEnvironment;
+import org.gradle.util.Jvm;
 import org.hamcrest.Matcher;
 
 import java.io.File;
@@ -128,12 +129,9 @@ public class InProcessGradleExecuter extends AbstractGradleExecuter {
         throw new UnsupportedOperationException();
     }
 
-    public GradleExecuter withJavaHome(File javaHome) {
-        throw new UnsupportedOperationException();
-    }
-
     public void assertCanExecute() {
         assertNull(getExecutable());
+        assertEquals(getJavaHome(), Jvm.current().getJavaHome());
     }
 
     public boolean canExecute() {
@@ -212,7 +210,7 @@ public class InProcessGradleExecuter extends AbstractGradleExecuter {
         }
     }
 
-    public static class InProcessExecutionResult extends AbstractExecutionResult {
+    public static class InProcessExecutionResult implements ExecutionResult {
         private final List<String> plannedTasks;
         private final Set<String> skippedTasks;
         private final String output;

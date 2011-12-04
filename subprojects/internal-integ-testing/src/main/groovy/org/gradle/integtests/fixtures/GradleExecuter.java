@@ -23,6 +23,9 @@ import java.util.List;
 import java.util.Map;
 
 public interface GradleExecuter {
+    /**
+     * Sets the working directory to use. Defaults to the test's temporary directory.
+     */
     GradleExecuter inDirectory(File directory);
 
     /**
@@ -120,11 +123,18 @@ public interface GradleExecuter {
      * @return The result.
      */
     ExecutionFailure runWithFailure();
-    
+
     /**
      * Provides a daemon registry for any daemons started by this executer, which may be none.
-     * 
+     *
      * @return the daemon registry, never null.
-    */
-   DaemonRegistry getDaemonRegistry();
+     */
+    DaemonRegistry getDaemonRegistry();
+
+    /**
+     * Creates a handle that allows a build to be executed asynchronously.
+     *
+     * @return the handle, never null.
+     */
+    GradleHandle createHandle();
 }

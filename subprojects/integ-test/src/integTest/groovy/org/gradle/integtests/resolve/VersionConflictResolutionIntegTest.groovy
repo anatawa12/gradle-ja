@@ -15,10 +15,7 @@
  */
 package org.gradle.integtests.resolve
 
-import org.gradle.integtests.fixtures.TestResources
 import org.gradle.integtests.fixtures.internal.AbstractIntegrationTest
-import org.gradle.util.TestFile
-import org.junit.Rule
 import org.junit.Test
 import static org.hamcrest.Matchers.containsString
 
@@ -26,15 +23,10 @@ import static org.hamcrest.Matchers.containsString
  * @author Szczepan Faber, @date 03.03.11
  */
 class VersionConflictResolutionIntegTest extends AbstractIntegrationTest {
-
-    @Rule
-    public final TestResources testResources = new TestResources()
-
     @Test
     void "strict conflict resolution should fail due to conflict"() {
-        TestFile repo = file("repo")
-        maven(repo).module("org", "foo", '1.3.3').publish()
-        maven(repo).module("org", "foo", '1.4.4').publish()
+        repo.module("org", "foo", '1.3.3').publish()
+        repo.module("org", "foo", '1.4.4').publish()
 
         def settingsFile = file("settings.gradle")
         settingsFile << "include 'api', 'impl', 'tool'"
@@ -44,7 +36,7 @@ class VersionConflictResolutionIntegTest extends AbstractIntegrationTest {
 allprojects {
 	apply plugin: 'java'
 	repositories {
-		maven { url "${repo.toURI()}" }
+		maven { url "${repo.uri}" }
 	}
 }
 
@@ -66,7 +58,7 @@ project(':tool') {
 		compile project(':impl')
 	}
 
-	configurations.compile.resolutionStrategy.conflictResolution = configurations.compile.resolutionStrategy.strict()
+	configurations.compile.resolutionStrategy.failOnVersionConflict()
 }
 """
 
@@ -79,8 +71,7 @@ project(':tool') {
 
     @Test
     void "strict conflict resolution should pass when no conflicts"() {
-        TestFile repo = file("repo")
-        maven(repo).module("org", "foo", '1.3.3').publish()
+        repo.module("org", "foo", '1.3.3').publish()
 
         def settingsFile = file("settings.gradle")
         settingsFile << "include 'api', 'impl', 'tool'"
@@ -90,7 +81,7 @@ project(':tool') {
 allprojects {
 	apply plugin: 'java'
 	repositories {
-		maven { url "${repo.toURI()}" }
+		maven { url "${repo.uri}" }
 	}
 }
 
@@ -112,7 +103,7 @@ project(':tool') {
 		compile project(':impl')
 	}
 
-	configurations.all { resolutionStrategy.conflictResolution = resolutionStrategy.strict() }
+	configurations.all { resolutionStrategy.failOnVersionConflict() }
 }
 """
 
@@ -124,10 +115,9 @@ project(':tool') {
 
     @Test
     void "strict conflict strategy can be used with forced modules"() {
-        TestFile repo = file("repo")
-        maven(repo).module("org", "foo", '1.3.3').publish()
-        maven(repo).module("org", "foo", '1.4.4').publish()
-        maven(repo).module("org", "foo", '1.5.5').publish()
+        repo.module("org", "foo", '1.3.3').publish()
+        repo.module("org", "foo", '1.4.4').publish()
+        repo.module("org", "foo", '1.5.5').publish()
 
         def settingsFile = file("settings.gradle")
         settingsFile << "include 'api', 'impl', 'tool'"
@@ -137,7 +127,7 @@ project(':tool') {
 allprojects {
 	apply plugin: 'java'
 	repositories {
-		maven { url "${repo.toURI()}" }
+		maven { url "${repo.uri}" }
 	}
 }
 
@@ -162,7 +152,7 @@ project(':tool') {
 		}
 	}
 
-	configurations.all { resolutionStrategy.conflictResolution = resolutionStrategy.strict() }
+	configurations.all { resolutionStrategy.failOnVersionConflict() }
 }
 """
 
@@ -174,9 +164,8 @@ project(':tool') {
 
     @Test
     void "can force already resolved version of a module and avoid conflict"() {
-        TestFile repo = file("repo")
-        maven(repo).module("org", "foo", '1.3.3').publish()
-        maven(repo).module("org", "foo", '1.4.4').publish()
+        repo.module("org", "foo", '1.3.3').publish()
+        repo.module("org", "foo", '1.4.4').publish()
 
         def settingsFile = file("settings.gradle")
         settingsFile << "include 'api', 'impl', 'tool'"
@@ -186,7 +175,7 @@ project(':tool') {
 allprojects {
 	apply plugin: 'java'
 	repositories {
-		maven { url "${repo.toURI()}" }
+		maven { url "${repo.uri}" }
 	}
 }
 
@@ -212,8 +201,10 @@ project(':tool') {
 
 allprojects {
     configurations.all {
-	    resolutionStrategy.force 'org:foo:1.3.3'
-	    resolutionStrategy.conflictResolution = resolutionStrategy.strict()
+	    resolutionStrategy {
+	        force 'org:foo:1.3.3'
+	        failOnVersionConflict()
+	    }
 	}
 }
 
@@ -227,11 +218,10 @@ allprojects {
 
     @Test
     void "can force arbitrary version of a module and avoid conflict"() {
-        TestFile repo = file("repo")
-        maven(repo).module("org", "foo", '1.3.3').publish()
-        maven(repo).module("org", "foobar", '1.3.3').publish()
-        maven(repo).module("org", "foo", '1.4.4').publish()
-        maven(repo).module("org", "foo", '1.5.5').publish()
+        repo.module("org", "foo", '1.3.3').publish()
+        repo.module("org", "foobar", '1.3.3').publish()
+        repo.module("org", "foo", '1.4.4').publish()
+        repo.module("org", "foo", '1.5.5').publish()
 
         def settingsFile = file("settings.gradle")
         settingsFile << "include 'api', 'impl', 'tool'"
@@ -241,7 +231,7 @@ allprojects {
 allprojects {
 	apply plugin: 'java'
 	repositories {
-		maven { url "${repo.toURI()}" }
+		maven { url "${repo.uri}" }
 	}
 	group = 'org.foo.unittests'
 	version = '1.0'
@@ -278,8 +268,10 @@ project(':tool') {
 
 allprojects {
     configurations.all {
-        resolutionStrategy.conflictResolution = resolutionStrategy.strict()
-        resolutionStrategy.force 'org:foo:1.5.5'
+        resolutionStrategy {
+            failOnVersionConflict()
+            force 'org:foo:1.5.5'
+        }
     }
 }
 
@@ -291,9 +283,8 @@ allprojects {
 
     @Test
     void "resolves to the latest version by default"() {
-        TestFile repo = file("repo")
-        maven(repo).module("org", "foo", '1.3.3').publish()
-        maven(repo).module("org", "foo", '1.4.4').publish()
+        repo.module("org", "foo", '1.3.3').publish()
+        repo.module("org", "foo", '1.4.4').publish()
 
         def settingsFile = file("settings.gradle")
         settingsFile << "include 'api', 'impl', 'tool'"
@@ -303,7 +294,7 @@ allprojects {
 allprojects {
 	apply plugin: 'java'
 	repositories {
-		maven { url "${repo.toURI()}" }
+		maven { url "${repo.uri}" }
 	}
 }
 
@@ -336,9 +327,8 @@ project(':tool') {
 
     @Test
     void "latest strategy respects forced modules"() {
-        TestFile repo = file("repo")
-        maven(repo).module("org", "foo", '1.3.3').publish()
-        maven(repo).module("org", "foo", '1.4.4').publish()
+        repo.module("org", "foo", '1.3.3').publish()
+        repo.module("org", "foo", '1.4.4').publish()
 
         def settingsFile = file("settings.gradle")
         settingsFile << "include 'api', 'impl', 'tool'"
@@ -348,7 +338,7 @@ project(':tool') {
 allprojects {
 	apply plugin: 'java'
 	repositories {
-		maven { url "${repo.toURI()}" }
+		maven { url "${repo.uri}" }
 	}
 }
 
@@ -370,8 +360,10 @@ project(':tool') {
 		compile project(':impl')
 	}
 	configurations.all {
-	    resolutionStrategy.conflictResolution = resolutionStrategy.latest()
-	    resolutionStrategy.force 'org:foo:1.3.3'
+	    resolutionStrategy {
+	        failOnVersionConflict()
+	        force 'org:foo:1.3.3'
+	    }
 	}
     task checkDeps(dependsOn: configurations.compile) << {
         assert configurations.compile*.name == ['api.jar', 'impl.jar', 'foo-1.3.3.jar']
@@ -385,15 +377,14 @@ project(':tool') {
 
     @Test
     void "can force the version of a particular module"() {
-        TestFile repo = file("repo")
-        maven(repo).module("org", "foo", '1.3.3').publish()
-        maven(repo).module("org", "foo", '1.4.4').publish()
+        repo.module("org", "foo", '1.3.3').publish()
+        repo.module("org", "foo", '1.4.4').publish()
 
         def buildFile = file("build.gradle")
         buildFile << """
 apply plugin: 'java'
 repositories {
-    maven { url "${repo.toURI()}" }
+    maven { url "${repo.uri}" }
 }
 
 dependencies {
@@ -415,15 +406,14 @@ task checkDeps << {
 
     @Test
     void "can force the version of a direct dependency"() {
-        TestFile repo = file("repo")
-        maven(repo).module("org", "foo", '1.3.3').publish()
-        maven(repo).module("org", "foo", '1.4.4').publish()
+        repo.module("org", "foo", '1.3.3').publish()
+        repo.module("org", "foo", '1.4.4').publish()
 
         def buildFile = file("build.gradle")
         buildFile << """
 apply plugin: 'java'
 repositories {
-    maven { url "${repo.toURI()}" }
+    maven { url "${repo.uri}" }
 }
 
 dependencies {
@@ -442,15 +432,14 @@ task checkDeps << {
 
     @Test
     void "forcing transitive dependency does not add extra dependency"() {
-        TestFile repo = file("repo")
-        maven(repo).module("org", "foo", '1.3.3').publish()
-        maven(repo).module("hello", "world", '1.4.4').publish()
+        repo.module("org", "foo", '1.3.3').publish()
+        repo.module("hello", "world", '1.4.4').publish()
 
         def buildFile = file("build.gradle")
         buildFile << """
 apply plugin: 'java'
 repositories {
-    maven { url "${repo.toURI()}" }
+    maven { url "${repo.uri}" }
 }
 
 dependencies {
@@ -468,5 +457,237 @@ task checkDeps << {
 
         //expect
         executer.withTasks("checkDeps").run()
+    }
+
+    @Test
+    void "does not attempt to resolve an evicted dependency"() {
+        repo.module("org", "external", "1.2").publish()
+        repo.module("org", "dep", "2.2").dependsOn("org", "external", "1.0").publish()
+
+        def buildFile = file("build.gradle")
+        buildFile << """
+repositories {
+    maven { url "${repo.uri}" }
+}
+
+configurations { compile }
+
+dependencies {
+    compile 'org:external:1.2'
+    compile 'org:dep:2.2'
+}
+
+task checkDeps << {
+    assert configurations.compile*.name == ['external-1.2.jar', 'dep-2.2.jar']
+}
+"""
+
+        //expect
+        executer.withTasks("checkDeps").run()
+    }
+
+    @Test
+    void "resolves dynamic dependency before resolving conflict"() {
+        repo.module("org", "external", "1.2").publish()
+        repo.module("org", "external", "1.4").publish()
+        repo.module("org", "dep", "2.2").dependsOn("org", "external", "1.+").publish()
+
+        def buildFile = file("build.gradle")
+        buildFile << """
+repositories {
+    maven { url "${repo.uri}" }
+}
+
+configurations { compile }
+
+dependencies {
+    compile 'org:external:1.2'
+    compile 'org:dep:2.2'
+}
+
+task checkDeps << {
+    assert configurations.compile*.name == ['dep-2.2.jar', 'external-1.4.jar']
+}
+"""
+
+        //expect
+        executer.withTasks("checkDeps").run()
+    }
+
+    @Test
+    void "fails when version selected by conflict resolution does not exist"() {
+        repo.module("org", "external", "1.2").publish()
+        repo.module("org", "dep", "2.2").dependsOn("org", "external", "1.4").publish()
+
+        def buildFile = file("build.gradle")
+        buildFile << """
+repositories {
+    maven { url "${repo.uri}" }
+}
+
+configurations { compile }
+
+dependencies {
+    compile 'org:external:1.2'
+    compile 'org:dep:2.2'
+}
+
+task checkDeps << {
+    assert configurations.compile*.name == ['external-1.2.jar', 'dep-2.2.jar']
+}
+"""
+
+        //expect
+        def failure = executer.withTasks("checkDeps").runWithFailure()
+        failure.assertHasCause("Could not find group:org, module:external, version:1.4.")
+    }
+
+    @Test
+    void "does not fail when evicted version does not exist"() {
+        repo.module("org", "external", "1.4").publish()
+        repo.module("org", "dep", "2.2").dependsOn("org", "external", "1.4").publish()
+
+        def buildFile = file("build.gradle")
+        buildFile << """
+repositories {
+    maven { url "${repo.uri}" }
+}
+
+configurations { compile }
+
+dependencies {
+    compile 'org:external:1.2'
+    compile 'org:dep:2.2'
+}
+
+task checkDeps << {
+    assert configurations.compile*.name == ['dep-2.2.jar', 'external-1.4.jar']
+}
+"""
+
+        //expect
+        executer.withTasks("checkDeps").run()
+    }
+
+    //TODO SF turn into IntegSpec
+
+    @Test
+    void "takes newest dynamic version when dynamic version forced"() {
+        //given
+        repo.module("org", "foo", '1.3.0').publish()
+
+        repo.module("org", "foo", '1.4.1').publish()
+        repo.module("org", "foo", '1.4.4').publish()
+        repo.module("org", "foo", '1.4.9').publish()
+
+        repo.module("org", "foo", '1.6.0').publish()
+
+        def settingsFile = file("settings.gradle")
+        settingsFile << "include 'api', 'impl', 'tool'"
+
+        def buildFile = file("build.gradle")
+        buildFile << """
+allprojects {
+	apply plugin: 'java'
+	repositories {
+		maven { url "${repo.uri}" }
+	}
+}
+
+project(':api') {
+	dependencies {
+		compile 'org:foo:1.4.4'
+	}
+}
+
+project(':impl') {
+	dependencies {
+		compile 'org:foo:1.4.1'
+	}
+}
+
+project(':tool') {
+
+	dependencies {
+		compile project(':api'), project(':impl'), 'org:foo:1.3.0'
+	}
+
+	configurations.all {
+	    resolutionStrategy {
+	        force 'org:foo:1.4+'
+	        failOnVersionConflict()
+	    }
+	}
+
+	task checkDeps << {
+        assert configurations.compile*.name.contains('foo-1.4.9.jar')
+    }
+}
+
+"""
+
+        //expect
+        executer.withTasks("tool:checkDeps").run()
+    }
+
+    @Test
+    void "parent pom does not participate in forcing mechanism"() {
+        //given
+        repo.module("org", "foo", '1.3.0').publish()
+        repo.module("org", "foo", '2.4.0').publish()
+
+        //TODO SF generalize
+        def parent = repo.module("org", "someParent", "1.0")
+        parent.type = 'pom'
+        parent.dependsOn("org", "foo", "1.3.0")
+        parent.publish()
+
+        def otherParent = repo.module("org", "someParent", "2.0")
+        otherParent.type = 'pom'
+        otherParent.dependsOn("org", "foo", "2.4.0")
+        otherParent.publish()
+
+        def module = repo.module("org", "someArtifact", '1.0')
+        module.parentPomSection = """
+<parent>
+  <groupId>org</groupId>
+  <artifactId>someParent</artifactId>
+  <version>1.0</version>
+</parent>
+"""
+        module.publish()
+
+        def buildFile = file("build.gradle")
+        buildFile << """
+apply plugin: 'java'
+repositories {
+    maven { url "${repo.uri}" }
+}
+
+dependencies {
+    compile 'org:someArtifact:1.0'
+}
+
+configurations.all {
+    resolutionStrategy {
+        force 'org:someParent:2.0'
+        failOnVersionConflict()
+    }
+}
+
+task checkDeps << {
+    def deps = configurations.compile*.name
+    assert deps.contains('someArtifact-1.0.jar')
+    assert deps.contains('foo-1.3.0.jar')
+    assert deps.size() == 2
+}
+"""
+
+        //expect
+        executer.withTasks("checkDeps").withArguments('-s').run()
+    }
+
+    def getRepo() {
+        return maven(file("repo"))
     }
 }

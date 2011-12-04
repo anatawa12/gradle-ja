@@ -22,6 +22,7 @@ class StdioIntegrationTest extends AbstractIntegrationSpec {
 
     def "build can read stdin when stdin has bounded length"() {
         given:
+        distribution.requireOwnUserHomeDir()
         buildFile << '''
 task echo << {
     def reader = new BufferedReader(new InputStreamReader(System.in))
@@ -36,7 +37,7 @@ task echo << {
 '''
 
         when:
-        executer.withStdIn("abc\n123").withArguments("-s")
+        executer.withStdIn("abc\n123").withArguments("-s", "--info")
         run "echo"
 
         then:
@@ -48,6 +49,7 @@ task echo << {
         def readEnd = new PipedInputStream(writeEnd)
 
         given:
+        distribution.requireOwnUserHomeDir()
         buildFile << '''
 task echo << {
     def reader = new BufferedReader(new InputStreamReader(System.in))
@@ -64,7 +66,7 @@ task echo << {
         writeEnd.write("abc\n123\nclose\n".bytes)
 
         when:
-        executer.withStdIn(readEnd).withArguments("-s")
+        executer.withStdIn(readEnd).withArguments("-s", "--info")
         run "echo"
 
         then:

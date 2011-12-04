@@ -51,11 +51,12 @@ public class DefaultResolutionStrategyTest extends Specification {
         strategy.force 'org.foo:bar:1.0'
 
         when:
-        strategy.forcedModules = [new ForcedModuleBuilder().build('hello:world:1.0')]
+        strategy.forcedModules = ['hello:world:1.0', [group:'g', name:'n', version:'1']]
 
         then:
         def versions = strategy.forcedModules as List
-        versions.size() == 1
+        versions.size() == 2
         versions[0].group == 'hello'
+        versions[1].group == 'g'
     }
 }

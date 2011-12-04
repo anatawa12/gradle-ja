@@ -95,7 +95,7 @@ class DefaultDependencyHandler implements DependencyHandler {
             }
         }
 
-        Object[] normalizedArgs = GUtil.flatten(args as List, false)
+        Object[] normalizedArgs = GUtil.collectionize(args)
         if (normalizedArgs.length == 2 && normalizedArgs[1] instanceof Closure) {
             return doAdd(configuration, normalizedArgs[0], (Closure) normalizedArgs[1])
         } else if (normalizedArgs.length == 1) {

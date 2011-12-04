@@ -68,6 +68,9 @@ integTestTasks.all {
         if (isDevBuild()) {
             systemProperties['org.gradle.integtest.versions'] = 'latest'
         }
+        if (isCIBuild()) {
+            maxParallelForks = 4
+        }
     }
 }
 
@@ -83,6 +86,8 @@ integTestTasks.all {
 }
 
 daemonIntegTest {
+    systemProperties['org.gradle.integtest.daemon.registry'] = file("$rootProject.buildDir/daemon").absolutePath
+
     doLast {
         if (project.hasProperty("waitForDaemonsToDieMillis")) {
             println "Property 'waitForDaemonsToDieMillis' passed so I'm waiting $project.waitForDaemonsToDieMillis millis so that deamons can die with honor..."

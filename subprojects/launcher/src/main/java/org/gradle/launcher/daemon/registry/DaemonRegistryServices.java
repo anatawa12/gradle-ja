@@ -15,23 +15,41 @@
  */
 package org.gradle.launcher.daemon.registry;
 
+import org.gradle.api.internal.project.DefaultServiceRegistry;
+import org.gradle.api.internal.Factory;
+import org.gradle.api.internal.cache.Cache;
+import org.gradle.api.internal.cache.MapBackedCache;
+import org.gradle.api.internal.cache.CacheAccessSerializer;
 import org.gradle.cache.internal.DefaultFileLockManager;
 import org.gradle.cache.internal.DefaultProcessMetaDataProvider;
 import org.gradle.cache.internal.FileLockManager;
-import org.gradle.os.*;
+import org.gradle.os.ProcessEnvironment;
 import org.gradle.os.jna.NativeEnvironment;
-import org.gradle.api.internal.project.DefaultServiceRegistry;
 
 import java.io.File;
+import java.util.Map;
+import java.util.HashMap;
+import java.util.Properties;
 
 /**
  * Takes care of instantiating and wiring together the services required for a daemon registry.
  */
 public class DaemonRegistryServices extends DefaultServiceRegistry {
-    private final File userHomeDir;
+    private final File daemonBaseDir;
+    private final Cache<File, DaemonRegistry> daemonRegistryCache;
 
-    public DaemonRegistryServices(File userHomeDir) {
-        this.userHomeDir = userHomeDir;
+    private static final Map<File, DaemonRegistry> REGISTRY_STORAGE = new HashMap<File, DaemonRegistry>();
+    private static final Cache<File, DaemonRegistry> REGISTRY_CACHE = new CacheAccessSerializer<File, DaemonRegistry>(
+            new MapBackedCache<File, DaemonRegistry>(REGISTRY_STORAGE)
+    );
+        
+    public DaemonRegistryServices(File daemonBaseDir) {
+        this(daemonBaseDir, REGISTRY_CACHE);
+    }
+
+    protected DaemonRegistryServices(File daemonBaseDir, Cache<File, DaemonRegistry> daemonRegistryCache) {
+        this.daemonBaseDir = daemonBaseDir;
+        this.daemonRegistryCache = daemonRegistryCache;
     }
 
     protected ProcessEnvironment createProcessEnvironment() {
@@ -39,7 +57,7 @@ public class DaemonRegistryServices extends DefaultServiceRegistry {
     }
 
     protected DaemonDir createDaemonDir() {
-        return new DaemonDir(userHomeDir, get(ProcessEnvironment.class));
+        return new DaemonDir(daemonBaseDir, get(ProcessEnvironment.class));
     }
 
     protected FileLockManager createFileLockManager() {
@@ -47,7 +65,15 @@ public class DaemonRegistryServices extends DefaultServiceRegistry {
     }
 
     protected DaemonRegistry createDaemonRegistry() {
-        return new PersistentDaemonRegistry(get(DaemonDir.class).getRegistry(), get(FileLockManager.class));
+        final File daemonRegistryFile = get(DaemonDir.class).getRegistry();
+        return daemonRegistryCache.get(daemonRegistryFile, new Factory<DaemonRegistry>() {
+            public DaemonRegistry create() {
+                return new PersistentDaemonRegistry(daemonRegistryFile, get(FileLockManager.class));
+            }
+        });
     }
-
+    
+    protected Properties createProperties() {
+        return System.getProperties();
+    }
 }

@@ -15,12 +15,16 @@
  */
 package org.gradle.launcher.daemon.context;
 
+import com.google.common.collect.Lists;
+import org.gradle.StartParameter;
 import org.gradle.util.Jvm;
-import org.gradle.api.UncheckedIOException;
+import org.gradle.os.jna.NativeEnvironment;
+import static org.gradle.util.GFileUtils.canonicalise;
 import org.gradle.api.internal.Factory;
+import org.gradle.launcher.daemon.registry.DaemonDir;
 
 import java.io.File;
-import java.io.IOException;
+import java.util.List;
 
 /**
  * Builds a daemon context, reflecting the current environment.
@@ -30,16 +34,16 @@ import java.io.IOException;
  */
 public class DaemonContextBuilder implements Factory<DaemonContext> {
 
-    private final Jvm jvm = Jvm.current();
-
     private File javaHome;
+    private File daemonRegistryDir;
+    private Long pid;
+    private Integer idleTimeout;
+    private List<String> daemonOpts = Lists.newArrayList();
 
     public DaemonContextBuilder() {
-        try {
-            javaHome = jvm.getJavaHome().getCanonicalFile();
-        } catch (IOException e) {
-            throw new UncheckedIOException("Unable to canonicalise JAVA_HOME '" + jvm.getJavaHome(), e);
-        }
+        javaHome = canonicalise(Jvm.current().getJavaHome());
+        daemonRegistryDir = DaemonDir.getDirectoryInGradleUserHome(StartParameter.DEFAULT_GRADLE_USER_HOME);
+        pid = NativeEnvironment.current().maybeGetPid();
     }
 
     public File getJavaHome() {
@@ -50,10 +54,42 @@ public class DaemonContextBuilder implements Factory<DaemonContext> {
         this.javaHome = javaHome;
     }
 
+    public File getDaemonRegistryDir() {
+        return this.daemonRegistryDir = daemonRegistryDir;
+    }
+
+    public void setDaemonRegistryDir(File daemonRegistryDir) {
+        this.daemonRegistryDir = daemonRegistryDir;
+    }
+
+    public Long getPid() {
+        return pid;
+    }
+    
+    public void setPid(Long pid) {
+        this.pid = pid;
+    }
+
+    public Integer getIdleTimeout() {
+        return idleTimeout;
+    }
+    
+    public void setIdleTimeout(Integer idleTimeout) {
+        this.idleTimeout = idleTimeout;
+    }
+
+    public List<String> getDaemonOpts() {
+        return daemonOpts;
+    }
+
+    public void setDaemonOpts(List<String> daemonOpts) {
+        this.daemonOpts = daemonOpts;
+    }
+
     /**
      * Creates a new daemon context, based on the current state of this builder.
      */
     public DaemonContext create() {
-        return new DefaultDaemonContext(javaHome);
+        return new DefaultDaemonContext(javaHome, daemonRegistryDir, pid, idleTimeout, daemonOpts);
     }
 }

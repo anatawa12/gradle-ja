@@ -18,11 +18,10 @@ package org.gradle.api.internal.artifacts;
 
 import org.apache.commons.lang.ObjectUtils;
 import org.gradle.api.InvalidUserDataException;
-import org.gradle.api.artifacts.ModuleIdentifier;
+import org.gradle.api.artifacts.ModuleVersionIdentifier;
 import org.gradle.api.artifacts.ResolvedArtifact;
 import org.gradle.api.artifacts.ResolvedDependency;
-import org.gradle.api.artifacts.ResolvedModule;
-import org.gradle.util.GUtil;
+import org.gradle.api.artifacts.ResolvedModuleVersion;
 
 import java.util.*;
 
@@ -73,10 +72,10 @@ public class DefaultResolvedDependency implements ResolvedDependency {
         return id.getConfiguration();
     }
 
-    public ResolvedModule getModule() {
-        return new ResolvedModule() {
-            public ModuleIdentifier getId() {
-                return new DefaultResolvedModuleId(id.getModuleGroup(), id.getModuleName(), id.getModuleVersion());
+    public ResolvedModuleVersion getModule() {
+        return new ResolvedModuleVersion() {
+            public ModuleVersionIdentifier getId() {
+                return new DefaultModuleVersionIdentifier(id.getModuleGroup(), id.getModuleName(), id.getModuleVersion());
             }
         };
     }
@@ -110,7 +109,7 @@ public class DefaultResolvedDependency implements ResolvedDependency {
     }
 
     public Set<ResolvedArtifact> getArtifacts(ResolvedDependency parent) {
-        return GUtil.addSets(getParentArtifacts(parent), getModuleArtifacts());
+        return getParentArtifacts(parent);
     }
 
     public Set<ResolvedArtifact> getAllArtifacts(ResolvedDependency parent) {
@@ -165,6 +164,7 @@ public class DefaultResolvedDependency implements ResolvedDependency {
             this.parentArtifacts.put(parent, parentArtifacts);
         }
         parentArtifacts.addAll(artifacts);
+        moduleArtifacts.addAll(artifacts);
     }
 
     public void addModuleArtifact(ResolvedArtifact artifact) {

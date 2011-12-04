@@ -15,26 +15,16 @@
  */
 package org.gradle.api.internal.artifacts.ivyservice
 
-import java.util.concurrent.Callable
 import org.apache.ivy.core.module.descriptor.Artifact
-import org.apache.ivy.core.resolve.ResolveEngine
 import org.gradle.api.artifacts.ResolvedArtifact
 import org.gradle.api.artifacts.ResolvedDependency
+import org.gradle.api.internal.Factory
 import org.gradle.api.internal.artifacts.DefaultResolvedArtifact
 import spock.lang.Specification
 
 class ResolvedArtifactFactoryTest extends Specification {
     final CacheLockingManager lockingManager = Mock()
     final ResolvedArtifactFactory factory = new ResolvedArtifactFactory(lockingManager)
-
-    def "creates an artifact backed by resolve engine"() {
-        Artifact artifact = Mock()
-        ResolveEngine resolveEngine = Mock()
-        ResolvedDependency resolvedDependency = Mock()
-
-        expect:
-        factory.create(resolvedDependency, artifact, resolveEngine) instanceof DefaultResolvedArtifact
-    }
 
     def "creates an artifact backed by resolver"() {
         Artifact artifact = Mock()
@@ -52,8 +42,8 @@ class ResolvedArtifactFactoryTest extends Specification {
         resolvedArtifact.file
 
         then:
-        1 * lockingManager.withCacheLock(!null, !null) >> {String displayName, Callable action ->
-            return action.call()
+        1 * lockingManager.useCache(!null, !null) >> {String displayName, Factory<?> action ->
+            return action.create()
         }
         1 * resolver.resolve(artifact) >> file
         0 * _._

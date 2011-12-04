@@ -34,6 +34,8 @@ import org.gradle.api.specs.Specs;
 import org.gradle.api.tasks.TaskDependency;
 import org.gradle.listener.ListenerBroadcast;
 import org.gradle.listener.ListenerManager;
+import org.gradle.util.ConfigureUtil;
+import org.gradle.util.CollectionUtils;
 import org.gradle.util.DeprecationLogger;
 import org.gradle.util.WrapUtil;
 
@@ -384,11 +386,11 @@ public class DefaultConfiguration extends AbstractFileCollection implements Conf
     }
 
     public Configuration copy(Spec<? super Dependency> dependencySpec) {
-        return createCopy(Specs.filterIterable(getDependencies(), dependencySpec), false);
+        return createCopy(CollectionUtils.filter(getDependencies(), dependencySpec), false);
     }
 
     public Configuration copyRecursive(Spec<? super Dependency> dependencySpec) {
-        return createCopy(Specs.filterIterable(getAllDependencies(), dependencySpec), true);
+        return createCopy(CollectionUtils.filter(getAllDependencies(), dependencySpec), true);
     }
 
     private DefaultConfiguration createCopy(Set<Dependency> dependencies, boolean recursive) {
@@ -441,6 +443,11 @@ public class DefaultConfiguration extends AbstractFileCollection implements Conf
 
     public DefaultResolutionStrategy getResolutionStrategy() {
         return resolutionStrategy;
+    }
+
+    public Configuration resolutionStrategy(Closure closure) {
+        ConfigureUtil.configure(closure, resolutionStrategy);
+        return this;
     }
 
     private void throwExceptionIfNotInUnresolvedState() {

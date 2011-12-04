@@ -18,28 +18,53 @@ package org.gradle.launcher.daemon.registry;
 
 import org.gradle.os.ProcessEnvironment;
 import org.gradle.util.GradleVersion;
+import org.gradle.util.GFileUtils;
+import org.gradle.cli.SystemPropertiesCommandLineConverter;
 
 import java.io.File;
 import java.util.UUID;
+import java.util.Map;
 
-/**
- * @author: Szczepan Faber, created at: 8/20/11
- */
 public class DaemonDir {
 
-    private final File dir;
+    public static final String SYSTEM_PROPERTY_KEY = "org.gradle.daemon.registry.base";
+        
+    private final File baseDir;
+    private final File versionedDir;
     private final File registryFile;
     private final ProcessEnvironment processEnvironment;
 
     public DaemonDir(File baseDir, ProcessEnvironment processEnvironment) {
-        dir = new File(baseDir, String.format("daemon/%s", GradleVersion.current().getVersion()));
-        registryFile = new File(dir, "registry.bin");
-        dir.mkdirs();
+        this.baseDir = baseDir;
+        this.versionedDir = new File(baseDir, String.format("%s", GradleVersion.current().getVersion()));
+        this.registryFile = new File(versionedDir, "registry.bin");
+        this.versionedDir.mkdirs();
         this.processEnvironment = processEnvironment;
     }
 
-    public File getDir() {
-        return dir;
+    public static File calculateDirectory(Map<?, ?> properties, File fallbackDirectory) {
+        Object propertyValue = properties.get(SYSTEM_PROPERTY_KEY);
+        if (propertyValue == null) {
+            return fallbackDirectory;
+        } else {
+           return GFileUtils.canonicalise(new File(propertyValue.toString())); 
+        }
+    }
+    
+    public static File calculateDirectoryViaPropertiesOrUseDefaultInGradleUserHome(Map<?, ?> properties, File gradleUserHome) {
+        return calculateDirectory(properties, getDirectoryInGradleUserHome(gradleUserHome));
+    }
+    
+    public static File getDirectoryInGradleUserHome(File gradleUserHome) {
+        return new File(gradleUserHome, "daemon");
+    }
+
+    public File getBaseDir() {
+        return baseDir;
+    }
+    
+    public File getVersionedDir() {
+        return versionedDir;
     }
 
     public File getRegistry() {
@@ -49,6 +74,11 @@ public class DaemonDir {
     //very simplistic, just making sure each damon has unique log file
     public File createUniqueLog() {
         Long pid = processEnvironment.maybeGetPid();
-        return new File(dir, String.format("daemon-%s.out.log", pid == null ? UUID.randomUUID() : pid));
+        return new File(versionedDir, String.format("daemon-%s.out.log", pid == null ? UUID.randomUUID() : pid));
     }
+    
+    public static String toCliArg(String path) {
+        return SystemPropertiesCommandLineConverter.toArg(SYSTEM_PROPERTY_KEY, path);
+    }
+    
 }

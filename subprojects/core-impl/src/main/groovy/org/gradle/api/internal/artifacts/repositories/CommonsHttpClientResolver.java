@@ -16,9 +16,10 @@
 package org.gradle.api.internal.artifacts.repositories;
 
 import org.apache.ivy.plugins.resolver.RepositoryResolver;
+import org.gradle.api.internal.artifacts.repositories.transport.HttpSettings;
 
 public class CommonsHttpClientResolver extends RepositoryResolver {
-    public CommonsHttpClientResolver(String username, String password) {
-        setRepository(new CommonsHttpClientBackedRepository(username, password));
+    public CommonsHttpClientResolver(HttpSettings httpSettings) {
+        setRepository(new CommonsHttpClientBackedRepository(httpSettings));
     }
 }

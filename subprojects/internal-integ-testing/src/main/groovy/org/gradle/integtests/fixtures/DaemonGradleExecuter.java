@@ -15,38 +15,41 @@
  */
 package org.gradle.integtests.fixtures;
 
-import org.gradle.util.TestFile;
+import org.gradle.launcher.daemon.registry.DaemonDir;
+import org.gradle.launcher.daemon.server.DaemonIdleTimeout;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 public class DaemonGradleExecuter extends ForkingGradleExecuter {
+    private static final String DAEMON_REGISTRY_SYS_PROP = "org.gradle.integtest.daemon.registry";
+    private final GradleDistribution distribution;
 
-    public DaemonGradleExecuter(TestFile gradleHomeDir) {
-        super(gradleHomeDir);
+    public DaemonGradleExecuter(GradleDistribution distribution) {
+        super(distribution.getGradleHomeDir());
+        this.distribution = distribution;
+    }
+
+    @Override
+    public Map<String, String> getAllEnvironmentVars() {
+        Map<String, String> vars = new HashMap<String, String>();
+        vars.put("GRADLE_DAEMON_OPTS", "-XX:MaxPermSize=256m");
+        vars.putAll(super.getAllEnvironmentVars());
+        return vars;
     }
 
     @Override
     protected List<String> getAllArgs() {
         List<String> args = new ArrayList<String>();
         args.add("--daemon");
+        args.add(DaemonIdleTimeout.toCliArg(5 * 60 * 1000));
+        String customDaemonRegistryDir = System.getProperty(DAEMON_REGISTRY_SYS_PROP);
+        if (customDaemonRegistryDir != null && !distribution.isUsingOwnUserHomeDir()) {
+            args.add(DaemonDir.toCliArg(customDaemonRegistryDir));
+        }
         args.addAll(super.getAllArgs());
         return args;
     }
-
-    public GradleHandle<DaemonGradleExecuter> createHandle() {
-        return new DaemonGradleHandle<DaemonGradleExecuter>(this);
-    }
-
-    protected static class DaemonGradleHandle<T extends DaemonGradleExecuter> extends ForkingGradleHandle<T> {
-        public DaemonGradleHandle(T executer) {
-            super(executer);
-        }
-
-        protected String transformStandardOutput(String output) {
-            output = output.replace(String.format("Note: the Gradle build daemon is an experimental feature.%n"), "");
-            output = output.replace(String.format("As such, you may experience unexpected build failures. You may need to occasionally stop the daemon.%n"), "");
-            return output;
-        }
-    }
-
 }

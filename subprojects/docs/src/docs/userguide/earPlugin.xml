@@ -197,18 +197,9 @@
             <sourcefile file="build.gradle"/>
             <test args="assemble"/>
         </sample>
-        <para role="original">You can also use customization options that the <apilink class="org.gradle.api.tasks.bundling.Jar"/>
+        <para>You can also use customization options that the <apilink class="org.gradle.plugins.ear.Ear"/>
         	task provides, such as <literal>from</literal> and <literal>metaInf</literal>.
         </para>
-        <para><literal>from</literal>や<literal>metaInf</literal>といった、<apilink class="org.gradle.api.tasks.bundling.Jar"/>タスクが提供するカスタマイズオプションも利用できます。
-        </para>
-        <para role="original">If you want to enable the generation of the default jar archive additional to the EAR archive just type:
-        </para>
-        <para>EARアーカイブに加え、デフォルトのJARアーカイブ生成を有効にしたい場合は、次のようにタイプするだけです:
-        </para>
-        <sample id="earCustomizedWithJarEnabled" dir="ear/earCustomized/ear" title="EARアーカイブに加えてJARアーカイブも生成 / Generation of JAR archive in addition to EAR archive">
-            <sourcefile file="build.gradle" snippet="enable-jar"/>
-        </sample>
     </section>
     <section id='sec:using_custom_app_xml'>
         <title>カスタムのディスクリプタファイルを使う<phrase role="original">Using custom descriptor file</phrase></title>

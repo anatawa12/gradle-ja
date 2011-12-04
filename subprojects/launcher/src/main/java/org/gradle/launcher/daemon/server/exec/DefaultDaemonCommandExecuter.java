@@ -20,8 +20,8 @@ import org.gradle.initialization.DefaultGradleLauncherFactory;
 import org.gradle.initialization.GradleLauncherFactory;
 import org.gradle.launcher.daemon.protocol.Command;
 import org.gradle.launcher.daemon.server.DaemonStateCoordinator;
-import org.gradle.logging.StyledTextOutputFactory;
-import org.gradle.logging.internal.LoggingOutputInternal;
+import org.gradle.launcher.daemon.context.DaemonContext;
+import org.gradle.logging.LoggingManagerInternal;
 import org.gradle.messaging.concurrent.ExecutorFactory;
 import org.gradle.messaging.remote.internal.Connection;
 import org.gradle.messaging.remote.internal.DisconnectAwareConnectionDecorator;
@@ -31,37 +31,35 @@ import org.gradle.messaging.remote.internal.DisconnectAwareConnectionDecorator;
  */
 public class DefaultDaemonCommandExecuter implements DaemonCommandExecuter {
 
-    final private ServiceRegistry loggingServices;
     private final ExecutorFactory executorFactory;
-    final private LoggingOutputInternal loggingOutput;
+    final private LoggingManagerInternal loggingManager;
     final private GradleLauncherFactory launcherFactory;
 
     public DefaultDaemonCommandExecuter(ServiceRegistry loggingServices, ExecutorFactory executorFactory) {
-        this.loggingServices = loggingServices;
         this.executorFactory = executorFactory;
-        this.loggingOutput = loggingServices.get(LoggingOutputInternal.class);
+        this.loggingManager = loggingServices.getFactory(LoggingManagerInternal.class).create();
         this.launcherFactory = new DefaultGradleLauncherFactory(loggingServices);
     }
 
-    public void executeCommand(Connection<Object> connection, Command command, DaemonStateCoordinator daemonStateCoordinator) {
+    public void executeCommand(Connection<Object> connection, Command command, DaemonContext daemonContext, DaemonStateCoordinator daemonStateCoordinator) {
         new DaemonCommandExecution(
             new DisconnectAwareConnectionDecorator<Object>(connection, executorFactory.create("DefaultDaemonCommandExecuter > DisconnectAwareConnectionDecorator")),
             command,
+            daemonContext,
             daemonStateCoordinator,
             new StopConnectionAfterExecution(),
             new HandleClientDisconnectBeforeSendingCommand(),
             new CatchAndForwardDaemonFailure(),
             new HandleStop(),
             new UpdateDaemonStateAndHandleBusyDaemon(),
-            new ReturnResult(),
-            new ForwardOutput(loggingOutput),
-            new ResetDeprecationLogger(),
-            new ReportExceptions(loggingServices.get(StyledTextOutputFactory.class)),
-            new HandleSleep(),
             new EstablishBuildEnvironment(),
-            new WatchForDisconnection(),
+            new LogToClient(loggingManager), // from this point down, logging is sent back to the client
             new ForwardClientInput(executorFactory),
-            new ExecuteBuild(loggingServices, launcherFactory)
+            new ReturnResult(),
+            new ResetDeprecationLogger(),
+            new CatchAndForwardDaemonFailureAsResult(),
+            new WatchForDisconnection(),
+            new ExecuteBuild(launcherFactory)
         ).proceed();
     }
 

@@ -25,6 +25,10 @@ import org.apache.commons.io.output.CloseShieldOutputStream;
 import org.apache.ivy.plugins.repository.*;
 import org.apache.ivy.util.FileUtil;
 import org.apache.ivy.util.url.ApacheURLLister;
+import org.gradle.api.UncheckedIOException;
+import org.gradle.api.artifacts.repositories.PasswordCredentials;
+import org.gradle.api.internal.artifacts.repositories.transport.HttpProxySettings;
+import org.gradle.api.internal.artifacts.repositories.transport.HttpSettings;
 import org.gradle.util.GUtil;
 import org.gradle.util.GradleVersion;
 import org.gradle.util.UncheckedException;
@@ -45,13 +49,16 @@ public class CommonsHttpClientBackedRepository extends AbstractRepository {
     private static final Logger LOGGER = LoggerFactory.getLogger(CommonsHttpClientBackedRepository.class);
     private final Map<String, Resource> resources = new HashMap<String, Resource>();
     private final HttpClient client = new HttpClient();
+    private final HttpProxySettings proxySettings;
     private final RepositoryCopyProgressListener progress = new RepositoryCopyProgressListener(this);
 
-    public CommonsHttpClientBackedRepository(String username, String password) {
-        if (GUtil.isTrue(username)) {
+    public CommonsHttpClientBackedRepository(HttpSettings httpSettings) {
+        PasswordCredentials credentials = httpSettings.getCredentials();
+        if (GUtil.isTrue(credentials.getUsername())) {
             client.getParams().setAuthenticationPreemptive(true);
-            client.getState().setCredentials(new AuthScope(null, -1, null), new UsernamePasswordCredentials(username, password));
+            client.getState().setCredentials(AuthScope.ANY, new UsernamePasswordCredentials(credentials.getUsername(), credentials.getPassword()));
         }
+        this.proxySettings = httpSettings.getProxySettings();
     }
 
     public Resource getResource(final String source) throws IOException {
@@ -130,7 +137,7 @@ public class CommonsHttpClientBackedRepository extends AbstractRepository {
         PutMethod method = new PutMethod(destination);
         configureMethod(method);
         method.setRequestEntity(new FileRequestEntity(source));
-        int result = client.executeMethod(method);
+        int result = executeMethod(method);
         if (!wasSuccessful(result)) {
             throw new IOException(String.format("Could not PUT '%s'. Received status code %s from server: %s", destination, result, method.getStatusText()));
         }
@@ -143,6 +150,31 @@ public class CommonsHttpClientBackedRepository extends AbstractRepository {
                 return false;
             }
         });
+    }
+
+    private int executeMethod(HttpMethod method) throws IOException {
+        configureProxyIfRequired(method);
+        return client.executeMethod(method);
+    }
+
+    private void configureProxyIfRequired(HttpMethod method) throws URIException {
+        HttpProxySettings.HttpProxy proxy = proxySettings.getProxy(method.getURI().getHost());
+        if (proxy != null) {
+            setProxyForClient(client, proxy);
+        } else {
+            client.getHostConfiguration().setProxyHost(null);
+        }
+    }
+
+    private void setProxyForClient(HttpClient httpClient, HttpProxySettings.HttpProxy proxy) {
+        // Only set proxy host once
+        if (client.getHostConfiguration().getProxyHost() != null) {
+            return;
+        }
+        httpClient.getHostConfiguration().setProxy(proxy.host, proxy.port);
+        if (proxy.username != null) {
+            httpClient.getState().setProxyCredentials(AuthScope.ANY, new UsernamePasswordCredentials(proxy.username, proxy.password));
+        }
     }
 
     public List list(String parent) throws IOException {
@@ -180,14 +212,20 @@ public class CommonsHttpClientBackedRepository extends AbstractRepository {
             return method.invoke(delegate, args);
         }
 
-        private Resource init() throws IOException {
-            LOGGER.debug("Attempting to get resource {}.", source);
-            int result = client.executeMethod(method);
+        private Resource init() {
+            LOGGER.info("Attempting to GET resource {}.", source);
+            int result;
+            try {
+                result = executeMethod(method);
+            } catch (IOException e) {
+                throw new UncheckedIOException(String.format("Could not GET '%s'.", source), e);
+            }
             if (result == 404) {
+                LOGGER.debug("Resource missing: {}.", source);
                 return new MissingResource(source);
             }
             if (!wasSuccessful(result)) {
-                throw new IOException(String.format("Could not GET '%s'. Received status code %s from server: %s", source, result, method.getStatusText()));
+                throw new UncheckedIOException(String.format("Could not GET '%s'. Received status code %s from server: %s", source, result, method.getStatusText()));
             }
             return new HttpResource(source, method);
         }
@@ -247,6 +285,7 @@ public class CommonsHttpClientBackedRepository extends AbstractRepository {
         }
 
         public InputStream openStream() throws IOException {
+            LOGGER.debug("Attempting to download resource {}.", source);
             return method.getResponseBodyAsStream();
         }
     }

@@ -23,6 +23,9 @@ import org.gradle.initialization.GradleLauncherAction;
 import org.gradle.initialization.GradleLauncherFactory;
 import org.gradle.launcher.daemon.client.DaemonClient;
 import org.gradle.launcher.daemon.client.DaemonClientServices;
+import org.gradle.launcher.daemon.registry.DaemonDir;
+import org.gradle.launcher.daemon.server.DaemonIdleTimeout;
+import org.gradle.launcher.daemon.server.DaemonJvmOptions;
 import org.gradle.launcher.exec.GradleLauncherActionExecuter;
 import org.gradle.logging.LoggingManagerInternal;
 import org.gradle.logging.LoggingServiceRegistry;
@@ -33,6 +36,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
+import java.util.List;
 
 public class DefaultConnection implements ConnectionVersion4 {
     private static final Logger LOGGER = LoggerFactory.getLogger(DefaultConnection.class);
@@ -82,10 +86,20 @@ public class DefaultConnection implements ConnectionVersion4 {
             executer = new EmbeddedGradleLauncherActionExecuter(gradleLauncherFactory);
         } else {
             File gradleUserHomeDir = GUtil.elvis(operationParameters.getGradleUserHomeDir(), StartParameter.DEFAULT_GRADLE_USER_HOME);
-            DaemonClientServices clientServices = new DaemonClientServices(loggingServices, gradleUserHomeDir);
+            File daemonBaseDir = DaemonDir.calculateDirectoryViaPropertiesOrUseDefaultInGradleUserHome(System.getProperties(), gradleUserHomeDir);
+            List<String> daemonOpts = DaemonJvmOptions.getFromEnvironmentVariable();
+            DaemonClientServices clientServices = new DaemonClientServices(loggingServices, daemonBaseDir, daemonOpts, getIdleTimeout(operationParameters));
             DaemonClient client = clientServices.get(DaemonClient.class);
             executer = new DaemonGradleLauncherActionExecuter(client);
         }
         return new LoggingBridgingGradleLauncherActionExecuter(executer, loggingServices.getFactory(LoggingManagerInternal.class));
+    }
+
+    private int getIdleTimeout(BuildOperationParametersVersion1 operationParameters) {
+        if (operationParameters.getDaemonMaxIdleTimeValue() != null && operationParameters.getDaemonMaxIdleTimeUnits() != null) {
+            return (int) operationParameters.getDaemonMaxIdleTimeUnits().toMillis(operationParameters.getDaemonMaxIdleTimeValue());
+        } else {
+            return DaemonIdleTimeout.DEFAULT_IDLE_TIMEOUT;
+        }
     }
 }

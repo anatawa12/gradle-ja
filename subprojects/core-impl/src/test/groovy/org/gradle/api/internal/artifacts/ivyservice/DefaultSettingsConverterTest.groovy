@@ -16,14 +16,15 @@
 
 package org.gradle.api.internal.artifacts.ivyservice
 
-import org.apache.ivy.core.module.descriptor.ModuleDescriptor
 import org.apache.ivy.core.settings.IvySettings
-import org.apache.ivy.plugins.resolver.ChainResolver
-import org.apache.ivy.plugins.resolver.DependencyResolver
 import org.apache.ivy.plugins.resolver.IBiblioResolver
 import org.gradle.api.internal.Factory
 import org.gradle.api.internal.artifacts.configurations.ResolutionStrategyInternal
 import org.gradle.api.internal.artifacts.ivyservice.dynamicversions.ModuleResolutionCache
+import org.gradle.api.internal.artifacts.ivyservice.filestore.FileStore
+import org.gradle.api.internal.artifacts.ivyservice.ivyresolve.LoopbackDependencyResolver
+import org.gradle.api.internal.artifacts.ivyservice.ivyresolve.UserResolverChain
+import org.gradle.api.internal.artifacts.ivyservice.modulecache.ModuleDescriptorCache
 import org.gradle.logging.ProgressLoggerFactory
 import spock.lang.Specification
 
@@ -31,17 +32,18 @@ class DefaultSettingsConverterTest extends Specification {
     final IBiblioResolver testResolver = new IBiblioResolver()
     final IBiblioResolver testResolver2 = new IBiblioResolver()
 
-    Map clientModuleRegistry = [a: [:] as ModuleDescriptor]
-    DependencyResolver projectResolver = Mock()
     ResolutionStrategyInternal resolutionStrategy = Mock()
     ModuleResolutionCache dynamicRevisionCache = Mock()
+    ModuleDescriptorCache moduleDescriptorCache = Mock()
+    CacheLockingManager cacheLockingManager = Mock()
+    FileStore fileStore = Mock()
 
     File testGradleUserHome = new File('gradleUserHome')
 
     final Factory<IvySettings> ivySettingsFactory = Mock()
     final IvySettings ivySettings = new IvySettings()
 
-    DefaultSettingsConverter converter = new DefaultSettingsConverter(Mock(ProgressLoggerFactory), ivySettingsFactory, dynamicRevisionCache)
+    DefaultSettingsConverter converter = new DefaultSettingsConverter(Mock(ProgressLoggerFactory), ivySettingsFactory, dynamicRevisionCache, moduleDescriptorCache, cacheLockingManager)
 
     public void setup() {
         testResolver.name = 'resolver'
@@ -49,60 +51,63 @@ class DefaultSettingsConverterTest extends Specification {
 
     public void testConvertForResolve() {
         when:
-        IvySettings settings = converter.convertForResolve([testResolver, testResolver2], projectResolver, clientModuleRegistry, resolutionStrategy)
+        IvySettings settings = converter.convertForResolve([testResolver, testResolver2], resolutionStrategy)
 
         then:
         1 * ivySettingsFactory.create() >> ivySettings
-        1 * resolutionStrategy.getForcedModules()
         1 * resolutionStrategy.getCachePolicy()
+        1 * moduleDescriptorCache.setSettings(ivySettings)
         0 * _._
 
         assert settings.is(ivySettings)
 
-        ChainResolver chainResolver = settings.getResolver(DefaultSettingsConverter.USER_RESOLVER_CHAIN_NAME)
-        assert chainResolver.resolvers == [testResolver, testResolver2]
+        UserResolverChain chainResolver = settings.getResolver(DefaultSettingsConverter.USER_RESOLVER_CHAIN_NAME)
         assert chainResolver.returnFirst
+        assert chainResolver.resolvers.size() == 2
 
-        assert settings.getResolver(DefaultSettingsConverter.CLIENT_MODULE_RESOLVER_NAME) instanceof ClientModuleResolver
-        assert settings.getResolver(DefaultSettingsConverter.TOP_LEVEL_RESOLVER_CHAIN_NAME) instanceof TopLeveResolverChain
+        assert settings.defaultResolver instanceof LoopbackDependencyResolver
+        assert settings.defaultResolver.resolver == chainResolver
 
-        EntryPointResolver entryPointResolver = settings.getResolver(DefaultSettingsConverter.ENTRY_POINT_RESOLVER)
-        assert settings.defaultResolver.is(entryPointResolver)
-
-        [testResolver.name, testResolver2.name].each {
-            assert settings.getResolver(it)
-            assert settings.getResolver(it).repositoryCacheManager.settings == settings
-        }
-        [DefaultSettingsConverter.ENTRY_POINT_RESOLVER, DefaultSettingsConverter.CLIENT_MODULE_RESOLVER_NAME, DefaultSettingsConverter.TOP_LEVEL_RESOLVER_CHAIN_NAME, DefaultSettingsConverter.USER_RESOLVER_CHAIN_NAME].each {
-            assert settings.getResolver(it)
-            assert settings.getResolver(it).repositoryCacheManager instanceof NoOpRepositoryCacheManager
+        [testResolver, testResolver2].each { resolver ->
+            assert chainResolver.resolvers.any { it.resolver == resolver }
+            assert settings.getResolver(resolver.name).resolver == resolver
+            assert resolver.settings == settings
+            assert resolver.repositoryCacheManager.settings == settings
         }
     }
 
     public void shouldReuseResolveSettings() {
         when:
-        IvySettings settings = converter.convertForResolve([testResolver, testResolver2], projectResolver, clientModuleRegistry, resolutionStrategy)
+        IvySettings settings = converter.convertForResolve([testResolver, testResolver2], resolutionStrategy)
 
         then:
         1 * ivySettingsFactory.create() >> ivySettings
-        1 * resolutionStrategy.getForcedModules()
         1 * resolutionStrategy.getCachePolicy()
+        1 * moduleDescriptorCache.setSettings(ivySettings)
         0 * _._
 
         assert settings.is(ivySettings)
 
-        ChainResolver chainResolver = settings.getResolver(DefaultSettingsConverter.USER_RESOLVER_CHAIN_NAME)
-        assert chainResolver.resolvers == [testResolver, testResolver2]
+        UserResolverChain chainResolver = settings.defaultResolver.resolver
+        assert chainResolver.resolvers.size() == 2
+        [testResolver, testResolver2].each { resolver ->
+            assert chainResolver.resolvers.any { it.resolver == resolver }
+        }
 
         when:
-        settings = converter.convertForResolve([testResolver], projectResolver, clientModuleRegistry, resolutionStrategy)
+        settings = converter.convertForResolve([testResolver], resolutionStrategy)
 
         then:
         assert settings.is(ivySettings)
 
-        ChainResolver secondChainResolver = settings.getResolver(DefaultSettingsConverter.USER_RESOLVER_CHAIN_NAME)
-        assert secondChainResolver.resolvers == [testResolver]
-        assert !ivySettings.resolvers.contains(testResolver2)
+        UserResolverChain secondChainResolver = settings.getResolver(DefaultSettingsConverter.USER_RESOLVER_CHAIN_NAME)
+        assert secondChainResolver.resolvers.size() == 1
+        [testResolver].each { resolver ->
+            assert secondChainResolver.resolvers.any { it.resolver == resolver }
+            assert settings.getResolver(resolver.name).resolver == resolver
+            assert resolver.settings == settings
+            assert resolver.repositoryCacheManager.settings == settings
+        }
     }
 
     public void testConvertForPublish() {
@@ -110,17 +115,17 @@ class DefaultSettingsConverterTest extends Specification {
         IvySettings settings = converter.convertForPublish([testResolver, testResolver2])
 
         then:
-        1 * ivySettingsFactory.create() >> ivySettings
-        0 * _._
-
         settings.is(ivySettings)
 
-        settings.resolvers as Set == [testResolver, testResolver2] as Set
-        settings.resolvers.each {
-            settings.resolvers.contains(it)
-            settings.getResolver(it.name).is(it)
-            settings.getResolver(it.name).repositoryCacheManager.settings == settings
+        and:
+        [testResolver, testResolver2].each {
+            it.settings == settings
+            it.repositoryCacheManager.settings == settings
         }
+
+        and:
+        1 * ivySettingsFactory.create() >> ivySettings
+        0 * _._
     }
 
     public void reusesPublishSettings() {
@@ -128,12 +133,11 @@ class DefaultSettingsConverterTest extends Specification {
         IvySettings settings = converter.convertForPublish([testResolver])
 
         then:
+        settings.is(ivySettings)
+
+        and:
         1 * ivySettingsFactory.create() >> ivySettings
         0 * _._
-
-        settings.is(ivySettings)
-        
-        settings.resolvers as Set == [testResolver] as Set
 
         when:
         settings = converter.convertForPublish([testResolver, testResolver2])
@@ -141,11 +145,10 @@ class DefaultSettingsConverterTest extends Specification {
         then:
         settings.is(ivySettings)
 
-        settings.resolvers as Set == [testResolver, testResolver2] as Set
-        settings.resolvers.each {
-            settings.resolvers.contains(it)
-            settings.getResolver(it.name).is(it)
-            settings.getResolver(it.name).repositoryCacheManager.settings == settings
+        and:
+            [testResolver, testResolver2].each {
+            it.settings == settings
+            it.repositoryCacheManager.settings == settings
         }
     }
 }

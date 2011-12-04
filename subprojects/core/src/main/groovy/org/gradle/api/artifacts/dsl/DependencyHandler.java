@@ -38,8 +38,8 @@ import java.util.Map;
  * //so that we can use 'compile', 'testCompile' for dependencies
  *
  * dependencies {
- *   //for dependencies found in artifact repositories use
- *   //the gav notation, e.g. group:artifactName:version
+ *   //for dependencies found in artifact repositories you can use
+ *   //the group:name:version notation
  *   compile 'commons-lang:commons-lang:2.6'
  *   testCompile 'org.mockito:mockito:1.9.0-rc1'
  *
@@ -66,7 +66,7 @@ import java.util.Map;
  * }
  * </pre>
  *
- * Example of advanced dependency declaration including:
+ * Examples of advanced dependency declaration including:
  * <ul>
  * <li>forcing certain dependency version in case of the conflict</li>
  * <li>excluding certain dependencies by name, group or both</li>
@@ -92,6 +92,31 @@ import java.util.Map;
  * }
  * </pre>
  *
+ * More examples of advanced configuration, useful when dependency module has multiple artifacts
+ * <ul>
+ *   <li>declaring dependency to a specific configuration of the module</li>
+ *   <li>explicit specification of the artifact. See also {@link org.gradle.api.artifacts.ModuleDependency#artifact(groovy.lang.Closure)}</li>
+ * </ul>
+ *
+ * <pre autoTested=''>
+ * apply plugin: 'java' //so that I can declare 'compile' dependencies
+ *
+ * dependencies {
+ *   //configuring dependency to specific configuration of the module
+ *   compile configuration: 'someConf', group: 'org.someOrg', name: 'someModule', version: '1.0'
+ *
+ *   //configuring dependency on 'someLib' module
+ *   compile(group: 'org.myorg', name: 'someLib', version:'1.0') {
+ *     //explicitly adding the dependency artifact:
+ *     artifact {
+ *       name = 'someArtifact' //artifact name different than module name
+ *       type = 'jar'
+ *       classifier = 'someClassifier'
+ *     }
+ *   }
+ * }
+ * </pre>
+ *
  * <h2>Dependency notations</h2>
  *
  * <p>There are several supported dependency notations. These are described below. For each dependency declared this
@@ -106,7 +131,7 @@ import java.util.Map;
  * <h3>External dependencies</h3>
  *
  * <p>There are 2 notations supported for declaring a dependency on an external module.
- * One is a String notation, sometimes referred as gav notation (group:artifactName:version)</p>
+ * One is a String notation formatted this way: group:name:version</p>
  *
  * <code><i>configurationName</i> "<i>group</i>:<i>name</i>:<i>version</i>:<i>classifier</i>"</code>
  *
@@ -126,7 +151,7 @@ import java.util.Map;
  *
  * dependencies {
  *   //for dependencies found in artifact repositories you can use
- *   //the string notation, e.g. group:artifactName:version (gav)
+ *   //the string notation, e.g. group:name:version
  *   compile 'commons-lang:commons-lang:2.6'
  *   testCompile 'org.mockito:mockito:1.9.0-rc1'
  *
@@ -177,6 +202,25 @@ import java.util.Map;
  * to extend from the provided configuration.</p>
  *
  * <p>When the configuration is from a different project, a project dependency is added.</p>
+ *
+ * <h3>Gradle distribution specific dependencies</h3>
+ *
+ * <p>It is possible to depend on certain Gradle APIs or libraries that Gradle ships with.
+ * It is particularly useful for Gradle plugin development. Example:</p>
+ *
+ * <pre autoTested=''>
+ * //Our Gradle plugin is written in groovy
+ * apply plugin: 'groovy'
+ * //now we can use 'groovy' and 'compile' configuration for declaring dependencies
+ *
+ * dependencies {
+ *   //we will use groovy that ships with Gradle:
+ *   groovy localGroovy()
+ *
+ *   //our plugin requires Gradle API interfaces and classes to compile:
+ *   compile gradleApi()
+ * }
+ * </pre>
  *
  * <h3>Client module dependencies</h3>
  *

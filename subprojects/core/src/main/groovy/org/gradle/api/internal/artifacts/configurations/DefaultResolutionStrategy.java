@@ -17,12 +17,12 @@
 package org.gradle.api.internal.artifacts.configurations;
 
 import org.gradle.api.artifacts.ConflictResolution;
-import org.gradle.api.artifacts.ModuleIdentifier;
+import org.gradle.api.artifacts.ModuleVersionSelector;
+import org.gradle.api.artifacts.ResolutionStrategy;
 import org.gradle.api.internal.artifacts.configurations.conflicts.LatestConflictResolution;
 import org.gradle.api.internal.artifacts.configurations.conflicts.StrictConflictResolution;
 import org.gradle.api.internal.artifacts.configurations.dynamicversion.CachePolicy;
 import org.gradle.api.internal.artifacts.configurations.dynamicversion.DefaultCachePolicy;
-import org.gradle.util.GUtil;
 
 import java.util.LinkedHashSet;
 import java.util.Set;
@@ -33,42 +33,31 @@ import java.util.concurrent.TimeUnit;
  */
 public class DefaultResolutionStrategy implements ResolutionStrategyInternal {
 
-    private Set<ModuleIdentifier> forcedModules = new LinkedHashSet<ModuleIdentifier>();
+    private Set<ModuleVersionSelector> forcedModules = new LinkedHashSet<ModuleVersionSelector>();
     private ConflictResolution conflictResolution = new LatestConflictResolution();
     private final DefaultCachePolicy cachePolicy = new DefaultCachePolicy();
 
-    public Set<ModuleIdentifier> getForcedModules() {
+    public Set<ModuleVersionSelector> getForcedModules() {
         return forcedModules;
     }
 
-    public ConflictResolution latest() {
-        return new LatestConflictResolution();
-    }
-
-    public ConflictResolution strict() {
-        return new StrictConflictResolution();
+    public ResolutionStrategy failOnVersionConflict() {
+        this.conflictResolution = new StrictConflictResolution();
+        return this;
     }
 
     public ConflictResolution getConflictResolution() {
         return this.conflictResolution;
     }
 
-    public DefaultResolutionStrategy setConflictResolution(ConflictResolution conflictResolution) {
-        assert conflictResolution != null : "Cannot set null conflictResolution";
-        this.conflictResolution = conflictResolution;
+    public DefaultResolutionStrategy force(Object... forcedModuleNotations) {
+        assert forcedModuleNotations != null : "forcedModuleNotations cannot be null";
+        this.forcedModules.addAll(new ForcedModuleNotationParser().parseNotation(forcedModuleNotations));
         return this;
     }
 
-    public DefaultResolutionStrategy force(String... forcedModules) {
-        assert forcedModules != null : "forcedModules cannot be null";
-        for (String forced : forcedModules) {
-            this.forcedModules.add(new ForcedModuleBuilder().build(forced));
-        }
-        return this;
-    }
-
-    public DefaultResolutionStrategy setForcedModules(Iterable<ModuleIdentifier> forcedModules) {
-        this.forcedModules = GUtil.toSet(forcedModules);
+    public DefaultResolutionStrategy setForcedModules(Object ... forcedModuleNotations) {
+        this.forcedModules = new ForcedModuleNotationParser().parseNotation(forcedModuleNotations);
         return this;
     }
 

@@ -16,14 +16,21 @@
 
 package org.gradle.launcher.daemon
 
+import org.gradle.integtests.fixtures.GradleDistribution
+import org.gradle.integtests.fixtures.GradleDistributionExecuter
 import org.gradle.integtests.fixtures.GradleHandles
 import org.gradle.launcher.daemon.client.DaemonDisappearedException
+import org.gradle.launcher.daemon.context.DefaultDaemonContext
 import org.gradle.launcher.daemon.server.DaemonIdleTimeout
 import org.gradle.launcher.daemon.testing.DaemonEventSequenceBuilder
+import org.gradle.os.OperatingSystem
 import org.gradle.testing.AvailableJavaHomes
+import org.gradle.util.Jvm
 import org.junit.Rule
 import spock.lang.IgnoreIf
 import spock.lang.Specification
+import static org.gradle.integtests.fixtures.GradleDistributionExecuter.Executer.daemon
+import static org.gradle.util.ConcurrentSpecification.poll
 
 /**
  * Outlines the lifecycle of the daemon given different sequences of events.
@@ -32,8 +39,10 @@ import spock.lang.Specification
  * from the org.gradle.launcher.daemon.testing.* package to model a sequence of expected
  * daemon registry state changes, executing actions at certain state changes.
  */
+@IgnoreIf({OperatingSystem.current().windows})
 class DaemonLifecycleSpec extends Specification {
-
+    @Rule public final GradleDistribution distribution = new GradleDistribution()
+    @Rule public final GradleDistributionExecuter executer = new GradleDistributionExecuter(daemon)
     @Rule public final GradleHandles handles = new GradleHandles()
 
     def daemonIdleTimeout = 5
@@ -47,7 +56,7 @@ class DaemonLifecycleSpec extends Specification {
     @Delegate DaemonEventSequenceBuilder sequenceBuilder = new DaemonEventSequenceBuilder()
 
     def buildDir(buildNum) {
-        handles.distribution.file("builds/$buildNum")
+        distribution.file("builds/$buildNum")
     }
 
     def buildDirWithScript(buildNum, buildScript) {
@@ -60,8 +69,7 @@ class DaemonLifecycleSpec extends Specification {
         run {
             builds << handles.createHandle {
                 withTasks("watch")
-                addGradleOpts(new DaemonIdleTimeout(daemonIdleTimeout * 1000).toSysArg())
-                withArguments("--daemon", "--info")
+                withArguments(DaemonIdleTimeout.toCliArg(daemonIdleTimeout * 1000), "--info")
                 if (javaHome) {
                     withJavaHome(javaHome)
                 }
@@ -74,13 +82,16 @@ class DaemonLifecycleSpec extends Specification {
                         println 'noticed stop file, finishing'
                     }
                 """)
-            }.passthroughOutput().start()
+            }.start()
         }
     }
 
     void completeBuild(buildNum = 0) {
         run { buildDir(buildNum).file("stop") << "stop" }
+    }
 
+    void waitForBuildToWait(buildNum = 0) {
+        run { poll { assert builds[buildNum].standardOutput.contains("waiting for stop file"); } }
     }
 
     void stopDaemons() {
@@ -93,7 +104,7 @@ class DaemonLifecycleSpec extends Specification {
             if (javaHome) {
                 withJavaHome(javaHome)
             }
-        }.passthroughOutput().start().waitForFinish()
+        }.start().waitForFinish()
     }
 
     void startForegroundDaemon() {
@@ -113,8 +124,8 @@ class DaemonLifecycleSpec extends Specification {
             if (javaHome) {
                 withJavaHome(javaHome)
             }
-            withArguments("--foreground")
-        }.passthroughOutput().start()
+            withArguments("--foreground", "--info")
+        }.start()
     }
 
     void killForegroundDaemon(int num = 0) {
@@ -145,8 +156,20 @@ class DaemonLifecycleSpec extends Specification {
         }
     }
 
+    void daemonContext(num = 0, Closure assertions) {
+        run { doDaemonContext(builds[num], assertions) }
+    }
+
+    void foregroundDaemonContext(num = 0, Closure assertions) {
+        run { doDaemonContext(foregroundDaemons[num], assertions) }
+    }
+
+    void doDaemonContext(gradleHandle, Closure assertions) {
+        DefaultDaemonContext.parseFrom(gradleHandle.standardOutput).with(assertions)
+    }
+
     def setup() {
-        handles.distribution.requireOwnUserHomeDir()
+        distribution.requireOwnUserHomeDir()
     }
 
     def "daemons do some work - sit idle - then timeout and die"() {
@@ -325,17 +348,37 @@ class DaemonLifecycleSpec extends Specification {
         then:
         idle()
 
+        and:
+        foregroundDaemonContext {
+            assert javaHome == AvailableJavaHomes.bestAlternative
+        }
+
         when:
         startBuild()
 
         then:
         numDaemons 2
         busy 1
+
+        when:
+        waitForBuildToWait()
+        completeBuild()
+
+        then:
+        daemonContext {
+            assert javaHome == Jvm.current().javaHome
+        }
     }
 
     def cleanup() {
-        sequenceBuilder.build(handles.daemonRegistry).run()
-        stopDaemons()
+        try {
+            sequenceBuilder.build(handles.daemonRegistry).run()
+        } finally {
+            new DaemonEventSequenceBuilder().with {
+                stopDaemons()
+                build(handles.daemonRegistry)
+            }.run()
+        }
     }
 
 }

@@ -117,7 +117,6 @@ task html(dependsOn: configureReleases) {
         }
         pages << new IndexPage(srcFile: "$webContentSrcDir/index.php" as File)
         pages << new PhpPage(srcFile: "$webContentSrcDir/news.php" as File)
-        pages << new PhpPage(srcFile: "$webContentSrcDir/cookbook.php" as File)
         pages << new PhpPage(srcFile: "$webContentSrcDir/roadmap.php" as File)
         pages.each { Page page ->
             page.destFile = new File(buildWebsiteDir, page.srcFile.name)
@@ -129,6 +128,9 @@ task html(dependsOn: configureReleases) {
 
         copy {
             into buildWebsiteDir
+            from(webContentSrcDir) {
+                include ".htaccess"
+            }
             from(webSrcDir) {
                 include 'css/**'
                 include 'img/**'
@@ -214,6 +216,8 @@ task install(type: Copy) {
     into "${System.getProperty('user.home')}/Sites/gradle"
 }
 
+task fullInstall(dependsOn: install)
+
 class WebsiteGitRepoComponentsExtension {
     Project project
     
@@ -231,7 +235,7 @@ class WebsiteGitRepoComponentsExtension {
             task.onlyIf { !checkoutDir.exists() }
         }
         
-        project.tasks.add(name: "update$friendlyName", type: Exec, dependsOn: [checkoutTask]) { task ->
+        project.fullInstall.dependsOn project.tasks.add(name: "update$friendlyName", type: Exec, dependsOn: [checkoutTask]) { task ->
             task.executable "git"
             task.args "pull"
             task.workingDir checkoutTask.checkoutDir
@@ -241,7 +245,6 @@ class WebsiteGitRepoComponentsExtension {
 project.extensions.add("websiteGitRepoComponents", new WebsiteGitRepoComponentsExtension(project: project))
 
 websiteGitRepoComponents {
-    board "git@github.com:gradleware/gradle-status-board.git"
     trainings "git@github.com:gradleware/training-data.git"
 }
 

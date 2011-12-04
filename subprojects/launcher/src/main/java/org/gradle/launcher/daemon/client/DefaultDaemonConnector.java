@@ -23,11 +23,9 @@ import org.gradle.launcher.daemon.registry.DaemonInfo;
 import org.gradle.launcher.daemon.registry.DaemonRegistry;
 import org.gradle.launcher.daemon.context.DaemonContext;
 import org.gradle.messaging.remote.internal.ConnectException;
-import org.gradle.messaging.remote.internal.Connection;
 import org.gradle.messaging.remote.internal.OutgoingConnector;
 import org.gradle.util.UncheckedException;
 
-import java.util.Date;
 import java.util.List;
 
 /**
@@ -36,7 +34,7 @@ import java.util.List;
 public class DefaultDaemonConnector implements DaemonConnector {
 
     private static final Logger LOGGER = Logging.getLogger(DefaultDaemonConnector.class);
-    public final static int DEFAULT_CONNECT_TIMEOUT = 30000;
+    public static final int DEFAULT_CONNECT_TIMEOUT = 30000;
 
     private final DaemonRegistry daemonRegistry;
     private final Spec<DaemonContext> contextCompatibilitySpec;
@@ -60,18 +58,18 @@ public class DefaultDaemonConnector implements DaemonConnector {
         return connectTimeout;
     }
 
-    public Connection<Object> maybeConnect() {
+    public DaemonConnection maybeConnect() {
         return findConnection(daemonRegistry.getAll());
     }
 
-    private Connection<Object> findConnection(List<DaemonInfo> daemonInfos) {
+    private DaemonConnection findConnection(List<DaemonInfo> daemonInfos) {
         for (DaemonInfo daemonInfo : daemonInfos) {
             if (!contextCompatibilitySpec.isSatisfiedBy(daemonInfo.getContext())) {
                 continue;
             }
 
             try {
-                return connector.connect(daemonInfo.getAddress());
+                return new DaemonConnection(connector.connect(daemonInfo.getAddress()), daemonInfo.getPassword());
             } catch (ConnectException e) {
                 //this means the daemon died without removing its address from the registry
                 //we can safely remove this address now
@@ -85,15 +83,15 @@ public class DefaultDaemonConnector implements DaemonConnector {
         return null;
     }
 
-    public Connection<Object> connect() {
-        Connection<Object> connection = findConnection(daemonRegistry.getIdle());
+    public DaemonConnection connect() {
+        DaemonConnection connection = findConnection(daemonRegistry.getIdle());
         if (connection != null) {
             return connection;
         }
 
         LOGGER.info("Starting Gradle daemon");
         daemonStarter.run();
-        Date expiry = new Date(System.currentTimeMillis() + connectTimeout);
+        long expiry = System.currentTimeMillis() + connectTimeout;
         do {
             connection = findConnection(daemonRegistry.getIdle());
             if (connection != null) {
@@ -104,7 +102,7 @@ public class DefaultDaemonConnector implements DaemonConnector {
             } catch (InterruptedException e) {
                 throw UncheckedException.asUncheckedException(e);
             }
-        } while (System.currentTimeMillis() < expiry.getTime());
+        } while (System.currentTimeMillis() < expiry);
 
         throw new GradleException("Timeout waiting to connect to Gradle daemon.");
     }

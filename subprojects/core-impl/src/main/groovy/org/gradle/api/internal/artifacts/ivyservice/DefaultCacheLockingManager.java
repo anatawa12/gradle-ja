@@ -15,245 +15,139 @@
  */
 package org.gradle.api.internal.artifacts.ivyservice;
 
-import org.apache.ivy.core.settings.IvySettings;
-import org.gradle.cache.internal.FileLock;
+import org.gradle.api.internal.Factory;
+import org.gradle.cache.PersistentIndexedCache;
 import org.gradle.cache.internal.FileLockManager;
-import org.gradle.cache.internal.LockTimeoutException;
-import org.gradle.messaging.concurrent.CompositeStoppable;
-import org.gradle.util.GFileUtils;
+import org.gradle.cache.internal.UnitOfWorkCacheManager;
 import org.gradle.util.UncheckedException;
-import org.jfrog.wharf.ivy.lock.LockHolder;
-import org.jfrog.wharf.ivy.lock.LockHolderFactory;
-import org.jfrog.wharf.ivy.lock.LockLogger;
 
-import java.io.Closeable;
 import java.io.File;
-import java.io.IOException;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.concurrent.Callable;
+import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
-public class DefaultCacheLockingManager implements LockHolderFactory, CacheLockingManager {
-    private final FileLockManager fileLockManager;
+public class DefaultCacheLockingManager implements CacheLockingManager {
     private final Lock lock = new ReentrantLock();
-    private final Map<File, ArtifactLock> artifactLocks = new HashMap<File, ArtifactLock>();
-    private final Map<File, FileLock> metadataLocks = new HashMap<File, FileLock>();
-    
-    private boolean locked;
+    private final Condition condition = lock.newCondition();
+    private final UnitOfWorkCacheManager cacheManager;
+    private Thread owner;
     private String operationDisplayName;
+    private boolean started;
+    private int depth;
 
-    public DefaultCacheLockingManager(FileLockManager fileLockManager) {
-        this.fileLockManager = fileLockManager;
+    public DefaultCacheLockingManager(FileLockManager fileLockManager, ArtifactCacheMetaData metaData) {
+        this.cacheManager = new UnitOfWorkCacheManager(String.format("artifact cache '%s'", metaData.getCacheDir()), metaData.getCacheDir(), fileLockManager);
     }
 
-    public <T> T withCacheLock(String operationDisplayName, Callable<? extends T> action) {
-        lockCache(operationDisplayName);
+    public void longRunningOperation(String operationDisplayName, final Runnable action) {
+        longRunningOperation(operationDisplayName, new Factory<Object>() {
+            public Object create() {
+                action.run();
+                return null;
+            }
+        });
+    }
+
+    public <T> T useCache(String operationDisplayName, Factory<? extends T> action) {
+        boolean wasStarted = lockCache(operationDisplayName);
         try {
-            return action.call();
-        } catch (Exception e) {
-            throw UncheckedException.asUncheckedException(e);
+            if (!wasStarted) {
+                cacheManager.onStartWork(operationDisplayName);
+            }
+            try {
+                return action.create();
+            } finally {
+                if (!wasStarted) {
+                    cacheManager.onEndWork();
+                }
+            }
         } finally {
-            unlockCache();
+            unlockCache(wasStarted);
         }
     }
 
-    private void lockCache(String operationDisplayName) {
+    public <T> T longRunningOperation(String operationDisplayName, Factory<? extends T> action) {
+        boolean wasStarted = startLongRunningOperation();
+        try {
+            if (wasStarted) {
+                cacheManager.onEndWork();
+            }
+            try {
+                return action.create();
+            } finally {
+                if (wasStarted) {
+                    cacheManager.onStartWork(this.operationDisplayName);
+                }
+            }
+        } finally {
+            finishLongRunningOperation(wasStarted);
+        }
+    }
+
+    private boolean startLongRunningOperation() {
         lock.lock();
         try {
-            if (locked) {
-                throw new IllegalStateException("Cannot lock the artifact cache, as it is already locked by this process.");
+            if (owner != Thread.currentThread()) {
+                throw new IllegalStateException("Cannot start long running operation, as the artifact cache has not been locked.");
             }
-            this.operationDisplayName = operationDisplayName;
-            locked = true;
+            boolean wasStarted = started;
+            started = false;
+            return wasStarted;
         } finally {
             lock.unlock();
         }
     }
 
-    private void unlockCache() {
+    private void finishLongRunningOperation(boolean wasStarted) {
         lock.lock();
         try {
-            // Metadata locks are opened on demand, but closed when the cache lock is released
-            closeMetadataLocks();
-
-            if (!artifactLocks.isEmpty()) {
-                new CompositeStoppable().addCloseables(artifactLocks.values()).stop();
-                throw new IllegalStateException("Some artifact file locks were not released.");
-            }
-        } finally {
-            locked = false;
-            metadataLocks.clear();
-            artifactLocks.clear();
-            lock.unlock();
-        }
-    }
-
-    private void closeMetadataLocks() {
-        for (FileLock metadataFileLock : metadataLocks.values()) {
-            metadataFileLock.close();
-        }
-    }
-
-    public LockLogger getLogger() {
-        throw new UnsupportedOperationException();
-    }
-
-    public long getTimeoutInMs() {
-        throw new UnsupportedOperationException();
-    }
-
-    public long getSleepTimeInMs() {
-        throw new UnsupportedOperationException();
-    }
-
-    public String getLockFileSuffix() {
-        throw new UnsupportedOperationException();
-    }
-
-    private void acquire(File protectedFile) {
-        lock.lock();
-        try {
-            if (!locked) {
-                throw new IllegalStateException("Cannot acquire artifact lock, as the artifact cache is not locked by this process.");
-            }
-            ArtifactLock artifactLock = artifactLocks.get(protectedFile);
-            if (artifactLock == null) {
-                FileLock fileLock = fileLockManager.lock(protectedFile, FileLockManager.LockMode.Exclusive, String.format("artifact file %s", protectedFile), operationDisplayName);
-                artifactLock = new ArtifactLock(fileLock);
-                artifactLocks.put(protectedFile, artifactLock);
-            }
-            artifactLock.refCount++;
+            started = wasStarted;
         } finally {
             lock.unlock();
         }
     }
 
-    private void release(File protectedFile) {
+    private boolean lockCache(String operationDisplayName) {
         lock.lock();
         try {
-            ArtifactLock artifactLock = artifactLocks.get(protectedFile);
-            if (artifactLock == null || artifactLock.refCount <= 0) {
-                throw new IllegalStateException("Cannot release artifact file lock, as the file is not locked.");
+            if (owner != Thread.currentThread()) {
+                while (owner != null) {
+                    try {
+                        condition.await();
+                    } catch (InterruptedException e) {
+                        throw UncheckedException.asUncheckedException(e);
+                    }
+                }
+                this.operationDisplayName = operationDisplayName;
+                owner = Thread.currentThread();
             }
-            artifactLock.refCount--;
-            if (artifactLock.refCount == 0) {
-                artifactLocks.remove(protectedFile);
-                artifactLock.lock.close();
+            boolean wasStarted = started;
+            started = true;
+            depth++;
+            return wasStarted;
+        } finally {
+            lock.unlock();
+        }
+    }
+
+    private void unlockCache(boolean wasStarted) {
+        lock.lock();
+        try {
+            depth--;
+            if (!wasStarted) {
+                started = false;
+                if (depth <= 0) {
+                    owner = null;
+                    operationDisplayName = null;
+                    condition.signalAll();
+                }
             }
         } finally {
             lock.unlock();
         }
     }
 
-    public LockHolder getLockHolder(final File protectedFile) {
-        final File canonicalFile = GFileUtils.canonicalise(protectedFile);
-        return new LockHolder() {
-            public void releaseLock() {
-                release(canonicalFile);
-            }
-
-            public boolean acquireLock() {
-                acquire(canonicalFile);
-                protectedFile.getParentFile().mkdirs();
-                return true;
-            }
-
-            public File getLockFile() {
-                throw new UnsupportedOperationException();
-            }
-
-            public File getProtectedFile() {
-                return protectedFile;
-            }
-
-            public String stateMessage() {
-                return "ok";
-            }
-        };
-    }
-    
-    public LockHolder getOrCreateLockHolder(File protectedFile) {
-        return getLockHolder(protectedFile);
-    }
-
-    public void close() throws IOException {
-    }
-
-    public void setSettings(IvySettings settings) {
-        throw new UnsupportedOperationException();
-    }
-
-    public FileLock getCacheMetadataFileLock(final File metadataFile) {
-        return new MetadataFileLock(metadataFile);
-    }
-
-    private FileLock acquireMetadataFileLock(File metadataFile) {
-        lock.lock();
-        try {
-            if (!locked) {
-                throw new IllegalStateException("Cannot acquire artifact lock, as the artifact cache is not locked by this process.");
-            }
-            FileLock metadataFileLock = metadataLocks.get(metadataFile);
-            if (metadataFileLock == null) {
-                metadataFileLock = fileLockManager.lock(metadataFile, FileLockManager.LockMode.Exclusive, String.format("metadata file %s", metadataFile.getName()), operationDisplayName);
-                metadataLocks.put(metadataFile, metadataFileLock);
-            }
-            return metadataFileLock;
-        } finally {
-            lock.unlock();
-        }
-    }
-
-    private static class ArtifactLock implements Closeable {
-        private final FileLock lock;
-        private int refCount;
-
-        private ArtifactLock(FileLock lock) {
-            this.lock = lock;
-        }
-
-        public void close() {
-            lock.close();
-        }
-    }
-
-    /**
-     * A FileLock implementation that locks on first use within a cache lock block, and retains file lock for the duration of the Cache lock.
-     * Any call to {@link #readFromFile} or {@link #writeToFile} will open the lock, even if it was previously closed. Thus the lock can be used for a long
-     * lived persistent cache, as long as all access occurs within a withCacheLock() block.
-     */
-    private class MetadataFileLock implements FileLock {
-        private final File metadataFile;
-
-        public MetadataFileLock(File metadataFile) {
-            this.metadataFile = metadataFile;
-        }
-
-        public boolean getUnlockedCleanly() {
-            // TODO Not sure about this
-            return acquireLock().getUnlockedCleanly();
-        }
-
-        public boolean isLockFile(File file) {
-            // TODO Not sure about this
-            return acquireLock().isLockFile(file);
-        }
-
-        public <T> T readFromFile(Callable<T> action) throws LockTimeoutException {
-            return acquireLock().readFromFile(action);
-        }
-
-        public void writeToFile(Runnable action) throws LockTimeoutException {
-            acquireLock().writeToFile(action);
-        }
-
-        public void close() {
-        }
-
-        private FileLock acquireLock() {
-            return acquireMetadataFileLock(metadataFile);
-        }
+    public <K, V> PersistentIndexedCache<K, V> createCache(File cacheFile, Class<K> keyType, Class<V> valueType) {
+        return cacheManager.newCache(cacheFile, keyType, valueType);
     }
 }

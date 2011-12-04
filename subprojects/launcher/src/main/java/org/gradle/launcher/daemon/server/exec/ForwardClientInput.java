@@ -31,6 +31,7 @@ import java.io.IOException;
 import java.io.PipedInputStream;
 import java.io.PipedOutputStream;
 import java.util.concurrent.Callable;
+import java.util.concurrent.CountDownLatch;
 
 /**
  * Listens for ForwardInput commands during the execution and sends that to a piped input stream
@@ -53,20 +54,32 @@ public class ForwardClientInput implements DaemonCommandAction {
             throw new GradleException("unable to wire client stdin to daemon stdin", e);
         }
 
+        final CountDownLatch inputOrConnectionClosedLatch = new CountDownLatch(1);
+        final Runnable countDownInputOrConnectionClosedLatch = new Runnable() {
+            public void run() {
+                inputOrConnectionClosedLatch.countDown();
+            }
+        };
+
         Dispatch<Object> dispatcher = new Dispatch<Object>() {
             public void dispatch(Object command) {
                 if (command instanceof ForwardInput) {
                     try {
                         ForwardInput forwardedInput = (ForwardInput)command;
+                        LOGGER.info("putting forwarded input '{}' on daemon's stdin", new String(forwardedInput.getBytes()).replace("\n", "\\n"));
                         inputSource.write(forwardedInput.getBytes());
+
                     } catch (IOException e) {
                         LOGGER.warn("received IO exception trying to forward client input", e);
                     }
                 } else if (command instanceof CloseInput) {
                     try {
+                        LOGGER.info("received {}, closing daemons stdin", command);
                         inputSource.close();
                     } catch (IOException e) {
                         LOGGER.warn("IO exception closing output stream connected to replacement stdin", e);
+                    } finally {
+                        countDownInputOrConnectionClosedLatch.run();
                     }
                 } else {
                     LOGGER.warn("while listening for IOCommands, received unexpected command: {}", command);
@@ -75,7 +88,7 @@ public class ForwardClientInput implements DaemonCommandAction {
         };
 
         StoppableExecutor inputReceiverExecuter = executorFactory.create("daemon client input forwarder");
-        AsyncReceive<Object> inputReceiver = new AsyncReceive<Object>(inputReceiverExecuter, dispatcher);
+        AsyncReceive<Object> inputReceiver = new AsyncReceive<Object>(inputReceiverExecuter, dispatcher, countDownInputOrConnectionClosedLatch);
         inputReceiver.receiveFrom(execution.getConnection());
 
         try {
@@ -89,7 +102,16 @@ public class ForwardClientInput implements DaemonCommandAction {
         } catch (Exception e) {
             throw UncheckedException.asUncheckedException(e);
         } finally {
-            inputReceiver.requestStop();
+            // means we are going to sit here until the client disconnects, which we are expecting it to 
+            // very soon because we are assuming we've just sent back the build result. We do this here
+            // in case the client tries to send input in between us sending back the result and it closing the connection.
+            try {
+                inputOrConnectionClosedLatch.await();
+            } catch (InterruptedException e) {
+                throw UncheckedException.asUncheckedException(e);
+            }
+            
+            inputReceiver.stop(); 
         }
     }
 
