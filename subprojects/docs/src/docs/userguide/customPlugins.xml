@@ -258,10 +258,10 @@
             Here is a simple build script for the project. It applies the Groovy plugin, and adds the Gradle API
             as a compile-time dependency.
         </para>
-        <para>Now we will move our plugin to a standalone project, so we can publish it and share it with others.
-            This project is simply a Groovy project that produces a JAR containing the plugin classes.
-            Here is a simple build script for the project. It applies the Groovy plugin, and adds the Gradle API
-            as a compile-time dependency.
+        <para>それでは、プラグインをスタンドアロンプロジェクトに移動して、発行して他のユーザーと共有できるようにしましょう。
+            このプロジェクトは、プラグインクラスを含むJARを発行する単なるGroovyプロジェクトです。
+            プロジェクトに対するシンプルなビルドスクリプトはこのようになります。
+            Groovyプラグインを適用して、コンパイル時の依存関係としてGradle APIを追加しています。
         </para>
 
         <sample id="customPluginStandalone" dir="customPlugin/plugin" title="カスタムプラグインに対するビルド / A build for a custom plugin" includeLocation="true">
@@ -273,10 +273,10 @@
 	    <filename>META-INF/gradle-plugins</filename> directory that matches the name of your plugin.
 	</para>
 	<para>
-            So how does Gradle find the <apilink class="org.gradle.api.Plugin"/> implementation? The answer is you need to provide a properties file in the jar's
-	    <filename>META-INF/gradle-plugins</filename> directory that matches the name of your plugin.
+        Gradleはどのようにして<apilink class="org.gradle.api.Plugin"/>の実装を探すのでしょうか？
+        その答えは、JARの<filename>META-INF/gradle-plugins</filename>ディレクトリに、
+        プラグインの名前に対応するプロパティファイルを提供する必要があるということです。
 	</para>
-
         <sample id="customPluginStandalone" dir="customPlugin/plugin" title="カスタムプラグインに対するワイヤリング / Wiring for a custom plugin">
             <sourcefile file="src/main/resources/META-INF/gradle-plugins/greeting.properties"/>
         </sample>	
@@ -286,21 +286,20 @@
 	    that the <literal>implementation-class</literal> property identifies the <apilink class="org.gradle.api.Plugin"/> implementation class.
 	</para>
 	<para>
-	    Notice that the properties filename matches the plugin's name and is placed in the resources folder, and
-	    that the <literal>implementation-class</literal> property identifies the <apilink class="org.gradle.api.Plugin"/> implementation class.
+	    プロパティファイルの名前がプラグインの名前と一致していてリソースフォルダに配置されていること、
+	    <literal>implementation-class</literal>プロパティに<apilink class="org.gradle.api.Plugin"/>の実装クラスを指定していることに注意してください。
 	</para>
 
         <section>
-            <title> <phrase role="original"> </phrase>Using your plugin in another project</title>
+            <title>別のプロジェクトでプラグインを使う<phrase role="original">Using your plugin in another project</phrase></title>
             <para role="original">To use a plugin in a build script, you need to add the plugin classes to the build script's classpath. To
                 do this, you use a <literal>buildscript { }</literal> block, as described in <xref linkend="sec:external_dependencies"/>.
                 The following example shows how you might do this when the JAR containing the plugin has been published
                 to a local repository:
             </para>
-            <para>To use a plugin in a build script, you need to add the plugin classes to the build script's classpath. To
-                do this, you use a <literal>buildscript { }</literal> block, as described in <xref linkend="sec:external_dependencies"/>.
-                The following example shows how you might do this when the JAR containing the plugin has been published
-                to a local repository:
+            <para>ビルドスクリプトでプラグインを使うためには、ビルドスクリプトのクラスパスにプラグインクラスを追加する必要があります。
+                このために、<xref linkend="sec:external_dependencies"/>で説明したように、<literal>buildscript { }</literal>ブロックが使えます
+                次のサンプルは、プラグインを含むJARがローカルリポジトリに発行済みのときにこれを行う方法を示しています:
             </para>
             <sample id="customPluginStandalone" dir="customPlugin/consumer" title="別のプロジェクトでカスタムプラグインを使う / Using a custom plugin in another project">
                 <test args="-p../plugin uploadArchives"/>
@@ -309,12 +308,12 @@
             </sample>
         </section>
         <section>
-            <title> <phrase role="original"> </phrase>Writing tests for your plugin</title>
+            <title>プラグインに対するテストの作成<phrase role="original">Writing tests for your plugin</phrase></title>
             <para role="original">You can use the <apilink class="org.gradle.testfixtures.ProjectBuilder"/> class to create
                 <apilink class="org.gradle.api.Project"/> instances to use when you test your plugin implementation.
             </para>
-            <para>You can use the <apilink class="org.gradle.testfixtures.ProjectBuilder"/> class to create
-                <apilink class="org.gradle.api.Project"/> instances to use when you test your plugin implementation.
+            <para>プラグイン実装をテストするときには、<apilink class="org.gradle.api.Project"/>インスタンスを生成するために
+                <apilink class="org.gradle.testfixtures.ProjectBuilder"/>クラスが利用できます。
             </para>
             <sample id="customPluginStandalone" dir="customPlugin/plugin" title="カスタムプラグインのテスト / Testing a custom plugin">
                 <sourcefile file="src/test/groovy/org/gradle/GreetingPluginTest.groovy" snippet="test-plugin"/>
@@ -323,10 +322,11 @@
     </section>
 
     <section>
-        <title> <phrase role="original"> </phrase>Maintaining multiple domain objects</title>
+        <title>複数のドメインオブジェクトの管理<phrase role="original">Maintaining multiple domain objects</phrase></title>
 
         <para role="original">Gradle provides some utility classes for maintaining collections of object, which work well with the Gradle build language.</para>
-        <para>Gradle provides some utility classes for maintaining collections of object, which work well with the Gradle build language.</para>
+        <para>Gradleはオブジェクトのコレクションを管理するためのユーティリティクラスを提供しており、それらはGradleビルド言語の中で活用できます。
+        </para>
 
         <sample id="domainObjectContainer" dir="userguide/organizeBuildLogic/customPluginWithDomainObjectContainer" title="ドメインオブジェクトの管理 / Managing domain objects">
             <sourcefile file="build.gradle"/>
@@ -340,11 +340,15 @@
             See the above link for <literal>project.container</literal> method variants taht allow custom instantiation strategies.
         </para>
         <para>
-            The <apilink class="org.gradle.api.Project" method="container(java.lang.Class)"/> methods create instances of <apilink class="org.gradle.api.NamedDomainObjectContainer"/>, that have many useful methods for managing and configuring the objects. In order
-            to use a type with any of the <literal>project.container</literal> methods, it MUST expose a property named “<literal>name</literal>”
-            as the unique, and constant, name for the object. The <literal>project.container(Class)</literal> variant of the container method creates 
-            new instances by attempting to invoke the constructor of the class that takes a single string argument, which is the desired name of the object. 
-            See the above link for <literal>project.container</literal> method variants taht allow custom instantiation strategies.
+            <apilink class="org.gradle.api.Project" method="container(java.lang.Class)"/>メソッドは、
+            オブジェクトの管理やコンフィグレーションに便利な多くのメソッドを提供する
+            <apilink class="org.gradle.api.NamedDomainObjectContainer"/>のインスタンスを生成します。
+            <literal>project.container</literal>のメソッドでタイプを扱うためには、
+            オブジェクトのユニークかつ固定の名前を提供する“<literal>name</literal>”プロパティを公開しなければなりません。
+            <literal>project.container(Class)</literal>メソッドおよびそのバリエーションは、
+            単一のstringを引数として取るクラスのコンストラクタの実行を試みることで新しいインスタンスを生成します。
+            このとき、引数はオブジェクトの名前となることが期待されます。
+            カスタムのインスタンス化戦略を可能にする<literal>project.container</literal>メソッドのバリエーションについては、上記のリンクを参照してください。
         </para>
     </section>
 </chapter>
