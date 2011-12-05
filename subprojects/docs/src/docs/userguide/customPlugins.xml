@@ -1,236 +1,342 @@
 <chapter id="custom_plugins" xml:lang="ja">
     <title>カスタムプラグインの作成<phrase role="original">Writing Custom Plugins</phrase></title>
 
-    <para>A Gradle plugin packages up reusable pieces of build logic, which can be used across many different
+    <para role="original">A Gradle plugin packages up reusable pieces of build logic, which can be used across many different
         projects and builds. Gradle allows you to implement your own custom plugins, so you can reuse your
         build logic, and share it with others.
     </para>
+    <para>Gradleプラグインは再利用可能なビルドロジックの断片をパッケージとしてまとめ、異なるプロジェクトやビルドで横断的に使えるようにします。
+        Gradleは独自のカスタムプラグインの実装手段を提供していますので、独自のビルドロジックを再利用し、他のユーザーと共有することができます。
+    </para>
 
-    <para>
+    <para role="original">
         You can implement a custom plugin in any language you like, provided the implementation ends up compiled as
         bytecode. For the examples here, we are going to use Groovy as the implementation language. You could use
         Java or Scala instead, if you want.
     </para>
+    <para>
+        カスタムプラグインは、最終的にバイトコードへコンパイルできるなら、どんな言語でもお好みの言語で実装することができます。
+        このサンプルでは実装言語としてGroovyを使います。
+        かわりにJavaやScalaを使うこともできますので、お好きにどうぞ。
+    </para>
 
     <section>
-        <title>Packaging a plugin</title>
-        <para>There are several places where you can put the source for the plugin.
+        <title>プラグインのパッケージング<phrase role="original">Packaging a plugin</phrase></title>
+        <para role="original">There are several places where you can put the source for the plugin.
+        </para>
+        <para>プラグインのソースを配置できる場所はいくつかあります。
         </para>
         <variablelist>
             <varlistentry>
-                <term>Build script</term>
+                <term>ビルドスクリプト<phrase role="original">Build script</phrase></term>
                 <listitem>
-                    <para>You can include the source for the plugin directly in the build script. This has the benefit that the plugin is
+                    <para role="original">You can include the source for the plugin directly in the build script. This has the benefit that the plugin is
                         automatically compiled and included in the classpath of the build script without you having to do anything.
                         However, the plugin is not visible outside the build script, and so you cannot reuse the plugin
                         outside the build script it is defined in.
                     </para>
+                    <para>ビルドスクリプトの中にプラグインのソースを直接含めることができます。
+                        この方法は、特になにもしなくてもプラグインが自動的にコンパイルされ、ビルドスクリプトのクラスパスに追加されるという利点があります。
+                        しかし、プラグインはビルドスクリプトの外部から参照できないため、プラグインが定義されているビルドスクリプトの外部からは再利用できません。
+                    </para>
                 </listitem>
             </varlistentry>
             <varlistentry>
-                <term><filename>buildSrc</filename> project</term>
+                <term><filename>buildSrc</filename>プロジェクト<phrase role="original"><filename>buildSrc</filename> project</phrase></term>
                 <listitem>
-                    <para>You can put the source for the plugin in the
+                    <para role="original">You can put the source for the plugin in the
                         <filename><replaceable>rootProjectDir</replaceable>/buildSrc/src/main/groovy</filename> directory.
                         Gradle will take care of compiling and testing the plugin and making it available on the
                         classpath of the build script. The plugin is visible to every build script used by the build.
                         However, it is not visible outside the build, and so you cannot reuse the plugin outside the
                         build it is defined in.
                     </para>
-                    <para>
+                    <para>プラグインのソースを<filename><replaceable>rootProjectDir</replaceable>/buildSrc/src/main/groovy</filename>ディレクトリに配置できます。
+                        Gradleがプラグインのコンパイルとテストを行い、ビルドスクリプトのクラスパスで有効になるようにしてくれます。
+                        プラグインは、ビルドで利用されるすべてのビルドスクリプトから参照可能です。
+                        しかし、ビルドの外部からは参照できないので、プラグインが定義されているビルドの外部から再利用することはできません。
+                    </para>
+                    <para role="original">
                         See <xref linkend="organizing_build_logic"/> for more details about the <filename>buildSrc</filename>
                         project.</para>
+                    <para>
+                        <filename>buildSrc</filename>プロジェクトの詳細については、<xref linkend="organizing_build_logic"/>を参照してください。
+                        </para>
                 </listitem>
             </varlistentry>
             <varlistentry>
-                <term>Standalone project</term>
+                <term>スタンドアロンプロジェクト<phrase role="original">Standalone project</phrase></term>
                 <listitem>
-                    <para>You can create a separate project for your plugin. This project produces and
+                    <para role="original">You can create a separate project for your plugin. This project produces and
                         publishes a JAR which you can then use in multiple builds and share with others. Generally, this JAR
                         might include some custom plugins, or bundle several related task classes into a single library. Or
                         some combination of the two.
                     </para>
+                    <para>プラグイン用に独立したプロジェクトを作ることができます。
+                        このプロジェクトはJARを生成して発行するので、複数のビルドで利用したり、他のユーザーと共有することができます。
+                        一般的に、このJARはカスタムプラグイン、ないしは関連するいくつかのタスククラスのバンドルする場合があります。
+                        あるいは、その両方の組み合わせです。
+                    </para>
                 </listitem>
             </varlistentry>
         </variablelist>
-        <para> In our examples, we will start with the plugin in the build script, to keep things simple.
+        <para role="original"> In our examples, we will start with the plugin in the build script, to keep things simple.
             Then we will look at creating a standalone project.
+        </para>
+        <para>このサンプルでは、簡単のためにビルドスクリプト内のプラグインからはじめます。
+            その後、スタンドアロンプロジェクトの作り方をみてみましょう。
         </para>
     </section>
 
     <section>
-        <title>Writing a simple plugin</title>
-        <para>To create a custom plugin, you need to write an implementation of <apilink class="org.gradle.api.Plugin"/>.
+        <title>シンプルなプラグインの作成<phrase role="original">Writing a simple plugin</phrase></title>
+        <para role="original">To create a custom plugin, you need to write an implementation of <apilink class="org.gradle.api.Plugin"/>.
             Gradle instantiates the plugin and calls the plugin instance's <apilink class="org.gradle.api.Plugin" method="apply"/> method when the
             plugin is used with a project. The project
             object is passed as a parameter, which the plugin can use to configure the project however it needs to.
             The following sample contains a greeting plugin, which adds a <literal>hello</literal> task to the project.
         </para>
+        <para>カスタムプラグインを作るには、<apilink class="org.gradle.api.Plugin"/>の実装を作成する必要があります。
+            Gradleはプラグインのインスタンスを生成し、プロジェクトでプラグインが利用されるときにプラグインインスタンスの<apilink class="org.gradle.api.Plugin" method="apply"/>メソッドを呼びます。
+            プロジェクトオブジェクトがパラメータとして渡され、必要に応じてプラグインがプロジェクトを構成するのに使えます。
+            次のサンプルは、プロジェクトに<literal>hello</literal>タスクを追加するgreetingプラグインを含んでいます。
+        </para>
 
-        <sample id="customPlugin" dir="userguide/organizeBuildLogic/customPlugin" title="A custom plugin">
+        <sample id="customPlugin" dir="userguide/organizeBuildLogic/customPlugin" title="カスタムプラグイン / A custom plugin">
             <sourcefile file="build.gradle"/>
             <output args="-q hello"/>
         </sample>
 
-        <para>
+        <para role="original">
             One thing to note is that a new instance of a given plugin is created for each project it is applied to.
+        </para>
+        <para>
+            注意すべきは、指定されたプラグインが適用されるプロジェクト毎に、新しいプラグインのインスタンスが生成されることです。
         </para>
     </section>
 
     <section>
-        <title>Getting input from the build</title>
-        <para>Most plugins need to obtain some configuration from the build script. One method for doing this is to use <firstterm>extension objects</firstterm>.
-             The Gradle <apilink class="org.gradle.api.Project"/> has an associated <apilink class="org.gradle.api.plugins.ExtensionContainer"/> object
-             that helps keep track of all the settings and properties being passed to plugins. You can capture user input by telling
-             the extension container about your plugin. To capture input, simply add a Java Bean compliant class into the extension container's list of
-             extensions. Groovy is a good language choice for a plugin because plain old Groovy objects contain all the getter and setter methods
-             that a Java Bean requires. 
-        </para>
+        <title>ビルドから入力を得る<phrase role="original">Getting input from the build</phrase></title>
 
-        <para>Let's add a simple extension object to the project. Here we add a <literal>greeting</literal> extension object to the
+        <para role="original">Let's add a simple extension object to the project. Here we add a <literal>greeting</literal> extension object to the
             project, which allows you to configure the greeting.
         </para>
+        <para>プロジェクトにシンプルなextensionオブジェクトを追加してみましょう
+            ここでは、プロジェクトにextensionオブジェクト<literal>greeting</literal>を追加し、greetingタスクを構成可能にしています。
+        </para>
 
-        <sample id="customPluginWithConvention" dir="userguide/organizeBuildLogic/customPluginWithConvention" title="A custom plugin extension">
+        <sample id="customPluginWithConvention" dir="userguide/organizeBuildLogic/customPluginWithConvention" title="カスタムプラグインのextension / A custom plugin extension">
             <sourcefile file="build.gradle"/>
             <output args="-q hello"/>
         </sample>
 
-        <para>In this example, <classname>GreetingPluginExtension</classname> is a plain old Groovy object with a field called <literal>message</literal>.
+        <para role="original">In this example, <classname>GreetingPluginExtension</classname> is a plain old Groovy object with a field called <literal>message</literal>.
             The extension object is added to the plugin list with the name <literal>greeting</literal>. This object then becomes available as a project property
             with the same name as the extension object.
         </para>
-
-        <para>Oftentimes, you have several related properties you need to specify on a single plugin. Gradle adds a configuration closure block for each extension object, so you
-            can group settings together. The following example shows you how this works.
+        <para>この例では、<classname>GreetingPluginExtension</classname>は<literal>message</literal>フィールドを持つPOGO(plain old Groovy object)です。
+            extensionオブジェクトは<literal>greeting</literal>という名前でプラグインリストに追加されます。
+            このオブジェクトは、extensionオブジェクトと同じ名前のプロジェクトプロパティとして有効になります。
         </para>
 
-        <sample id="customPluginWithAdvancedConvention" dir="userguide/organizeBuildLogic/customPluginWithAdvancedConvention" title="A custom plugin with configuration closure">
+        <para role="original">Oftentimes, you have several related properties you need to specify on a single plugin. Gradle adds a configuration closure block for each extension object, so you
+            can group settings together. The following example shows you how this works.
+        </para>
+        <para>しばしば、ひとつのプラグインに対していくつかの関連したプロパティを指定する必要がある場合があります。
+           Gradleはそれぞれのextensionオブジェクトに対してコンフィグレーションクロージャブロックを追加するので、
+           グループの設定をまとめて行うことができます。
+           次のサンプルは、これがどのように働くのかを示しています。
+        </para>
+
+        <sample id="customPluginWithAdvancedConvention" dir="userguide/organizeBuildLogic/customPluginWithAdvancedConvention" title="コンフィグレーションクロージャ付きのカスタムプラグイン / A custom plugin with configuration closure">
             <sourcefile file="build.gradle"/>
             <output args="-q hello"/>
         </sample>
 
-        <para>In this example, several settings can be grouped together within the <literal>greeting</literal> closure.
+        <para role="original">In this example, several settings can be grouped together within the <literal>greeting</literal> closure.
             The name of the closure block in the build script (<literal>greeting</literal>) needs to match the extension object name.
             Then, when the closure is executed, the fields on the extension object will be mapped to the variables within the closure
             based on the standard Groovy closure delegate feature.
         </para>
+        <para>この例では、<literal>greeting</literal>クロージャ内にいくつかの設定をグループ化してまとめることができています。
+            ビルドスクリプトにおけるクロージャブロックの名前(<literal>greeting</literal>)は、extensionオブジェクトの名前と一致している必要があります。
+            そして、クロージャが実行されると、Groovyの標準のクロージャ委譲機能に基づいて、extensionオブジェクトのフィールドはクロージャ内の変数にマップされます。
+        </para>
         
         <section>
-            <title>Using extensions for default values</title>
-            <para>
+            <title>デフォルト値のためにextensionを使う<phrase role="original">Using extensions for default values</phrase></title>
+            <para role="original">
                 The extension mechanism is also a powerful way of declaring default values for objects such as tasks. Furthermore, these default values
                 can be specified in terms of other properties.
             </para>
-            <sample id="conventionTaskWithProperty" dir="userguide/tasks/customTaskUsingConvention" title="A task with a configuration property">
+            <para>
+                extensionの仕組みは、タスクなどのオブジェクトのデフォルト値を宣言する強力な方法でもあります。
+                さらに、これらのデフォルト値は他のプロパティから指定することもできます。
+            </para>
+            <sample id="conventionTaskWithProperty" dir="userguide/tasks/customTaskUsingConvention" title="コンフィグレーションプロパティを持つタスク / A task with a configuration property">
                 <sourcefile file="build.gradle" snippet="task"/>
             </sample>
-            <para>
+            <para role="original">
                 Given the above task, we can wire in a default value for the <literal>greeting</literal> property that is any value. In this case we defer
                 to a project property of the same name.
             </para>
-            <sample id="customTaskApplyingConventionInPlugin" dir="userguide/tasks/customTaskUsingConvention" title="Wiring in the task property default value with conventions">
+            <para>
+                上のタスクに対して、<literal>greeting</literal>プロパティのデフォルト値として任意の値を結びつけることができます。
+            </para>
+            <sample id="customTaskApplyingConventionInPlugin" dir="userguide/tasks/customTaskUsingConvention" title="規約によってタスクプロパティのデフォルト値を結びつける / Wiring in the task property default value with conventions">
                 <sourcefile file="build.gradle" snippet="plugin"/>
             </sample>
-            <para>
+            <para role="original">
                 By using the convention mapping above to map the value of the project property <literal>greeting</literal> as the value for the 
                 <literal>greeting</literal> property on all <literal>GreetingTask</literal> tasks, we have effectively configured this as the default value.
                 That is, individual tasks can be overridden in such a way to override this default.
             </para>
-            <sample id="customTaskWithConventionUsage" dir="userguide/tasks/customTaskUsingConvention" title="Overriding conventional defaults">
+            <para>
+                上記の規約によるマッピングで、プロジェクトプロパティ<literal>greeting</literal>の値をすべての<literal>GreetingTask</literal>タスクの<literal>greeting</literal>プロパティに対する値としてマップすることで、
+                実質的にこれをデフォルト値として設定したことになります。
+                それはつまり、個々のタスクはこのデフォルトを次のようにして上書きできるということです。
+            </para>
+            <sample id="customTaskWithConventionUsage" dir="userguide/tasks/customTaskUsingConvention" title="規約によるデフォルトの上書き / Overriding conventional defaults">
                 <sourcefile file="build.gradle" snippet="tasks"/>
             </sample>
-            <para>
+            <para role="original">
                 In the above, the <literal>hello</literal> task will assume the default value, while <literal>bonjour</literal> overrides this explicitly.
             </para>
-            <sample id="customTaskWithConventionOutput" dir="userguide/tasks/customTaskUsingConvention" title="Conventional defaults in action">
+            <para>
+                上記では、<literal>hello</literal>タスクはデフォルト値を前提としているのに対し、<literal>bonjour</literal>は明示的に上書きしています。
+            </para>
+            <sample id="customTaskWithConventionOutput" dir="userguide/tasks/customTaskUsingConvention" title="規約によるデフォルトの実行結果 / Conventional defaults in action">
                 <output args="-q hello bonjour"/>
             </sample>
-            <para>
+            <para role="original">
                 Note that the convention mapping is “live” in that the convention mapping closure will be evaluated everytime that the value is requested.
                 In this example this means that the default value for the task property will always be the value of <literal>project.greeting</literal>, 
                 no matter when or how it changes.
+            </para>
+            <para>
+                規約マッピングは「動的」であることに注意してください。
+                規約マッピングのクロージャは、値が要求されるたびに毎回評価されます。
+                このサンプルでは、タスクプロパティのデフォルト値は常に<literal>project.greeting</literal>の値であるということを意味し、いつどのように変更されるかわかりません。
             </para>
         </section>
         
     </section>
 
     <section>
-        <title>Working with files in custom tasks and plugins</title>
-        <para>
+        <title>カスタムタスクやプラグインでファイルを扱う<phrase role="original">Working with files in custom tasks and plugins</phrase></title>
+        <para role="original">
             When developing custom tasks and plugins, it's a good idea to be very flexible when accepting input configuration for file locations.
             To do this, you can leverage the <apilink class="org.gradle.api.Project" method="file(java.lang.Object)"/> method to resolve values to files as late as possible.
         </para>
-        <sample id="lazyFileProperties" dir="userguide/tasks/customTaskWithFileProperty" title="Evaluating file properties lazily">
+        <para>
+            カスタムタスクやプラグインを開発するとき、ファイルロケーションの入力コンフィグレーションを柔軟に行えるようにするのは良いアイデアです。
+            これを実現するにあたり、ファイルに対する値の解決をなるべく遅らせるために<apilink class="org.gradle.api.Project" method="file(java.lang.Object)"/>メソッドを活用できます
+        </para>
+        <sample id="lazyFileProperties" dir="userguide/tasks/customTaskWithFileProperty" title="ファイルプロパティの遅延評価 / Evaluating file properties lazily">
             <sourcefile file="build.gradle"/>
             <output args="-q sayGreeting"/>
         </sample>
-        <para>
+        <para role="original">
             In this example, we configure the <literal>greet</literal> task <literal>destination</literal> property as a closure, which is evaluated with
             the <apilink class="org.gradle.api.Project" method="file(java.lang.Object)"/> method to turn the return value of the closure into a file object
             at the last minute. You will notice that in the above example we specify the <literal>greetingFile</literal> property value after we have 
             configured to use it for the task. This kind of lazy evaluation is a key benefit of accepting any value when setting a file property, then 
             resolving that value when reading the property.
         </para>
+        <para>
+            この例では、<literal>greet</literal>タスクの<literal>destination</literal>プロパティをクロージャで定義したので、
+            クロージャの戻り値をfileオブジェクトに変換することが必要になる直前に<apilink class="org.gradle.api.Project" method="file(java.lang.Object)"/>メソッドによって評価されます。
+            上記のサンプルでは、タスクで値を利用するコンフィグレーションを行った後で<literal>greetingFile</literal>プロパティの値を指定していることに気づくでしょう。
+            この種の遅延評価は、ファイルプロパティを設定する際に任意の値を受け入れ、そしてプロパティの読み出し時に値を解決することができるという重要なメリットをもたらします。
+        </para>
     </section>
     
     <section>
-        <title>A standalone project</title>
+        <title>スタンドアロンプロジェクト<phrase role="original">A standalone project</phrase></title>
+        <para role="original">Now we will move our plugin to a standalone project, so we can publish it and share it with others.
+            This project is simply a Groovy project that produces a JAR containing the plugin classes.
+            Here is a simple build script for the project. It applies the Groovy plugin, and adds the Gradle API
+            as a compile-time dependency.
+        </para>
         <para>Now we will move our plugin to a standalone project, so we can publish it and share it with others.
             This project is simply a Groovy project that produces a JAR containing the plugin classes.
             Here is a simple build script for the project. It applies the Groovy plugin, and adds the Gradle API
             as a compile-time dependency.
         </para>
 
-        <sample id="customPluginStandalone" dir="customPlugin" title="A build for a custom plugin" includeLocation="true">
+        <sample id="customPluginStandalone" dir="customPlugin" title=" / A build for a custom plugin" includeLocation="true">
             <sourcefile file="build.gradle" snippet="use-plugin"/>
         </sample>
 
+	<para role="original">
+            So how does Gradle find the <apilink class="org.gradle.api.Plugin"/> implementation? The answer is you need to provide a properties file in the jar's
+	    <filename>META-INF/gradle-plugins</filename> directory that matches the name of your plugin.
+	</para>
 	<para>
             So how does Gradle find the <apilink class="org.gradle.api.Plugin"/> implementation? The answer is you need to provide a properties file in the jar's
 	    <filename>META-INF/gradle-plugins</filename> directory that matches the name of your plugin.
 	</para>
 
-        <sample id="customPluginStandalone" dir="customPlugin" title="Wiring for a custom plugin">
+        <sample id="customPluginStandalone" dir="customPlugin" title=" / Wiring for a custom plugin">
             <sourcefile file="src/main/resources/META-INF/gradle-plugins/greeting.properties"/>
         </sample>	
 
+	<para role="original">
+	    Notice that the properties filename matches the plugin's name and is placed in the resources folder, and
+	    that the <literal>implementation-class</literal> property identifies the <apilink class="org.gradle.api.Plugin"/> implementation class.
+	</para>
 	<para>
 	    Notice that the properties filename matches the plugin's name and is placed in the resources folder, and
 	    that the <literal>implementation-class</literal> property identifies the <apilink class="org.gradle.api.Plugin"/> implementation class.
 	</para>
 
         <section>
-            <title>Using your plugin in another project</title>
+            <title> <phrase role="original"> </phrase>Using your plugin in another project</title>
+            <para role="original">To use a plugin in a build script, you need to add the plugin classes to the build script's classpath. To
+                do this, you use a <literal>buildscript { }</literal> block, as described in <xref linkend="sec:external_dependencies"/>.
+                The following example shows how you might do this when the JAR containing the plugin has been published
+                to a local repository:
+            </para>
             <para>To use a plugin in a build script, you need to add the plugin classes to the build script's classpath. To
                 do this, you use a <literal>buildscript { }</literal> block, as described in <xref linkend="sec:external_dependencies"/>.
                 The following example shows how you might do this when the JAR containing the plugin has been published
                 to a local repository:
             </para>
-            <sample id="customPluginStandalone" dir="customPlugin" title="Using a custom plugin in another project">
+            <sample id="customPluginStandalone" dir="customPlugin" title=" / Using a custom plugin in another project">
                 <sourcefile file="usesCustomPlugin.gradle" snippet="use-plugin"/>
             </sample>
         </section>
         <section>
-            <title>Writing tests for your plugin</title>
+            <title> <phrase role="original"> </phrase>Writing tests for your plugin</title>
+            <para role="original">You can use the <apilink class="org.gradle.testfixtures.ProjectBuilder"/> class to create
+                <apilink class="org.gradle.api.Project"/> instances to use when you test your plugin implementation.
+            </para>
             <para>You can use the <apilink class="org.gradle.testfixtures.ProjectBuilder"/> class to create
                 <apilink class="org.gradle.api.Project"/> instances to use when you test your plugin implementation.
             </para>
-            <sample id="customPluginStandalone" dir="customPlugin" title="Testing a custom plugin">
+            <sample id="customPluginStandalone" dir="customPlugin" title=" / Testing a custom plugin">
                 <sourcefile file="src/test/groovy/org/gradle/GreetingPluginTest.groovy" snippet="test-plugin"/>
             </sample>
         </section>
     </section>
 
     <section>
-        <title>Maintaining multiple domain objects</title>
+        <title> <phrase role="original"> </phrase>Maintaining multiple domain objects</title>
 
+        <para role="original">Gradle provides some utility classes for maintaining collections of object, which work well with the Gradle build language.</para>
         <para>Gradle provides some utility classes for maintaining collections of object, which work well with the Gradle build language.</para>
 
-        <sample id="domainObjectContainer" dir="userguide/organizeBuildLogic/customPluginWithDomainObjectContainer" title="Managing domain objects">
+        <sample id="domainObjectContainer" dir="userguide/organizeBuildLogic/customPluginWithDomainObjectContainer" title=" / Managing domain objects">
             <sourcefile file="build.gradle"/>
             <output args="-q books"/>
         </sample>
+        <para role="original">
+            The <apilink class="org.gradle.api.Project" method="container(java.lang.Class)"/> methods create instances of <apilink class="org.gradle.api.NamedDomainObjectContainer"/>, that have many useful methods for managing and configuring the objects. In order
+            to use a type with any of the <literal>project.container</literal> methods, it MUST expose a property named “<literal>name</literal>”
+            as the unique, and constant, name for the object. The <literal>project.container(Class)</literal> variant of the container method creates 
+            new instances by attempting to invoke the constructor of the class that takes a single string argument, which is the desired name of the object. 
+            See the above link for <literal>project.container</literal> method variants taht allow custom instantiation strategies.
+        </para>
         <para>
             The <apilink class="org.gradle.api.Project" method="container(java.lang.Class)"/> methods create instances of <apilink class="org.gradle.api.NamedDomainObjectContainer"/>, that have many useful methods for managing and configuring the objects. In order
             to use a type with any of the <literal>project.container</literal> methods, it MUST expose a property named “<literal>name</literal>”
