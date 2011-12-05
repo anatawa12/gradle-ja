@@ -264,7 +264,7 @@
             as a compile-time dependency.
         </para>
 
-        <sample id="customPluginStandalone" dir="customPlugin" title=" / A build for a custom plugin" includeLocation="true">
+        <sample id="customPluginStandalone" dir="customPlugin/plugin" title="カスタムプラグインに対するビルド / A build for a custom plugin" includeLocation="true">
             <sourcefile file="build.gradle" snippet="use-plugin"/>
         </sample>
 
@@ -277,7 +277,7 @@
 	    <filename>META-INF/gradle-plugins</filename> directory that matches the name of your plugin.
 	</para>
 
-        <sample id="customPluginStandalone" dir="customPlugin" title=" / Wiring for a custom plugin">
+        <sample id="customPluginStandalone" dir="customPlugin/plugin" title="カスタムプラグインに対するワイヤリング / Wiring for a custom plugin">
             <sourcefile file="src/main/resources/META-INF/gradle-plugins/greeting.properties"/>
         </sample>	
 
@@ -302,8 +302,10 @@
                 The following example shows how you might do this when the JAR containing the plugin has been published
                 to a local repository:
             </para>
-            <sample id="customPluginStandalone" dir="customPlugin" title=" / Using a custom plugin in another project">
-                <sourcefile file="usesCustomPlugin.gradle" snippet="use-plugin"/>
+            <sample id="customPluginStandalone" dir="customPlugin/consumer" title="別のプロジェクトでカスタムプラグインを使う / Using a custom plugin in another project">
+                <test args="-p../plugin uploadArchives"/>
+                <test args="hello"/>
+                <sourcefile file="build.gradle" snippet="use-plugin"/>
             </sample>
         </section>
         <section>
@@ -314,7 +316,7 @@
             <para>You can use the <apilink class="org.gradle.testfixtures.ProjectBuilder"/> class to create
                 <apilink class="org.gradle.api.Project"/> instances to use when you test your plugin implementation.
             </para>
-            <sample id="customPluginStandalone" dir="customPlugin" title=" / Testing a custom plugin">
+            <sample id="customPluginStandalone" dir="customPlugin/plugin" title="カスタムプラグインのテスト / Testing a custom plugin">
                 <sourcefile file="src/test/groovy/org/gradle/GreetingPluginTest.groovy" snippet="test-plugin"/>
             </sample>
         </section>
@@ -326,7 +328,7 @@
         <para role="original">Gradle provides some utility classes for maintaining collections of object, which work well with the Gradle build language.</para>
         <para>Gradle provides some utility classes for maintaining collections of object, which work well with the Gradle build language.</para>
 
-        <sample id="domainObjectContainer" dir="userguide/organizeBuildLogic/customPluginWithDomainObjectContainer" title=" / Managing domain objects">
+        <sample id="domainObjectContainer" dir="userguide/organizeBuildLogic/customPluginWithDomainObjectContainer" title="ドメインオブジェクトの管理 / Managing domain objects">
             <sourcefile file="build.gradle"/>
             <output args="-q books"/>
         </sample>

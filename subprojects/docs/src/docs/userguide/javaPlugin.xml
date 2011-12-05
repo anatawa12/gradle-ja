@@ -354,8 +354,11 @@
                     <phrase role="original">The tasks which produce the artifacts in configuration <replaceable>ConfigurationName</replaceable>.</phrase>
                 </td>
                 <td><apilink class="org.gradle.api.Task"/></td>
-                <td>指定されたコンフィギュレーションのアーティファクトを構築する
-                <phrase role="original">Assembles the artifacts in the specified configuration.</phrase></td>
+                <td>指定されたコンフィギュレーションのアーティファクトを構築する。
+                    このタスクは、Javaプラグインが暗黙的に適用するBaseプラグインにより追加される。
+                    <phrase role="original">Assembles the artifacts in the specified configuration.
+                        The task is added by the Base plugin which is implicitly applied by the Java plugin.</phrase>
+                </td>
             </tr>
             <tr>
                 <td>
@@ -366,8 +369,11 @@
                     <phrase role="original">The tasks which uploads the artifacts in configuration <replaceable>ConfigurationName</replaceable>.</phrase>
                 </td>
                 <td><apilink class="org.gradle.api.tasks.Upload"/></td>
-                <td>指定されたコンフィギュレーションのアーティファクトを構築しアップロードする
-                <phrase role="original">Assembles and uploads the artifacts in the specified configuration.</phrase></td>
+                <td>指定されたコンフィギュレーションのアーティファクトを構築しアップロードする。
+                    このタスクは、Javaプラグインが暗黙的に適用するBaseプラグインにより追加される。
+                    <phrase role="original">Assembles and uploads the artifacts in the specified configuration.
+                        The task is added by the Base plugin which is implicitly applied by the Java plugin.</phrase>
+                </td>
             </tr>
         </table>
 
@@ -421,13 +427,9 @@
         <title>依存関係の管理<phrase role="original">Dependency management</phrase></title>
         <para role="original">The Java plugin adds a number of dependency configurations to your project, as shown below. It assigns
             those configurations to tasks such as <literal>compileJava</literal> and <literal>test</literal>.
-            To learn more about configurations see <xref linkend="sub:configurations"/> and
-            <xref linkend="artifacts_and_configurations"/>.
         </para>
         <para>Javaプラグインは、以下のような多くの依存関係のコンフィギュレーションをプロジェクトに追加します。
         これらのコンフィギュレーションは<literal>compileJava</literal>や<literal>test</literal>といったタスクに割り当てられます。
-            コンフィギュレーションについての詳しい情報は<xref linkend="sub:configurations"/>や
-            <xref linkend="artifacts_and_configurations"/>を参照してください。
         </para>
         <table id='tab:configurations'>
             <title>Javaプラグイン - 依存関係のコンフィギュレーション<phrase role="original">Java plugin - dependency configurations</phrase></title>

@@ -16,25 +16,27 @@
 
 package org.gradle.cache.internal
 
+import org.gradle.api.internal.Factory
 import org.gradle.cache.internal.FileLockManager.LockMode
 import org.gradle.util.TemporaryFolder
+import org.gradle.util.TestFile
+import org.gradle.util.Requires
+import org.gradle.util.TestPrecondition
+
 import org.junit.Rule
 import spock.lang.Specification
-import org.gradle.util.TestFile
-import java.util.concurrent.Callable
-import org.gradle.os.OperatingSystem
 
 /**
  * @author: Szczepan Faber, created at: 8/30/11
  */
 class DefaultFileLockManagerTest extends Specification {
-    @Rule public TemporaryFolder tmpDir = new TemporaryFolder()
-    final ProcessMetaDataProvider metaDataProvider = Mock()
-    def manager = new DefaultFileLockManager(metaDataProvider)
+    @Rule TemporaryFolder tmpDir = new TemporaryFolder()
+    ProcessMetaDataProvider metaDataProvider = Mock()
+    FileLockManager manager = new DefaultFileLockManager(metaDataProvider)
 
     def setup() {
-        _ * metaDataProvider.processIdentifier >> '123'
-        _ * metaDataProvider.processDisplayName >> 'process'
+        metaDataProvider.processIdentifier >> '123'
+        metaDataProvider.processDisplayName >> 'process'
     }
 
     def "can lock a file"() {
@@ -175,7 +177,7 @@ class DefaultFileLockManagerTest extends Specification {
         lock.close()
 
         when:
-        lock.readFromFile({} as Callable)
+        lock.readFromFile({} as Factory)
 
         then:
         thrown(IllegalStateException)
@@ -245,11 +247,8 @@ class DefaultFileLockManagerTest extends Specification {
         mode << [LockMode.Shared, LockMode.Exclusive]
     }
 
+    @Requires(TestPrecondition.NO_FILE_LOCK_ON_OPEN)
     def "writes version 2 lock file while exclusive lock is open"() {
-        if (OperatingSystem.current().fileSystem.implicitlyLocksFileOnOpen) {
-            // We won't be able to open the lock file for reading during the test - bail
-            return
-        }
         def file = tmpDir.file("state.bin")
         def lockFile = tmpDir.file("state.bin.lock")
 

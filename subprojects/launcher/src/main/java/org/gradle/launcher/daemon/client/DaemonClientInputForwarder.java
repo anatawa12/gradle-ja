@@ -15,6 +15,9 @@
  */
 package org.gradle.launcher.daemon.client;
 
+import org.gradle.api.logging.Logger;
+import org.gradle.api.logging.Logging;
+
 import org.gradle.api.Action;
 import org.gradle.initialization.BuildClientMetaData;
 import org.gradle.launcher.daemon.protocol.IoCommand;
@@ -36,11 +39,12 @@ import java.util.concurrent.locks.ReentrantLock;
  */
 public class DaemonClientInputForwarder implements Stoppable {
 
+    private static final Logger LOGGER = Logging.getLogger(DaemonClientInputForwarder.class);
+
     public static final int DEFAULT_BUFFER_SIZE = 1024;
 
     private final Lock lifecycleLock = new ReentrantLock();
     private boolean started;
-    private boolean stopped;
 
     private final InputStream inputStream;
     private final BuildClientMetaData clientMetadata;
@@ -71,13 +75,18 @@ public class DaemonClientInputForwarder implements Stoppable {
 
             Action<String> dispatcher = new Action<String>() {
                 public void execute(String input) {
+                    if (LOGGER.isDebugEnabled()) {
+                        LOGGER.debug("Forwarding input to daemon: '{}'", input.replace("\n", "\\n"));
+                    }                    
                     dispatch.dispatch(new ForwardInput(clientMetadata, input.getBytes()));
                 }
             };
 
             Runnable onFinish = new Runnable() {
                 public void run() {
-                    dispatch.dispatch(new CloseInput(clientMetadata));
+                    CloseInput message = new CloseInput(clientMetadata);
+                    LOGGER.debug("Dispatching close input message: {}", message);
+                    dispatch.dispatch(message);
                 }
             };
 
@@ -92,9 +101,14 @@ public class DaemonClientInputForwarder implements Stoppable {
     public void stop() {
         lifecycleLock.lock();
         try {
-            if (!stopped) {
-                forwarder.stop();
-                stopped = true;
+            if (started) {
+                LOGGER.debug("input forwarder stop requested");
+                try {
+                    forwarder.stop();
+                } finally {
+                    forwarder = null;
+                    started = false;
+                }
             }
         } finally {
             lifecycleLock.unlock();

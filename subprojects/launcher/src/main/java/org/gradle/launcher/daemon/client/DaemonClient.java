@@ -28,20 +28,23 @@ import org.gradle.messaging.remote.internal.Connection;
 
 /**
  * The client piece of the build daemon.
- *
- * <p>Protocol is this:</p>
- *
- * <ol> <li>Client connects to the server.</li>
- *
- * <li>Client sends a {@link org.gradle.launcher.daemon.protocol.Command} message.</li>
- *
- * <li>Server sends zero or more {@link org.gradle.logging.internal.OutputEvent} messages. Note that the server may send output messages before it receives the command message. </li>
- *
- * <li>Server sends a {@link org.gradle.launcher.daemon.protocol.Result} message.</li>
- *
- * <li>Connection is closed.</li>
- *
- * </ol>
+ * <p>
+ * Immediately upon forming a connection, the daemon may send {@link OutputEvent} messages back to the client and may do so
+ * for as long as the connection is open.
+ * <p>
+ * The client is expected to send exactly one {@link Build} message as the first message it sends to the daemon. After this
+ * it may send zero to many {@link ForwardInput} messages. If the client's stdin stream is closed before the connection to the
+ * daemon is terminated, the client must send a {@link CloseInput} command to instruct that daemon that no more input is to be
+ * expected.
+ * <p>
+ * After receiving the {@link Build} message from the client, the daemon will at some time return a {@link Result} message
+ * indicating either that the daemon encountered an internal failure or that the build failed dependending on the specific
+ * type of the {@link Result} object returned.
+ * <p>
+ * After receiving the {@link Result} message, the client must send a {@link CloseInput} command if it has not already done so
+ * due the stdin stream being closed. At this point the client is expected to terminate the connection with the daemon.
+ * <p>
+ * If the daemon returns a {@code null} message before returning a {@link Result} object, it has terminated unexpectedly for some reason.
  */
 public class DaemonClient implements GradleLauncherActionExecuter<BuildActionParameters> {
     private static final Logger LOGGER = Logging.getLogger(DaemonClient.class);
@@ -59,7 +62,7 @@ public class DaemonClient implements GradleLauncherActionExecuter<BuildActionPar
      * Stops all daemons, if any is running.
      */
     public void stop() {
-        Connection<Object> connection = connector.maybeConnect();
+        DaemonConnection connection = connector.maybeConnect();
         if (connection == null) {
             LOGGER.lifecycle("No Gradle daemons are running.");
             return;
@@ -68,7 +71,7 @@ public class DaemonClient implements GradleLauncherActionExecuter<BuildActionPar
         LOGGER.lifecycle("At least one daemon is running. Sending stop command...");
         //iterate and stop all daemons
         while (connection != null) {
-            new StopDispatcher().dispatch(clientMetaData, connection);
+            new StopDispatcher().dispatch(clientMetaData, connection.getConnection());
             LOGGER.lifecycle("Gradle daemon stopped.");
             connection = connector.maybeConnect();
         }
@@ -84,9 +87,9 @@ public class DaemonClient implements GradleLauncherActionExecuter<BuildActionPar
         LOGGER.warn("Note: the Gradle build daemon is an experimental feature.");
         LOGGER.warn("As such, you may experience unexpected build failures. You may need to occasionally stop the daemon.");
         while(true) {
-            Connection<Object> connection = connector.connect();
+            DaemonConnection daemonConnection = connector.connect();
 
-            Result<T> result = runBuild(new Build(action, parameters), connection);
+            Result<T> result = runBuild(new Build(action, parameters), daemonConnection.getConnection());
             if (result instanceof DaemonBusy) {
                 continue; // try a different daemon
             } else if (result instanceof Failure) {

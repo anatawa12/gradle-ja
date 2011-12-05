@@ -19,9 +19,11 @@ import org.gradle.integtests.fixtures.IvyRepository
 import org.gradle.integtests.fixtures.internal.AbstractIntegrationSpec
 
 class IvyLocalDependencyResolutionIntegrationTest extends AbstractIntegrationSpec {
-    public void "does not cache local artifacts or metadata"() {
-        distribution.requireOwnUserHomeDir()
+    def "setup"() {
+        requireOwnUserHomeDir()
+    }
 
+    public void "does not cache local artifacts or metadata"() {
         given:
         def repo = ivyRepo()
         def moduleA = repo.module('group', 'projectA', '1.2')
@@ -65,7 +67,6 @@ task retrieve(type: Sync) {
     }
 
     public void "does not cache resolution of dynamic versions or changing modules"() {
-        distribution.requireOwnUserHomeDir()
         def repo = ivyRepo()
 
         given:
@@ -125,66 +126,6 @@ task retrieve(type: Sync) {
         def jarC1 = file('libs/projectC-1.0.jar')
         jarC1.assertIsCopyOf(projectC1.jarFile)
         jarC1.assertHasChangedSince(jarCsnapshot)
-    }
-
-    def "resolves only artifacts attached to 'default' configuration when ivy pattern used"() {
-        //This test documents existing functionality which I'm not sure is correct.
-        //Problem: artifacts declared in ivy.xml but not attached to 'default' are silently dropped by Gradle
-        //  e.g. gradle resolve does not report errors but the artifact jar is not included in the file collection
-        //Also: if we get rid of the ivy.xml and ivyPattern setting both artifacts are 'fully' resolvable
-
-        distribution.requireOwnUserHomeDir()
-        def repo = ivyRepo()
-
-        def ivyXml = file('ivy-repo/ivy.xml')
-        ivyXml << """<?xml version="1.0" encoding="UTF-8"?>
-<ivy-module version="2.0" xmlns:m="http://ant.apache.org/ivy/maven">
-	<info organisation="org.gradle"
-		module="foo"
-		revision="1.0.0"
-		status="integration"
-		publication="20111024084157"
-	/>
-	<configurations>
-		<conf name="default" visibility="public" />
-		<conf name="myJars" visibility="public"/>
-	</configurations>
-	<publications>
-		<artifact name="foo" type="jar" ext="jar" conf="default"/>
-		<artifact name="bar" type="jar" ext="jar" conf="myJars"/>
-	</publications>
-</ivy-module>
-"""
-        file('ivy-repo/foo-1.0.0.jar').text = "I'm pretending to be a jar"
-        file('ivy-repo/bar-1.0.0.jar').text = "I'm pretending to be a jar"
-
-        given:
-        buildFile << """
-repositories {
-    ivy {
-        artifactPattern "${repo.uri}/[artifact]-[revision].[ext]"
-        ivyPattern "${repo.uri}/ivy.xml"
-    }
-}
-
-configurations {
-    compile
-}
-
-dependencies {
-    compile "org.gradle:foo:1.0.0", "org.gradle:bar:1.0.0"
-}
-
-task libs(type: Copy) {
-    from configurations.compile
-    into 'libs'
-}
-"""
-        when:
-        run 'libs'
-
-        then:
-        file('libs').list() == ['foo-1.0.0.jar']
     }
 
     IvyRepository ivyRepo() {

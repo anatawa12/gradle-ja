@@ -53,7 +53,7 @@ public interface ResolvedDependency {
      *
      * @return The module.
      */
-    ResolvedModule getModule();
+    ResolvedModuleVersion getModule();
 
     /**
      * Returns the transitive ResolvedDependency instances of this resolved dependency. Returns never null.
@@ -87,7 +87,7 @@ public interface ResolvedDependency {
     Set<ResolvedArtifact> getParentArtifacts(ResolvedDependency parent);
 
     /**
-     * Returns a union of the module and parent artifacts of this dependency. Never returns null.
+     * Returns the parent artifacts of this dependency. Never returns null.
      *
      * @param parent A parent of the ResolvedDependency. Must not be null.
      * @throws org.gradle.api.InvalidUserDataException If the parent is unknown or null
@@ -95,7 +95,7 @@ public interface ResolvedDependency {
     Set<ResolvedArtifact> getArtifacts(ResolvedDependency parent);
 
     /**
-     * Returns a union of the module and parent artifacts of this dependency and its children. Never returns null.
+     * Returns the parent artifacts of this dependency and its children. Never returns null.
      *
      * @param parent A parent of the ResolvedDependency. Must not be null.
      * @throws org.gradle.api.InvalidUserDataException If the parent is unknown or null

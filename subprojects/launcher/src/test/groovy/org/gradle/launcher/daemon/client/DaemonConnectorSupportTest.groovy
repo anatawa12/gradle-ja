@@ -15,7 +15,6 @@
  */
 package org.gradle.launcher.daemon.client
 
-import org.gradle.api.specs.Spec
 import org.gradle.api.specs.Specs
 import org.gradle.api.GradleException
 import org.gradle.launcher.daemon.registry.EmbeddedDaemonRegistry
@@ -70,7 +69,7 @@ class DaemonConnectorSupportTest extends Specification {
         def daemonNum = daemonCounter++
         def context = [:] as DaemonContext
         context.metaClass.num = daemonNum
-        registry.store(createAddress(daemonNum), context)
+        registry.store(createAddress(daemonNum), context, "password")
     }
 
     def theConnector
@@ -83,7 +82,7 @@ class DaemonConnectorSupportTest extends Specification {
     }
 
     def connect() {
-        connector.connect().num
+        connector.connect().connection.num
     }
 
     def getRegistry() {

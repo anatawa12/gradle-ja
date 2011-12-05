@@ -86,12 +86,15 @@ public abstract class AbstractGradleExecuter implements GradleExecuter {
         if (settingsFile != null) {
             executer.usingSettingsFile(settingsFile);
         }
+        if (javaHome != null) {
+            executer.withJavaHome(javaHome);
+        }
         for (File initScript : initScripts) {
             executer.usingInitScript(initScript);
         }
         executer.withTasks(tasks);
         executer.withArguments(args);
-        executer.withEnvironmentVars(environmentVars);
+        executer.withEnvironmentVars(getAllEnvironmentVars());
         executer.usingExecutable(executable);
         if (quiet) {
             executer.withQuietLogging();
@@ -224,6 +227,10 @@ public abstract class AbstractGradleExecuter implements GradleExecuter {
         return this;
     }
 
+    protected Map<String, String> getAllEnvironmentVars() {
+        return environmentVars;
+    }
+
     public Map<String, String> getEnvironmentVars() {
         return environmentVars;
     }
@@ -279,6 +286,10 @@ public abstract class AbstractGradleExecuter implements GradleExecuter {
         allArgs.addAll(args);
         allArgs.addAll(tasks);
         return allArgs;
+    }
+
+    public GradleHandle createHandle() {
+        throw new UnsupportedOperationException(String.format("A %s does not support creating handles.", getClass().getSimpleName()));
     }
 
     public final ExecutionResult run() {

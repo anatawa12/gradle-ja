@@ -16,8 +16,8 @@
 package org.gradle.api.artifacts;
 
 import groovy.lang.Closure;
-import org.gradle.api.NamedDomainObjectContainer;
 import org.gradle.api.InvalidUserDataException;
+import org.gradle.api.NamedDomainObjectContainer;
 
 /**
  * <p>A {@code ConfigurationContainer} is responsible for declaring and managing configurations. See also {@link Configuration}.</p>
@@ -75,12 +75,9 @@ import org.gradle.api.InvalidUserDataException;
  *   compile.transitive = false
  *   testCompile.transitive = false
  * }
- *
- * //Configuring strict conflict strategy - it will fail eagerly if on single classpath
- * //there are multiple different versions of the same dependency (group and name are equal).
- * //Warning: resolution strategies are yet experimental - the DSL is not yet confirmed!
- * configurations.all { resolutionStrategy = resolutionStrategy.strict() }
  * </pre>
+ *
+ * Examples on configuring the <b>resolution strategy</b> - see docs for {@link ResolutionStrategy}
  *
  * @author Hans Dockter
  */

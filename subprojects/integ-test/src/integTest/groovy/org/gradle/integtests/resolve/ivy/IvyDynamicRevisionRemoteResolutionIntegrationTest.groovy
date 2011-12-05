@@ -24,8 +24,11 @@ import org.junit.Rule
 class IvyDynamicRevisionRemoteResolutionIntegrationTest extends AbstractIntegrationSpec {
     @Rule public final HttpServer server = new HttpServer()
 
+    def "setup"() {
+        requireOwnUserHomeDir()
+    }
+
     def "uses latest version from version range and latest status"() {
-        distribution.requireOwnUserHomeDir()
         server.start()
         def repo = ivyRepo()
 
@@ -92,8 +95,111 @@ task retrieve(type: Sync) {
         file('libs/projectB-2.2.jar').assertIsCopyOf(projectB2.jarFile)
     }
 
+    def "checks new repositories before returning any cached value"() {
+        server.start()
+
+        given:
+        buildFile << """
+repositories {
+    ivy { url "http://localhost:${server.port}/repo1" }
+}
+
+if (project.hasProperty('addRepo2')) {
+    repositories {
+        ivy { url "http://localhost:${server.port}/repo2" }
+    }
+}
+
+configurations { compile }
+
+dependencies {
+    compile group: "group", name: "projectA", version: "1.+"
+}
+
+task retrieve(type: Sync) {
+    from configurations.compile
+    into 'libs'
+}
+"""
+
+        when:
+        def projectA11 = ivyRepo('repo1').module("group", "projectA", "1.1")
+        projectA11.publish()
+        def projectA12 = ivyRepo('repo2').module("group", "projectA", "1.2")
+        projectA12.publish()
+
+        and: "Server handles requests"
+        serveUpDynamicRevision(projectA11, "/repo1")
+
+        and: "Retrieve with only repo1"
+        run 'retrieve'
+
+        then: "Version 1.1 is used"
+        file('libs').assertHasDescendants('projectA-1.1.jar')
+
+        when: "Server handles requests"
+        server.resetExpectations()
+        serveUpDynamicRevision(projectA12, "/repo2")
+
+        and: "Retrieve with both repos"
+        executer.withArguments("-PaddRepo2")
+        run 'retrieve'
+
+        then: "Version 1.2 is used"
+        file('libs').assertHasDescendants('projectA-1.2.jar')
+    }
+    
+    def "uses and caches latest of versions obtained from multiple HTTP repositories"() {
+        server.start()
+
+        given:
+        buildFile << """
+repositories {
+    ivy { url "http://localhost:${server.port}/repo1" }
+    ivy { url "http://localhost:${server.port}/repo2" }
+    ivy { url "http://localhost:${server.port}/repo3" }
+}
+
+configurations { compile }
+
+dependencies {
+    compile group: "group", name: "projectA", version: "1.+"
+}
+
+task retrieve(type: Sync) {
+    from configurations.compile
+    into 'libs'
+}
+"""
+
+        when: "Versions are published"
+        def projectA11 = ivyRepo('repo1').module("group", "projectA", "1.1")
+        projectA11.publish()
+        def projectA12 = ivyRepo('repo3').module("group", "projectA", "1.2")
+        projectA12.publish()
+
+        and: "Server handles requests"
+        serveUpDynamicRevision(projectA11, "/repo1")
+        // TODO Should only list missing directory once
+        server.expectGetMissing("/repo2/group/projectA/")
+        server.expectGetMissing("/repo2/group/projectA/")
+        serveUpDynamicRevision(projectA12, "/repo3")
+
+        and:
+        run 'retrieve'
+
+        then: "Version 1.2 is used"
+        file('libs').assertHasDescendants('projectA-1.2.jar')
+        
+        when: "Run again with cached dependencies"
+        server.resetExpectations()
+        def result = run 'retrieve'
+        
+        then: "No server requests, task skipped"
+        result.assertTaskSkipped(':retrieve')
+    }
+
     def "caches resolved revisions until cache expiry"() {
-        distribution.requireOwnUserHomeDir()
         server.start()
         def repo = ivyRepo()
 
@@ -160,7 +266,6 @@ task retrieve(type: Sync) {
     }
 
     def "uses and caches dynamic revisions for transitive dependencies"() {
-        distribution.requireOwnUserHomeDir()
         server.start()
         def repo = ivyRepo()
 
@@ -247,14 +352,13 @@ task retrieve(type: Sync) {
         file('libs/projectB-2.2.jar').assertIsCopyOf(projectB2.jarFile)
     }
 
-    private def serveUpDynamicRevision(IvyModule module) {
-        server.expectGetDirectoryListing("/${module.organisation}/${module.module}/", module.moduleDir.parentFile)
-        server.expectGet("/${module.organisation}/${module.module}/${module.revision}/ivy-${module.revision}.xml", module.ivyFile)
-        server.expectGet("/${module.organisation}/${module.module}/${module.revision}/${module.module}-${module.revision}.jar", module.jarFile)
+    private def serveUpDynamicRevision(IvyModule module, String prefix = "") {
+        server.expectGetDirectoryListing("${prefix}/${module.organisation}/${module.module}/", module.moduleDir.parentFile)
+        server.expectGet("${prefix}/${module.organisation}/${module.module}/${module.revision}/ivy-${module.revision}.xml", module.ivyFile)
+        server.expectGet("${prefix}/${module.organisation}/${module.module}/${module.revision}/${module.module}-${module.revision}.jar", module.jarFile)
     }
 
     def "detects changed module descriptor when flagged as changing"() {
-        distribution.requireOwnUserHomeDir()
         server.start()
 
         given:
@@ -317,7 +421,6 @@ task retrieve(type: Copy) {
     }
 
     def "detects changed artifact when flagged as changing"() {
-        distribution.requireOwnUserHomeDir()
         server.start()
 
         given:
@@ -358,8 +461,8 @@ task retrieve(type: Copy) {
         def snapshot = jarFile.snapshot()
 
         when:
-        module.publishWithChangedContent()
         waitOneSecondSoThatPublicationDateWillHaveChanged();
+        module.publishWithChangedContent()
 
         server.resetExpectations()
         // Server will be hit to get updated versions
@@ -376,7 +479,6 @@ task retrieve(type: Copy) {
     }
 
     def "caches changing module descriptor and artifacts until cache expiry"() {
-        distribution.requireOwnUserHomeDir()
         server.start()
 
         given:
@@ -423,8 +525,8 @@ task retrieve(type: Copy) {
 
         when: "Module meta-data is changed and artifacts are modified"
         module.artifact([name: 'other'])
-        module.publishWithChangedContent()
         waitOneSecondSoThatPublicationDateWillHaveChanged()
+        module.publishWithChangedContent()
 
         and: "We request 1.1 (changing), with module meta-data cached. No server requests."
         run 'retrieve'
@@ -459,7 +561,7 @@ task retrieve(type: Copy) {
         Thread.sleep(1000)
     }
 
-    IvyRepository ivyRepo() {
-        return new IvyRepository(distribution.testFile('ivy-repo'))
+    IvyRepository ivyRepo(def dir = 'ivy-repo') {
+        return new IvyRepository(distribution.testFile(dir))
     }
 }

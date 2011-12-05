@@ -95,10 +95,10 @@
 
     <section>
         <title>依存関係のコンフィグレーション <phrase role="original">Dependency configurations</phrase></title>
-        <para role="original">Dependencies are grouped into <firstterm>configurations</firstterm>. A configuration is simply a set of dependencies
-            with a name. You can use them to declare the external dependencies of your project. As we will see later, they are also
-            used to declare the publications of your project.</para>
-        <para>依存関係は、<firstterm>コンフィグレーション</firstterm>によってグループ化されます。コンフィグレーションとは、ただ単に依存関係のセットに名前をつけただけのものです。プロジェクトが外部に依存しているものが何か宣言するため、このコンフィグレーションを使うことができます。また、後で見るように、コンフィグレーションはプロジェクトが外部に公開するものを宣言するためにも使用されます。
+        <para role="original">In Gradle dependencies are grouped into <firstterm>configurations</firstterm>. A configuration is simply a named set of dependencies.
+            We will refer to them as <firstterm>dependency configurations</firstterm>. You can use them to declare the external dependencies of your project.
+            As we will see later, they are also used to declare the publications of your project.</para>
+        <para>Gradleでは、依存関係は、<firstterm>コンフィグレーション</firstterm>によってグループ化されます。コンフィグレーションとは、単なる名前の付いた依存関係の集まりです。コンフィグレーションは<firstterm>依存関係設定</firstterm>として参照されます。プロジェクトが外部に依存しているものを宣言するのに使われ、また後で見るように、プロジェクトが外部に公開するものを宣言するためにも使用されます。
         </para>
         <para role="original">
             The Java plugin defines a number of standard configurations. These configurations represent the classpaths that the
@@ -111,19 +111,19 @@
             <varlistentry>
                 <term>compile</term>
                 <listitem>
-                    <para role="original">Defines the dependencies required to compile the production source of the project.</para>
-                    <para>プロジェクトのプロダクトコードをコンパイルするのに必要な依存関係を定義する。</para>
+                    <para role="original">The dependencies required to compile the production source of the project.</para>
+                    <para>プロジェクトのプロダクトコードをコンパイルするのに必要な依存関係</para>
                 </listitem>
             </varlistentry>
             <varlistentry>
                 <term>runtime</term>
                 <listitem>
                     <para role="original">
-                        Defines the dependencies required by the production classes at runtime. By default, also includes the
+                        The dependencies required by the production classes at runtime. By default, also includes the
                         compile time dependencies.
                     </para>
                     <para>
-                        プロダクトのクラスを実行するときに必要になる依存関係を定義する。デフォルトで、コンパイル時の依存関係もここに含まれる。
+                        プロダクトのクラスを実行するときに必要になる依存関係。デフォルトで、コンパイル時の依存関係もここに含まれる。
                     </para>
                 </listitem>
             </varlistentry>
@@ -131,11 +131,11 @@
                 <term>testCompile</term>
                 <listitem>
                     <para role="original">
-                        Defines the dependencies required to compile the test source of the project. By default, also includes
+                        The dependencies required to compile the test source of the project. By default, also includes
                         the compiled production classes and the compile time dependencies.
                     </para>
                     <para>
-                    プロジェクトのテストコードをコンパイルするのに必要な依存関係を定義する。デフォルトで、コンパイルされたプロダクトクラスと、コンパイル時の依存関係も含まれる。
+                    プロジェクトのテストコードをコンパイルするのに必要な依存関係。デフォルトで、コンパイルされたプロダクトクラスと、コンパイル時の依存関係も含まれる。
                     </para>
                 </listitem>
             </varlistentry>
@@ -169,7 +169,7 @@
             a corporate Maven or Ivy repository, or a directory in the local file system.
         </para>
         <para>
-            定義できる依存関係には、さまざまなタイプがあります。そのうちの一つが、<firstterm>外部依存関係</firstterm>です。これは、現在のビルドの外部でビルドされ、MavenセントラルリポジトリやIvyリポジトリ、ローカルファイルシステムなどに保存されているファイルへの依存関係です。</para>
+            定義できる依存関係には、さまざまなタイプがあります。そのうちの一つが、<firstterm>外部依存関係</firstterm>です。これは、今のビルドとは別に作られ、MavenセントラルリポジトリやIvyリポジトリ、ローカルファイルシステムなどに保存されているファイルへの依存関係です。</para>
         <para role="original">
             To define an external dependency, you add it to a dependency configuration:
         </para>
@@ -294,7 +294,7 @@
             For all the details of dependency resolution, see <xref linkend="dependency_management"/>, and for artifact publication see <xref linkend="artifact_management"/>.
         </para>
         <para>
-            依存関係解決についての全ての詳細は、<xref linkend="dependency_management"/>に載っています。そして、アーティファクトの公開については<xref linkend="artifact_management"/>に載っています。
+            依存関係解決については、<xref linkend="dependency_management"/>に全て詳細に載っています。そして、アーティファクトの公開については<xref linkend="artifact_management"/>に載っています。
         </para>
         <para role="original">
             If you are interested in the DSL elements mentioned here, have a look at <apilink class="org.gradle.api.Project" method="configurations"/>,

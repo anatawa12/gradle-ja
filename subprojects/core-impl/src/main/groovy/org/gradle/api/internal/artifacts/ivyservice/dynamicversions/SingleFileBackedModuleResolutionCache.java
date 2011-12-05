@@ -16,20 +16,20 @@
 package org.gradle.api.internal.artifacts.ivyservice.dynamicversions;
 
 import org.apache.ivy.core.module.id.ModuleRevisionId;
-import org.apache.ivy.plugins.resolver.DependencyResolver;
 import org.gradle.api.internal.artifacts.ivyservice.ArtifactCacheMetaData;
 import org.gradle.api.internal.artifacts.ivyservice.CacheLockingManager;
-import org.gradle.cache.DefaultSerializer;
+import org.gradle.api.internal.artifacts.ivyservice.ivyresolve.ModuleVersionRepository;
 import org.gradle.cache.PersistentIndexedCache;
-import org.gradle.cache.internal.FileLock;
-import org.gradle.cache.internal.btree.BTreePersistentIndexedCache;
 import org.gradle.util.TimeProvider;
-import org.jfrog.wharf.ivy.model.WharfResolverMetadata;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.Serializable;
 
 public class SingleFileBackedModuleResolutionCache implements ModuleResolutionCache {
+    private static final Logger LOGGER = LoggerFactory.getLogger(SingleFileBackedModuleResolutionCache.class);
+
     private final TimeProvider timeProvider;
     private final ArtifactCacheMetaData cacheMetadata;
     private final CacheLockingManager cacheLockingManager;
@@ -40,7 +40,7 @@ public class SingleFileBackedModuleResolutionCache implements ModuleResolutionCa
         this.cacheLockingManager = cacheLockingManager;
         this.cacheMetadata = cacheMetadata;
     }
-    
+
     private PersistentIndexedCache<RevisionKey, ModuleResolutionCacheEntry> getCache() {
         if (cache == null) {
             cache = initCache();
@@ -50,29 +50,28 @@ public class SingleFileBackedModuleResolutionCache implements ModuleResolutionCa
 
     private PersistentIndexedCache<RevisionKey, ModuleResolutionCacheEntry> initCache() {
         File dynamicRevisionsFile = new File(cacheMetadata.getCacheDir(), "dynamic-revisions.bin");
-        FileLock dynamicRevisionsLock = cacheLockingManager.getCacheMetadataFileLock(dynamicRevisionsFile);
-        return new BTreePersistentIndexedCache<RevisionKey, ModuleResolutionCacheEntry>(dynamicRevisionsFile, dynamicRevisionsLock,
-                new DefaultSerializer<ModuleResolutionCacheEntry>(ModuleResolutionCacheEntry.class.getClassLoader()));
+        return cacheLockingManager.createCache(dynamicRevisionsFile, RevisionKey.class, ModuleResolutionCacheEntry.class);
     }
 
-    public void recordResolvedDynamicVersion(DependencyResolver resolver, ModuleRevisionId requestedVersion, ModuleRevisionId resolvedVersion) {
-        getCache().put(createKey(resolver, requestedVersion), createEntry(resolvedVersion));
+    public void cacheModuleResolution(ModuleVersionRepository repository, ModuleRevisionId requestedVersion, ModuleRevisionId resolvedVersion) {
+        if (requestedVersion.equals(resolvedVersion)) {
+            return;
+        }
+
+        LOGGER.debug("Caching resolved revision in dynamic revision cache: Will use '{}' for '{}'", resolvedVersion, requestedVersion);
+        getCache().put(createKey(repository, requestedVersion), createEntry(resolvedVersion));
     }
 
-    public void recordChangingModuleResolution(DependencyResolver resolver, ModuleRevisionId module) {
-        getCache().put(createKey(resolver, module), createEntry(null));
-    }
-
-    public CachedModuleResolution getCachedModuleResolution(DependencyResolver resolver, ModuleRevisionId moduleId) {
-        ModuleResolutionCacheEntry moduleResolutionCacheEntry = getCache().get(createKey(resolver, moduleId));
+    public CachedModuleResolution getCachedModuleResolution(ModuleVersionRepository repository, ModuleRevisionId moduleId) {
+        ModuleResolutionCacheEntry moduleResolutionCacheEntry = getCache().get(createKey(repository, moduleId));
         if (moduleResolutionCacheEntry == null) {
             return null;
         }
         return new DefaultCachedModuleResolution(moduleId, moduleResolutionCacheEntry, timeProvider);
     }
 
-    private RevisionKey createKey(DependencyResolver resolver, ModuleRevisionId revisionId) {
-        return new RevisionKey(resolver, revisionId);
+    private RevisionKey createKey(ModuleVersionRepository repository, ModuleRevisionId revisionId) {
+        return new RevisionKey(repository, revisionId);
     }
 
     private ModuleResolutionCacheEntry createEntry(ModuleRevisionId revisionId) {
@@ -83,8 +82,8 @@ public class SingleFileBackedModuleResolutionCache implements ModuleResolutionCa
         private final String resolverId;
         private final String revisionId;
 
-        private RevisionKey(DependencyResolver resolver, ModuleRevisionId revision) {
-            this.resolverId = new WharfResolverMetadata(resolver).getId();
+        private RevisionKey(ModuleVersionRepository repository, ModuleRevisionId revision) {
+            this.resolverId = repository.getId();
             this.revisionId = revision.encodeToString();
         }
 

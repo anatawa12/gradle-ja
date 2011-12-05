@@ -188,14 +188,14 @@
             プロジェクトに対する簡単なビルドスクリプトがこちらです。
         </para>
 
-        <sample id="customTaskStandalone" dir="customPlugin" title="カスタムタスクのビルド / A build for a custom task" includeLocation="true">
+        <sample id="customTaskStandalone" dir="customPlugin/plugin" title="カスタムタスクのビルド / A build for a custom task" includeLocation="true">
             <sourcefile file="build.gradle" snippet="use-plugin"/>
         </sample>
 
         <para role="original">We just follow the convention for where the source for the task class should go.</para>
         <para>タスククラスのソースを配置する場所は規約に従いました。</para>
 
-        <sample id="customTaskStandalone" dir="customPlugin" title="カスタムタスク / A custom task">
+        <sample id="customTaskStandalone" dir="customPlugin/plugin" title="カスタムタスク / A custom task">
             <sourcefile file="src/main/groovy/org/gradle/GreetingTask.groovy"/>
         </sample>
 
@@ -210,8 +210,10 @@
                 これを実行するには、<xref linkend="sec:external_dependencies"/>で説明されているとおり、<literal>buildscript { }</literal>ブロックを使います。
                 次のサンプルでは、タスククラスを含むJARをローカルリポジトリに発行した場合にどのようにすればよいかを示しています:
             </para>
-            <sample id="usingCustomTask" dir="customPlugin" title="カスタムタスクを別のプロジェクトで使う / Using a custom task in another project">
-                <sourcefile file="usesCustomTask.gradle" snippet="use-task"/>
+            <sample id="usingCustomTask" dir="customPlugin/consumer" title="カスタムタスクを別のプロジェクトで使う / Using a custom task in another project">
+                <test args="-p../plugin uploadArchives"/>
+                <test args="greeting"/>
+                <sourcefile file="build.gradle" snippet="use-task"/>
             </sample>
         </section>
         <section>
@@ -222,7 +224,7 @@
             <para>タスククラスのテストのために、<apilink class="org.gradle.testfixtures.ProjectBuilder"/>クラスを利用して
                 <apilink class="org.gradle.api.Project"/>のインスタンスを生成することができます。
             </para>
-            <sample id="customTaskStandalone" dir="customPlugin" title="カスタムタスクのテスト / Testing a custom task">
+            <sample id="customTaskStandalone" dir="customPlugin/plugin" title="カスタムタスクのテスト / Testing a custom task">
                 <sourcefile file="src/test/groovy/org/gradle/GreetingTaskTest.groovy" snippet="test-task"/>
             </sample>
         </section>

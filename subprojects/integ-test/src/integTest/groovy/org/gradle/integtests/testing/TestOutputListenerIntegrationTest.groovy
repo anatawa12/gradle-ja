@@ -21,27 +21,25 @@ import org.junit.Rule
 import org.junit.Test
 import spock.lang.Issue
 
+@Issue("GRADLE-1009")
 public class TestOutputListenerIntegrationTest extends AbstractIntegrationSpec {
     @Rule public final TestResources resources = new TestResources()
 
     @Test
-    @Issue("GRADLE-1009")
-    def "standard output is shown when tests are executed"() {
+    def "can use standard output listener for tests"() {
         given:
         def test = file("src/test/java/SomeTest.java")
         test << """
 import org.junit.*;
 
 public class SomeTest {
-    @Test
-    public void showsOutputWhenPassing() {
+    @Test public void showsOutputWhenPassing() {
         System.out.println("out passing");
         System.err.println("err passing");
         Assert.assertTrue(true);
     }
 
-    @Test
-    public void showsOutputWhenFailing() {
+    @Test public void showsOutputWhenFailing() {
         System.out.println("out failing");
         System.err.println("err failing");
         Assert.assertTrue(false);
@@ -51,16 +49,14 @@ public class SomeTest {
         def buildFile = file('build.gradle')
         buildFile << """
 apply plugin: 'java'
-
-repositories {
-    mavenCentral()
-}
-
-dependencies {
-    testCompile "junit:junit:4.8.2"
-}
+repositories { mavenCentral() }
+dependencies { testCompile "junit:junit:4.8.2" }
 
 test.addTestOutputListener(new VerboseOutputListener(logger: project.logger))
+
+def removeMe = new RemoveMeListener()
+test.addTestOutputListener(removeMe)
+test.removeTestOutputListener(removeMe)
 
 class VerboseOutputListener implements TestOutputListener {
 
@@ -68,6 +64,12 @@ class VerboseOutputListener implements TestOutputListener {
 
     public void onOutput(TestDescriptor descriptor, TestOutputEvent event) {
         logger.lifecycle(descriptor.toString() + " " + event.destination + " " + event.message);
+    }
+}
+
+class RemoveMeListener implements TestOutputListener {
+    public void onOutput(TestDescriptor descriptor, TestOutputEvent event) {
+        println "remove me!"
     }
 }
 """
@@ -80,18 +82,19 @@ class VerboseOutputListener implements TestOutputListener {
         failure.output.contains('test showsOutputWhenFailing(SomeTest) StdOut out failing')
         failure.output.contains('test showsOutputWhenPassing(SomeTest) StdErr err passing')
         failure.output.contains('test showsOutputWhenFailing(SomeTest) StdErr err failing')
+
+        !failure.output.contains("remove me!")
     }
 
     @Test
-    def "can register output listener at gradle level"() {
+    def "can register output listener at gradle level and using onOutput method"() {
         given:
         def test = file("src/test/java/SomeTest.java")
         test << """
 import org.junit.*;
 
 public class SomeTest {
-    @Test
-    public void foo() {
+    @Test public void foo() {
         System.out.println("message from foo");
     }
 }
@@ -99,14 +102,8 @@ public class SomeTest {
         def buildFile = file('build.gradle')
         buildFile << """
 apply plugin: 'java'
-
-repositories {
-    mavenCentral()
-}
-
-dependencies {
-    testCompile "junit:junit:4.8.2"
-}
+repositories { mavenCentral() }
+dependencies { testCompile "junit:junit:4.8.2" }
 
 test.onOutput { descriptor, event ->
     logger.lifecycle("first: " + event.message)
@@ -133,6 +130,37 @@ class VerboseOutputListener implements TestOutputListener {
     }
 
     @Test
+    def "shows standard streams configured via closure"() {
+        given:
+        def test = file("src/test/java/SomeTest.java")
+        test << """
+import org.junit.*;
+
+public class SomeTest {
+    @Test public void foo() {
+        System.out.println("message from foo");
+    }
+}
+"""
+        def buildFile = file('build.gradle')
+        buildFile << """
+apply plugin: 'java'
+repositories { mavenCentral() }
+dependencies { testCompile "junit:junit:4.8.2" }
+
+test.testLogging {
+    showStandardStreams = true
+}
+"""
+
+        when:
+        def result = executer.withTasks('test').withArguments('-i').run()
+
+        then:
+        result.output.contains('message from foo')
+    }
+
+    @Test
     def "shows standard stream also for testNG"() {
         given:
         def test = file("src/test/java/SomeTest.java")
@@ -141,8 +169,7 @@ import org.testng.*;
 import org.testng.annotations.*;
 
 public class SomeTest {
-    @Test
-    public void foo() {
+    @Test public void foo() {
         System.out.println("output from foo");
         System.err.println("error from foo");
     }
@@ -152,14 +179,8 @@ public class SomeTest {
         def buildFile = file('build.gradle')
         buildFile << """
 apply plugin: 'java'
-
-repositories {
-    mavenCentral()
-}
-
-dependencies {
-    testCompile 'org.testng:testng:5.14'
-}
+repositories { mavenCentral() }
+dependencies { testCompile 'org.testng:testng:5.14' }
 
 test {
     useTestNG()

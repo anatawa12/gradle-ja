@@ -215,12 +215,5 @@
         </para>
         <para>もちろん、excludes と includes を定義したクロージャを使って異なるファイルセットを設定することもできます。
         </para>
-        <para role="original">If you want to enable the generation of the default jar archive additional to the war archive just type:
-        </para>
-        <para>WAR アーカイブに加えて デフォルトの JAR アーカイブを生成するようにしたいのであれば、以下を追加するだけでよいです。
-        </para>
-        <sample id="customisedWebApplication" dir="webApplication/customised" title="Generation of JAR archive in addition to WAR archive">
-            <sourcefile file="build.gradle" snippet="enable-jar"/>
-        </sample>
     </section>
 </chapter>
