@@ -14,32 +14,32 @@
   ~ limitations under the License.
   -->
 <chapter id="artifact_management">
-    <title>Publishing artifacts</title>
+    <title>アーティファクトの公開 <phrase role="original">Publishing artifacts</phrase></title>
     <section>
         <title>はじめに<phrase role="original">Introduction</phrase></title>
-        <para>This chapter is about how you declare the outgoing artifacts of your project, and how to work with
+        <para role="original">This chapter is about how you declare the outgoing artifacts of your project, and how to work with
             them (e.g. upload them). We define the artifacts of the projects as the files the project provides to the
             outside world. This might be a library or a ZIP distribution or any other file. A project can publish as many artifacts as it wants.
         </para>
-        <para>この章では、プロジェクトのアーティファクト(成果物)を定義する方法と、アーティファクトの取り扱い方(アップロードする方法など)について解説します。Gradleでは、アーティファクトを「プロジェクトが外部へ公開したいファイル」と定義しています。普通は何らかのアーカイブになるかと思いますが、必ずしもはそうとは限りません。ライブラリだったり配布物だったり、その他いろいろなファイルがアーティファクトになりうるでしょう。Mavenの世界では、一つのプロジェクトにつき一つのアーティファクトしか公開できませんが、Gradleでは必要ならいくつでも公開することができます。</para>
+        <para>この章では、プロジェクトが公開するアーティファクト(成果物)の定義方法と取り扱い(アップロードする方法など)について解説します。ここでいうプロジェクトのアーティファクトとは、外部の世界へ提供するファイルのことを指します。ライブラリやZIPの配布物かもしれませんし、なにか他のファイルかもしれません。一つのプロジェクトから、いくつでも好きなだけアーティファクトを公開することができます。</para>
     </section>
     <section id="artifacts_and_configurations">
         <title>アーティファクトとコンフィギュレーション<phrase role="original">Artifacts and configurations</phrase></title>
         <para role="original">Like dependencies, artifacts are grouped by configurations. In fact, a configuration can contain
             both artifacts and dependencies at the same time.
         </para>
-        <para>For each configuration in your project, Gradle provides the tasks <literal>upload<replaceable>ConfigurationName</replaceable></literal> and
+        <para>依存関係と同じように、アーティファクトもコンフィギュレーションによってグループ化されます。実際、コンフィギュレーションにはアーティファクトと依存関係、両方を同時に含めることもできます。</para>
+        <para role="original">For each configuration in your project, Gradle provides the tasks <literal>upload<replaceable>ConfigurationName</replaceable></literal> and
         <literal>build<replaceable>ConfigurationName</replaceable></literal>.
-        <footnote><para>To be exact, the Base plugin provides those tasks. This plugin is automatically applied if you use
+        <footnote><para role="original">To be exact, the Base plugin provides those tasks. This plugin is automatically applied if you use
         the Java plugin.</para></footnote>
         Execution of these tasks will build or upload the artifacts belonging to the respective configuration.
         </para>
-        <para>
-        アーティファクトをコンフィギュレーションに割り当てると、どういうメリットがあるのでしょうか？ Gradleは、すべてのコンフィギュレーション(独自定義のものも含む)に対して、<code>upload[コンフィグレーション名]</code>タスクと<code>build[コンフィグレーション名]</code>タスクを自動で作成します。
+        <para>Gradleは、プロジェクト内のすべてのコンフィギュレーションに対して、<literal>upload<replaceable>コンフィグレーション名</replaceable></literal> タスクと<literal>build<replaceable>コンフィグレーション名</replaceable></literal> タスクを提供します。
         <footnote><para>
-        正確に言うと、これらのタスクを作成するのはBaseプラグインです。Baseプラグインは、Javaプラグインを使うと自動的に適用されます。
+        正確に言うと、Baseプラグインがこれらのタスクを提供します。Baseプラグインは、Javaプラグインを使うと自動的に適用されます。
         </para></footnote>
-        これらのタスクを実行すると、コンフィギュレーションに属しているアーティファクトをビルドしたり、アップロードしたりできます。
+        これらのタスクを実行すると、対象のコンフィギュレーションに属しているアーティファクトをビルドしたり、アップロードしたりできます。
         </para>
         <para role="original">Table <xref linkend="tab:configurations"/> shows the configurations added by the Java plugin. Two of the
         configurations are relevant for the usage with artifacts. The <code>archives</code> configuration is the standard
@@ -47,47 +47,52 @@
         configuration. We will talk more about the <code>runtime</code> configuration in <xref linkend="project_libraries"/>.
         As with dependencies, you can declare as many custom configurations as you like and assign artifacts to them.
         </para>
-        <para>ビルド手順の一つとしてカスタムのアーカイブを作ったとしても、デフォルトではどのコンフィギュレーションにも追加されないことに注意してください。明示的にコンフィギュレーションを割り当てる必要があります。</para>
+        <para><xref linkend="tab:configurations"/>に、Javaプラグインが追加するコンフィギュレーションの一覧を載せています。これらのうち、アーティファクトを使うに当たって関係があるものは次の二つです。<code>archives</code>コンフィギュレーションは、プロジェクトのアーティファクトを含めるための標準のコンフィギュレーションです。Javaプラグインは、デフォルトのjarを自動的にこのコンフィギュレーションに追加します。<xref linkend="project_libraries"/>では、<code>runtime</code>コンフィギュレーションについて詳しく解説します。また、アーティファクトを追加するための独自コンフィギュレーションも、依存関係のコンフィギュレーションと同じようにいくつでも宣言して追加できます。</para>
     </section>
 
     <section>
-        <title>Declaring artifacts</title>
+        <title>アーティファクトの宣言 <phrase role="original">Declaring artifacts</phrase></title>
         <section>
-            <title>Archive task artifacts</title>
-            <para>You can use an archive task to define an artifact:</para>
-            <sample id="archiveTaskArtifact" dir="userguide/artifacts/uploading" title="Defining an artifact using an archive task">
+            <title>アーカイブタスク・アーティファクト <phrase role="original">Archive task artifacts</phrase></title>
+            <para role="original">You can use an archive task to define an artifact:</para>
+            <para>アーカイブタスクを使ってアーティファクトを宣言できます。</para>
+            <sample id="archiveTaskArtifact" dir="userguide/artifacts/uploading" title="アーカイブタスクを使ってアーティファクトを宣言する / Defining an artifact using an archive task">
                 <sourcefile file="build.gradle" snippet="archive-artifact"/>
             </sample>
-            <para>It is important to note that the custom archives you are creating as part of your build are not
+            <para role="original">It is important to note that the custom archives you are creating as part of your build are not
             automatically assigned to any configuration. You have to explicitly do this assignment.</para>
+            <para>重要なことですが、独自のアーカイブ作成をビルドに組み込んでも、そのアーカイブが自動的になんらかのコンフィグレーションに割り当てられるわけではないことに注目してください。割り当ては、明示的に行う必要があります。</para>
         </section>
         <section>
-            <title>File artifacts</title>
-            <para>You can also use a file to define an artifact:</para>
-            <sample id="fileArtifact" dir="userguide/artifacts/uploading" title="Defining an artifact using a file">
+            <title>ファイル・アーティファクト <phrase role="original">File artifacts</phrase></title>
+            <para role="original">You can also use a file to define an artifact:</para>
+            <para>アーティファクトは、ファイルで宣言することもできます。</para>
+            <sample id="fileArtifact" dir="userguide/artifacts/uploading" title="アーティファクトをファイルで宣言する / Defining an artifact using a file">
                 <sourcefile file="build.gradle" snippet="file-artifact"/>
             </sample>
-            <para>Gradle will figure out the properties of the artifact based on the name of the file. You can customize these properties:</para>
-            <sample id="fileArtifact" dir="userguide/artifacts/uploading" title="Customizing an artifact">
+            <para role="original">Gradle will figure out the properties of the artifact based on the name of the file. You can customize these properties:</para>
+            <para>Gradleは、ファイル名を元にアーティファクトのプロパティを決定します。このプロパティは、以下のようにしてカスタマイズすることができます。</para>
+            <sample id="fileArtifact" dir="userguide/artifacts/uploading" title="アーティファクトのカスタマイズ / Customizing an artifact">
                 <sourcefile file="build.gradle" snippet="customised-file-artifact"/>
             </sample>
-            <para>There is a map-based syntax for defining an artifact using a file. The map must include a <literal>file</literal> entry that
+            <para role="original">There is a map-based syntax for defining an artifact using a file. The map must include a <literal>file</literal> entry that
                 defines the file. The map may include other artifact properties:
             </para>
-            <sample id="fileArtifact" dir="userguide/artifacts/uploading" title="Map syntax for defining an artifact using a file">
+            <para>ファイルでアーティファクトを宣言する際には、Mapスタイルの文法を使うこともできます。そのMapにはファイルを宣言するfileエントリを含めなければなりません。そのほか、アーティファクトの各プロパティを含めることができます。</para>
+            <sample id="fileArtifact" dir="userguide/artifacts/uploading" title="ファイルでアーティファクトを宣言するMapスタイルの文法 / Map syntax for defining an artifact using a file">
                 <sourcefile file="build.gradle" snippet="map-file-artifact"/>
             </sample>
         </section>
     </section>
 
     <section>
-        <title>Publishing artifacts</title>
-        <para>We have said that there is a specific upload task for each configuration. But before you can do an upload,
+        <title>アーティファクトの公開 <phrase role="original">Publishing artifacts</phrase></title>
+        <para role="original">We have said that there is a specific upload task for each configuration. But before you can do an upload,
             you have to configure the upload task and define where to publish the artifacts to. The repositories you have defined (as described
             in <xref linkend="sec:repositories"/>) are not automatically used for uploading. In fact, some of those repositories allow only for artifact downloading.
             Here is an example how you can configure the upload task of a configuration:
         </para>
-        <para>先ほど、すべてのコンフィギュレーションにアップロード用のタスクが作成されることを説明しました。しかし、実際にそのタスクを使うためには、どこにアーティファクトをアップロードするのか設定してやる必要があります。プロジェクトに定義したリポジトリ(<xref linkend="sec:repositories"/>)が、勝手にアップロードに使用されることはありません。実際、ダウンロードしか許していないリポジトリもあるでしょう。次の例は、アップロードタスクの設定方法を示すものです。</para>
+        <para>先ほど、すべてのコンフィギュレーションにアップロード用のタスクが作成されることを説明しました。しかし、実際にアップロードする前に、どこにアーティファクトを公開するのか、タスクを設定して定義する必要があります。プロジェクトに定義したリポジトリ(<xref linkend="sec:repositories"/>)が、勝手にアップロードに使用されることはありません。実際、それらのリポジトリには、ダウンロードしか許していないものもあるでしょう。次の例は、アップロードタスクの設定方法を示すものです。</para>
         <sample id="uploading" dir="userguide/artifacts/uploading" title="アップロードタスクの設定 / Configuration of the upload task">
             <sourcefile file="build.gradle" snippet="uploading"/>
         </sample>
@@ -107,7 +112,7 @@
             existing configurations extend from other configurations. You might have different group of artifacts which have
             a different set of dependencies. This mechanism is very powerful and flexible.
             </para>
-            <para>あるプロジェクトがライブラリとして使用される場合、アーティファクトおよびアーティファクトが依存しているライブラリが何なのかを定義しておく必要があります。このためにJavaプラグインが作成するのが<code>default</code>というコンフィギュレーションです。このコンフィギュレーションは、<code>archives</code>と<code>runtime</code>、両方のコンフィギュレーションを継承したものになっています。archivesコンフィギュレーションはruntimeコンフィギュレーションに依存しているはずだ、という暗黙的な仮定の上での仕様なのですが、もちろんこのあたりの設定は完全にカスタマイズ可能です。独自のコンフィギュレーションを作成してもいいし、既存のコンフィギュレーションの継承元を変えてやってもいいでしょう。別の依存関係をもつアーティファクト群を追加することもできます。非常に強力で、柔軟性のある仕組みだといえます。</para>
+            <para>プロジェクトがライブラリとして使用される場合、そのライブラリのアーティファクトは何か、アーティファクトが依存しているライブラリは何か、定義しておく必要があります。Javaプラグインは、この目的のために<code>runtime</code>というコンフィギュレーションを追加します。これは、公開したいアーティファクトは<code>runtime</code>依存関係に依存しているはずだ、という暗黙的な仮定の上での仕様ですが、もちろんこのあたりの設定は完全にカスタマイズ可能です。独自のコンフィギュレーションを作成してもいいし、既存のコンフィギュレーションの継承元を変えてもいいでしょう。別の依存関係をもつ別のアーティファクトを加えることもできます。このメカニズムは非常に強力で、柔軟性豊かなものです。</para>
         <para role="original">If someone wants to use your project as a library, she simply needs to declare on which configuration of
             the dependency to depend on.
             A Gradle dependency offers the <code>configuration</code> property to declare this. If this
