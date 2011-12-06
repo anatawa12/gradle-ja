@@ -19,27 +19,30 @@
         <para role="original">This chapter is a work in progress</para>
         <para>この章は執筆途中です。</para>
     </note>
-    <para>The Maven plugin adds support for deploying artifacts to Maven repositories.</para>
+    <para role="original">The Maven plugin adds support for deploying artifacts to Maven repositories.</para>
+    <para>Mavenプラグインは、Mavenリポジトリへのアーティファクトのデプロイに対するサポートを追加します。</para>
 
     <section>
-        <title>Usage</title>
-        <para>To use the Maven plugin, include in your build script:</para>
-        <sample id="useMavenPlugin" dir="maven/quickstart" title="Using the Maven plugin">
+        <title>使用方法<phrase role="original">Usage</phrase></title>
+        <para role="original">To use the Maven plugin, include in your build script:</para>
+        <para>Mavenプラグインを使うには、ビルドスクリプトに以下を含めます:</para>
+        <sample id="useMavenPlugin" dir="maven/quickstart" title="Mavenプラグインの利用 / Using the Maven plugin">
             <sourcefile file="build.gradle" snippet="use-plugin"/>
         </sample>
     </section>
 
     <section>
-        <title>Tasks</title>
-        <para>The Maven plugin defines the following tasks:</para>
+        <title>タスク<phrase role="original">Tasks</phrase></title>
+        <para role="original">The Maven plugin defines the following tasks:</para>
+        <para>Mavenプラグインは以下のタスクを定義しています:</para>
         <table>
-            <title>Maven plugin - tasks</title>
+            <title>Mavenプラグイン - タスク<phrase role="original">Maven plugin - tasks</phrase></title>
             <thead>
                 <tr>
-                    <td>Task name</td>
-                    <td>Depends on</td>
-                    <td>Type</td>
-                    <td>Description</td>
+                    <td>タスク名<phrase role="original">Task name</phrase></td>
+                    <td>依存先<phrase role="original">Depends on</phrase></td>
+                    <td>型<phrase role="original">Type</phrase></td>
+                    <td>説明<phrase role="original">Description</phrase></td>
                 </tr>
             </thead>
             <tr>
@@ -47,33 +50,41 @@
                     <literal>install</literal>
                 </td>
                 <td>
-                    All tasks that build the associated archives.
+                     関連するアーカイブをビルドするすべてのタスク
+                     <phrase role="original">All tasks that build the associated archives.</phrase>
                 </td>
                 <td><apilink class="org.gradle.api.tasks.Upload"/></td>
-                <td>Installs the associated artifacts to the local Maven cache, including Maven metadata generation.
+                <td>
+                Mavenメタデータの生成を含め、関連するアーティファクトをローカルMavenキャッシュにインストールする。
+                デフォルトではinstallタスクは<literal>archives</literal>コンフィグレーションに関連付けられる。
+                このコンフィグレーションのデフォルトでは要素としてJARのみを持つ。
+                ローカルリポジトリへのインストールに関して詳しく学ぶためには<xref linkend="sub:installing_to_the_local_repository"/>を参照のこと。
+                <phrase role="original">Installs the associated artifacts to the local Maven cache, including Maven metadata generation.
                 By default the install task is associated with the <literal>archives</literal> configuration. This
                 configuration has by default only the default jar as an element. To learn more about installing to the
-                local repository, see: <xref linkend="sub:installing_to_the_local_repository"/></td>
+                local repository, see: <xref linkend="sub:installing_to_the_local_repository"/></phrase></td>
             </tr>
         </table>
     </section>
 
     <section>
-        <title>Dependency management</title>
-        <para>The Maven plugin does not define any dependency configurations.</para>
+        <title>依存関係管理<phrase role="original">Dependency management</phrase></title>
+        <para role="original">The Maven plugin does not define any dependency configurations.</para>
+        <para>Mavenプラグインはいかなる依存関係のコンフィグレーションも定義していません。</para>
     </section>
 
     <section>
-        <title>Convention properties</title>
-        <para>The Maven plugin defines the following convention properties:</para>
+        <title>規約プロパティ<phrase role="original">Convention properties</phrase></title>
+        <para role="original">The Maven plugin defines the following convention properties:</para>
+        <para>Mavenプラグインは以下の規約プロパティを定義しています:</para>
         <table>
-            <title>Maven plugin - properties</title>
+            <title>Mavenプラグイン - プロパティ<phrase role="original">Maven plugin - properties</phrase></title>
             <thead>
                 <tr>
-                    <td>Property name</td>
-                    <td>Type</td>
-                    <td>Default value</td>
-                    <td>Description</td>
+                    <td>プロパティ名 <phrase role="original">Property name</phrase></td>
+                    <td>型 <phrase role="original">Type</phrase></td>
+                    <td>デフォルト値<phrase role="original">Default value</phrase></td>
+                    <td>説明<phrase role="original">Description</phrase></td>
                 </tr>
             </thead>
             <tr>
@@ -87,7 +98,8 @@
                     <literal>poms</literal>
                 </td>
                 <td>
-                    The path of the directory to write the generated POMs, relative to the build directory.
+                     生成されたPOMを書き出すディレクトリのパス名をビルドディレクトリからの相対パスで指定
+                     <phrase role="original">The path of the directory to write the generated POMs, relative to the build directory.</phrase>
                 </td>
             </tr>
             <tr>
@@ -101,7 +113,8 @@
                     <literal><replaceable>buildDir</replaceable>/<replaceable>pomDirName</replaceable></literal>
                 </td>
                 <td>
-                    The directory where the generated POMs are written to.
+                    生成されたPOMを書き出すディレクトリ
+                    <phrase role="original">The directory where the generated POMs are written to.</phrase>
                 </td>
             </tr>
             <tr>
@@ -115,84 +128,132 @@
                     <literal>n/a</literal>
                 </td>
                 <td>
-                    Instructions for mapping Gradle configurations to Maven scopes. See <xref linkend="sub:dependency_mapping"/>.
+                    GradleコンフィグレーションからMavenスコープへのマッピング指示。<xref linkend="sub:dependency_mapping"/>参照。
+                    <phrase role="original">Instructions for mapping Gradle configurations to Maven scopes. See <xref linkend="sub:dependency_mapping"/>.</phrase>
                 </td>
             </tr>
         </table>
-        <para>These properties are provided by a <apilink class="org.gradle.api.plugins.MavenPluginConvention"/>
+        <para role="original">These properties are provided by a <apilink class="org.gradle.api.plugins.MavenPluginConvention"/>
             convention object.</para>
+        <para>これらのプロパティは規約オブジェクト<apilink class="org.gradle.api.plugins.MavenPluginConvention"/>が提供します。
+        </para>
     </section>
 
     <section>
-        <title>Convention methods</title>
-        <para>The maven plugin provides a factory method for creating a POM. This is useful if you need a POM
+        <title>規約メソッド<phrase role="original">Convention methods</phrase></title>
+        <para role="original">The maven plugin provides a factory method for creating a POM. This is useful if you need a POM
         without the context of uploading to a Maven repo.</para>
-        <sample id="newPom" dir="maven/pomGeneration" title="Creating a stand alone pom.">
+        <para>MavenプラグインはPOM生成のためのファクトリメソッドを提供します。
+            これはMavenリポジトリへのアップロードを必要としないPOMが必要なときに便利です。</para>
+        <sample id="newPom" dir="maven/pomGeneration" title="スタンドアロンPOMの生成 / Creating a stand alone pom.">
             <sourcefile file="build.gradle" snippet="new-pom"/>
         </sample>
-        <para>Amongst other things, Gradle supports the same builder syntax as polyglot Maven. To learn more about the Gradle Maven POM object, see
+        <para role="original">Amongst other things, Gradle supports the same builder syntax as polyglot Maven. To learn more about the Gradle Maven POM object, see
             <apilink class="org.gradle.api.artifacts.maven.MavenPom"/>. See also: <apilink class="org.gradle.api.plugins.MavenPluginConvention"/>
+        </para>
+        <para>そのほか、Gradleは多言語Mavenと同じビルダー文法をサポートします。
+            Gradle Maven POMオブジェクトについてもっと学ぶためには、
+            <apilink class="org.gradle.api.artifacts.maven.MavenPom"/>を参照してください。また、<apilink class="org.gradle.api.plugins.MavenPluginConvention"/>も有用です。
         </para>
     </section>
 
     <section id='uploading_to_maven_repositories'>
-        <title>Interacting with Maven repositories</title>
+        <title>Mavenリポジトリとの相互作用<phrase role="original">Interacting with Maven repositories</phrase></title>
         <section id='sec:introduction'>
-            <title>Introduction</title>
-            <para>With Gradle you can deploy to remote Maven repositories or install to your local Maven repository. This
+            <title>はじめに<phrase role="original">Introduction</phrase></title>
+            <para role="original">With Gradle you can deploy to remote Maven repositories or install to your local Maven repository. This
                 includes all Maven metadata manipulation and works also for Maven snapshots. In fact, Gradle's deployment is
                 100 percent Maven compatible as we use the native Maven Ant tasks under the hood.
             </para>
-            <para>Deploying to a Maven repository is only half the fun if you don't have a POM. Fortunately Gradle can
+            <para>Gradleでは、リモートMavenリポジトリにデプロイすることも、ローカルMavenリポジトリにインストールすることもできます。
+                これにはすべてのMavenメタデータの操作が含まれ、Mavenスナップショットに対しても適用できます。
+                実際、Gradleのデプロイは、ネィティブのMaven Antタスクを内部で利用するのと同じく、100%Maven互換です。
+            </para>
+            <para role="original">Deploying to a Maven repository is only half the fun if you don't have a POM. Fortunately Gradle can
                 generate this POM for you using the dependency information it has.
+            </para>
+            <para>もしPOMがないとしたら、Mavenリポジトリへのデプロイは楽しさ半減です。
+                幸運なことに、GradleはPOM自身の持つ依存関係の情報を用いて、このPOMを生成してくれます 
             </para>
         </section>
         <section id='sec:deploying_to_a_maven_repository'>
-            <title>Deploying to a Maven repository</title>
-            <para>Let's assume your project produces just the default jar file. Now you want to deploy this jar file to
+            <title>Mavenリポジトリへのデプロイ<phrase role="original">Deploying to a Maven repository</phrase></title>
+            <para role="original">Let's assume your project produces just the default jar file. Now you want to deploy this jar file to
                 a remote Maven repository.
             </para>
-            <sample id="uploadFile" dir="userguide/artifacts/maven" title="Upload of file to remote Maven repository">
+            <para>プロジェクトが単にデフォルトのJARファイルを生成するだけだとしましょう。
+                このJARファイルをリモートMavenリポジトリにデプロイしたいとします。
+            </para>
+            <sample id="uploadFile" dir="userguide/artifacts/maven" title="リモートMavenリポジトリへのファイルアップロード / Upload of file to remote Maven repository">
                 <sourcefile file="build.gradle" snippet="upload-file"/>
             </sample>
-            <para>That is all. Calling the
+            <para role="original">That is all. Calling the
                 <literal>uploadArchives</literal>
                 task will generate the POM and deploys the artifact and the pom to the specified repository.
             </para>
-            <para>There is some more work to do if you need support for other protocols than <literal>file</literal>. In
+            <para>これが全てです。
+                <literal>uploadArchives</literal>タスクを呼び出すことでPOMが生成され、
+                アーティファクトとPOMが指定されたリポジトリにデプロイされます。
+            </para>
+            <para role="original">There is some more work to do if you need support for other protocols than <literal>file</literal>. In
                 this case the native Maven code we delegate to needs additional libraries. Which libraries depend on the
                 protocol you need. The available protocols and the corresponding libraries are listed in <xref
                         linkend='wagonLibs'/> (those libraries have again transitive dependencies which have transitive
                 dependencies).
                 <footnote>
-                    <para>It is planned for a future release to provide out-of-the-box support for this
+                    <para role="original">It is planned for a future release to provide out-of-the-box support for this
                     </para>
                 </footnote>
                 For example to use the ssh protocol you can do:
             </para>
-            <sample id="uploadWithSsh" dir="userguide/artifacts/maven" title="Upload of file via SSH">
+            <para><literal>file</literal>以外のプロトコルをサポートする必要があるなら、他にも少しやるべきことがあります。
+                この場合、処理を委譲するネィティブMavenコードが追加のライブラリを必要とします。
+                どのライブラリが必要になるかは、必要なプロトコルによります。
+                利用可能なプロトコルと対応するライブラリは<xref linkend='wagonLibs'/>にリストアップされています
+                (推移的な依存関係を持つこれらのライブラリは、さらに推移的な依存関係を持ちます)。
+                <footnote>
+                    <para>これらは将来のリリースで標準サポートされる予定です
+                    </para>
+                </footnote>
+                例えば、SSHプロトコルを使うには次のようにできます:
+            </para>
+            <sample id="uploadWithSsh" dir="userguide/artifacts/maven" title="SSH経由でのファイルアップロード / Upload of file via SSH">
                 <sourcefile file="build.gradle" snippet="upload-with-ssh"/>
             </sample>
-            <para>There are many configuration options for the Maven deployer. The configuration is done via a Groovy builder.
+            <para role="original">There are many configuration options for the Maven deployer. The configuration is done via a Groovy builder.
                 All the elements of this tree are Java beans. To configure the simple attributes you pass a map to the bean
                 elements. To add another bean elements to its parent, you use a closure. In the example above <emphasis>repository</emphasis>
                 and <emphasis>authentication</emphasis> are such bean elements. <xref linkend='deployerConfig'/>
                 lists the available bean elements and a link to the javadoc of the corresponding class. In the javadoc you
                 can see the possible attributes you can set for a particular element.
             </para>
-            <para>In Maven you can define repositories and optionally snapshot repositories. If no snapshot repository
+            <para>Mavenデプロイヤーには多くのコンフィグレーションオプションがあります。
+                コンフィグレーションはGroovyビルダーで行うことができます。
+                このツリーのすべての要素はJava beansです。
+                単純な属性を設定するためには、beanの要素にmapを渡してやります。
+                親要素に別のbean要素を追加するには、クロージャを使います。
+                上記の例では、<emphasis>repository</emphasis>と<emphasis>authentication</emphasis>がbean要素です。
+                利用可能なbean要素と対応するクラスのJavaDocへのリンクは、<xref linkend='deployerConfig'/>にリストアップされています。
+                JavaDocでは特定の要素にセットできる属性を確認できます。
+            </para>
+            <para role="original">In Maven you can define repositories and optionally snapshot repositories. If no snapshot repository
                 is defined, releases and snapshots are both deployed to the
                 <literal>repository</literal>
                 element. Otherwise snapshots are deployed to the
                 <literal>snapshotRepository</literal>
                 element.
             </para>
+            <para>Mavenではリポジトリに加えて、オプションでスナップショットリポジトリを定義できます。
+                スナップショットリポジトリが定義されていない場合、
+                リリースとスナップショットの両方が<literal>repository</literal>要素で指定された先にデプロイされます。
+                そうでない場合は、スナップショットは<literal>snapshotRepository</literal>要素で指定された先にデプロイされます。
+            </para>
             <table id='wagonLibs'>
-                <title>Protocol jars for Maven deployment</title>
+                <title>Mavenデプロイに対するプロトコルJAR<phrase role="original">Protocol jars for Maven deployment</phrase></title>
                 <thead>
                     <tr>
-                        <td>Protocol</td>
-                        <td>Library</td>
+                        <td>プロトコル<phrase role="original">Protocol</phrase></td>
+                        <td>ライブラリ<phrase role="original">Library</phrase></td>
                     </tr>
                 </thead>
                 <tr>
@@ -225,10 +286,10 @@
                 </tr>
             </table>
             <table id='deployerConfig'>
-                <title>Configuration elements of the MavenDeployer</title>
+                <title>MavenDeployerのコンフィグレーション要素<phrase role="original">Configuration elements of the MavenDeployer</phrase></title>
                 <thead>
                     <tr>
-                        <td>Element</td>
+                        <td>要素<phrase role="original">Element</phrase></td>
                         <td>Javadoc</td>
                     </tr>
                 </thead>
@@ -290,67 +351,104 @@
             </table>
         </section>
         <section id='sub:installing_to_the_local_repository'>
-            <title>Installing to the local repository</title>
-            <para>The Maven plugin adds an <literal>install</literal> task to your project. This task depends on all the archives
+            <title>ローカルリポジトリへのインストール<phrase role="original">Installing to the local repository</phrase></title>
+            <para role="original">The Maven plugin adds an <literal>install</literal> task to your project. This task depends on all the archives
                 task of the <literal>archives</literal> configuration. It installs those archives to your local Maven repository.
                 If the default location for the local repository is redefined in a Maven <literal>settings.xml</literal>, this is
                 considered by this task.
             </para>
+            <para>Mavenプラグインはプロジェクトに<literal>install</literal>タスクを追加します。
+                このタスクは<literal>archives</literal>コンフィグレーションのすべてのarchivesタスクに依存します。
+                これらのアーカイブはローカルMavenリポジトリにインストールされます。
+                もし、ローカルリポジトリの場所がMavenの<literal>settings.xml</literal>で再定義されていたら、このタスクはそれを反映します。
+            </para>
         </section>
         <section id='sec:maven_pom_generation'>
-            <title>Maven POM generation</title>
-            <para>The Maven POMs for uploading are automatically generated by Gradle. The groupId, artifactId, version and packaging
+            <title>MavenのPOM生成<phrase role="original">Maven POM generation</phrase></title>
+            <para role="original">The Maven POMs for uploading are automatically generated by Gradle. The groupId, artifactId, version and packaging
                 values are taken from the project object. The dependency elements are created from the Gradle dependency declarations.
                 You can find the generated POMs in the directory
                 <literal>&lt;buildDir>/poms</literal>. You can further customize the POM via the API of the
                 <apilink class="org.gradle.api.artifacts.maven.MavenPom"/> object.
             </para>
-            <para>You might want the artifact deployed to the maven repository to have a different version or name than
+            <para>アップロードするためのMavenのPOMはGradleが自動的に生成します。
+                groupId、artifactId、versionおよびパッケージングの値はprojectオブジェクトから参照されます。
+                依存関係の要素は、Gradleの依存関係の宣言から生成されます。
+                <literal>&lt;buildDir>/poms</literal>ディレクトリにPOMが生成されるのを確認できます。
+                <apilink class="org.gradle.api.artifacts.maven.MavenPom"/>オブジェクトのAPI経由で、さらなるPOMのカスタマイズも可能です。
+            </para>
+            <para role="original">You might want the artifact deployed to the maven repository to have a different version or name than
                 the artifact generated by Gradle. To customize these you can do:
             </para>
-            <sample id="customizePom" dir="userguide/artifacts/maven" title="Customization of pom">
+            <para>Mavenリポジトリにデプロイされるアーティファクトが、Gradleによって生成されたアーティファクトと異なる名前やバージョンを持つようにしたい場合があるかもしれません。
+                これらをカスタマイズすることができます:
+            </para>
+            <sample id="customizePom" dir="userguide/artifacts/maven" title="POMのカスタマイズ / Customization of pom">
                 <sourcefile file="build.gradle" snippet="customize-pom"/>
             </sample>
-            <para>Or you want to add new elements like license information.</para>
-            <sample id="pomBuilder" dir="userguide/artifacts/maven" title="Builder style customization of pom">
+            <para role="original">Or you want to add new elements like license information.</para>
+            <para>または、ライセンス情報のような新しい要素を追加したい場合です。</para>
+            <sample id="pomBuilder" dir="userguide/artifacts/maven" title="ビルダースタイルでのPOMのカスタマイズ / Builder style customization of pom">
                 <sourcefile file="build.gradle" snippet="builder"/>
             </sample>
-            <para>We use a builder here. You could also add the artifactId and groupId via the builder.</para>
-            <para>The pom object offers a <literal>whenConfigure</literal> method, if you need to modify the
+            <para role="original">We use a builder here. You could also add the artifactId and groupId via the builder.</para>
+            <para>ここではビルダーを使いました。ビルダー経由でartifactIdやgroupIdを追加することもできます。</para>
+            <para role="original">The pom object offers a <literal>whenConfigure</literal> method, if you need to modify the
                 autogenerated content.</para>
-            <sample id="pomBuilder" dir="maven/pomGeneration" title="Modifying auto-generated content">
+            <para>自動生成されるコンテンツを修正する必要がある場合に備えて、
+                pomオブジェクトは提供する<literal>whenConfigure</literal>メソッドを提供しています。</para>
+            <sample id="pomBuilder" dir="maven/pomGeneration" title="自動生成コンテンツの修正 / Modifying auto-generated content">
                 <sourcefile file="build.gradle" snippet="when-configured"/>
             </sample>
-            <para>If you have more than one artifact to publish, things work a little bit differently. See<xref
+            <para role="original">If you have more than one artifact to publish, things work a little bit differently. See<xref
                         linkend="sub:multiple_artifacts_per_project"/>.
             </para>
-            <para>To customize the settings for the Maven installer (see<xref
+            <para>2つ以上のアーティファクトを発行する場合、少し異なる挙動になります。
+                <xref linkend="sub:multiple_artifacts_per_project"/>を参照してください。
+            </para>
+            <para role="original">To customize the settings for the Maven installer (see<xref
                     linkend='sub:installing_to_the_local_repository'/>), you can do:
             </para>
-            <sample id="customizeInstaller" dir="userguide/artifacts/maven" title="Customization of Maven installer">
+            <para>Mavenインストーラの設定をカスタマイズするには(<xref linkend='sub:installing_to_the_local_repository'/>参照)、
+                次のようにします:
+            </para>
+            <sample id="customizeInstaller" dir="userguide/artifacts/maven" title="Mavenインストーラのカスタマイズ / Customization of Maven installer">
                 <sourcefile file="build.gradle" snippet="customize-installer"/>
             </sample>
-            <para>In contrast to the example above we use the builder here for changing groupId and artifactId.</para> 
+            <para role="original">In contrast to the example above we use the builder here for changing groupId and artifactId.</para> 
+            <para>前出の例とは対照的に、ここではgroupId(訳注:versionの誤り?)とartifactIdを変更するためにビルダーを使いました。</para> 
             <section id='sub:multiple_artifacts_per_project'>
-                <title>Multiple artifacts per project</title>
-                <para>Maven can only deal with one artifact per project. This is reflected in the structure of the
+                <title>複数アーティファクトを含むプロジェクト<phrase role="original">Multiple artifacts per project</phrase></title>
+                <para role="original">Maven can only deal with one artifact per project. This is reflected in the structure of the
                     Maven POM. We think there are many situations where it makes sense to have more than one artifact per
                     project. In such a case you need to generate multiple POMs. In such a case you have to explicitly declare each artifact
                     you want to publish to a Maven repository. The <apilink class="org.gradle.api.artifacts.maven.MavenDeployer"/> and the MavenInstaller
                     both provide an API for this:
                 </para>
-                <sample id="multiplePoms" dir="userguide/artifacts/maven" title="Generation of multiple poms">
+                <para>Mavenはプロジェクトあたり1つのアーティファクトしか扱うことができません。
+                    これはMavenのPOMの構造を反映しています。
+                    我々は、プロジェクトが2つ以上のアーティファクトを含むことが合理的であるシチュエーションも多いと考えています。
+                    この場合、複数のPOMを生成する必要があります。
+                    このような状況では、Mavenリポジトリに発行するそれぞれのアーティファクトを明示的に宣言する必要があります。
+                    <apilink class="org.gradle.api.artifacts.maven.MavenDeployer"/>およびMavenInstallerが、これに対するAPIを提供します:
+                </para>
+                <sample id="multiplePoms" dir="userguide/artifacts/maven" title="複数POMの生成 / Generation of multiple poms">
                     <sourcefile file="build.gradle" snippet="multiple-poms"/>
                 </sample>
-                <para>You need to declare a filter for each artifact you want to publish. This filter defines a boolean expression for
+                <para role="original">You need to declare a filter for each artifact you want to publish. This filter defines a boolean expression for
                     which Gradle artifact it accepts. Each filter has a POM associated with it which you can configure.
                     To learn more about this have a look at <apilink class="org.gradle.api.artifacts.maven.PomFilterContainer"/>
                     and its associated classes.
                 </para>
+                <para>発行するそれぞれのアーティファクトに対してfilterを宣言する必要があります。
+                    filterではGradleアーティファクトが受け付ける論理式を定義します。
+                    それぞれのfilterは関連付けられたPOMを持ち、コンフィグレーション可能です。
+                    より詳しく学ぶためには、<apilink class="org.gradle.api.artifacts.maven.PomFilterContainer"/>および関連クラスを参照してください。
+                </para>
             </section>
             <section id='sub:dependency_mapping'>
-                <title>Dependency mapping</title>
-                <para>The Maven plugin configures the default mapping between the Gradle configurations added by the
+                <title>依存関係のマッピング<phrase role="original">Dependency mapping</phrase></title>
+                <para role="original">The Maven plugin configures the default mapping between the Gradle configurations added by the
                     Java and War plugin and the Maven scopes. Most
                     of the time you don't need to touch this and you can safely skip this section. The mapping
                     works like the following. You can map a configuration to one and only one scope. Different
@@ -359,12 +457,27 @@
                     <apilink class="org.gradle.api.artifacts.maven.Conf2ScopeMappingContainer"/>
                     to learn more. To access the mapping configuration you can say:
                 </para>
-                <sample id="mappings" dir="userguide/artifacts/maven" title="Accessing a mapping configuration">
+                <para>Mavenプラグインは、JavaプラグインとWarプラグインによって追加されたGradleコンフィグレーションと
+                    Mavenスコープとの間のデフォルトのマッピングを構成します。
+                    ほとんどの場合これに触れる必要はなく、この節は読み飛ばしていただいてかまいません。
+                    マッピングは次のように動作します。
+                    コンフィグレーションはただ一つのスコープにのみマップできます。
+                    異なるコンフィグレーションは一つ、もしくは異なるスコープにマップできます。
+                    特定のコンフィグレーション-スコープマッピングに優先度を割り当てることもできます。
+                    詳しくは<apilink class="org.gradle.api.artifacts.maven.Conf2ScopeMappingContainer"/>を参照してください。
+                    マッピングコンフィグレーションにアクセスするには次のようにします:
+                </para>
+                <sample id="mappings" dir="userguide/artifacts/maven" title="マッピングコンフィグレーションへのアクセス / Accessing a mapping configuration">
                     <sourcefile file="build.gradle" snippet="mappings"/>
                 </sample>
-                <para>Gradle exclude rules are converted to Maven excludes if possible. Such a conversion is possible if in
+                <para role="original">Gradle exclude rules are converted to Maven excludes if possible. Such a conversion is possible if in
                     the Gradle exclude rule the group as well as the module name is specified (as Maven needs both in
                     contrast to Ivy). Per-configuration excludes are also included in the Maven POM, if they are convertible.
+                </para>
+                <para>Gradleのexcludeルールは、可能であればMavenのexcludeに変換されます。
+                    この変換は、Gradleのexcludeルールにおいてgroupとモジュール名の両方が指定されている場合に可能となります
+                    (Ivyとは対照的に、Mavenは両方を必要とするため)。
+                    コンフィグレーション毎のexcludeも、変換可能であればMavenのPOMに含まれます。
                 </para>
             </section>
         </section>
