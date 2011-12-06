@@ -115,9 +115,9 @@
             information is used to specify version information for the <emphasis>Import-Package</emphasis>
             value. Beside the explicit properties of the <literal>OsgiManifest</literal> object you can add instructions.
         </para>
-        <para>classesディレクトリにあるクラスのパッケージ依存関係と公開するパッケージが解析され、その情報に基づいてOSGi Manifestの <emphasis>Import-Package</emphasis> と <emphasis>Export-Package</emphasis> の値が決定される。
-            クラスパスにOSGiバンドル形式のjarがある場合、<emphasis>Import-Package</emphasis>の値を決定するためにバンドルの情報が参照される。
-            <literal>OsgiManifest</literal> オブジェクトに明示的にinstructionプロパティを追加することでメタデータを追加できる。
+        <para>classesディレクトリにあるクラスのパッケージ依存関係と公開するパッケージが解析され、その情報に基づいてOSGi Manifestの <emphasis>Import-Package</emphasis> と <emphasis>Export-Package</emphasis> の値が決定されます。
+            クラスパスにOSGiバンドル形式のjarがある場合、<emphasis>Import-Package</emphasis>の値を決定するためにバンドルの情報が参照されます。
+            <literal>OsgiManifest</literal> オブジェクトに明示的にinstructionプロパティを追加することでメタデータを追加できます。
         </para>
         <sample id="osgi" dir="userguide/tutorial/osgi" title="OSGiのMANIFEST.MFファイルの設定 / Configuration of OSGi MANIFEST.MF file">
             <sourcefile file="build.gradle" snippet="configure-jar"/>
@@ -125,8 +125,8 @@
         <para role="original">The first argument of the instruction call is the key of the property. The other arguments form the value.
             They are joined by Gradle with the <literal>,</literal> separator. To learn more about the available
             instructions have a look at the <ulink url='http://www.aqute.biz/Code/Bnd'>BND tool</ulink>.</para>
-        <para>instruction の第1引数はプロパティのキー、第2引数は値を指定する。
-            それらはGradleによって <literal>,</literal> で結合される。
-            利用可能な instruction の詳細については <ulink url='http://www.aqute.biz/Code/Bnd'>BND tool</ulink> を参照。</para>
+        <para>instruction の第1引数にはプロパティのキー、第2引数には値を指定します。
+            それらはGradleによって <literal>,</literal> で結合されます。
+            利用可能な instruction の詳細については <ulink url='http://www.aqute.biz/Code/Bnd'>BND tool</ulink> を参照してください。</para>
     </section>
 </chapter>
