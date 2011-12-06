@@ -13,10 +13,11 @@
   ~ See the License for the specific language governing permissions and
   ~ limitations under the License.
   -->
-<chapter id="maven_plugin">
-    <title>The Maven Plugin</title>
+<chapter id="maven_plugin" xml:lang="ja">
+    <title>Mavenプラグイン<phrase role="original">The Maven Plugin</phrase></title>
     <note>
-        <para>This chapter is a work in progress</para>
+        <para role="original">This chapter is a work in progress</para>
+        <para>この章は執筆途中です。</para>
     </note>
     <para>The Maven plugin adds support for deploying artifacts to Maven repositories.</para>
 
