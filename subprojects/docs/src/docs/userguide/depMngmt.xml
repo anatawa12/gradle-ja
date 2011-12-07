@@ -14,7 +14,7 @@
   ~ limitations under the License.
   -->
 <chapter id='dependency_management' xmlns:xi="http://www.w3.org/2001/XInclude" xml:lang="ja">
-    <title>依存関係の管理<phrase role="original">Dependency Management</phrase></title>
+    <title>依存関係の管理 <phrase role="original">Dependency Management</phrase></title>
     <section id='sec:Introduction'>
         <title>はじめに<phrase role="original">Introduction</phrase></title>
         <para role="original">This chapter gives an overview of issues related with dependency management and presents how Gradle can be used to overcome them.
@@ -23,14 +23,14 @@
         <para role="original">Gradle offers a very good support for dependency management. If you are familiar with Maven or Ivy approach you will be delighted to learn that:
         </para>
         <para>
-        Gradleは、依存関係の管理についてとても充実したサポートを提供しています。MavenやIvyでの依存関係管理に明るい方なら、Gradleで次のことができると聞いて嬉しくなるでしょう。
+        Gradleは、依存関係の管理について非常に充実したサポートを提供しています。MavenやIvyでの依存関係管理に明るい方なら、次のことを知って喜ばれることでしょう。
         </para>
         <itemizedlist>
             <listitem>
                 <para role="original">All the concepts that you already know and like are still there and are fully supported by Gradle. The current dependency management solutions all require to work with XML descriptor files and are usually
         based on remote repositories for downloading the dependencies. Gradle fully supports this approach.
                 </para>
-                <para>依存関係管理については既に慣れ親しまれている概念があるのですが、Gradleはその概念を完全な形でサポートしています。現在使われている依存関係の管理方法はすべて、XML形式のメタデータを使用し、(一般的には)リモートリポジトリから依存関係をダウンロードしてくるものです。この方法を、Gradleでも使用することができるのです。</para>
+                <para>以前から慣れ親しまれている依存関係管理の概念を完全な形でサポートしています。現在使われている依存関係の管理方法はすべて、XML形式のメタデータを使用し、(一般的には)リモートリポジトリから依存関係をダウンロードしてくるものです。この方法を、Gradleでも使用することができます。</para>
             </listitem>
             <listitem>
                 <para role="original">Gradle works <emphasis>perfectly</emphasis> with your existent dependency management
@@ -104,13 +104,13 @@
                 classpath, whose sheer presence, as I found out after much research, accelerated LDAP access. So
                 removing this jar would not have led to any errors at compile or runtime.
             </para>
-            <para>推移的な依存関係が、なぜそんなに重要なのでしょうか。どの依存関係が直接依存しているもので、どの依存関係が推移的に依存しているのか分からなくなれば、ビルドシステムは早晩制御不能になるでしょう。Gradleでさえ20以上のjarから構成されています。SpringやHibernateなどのエンタープライズレベルのプロジェクトだと、jarの数はゆうに100を超えるでしょう。どのjarをどこからなぜ入れたのか、全部覚えておくようなことはできません。こうなると、なにか依存関係を破棄したいとなったとき、それに関連してどのjarを削除すればいいのか分からなくなります。削除しようとしているjarは、それ自身プロジェクトから直接使われているjarかもしれません。別の依存関係から推移的に依存されているかもしれません。プロジェクトが直接依存しているライブラリは、実行時のみの依存関係である場合も多いものです。もちろん、そこから推移する依存関係も実行時の依存関係になります。つまり、コンパイラは頼りにできないということです。このシナリオの行き着く先を、私たちはたくさん見てきました。もはや誰も、恐ろしくて何一つjarを削除できなくなってしまいます。プロジェクトのクラスパスは完全にめちゃくちゃになって、そのクラスパスで問題が発生しようものならこの世の地獄にご招待という話です。私が以前携わっていたプロジェクトでは、LDAPに関するjarをいくつかクラスパスに追加していました。後ほど調べて分かったのですが、このjarはあるだけでLDAPアクセスを高速化させます。つまり、このjarを取り除いたとしても、コンパイル時にも実行時にもエラーが発生することはなかったでしょう。</para>
+            <para>推移的な依存関係が、なぜそんなに重要なのでしょうか。どの依存関係が直接依存しているもので、どの依存関係が推移的に依存しているのか分からなくなれば、ビルドシステムは早晩制御不能になるでしょう。Gradleでさえ20以上のjarから構成されています。SpringやHibernateなどのエンタープライズレベルのプロジェクトだと、jarの数はゆうに100を超えるでしょう。どのjarをどこからなぜ入れたのか、全部覚えておくようなことはできません。こうなると、なにか依存関係を破棄したいとなったとき、それに関連してどのjarを削除すればいいのか分からなくなります。削除しようとしているjarは、それ自身プロジェクトから直接使われているjarかもしれません。別の依存関係から推移的に依存されているかもしれません。ライブラリは、実行時のみ依存しているという場合も多いものです。もちろん、そこから推移する依存関係も実行時の依存関係になります。つまり、コンパイラは頼りにできないということです。このシナリオの行き着く先を、私たちはたくさん見てきました。もはや誰も、恐ろしくて何一つjarを削除できなくなってしまいます。プロジェクトのクラスパスは完全にめちゃくちゃになって、そのクラスパスで問題が発生しようものならこの世の地獄にご招待という話です。私が以前携わっていたプロジェクトでは、LDAPに関するjarをいくつかクラスパスに追加していました。後ほど調べて分かったのですが、このjarはあるだけでLDAPアクセスを高速化させます。つまり、このjarを取り除いたとしても、コンパイル時にも実行時にもエラーが発生することはなかったでしょう。</para>
             <para role="original">Gradle offers you different ways to express what are first level and what are transitive dependencies.
                 Gradle allows you for example to store your jars in CVS or SVN without XML descriptor files and still
                 use transitive dependency management. Gradle also validates your dependency hierarchy against the
                 reality of your code by using only the first level dependencies for compiling.
             </para>
-            <para>Gradleでは、何が直接依存していて何が推移的に依存しているのか、様々な方法で定義できます。たとえば、XMLのディスクリプタなしでjarをCVSやSVNに置いたとしても、推移的な依存関係は管理できます。さらに、依存関係の構造を検証し、コンパイルするコードが直接的な依存関係のみ使用しているかどうか、確認することもできます。</para>
+            <para>Gradleでは、何が直接依存していて何が推移的に依存しているのか、様々な方法で定義できます。たとえば、XMLのディスクリプタなしでjarをCVSやSVNに置いたとしても、推移的な依存関係を管理できます。さらに、依存関係の構造を検証し、コンパイルするコードが直接的な依存関係のみ使用しているかどうか、確認することもできます。</para>
         </section>
         <section id='sub:version_conflicts'>
             <title>バージョン競合<phrase role="original">Version conflicts</phrase></title>
@@ -118,36 +118,58 @@
                 dependency. This frequently leads to conflicts. Different dependencies rely on different versions of
                 another dependency. The JVM unfortunately does not offer yet any easy way, to have different versions of
                 the same jar in the classpath (see <xref linkend='sub:dependency_management_and_java'/>).</para>
-            <para>Gradle offers following conflict resolution strategies:
+            <para>依存関係を記述すると、様々なライブラリが様々なバージョンのライブラリを要求することになります。これが競合を起こすのは、よくあることです。つまり、同じライブラリの異なるバージョンが要求される場合があります。残念ながら、JVMではクラスパス上にバージョン違いの同じjarを混在させるのは、簡単なことではありません。</para>
+            <para><phrase role="original">Gradle offers following conflict resolution strategies:</phrase>
+                Gradleは、競合を解決する戦略として、以下のものを提供しています。
                 <itemizedlist>
-                    <listitem><emphasis>Newest</emphasis> - used by default by Gradle - the newest version of the dependency is used.
-                    This strategy has been in Gradle since early days.
+                    <listitem><phrase role="original"><emphasis>Newest</emphasis> - used by default by Gradle - the newest version of the dependency is used.
+                    This strategy has been in Gradle since early days.</phrase>
+                            <emphasis>Newest</emphasis> - Gradleがデフォルトで使用する - 最も新しいバージョンの依存関係が使われる。この戦略は以前からGradleにあったものです。
                     </listitem>
-                    <listitem><emphasis>Fail</emphasis> - fail eagerly on version conflict.
+                    <listitem><phrase role="original"><emphasis>Fail</emphasis> - fail eagerly on version conflict.
                         Useful if you need extra control and manage the conflicts manually.
-                        Introduced in <code>1.0-milestone-6</code>. See <apilink class='org.gradle.api.artifacts.ResolutionStrategy'/> for reference on managing the conflict resolution strategies.
+                        Introduced in <code>1.0-milestone-6</code>. See <apilink class='org.gradle.api.artifacts.ResolutionStrategy'/> for reference on managing the conflict resolution strategies.</phrase>
+                    <emphasis>Fail</emphasis> - バージョンが競合したら強制的に失敗させる。
+                    これは、競合を手作業で制御、管理しているときに便利です。
+                    この戦略は、<code>1.0-milestone-6</code>で導入されました。競合を解決する戦略の管理については、<apilink class='org.gradle.api.artifacts.ResolutionStrategy'/>を参照してください。
                     </listitem>
                 </itemizedlist>
-                Gradle provides means to resolve version conflicts:
+                <phrase role="original">Gradle provides means to resolve version conflicts:</phrase>
+                Gradleは、バージョンの競合を解決するための手段を提供しています。
                 <itemizedlist>
                     <listitem>
+                        <phrase role="original">
                         Configuring a first level dependency as <emphasis>forced</emphasis>.
                         The feature has been in Gradle since early days.
                         This approach is useful if the dependency incurring conflict is already a first level dependency.
                         See examples in <apilink class='org.gradle.api.artifacts.dsl.DependencyHandler'/>
+                        </phrase>
+                        直接の依存関係を<emphasis>forced</emphasis>に設定する。
+                        この機能は、以前からGradleに実装されていました。
+                        これは、競合に突き当たった依存関係が、プロジェクトが直接依存しているものだったときに便利です。
                     </listitem>
                     <listitem>
+                        <phrase role="original">
                         Configuring any dependency (transitive or not) as <emphasis>forced</emphasis>.
                         The feature was introduced in <code>1.0-milestone-7</code>.
                         This approach is useful if the dependency incurring conflict is a transitive dependency.
                         It also can be used to force versions of first level dependencies.
                         See examples in <apilink class='org.gradle.api.artifacts.ResolutionStrategy'/>
+                        </phrase>
+                        すべての依存関係を（推移的なものかどうかにかかわらず）<emphasis>forced</emphasis>に設定する。
+                        この機能は、<code>1.0-milestone-7</code>で導入されました。
+                        これは、競合に突き当たった依存関係が、推移的な依存関係だったときに便利です。
+                        また、直接の依存関係に対してバージョンを強制するのにも使用できます。
+                        <apilink class='org.gradle.api.artifacts.ResolutionStrategy'/>の例を参照してください。
                     </listitem>
                 </itemizedlist>
+                <phrase role="original">
                 To deal with problems due to version conflicts, reports with dependency graphs are also very helpful.
                 Such reports are another feature of dependency management.
+                </phrase>
+                バージョン競合に絡む問題に対処するには、依存関係をグラフにしたレポートがあると非常に便利です。
+                そのようなレポートが、依存関係管理のもう一つの機能です。
             </para>
-            <para>依存関係の定義では、様々なライブラリが様々なバージョンのライブラリを要求します。これが依存関係の競合をよく引き起こすのです。つまり、同じライブラリの異なるバージョンが要求される場合があります。残念ながら、JVMではクラスパス上にバージョン違いの同じjarを混在させるのは、簡単なことではありません(<xref linkend='sub:dependency_management_and_java'/>参照)。Gradleは、どのようにバージョン競合を解決するかという戦略を提供します。デフォルトでは最新バージョンが使用されるようになっています。また、バージョン競合を解決する際には、依存関係をグラフにしたレポートを参照することが大きな助けになるでしょう。このようなレポートの生成が依存関係管理のもう一つの機能です。</para>
         </section>
         <section id='sub:dynamic_versions_and_changing_modules'>
             <title>動的バージョンと変更性モジュール<phrase role="original">Dynamic Versions and Changing Modules</phrase></title>
@@ -206,8 +228,8 @@
         </section>
     </section>
     <section id='sub:configurations'>
-        <title>Dependency configurations</title>
-        <para>In Gradle dependencies are grouped into configurations. Configurations have a name, a number of other properties,
+        <title>依存関係のコンフィグレーション <phrase role="original">Dependency configurations</phrase></title>
+        <para role="original">In Gradle dependencies are grouped into configurations. Configurations have a name, a number of other properties,
             and they can extend each other.
             Many Gradle plugin add pre-defined configurations to your project. The Java plugin, for example,
             adds some configurations to represent the various classpaths it needs. see <xref linkend='sec:java_plugin_and_dependency_management'/>
@@ -216,80 +238,98 @@
             building or testing your software (e.g. additional JDBC drivers to be shipped with your distribution).
         </para>
         <para>
+            依存関係は、コンフィギュレーションによりグループ化されます。コンフィギュレーションは名前(name)といくつかのプロパティを持っていて、それらを別のコンフィギュレーションから継承することもできます。
+            Gradleプラグインの多くが、定義済みのコンフィグレーションをプロジェクトに追加します。
+            たとえば、Javaプラグインは、いくつかのコンフィグレーションをプロジェクトに追加して、必要とされる様々なクラスパスを表現します。詳しくは<xref linkend='sec:java_plugin_and_dependency_management'/>をご参照ください。
+            もちろん、定義済みのものだけでなく、独自のコンフィギュレーションを定義することも可能です。このような独自コンフィギュレーションには様々な使い道があります。たとえば、ビルド時にもテスト時にも使用されないような依存関係(配布物に同梱するオプションのJDBCドライバなど)を追加するのにとても便利です。
+        </para>
+        <para role="original">
             A project's configurations are managed by a <literal>configurations</literal> object. The closure you pass to
             the configurations object is applied against its API. To learn more about this API have a look at
             <apilink class='org.gradle.api.artifacts.ConfigurationContainer'/>.
         </para>
-        <para>To define a configuration:</para>
-        <sample id="defineConfiguration" dir="userguide/artifacts/defineConfiguration" title="Definition of a configuration">
+        <para>
+            プロジェクトのコンフィギュレーションは<literal>configurations</literal>オブジェクトで管理されています。このオブジェクトに渡したクロージャは、<literal>configurations</literal>のAPIに対して適用されます。このAPIの詳細については<apilink class='org.gradle.api.artifacts.ConfigurationContainer'/>をご参照ください。
+        </para>
+        <para role="original">To define a configuration:</para>
+        <para>コンフィグレーションを定義するには</para>
+        <sample id="defineConfiguration" dir="userguide/artifacts/defineConfiguration" title="コンフィグレーションの定義 / Definition of a configuration">
             <sourcefile file="build.gradle" snippet="define-configuration"/>
         </sample>
-        <para>To access a configuration:</para>
-        <sample id="defineConfiguration" dir="userguide/artifacts/defineConfiguration" title="Accessing a configuration">
+        <para role="original">To access a configuration:</para>
+        <para>コンフィグレーションにアクセスするには</para>
+        <sample id="defineConfiguration" dir="userguide/artifacts/defineConfiguration" title="コンフィグレーションにアクセスする / Accessing a configuration">
             <sourcefile file="build.gradle" snippet="lookup-configuration"/>
         </sample>
-        <para>To configure a configuration:</para>
-        <sample id="defineConfiguration" dir="userguide/artifacts/defineConfiguration" title="Configuration of a configuration">
+        <para role="original">To configure a configuration:</para>
+        <para>コンフィグレーションの設定を変更するには</para>
+        <sample id="defineConfiguration" dir="userguide/artifacts/defineConfiguration" title="コンフィグレーションの設定変更 / Configuration of a configuration">
             <sourcefile file="build.gradle" snippet="configure-configuration"/>
         </sample>
     </section>
 
     <section id='sec:how_to_declare_your_dependencies'>
-        <title>依存関係の宣言方法<phrase role="original">How to declare your dependencies</phrase></title>
-        <para>There are several different types of dependencies that you can declare:
+        <title>依存関係の宣言方法 <phrase role="original">How to declare your dependencies</phrase></title>
+        <para role="original">There are several different types of dependencies that you can declare:
         </para>
+        <para>定義できる依存関係にはいくつかの種類があります。</para>
         <table>
-            <title>Dependency types</title>
+            <title>依存関係の種類 <phrase role="original">Dependency types</phrase></title>
             <thead>
                 <tr>
-                    <td>Type</td>
-                    <td>Description</td>
+                    <td><phrase role="original">Type</phrase> 種類</td>
+                    <td><phrase role="original">Description</phrase> 説明</td>
                 </tr>
             </thead>
             <tr>
-                <td><link linkend="sub:module_dependencies">External module dependency</link></td>
-                <td>A dependency on an external module in some repository.</td>
+                <td><link linkend="sub:module_dependencies"><phrase role="original">External module dependency</phrase> 外部モジュール依存関係</link></td>
+                <td><phrase role="original">A dependency on an external module in some repository.</phrase> リポジトリにある外部モジュールへの依存関係</td>
             </tr>
             <tr>
-                <td><link linkend="sub:project_dependencies">Project dependency</link></td>
-                <td>A dependency on another project in the same build.</td>
+                <td><link linkend="sub:project_dependencies"><phrase role="original">Project dependency</phrase> プロジェクト依存関係</link></td>
+                <td><phrase role="original">A dependency on another project in the same build.</phrase> 同じビルド内の、別プロジェクトへの依存関係</td>
             </tr>
             <tr>
-                <td><link linkend="sub:file_dependencies">File dependency</link></td>
-                <td>A dependency on a set of files on the local filesystem.</td>
+                <td><link linkend="sub:file_dependencies"><phrase role="original">File dependency</phrase> ファイル依存関係</link></td>
+                <td><phrase role="original">A dependency on a set of files on the local filesystem.</phrase> ローカルファイルシステムにあるファイル群への依存関係</td>
             </tr>
             <tr>
-                <td><link linkend="sub:client_module_dependencies">Client module dependency</link></td>
-                <td>A dependency on an external module, where the artifacts are located in some repository but the module meta-data
-                    is specified by the local build. You use this kind of dependency when you want to override the meta-data for the module.
+                <td><link linkend="sub:client_module_dependencies"><phrase role="original">Client module dependency</phrase> クライアントモジュール依存関係</link></td>
+                <td><phrase role="original">A dependency on an external module, where the artifacts are located in some repository but the module meta-data
+                    is specified by the local build. You use this kind of dependency when you want to override the meta-data for the module.</phrase> 外部モジュールへの依存関係で、モジュールのアーティファクトだけをリポジトリから参照し、モジュールのメタデータはローカルのビルド内で定義する。モジュールのメタデータを上書きしたいときは、この依存関係が使える。
                 </td>
             </tr>
             <tr>
-                <td><link linkend="sub:api_dependencies">Gradle API dependency</link></td>
-                <td>A dependency on the API of the current Gradle version.
-                    You use this kind of dependency when you are developing custom Gradle plugins and task types.
+                <td><link linkend="sub:api_dependencies"><phrase role="original">Gradle API dependency</phrase> Gradle API依存関係</link></td>
+                <td><phrase role="original">A dependency on the API of the current Gradle version.
+                        You use this kind of dependency when you are developing custom Gradle plugins and task types.</phrase>
+                    カレントバージョンのGradleのAPIに対する依存関係。
+                    Gradleのカスタムプラグインやタスクを開発しているときなどに使う。
                 </td>
             </tr>
             <tr>
-                <td><link linkend="sub:groovy_dependencies">Local Groovy dependency</link></td>
-                <td>A dependency on the Groovy version used by the current Gradle version.
-                    You use this kind of dependency when you are developing custom Gradle plugins and task types.
+                <td><link linkend="sub:groovy_dependencies"><phrase role="original">Local Groovy dependency</phrase> 内部Groovy依存関係</link></td>
+                <td><phrase role="original">A dependency on the Groovy version used by the current Gradle version.
+                        You use this kind of dependency when you are developing custom Gradle plugins and task types.</phrase>
+                    カレントバージョンのGradleが使用しているGroovyへの依存関係。
+                    Gradleのカスタムプラグインやタスクを開発しているときなどに使う。
                 </td>
             </tr>
         </table>
 
         <section id='sub:module_dependencies'>
-            <title>External module dependencies</title>
-            <para>External module dependencies are the most common dependencies. They refer to a module in an external repository.
+            <title>外部モジュール依存関係 <phrase role="original">External module dependencies</phrase></title>
+            <para role="original">External module dependencies are the most common dependencies. They refer to a module in an external repository.
             </para>
-            <para>モジュール依存関係は、もっともポピュラーなタイプの依存関係です。外部リポジトリを使った依存関係に相当します。</para>
+            <para>外部モジュール依存関係は、もっともポピュラーなタイプの依存関係です。外部リポジトリを使った依存関係に相当します。</para>
             <sample id="moduleDependencies" dir="userguide/artifacts/externalDependencies" title="モジュール依存関係 / Module dependencies">
                 <sourcefile file="build.gradle" snippet="module-dependencies"/>
             </sample>
-            <para>Please see the <apilink class='org.gradle.api.artifacts.dsl.DependencyHandler'/>
+            <para role="original">Please see the <apilink class='org.gradle.api.artifacts.dsl.DependencyHandler'/>
                 for more examples and complete reference. Please read on to get thorough understanding of the Gradle's dependency management.
             </para>
-            <para>Gradle provides different notations for module dependencies. There is a string notation and
+            <para>より多くの例と、完全なリファレンスを<apilink class='org.gradle.api.artifacts.dsl.DependencyHandler'/>で見ることができます。読み進めてもらえれば、Gradleでの依存関係の管理について通して理解することができるでしょう。</para>
+            <para role="original">Gradle provides different notations for module dependencies. There is a string notation and
                 a map notation. A module dependency has an API which allows for further configuration. Have a look at
                 <apilink class='org.gradle.api.artifacts.ExternalModuleDependency'/> to learn all about the API.
                 This API provides properties and configuration methods. Via the string notation you can define a subset
@@ -297,7 +337,8 @@
                 either with the map or with the string notation, you can assign a single dependency to a configuration
                 together with a closure.
             </para>
-            <para>依存関係を定義する際、Gradleでは文字列記法とマップ記法を使用できます。モジュール依存関係はAPIを公開しているので、それを使用してさらに設定を行うこともできます。APIについての詳細は<apilink class='org.gradle.api.artifacts.ExternalModuleDependency'/>をご覧ください。このAPIではプロパティと設定用のメソッドを公開しており、文字列記法で設定できるのはプロパティのうちの一部です。マップ記法を使うとすべてのプロパティを設定できます。すべてのAPIにアクセスするには、文字列記法かマップ記法で依存関係をコンフィギュレーションに割り当てる際に、クロージャを使用してください。</para>
+            <para>Gradleでは、モジュール依存関係の定義にいくつかの記法を使用できます。記法には文字列記法やマップ記法があり、モジュール依存関係のAPIを使用してさらに設定を行うこともできます。APIについての詳細は<apilink class='org.gradle.api.artifacts.ExternalModuleDependency'/>をご覧ください。
+                このAPIではプロパティと設定用のメソッドを公開しています。このうち、文字列記法で設定できるのはプロパティのうちの一部です。マップ記法を使うとすべてのプロパティを設定できます。すべてのAPIにアクセスするには、文字列記法かマップ記法にクロージャを追加してください。その際、依存関係はひとつだけコンフィギュレーションに割り当てることができます。</para>
             <para role="original">If you declare a module dependency, Gradle looks for a corresponding module descriptor file (<literal>pom.xml</literal> or
                 <literal>ivy.xml</literal>) in the repositories. If such a module descriptor file exists, it is parsed and the artifacts of
                 this module (e.g. <literal>hibernate-3.0.5.jar</literal>) as well as its dependencies (e.g. cglib) are downloaded. If no such
@@ -305,8 +346,10 @@
                 a module can only have one and only one artifact. In Gradle and Ivy a module can have multiple artifacts.
                 Each artifact can have a different set of dependencies.
             </para>
+           <para>モジュール依存関係が宣言されている場合、Gradleはモジュールのメタデータファイル(<literal>pom.xml</literal>か<literal>ivy.xml</literal>)をリポジトリに探しにいきます。モジュールのメタデータファイルが見つかればそれを解析し、モジュールのアーティファクト(たとえば<literal>hibernate-3.0.5.jar</literal>)とそのモジュールの依存関係(たとえばcglib)をダウンロードします。メタデータファイルがなければ、Gradleは依存関係を解決するため<literal>hibernate-3.0.5.jar</literal>という名前のファイルを探します。Mavenでは、一つのモジュールにつき一つのアーティファクトしか持つことができません。GradleとIvyでは、一つのモジュールが複数のアーティファクトを持つことができます。また、それらのアーティファクトは、それぞれ別の依存関係を持っています。</para>
             <section id='ssub:multi_artifact_dependencies'>
-                <title>Depending on modules with multiple artifacts</title>
+                <title>複数のアーティファクトをもつモジュールへの依存関係 <phrase role="original">Depending on modules with multiple artifacts</phrase></title>
+                <para role="original">
                 As mentioned earlier, a maven module has only one artifact. So, when your project depends on a maven module
                 it's obvious what artifact is the actual dependency.
                 With Gradle or Ivy the case is different. Ivy model of dependencies (<literal>ivy.xml</literal>) can declare multiple artifacts.
@@ -314,18 +357,37 @@
                 In Gradle, when you declare a dependency on an ivy module you actually declare dependency on the <literal>'default'</literal> configuration of that module.
                 So the actual list of artifacts (typically jars) your project depends on, are all artifacts that are attached to the <literal>default</literal> configuration of that module.
                 This is very important in following exemplary use cases:
+                </para>
+                <para>
+                先ほど述べたとおり、Mavenのモジュールは一つのアーティファクトしか持っていません。なので、プロジェクトが依存しているものがMavenのモジュールなら、実際に依存しているアーティファクトも明らかです。
+                一方、GradleやIvyの場合そうではありません。Ivyの依存関係モデル(<literal>ivy.xml</literal>)では複数のアーティファクトを宣言できます。
+                詳しくは、IvyのリファレンスでIvy.xmlについて参照してみてください。
+                Gradleでは、Ivyモジュールへの依存関係を宣言した場合、実際にはそのモジュールの「<literal>default</literal>」コンフィグレーションへの依存関係を宣言したことになります。
+                ですから、実際にプロジェクトが依存しているアーティファクト（典型的なものはjarファイル）というのは、「<literal>default</literal>」コンフィグレーションに割り当てられたアーティファクトということになります。
+                これは、次のような例ではとても重要になってきます。
+                </para>
                 <itemizedlist>
-                    <listitem>The <literal>default</literal> configuration of some module contains some artifacts
+                    <listitem><phrase role="original">The <literal>default</literal> configuration of some module contains some artifacts
                         you don't want on the classpath. You might need to configure a dependency on specific artifact(s) of given module,
-                        rather than pulling all artifacts of the <literal>default</literal> dependency
+                        rather than pulling all artifacts of the <literal>default</literal> dependency</phrase>
+                        モジュールの<literal>default</literal>コンフィグレーションが、クラスパスに含めたくないアーティファクトを持っている場合。
+                        <literal>default</literal>にある全てのアーティファクトを引っ張ってくるのではなく、依存するアーティファクトを指定してやる必要があるかもしれません。
                     </listitem>
-                    <listitem>The artifact you need on the classpath has been published in a different configuration
+                    <listitem><phrase role="original">The artifact you need on the classpath has been published in a different configuration
                         than the <literal>default</literal> one. This means this artifact will not be pulled in by Gradle.
-                        Unless you explicitly declare what configuration of the module you depend on.
+                        Unless you explicitly declare what configuration of the module you depend on.</phrase>
+                        必要なアーティファクトが、<literal>default</literal>コンフィグレーション以外のコンフィグレーションで公開されている場合。
+                        この場合、依存するコンフィグレーションを明示的に指定しなければ、Gradleがそれらを引っ張ってくることはありません。
                     </listitem>
                 </itemizedlist>
+                <para role="original">
                 There are other situations where it is necessary to fine-tune the dependency declaration.
                 Please see the <apilink class='org.gradle.api.artifacts.dsl.DependencyHandler'/> for examples and complete reference on declaring dependencies.
+                </para>
+                <para>
+                依存関係の宣言を微調整しなければならない状況は、他にもあります。
+                <apilink class='org.gradle.api.artifacts.dsl.DependencyHandler'/>で、依存関係の宣言についての更に多くの例と完全なリファレンスを見ることができます。
+                </para>
             </section>
             <section id='ssub:artifact_dependencies'>
                 <title>アーティファクトオンリー記法<phrase role="original">Artifact only notation</phrase></title>
@@ -439,7 +501,7 @@
                 them to a repository. This can be useful if you cannot, or do not want to, place certain files in a
                 repository. Or if you do not want to use any repositories at all for storing your dependencies.
             </para>
-            <para>ファイル依存関係を使うと、ファイルセットをリポジトリに追加することなく直接コンフィギュレーションに設定できます。ファイルをリポジトリに登録できない、またはしたくないときに有用な依存関係です。また、プロジェクトの依存関係をどんなリポジトリにも記録したくないという場合にも使えます。</para>
+            <para>ファイル依存関係を使うと、ファイルセットをリポジトリに追加することなく直接コンフィギュレーションに設定できます。ファイルをリポジトリに登録できない、またはしたくないときに有用な依存関係です。また、プロジェクトの依存関係を保存するのに、リポジトリを一切使いたくないという場合にも使えます。</para>
             <para role="original">To add some files as a dependency for a configuration, you simply pass a
                 <link linkend="sec:file_collections">file collection</link> as a dependency:</para>
             <para>ファイルを依存関係としてコンフィギュレーションに追加するには、単に<link linkend="sec:file_collections">file collection</link>を依存関係として渡すだけです。</para>
@@ -463,21 +525,23 @@
         </section>
 
         <section id="sub:api_dependencies">
-            <title>Gradle API依存<phrase role="original">Gradle API Dependency</phrase></title>
+            <title>Gradle API依存関係<phrase role="original">Gradle API Dependency</phrase></title>
             <para role="original">You can declare a dependency on the API of the current version of Gradle by using the
                 <apilink class="org.gradle.api.artifacts.dsl.DependencyHandler" method="gradleApi"/> method. This is
                 useful when you are developing custom Gradle tasks or plugins.</para>
-            <sample id="gradle-api-dependencies" dir="customPlugin/plugin" title="Gradle API dependencies">
+            <para><apilink class="org.gradle.api.artifacts.dsl.DependencyHandler" method="gradleApi"/>メソッドを使って、使用しているGradleのAPIに依存していることを宣言できます。これは、カスタムのGradleタスクやプラグインを開発するときに便利です。</para>
+            <sample id="gradle-api-dependencies" dir="customPlugin/plugin" title="Gradle API依存関係 / Gradle API dependencies">
                 <sourcefile file="build.gradle" snippet="gradle-api-dependencies"/>
             </sample>
         </section>
 
         <section id="sub:groovy_dependencies">
-            <title>Local Groovy Dependency</title>
-            <para>You can declare a dependency on the Groovy that is distributed with Gradle by using the
+            <title>内部Groovy依存関係 <phrase role="original">Local Groovy Dependency</phrase></title>
+            <para role="original">You can declare a dependency on the Groovy that is distributed with Gradle by using the
                 <apilink class="org.gradle.api.artifacts.dsl.DependencyHandler" method="localGroovy"/> method. This is
                 useful when you are developing custom Gradle tasks or plugins in Groovy.</para>
-            <sample id="local-groovy-dependencies" dir="customPlugin/plugin" title="Gradle's Groovy dependencies">
+            <para><apilink class="org.gradle.api.artifacts.dsl.DependencyHandler" method="localGroovy"/>メソッドを使って、Gradleに同梱されているGroovyに依存していることを宣言できます。これは、カスタムのGradleタスクやプラグインをGroovyで開発するときに便利です。</para>
+            <sample id="local-groovy-dependencies" dir="customPlugin/plugin" title="内部Groovy依存関係 / Gradle's Groovy dependencies">
                 <sourcefile file="build.gradle" snippet="local-groovy-dependencies"/>
             </sample>
         </section>
@@ -650,41 +714,43 @@
             regarding repository layout and retrieval policies. Additionally Gradle provides various convenience
             method to add pre-configured repositories.
         </para>
-        <para>There are several different types of repositories you can declare:</para>
+        <para>Gradleのリポジトリ管理は、Apache Ivyをベースにしており、リポジトリのレイアウトや参照方法を柔軟に定義できるようになっています。加えて、Gradleは、定義済みのリポジトリ定義を簡単に追加するための便利なメソッドを色々と提供しています。</para>
+        <para role="original">There are several different types of repositories you can declare:</para>
+        <para>宣言できるリポジトリにはいくつかの種類があります。</para>
 
         <table>
-            <title>Repository types</title>
+            <title><phrase role="original">Repository types</phrase> リポジトリの種類</title>
             <thead>
                 <tr>
-                    <td>Type</td>
-                    <td>Description</td>
+                    <td><phrase role="original">Type</phrase> 種類</td>
+                    <td><phrase role="original">Description</phrase> 説明</td>
                 </tr>
             </thead>
             <tr>
-                <td><link linkend="sub:maven_central">Maven central repository</link></td>
-                <td>A pre-configured repository that looks for dependencies in Maven Central.</td>
+                <td><link linkend="sub:maven_central"><phrase role="original">Maven central repository</phrase> Mavenセントラルリポジトリ</link></td>
+                <td><phrase role="original">A pre-configured repository that looks for dependencies in Maven Central.</phrase> Mavenセントラルにある依存関係を探すための定義済みリポジトリ</td>
             </tr>
             <tr>
-                <td><link linkend="sub:maven_local">Maven local repository</link></td>
-                <td>A pre-configured repository that looks for dependencies in the local Maven repository.</td>
+                <td><link linkend="sub:maven_local"><phrase role="original">Maven local repository</phrase> Mavenローカルリポジトリ</link></td>
+                <td><phrase role="original">A pre-configured repository that looks for dependencies in the local Maven repository.</phrase> Mavenのローカルリポジトリにある依存関係を探すための定義済みリポジトリ</td>
             </tr>
             <tr>
-                <td><link linkend="sub:maven_repo">Maven repository</link></td>
-                <td>A Maven repository. Can be located on the local filesystem or at some remote location.</td>
+                <td><link linkend="sub:maven_repo"><phrase role="original">Maven repository</phrase> Mavenリポジトリ</link></td>
+                <td><phrase role="original">A Maven repository. Can be located on the local filesystem or at some remote location.</phrase> Mavenリポジトリ。ローカルファイルシステムまたはリモートに配置できる。</td>
             </tr>
             <tr>
-                <td><link linkend="sec:ivy_repositories">Ivy repository</link></td>
-                <td>An Ivy repository. Can be located on the local filesystem or at some remote location.</td>
+                <td><link linkend="sec:ivy_repositories"><phrase role="original">Ivy repository</phrase> Ivyリポジトリ</link></td>
+                <td><phrase role="original">An Ivy repository. Can be located on the local filesystem or at some remote location.</phrase> Ivyリポジトリ。ローカルファイルシステムまたはリモートに配置できる。</td>
             </tr>
             <tr>
-                <td><link linkend="sec:flat_dir_resolver">Flat directory repository</link></td>
-                <td>A simple repository on the local filesystem. Does not support any meta-data formats.</td>
+                <td><link linkend="sec:flat_dir_resolver"><phrase role="original">Flat directory repository</phrase> フラットディレクトリリポジトリ</link></td>
+                <td><phrase role="original">A simple repository on the local filesystem. Does not support any meta-data formats.</phrase> ローカルファイルシステム上のシンプルなリポジトリ。どんなフォーマットのメタデータもサポートされない。</td>
             </tr>
         </table>
 
         <section id='sub:maven_central'>
-            <title>Maven central repository</title>
-            <para>To add the central Maven 2 repository (<ulink url='http://repo1.maven.org/maven2'/>) simply add this to your build script:
+            <title>Mavenセントラルリポジトリ <phrase role="original">Maven central repository</phrase></title>
+            <para role="original">To add the central Maven 2 repository (<ulink url='http://repo1.maven.org/maven2'/>) simply add this to your build script:
             </para>
             <para>Maven2のセントラルリポジトリ(<ulink url='http://repo1.maven.org/maven2'/>)は、ただ次のように書くだけで簡単に追加できます。</para>
             <sample id="mavenCentral" dir="userguide/artifacts/defineRepository" title="Mavenセントラルリポジトリを追加する / Adding central Maven repository">
@@ -692,34 +758,37 @@
             </sample>
             <para role="original">Now Gradle will look for your dependencies in this repository.
             </para>
+            <para>こうすることで、Gradleはこのリポジトリから依存関係を取得するようになります。</para>
         </section>
 
         <section id='sub:maven_local'>
-            <title>Local Maven repository</title>
-            <para>To use the local Maven cache as a repository you can do:</para>
-            <sample id="mavenLocalRepo" dir="userguide/artifacts/defineRepository" title="Adding the local Maven cache as a repository">
+            <title>Mavenローカルリポジトリ <phrase role="original">Local Maven repository</phrase></title>
+            <para role="original">To use the local Maven cache as a repository you can do:</para>
+            <para>ローカルにあるMavenのキャッシュをリポジトリとして使うには、次のようにします。</para>
+            <sample id="mavenLocalRepo" dir="userguide/artifacts/defineRepository" title="ローカルのMavenキャッシュをリポジトリに使う / Adding the local Maven cache as a repository">
                 <sourcefile file="build.gradle" snippet="maven-local"/>
             </sample>
         </section>
 
         <section id='sub:maven_repo'>
-            <title>Maven repositories</title>
-            <para>For adding a custom Maven repository you can do:
+            <title>Mavenリポジトリ <phrase role="original">Maven repositories</phrase></title>
+            <para role="original">For adding a custom Maven repository you can do:
             </para>
             <para>カスタムのMavenリポジトリを追加するには、次のようにします。</para>
             <sample id="mavenLikeRepo" dir="userguide/artifacts/defineRepository" title="カスタムMavenリポジトリを追加する / Adding custom Maven repository">
                 <sourcefile file="build.gradle" snippet="maven-like-repo"/>
             </sample>
 
-            <para>Sometimes a repository will have the POMs published to one location, and the JARs and other artifacts published at another location.
+            <para role="original">Sometimes a repository will have the POMs published to one location, and the JARs and other artifacts published at another location.
                 To define such a repository, you can do:
             </para>
-            <para>次のようにすることで、jarを探しに行くリポジトリを、先ほどのMavenセントラルリポジトリの例のように、複数追加することが出来ます。</para>
-            <sample id="mavenLikeRepoWithJarRepo" dir="userguide/artifacts/defineRepository" title="JARファイルのために、Mavenリポジトリを複数追加する / Adding additional Maven repositories for JAR files">
+            <para>POMと、JARなどのアーティファクトを別々の場所に配置するようなリポジトリもあります。このようなリポジトリを定義するには、次のようにします。</para>
+            <sample id="mavenLikeRepoWithJarRepo" dir="userguide/artifacts/defineRepository" title="JARファイル用のMavenリポジトリを追加する / Adding additional Maven repositories for JAR files">
                 <sourcefile file="build.gradle" snippet="maven-like-repo-with-jar-repo"/>
             </sample>
-            <para>Gradle will look at the first URL for the POM and the JAR. If the JAR can't be found there, the artifact URLs are used to look for JARs.
+            <para role="original">Gradle will look at the first URL for the POM and the JAR. If the JAR can't be found there, the artifact URLs are used to look for JARs.
             </para>
+            <para>Gradleは、最初のURLを、POMとJARを探すために使用します。JARがそこで見つからなかった場合は、artifact URLを使ってJARを探しに行きます。</para>
             <section>
                 <title>パスワードで保護されたMavenリポジトリへのアクセス<phrase role="original">Accessing password protected Maven repositories</phrase></title>
                 <para role="original">To access a Maven repository which uses basic authentication, you specify the username and password to use when you define the repository:
@@ -734,10 +803,10 @@
         </section>
 
         <section id='sec:flat_dir_resolver'>
-            <title>Flat directory repository</title>
+            <title>フラットディレクトリリポジトリ <phrase role="original">Flat directory repository</phrase></title>
             <para role="original">If you want to use a (flat) filesytem directory as a repository, simply type:
             </para>
-            <para>ファイルシステム上の(フラットな)ディレクトリをリポジトリとして使用したい場合も、簡単に定義できます。</para>
+            <para>ファイルシステム上の(フラットな)ディレクトリをリポジトリとして使用したい場合は、単に次のようにタイプしてください。</para>
             <sample id="flatDirMulti" dir="userguide/artifacts/defineRepository" title="フラットディレクトリ・リゾルバ / Flat repository resolver">
                 <sourcefile file="build.gradle" snippet="flat-dir-multi"/>
             </sample>
