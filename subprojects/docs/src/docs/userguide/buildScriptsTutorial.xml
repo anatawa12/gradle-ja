@@ -41,7 +41,7 @@
         <title>Hello world</title>
         <para role="original">You run a Gradle build using the <command>gradle</command> command. The <command>gradle</command> command
             looks for a file called <filename>build.gradle</filename> in the current directory.
-            <footnote><para>There are command line switches to change this behavior. See <xref linkend='gradle_command_line'/>)</para></footnote>
+            <footnote><para role="original">There are command line switches to change this behavior. See <xref linkend='gradle_command_line'/>)</para></footnote>
             We call this <filename>build.gradle</filename> file a <firstterm>build script</firstterm>, although strictly speaking it is
             a build configuration script, as we will see later. The build script defines a project and its tasks.
         </para>
