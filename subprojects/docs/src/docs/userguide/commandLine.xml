@@ -13,8 +13,8 @@
   ~ See the License for the specific language governing permissions and
   ~ limitations under the License.
   -->
-<appendix id='gradle_command_line'>
-    <title>Gradle Command Line</title>
+<appendix id='gradle_command_line' xml:lang="ja">
+    <title>Gradleコマンドライン<phrase role="original">Gradle Command Line</phrase></title>
     <para>The <command>gradle</command> command has the following usage:
         <cmdsynopsis>
             <command>gradle</command>
