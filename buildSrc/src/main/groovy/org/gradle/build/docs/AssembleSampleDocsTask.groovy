@@ -66,8 +66,13 @@ class AssembleSamplesDocTask extends SourceTask {
             Document doc = DocumentBuilderFactory.newInstance().newDocumentBuilder().newDocument()
 
             DomBuilder builder = new DomBuilder(doc)
-            builder.appendix(id: 'sample_list') {
-                title('Gradle Samples')
+            builder.appendix(id: 'sample_list', "xml:lang":"ja") {
+                title {
+                    text('Gradleサンプル集')
+                    phrase(role:"original") {
+                        text(' Gradle Samples')
+                    }
+                }
                 para {
                     text('Listed below are some of the stand-alone samples which are included in the Gradle distribution. ')
                     text('You can find these samples in the ')
