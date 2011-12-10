@@ -15,230 +15,372 @@
   -->
 <appendix id='gradle_command_line' xml:lang="ja">
     <title>Gradleコマンドライン<phrase role="original">Gradle Command Line</phrase></title>
-    <para>The <command>gradle</command> command has the following usage:
+    <para role="original">The <command>gradle</command> command has the following usage:
+        <!-- cmdsynopsisタグは独自のclassが設定されてしまうのでrole="original"で不可視にできない
+        <cmdsynopsis role="original">
+            <command>gradle</command>
+            <arg choice="opt" rep="repeat">option</arg>
+            <arg choice="opt" rep="repeat">task</arg>
+        </cmdsynopsis>
+        -->
+        The command-line options available for the <command>gradle</command> command are listed below:
+    </para>
+    <para><command>gradle</command>コマンドの使用法は次のようになります:
         <cmdsynopsis>
             <command>gradle</command>
             <arg choice="opt" rep="repeat">option</arg>
             <arg choice="opt" rep="repeat">task</arg>
         </cmdsynopsis>
-        The command-line options available for the <command>gradle</command> command are listed below:
+        以下に、<command>gradle</command>コマンドで利用可能なコマンドラインオプションのリストを示します:
     </para>
     <variablelist>
         <varlistentry>
             <term><option>-?</option>, <option>-h</option>, <option>--help</option></term>
-            <listitem><para>Shows a help message.</para></listitem>
+            <listitem>
+            <para role="original">Shows a help message.</para>
+            <para>ヘルプメッセージを表示します。</para>
+            </listitem>
         </varlistentry>
         <varlistentry>
             <term><option>-C</option>, <option>--cache</option></term>
-            <listitem><para>Specifies how compiled build scripts should be cached. Possible values are:
+            <listitem>
+            <para role="original">Specifies how compiled build scripts should be cached. Possible values are:
                 <literal>rebuild</literal> or <literal>on</literal>. Default value is
                 <literal>on</literal>. See <xref linkend="sec:caching"/>.
-            </para></listitem>
+            </para>
+            <para>コンパイル済みのビルドスクリプトのキャッシュ方法を指定します。指定可能な値は
+                <literal>rebuild</literal> または <literal>on</literal> です。
+                デフォルト値は <literal>on</literal> です。
+                <xref linkend="sec:caching"/>を参照。
+            </para>
+            </listitem>
         </varlistentry>
         <varlistentry>
             <term><option>-D</option>, <option>--system-prop</option></term>
-            <listitem><para>Sets a system property of the JVM, for example <literal>-Dmyprop=myvalue</literal>.
+            <listitem>
+            <para role="original">Sets a system property of the JVM, for example <literal>-Dmyprop=myvalue</literal>.
                 See <xref linkend="sec:gradle_properties_and_system_properties"/>.
-            </para></listitem>
+            </para>
+            <para>JVMのシステムプロパティをセットします。例: <literal>-Dmyprop=myvalue</literal>
+                <xref linkend="sec:gradle_properties_and_system_properties"/> を参照。
+            </para>
+            </listitem>
         </varlistentry>
         <varlistentry>
             <term><option>-I</option>, <option>--init-script</option></term>
-            <listitem><para>Specifies an initialization script. See <xref linkend="init_scripts"/>.</para></listitem>
+            <listitem>
+            <para role="original">Specifies an initialization script. See <xref linkend="init_scripts"/>.</para>
+            <para>初期化スクリプトを指定します。<xref linkend="init_scripts"/>を参照。</para>
+            </listitem>
         </varlistentry>
         <varlistentry>
             <term><option>-P</option>, <option>--project-prop</option></term>
-            <listitem><para>Sets a project property of the root project, for example
+            <listitem>
+            <para role="original">Sets a project property of the root project, for example
                 <literal>-Pmyprop=myvalue</literal>. See <xref linkend="sec:gradle_properties_and_system_properties"/>.
-            </para></listitem>
+            </para>
+            <para>ルートプロジェクトのプロジェクトプロパティをセットします。
+                例: <literal>-Pmyprop=myvalue</literal>
+                <xref linkend="sec:gradle_properties_and_system_properties"/>を参照。
+            </para>
+            </listitem>
         </varlistentry>
         <varlistentry>
             <term><option>-S</option>, <option>--full-stacktrace</option></term>
-            <listitem><para>Print out the full (very verbose) stacktrace for any exceptions. See <xref linkend="logging"/>.
-            </para></listitem>
+            <listitem>
+            <para role="original">Print out the full (very verbose) stacktrace for any exceptions. See <xref linkend="logging"/>.</para>
+            <para>例外に対する(非常に冗長な)フルスタックトレースを表示します。<xref linkend="logging"/>を参照。</para>
+            </listitem>
         </varlistentry>
         <varlistentry>
             <term><option>-a</option>, <option>--no-rebuild</option></term>
-            <listitem><para>Do not rebuild project dependencies.
-            </para></listitem>
+            <listitem>
+            <para role="original">Do not rebuild project dependencies.</para>
+            <para>プロジェクトの依存関係を再構築しません。</para>
+            </listitem>
         </varlistentry>
         <varlistentry>
             <term><option>--all</option></term>
-            <listitem><para>Shows additional detail in the task listing. See <xref linkend="sec:listing_tasks"/>.
-            </para></listitem>
+            <listitem>
+            <para role="original">Shows additional detail in the task listing. See <xref linkend="sec:listing_tasks"/>.</para>
+            <para>タスクリストで追加の詳細情報を表示します。<xref linkend="sec:listing_tasks"/>参照。</para>
+            </listitem>
         </varlistentry>
         <varlistentry>
             <term><option>-b</option>, <option>--build-file</option></term>
-            <listitem><para>Specifies the build file. See <xref linkend="sec:selecting_build"/>.
-            </para></listitem>
+            <listitem>
+            <para role="original">Specifies the build file. See <xref linkend="sec:selecting_build"/>.</para>
+            <para>ビルドファイルを指定します。<xref linkend="sec:selecting_build"/>参照。</para>
+            </listitem>
         </varlistentry>
         <varlistentry>
             <term><option>-c</option>, <option>--settings-file</option></term>
-            <listitem><para>Specifies the settings file.</para></listitem>
+            <listitem>
+            <para role="original">Specifies the settings file.</para>
+            <para>設定(settings)ファイルを指定します。</para>
+            </listitem>
         </varlistentry>
         <varlistentry>
             <term><option>-d</option>, <option>--debug</option></term>
-            <listitem><para>Log in debug mode (includes normal stacktrace). See <xref linkend="logging"/>.
-            </para></listitem>
+            <listitem>
+            <para role="original">Log in debug mode (includes normal stacktrace). See <xref linkend="logging"/>.</para>
+            <para>デバッグモードでログを出力します(通常のスタックトレースを含む)。<xref linkend="logging"/>参照。</para>
+            </listitem>
         </varlistentry>
         <varlistentry>
             <term><option>-e</option>, <option>--embedded</option></term>
-            <listitem><para>Specify an embedded build script.
-            </para></listitem>
+            <listitem>
+            <para role="original">Specify an embedded build script.</para>
+            <para>埋め込みビルドスクリプトを指定します。</para>
+            </listitem>
         </varlistentry>
         <varlistentry>
             <term><option>-g</option>, <option>--gradle-user-home</option></term>
-            <listitem><para>Specifies the Gradle user home directory. The default is the <filename>.gradle</filename>
+            <listitem>
+            <para role="original">Specifies the Gradle user home directory. The default is the <filename>.gradle</filename>
                 directory in the user's home directory.
-            </para></listitem>
+            </para>
+            <para>Gradleのuser homeディレクトリを指定します。
+                デフォルトはユーザーのホームディレクトリの<filename>.gradle</filename>です。
+            </para>
+            </listitem>
         </varlistentry>
         <varlistentry>
             <term><option>--gui</option></term>
-            <listitem><para>Launches the Gradle GUI. See <xref linkend="tutorial_gradle_gui"/>.
-            </para></listitem>
+            <listitem>
+            <para role="original">Launches the Gradle GUI. See <xref linkend="tutorial_gradle_gui"/>.</para>
+            <para>Gradle GUIを起動します。<xref linkend="tutorial_gradle_gui"/>参照。</para>
+            </listitem>
         </varlistentry>
         <varlistentry>
             <term><option>-i</option>, <option>--info</option></term>
-            <listitem><para>Set log level to info. See <xref linkend="logging"/>.
-            </para></listitem>
+            <listitem>
+            <para role="original">Set log level to info. See <xref linkend="logging"/>.</para>
+            <para>ログレベルを info にセットします。<xref linkend="logging"/>参照。</para>
+            </listitem>
         </varlistentry>
         <varlistentry>
             <term><option>-m</option>, <option>--dry-run</option></term>
-            <listitem><para>Runs the build with all task actions disabled. See <xref linkend="sec:dry_run"/>.
-            </para> </listitem>
+            <listitem>
+            <para role="original">Runs the build with all task actions disabled. See <xref linkend="sec:dry_run"/>.</para>
+            <para>すべてのタスクを無効化した状態でビルドを実行します。<xref linkend="sec:dry_run"/>参照。</para>
+            </listitem>
         </varlistentry>
         <varlistentry>
             <term><option>--no-color</option></term>
-            <listitem><para>Do not use color in the console output.</para></listitem>
+            <listitem>
+            <para role="original">Do not use color in the console output.</para>
+            <para>コンソール出力のカラー表示を無効にします。</para>
+            </listitem>
         </varlistentry>
         <varlistentry>
             <term><option>-p</option>, <option>--project-dir</option></term>
-            <listitem><para>Specifies the start directory for Gradle. Defaults to current directory.
+            <listitem>
+            <para role="original">Specifies the start directory for Gradle. Defaults to current directory.
                 See <xref linkend="sec:selecting_build"/>.
-            </para></listitem>
+            </para>
+            <para>Gradleの開始ディレクトリを指定します。デフォルトはカレントディレクトリです。
+                <xref linkend="sec:selecting_build"/>参照。
+            </para>
+            </listitem>
         </varlistentry>
         <varlistentry>
             <term><option>--profile</option></term>
-            <listitem><para>Profiles build execution time and generates a report in the
+            <listitem>
+            <para role="original">Profiles build execution time and generates a report in the
                 <filename><replaceable>buildDir</replaceable>/reports/profile</filename> directory. See <xref linkend="sec:profiling_build"/>.
-            </para></listitem>
+            </para>
+            <para>ビルドの実行時間に対するプロファイリングを行い、
+                <filename><replaceable>buildDir</replaceable>/reports/profile</filename>ディレクトリにレポートを生成します。
+                <xref linkend="sec:profiling_build"/>参照。
+            </para>
+            </listitem>
         </varlistentry>
         <varlistentry>
             <term><option>--project-cache-dir</option></term>
             <listitem>
-                <para>Specifies the project-specific cache directory. Default value is <filename>.gradle</filename> in the root project directory. See <xref linkend="sec:caching"/>.</para>
+                <para role="original">Specifies the project-specific cache directory. Default value is <filename>.gradle</filename> in the root project directory. See <xref linkend="sec:caching"/>.</para>
+                <para>プロジェクト別のキャッシュディレクトリを指定します。
+                    デフォルトはプロジェクトルートディレクトリの<filename>.gradle</filename>です。
+                    <xref linkend="sec:caching"/>参照。</para>
             </listitem>
         </varlistentry>
         <varlistentry>
             <term><option>-q</option>, <option>--quiet</option></term>
-            <listitem><para>Log errors only. See <xref linkend="logging"/>.</para></listitem>
+            <listitem>
+            <para role="original">Log errors only. See <xref linkend="logging"/>.</para>
+            <para>エラーのみをログ出力します。<xref linkend="logging"/>参照。</para>
+            </listitem>
         </varlistentry>
         <varlistentry>
             <term><option>-s</option>, <option>--stacktrace</option></term>
-            <listitem><para>Print out the stacktrace also for user exceptions (e.g. compile error). See <xref linkend="logging"/>.
-            </para></listitem>
+            <listitem>
+            <para role="original">Print out the stacktrace also for user exceptions (e.g. compile error). See <xref linkend="logging"/>.</para>
+            <para>ユーザー例外(コンパイルエラーなど)に対するスタックトレースも出力します。<xref linkend="logging"/>参照。</para>
+            </listitem>
         </varlistentry>
         <varlistentry>
             <term><option>-u</option>, <option>--no-search-upwards</option></term>
-            <listitem><para>Don't search in parent directories for a <filename>settings.gradle</filename> file.
-            </para></listitem>
+            <listitem>
+            <para role="original">Don't search in parent directories for a <filename>settings.gradle</filename> file.</para>
+            <para>親ディレクトリへの<filename>settings.gradle</filename>ファイルの探索を行いません。</para>
+            </listitem>
         </varlistentry>
         <varlistentry>
             <term><option>-v</option>, <option>--version</option></term>
-            <listitem><para>Prints version info.
-            </para></listitem>
+            <listitem>
+            <para role="original">Prints version info.</para>
+            <para>バージョン情報を表示します。</para>
+            </listitem>
         </varlistentry>
         <varlistentry>
             <term><option>-x</option>, <option>--exclude-task</option></term>
-            <listitem><para>Specifies a task to be excluded from execution. See <xref linkend="sec:excluding_tasks_from_the_command_line"/>.
-            </para></listitem>
+            <listitem>
+            <para role="original">Specifies a task to be excluded from execution. See <xref linkend="sec:excluding_tasks_from_the_command_line"/>.</para>
+            <para>実行を除外するタスクを指定します。<xref linkend="sec:excluding_tasks_from_the_command_line"/>参照。</para>
+            </listitem>
         </varlistentry>
     </variablelist>
-    <para>The above information is printed to the console when you execute <userinput>gradle -h</userinput>.</para>
+    <para role="original">The above information is printed to the console when you execute <userinput>gradle -h</userinput>.</para>
+    <para>これらの情報は<userinput>gradle -h</userinput>を実行するとコンソールに表示されます。</para>
 
     <section>
-        <title>Deprecated command-line options</title>
-        <para>The following options are deprecated and will be removed in a future version of Gradle:</para>
+        <title>非推奨のコマンドラインオプション<phrase role="original">Deprecated command-line options</phrase></title>
+        <para role="original">The following options are deprecated and will be removed in a future version of Gradle:</para>
+        <para>以下のオプションは非推奨で、Gradleの将来のバージョンでは削除される予定です:</para>
         <variablelist>
             <varlistentry>
                 <term><option>-n</option>, <option>--dependencies</option></term>
-                <listitem><para>(deprecated) Show list of all project dependencies. You should use <userinput>gradle dependencies</userinput>
+                <listitem>
+                <para role="original">(deprecated) Show list of all project dependencies. You should use <userinput>gradle dependencies</userinput>
                     instead. See <xref linkend="sec:listing_dependencies"/>.
-                </para></listitem>
+                </para>
+                <para>(非推奨) プロジェクトのすべての依存関係の一覧を表示します。
+                    代わりに <userinput>gradle dependencies</userinput> を使ってください。
+                    <xref linkend="sec:listing_dependencies"/>参照。
+                </para>
+                </listitem>
             </varlistentry>
             <varlistentry>
                 <term><option>-r</option>, <option>--properties</option></term>
-                <listitem><para>(deprecated) Show list of all available project properties. You should use <userinput>gradle properties</userinput>
-                    instead. See <xref linkend="sec:listing_properties"/>.</para></listitem>
+                <listitem>
+                <para role="original">(deprecated) Show list of all available project properties. You should use <userinput>gradle properties</userinput>
+                    instead. See <xref linkend="sec:listing_properties"/>.</para>
+                <para>(非推奨) 利用可能なすべてのプロジェクトプロパティの一覧を表示します。
+                    代わりに <userinput>gradle properties</userinput> を使ってください。
+                    <xref linkend="sec:listing_properties"/>参照。</para>
+                 </listitem>
             </varlistentry>
             <varlistentry>
                 <term><option>-t</option>, <option>--tasks</option></term>
-                <listitem><para>(deprecated) Show list of available tasks. You should use <userinput>gradle tasks</userinput>
+                <listitem>
+                <para role="original">(deprecated) Show list of available tasks. You should use <userinput>gradle tasks</userinput>
                     instead. See <xref linkend="sec:listing_tasks"/>.</para>
+                <para>(非推奨) 利用可能なタスクの一覧を表示します。
+                    代わりに <userinput>gradle tasks</userinput> を使ってください。
+                    <xref linkend="sec:listing_tasks"/>参照。</para>
                 </listitem>
             </varlistentry>
         </variablelist>
     </section>
 
     <section>
-        <title>Experimental command-line options</title>
-        <para>The following options are experimental:</para>
+        <title>実験的なコマンドラインオプション<phrase role="original">Experimental command-line options</phrase></title>
+        <para role="original">The following options are experimental:</para>
+        <para>以下のオプションは実験的なものです:</para>
         <variablelist>
             <varlistentry>
                 <term><option>--continue</option></term>
-                <listitem><para>Continues task execution after a task failure.</para></listitem>
+                <listitem>
+                <para role="original">Continues task execution after a task failure.</para>
+                <para>タスクが失敗してもタスクの実行を継続します。</para>
+                </listitem>
             </varlistentry>
             <varlistentry>
                 <term><option>--daemon</option></term>
-                <listitem><para>Uses the Gradle daemon to run the build. Starts the daemon if not running.</para></listitem>
+                <listitem>
+                <para role="original">Uses the Gradle daemon to run the build. Starts the daemon if not running.</para>
+                <para>ビルドの実行にGradleデーモンを利用します。デーモンが起動済みでなければ起動します。</para>
+                </listitem>
             </varlistentry>
             <varlistentry>
                 <term><option>--foreground</option></term>
-                <listitem><para>Starts the Gradle daemon in the foreground.</para></listitem>
+                <listitem>
+                <para role="original">Starts the Gradle daemon in the foreground.</para>
+                <para>Gradleデーモンをフォアグラウンドで起動します。</para>
+                </listitem>
             </varlistentry>
             <varlistentry>
                 <term><option>--no-daemon</option></term>
-                <listitem><para>Do not use the Gradle daemon to run the build.</para></listitem>
+                <listitem>
+                <para role="original">Do not use the Gradle daemon to run the build.</para>
+                <para>ビルドの実行にGradleデーモンを利用しません。</para>
+                </listitem>
             </varlistentry>
             <varlistentry>
                 <term><option>--stop</option></term>
-                <listitem><para>Stops the Gradle daemon if it is running.</para></listitem>
+                <listitem>
+                <para role="original">Stops the Gradle daemon if it is running.</para>
+                <para>Gradleデーモンが起動済みであれば停止します。</para>
+                </listitem>
             </varlistentry>
         </variablelist>
     </section>
 
     <section>
-        <title>System properties</title>
-        <para>The following system properties are available for the <command>gradle</command> command. Note that
+        <title>システムプロパティ<phrase role="original">System properties</phrase></title>
+        <para role="original">The following system properties are available for the <command>gradle</command> command. Note that
             command-line options take precedence over system properties.
+        </para>
+        <para> <command>gradle</command> コマンドに対して以下のシステムプロパティが利用可能です。
+            コマンドラインオプションはシステムプロパティよりも優先されることに注意してください。
         </para>
         <varlistentry>
             <term><literal>gradle.user.home</literal></term>
-            <listitem><para>Specifies the Gradle user home directory.</para> </listitem>
+            <listitem>
+            <para role="original">Specifies the Gradle user home directory.</para>
+            <para>Gradleのuser homeディレクトリを指定します。</para>
+            </listitem>
         </varlistentry>
         <varlistentry>
             <term><literal>org.gradle.daemon</literal></term>
-            <listitem><para>When set to <literal>true</literal>, use the Gradle daemon to run the build.</para>
+            <listitem>
+            <para role="original">When set to <literal>true</literal>, use the Gradle daemon to run the build.</para>
+            <para><literal>true</literal>をセットすると、ビルドの実行にGradleデーモンを利用します。</para>
             </listitem>
         </varlistentry>
     </section>
 
     <section>
-        <title>Environment variables</title>
-        <para>The following environment variables are available for the <command>gradle</command> command. Note that
+        <title>環境変数<phrase role="original">Environment variables</phrase></title>
+        <para role="original">The following environment variables are available for the <command>gradle</command> command. Note that
             command-line options and system properties take precedence over environment variables.
+        </para>
+        <para><command>gradle</command>に対して以下の環境変数が利用可能です。
+            コマンドラインオプションおよびシステムプロパティは環境変数よりも優先されることに注意してください。
         </para>
         <variablelist>
             <varlistentry>
                 <term><literal>GRADLE_OPTS</literal></term>
-                <listitem><para>Specifies command-line arguments to use to start the JVM. This can be useful for setting
+                <listitem>
+                <para role="original">Specifies command-line arguments to use to start the JVM. This can be useful for setting
                     the system properties to use for running Gradle. For example you could set <literal>GRADLE_OPTS="-Dorg.gradle.daemon=true"</literal>
                     to use the Gradle daemon without needing to use the <option>--daemon</option> option every time you
                     run Gradle.
-                </para></listitem>
+                </para>
+                <para>JVM起動時のコマンドライン引数を指定します。
+                    これはGradle実行時に利用するシステムプロパティの設定に便利です。
+                    例えば、<literal>GRADLE_OPTS="-Dorg.gradle.daemon=true"</literal>をセットしておけば、
+                    Gradleデーモンを利用するためにGradleを実行するたびに毎回<option>--daemon</option>オプションを指定する必要がありません。
+                </para>
+                </listitem>
             </varlistentry>
             <varlistentry>
                 <term><literal>GRADLE_USER_HOME</literal></term>
-                <listitem><para>Specifies the Gradle user home directory.</para></listitem>
+                <listitem>
+                <para role="original">Specifies the Gradle user home directory.</para>
+                <para>Gradleのuser homeディレクトリを指定します。</para>
+                </listitem>
             </varlistentry>
         </variablelist>
     </section>
