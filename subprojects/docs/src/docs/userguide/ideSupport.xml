@@ -17,10 +17,9 @@
     <title>IDE対応の現状と、IDEによらない開発支援<phrase role="original">Existing IDE Support and how to cope without it</phrase></title>
     <section id='sec:intellij'>
         <title>IntelliJ</title>
-        <para>Gradle has been mainly developed with Idea IntelliJ and its very good Groovy plugin. Gradle's build script
+        <para role="original">Gradle has been mainly developed with Idea IntelliJ and its very good Groovy plugin. Gradle's build script
             <footnote>
-                <para>Gradle is built with Gradle
-                </para>
+                <para role="original">Gradle is built with Gradle</para>
             </footnote>
             has also been developed with the support of this IDE. IntelliJ allows you to define any filepattern to be
             interpreted as a Groovy script. In the case of Gradle you can define such a pattern for
@@ -31,27 +30,54 @@
             if you do this you have a fantastic IDE support for developing Gradle scripts. Of course if you use
             additional libraries for your build scripts they would further pollute your project classpath.
         </para>
-        <para>We hope that in the future <filename>*.gradle</filename> files
+        <para>Gradleは主にIdea IntelliJとそのすばらしいGroovyプラグインを利用して開発されています。
+            Gradleのビルドスクリプト
+            <footnote>
+                <para>GradleはGradleでビルドされている</para>
+            </footnote>
+            の開発にも、このIDEのサポートを利用することができます。
+            IntelliJは任意のファイルパターンをGroovyスクリプトとして解釈することができます。
+            Gradleの場合は<filename>build.gradle</filename>や<filename>settings.gradle</filename>のようなパターンを定義できます。
+            これは非常に役に立ちます。
+            Gradleクラスに対するコンテンツアシストを提示するためのGradleバイナリに対するクラスパスの設定は行われません。
+            プロジェクトのクラスパスに、GradleのJAR(配布物に含まれています)を追加するとよいでしょう。
+            実際にはそこにあるべきものではないのですが、これを行うことでGradleスクリプトの開発に対するIDEのすばらしいサポートが受けられるようになります。
+            もちろん、ビルドスクリプトのための追加のライブラリを使うならば、それはプロジェクトのクラスパスを汚染することになりますが。
+        </para>
+        <para role="original">We hope that in the future <filename>*.gradle</filename> files
             get special treatment by IntelliJ and you will be able to define a specific classpath for them.
+        </para>
+        <para>われわれは、将来においてIntelliJが<filename>*.gradle</filename>ファイルを特別に扱い、
+            それらに特化したクラスパスの定義が可能になることを希望しています。
         </para>
     </section>
     <section>
         <title>Eclipse</title>
-        <para>There is a Groovy plugin for eclipse. We don't know in what state it is and how it would support Gradle.
+        <para role="original">There is a Groovy plugin for eclipse. We don't know in what state it is and how it would support Gradle.
             In the next edition of this user guide we can hopefully write more about this.
+        </para>
+        <para>EclipseにはGroovyプラグインがあります。
+            我々はその現状や、Gradleをどうサポートできるのかを把握していません。
+            ユーザーガイドの次の版ではもう少し詳しい記述を追加したいと思っています。
         </para>
     </section>
     <section id='sec:using_gradle_without_ide_support'>
-        <title>Using Gradle without IDE support</title>
-        <para>What we can do for you is to spare you typing things like
+        <title>IDEサポートなしでGradleを使う<phrase role="original">Using Gradle without IDE support</phrase></title>
+        <para role="original">What we can do for you is to spare you typing things like
             <literal>throw new org.gradle.api.tasks.StopExecutionException()</literal>
             and just type
             <literal>throw new StopExecutionException()</literal>
             instead. We do this by automatically adding a set of import statements to the Gradle scripts before Gradle
             executes them. Listed below are the imports added to each script.
         </para>
+        <para>我々にできるのは、
+            <literal>throw new org.gradle.api.tasks.StopExecutionException()</literal>のような記述のタイプ量を節約して
+            代わりに<literal>throw new StopExecutionException()</literal>とだけタイプすればよいようにすることです。
+            Gradleスクリプトの実行前に一連のimport文を自動的に追加することでこれを実現しています。
+            以下はスクリプトに追加されるimportの一覧です。
+        </para>
         <figure>
-            <title>gradle-imports</title>
+            <title>Gradleがimportするパッケージ<phrase role="original">gradle-imports</phrase></title>
             <programlisting><xi:include href='../../../../../subprojects/core/src/main/resources/org/gradle/configuration/default-imports.txt' parse='text'/></programlisting>
         </figure>
     </section>
