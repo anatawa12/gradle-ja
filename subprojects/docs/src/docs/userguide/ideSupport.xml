@@ -13,8 +13,8 @@
   ~ See the License for the specific language governing permissions and
   ~ limitations under the License.
   -->
-<appendix id='ide_support' xmlns:xi="http://www.w3.org/2001/XInclude">
-    <title>Existing IDE Support and how to cope without it</title>
+<appendix id='ide_support' xmlns:xi="http://www.w3.org/2001/XInclude" xml:lang="ja">
+    <title>IDE対応の現状と、IDEによらない開発支援<phrase role="original">Existing IDE Support and how to cope without it</phrase></title>
     <section id='sec:intellij'>
         <title>IntelliJ</title>
         <para>Gradle has been mainly developed with Idea IntelliJ and its very good Groovy plugin. Gradle's build script
