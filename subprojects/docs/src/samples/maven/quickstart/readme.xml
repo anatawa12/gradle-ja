@@ -14,5 +14,6 @@
   ~ limitations under the License.
   -->
 <sample>
-    <para>Demonstrates how to deploy and install artifacts to a Maven repository.</para>
+    <para><phrase role="original">Demonstrates how to deploy and install artifacts to a Maven repository.</phrase>
+        Mavenリポジトリにアーティファクトをデプロイ、インストールするデモ</para>
 </sample>

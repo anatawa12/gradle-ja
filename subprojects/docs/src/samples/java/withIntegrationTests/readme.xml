@@ -1,3 +1,4 @@
 <sample>
-    <para>This sample demonstrates how to use a source set to add an integration test suite to a Java project.</para>
+    <para><phrase role="original">This sample demonstrates how to use a source set to add an integration test suite to a Java project.</phrase>
+        ソースセットを使って、Javaプロジェクトに結合テスト・スイートを追加する方法を示すサンプル</para>
 </sample>

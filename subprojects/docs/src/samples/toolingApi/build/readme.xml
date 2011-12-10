@@ -1,3 +1,4 @@
 <sample>
-    <para>An application which uses the tooling API to execute a Gradle build.</para>
+    <para><phrase role="original">An application which uses the tooling API to execute a Gradle build.</phrase>
+        Tooling APIを使ってGradleのビルドを実行するアプリケーション</para>
 </sample>

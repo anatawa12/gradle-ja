@@ -1,6 +1,7 @@
 <sample>
-    <para>Demonstrates how to deploy and install to a Maven repository. Also demonstrates how to deploy a javadoc JAR
+    <para><phrase role="original">Demonstrates how to deploy and install to a Maven repository. Also demonstrates how to deploy a javadoc JAR
         along with the main JAR, how to customize the contents of the generated POM, and how to deploy snapshots and
-        releases to different repositories.
+        releases to different repositories.</phrase>
+        Mavenリポジトリにデプロイ、インストールするデモ。メインのJARに加えてJavaDocのJARをデプロイしたり、生成されるPOMの内容をカスタマイズしたり、スナップショットとリリース版を違うリポジトリにデプロイしたりもしています。
     </para>
 </sample>

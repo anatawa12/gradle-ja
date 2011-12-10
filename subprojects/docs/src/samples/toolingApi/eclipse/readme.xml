@@ -1,3 +1,4 @@
 <sample>
-    <para>An application which uses the tooling API to build the Eclipse model for a project.</para>
+    <para><phrase role="original">An application which uses the tooling API to build the Eclipse model for a project.</phrase>
+        Tooling APIを使ってEclipseのプロジェクトモデルを構築するアプリケーション</para>
 </sample>

@@ -73,7 +73,7 @@ class AssembleSamplesDocTask extends SourceTask {
                         text(' Gradle Samples')
                     }
                 }
-                para {
+                para(role:"original") {
                     text('Listed below are some of the stand-alone samples which are included in the Gradle distribution. ')
                     text('You can find these samples in the ')
                     filename {
@@ -82,11 +82,35 @@ class AssembleSamplesDocTask extends SourceTask {
                     }
                     text(' directory of the distribution.')
                 }
+                para {
+                    text('Gradleの配布物には、スタンドアローンで動作するサンプルが含まれています。以下にその一覧を掲載しました。')
+                    text('これらのサンプルは、配布物の')
+                    filename {
+                        replaceable('GRADLE_HOME')
+                        text('/samples')
+                    }
+                    text(' ディレクトリに入っています。')
+                }
                 table {
-                    title('Samples included in the distribution')
+                    title {
+                        phrase(role:"original") {
+                            text('Samples included in the distribution')
+                        }
+                        text(' 配布物に入っているサンプル')
+                    }
                     thead {
-                        td('Sample')
-                        td('Description')
+                        td {
+                            phrase(role:"original") {
+                                text('Sample')
+                            }
+                            text(' サンプル')
+                        }
+                        td {
+                            phrase(role:"original") {
+                                text('Description')
+                            }
+                            text(' 説明')
+                        }
                     }
                     samples.each {sample ->
                         tr {
@@ -107,7 +131,10 @@ class AssembleSamplesDocTask extends SourceTask {
                     }
                     section(id: sample.hashCode()) {
                         title {
-                            text('Sample ')
+                            text('サンプル ')
+                            phrase(role:"original") {
+                                text('Sample ')
+                            }
                             filename(sample.dir)
                         }
                         sample.doc.childNodes.each {n ->

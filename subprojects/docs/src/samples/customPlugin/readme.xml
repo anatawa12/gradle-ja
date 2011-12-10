@@ -1,12 +1,16 @@
 <sample>
-    <para>A set of projects that show how to implement, test, publish and use a custom plugin and task.</para>
-    <para>This sample contains the following projects:</para>
+    <para><phrase role="original">A set of projects that show how to implement, test, publish and use a custom plugin and task.</phrase>
+        カスタムプラグインやカスタムタスクの実装、テスト、公開および使用方法を示す、いくつかのサンプルプロジェクト</para>
+    <para role="original">This sample contains the following projects:</para>
+    <para>このサンプルには、以下のプロジェクトが含まれています。</para>
     <itemizedlist>
         <listitem>
-            <para>The <filename>plugin</filename> directory contains the project that implements and publishes the plugin.</para>
+            <para role="original">The <filename>plugin</filename> directory contains the project that implements and publishes the plugin.</para>
+            <para>pluginディレクトリのプロジェクトで、プラグインを実装して公開しています。</para>
         </listitem>
         <listitem>
-            <para>The <filename>consumer</filename> directory contains the project that uses the plugin.</para>
+            <para role="original">The <filename>consumer</filename> directory contains the project that uses the plugin.</para>
+            <para><filename>consumer</filename>ディレクトリのプロジェクトで、そのプラグインを使用しています。</para>
         </listitem>
     </itemizedlist>
 </sample>

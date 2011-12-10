@@ -1,3 +1,4 @@
 <sample>
-    <para>Web application with customized WAR contents.</para>
+    <para><phrase role="original">Web application with customized WAR contents.</phrase>
+        中身をカスタマイズしたWARをビルドするWebアプリケーションプロジェクト</para>
 </sample>

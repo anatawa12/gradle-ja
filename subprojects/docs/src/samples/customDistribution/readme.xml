@@ -1,13 +1,19 @@
 <sample>
-    <para>This sample demonstrates how to create a custom Gradle distribution and use it with the Gradle wrapper.</para>
-    <para>This sample contains the following projects:</para>
+    <para><phrase role="original">This sample demonstrates how to create a custom Gradle distribution and use it with the Gradle wrapper.</phrase>
+        Gradleのカスタムディストリビューションを作る方法、およびそのディストリビューションをGradleラッパーで使う方法をデモしています。</para>
+    <para role="original">This sample contains the following projects:</para>
+    <para>このサンプルには次のプロジェクトが含まれています。</para>
     <itemizedlist>
         <listitem>
-            <para>The <filename>plugin</filename> directory contains the project that implements a custom plugin, and bundles the plugin into a custom
+            <para role="original">The <filename>plugin</filename> directory contains the project that implements a custom plugin, and bundles the plugin into a custom
                 Gradle distribution.</para>
+            <para>
+            <filename>plugin</filename>ディレクトリに入っているプロジェクトで、カスタムプラグインを実装してディストリビューションにバンドルしています。
+            </para>
         </listitem>
         <listitem>
-            <para>The <filename>consumer</filename> directory contains the project that uses the custom distribution.</para>
+            <para role="original">The <filename>consumer</filename> directory contains the project that uses the custom distribution.</para>
+            <filename>consumer</filename>ディレクトリに入っているプロジェクトで、そのカスタムディストリビューションを使用しています。
         </listitem>
     </itemizedlist>
 </sample>

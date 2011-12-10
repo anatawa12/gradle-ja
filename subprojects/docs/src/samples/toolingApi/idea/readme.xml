@@ -15,5 +15,6 @@
   -->
 
 <sample>
-    <para>An application which uses the tooling API to extract information needed by IntelliJ IDEA.</para>
+    <para><phrase role="original">An application which uses the tooling API to extract information needed by IntelliJ IDEA.</phrase>
+        IntellJ IDEAで必要な情報を、Tooling APIを使って抽出するアプリケーション</para>
 </sample>
