@@ -26,7 +26,10 @@
         <link href="style.css" rel="stylesheet" type="text/css"/>
         <link href="userguide.css" rel="stylesheet" type="text/css"/>
         <link href="print.css" rel="stylesheet" type="text/css" media="print"/>
+        <link href="pdfstyle.css" rel="stylesheet" type="text/css"/>
     </xsl:template>
+
+    <xsl:template match="//*[@role='original']" />
 
     <xsl:template name="user.head.content">
         <bookmarks>
