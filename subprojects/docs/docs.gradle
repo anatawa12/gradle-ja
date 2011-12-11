@@ -25,6 +25,12 @@ import org.gradle.os.OperatingSystem
 apply plugin: 'base'
 apply from: "${rootDir}/gradle/ssh.gradle"
 
+repositories {
+    maven {
+        url "https://maven.atlassian.com/repository/public"
+    }
+}
+
 configurations {
     userGuideStyleSheets
     userGuideTask
@@ -32,7 +38,7 @@ configurations {
 
 dependencies {
     userGuideTask 'xalan:xalan:2.7.1', 'xerces:xercesImpl:2.9.1'
-    userGuideTask module('xhtmlrenderer:xhtmlrenderer:R8rc1') {
+    userGuideTask module('org.xhtmlrenderer:xhtmlrenderer:8.3-atlassian') {
         dependency 'itext:itext:2.0.8@jar'
     }
     userGuideTask 'xslthl:xslthl:2.0.1@jar'
@@ -53,6 +59,12 @@ samplesDir = file("$buildDir/samples")
 docbookSrc = new File(project.buildDir, 'src')
 samplesSrcDir = file('src/samples')
 websiteDocs = new File(buildDir, 'websiteDocs')
+
+pdfFontNameKey = "gradleDocsPdfFontName"
+pdfFontFileKey = "gradleDocsPdfFontFile"
+pdfGeneratable = {
+    project.hasProperty(pdfFontFileKey) && project.hasProperty(pdfFontNameKey)
+}
 
 outputs = [:]
 outputs.samples = files(samplesDir) {
@@ -226,6 +238,31 @@ task userguideXhtml(type: Docbook2Xhtml, dependsOn: remoteUserguideDocbook) {
     resources += fileTree {
         from cssSrcDir
         include '*.css'
+    }
+}
+
+userguideXhtml.onlyIf pdfGeneratable
+
+userguideXhtml << {
+    def pdfWorkDir = new File(buildDir, 'tmp/userguidePdf')
+
+    def fontFile = file(project[pdfFontFileKey])
+    if(fontFile.canRead()) {
+        copy {
+            from (fontFile)
+            into pdfWorkDir
+        }
+    } else {
+        throw new IllegalStateException("Font file not found")
+    }
+    copy {
+        from (new File(srcDocsDir, "pdf")) {
+            include '*.css'
+        }
+        into pdfWorkDir
+        filter(org.apache.tools.ant.filters.ReplaceTokens,
+            tokens:['pdf.font.name':project[pdfFontNameKey],
+                    'pdf.font.file':fontFile.name])
     }
 }
 
@@ -467,7 +504,7 @@ class Xhtml2Pdf extends DefaultTask {
     FileCollection classpath
 
     def Xhtml2Pdf() {
-        onlyIf { !OperatingSystem.current().isWindows() }
+        onlyIf project.pdfGeneratable
     }
 
     @TaskAction

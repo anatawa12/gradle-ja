@@ -1,0 +1,27 @@
+@font-face{
+    font-family: "@pdf.font.name@";
+    src: url(@pdf.font.file@);
+    -fs-pdf-font-embed: embed;
+    -fs-pdf-font-encoding: Identity-H;
+}
+
+body {
+    font-family: "@pdf.font.name@" !important;
+}
+body, td, div {
+    font-family: "@pdf.font.name@" !important;
+}
+h1, h2, h3, h4, h5 {
+    font-family: "@pdf.font.name@" !important;
+}
+.heading {
+    font-family: "@pdf.font.name@" !important;
+}
+div.title * {
+    font-family: 'DejaVu Sans','Lucida Grande','Verdana',sans-serif !important;
+}
+
+p {  
+    word-wrap: break-word;  
+}
+
