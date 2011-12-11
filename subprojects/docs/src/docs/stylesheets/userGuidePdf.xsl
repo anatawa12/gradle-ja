@@ -17,6 +17,8 @@
     <xsl:import href="xhtml/docbook.xsl"/>
     <xsl:import href="userGuideHtmlCommon.xsl"/>
 
+    <xsl:output method="xhtml" encoding="UTF-8" indent="no"/>
+
     <!-- Use custom <head> content, to include stylesheets and bookmarks -->
 
     <xsl:template name="output.html.stylesheets">
