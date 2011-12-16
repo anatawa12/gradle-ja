@@ -16,35 +16,49 @@
 <appendix id='potential_traps' xmlns:xi="http://www.w3.org/2001/XInclude" xml:lang="ja">
     <title>陥りがちな罠 <phrase role="original">Potential Traps</phrase></title>
     <section id='sec:groovy_script_variables'>
-        <title>Groovy script variables</title>
-        <para>For Gradle users it is important to understand how Groovy deals with script variables. Groovy has two types
+        <title>Groovyスクリプトの変数 <phrase role="original">Groovy script variables</phrase></title>
+        <para role="original">For Gradle users it is important to understand how Groovy deals with script variables. Groovy has two types
             of script variables. One with a local scope and one with a script wide scope.
         </para>
-        <sample id="scope" dir="userguide/tutorial" title="Variables scope: local and script wide">
+        <para>
+        Gradleユーザーにとって、Groovyがスクリプトの変数をどう扱うか理解しておくことは大事なことです。
+        Groovyには、二種類のスクリプト変数があります。一つがローカルスコープのもので、もう一つがスクリプトスコープのものです。
+        </para>
+        <sample id="scope" dir="userguide/tutorial" title="変数のスコープ：ローカルスコープとスクリプトスコープ / Variables scope: local and script wide">
             <sourcefile file="scope.groovy"/>
             <output args=""/>
         </sample>
-        <para>Variables which are declared with a type modifier are visible within closures but not visible within
+        <para role="original">Variables which are declared with a type modifier are visible within closures but not visible within
             methods. This is a heavily discussed behavior in the Groovy community.
             <footnote>
-                <para>One of those discussions can be found here:
+                <para role="original">One of those discussions can be found here:
                     <ulink url='http://www.nabble.com/script-scoping-question-td16034724.html'/>
+                </para>
+            </footnote>
+        </para>
+        <para>
+        型修飾のついた変数は、クロージャ内からは見えていますが、メソッドからは見えていません。これは、Groovyコミュニティでもよく議論されている振る舞いです。
+            <footnote>
+                <para>これらの議論のうちの一つを、ここで見ることができます。
+                    <ulink url='http://groovy.329449.n5.nabble.com/script-scoping-question-td355887.html'/>
                 </para>
             </footnote>
         </para>
     </section>
     <section id='sec:configuration_and_execution_phase'>
-        <title>Configuration and execution phase</title>
-        <para>It is important to keep in mind that Gradle has a distinct configuration and execution phase (see 
+        <title>設定フェーズと実行フェーズ <phrase role="original">Configuration and execution phase</phrase></title>
+        <para role="original">It is important to keep in mind that Gradle has a distinct configuration and execution phase (see 
             <xref linkend='build_lifecycle'/>).
         </para>
-        <sample id="mkdirTrap" dir="userguide/tutorial/mkdirTrap" title="Distinct configuration and execution phase">
+        <para>Gradleが設定フェーズと実行フェーズを区別していることは常に頭に入れておきましょう。とても重要なことです。(<xref linkend='build_lifecycle'/>参照)</para>
+        <sample id="mkdirTrap" dir="userguide/tutorial/mkdirTrap" title="設定フェーズと実行フェーズの区別 / Distinct configuration and execution phase">
             <sourcefile file="build.gradle"/>
             <output args="-q compile"/>
         </sample>
-        <para>As the creation of the directory happens during the configuration phase, the
+        <para role="original">As the creation of the directory happens during the configuration phase, the
             <literal>clean</literal>
             task removes the directory during the execution phase.
         </para>
+        <para>ディレクトリの作成は設定フェーズで起こっていて、実行フェーズで<literal>clean</literal>タスクがそのディレクトリを削除してしまっています。</para>
     </section>
 </appendix>
