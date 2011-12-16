@@ -13,8 +13,8 @@
   ~ See the License for the specific language governing permissions and
   ~ limitations under the License.
   -->
-<appendix id='potential_traps' xmlns:xi="http://www.w3.org/2001/XInclude">
-    <title>Potential Traps</title>
+<appendix id='potential_traps' xmlns:xi="http://www.w3.org/2001/XInclude" xml:lang="ja">
+    <title>陥りがちな罠 <phrase role="original">Potential Traps</phrase></title>
     <section id='sec:groovy_script_variables'>
         <title>Groovy script variables</title>
         <para>For Gradle users it is important to understand how Groovy deals with script variables. Groovy has two types
