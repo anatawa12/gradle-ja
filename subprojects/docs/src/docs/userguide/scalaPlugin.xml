@@ -13,8 +13,8 @@
   ~ See the License for the specific language governing permissions and
   ~ limitations under the License.
   -->
-<chapter id="scala_plugin" xmlns:xi="http://www.w3.org/2001/XInclude">
-    <title>The Scala Plugin</title>
+<chapter id="scala_plugin" xmlns:xi="http://www.w3.org/2001/XInclude" xml:lang="ja">
+    <title>Scalaプラグイン <phrase role="original">The Scala Plugin</phrase></title>
 
     <para>The Scala plugin extends the Java plugin to add support for Scala projects. It can deal with Scala-only
         projects and with mixed Java/Scala projects. It can even deal with Java-only projects.
