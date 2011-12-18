@@ -17,42 +17,51 @@
 package org.gradle.api.internal.file;
 
 import org.apache.commons.io.FilenameUtils;
-import org.gradle.api.internal.DescribedReadableResource;
 import org.gradle.api.internal.file.archive.compression.Bzip2Archiver;
 import org.gradle.api.internal.file.archive.compression.GzipArchiver;
+import org.gradle.api.resources.MissingResourceException;
 import org.gradle.api.resources.ReadableResource;
-import org.gradle.api.resources.ResourceDoesNotExist;
 import org.gradle.api.tasks.bundling.Compression;
 
-import java.io.File;
 import java.io.InputStream;
+import java.net.URI;
 
 /**
  * by Szczepan Faber, created at: 11/23/11
  */
-public class MaybeCompressedFileResource extends AbstractFileResource implements DescribedReadableResource {
+public class MaybeCompressedFileResource implements ReadableResource {
 
     private final ReadableResource resource;
 
-    public MaybeCompressedFileResource(File file) {
-        super(file);
-        String ext = FilenameUtils.getExtension(file.getName());
-        FileResource fileResource = new FileResource(file);
+    public MaybeCompressedFileResource(ReadableResource resource) {
+        String ext = FilenameUtils.getExtension(resource.getURI().toString());
 
         if (Compression.BZIP2.getExtension().equals(ext)) {
-            resource = new Bzip2Archiver(fileResource);
+            this.resource = new Bzip2Archiver(resource);
         } else if (Compression.GZIP.getExtension().equals(ext)) {
-            resource = new GzipArchiver(fileResource);
+            this.resource = new GzipArchiver(resource);
         } else {
-            resource = fileResource;
+            this.resource = resource;
         }
     }
 
-    public InputStream read() throws ResourceDoesNotExist {
+    public InputStream read() throws MissingResourceException {
         return resource.read();
     }
 
     public ReadableResource getResource() {
         return resource;
+    }
+
+    public String getDisplayName() {
+        return resource.getDisplayName();
+    }
+
+    public URI getURI() {
+        return resource.getURI();
+    }
+
+    public String getBaseName() {
+        return resource.getBaseName();
     }
 }

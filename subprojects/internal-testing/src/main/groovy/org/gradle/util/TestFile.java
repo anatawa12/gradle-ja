@@ -71,6 +71,10 @@ public class TestFile extends File implements TestFileContext {
         return this;
     }
 
+    Object writeReplace() throws ObjectStreamException {
+        return new File(getAbsolutePath());
+    }
+
     private static URI toUri(URL url) {
         try {
             return url.toURI();
@@ -489,6 +493,11 @@ public class TestFile extends File implements TestFileContext {
     public void assertHasChangedSince(Snapshot snapshot) {
         Snapshot now = snapshot();
         assertTrue(now.modTime != snapshot.modTime || !Arrays.equals(now.hash, snapshot.hash));
+    }
+
+    public void assertContentsHaveNotChangedSince(Snapshot snapshot) {
+        Snapshot now = snapshot();
+        assertArrayEquals(String.format("contents of %s has changed", this), snapshot.hash, now.hash);
     }
 
     public void assertHasNotChangedSince(Snapshot snapshot) {
