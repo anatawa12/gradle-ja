@@ -16,64 +16,75 @@
 <chapter id="scala_plugin" xmlns:xi="http://www.w3.org/2001/XInclude" xml:lang="ja">
     <title>Scalaプラグイン <phrase role="original">The Scala Plugin</phrase></title>
 
-    <para>The Scala plugin extends the Java plugin to add support for Scala projects. It can deal with Scala-only
+    <para role="original">The Scala plugin extends the Java plugin to add support for Scala projects. It can deal with Scala-only
         projects and with mixed Java/Scala projects. It can even deal with Java-only projects.
         The Scala plugin supports joint compilation of Java and Scala source. This means your project can contain
         Scala classes which use Java classes, and vice versa.
     </para>
+    <para>
+    Scalaプラグインは、Javaプラグインを拡張し、Scalaプロジェクトのサポートを追加したものです。Scalaプロジェクトと、Scala/Java混合プロジェクトを扱うことができます。
+    Scalaプラグインは、JavaソースとScalaソースのジョイントコンパイルをサポートしています。ですから、Javaクラスを呼び出すScalaクラスをプロジェクトに含められますし、その逆も可能です。
+    </para>
 
     <section>
-        <title>Usage</title>
-        <para>To use the Scala plugin, include in your build script:</para>
-        <sample id="useScalaPlugin" dir="scala/quickstart" title="Using the Scala plugin">
+        <title>使用方法 <phrase role="original">Usage</phrase></title>
+        <para role="original">To use the Scala plugin, include in your build script:</para>
+        <para>Scalaプラグインを使うには、ビルドスクリプトに以下の行を追加します。</para>
+        <sample id="useScalaPlugin" dir="scala/quickstart" title="Scalaプラグインを使う / Using the Scala plugin">
             <sourcefile file="build.gradle" snippet="use-plugin"/>
         </sample>
     </section>
 
     <section>
-        <title>Tasks</title>
-        <para>The Scala plugin adds the following tasks to the project.</para>
+        <title>タスク <phrase role="original">Tasks</phrase></title>
+        <para role="original">The Scala plugin adds the following tasks to the project.</para>
+        <para>Scalaプラグインは、プロジェクトに以下のタスクを追加します。</para>
         <table>
-            <title>Scala plugin - tasks</title>
+            <title>Scalaプラグイン - タスク <phrase role="original">Scala plugin - tasks</phrase></title>
             <thead>
                 <tr>
-                    <td>Task name</td>
-                    <td>Depends on</td>
-                    <td>Type</td>
-                    <td>Description</td>
+                    <td><phrase role="original">Task name</phrase> タスク</td>
+                    <td><phrase role="original">Depends on</phrase> 依存先</td>
+                    <td><phrase role="original">Type</phrase> 型</td>
+                    <td><phrase role="original">Description</phrase> 説明</td>
                 </tr>
             </thead>
             <tr>
                 <td><literal>compileScala</literal></td>
                 <td><literal>compileJava</literal></td>
                 <td><apilink class="org.gradle.api.tasks.scala.ScalaCompile"/></td>
-                <td>Compiles production Scala source files using scalac.</td>
+                <td><phrase role="original">Compiles production Scala source files using scalac.</phrase>
+                scalacでScalaの製品ソースファイルをコンパイルする。</td>
             </tr>
             <tr>
                 <td><literal>compileTestScala</literal></td>
                 <td><literal>compileTestJava</literal></td>
                 <td><apilink class="org.gradle.api.tasks.scala.ScalaCompile"/></td>
-                <td>Compiles test Scala source files using scalac.</td>
+                <td><phrase role="original">Compiles test Scala source files using scalac.</phrase>
+                scalacでScalaのテストソースファイルをコンパイルする。</td>
             </tr>
             <tr>
                 <td><literal>compile<replaceable>SourceSet</replaceable>Scala</literal></td>
                 <td><literal>compile<replaceable>SourceSet</replaceable>Java</literal></td>
                 <td><apilink class="org.gradle.api.tasks.scala.ScalaCompile"/></td>
-                <td>Compiles the given source set's Scala source files using scalac.</td>
+                <td><phrase role="original">Compiles the given source set's Scala source files using scalac.</phrase>
+                指定したソースセットのScalaソースファイルをscalacでコンパイルする。</td>
             </tr>
             <tr>
                 <td><literal>scaladoc</literal></td>
                 <td>-</td>
                 <td><apilink class="org.gradle.api.tasks.scala.ScalaDoc"/></td>
-                <td>Generates API documentation for the production Scala source files using scaladoc.</td>
+                <td><phrase role="original">Generates API documentation for the production Scala source files using scaladoc.</phrase>
+                scaladocで、Scala製品ソースファイルのAPIドキュメントを生成する。</td>
             </tr>
         </table>
-        <para>The Scala plugin adds the following dependencies to tasks added by the Java plugin.</para>
+        <para role="original">The Scala plugin adds the following dependencies to tasks added by the Java plugin.</para>
+        <para>Scalaプラグインは、Javaプラグインによって追加されたタスクに以下の依存関係を追加します。</para>
         <table>
-            <title>Scala plugin - additional task dependencies</title>
+            <title>Scalaプラグイン - タスクの追加依存関係 <phrase role="original">Scala plugin - additional task dependencies</phrase></title>
             <thead>
-                <td>Task name</td>
-                <td>Depends on</td>
+                <td><phrase role="original">Task name</phrase> タスク名</td>
+                <td><phrase role="original">Depends on</phrase> 依存先</td>
             </thead>
             <tr>
                 <td>
@@ -101,7 +112,7 @@
             </tr>
         </table>
         <figure>
-            <title>Scala plugin - tasks</title>
+            <title>Scalaプラグイン - タスク<phrase role="original">Scala plugin - tasks</phrase></title>
             <imageobject>
                 <imagedata fileref="img/scalaPluginTasks.png"/>
             </imageobject>
@@ -109,17 +120,20 @@
     </section>
 
     <section>
-        <title>Project layout</title>
-        <para>The Scala plugin assumes the project layout shown below.  All the Scala source directories can contain
+        <title>プロジェクトレイアウト <phrase role="original">Project layout</phrase></title>
+        <para role="original">The Scala plugin assumes the project layout shown below.  All the Scala source directories can contain
             Scala <emphasis>and</emphasis> Java code. The Java source directories may only contain Java source code.
             None of these directories need exist or have anything in them. The Scala plugin will compile whatever it
             finds, and handles anything which is missing.</para>
+        <para>Scalaプロジェクトは、以下のようなプロジェクトレイアウトを想定しています。全てのScalaソースディレクトリには、Scala<emphasis>だけでなく</emphasis>Javaのコードも置くことができます。一方、Javaソースディレクトリに置けるのはJavaのソースコードだけです。
+        これらのディレクトリはなくても構いませんし、何かを置いておく必要もありません。Scalaプラグインは見つけたものはすべてコンパイルし、見つからないものがあった場合でも適当に対処します。
+        </para>
         <table id='scalalayout'>
-            <title>Scala plugin - project layout</title>
+            <title>Scalaプラグイン <phrase role="original">Scala plugin - project layout</phrase></title>
             <thead>
                 <tr>
-                    <td>Directory</td>
-                    <td>Meaning</td>
+                    <td><phrase role="original">Directory</phrase> ディレクトリ</td>
+                    <td><phrase role="original">Meaning</phrase> 意味</td>
                 </tr>
             </thead>
             <xi:include href="javaProjectMainLayout.xml"/>
@@ -127,28 +141,29 @@
                 <td>
                     <filename>src/main/scala</filename>
                 </td>
-                <td>Production Scala source. May also contain Java source for joint compilation.</td>
+                <td><phrase role="original">Production Scala source. May also contain Java source for joint compilation.</phrase>
+                製品のScalaソース。ジョイントコンパイルするJavaソースを含んでもよい</td>
             </tr>
             <xi:include href="javaProjectTestLayout.xml"/>
             <tr>
                 <td>
                     <filename>src/test/scala</filename>
                 </td>
-                <td>Test Scala source. May also contain Java source for joint compilation.</td>
+                <td><phrase role="original">Test Scala source. May also contain Java source for joint compilation.</phrase> テストのScalaソース。ジョイントコンパイルするJavaソースを含んでもよい</td>
             </tr>
             <xi:include href="javaProjectGenericLayout.xml"/>
             <tr>
                 <td>
                     <filename>src/<replaceable>sourceSet</replaceable>/scala</filename>
                 </td>
-                <td>Scala source for the given source set. May also contain Java source for joint compilation.</td>
+                <td><phrase role="original">Scala source for the given source set. May also contain Java source for joint compilation.</phrase> 特定のソースセットのScalaソース。ジョイントコンパイルするJavaソースを含んでもよい</td>
             </tr>
         </table>
 
         <section>
-            <title>Changing the project layout</title>
+            <title>プロジェクトレイアウトの変更 <phrase role="original">Changing the project layout</phrase></title>
             <para>TBD</para>
-            <sample id="customScalaSourceLayout" dir="scala/customizedLayout" title="Custom Scala source layout">
+            <sample id="customScalaSourceLayout" dir="scala/customizedLayout" title="Scalaソースレイアウトのカスタマイズ / Custom Scala source layout">
                 <sourcefile file="build.gradle" snippet="define-main"/>
             </sample>
         </section>
@@ -156,33 +171,39 @@
     </section>
 
     <section>
-        <title>Dependency Management</title>
-        <para>The Scala plugin adds a <literal>scalaTools</literal> configuration, which it uses to locate the Scala
+        <title>依存関係の管理 <phrase role="original">Dependency Management</phrase></title>
+        <para role="original">The Scala plugin adds a <literal>scalaTools</literal> configuration, which it uses to locate the Scala
             tools, such as scalac, to use. You must specify the version of Scala to use. Below is an example.
         </para>
-        <sample id="declareScalaTools" dir="scala/quickstart" title="Declaring the Scala version to use">
+        <para>
+        Scalaプラグインは、<literal>scalaTools</literal>というコンフィグレーションを追加し、scalacなどのScalaツールを格納するのに使用します。
+        ここでは、使いたいScalaのバージョンを指定しなければなりません。以下がその例です。
+        </para>
+        <sample id="declareScalaTools" dir="scala/quickstart" title="使用するScalaのバージョンを指定する。 / Declaring the Scala version to use">
             <sourcefile file="build.gradle" snippet="declare-scala-version"/>
         </sample>
     </section>
 
     <section>
-        <title>Convention Properties</title>
-        <para>The Scala plugin does not add any convention properties to the project.</para>
+        <title>規約プロパティ <phrase role="original">Convention Properties</phrase></title>
+        <para role="original">The Scala plugin does not add any convention properties to the project.</para>
+        <para>Scalaプラグインは、プロジェクトに規約プロパティを追加しません。</para>
     </section>
     
     <section>
-        <title>Source set properties</title>
-        <para>The Scala plugin adds the following convention properties to each source set in the project. You can
+        <title>ソースセットプロパティ <phrase role="original">Source set properties</phrase></title>
+        <para role="original">The Scala plugin adds the following convention properties to each source set in the project. You can
             use these properties in your build script as though they were properties of the source set object (see
             <xref linkend="sub:more_about_convention_objects"/>).</para>
+        <para>Scalaプロジェクトの各ソースセットに以下の規約プロパティを追加します。これらのプロパティは、あたかもソースセットオブジェクトのプロパティであるかのようにビルドスクリプト内で使うことができます（<xref linkend="sub:more_about_convention_objects"/>参照）</para>
         <table>
-            <title>Scala plugin - source set properties</title>
+            <title>Scalaプラグイン - ソースセットプロパティ <phrase role="original">Scala plugin - source set properties</phrase></title>
             <thead>
                 <tr>
-                    <td>Property name</td>
-                    <td>Type</td>
-                    <td>Default value</td>
-                    <td>Description</td>
+                    <td><phrase role="original">Property name</phrase> プロパティ名</td>
+                    <td><phrase role="original">Type</phrase> 型</td>
+                    <td><phrase role="original">Default value</phrase> デフォルト値</td>
+                    <td><phrase role="original">Description</phrase> 説明</td>
                 </tr>
             </thead>
             <tr>
@@ -190,15 +211,18 @@
                     <literal>scala</literal>
                 </td>
                 <td>
-                    <apilink class="org.gradle.api.file.SourceDirectorySet"/> (read-only)
+                    <apilink class="org.gradle.api.file.SourceDirectorySet"/> (<phrase role="original">read-only</phrase>読取り専用)
                 </td>
                 <td>
-                    Not null
+                    <phrase role="original">Not null</phrase> 非null
                 </td>
                 <td>
+                    <phrase role="original">
                     The Scala source files of this source set. Contains all <filename>.scala</filename> and
                     <filename>.java</filename> files found in the Scala source directories, and excludes all other
                     types of files.
+                    </phrase>
+                    このソースセットのScalaソースファイル。Scalaソースディレクトリにある、すべての<filename>.scala</filename>と<filename>.java</filename>ファイルを含み、その他のタイプのファイルは含まない
                 </td>
             </tr>
             <tr>
@@ -206,14 +230,18 @@
                     <literal>scala.srcDirs</literal>
                 </td>
                 <td>
-                    <classname>Set&lt;File></classname>. Can set using anything described in <xref linkend="sec:specifying_multiple_files"/>.
+                    <phrase role="original"><classname>Set&lt;File></classname>. Can set using anything described in <xref linkend="sec:specifying_multiple_files"/>.</phrase>
+                    <xref linkend="sec:specifying_multiple_files"/>で説明されたものなら何でも設定可能
                 </td>
                 <td>
                     <literal>[<replaceable>projectDir</replaceable>/src/<replaceable>name</replaceable>/scala]</literal>
                 </td>
                 <td>
+                    <phrase role="original">
                     The source directories containing the Scala source files of this source set. May also contain
                     Java source files for joint compilation.
+                    </phrase>
+                    このソースセットのScalaソースファイルを含むソースディレクトリ。ジョイントコンパイルするJavaソースファイルも含む場合がある
                 </td>
             </tr>
             <tr>
@@ -221,54 +249,65 @@
                     <literal>allScala</literal>
                 </td>
                 <td>
-                    <apilink class="org.gradle.api.file.FileTree"/> (read-only)
+                    <apilink class="org.gradle.api.file.FileTree"/> (<phrase role="original">read-only</phrase>読取り専用)
                 </td>
                 <td>
-                    Not null
+                    <phrase role="original">Not null</phrase> 非null
                 </td>
                 <td>
+                    <phrase role="original">
                     All Scala source files of this source set. Contains only the <filename>.scala</filename> files
                     found in the Scala source directories.
+                    </phrase>
+                    このソースセットの全Scalaソースファイル。Scalaソースディレクトリにある<filename>.scala</filename>ファイルのみを含む
                 </td>
             </tr>
         </table>
 
-        <para>These convention properties are provided by a convention object of type <apilink class="org.gradle.api.tasks.ScalaSourceSet"/>.</para>
-        <para>The Scala plugin also modifies some source set properties:</para>
+        <para role="original">These convention properties are provided by a convention object of type <apilink class="org.gradle.api.tasks.ScalaSourceSet"/>.</para>
+        <para>これらの規約プロパティは<apilink class="org.gradle.api.tasks.ScalaSourceSet"/>型の規約オブジェクトにより提供されます。</para>
+        <para role="original">The Scala plugin also modifies some source set properties:</para>
+        <para>また、Scalaプラグインはいくつかのソースセットプロパティを修正します。</para>
         <table>
-            <title>Scala plugin - source set properties</title>
+            <title>Scalaプラグイン <phrase role="original">Scala plugin - source set properties</phrase></title>
             <thead>
                 <tr>
-                    <td>Property name</td>
-                    <td>Change</td>
+                    <td><phrase role="original">Property name</phrase> プロパティ名</td>
+                    <td><phrase role="original">Change</phrase> 変更点</td>
                 </tr>
             </thead>
             <tr>
                 <td>
                     <literal>allJava</literal>
                 </td>
-                <td>Adds all <filename>.java</filename> files found in the Scala source directories.</td>
+                <td><phrase role="original">Adds all <filename>.java</filename> files found in the Scala source directories.</phrase> Scalaソースディレクトリにあるすべての<filename>.java</filename>ファイルを追加</td>
             </tr>
             <tr>
                 <td>
                     <literal>allSource</literal>
                 </td>
-                <td>Adds all source files found in the Scala source directories.</td>
+                <td><phrase role="original">Adds all source files found in the Scala source directories.</phrase>
+                Scalaソースディレクトリにあるすべてのファイルを追加</td>
             </tr>
         </table>
     </section>
 
     <section>
         <title>Fast Scala Compiler</title>
-        <para>The Scala plugin includes support for <ulink url="http://www.scala-lang.org/docu/files/tools/fsc.html">fsc</ulink>,
+        <para><phrase role="original">The Scala plugin includes support for <ulink url="http://www.scala-lang.org/docu/files/tools/fsc.html">fsc</ulink>,
             the Fast Scala Compiler. <literal>fsc</literal> runs in a separate daemon process and can speed up
-            compilation significantly.
-            <sample id="fsc" dir="scala/fsc" title="Enabling the Fast Scala Compiler">
+            compilation significantly.</phrase>
+        Scalaプラグインには、<ulink url="http://www.scala-lang.org/docu/files/tools/fsc.html">fsc</ulink>、Fast Scala Compilerのサポートが含まれています。
+        <sample id="fsc" dir="scala/fsc" title="Fast Scala Compilerを有効にする / Enabling the Fast Scala Compiler">
                 <sourcefile file="build.gradle" snippet="use-fsc"/>
             </sample>
+            <phrase role="original">
             Note that <literal>fsc</literal> expects to be restarted whenever the <emphasis>contents</emphasis> of its
             compile class path change. (It does detect changes to the compile class path itself.) This makes it
             less suitable for multi-project builds.
+            </phrase>
+            ただし、次の点に注意してください。<literal>fsc</literal>は、コンパイル時のクラスパス<emphasis>に含まれるもの</emphasis>（訳注：jarなど）が変更される度に再起動させる必要があります。（コンパイル時クラスパス自体の変更は検知されますが）。
+            このため、マルチプロジェクトとの相性は悪くなります。
         </para>
     </section>
 
