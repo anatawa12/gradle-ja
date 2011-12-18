@@ -24,6 +24,7 @@ import org.gradle.api.initialization.dsl.ScriptHandler;
 import org.gradle.api.logging.LogLevel;
 import org.gradle.api.logging.Logger;
 import org.gradle.api.logging.LoggingManager;
+import org.gradle.api.resources.ResourceHandler;
 import org.gradle.api.tasks.WorkResult;
 import org.gradle.process.ExecResult;
 
@@ -227,8 +228,13 @@ public interface Script {
      *   from tarTree('someCompressedTar.gzip')
      *
      *   //tar tree attempts to guess the compression based on the file extension
-     *   //however if you must to specify the compression explicitly you can:
+     *   //however if you must specify the compression explicitly you can:
      *   from tarTree(resources.gzip('someTar.ext'))
+     *
+     *   //in case you work with unconventionally compressed tars
+     *   //you can provide your own implementation of a ReadableResource:
+     *   //from tarTree(yourOwnResource as ReadableResource)
+     *
      *   into 'dest'
      * }
      * </pre>
@@ -345,4 +351,11 @@ public interface Script {
      * @return The logger. Never returns null.
      */
     Logger getLogger();
+
+    /**
+     * Provides access to resource-specific utility methods, for example factory methods that create various resources.
+     *
+     * @return Returned instance contains various resource-specific utility methods.
+     */
+    ResourceHandler getResources();
 }

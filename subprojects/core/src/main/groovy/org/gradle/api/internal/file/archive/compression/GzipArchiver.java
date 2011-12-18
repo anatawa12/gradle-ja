@@ -16,13 +16,15 @@
 
 package org.gradle.api.internal.file.archive.compression;
 
-import org.gradle.api.internal.DescribedReadableResource;
+import org.gradle.api.internal.resources.URIBuilder;
 import org.gradle.api.resources.ReadableResource;
+import org.gradle.api.resources.ResourceException;
 
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.net.URI;
 import java.util.zip.GZIPInputStream;
 import java.util.zip.GZIPOutputStream;
 
@@ -31,11 +33,13 @@ import java.util.zip.GZIPOutputStream;
  */
 public class GzipArchiver implements ReadableResource {
 
-    private DescribedReadableResource resource;
+    private ReadableResource resource;
+    private URI uri;
 
-    public GzipArchiver(DescribedReadableResource resource) {
+    public GzipArchiver(ReadableResource resource) {
         assert resource != null;
         this.resource = resource;
+        this.uri = new URIBuilder(resource.getURI()).schemePrefix("gzip:").build();
     }
 
     public static Compressor getCompressor() {
@@ -59,8 +63,20 @@ public class GzipArchiver implements ReadableResource {
         try {
             return new GZIPInputStream(is);
         } catch (Exception e) {
-            String message = String.format("Unable to create gzip input stream for resource: %s due to: %s.", resource.getName(), e.getMessage());
-            throw new RuntimeException(message, e);
+            String message = String.format("Unable to create gzip input stream for resource: %s due to: %s.", resource.getBaseName(), e.getMessage());
+            throw new ResourceException(message, e);
         }
+    }
+
+    public String getDisplayName() {
+        return resource.getDisplayName();
+    }
+
+    public URI getURI() {
+        return uri;
+    }
+
+    public String getBaseName() {
+        return resource.getBaseName();
     }
 }

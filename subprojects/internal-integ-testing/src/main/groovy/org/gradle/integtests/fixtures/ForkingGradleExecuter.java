@@ -20,9 +20,9 @@ import org.gradle.StartParameter;
 import org.gradle.cli.CommandLineParser;
 import org.gradle.cli.CommandLineParserFactory;
 import org.gradle.cli.SystemPropertiesCommandLineConverter;
-import org.gradle.launcher.daemon.registry.DaemonDir;
 import org.gradle.launcher.daemon.registry.DaemonRegistry;
 import org.gradle.launcher.daemon.registry.DaemonRegistryServices;
+import org.gradle.launcher.daemon.server.DaemonParameters;
 import org.gradle.os.OperatingSystem;
 import org.gradle.process.ExecResult;
 import org.gradle.process.internal.ExecHandle;
@@ -40,6 +40,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
+import java.util.HashMap;
 
 import static org.junit.Assert.fail;
 
@@ -63,8 +64,10 @@ public class ForkingGradleExecuter extends AbstractGradleExecuter {
             userHome = StartParameter.DEFAULT_GRADLE_USER_HOME;
         }
 
-        File daemonBaseDir = DaemonDir.calculateDirectoryViaPropertiesOrUseDefaultInGradleUserHome(getSystemPropertiesFromArgs(), userHome);
-        return new DaemonRegistryServices(daemonBaseDir).get(DaemonRegistry.class);
+        DaemonParameters parameters = new DaemonParameters();
+        parameters.configureFromGradleUserHome(userHome);
+        parameters.configureFromSystemProperties(getSystemPropertiesFromArgs());
+        return new DaemonRegistryServices(parameters.getBaseDir()).get(DaemonRegistry.class);
     }
 
     protected Map<String, String> getSystemPropertiesFromArgs() {
@@ -113,7 +116,16 @@ public class ForkingGradleExecuter extends AbstractGradleExecuter {
         builder.environment("GRADLE_HOME", "");
         builder.environment("JAVA_HOME", getJavaHome());
         builder.environment("GRADLE_OPTS", formatGradleOpts());
-        builder.environment(getAllEnvironmentVars());
+
+        Map<String, String> envVars = new HashMap<String, String>(getAllEnvironmentVars());
+
+        // If the user's environment has JAVA_OPTS set, it will be inherited by the forked process.
+        // If we don't have explicit settings, explicit “null” it out to prevent env pollution.
+        if (!envVars.containsKey("JAVA_OPTS")) {
+            envVars.put("JAVA_OPTS", "");
+        }
+
+        builder.environment(envVars);
         builder.workingDir(getWorkingDir());
         builder.setStandardInput(getStdin());
 

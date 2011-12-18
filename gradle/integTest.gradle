@@ -56,19 +56,15 @@ integTestTasks.all {
 
     testResultsDir = file("${project.testResultsDir}/$name")
 
-    systemProperties['org.gradle.integtest.versions'] = 'all'
+    systemProperties['org.gradle.integtest.versions'] = 'latest'
 
     doFirst {
         testReportDir = file("${project.reportsDir}/$name")
         systemProperties['integTest.gradleHomeDir'] = integTestImageDir.absolutePath
         systemProperties['integTest.gradleUserHomeDir'] = integTestUserDir.absolutePath
         systemProperties['integTest.samplesdir'] = project(":docs").samplesDir.absolutePath
-        // TODO - remove this once wharf is behaving itself
-        delete fileTree(dir: "$integTestUserDir/worker-1/caches/artifacts-2/", include: "**/*.kryo")
-        if (isDevBuild()) {
-            systemProperties['org.gradle.integtest.versions'] = 'latest'
-        }
         if (isCIBuild()) {
+            systemProperties['org.gradle.integtest.versions'] = 'all'
             maxParallelForks = 4
         }
     }
