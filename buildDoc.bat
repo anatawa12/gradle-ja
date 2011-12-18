@@ -1,1 +1,2 @@
-cmd /c gradlew.bat :docs:docs -x :docs:userguidePdf
+@echo off
+cmd /c gradlew.bat :docs:docs
