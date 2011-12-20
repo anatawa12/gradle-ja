@@ -14,8 +14,8 @@
   ~ limitations under the License.
   -->
 
-<chapter id='signing_plugin'>
-    <title>The Signing Plugin</title>
+<chapter id='signing_plugin' xml:lang="ja">
+    <title>署名プラグイン <phrase role="original">The Signing Plugin</phrase></title>
 
     <para>
         The signing plugin adds the ability to digitally sign built files and artifacts.
