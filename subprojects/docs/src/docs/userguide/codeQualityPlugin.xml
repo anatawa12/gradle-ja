@@ -13,8 +13,8 @@
   ~ See the License for the specific language governing permissions and
   ~ limitations under the License.
   -->
-<chapter id="code_quality_plugin">
-    <title>The Code Quality Plugin</title>
+<chapter id="code_quality_plugin" xml:lang="ja">
+    <title>コード品質プラグイン <phrase role="original">The Code Quality Plugin</phrase></title>
 
     <para>The code quality plugin adds tasks which perform code quality checks and generate reports from these checks.
         The following tools are supported:
