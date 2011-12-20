@@ -16,8 +16,9 @@
 <chapter id="code_quality_plugin" xml:lang="ja">
     <title>コード品質プラグイン <phrase role="original">The Code Quality Plugin</phrase></title>
 
-    <para>The code quality plugin adds tasks which perform code quality checks and generate reports from these checks.
-        The following tools are supported:
+    <para><phrase role="original">The code quality plugin adds tasks which perform code quality checks and generate reports from these checks.
+        The following tools are supported:</phrase>
+        コード品質プラグインは、コードの品質をチェックし、レポートを生成するタスクを追加します。
         <itemizedlist>
             <listitem><para><ulink url="http://checkstyle.sourceforge.net/index.html">Checkstyle</ulink></para></listitem>
             <listitem><para><ulink url="http://codenarc.sourceforge.net/index.html">CodeNarc</ulink></para></listitem>
@@ -25,24 +26,26 @@
     </para>
 
     <section>
-        <title>Usage</title>
-        <para>To use the code quality plugin, include in your build script:</para>
-        <sample id="useCodeQualityPlugin" dir="codeQuality" title="Using the code quality plugin">
+        <title>使用方法 <phrase role="original">Usage</phrase></title>
+        <para role="original">To use the code quality plugin, include in your build script:</para>
+        <para>コード品質プラグインを使うには、次の行をビルドスクリプトに追加します。</para>
+        <sample id="useCodeQualityPlugin" dir="codeQuality" title="コード品質プラグインを使う / Using the code quality plugin">
             <sourcefile file="build.gradle" snippet="use-plugin"/>
         </sample>
     </section>
 
     <section>
-        <title>Tasks</title>
-        <para>When used with the Java plugin, the code quality plugin adds the following tasks to the project:</para>
+        <title>タスク <phrase role="original">Tasks</phrase></title>
+        <para role="original">When used with the Java plugin, the code quality plugin adds the following tasks to the project:</para>
+        <para>Javaプラグインを使っている場合、コード品質プラグインは以下のタスクをプロジェクトに追加します。</para>
         <table>
-            <title>Code quality plugin - Java tasks</title>
+            <title>コード品質プラグイン - Javaタスク <phrase role="original">Code quality plugin - Java tasks</phrase></title>
             <thead>
                 <tr>
-                    <td>Task name</td>
-                    <td>Depends on</td>
-                    <td>Type</td>
-                    <td>Description</td>
+                    <td><phrase role="original">Task name</phrase> タスク名</td>
+                    <td><phrase role="original">Depends on</phrase> 依存先</td>
+                    <td><phrase role="original">Type</phrase> 型</td>
+                    <td><phrase role="original">Description</phrase> 説明</td>
                 </tr>
             </thead>
             <tr>
@@ -51,7 +54,8 @@
                 </td>
                 <td>-</td>
                 <td><apilink class="org.gradle.api.plugins.quality.Checkstyle"/></td>
-                <td>Runs Checkstyle against the production Java source files.</td>
+                <td><phrase role="original">Runs Checkstyle against the production Java source files.</phrase>
+                Javaの製品ソースファイルをCheckstyleにかけます。</td>
             </tr>
             <tr>
                 <td>
@@ -59,7 +63,8 @@
                 </td>
                 <td><literal>compile</literal></td>
                 <td><apilink class="org.gradle.api.plugins.quality.Checkstyle"/></td>
-                <td>Runs Checkstyle against the test Java source files.</td>
+                <td><phrase role="original">Runs Checkstyle against the test Java source files.</phrase>
+                JavaのテストソースファイルをCheckstyleにかけます。</td>
             </tr>
             <tr>
                 <td>
@@ -67,59 +72,69 @@
                 </td>
                 <td>-</td>
                 <td><apilink class="org.gradle.api.plugins.quality.Checkstyle"/></td>
-                <td>Runs Checkstyle against the given source set's Java source files.</td>
+                <td><phrase role="original">Runs Checkstyle against the given source set's Java source files.</phrase>
+                指定したソースセットのJavaソースファイルをCheckstyleにかけます。</td>
             </tr>
         </table>
 
-        <para>When used with the Groovy plugin, the code quality plugin adds the following tasks to the project:</para>
+        <para role="original">When used with the Groovy plugin, the code quality plugin adds the following tasks to the project:</para>
+        <para>Groovyプラグインを使っている場合、コード品質プラグインは以下のタスクをプロジェクトに追加します。</para>
 
         <table>
-            <title>Code quality plugin - tasks</title>
+            <title>コード品質プラグイン <phrase role="original">Code quality plugin - tasks</phrase></title>
             <thead>
                 <tr>
-                    <td>Task name</td>
-                    <td>Depends on</td>
-                    <td>Type</td>
-                    <td>Description</td>
+                    <td><phrase role="original">Task name</phrase> タスク名</td>
+                    <td><phrase role="original">Depends on</phrase> 依存先</td>
+                    <td><phrase role="original">Type</phrase> 型</td>
+                    <td><phrase role="original">Description</phrase> 説明</td>
                 </tr>
             </thead>
             <tr>
                 <td>codenarcMain</td>
                 <td>-</td>
                 <td><apilink class="org.gradle.api.plugins.quality.CodeNarc"/></td>
-                <td>Runs CodeNarc against the production Groovy source files.</td>
+                <td><phrase role="original">Runs CodeNarc against the production Groovy source files.</phrase>
+                Groovyの製品ソースファイルをCodeNarcにかけます。</td>
             </tr>
             <tr>
                 <td>codenarcTest</td>
                 <td>-</td>
                 <td><apilink class="org.gradle.api.plugins.quality.CodeNarc"/></td>
-                <td>Runs CodeNarc against the test Groovy source files.</td>
+                <td><phrase role="original">Runs CodeNarc against the test Groovy source files.</phrase>
+                GroovyのテストソースファイルをCodeNarcにかけます。</td>
             </tr>
             <tr>
                 <td>codenarc<replaceable>SourceSet</replaceable></td>
                 <td>-</td>
                 <td><apilink class="org.gradle.api.plugins.quality.CodeNarc"/></td>
-                <td>Runs CodeNarc against the given source set's Groovy source files.</td>
+                <td><phrase role="original">Runs CodeNarc against the given source set's Groovy source files.</phrase>
+                指定したソースセットのGroovyソースファイルをCodeNarcにかけます。</td>
             </tr>
         </table>
-        <para>The Code quality plugin adds the following dependencies to tasks added by the Java plugin.</para>
+        <para role="original">The Code quality plugin adds the following dependencies to tasks added by the Java plugin.</para>
+        <para>コード品質プラグインは、Javaプラグインによって追加されたタスクに以下の依存関係を追加します。</para>
         <table>
-            <title>Code quality plugin - additional task dependencies</title>
+            <title>コード品質プラグイン - タスクの追加依存関係 <phrase role="original">Code quality plugin - additional task dependencies</phrase></title>
             <thead>
-                <td>Task name</td>
-                <td>Depends on</td>
+                <td><phrase role="original">Task name</phrase> タスク名</td>
+                <td><phrase role="original">Depends on</phrase> 依存先</td>
             </thead>
             <tr>
                 <td>check</td>
-                <td>All Checkstyle and CodeNarc tasks, including <literal>checkstyleMain</literal>,
+                <td><phrase role="original">All Checkstyle and CodeNarc tasks, including <literal>checkstyleMain</literal>,
                     <literal>checkstyleTest</literal>,
                     <literal>codenarcMain</literal> and
-                    <literal>codenarcTest</literal>
+                    <literal>codenarcTest</literal></phrase>
+                    <literal>checkstyleMain</literal>、
+                    <literal>checkstyleTest</literal>、
+                    <literal>codenarcMain</literal>および
+                    <literal>codenarcTest</literal>を含む全てのCheckstyle、CodeNarcタスク
                 </td>
             </tr>
         </table>
         <figure>
-            <title>Code quality plugin - tasks</title>
+            <title>コード品質プラグイン - タスク <phrase role="original">Code quality plugin - tasks</phrase></title>
             <imageobject>
                 <imagedata fileref="img/codeQualityPluginTasks.png"/>
             </imageobject>
@@ -127,47 +142,52 @@
     </section>
 
     <section>
-        <title>Project layout</title>
-        <para>The code quality plugin expects the following project layout:</para>
+        <title>プロジェクトレイアウト <phrase role="original">Project layout</phrase></title>
+        <para role="original">The code quality plugin expects the following project layout:</para>
+        <para>コード品質プラグインは以下のようなプロジェクトレイアウトを想定しています。</para>
         <table>
-            <title>Code quality plugin - project layout</title>
+            <title>コード品質プラグイン - プロジェクトレイアウト <phrase role="original">Code quality plugin - project layout</phrase></title>
             <thead>
                 <tr>
-                    <td>File</td>
-                    <td>Meaning</td>
+                    <td><phrase role="original">File</phrase> ファイル</td>
+                    <td><phrase role="original">Meaning</phrase> 意味</td>
                 </tr>
             </thead>
             <tr>
                 <td>
                     <filename>config/checkstyle/checkstyle.xml</filename>
                 </td>
-                <td>Checkstyle configuration file</td>
+                <td><phrase role="original">Checkstyle configuration file</phrase>
+                Checkstyleの設定ファイル</td>
             </tr>
             <tr>
                 <td>
                     <filename>config/codenarc/codenarc.xml</filename>
                 </td>
-                <td>CodeNarc configuration file</td>
+                <td><phrase role="original">CodeNarc configuration file</phrase>
+                CodeNarcの設定ファイル</td>
             </tr>
         </table>
     </section>
 
     <section>
-        <title>Dependency management</title>
-        <para>The code quality plugin does not add any dependency configurations.</para>
+        <title>依存関係の管理 <phrase role="original">Dependency management</phrase></title>
+        <para role="original">The code quality plugin does not add any dependency configurations.</para>
+        <para>コード品質プラグインは依存関係のコンフィグレーションを追加しません。</para>
     </section>
 
     <section>
-        <title>Convention properties</title>
-        <para>When used with the Java plugin, the code quality plugin adds the following convention properties to the project:</para>
+        <title>規約プロパティ <phrase role="original">Convention properties</phrase></title>
+        <para role="original">When used with the Java plugin, the code quality plugin adds the following convention properties to the project:</para>
+        <para>Javaプラグインを使っている場合、コード品質プラグインは以下の規約プロパティをプロジェクトに追加します。</para>
         <table>
-            <title>Code quality plugin - convention properties</title>
+            <title>コード品質プラグイン - 規約プロパティ <phrase role="original">Code quality plugin - convention properties</phrase></title>
             <thead>
                 <tr>
-                    <td>Property name</td>
-                    <td>Type</td>
-                    <td>Default value</td>
-                    <td>Description</td>
+                    <td><phrase role="original">Property name</phrase> プロパティ名</td>
+                    <td><phrase role="original">Type</phrase> 型</td>
+                    <td><phrase role="original">Default value</phrase> デフォルト値</td>
+                    <td><phrase role="original">Description</phrase> 説明</td>
                 </tr>
             </thead>
             <tr>
@@ -181,7 +201,8 @@
                     <literal>config/checkstyle/checkstyle.xml</literal>
                 </td>
                 <td>
-                    The location of the Checkstyle configuration file, relative to the project directory.
+                    <phrase role="original">The location of the Checkstyle configuration file, relative to the project directory.</phrase>
+                    Checkstyle設定ファイルの場所を、プロジェクトディレクトリからの相対パスで設定
                 </td>
             </tr>
             <tr>
@@ -189,13 +210,14 @@
                     <literal>checkstyleConfigFile</literal>
                 </td>
                 <td>
-                    <classname>File</classname> (read-only)
+                    <classname>File</classname> (<phrase role="original">read-only</phrase> 読込み専用)
                 </td>
                 <td>
                     <literal><replaceable>projectDir</replaceable>/<replaceable>checkstyleConfigFileName</replaceable></literal>
                 </td>
                 <td>
-                    The Checkstyle configuration file.
+                    <phrase role="original">The Checkstyle configuration file.</phrase>
+                    Checkstyleの設定ファイル
                 </td>
             </tr>
             <tr>
@@ -209,7 +231,8 @@
                     <literal>checkstyle</literal>
                 </td>
                 <td>
-                    The name of the directory to generate Checkstyle results into, relative to the build directory.
+                    <phrase role="original">The name of the directory to generate Checkstyle results into, relative to the build directory.</phrase>
+                    Checkstyleの結果を出力するディレクトリ名を、buildディレクトリからの相対パスで設定
                 </td>
             </tr>
             <tr>
@@ -217,13 +240,14 @@
                     <literal>checkstyleResultsDir</literal>
                 </td>
                 <td>
-                    <classname>File</classname> (read-only)
+                    <classname>File</classname> (<phrase role="original">read-only</phrase> 読込み専用)
                 </td>
                 <td>
                     <literal><replaceable>buildDir</replaceable>/<replaceable>checkstyleResultsDirName</replaceable></literal>
                 </td>
                 <td>
-                    The directory to generate Checkstyle results into.
+                    <phrase role="original">The directory to generate Checkstyle results into.</phrase>
+                    Checkstyleの結果を出力するディレクトリ
                 </td>
             </tr>
             <tr>
@@ -237,24 +261,27 @@
                     <literal>[:]</literal>
                 </td>
                 <td>
-                    The properties to use when loading the Checkstyle configuration.
+                    <phrase role="original">The properties to use when loading the Checkstyle configuration.</phrase>
+                    Checkstyleの設定をロードするときに使うプロパティ
                 </td>
             </tr>
         </table>
 
-        <para>These convention properties are provided by a convention object of type
+        <para role="original">These convention properties are provided by a convention object of type
             <apilink class="org.gradle.api.plugins.quality.JavaCodeQualityPluginConvention"/>.</para>
+        <para>これらの規約プロパティは、<apilink class="org.gradle.api.plugins.quality.JavaCodeQualityPluginConvention"/>型の規約オブジェクトにより提供されています。</para>
 
-        <para>When used with the Groovy plugin, the code quality plugin adds the following convention properties to the project:</para>
+        <para role="original">When used with the Groovy plugin, the code quality plugin adds the following convention properties to the project:</para>
+        <para>Groovyプラグインを使っている場合、コード品質プラグインは以下の規約プロパティをプロジェクトに追加します。</para>
 
         <table>
-            <title>Code quality plugin - convention properties</title>
+            <title>コード品質プラグイン - 規約プロパティ <phrase role="original">Code quality plugin - convention properties</phrase></title>
             <thead>
                 <tr>
-                    <td>Property name</td>
-                    <td>Type</td>
-                    <td>Default value</td>
-                    <td>Description</td>
+                    <td><phrase role="original">Property name</phrase> プロパティ名</td>
+                    <td><phrase role="original">Type</phrase> 型</td>
+                    <td><phrase role="original">Default value</phrase> デフォルト値</td>
+                    <td><phrase role="original">Description</phrase> 説明</td>
                 </tr>
             </thead>
             <tr>
@@ -268,7 +295,8 @@
                     <literal>config/codenarc/codenarc.xml</literal>
                 </td>
                 <td>
-                    The location of the CodeNarc configuration file, relative to the project directory.
+                    <phrase role="original">The location of the CodeNarc configuration file, relative to the project directory.</phrase>
+                    CodeNarc設定ファイルの場所を、プロジェクトディレクトリからの相対パスで設定
                 </td>
             </tr>
             <tr>
@@ -276,13 +304,14 @@
                     <literal>codeNarcConfigFile</literal>
                 </td>
                 <td>
-                    <classname>File</classname> (read-only)
+                    <classname>File</classname> (<phrase role="original">read-only</phrase> 読込み専用)
                 </td>
                 <td>
                     <literal><replaceable>projectDir</replaceable>/<replaceable>codeNarcConfigFileName</replaceable></literal>
                 </td>
                 <td>
-                    The CodeNarc configuration file.
+                    <phrase role="original">The CodeNarc configuration file.</phrase>
+                    CodeNarcの設定ファイル
                 </td>
             </tr>
             <tr>
@@ -296,7 +325,8 @@
                     <literal>codenarc</literal>
                 </td>
                 <td>
-                    The name of the directory to generate CodeNarc reports into, relative to the reports directory.
+                    <phrase role="original">The name of the directory to generate CodeNarc reports into, relative to the reports directory.</phrase>
+                    CodeNarcのレポートを出力するディレクトリ名を、reportsディレクトリからの相対パスで設定
                 </td>
             </tr>
             <tr>
@@ -304,19 +334,21 @@
                     <literal>codeNarcReportsDir</literal>
                 </td>
                 <td>
-                    <classname>File</classname> (read-only)
+                    <classname>File</classname> (<phrase role="original">read-only</phrase> 読込み専用)
                 </td>
                 <td>
                     <literal><replaceable>reportsDir</replaceable>/<replaceable>codeNarcReportsDirName</replaceable></literal>
                 </td>
                 <td>
-                    The directory to generate CodeNarc reports into.
+                    <phrase role="original">The directory to generate CodeNarc reports into.</phrase>
+                    CodeNarcレポートを出力するディレクトリ
                 </td>
             </tr>
         </table>
 
-        <para>These convention properties are provided by a convention object of type
+        <para role="original">These convention properties are provided by a convention object of type
             <apilink class="org.gradle.api.plugins.quality.GroovyCodeQualityPluginConvention"/>.</para>
+        <para>これらの規約プロパティは、<apilink class="org.gradle.api.plugins.quality.GroovyCodeQualityPluginConvention"/>型の規約オブジェクトにより提供されています。</para>
     </section>
 
 </chapter>
