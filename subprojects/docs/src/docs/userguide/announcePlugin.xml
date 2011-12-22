@@ -1,5 +1,5 @@
-<chapter id='announce_plugin'>
-    <title>The Announce Plugin</title>
+<chapter id='announce_plugin' xml:lang="ja">
+    <title>通知プラグイン<phrase role="original">The Announce Plugin</phrase></title>
     <para>The Gradle announce plugin enables you to publish messages on succeeded tasks to your favourite platforms.
 	It supports 
 	<itemizedlist>
