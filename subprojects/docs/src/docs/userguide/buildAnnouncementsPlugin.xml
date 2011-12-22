@@ -1,22 +1,31 @@
-<chapter id='build_announcements_plugin'>
-    <title>The Build Announcements Plugin</title>
+<chapter id='build_announcements_plugin' xml:lang="ja">
+    <title>ビルド通知プラグイン<phrase role="original">The Build Announcements Plugin</phrase></title>
     <note>
+        <para role="original">
+            The build announcements is experimental and should not be considered stable.
+        </para>
         <para>
             The build announcements is experimental and should not be considered stable.
         </para>
     </note>
+    <para role="original">The build announcements plugin uses the <link linkend="announce_plugin">announce</link> plugin to send local announcements on important events in the build.</para>
     <para>The build announcements plugin uses the <link linkend="announce_plugin">announce</link> plugin to send local announcements on important events in the build.</para>
     <section>
-        <title>Usage</title>
+        <title><phrase role="original"></phrase>Usage</title>
+        <para role="original">To use the build announcements plugin, include in your build script:</para>
         <para>To use the build announcements plugin, include in your build script:</para>
-        <sample id="useBuildAnnouncementsPlugin" dir="announce" title="Using the build announcements plugin">
+        <sample id="useBuildAnnouncementsPlugin" dir="announce" title=" / Using the build announcements plugin">
             <sourcefile file="build.gradle" snippet="use-build-announcements-plugin"/>
         </sample>
+        <para role="original">That's it. If you want to tweak where the announcements go, you can configure the <link linkend="announce_plugin">announce</link> plugin to
+            change the local announcer.
+        </para>
         <para>That's it. If you want to tweak where the announcements go, you can configure the <link linkend="announce_plugin">announce</link> plugin to
             change the local announcer.
         </para>
+        <para role="original">You can also apply the plugin from an init script:</para>
         <para>You can also apply the plugin from an init script:</para>
-        <sample id="useBuildAnnouncementsPlugin" dir="announce" title="Using the build announcements plugin from an init script">
+        <sample id="useBuildAnnouncementsPlugin" dir="announce" title=" / Using the build announcements plugin from an init script">
             <sourcefile file="init.gradle"/>
             <test args="-I init.gradle"/>
         </sample>
