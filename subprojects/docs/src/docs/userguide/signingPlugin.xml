@@ -17,51 +17,66 @@
 <chapter id='signing_plugin' xml:lang="ja">
     <title>署名プラグイン <phrase role="original">The Signing Plugin</phrase></title>
 
-    <para>
+    <para role="original">
         The signing plugin adds the ability to digitally sign built files and artifacts.
         These digital signatures can then be used to prove who built the artifact the signature is attached to
         as well as other information such as when the signature was generated.
     </para>
     <para>
+    署名プラグインは、ビルドされたファイルやアーティファクトに電子署名を行う機能を追加します。
+    この電子署名は、いつその署名がされたのかなどの情報だけでなく、署名されたアーティファクトを誰がビルドしたのかを証明するのに使われます。
+    </para>
+    <para role="original">
         The signing plugin currently only provides support for generating <ulink url='http://www.pgpi.org/'>PGP signatures</ulink> 
         (which is the signature format <ulink url="https://docs.sonatype.org/display/Repository/Central+Sync+Requirements">required for 
         publication to the Maven Central Repository</ulink>).
     </para>
+    <para>現在署名プラグインがサポートしているのは、<ulink url='http://www.pgpi.org/'>PGP署名</ulink>(<ulink url="https://docs.sonatype.org/display/Repository/Central+Sync+Requirements">Mavenセントラルリポジトリに公開するのに必要な</ulink>署名形式)の生成のみです。</para>
 
     <section>
-        <title>Usage</title>
-        <para>To use the Signing plugin, include in your build script:</para>
-        <sample id="useSigningPlugin" dir="signing/maven" title="Using the Signing plugin">
+        <title>使用方法 <phrase role="original">Usage</phrase></title>
+        <para role="original">To use the Signing plugin, include in your build script:</para>
+        <para>署名プラグインを使うには、以下の行をビルドスクリプトに追加します。</para>
+        <sample id="useSigningPlugin" dir="signing/maven" title="署名プラグインの使用 / Using the Signing plugin">
             <sourcefile file="build.gradle" snippet="use-plugin"/>
         </sample>
     </section>
     
     <section>
-        <title>Signatory credentials</title>
-        <para>
+        <title>署名者の資格情報 <phrase role="original">Signatory credentials</phrase></title>
+        <para role="original">
             In order to create PGP signatures, you will need a key pair (instructions on creating a key pair using the <ulink url="http://www.gnupg.org/">GnuPG tools</ulink> 
             can be found in the <ulink url="http://www.gnupg.org/documentation/howtos.html">GnuPG HOWTOs</ulink>). You need to provide the signing plugin
             with your key information, which means three things: 
         </para>
-        <itemizedlist>
-            <listitem><para>The public key ID (an 8 character hexadecimal string).</para></listitem>
-            <listitem><para>The absolute path to the secret key ring file containing your private key.</para></listitem>
-            <listitem><para>The passphrase used to protect your private key.</para></listitem>
-        </itemizedlist>
         <para>
+        PGP署名を作成するには、キーペアが必要です(<ulink url="http://www.gnupg.org/">GnuPGツール</ulink>を使用してキーペアを作成する手順については、<ulink url="http://www.gnupg.org/documentation/howtos.html">GnuPGのHOWTO文書</ulink>で見つけることができます)。
+        署名プラグインでは、このキー情報、つまり以下の三つの情報を設定することができます。
+        </para>
+        <itemizedlist>
+            <listitem><para role="original">The public key ID (an 8 character hexadecimal string).</para><para>公開鍵ID(8文字の16進数文字列)</para></listitem>
+            <listitem><para role="original">The absolute path to the secret key ring file containing your private key.</para><para>秘密鍵を保存したキーリングファイルの絶対パス</para></listitem>
+            <listitem><para role="original">The passphrase used to protect your private key.</para><para>秘密鍵を保護するパスフレーズ</para></listitem>
+        </itemizedlist>
+        <para role="original">
             These items must be supplied as the property projects <literal>signing.keyId</literal>, <literal>signing.password</literal> 
             and <literal>signing.secretKeyRingFile</literal> respectively. Given the personal and private nature of these values, a good practice
             is to store them in the user <literal>gradle.properties</literal> file (described in <xref linkend="sec:gradle_properties_and_system_properties"/>).
+        </para>
+        <para>
+        これらの情報は、それぞれ<literal>signing.keyId</literal>、<literal>signing.secretKeyRingFile</literal>、<literal>signing.password</literal>というプロジェクトプロパティで設定する必要があります。
+        良いプラクティスは、ユーザーの<literal>gradle.properties</literal>ファイル(<xref linkend="sec:gradle_properties_and_system_properties"/>で解説されています)にこれらを保存することです。
         </para>
         <programlisting>
             signing.keyId=24875D73
 signing.password=secret
 signing.secretKeyRingFile=/Users/me/.gnupg/secring.gpg
         </programlisting>
-        <para>
+        <para role="original">
             If specifying this information in the user <literal>gradle.properties</literal> file is not feasible for your environment, you can source the information
             however you need to and set the project properties manually.
         </para>
+        <para>これらの情報を<literal>gradle.properties</literal>ファイルで設定するのが環境の問題で難しい場合は、手動でプロジェクトのプロパティに設定させることも可能です。</para>
         <!--
             Unsure how to go about automatically testing this little snippet.
         -->
@@ -83,80 +98,111 @@ gradle.taskGraph.whenReady { taskGraph ->
     </section>
 
     <section>
-        <title>Specifying what to sign</title>
-        <para>
+        <title>署名対象を指定する <phrase role="original">Specifying what to sign</phrase></title>
+        <para role="original">
             As well as configuring how things are to be signed (i.e. the signatory configuration), you must also specify what is to be signed. 
             The Signing plugin provides a DSL that allows you to specify the tasks and/or configurations that should be signed.
         </para>
+        <para>
+        どのように署名するか(つまり署名者情報の指定)だけでなく、何を署名するかというのも設定しなければなりません。
+        署名プラグインは、署名すべきタスクやコンフィギュレーションを指定するためのDSLを提供しています。
+        </para>
         <section>
-            <title>Signing Configurations</title>
-            <para>
+            <title>コンフィグレーションに署名する <phrase role="original">Signing Configurations</phrase></title>
+            <para role="original">
                 It is common to want to sign the artifacts of a configuration. For example, the <link linkend="java_plugin">Java plugin</link> 
                 configures a jar to built and this jar artifact is added to the <literal>archives</literal> configuration. 
                 Using the Signing DSL, you can specify that all of the artifacts of this configuration should be signed.
             </para>
-            <sample id="signingArchives" dir="signing/maven" title="Signing a configuration">
+            <para>
+            あるコンフィグレーション内のアーティファクトに対して署名をしたいというのは良くあることです。例えば、<link linkend="java_plugin">Javaプラグイン</link>は、jarをビルドするよう定義し、そのjarをアーティファクトとして<literal>archives</literal>コンフィグレーションに追加します。
+            署名DSLを使えば、このコンフィグレーションに含まれる全てのアーティファクトに署名するよう設定できるのです。
+            </para>
+            <sample id="signingArchives" dir="signing/maven" title="コンフィグレーションに署名する / Signing a configuration">
                 <sourcefile file="build.gradle" snippet="sign-archives"/>
             </sample>
-            <para>
+            <para role="original">
                 This will create a task (of type <apilink class="org.gradle.plugins.signing.Sign"/>) in your project named “<literal>signArchives</literal>”, 
                 that will build any <literal>archives</literal> artifacts (if needed) and then generate signatures for them. The signature files will be placed
                 alongside the artifacts being signed.
             </para>
-            <sample id="signingArchivesOutput" dir="signing/maven" title="Signing a configuration output">
+            <para>
+            これにより、「<literal>signArchives</literal>」という名前のタスク(<apilink class="org.gradle.plugins.signing.Sign"/>型)が追加されます。
+            このタスクは、<literal>archives</literal>のアーティファクトを全て(必要なら)ビルドし、それからそれらのアーティファクト用に署名を作成します。署名ファイルは、署名されるアーティファクトと一緒に置かれます。
+            </para>
+            <sample id="signingArchivesOutput" dir="signing/maven" title="コンフィグレーションの出力に署名する / Signing a configuration output">
                 <output args="signArchives"/>
             </sample>
         </section>
         <section>
-            <title>Signing Tasks</title>
-            <para>
+            <title>タスクに署名する <phrase role="original">Signing Tasks</phrase></title>
+            <para role="original">
                 In some cases the artifact that you need to sign may not be part of a configuration. In this case you can directly sign the task that
                 produces the artifact to sign.
             </para>
-            <sample id="signingTasks" dir="signing/tasks" title="Signing a task">
+            <para>署名したいものが、コンフィギュレーションに含まれていないというケースもあります。このケースでは、署名するアーティファクトを作成するタスクに対して、直接署名することができます。</para>
+            <sample id="signingTasks" dir="signing/tasks" title="タスクを署名する / Signing a task">
                 <sourcefile file="build.gradle" snippet="sign-task"/>
             </sample>
-            <para>
+            <para role="original">
                 This will create a task (of type <apilink class="org.gradle.plugins.signing.Sign"/>) in your project named “<literal>signStuffZip</literal>”, 
                 that will build the input task's archive (if needed) and then sign it. The signature file will be placed
                 alongside the artifact being signed.
             </para>
-            <sample id="signingTaskOutput" dir="signing/tasks" title="Signing a task output">
+            <para>
+            これにより、「<literal>signStuffZip</literal>」という名前のタスク(<apilink class="org.gradle.plugins.signing.Sign"/>型)がプロジェクトに追加されます。
+            このタスクは、入力物を(必要なら)ビルドしてアーカイブを作成し、それからそのアーカイブに署名します。署名ファイルは、署名されるアーティファクトと一緒に置かれます。
+            </para>
+            <sample id="signingTaskOutput" dir="signing/tasks" title="タスクの出力に署名する / Signing a task output">
                 <output args="signStuffZip"/>
             </sample>
-            <para>
+            <para role="original">
                 For a task to be “signable”, it must produce an archive of some type. Tasks that do this are the <apilink class="org.gradle.api.tasks.bundling.Tar"/>,
                 <apilink class="org.gradle.api.tasks.bundling.Zip"/>, <apilink class="org.gradle.api.tasks.bundling.Jar"/>, 
                 <apilink class="org.gradle.api.tasks.bundling.War"/> and <apilink class="org.gradle.plugins.ear.Ear"/> tasks.
             </para>
+            <para>
+            「署名可能」なタスクは、何らかのアーカイブを作成するものに限られます。この種類のタスクには、<apilink class="org.gradle.api.tasks.bundling.Tar"/>や<apilink class="org.gradle.api.tasks.bundling.Zip"/>、<apilink class="org.gradle.api.tasks.bundling.Jar"/>、<apilink class="org.gradle.api.tasks.bundling.War"/>、<apilink class="org.gradle.plugins.ear.Ear"/>があります。
+            </para>
         </section>
         <section>
-            <title>Conditional Signing</title>
-            <para>
+            <title>条件付き署名 <phrase role="original">Conditional Signing</phrase></title>
+            <para role="original">
                 A common usage pattern is to only sign build artifacts under certain conditions. For example, you may not wish to sign artifacts for non release versions.
                 To achieve this, you can wrap whatever logic you need around the signing DSL.
             </para>
-            <sample id="conditionalSigning" dir="signing/conditional" title="Conditional signing">
+            <para>
+            よくあるビルドのパターンに、ある特定の条件下に限ってアーティファクトに署名する、というものがあります。例えば、リリースバージョン以外のアーティファクトには署名を付けたくないかもしれません。
+            これは、署名DSLを必要なロジックで囲めば実現できます。
+            </para>
+            <sample id="conditionalSigning" dir="signing/conditional" title="条件付き署名 / Conditional signing">
                 <sourcefile file="build.gradle" snippet="conditional-signing" />
             </sample>
         </section>
     </section>
     
     <section>
-        <title>Publishing the signatures</title>
-        <para>
+        <title>署名を公開する <phrase role="original">Publishing the signatures</phrase></title>
+        <para role="original">
             When specifying what is to be signed via the Signing DSL, the resultant signature artifacts are automatically added to the <literal>signatures</literal> and
             <literal>archives</literal> dependency configurations. This means that if you want to upload your signatures to your distribution repository along
             with the artifacts you simply execute the <literal>uploadArchives</literal> task as normal.
         </para>
+        <para>
+        署名DSLで署名対象を指定すると、生成された署名は自動的に<literal>signatures</literal>コンフィギュレーションと<literal>archives</literal>コンフィギュレーションに追加されます。
+        つまり、署名をアーティファクトと一緒に配布用リポジトリに公開したい場合は、通常通りただ<literal>uploadArchives</literal>タスクを実行すればいいということです。
+        </para>
     </section>
     
     <section>
-        <title>Signing POM files</title>
+        <title>POMファイルに署名する <phrase role="original">Signing POM files</phrase></title>
         <para>
+            <phrase role="original">
             When deploying signatures for your artifacts to a Maven repository, you will also want to sign the published POM file. The signing plugin adds a
             <literal>signPom()</literal> method that can be used in the <literal>beforeDeployment()</literal> block in your upload task configuration.
-            <sample id="signingMavenPom" dir="signing/maven" title="Signing a POM for deployment">
+            </phrase>
+            アーティファクトの署名をMavenリポジトリにデプロイするときは、公開するPOMファイルにも署名をしたいはずです。署名プラグインは、<literal>signPom()</literal>というメソッドを追加します。アップロードタスクの設定を行う際、このメソッドを<literal>beforeDeployment()</literal>ブロックで使用してください。
+            <sample id="signingMavenPom" dir="signing/maven" title="デプロイのためにPOMファイルを署名する / Signing a POM for deployment">
                 <sourcefile file="build.gradle" snippet="sign-pom"/>
             </sample>
         </para>
