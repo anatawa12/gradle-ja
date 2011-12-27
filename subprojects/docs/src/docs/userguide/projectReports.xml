@@ -13,8 +13,8 @@
   ~ See the License for the specific language governing permissions and
   ~ limitations under the License.
   -->
-<chapter id="project_reports_plugin" xmlns:xi="http://www.w3.org/2001/XInclude">
-    <title>The Project Report Plugin</title>
+<chapter id="project_reports_plugin" xmlns:xi="http://www.w3.org/2001/XInclude" xml:lang="ja">
+    <title>プロジェクトレポートプラグイン<phrase role="original">The Project Report Plugin</phrase></title>
 
     <note>
         <para>The Project report plugin is currently a work in progress, and at this stage doesn't do particularly
