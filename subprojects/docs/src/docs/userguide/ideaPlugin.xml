@@ -14,8 +14,8 @@
   ~ limitations under the License.
   -->
 
-<chapter id="idea_plugin">
-    <title>The IDEA Plugin</title>
+<chapter id="idea_plugin" xml:lang="ja">
+    <title>IDEAプラグイン <phrase role="original">The IDEA Plugin</phrase></title>
 
     <para>The IDEA plugin generates files that are used by <ulink url="http://www.jetbrains.com/idea/">IntelliJ IDEA</ulink>, thus
         making it possible to open the project from IDEA (<guimenuitem>File</guimenuitem> - <guimenuitem>Open Project</guimenuitem>).
