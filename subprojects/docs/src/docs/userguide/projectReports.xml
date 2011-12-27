@@ -17,38 +17,49 @@
     <title>プロジェクトレポートプラグイン<phrase role="original">The Project Report Plugin</phrase></title>
 
     <note>
-        <para>The Project report plugin is currently a work in progress, and at this stage doesn't do particularly
+        <para role="original">The Project report plugin is currently a work in progress, and at this stage doesn't do particularly
             much. We plan to add much more to these reports in future releases of Gradle.
+        </para>
+        <para>プロジェクトレポートプラグインは現在開発中であり、現段階ではそれほど多くの機能が実装されているわけではありません。
+            Gradleの将来のリリースではもっと多くの情報をレポートに追加する予定です。
         </para>
     </note>
 
-    <para>The Project report plugin adds some tasks to your project which generate reports containing useful
+    <para role="original">The Project report plugin adds some tasks to your project which generate reports containing useful
         information about your build. Those tasks generate exactly the same content as the command line reports triggered
         by <userinput>gradle tasks</userinput>, <userinput>gradle dependencies</userinput> and
         <userinput>gradle properties</userinput> (see<xref linkend="sec:obtaining_information_about_your_build"/>).
         In contrast to the command line reports, the report plugin generates the reports into a file. There is also an
         aggregating task that depends on all report tasks added by the plugin.
     </para>
+    <para>プロジェクトレポートプラグインは、ビルドに関する有益な情報を含むレポートを生成するタスクをプロジェクトに追加します。
+        これらのタスクは、<userinput>gradle tasks</userinput>、<userinput>gradle dependencies</userinput> および<userinput>gradle properties</userinput>によるコマンドラインレポートとまったく同じ内容を生成します
+        (<xref linkend="sec:obtaining_information_about_your_build"/>を参照)。
+        コマンドラインレポートとは対照的に、レポートプラグインはレポートをファイルに出力します。
+        プラグインによって追加されたすべてのレポートタスクに依存する集約タスクもあります。
+    </para>
 
     <section>
-        <title>Usage</title>
-        <para>To use the Project report plugin, include in your build script:</para>
+        <title>使用法 <phrase role="original">Usage</phrase></title>
+        <para role="original">To use the Project report plugin, include in your build script:</para>
+        <para>プロジェクトレポートプラグインを使うには、ビルドスクリプトに以下を含めます:</para>
 <programlisting language="java">
 apply plugin: 'project-report'
 </programlisting>
     </section>
 
     <section>
-        <title>Tasks</title>
-        <para>The project report plugin defines the following tasks:</para>
+        <title>タスク <phrase role="original">Tasks</phrase></title>
+        <para role="original">The project report plugin defines the following tasks:</para>
+        <para>プロジェクトレポートプラグインは以下のタスクを定義しています:</para>
         <table>
-            <title>Project report plugin - tasks</title>
+            <title>プロジェクトレポートプラグイン - タスク <phrase role="original">Project report plugin - tasks</phrase></title>
             <thead>
                 <tr>
-                    <td>Task name</td>
-                    <td>Depends on</td>
-                    <td>Type</td>
-                    <td>Description</td>
+                    <td>タスク名 <phrase role="original">Task name</phrase></td>
+                    <td>依存先 <phrase role="original">Depends on</phrase></td>
+                    <td>タイプ <phrase role="original">Type</phrase></td>
+                    <td>説明 <phrase role="original">Description</phrase></td>
                 </tr>
             </thead>
             <tr>
@@ -57,7 +68,7 @@ apply plugin: 'project-report'
                 </td>
                 <td>-</td>
                 <td><apilink class="org.gradle.api.tasks.diagnostics.DependencyReportTask"/></td>
-                <td>Generates the project dependency report.</td>
+                <td>プロジェクト依存関係レポートを生成します。<phrase role="original">Generates the project dependency report.</phrase></td>
             </tr>
             <tr>
                 <td>
@@ -65,7 +76,7 @@ apply plugin: 'project-report'
                 </td>
                 <td>-</td>
                 <td><apilink class="org.gradle.api.tasks.diagnostics.PropertyReportTask"/></td>
-                <td>Generates the project property report.</td>
+                <td>プロジェクトプロパティレポートを生成します。<phrase role="original">Generates the project property report.</phrase></td>
             </tr>
             <tr>
                 <td>
@@ -73,7 +84,7 @@ apply plugin: 'project-report'
                 </td>
                 <td>-</td>
                 <td><apilink class="org.gradle.api.tasks.diagnostics.TaskReportTask"/></td>
-                <td>Generates the project task report.</td>
+                <td>プロジェクトタスクレポートを生成します。<phrase role="original">Generates the project task report.</phrase></td>
             </tr>
             <tr>
                 <td>
@@ -83,32 +94,35 @@ apply plugin: 'project-report'
                     <literal>dependencyReport</literal>, <literal>propertyReport</literal>, <literal>taskReport</literal>
                 </td>
                 <td><apilink class="org.gradle.api.Task"/></td>
-                <td>Generates all project reports.</td>
+                <td>すべてのプロジェクトレポートを生成します。<phrase role="original">Generates all project reports.</phrase></td>
             </tr>
         </table>
     </section>
 
     <section>
-        <title>Project layout</title>
-        <para>The project report plugin does not require any particular project layout.</para>
+        <title>プロジェクトレイアウト <phrase role="original">Project layout</phrase></title>
+        <para role="original">The project report plugin does not require any particular project layout.</para>
+        <para>プロジェクトレポートプラグインは特定のプロジェクトレイアウトを要求しません。</para>
     </section>
 
     <section>
-        <title>Dependency management</title>
-        <para>The project report plugin does not define any dependency configurations.</para>
+        <title>依存関係 <phrase role="original">Dependency management</phrase></title>
+        <para role="original">The project report plugin does not define any dependency configurations.</para>
+        <para>プロジェクトレポートプラグインはいかなる依存関係コンフィグレーションも定義しません。</para>
     </section>
 
     <section>
-        <title>Convention properties</title>
-        <para>The project report defines the following convention properties:</para>
+        <title>規約プロパティ <phrase role="original">Convention properties</phrase></title>
+        <para role="original">The project report defines the following convention properties:</para>
+        <para>プロジェクトレポートプラグインは以下の規約プロパティを定義します:</para>
         <table>
-            <title>Project report plugin - convention properties</title>
+            <title>プロジェクトレポートプラグイン - 規約プロパティ <phrase role="original">Project report plugin - convention properties</phrase></title>
             <thead>
                 <tr>
-                    <td>Property name</td>
-                    <td>Type</td>
-                    <td>Default value</td>
-                    <td>Description</td>
+                    <td>プロパティ名 <phrase role="original">Property name</phrase></td>
+                    <td>タイプ <phrase role="original">Type</phrase></td>
+                    <td>デフォルト値 <phrase role="original">Default value</phrase></td>
+                    <td>説明 <phrase role="original">Description</phrase></td>
                 </tr>
             </thead>
             <xi:include href="reportingBasePluginProperties.xml"/>
@@ -120,10 +134,12 @@ apply plugin: 'project-report'
                     <classname>Set&lt;Project&gt;</classname>
                 </td>
                 <td>
-                    <literal>A one element set with the project the plugin was applied to.</literal>
+                    <literal>プラグイン適用先プロジェクトからなる1要素のSet
+                    <phrase role="original">A one element set with the project the plugin was applied to.</phrase></literal>
                 </td>
                 <td>
-                    The projects to generate the reports for.
+                    レポート生成対象のプロジェクト
+                    <phrase role="original">The projects to generate the reports for.</phrase>
                 </td>
             </tr>
             <tr>
@@ -137,7 +153,8 @@ apply plugin: 'project-report'
                     <literal>project</literal>
                 </td>
                 <td>
-                    The name of the directory to generate the project report into, relative to the reports directory.
+                    プロジェクトレポート生成先ディレクトリ名、reportsディレクトリからの相対パス
+                    <phrase role="original">The name of the directory to generate the project report into, relative to the reports directory.</phrase>
                 </td>
             </tr>
             <tr>
@@ -151,12 +168,14 @@ apply plugin: 'project-report'
                     <literal><replaceable>reportsDir</replaceable>/<replaceable>projectReportDirName</replaceable></literal>
                 </td>
                 <td>
-                    The directory to generate the project report into.
+                    プロジェクトレポート生成先ディレクトリ
+                    <phrase role="original">The directory to generate the project report into.</phrase>
                 </td>
             </tr>
         </table>
 
-        <para>These convention properties are provided by a convention object of type <apilink class="org.gradle.api.plugins.ProjectReportsPluginConvention"/>.</para>
+        <para role="original">These convention properties are provided by a convention object of type <apilink class="org.gradle.api.plugins.ProjectReportsPluginConvention"/>.</para>
+        <para>規約プロパティは <apilink class="org.gradle.api.plugins.ProjectReportsPluginConvention"/> 型の規約オブジェクトによって提供されます。</para>
     </section>
     
 </chapter>
