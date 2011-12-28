@@ -14,8 +14,8 @@
   ~ limitations under the License.
   -->
 
-<chapter id="antlr_plugin">
-    <title>The Antlr Plugin</title>
+<chapter id="antlr_plugin"  xml:lang="ja">
+    <title>Antlrプラグイン <phrase role="original">The Antlr Plugin</phrase></title>
 
     <para>The Antlr plugin extends the Java plugin to add support for generating parsers using <ulink url="http://www.antlr.org/">Antlr</ulink>.</para>
 
