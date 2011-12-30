@@ -13,8 +13,8 @@
   ~ See the License for the specific language governing permissions and
   ~ limitations under the License.
   -->
-<chapter id="sonar_plugin">
-    <title>The Sonar Plugin</title>
+<chapter id="sonar_plugin" xml:lang="ja">
+    <title>Sonarプラグイン<phrase role="original">The Sonar Plugin</phrase></title>
 
     <para>The Sonar plugin provides integration with <ulink url="http://www.sonarsource.org">Sonar</ulink>,
         a web-based platform for monitoring code quality. The plugin adds a <literal>sonarAnalyze</literal> task
