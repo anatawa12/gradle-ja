@@ -3,3 +3,21 @@
     color: white;
 }
 
+.titlepage .author {
+    margin-top: 0;
+}
+
+.translators {
+    margin: 1em auto;
+}
+.translators h3 {
+    color: #444444;
+    font-size: 100%;
+}
+.translators .othercredit {
+    color: #666666;
+    font-weight: normal;
+    font-size: small;
+    margin-bottom: 0;
+}
+

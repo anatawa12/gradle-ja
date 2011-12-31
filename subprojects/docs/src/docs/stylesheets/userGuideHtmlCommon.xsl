@@ -27,6 +27,7 @@
     <xsl:param name="section.label.includes.component.label">1</xsl:param>
     <xsl:param name="css.decoration">0</xsl:param>
     <xsl:param name="highlight.source" select="1"/>
+    <xsl:param name="othercredit.like.author.enabled">1</xsl:param>
 
     <!-- Use custom style sheet content -->
     <xsl:param name="html.stylesheet">DUMMY</xsl:param>
@@ -97,6 +98,10 @@
                 <xsl:apply-templates mode="book.titlepage.recto.auto.mode" select="bookinfo/releaseinfo"/>
             </div>
             <xsl:apply-templates mode="book.titlepage.recto.auto.mode" select="bookinfo/author"/>
+            <div class="translators">
+                <h3>Translated by</h3>
+                <xsl:apply-templates mode="book.titlepage.recto.auto.mode" select="bookinfo/othercredit"/>
+            </div>
             <xsl:apply-templates mode="book.titlepage.recto.auto.mode" select="bookinfo/copyright"/>
             <xsl:apply-templates mode="book.titlepage.recto.auto.mode" select="bookinfo/legalnotice"/>
         </div>
