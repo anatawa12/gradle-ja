@@ -28,11 +28,11 @@
             </para>
             <para>このドキュメントは、個人利用目的および第三者に配布するためにコピーして使用できます。ただし、印刷するにせよ電子媒体を使用するにせよ、以下の点に留意してください。どのような形態であれ使用料を課さないこと。また、このコピーライト条項を配布物に含めること。</para>
         </legalnotice>
-        <author>
+        <author xml:lang="en">
             <firstname>Hans</firstname>
             <surname>Dockter</surname>
         </author>
-        <author>
+        <author xml:lang="en">
             <firstname>Adam</firstname>
             <surname>Murdoch</surname>
         </author>
