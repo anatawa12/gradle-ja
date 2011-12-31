@@ -169,9 +169,8 @@
             <varlistentry>
                 <term>フリーかつオープンソース<phrase role="original">Free and open source</phrase></term>
                 <listitem>
-                    <para role="original">Gradle is an open source project, and is licensed under the <ulink url="website:license.html">ASL</ulink>.
-                        <para>Gradleはオープンソースプロジェクトであり、<ulink url="website:license.html">ASL</ulink>のもとで公開されています。</para>
-                    </para>
+                    <para role="original">Gradle is an open source project, and is licensed under the <ulink url="website:license.html">ASL</ulink>.</para>
+                    <para>Gradleはオープンソースプロジェクトであり、<ulink url="website:license.html">ASL</ulink>のもとで公開されています。</para>
                 </listitem>
             </varlistentry>
         </variablelist>
