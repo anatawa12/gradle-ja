@@ -17,60 +17,73 @@
 <chapter id="idea_plugin" xml:lang="ja">
     <title>IDEAプラグイン <phrase role="original">The IDEA Plugin</phrase></title>
 
-    <para>The IDEA plugin generates files that are used by <ulink url="http://www.jetbrains.com/idea/">IntelliJ IDEA</ulink>, thus
+    <para role="original">The IDEA plugin generates files that are used by <ulink url="http://www.jetbrains.com/idea/">IntelliJ IDEA</ulink>, thus
         making it possible to open the project from IDEA (<guimenuitem>File</guimenuitem> - <guimenuitem>Open Project</guimenuitem>).
         Both external dependencies (including associated source and javadoc files) and project dependencies are considered.</para>
+    <para>
+    IDEAプラグインは、<ulink url="http://www.jetbrains.com/idea/">IntelliJ IDEA</ulink>が使用するファイルを生成し、プロジェクトをIDEA(<guimenuitem>File</guimenuitem> - <guimenuitem>Open Project</guimenuitem>)で開けるようにします。
+    外部依存関係(関連するソースやjavadocファイルを含む)とプロジェクト依存関係についても考慮されています。
+    </para>
 
-    <para>What exactly the IDEA plugin generates depends on which other plugins are used:</para>
+    <para role="original">What exactly the IDEA plugin generates depends on which other plugins are used:</para>
+    <para>IDEAプラグインが実際に生成するものは、使用されているプラグインによって異なります。</para>
     <table>
-        <title>IDEA plugin behavior</title>
+        <title>IDEAプラグインの振る舞い <phrase role="original">IDEA plugin behavior</phrase></title>
         <thead>
             <tr>
-                <td>Plugin</td><td>Description</td>
+                <td><phrase role="original">Plugin</phrase> プラグイン</td><td><phrase role="original">Description</phrase> 説明</td>
             </tr>
         </thead>
         <tr>
-            <td>None</td><td>Generates an IDEA module file. Also generates an IDEA project and workspace file if the project
-            is the root project.</td>
+            <td><phrase role="original">None</phrase> なし</td><td><phrase role="original">Generates an IDEA module file. Also generates an IDEA project and workspace file if the project
+            is the root project.</phrase> IDEAモジュールファイルを生成する。プロジェクトがルートプロジェクトだった場合は、IDEAプロジェクトとワークスペースファイルも生成する。</td>
         </tr>
         <tr>
             <td>
                 <link linkend="java_plugin">Java</link>
             </td>
-            <td>Adds Java configuration to the module and project files.</td>
+            <td><phrase role="original">Adds Java configuration to the module and project files.</phrase> モジュールファイルとプロジェクトファイルに、Javaの設定を追加する。</td>
         </tr>
     </table>
 
-    <para>One focus of the IDEA plugin is to be open to customization. The plugin provides a standardized set of hooks
+    <para role="original">One focus of the IDEA plugin is to be open to customization. The plugin provides a standardized set of hooks
         for adding and removing content from the generated files.
     </para>
+    <para>IDEAプラグインで重視されているものの一つがカスタマイズ性です。生成するファイルに内容を追加したり削除したりするためのフックが標準化されて提供されています。</para>
 
     <section>
-        <title>Usage</title>
-        <para>To use the IDEA plugin, include this in your build script:</para>
-        <sample id="useIdeaPlugin" dir="idea" title="Using the IDEA plugin">
+        <title><phrase role="original">Usage</phrase> 使用方法</title>
+        <para role="original">To use the IDEA plugin, include this in your build script:</para>
+        <para>IDEAプラグインを使うには、ビルドスクリプトに次の行を追加します。</para>
+        <sample id="useIdeaPlugin" dir="idea" title="IDEAプラグインを使う / Using the IDEA plugin">
             <sourcefile file="build.gradle" snippet="use-plugin"/>
         </sample>
-        <para>The IDEA plugin adds a number of tasks to your project. The main tasks that you will use
+        <para role="original">The IDEA plugin adds a number of tasks to your project. The main tasks that you will use
             are the <literal>idea</literal> and <literal>cleanIdea</literal> tasks.
         </para>
+        <para>IDEAプラグインは、プロジェクトにいくつかのタスクを追加します。主に使うものは<literal>idea</literal>タスクと<literal>cleanIdea</literal>タスクでしょう。</para>
     </section>
     <section>
-        <title>Tasks</title>
+        <title>タスク <phrase role="original">Tasks</phrase></title>
 
-        <para>The IDEA plugin adds the tasks shown below to a project.
+        <para role="original">The IDEA plugin adds the tasks shown below to a project.
             Notice that <literal>clean</literal> does not depend on <literal>cleanIdeaWorkspace</literal>.
             It's because workspace contains a lot of user specific temporary data and typically it is not desirable to manipulate it outside IDEA.
         </para>
+        <para>
+        IDEAプラグインはプロジェクトに以下のタスクを追加します。
+        <literal>cleanIdea</literal>が<literal>cleanIdeaWorkspace</literal>に依存していないことに注意してください。
+        ワークスペースにはユーザーごとの一時データが多く含まれており、一般的にはIDEAの外からは操作されたくないものだからです。
+        </para>
 
         <table id='ideatasks'>
-            <title>IDEA plugin - Tasks</title>
+            <title>IDEAプラグイン - タスク <phrase role="original">IDEA plugin - Tasks</phrase></title>
             <thead>
                 <tr>
-                    <td>Task name</td>
-                    <td>Depends on</td>
-                    <td>Type</td>
-                    <td>Description</td>
+                    <td><phrase role="original">Task name</phrase> タスク名</td>
+                    <td><phrase role="original">Depends on</phrase> 依存先</td>
+                    <td><phrase role="original">Type</phrase> 型</td>
+                    <td><phrase role="original">Description</phrase> 説明</td>
                 </tr>
             </thead>
             <tr>
@@ -79,7 +92,7 @@
                 </td>
                 <td><literal>ideaProject</literal>, <literal>ideaModule</literal>, <literal>ideaWorkspace</literal></td>
                 <td><literal>-</literal></td>
-                <td>Generates all IDEA configuration files</td>
+                <td><phrase role="original">Generates all IDEA configuration files</phrase> 全てのIDEA設定ファイルを生成する。</td>
             </tr>
             <tr>
                 <td>
@@ -89,7 +102,7 @@
                     <literal>cleanIdeaProject</literal>, <literal>cleanIdeaModule</literal>
                 </td>
                 <td><apilink class="org.gradle.api.tasks.Delete"/></td>
-                <td>Removes all IDEA configuration files</td>
+                <td><phrase role="original">Removes all IDEA configuration files</phrase> IDEAの設定ファイルを全て削除する。</td>
             </tr>
             <tr>
                 <td>
@@ -99,7 +112,7 @@
                     <literal>-</literal>
                 </td>
                 <td><apilink class="org.gradle.api.tasks.Delete"/></td>
-                <td>Removes the IDEA project file</td>
+                <td><phrase role="original">Removes the IDEA project file</phrase> IDEAのプロジェクトファイルを削除する。</td>
             </tr>
             <tr>
                 <td>
@@ -109,7 +122,7 @@
                     <literal>-</literal>
                 </td>
                 <td><apilink class="org.gradle.api.tasks.Delete"/></td>
-                <td>Removes the IDEA module file</td>
+                <td><phrase role="original">Removes the IDEA module file</phrase> IDEAのモジュールファイルを削除する。</td>
             </tr>
             <tr>
                 <td>
@@ -119,7 +132,7 @@
                     <literal>-</literal>
                 </td>
                 <td><apilink class="org.gradle.api.tasks.Delete"/></td>
-                <td>Removes the IDEA workspace file</td>
+                <td><phrase role="original">Removes the IDEA workspace file</phrase> IDEAのワークスペースファイルを削除する。</td>
             </tr>
             <tr>
                 <td>
@@ -129,7 +142,7 @@
                     <literal>-</literal>
                 </td>
                 <td><apilink class="org.gradle.plugins.ide.idea.GenerateIdeaProject"/></td>
-                <td>Generates the <literal>.ipr</literal> file. This task is only added to the root project.</td>
+                <td><phrase role="original">Generates the <literal>.ipr</literal> file. This task is only added to the root project.</phrase> <literal>.ipr</literal>ファイルを生成する。このタスクはルートプロジェクトのみに追加されます。</td>
             </tr>
             <tr>
                 <td>
@@ -139,7 +152,7 @@
                     <literal>-</literal>
                 </td>
                 <td><apilink class="org.gradle.plugins.ide.idea.GenerateIdeaModule"/></td>
-                <td>Generates the <literal>.iml</literal> file</td>
+                <td><phrase role="original">Generates the <literal>.iml</literal> file</phrase> <literal>.iml</literal>ファイルを作成する。</td>
             </tr>
             <tr>
                 <td>
@@ -149,21 +162,21 @@
                     <literal>-</literal>
                 </td>
                 <td><apilink class="org.gradle.plugins.ide.idea.GenerateIdeaWorkspace"/></td>
-                <td>Generates the <literal>.iws</literal> file. This task is only added to the root project.</td>
+                <td><phrase role="original">Generates the <literal>.iws</literal> file. This task is only added to the root project.</phrase> <literal>.iws</literal>ファイルを生成する。このタスクはルートプロジェクトのみに追加されます。</td>
             </tr>
         </table>
     </section>
 
     <section>
-        <title>Configuration</title>
+        <title>設定 <phrase role="original">Configuration</phrase></title>
 
         <table id='idea-configuration'>
-            <title>Configuration of the idea plugin</title>
+            <title>IDEAプラグインの設定 <phrase role="original">Configuration of the idea plugin</phrase></title>
             <thead>
                 <tr>
-                    <td>Model</td>
-                    <td>Reference name</td>
-                    <td>Description</td>
+                    <td><phrase role="original">Model</phrase> モデル</td>
+                    <td><phrase role="original">Reference name</phrase> 参照名</td>
+                    <td><phrase role="original">Description</phrase> 説明</td>
                 </tr>
             </thead>
             <tr>
@@ -171,77 +184,101 @@
                     <apilink class="org.gradle.plugins.ide.idea.model.IdeaModel"/>
                 </td>
                 <td><literal>idea</literal></td>
-                <td>Top level element that enables configuration of the idea plugin in a DSL-friendly fashion</td>
+                <td><phrase role="original">Top level element that enables configuration of the idea plugin in a DSL-friendly fashion</phrase>
+                    DSLフレンドリーな方法でIDEAプラグインの設定を行うための、最上位レベルの要素</td>
             </tr>
             <tr>
                 <td>
                     <apilink class="org.gradle.plugins.ide.idea.model.IdeaProject"/>
                 </td>
                 <td><literal>idea.project</literal></td>
-                <td>Allows configuring project information</td>
+                <td><phrase role="original">Allows configuring project information</phrase>
+                    プロジェクト情報の設定ができる</td>
             </tr>
             <tr>
                 <td>
                     <apilink class="org.gradle.plugins.ide.idea.model.IdeaModule"/>
                 </td>
                 <td><literal>idea.module</literal></td>
-                <td>Allows configuring module information</td>
+                <td><phrase role="original">Allows configuring module information</phrase>
+                    モジュールの設定ができる</td>
             </tr>
             <tr>
                 <td>
                     <apilink class="org.gradle.plugins.ide.idea.model.IdeaWorkspace"/>
                 </td>
                 <td><literal>idea.workspace</literal></td>
-                <td>Allows configuring the workspace xml</td>
+                <td><phrase role="original">Allows configuring the workspace xml</phrase>
+                    ワークスペースXMLの設定ができる</td>
             </tr>
         </table>
     </section>
 
     <section>
-        <title>Customizing the generated files</title>
-        <para>IDEA plugin provides hooks and behavior for customizing the generated content.
+        <title>生成するファイルのカスタマイズ <phrase role="original">Customizing the generated files</phrase></title>
+        <para role="original">IDEA plugin provides hooks and behavior for customizing the generated content.
             The workspace file can effectively only be manipulated via the <code>withXml</code> hook
             because its corresponding domain object is essentially empty.</para>
-        <para>The tasks recognize existing IDEA files, and merge them with the generated content.</para>
+        <para>
+        IDEAプラグインには、生成される内容をカスタマイズするためのフックと特徴があります。
+        なお、ワークスペースファイルは、対応するドメインオブジェクトが実質的に空なので、<code>withXml</code>フックを使用しないと効果的に操作できません。
+        </para>
+        <para role="original">The tasks recognize existing IDEA files, and merge them with the generated content.</para>
+        <para>IDEAプラグインのタスクは、既存のIDEAファイルを検知し、生成された内容をそれにマージします。</para>
         <section>
-            <title>Merging</title>
-            <para>Sections of existing IDEA files that are also the target of generated content will be amended or overwritten,
+            <title>マージ <phrase role="original">Merging</phrase></title>
+            <para role="original">Sections of existing IDEA files that are also the target of generated content will be amended or overwritten,
                 depending on the particular section. The remaining sections will be left as-is.</para>
-            <section id="sec:complete-overwrite">
-                <title>Disabling merging with a complete overwrite</title>
-                <para>To completely overwrite existing IDEA files, execute a clean task together with its corresponding generation task,
+            <para>
+            既存のIDEAファイルのセクションのうち、生成される内容の対象になっているものは、セクションごとに修正、または上書きされます。
+            それ以外のセクションはそのまま残されます。
+            </para>
+            <section id="sec:complete-overwrite-i">
+                <title>マージを無効にして、完全に上書きする <phrase role="original">Disabling merging with a complete overwrite</phrase></title>
+                <para role="original">To completely overwrite existing IDEA files, execute a clean task together with its corresponding generation task,
                     for example <userinput>gradle cleanIdea idea</userinput> (in that order). If you want to make this
                     the default behavior, add <code>tasks.idea.dependsOn(cleanIdea)</code> to your build script. This makes it
                     unnecessary to execute the clean task explicitly.
                 </para>
-                <para>Complete overwrite works equally well for individual files, for example by executing <userinput> gradle cleanIdeaModule ideaModule</userinput>.</para>
+                <para>
+                既存のIDEAファイルを完全に上書きするには、クリーンタスクを、対応する生成タスクと一緒に使用してください。例えば、<userinput>gradle cleanIdea idea</userinput>をこの順序で使用します。
+                デフォルトでそのように動作させたいのであれば、<code>tasks.idea.dependsOn(cleanIdea)</code>というコードをビルドスクリプトに追加してください。明示的にクリーンタスクを実行する必要がなくなります。
+                </para>
+                <para role="original">Complete overwrite works equally well for individual files, for example by executing <userinput> gradle cleanIdeaModule ideaModule</userinput>.</para>
+                <para>個々のファイルに対しても同様で、例えば<userinput> gradle cleanIdeaModule ideaModule</userinput>とすることで、完全に上書きすることができます。</para>
             </section>
         </section>
         <section>
-            <title>Hooking into the generation lifecycle</title>
-            <para>The IDEA plugin provides domain classes modeling the sections of the IDEA files
+            <title>生成ライフサイクルへフックする <phrase role="original">Hooking into the generation lifecycle</phrase></title>
+            <para role="original">The IDEA plugin provides domain classes modeling the sections of the IDEA files
                 that are generated by Gradle. The generation lifecycle is as follows:
+            </para>
+            <para>
+            IDEAプラグインは、生成するIDEAファイルの各セクションを表すドメインクラスを提供しています。生成ライフサイクルは、次のとおりです。
+            </para>
                 <orderedlist>
-                    <listitem>If there is an existing file, its whole XML content is parsed and stored in memory; otherwise, a default file is used in its place</listitem>
-                    <listitem>The domain objects are populated with the relevant content of the existing file</listitem>
-                    <listitem>The <code>beforeMerged</code> hook is executed</listitem>
-                    <listitem>The domain objects are populated with content from Gradle's build model, which may require merging with content from the existing file</listitem>
-                    <listitem>The <code>whenMerged</code> hook is executed</listitem>
-                    <listitem>All sections modeled by the domain objects are removed from the in-memory XML representation</listitem>
-                    <listitem>The domain objects inject their content into the in-memory XML representation</listitem>
-                    <listitem>The <code>withXml</code> hook is executed</listitem>
-                    <listitem>The in-memory XML representation is written to disk</listitem>
+                    <listitem><phrase role="original">If there is an existing file, its whole XML content is parsed and stored in memory; otherwise, a default file is used in its place</phrase> 既存のファイルがあれば、その全XMLコンテンツを解析してメモリに保存する。そうでなければ、デフォルトのファイルがそれに使用される。</listitem>
+                    <listitem><phrase role="original">The domain objects are populated with the relevant content of the existing file</phrase> 既存ファイルの内容に関連したドメインオブジェクトが読み込まれる。</listitem>
+                    <listitem><phrase role="original">The <code>beforeMerged</code> hook is executed</phrase> <code>beforeMerged</code>フックが実行される。</listitem>
+                    <listitem><phrase role="original">The domain objects are populated with content from Gradle's build model, which may require merging with content from the existing file</phrase> Gradleビルドモデルの内容から、ドメインオブジェクトが読み込まれる。既存ファイルの内容とのマージが必要になる場合もある。</listitem>
+                    <listitem><phrase role="original">The <code>whenMerged</code> hook is executed</phrase> <code>whenMerged</code>フックが実行される。</listitem>
+                    <listitem><phrase role="original">All sections modeled by the domain objects are removed from the in-memory XML representation</phrase> ドメインオブジェクトで表された全てのセクションが、メモリ内のXMLデータから削除される。</listitem>
+                    <listitem><phrase role="original">The domain objects inject their content into the in-memory XML representation</phrase> ドメインオブジェクトが、内容をメモリ内のXMLデータに挿入する。</listitem>
+                    <listitem><phrase role="original">The <code>withXml</code> hook is executed</phrase> <code>withXml</code>フックが実行される。</listitem>
+                    <listitem><phrase role="original">The in-memory XML representation is written to disk</phrase> メモリ内のXMLデータがディスクに書き出される。</listitem>
                 </orderedlist>
+            <para role="original">
                 The following table lists the domain objects used for each of the IDEA task types:
             </para>
+            <para>それぞれのIDEAタスクが使うドメインオブジェクトは、次の表の通りです。</para>
             <table id='idea-hooks'>
-                <title>Idea plugin hooks</title>
+                <title>IDEAプラグインフック <phrase role="original">Idea plugin hooks</phrase></title>
                 <thead>
                     <tr>
-                        <td>Model</td>
-                        <td><literal>beforeMerged { arg -> }</literal> argument type</td>
-                        <td><literal>whenMerged { arg -> }</literal> argument type</td>
-                        <td><literal>withXml { arg -> }</literal> argument type</td>
+                        <td><phrase role="original">Model</phrase> モデル</td>
+                        <td><literal>beforeMerged { arg -> }</literal> <phrase role="original">argument type</phrase> 引数の型</td>
+                        <td><literal>whenMerged { arg -> }</literal> <phrase role="original">argument type</phrase> 引数の型</td>
+                        <td><literal>withXml { arg -> }</literal> <phrase role="original">argument type</phrase> 引数の型</td>
                     </tr>
                 </thead>
                 <tr>
@@ -264,29 +301,38 @@
                 </tr>
             </table>
             <section id="sec:partial-overwrite">
-                <title>Partial overwrite of existing content</title>
-                <para>A <link linkend="sec:complete-overwrite">complete overwrite</link> causes all existing content to be discarded,
+                <title>既存の内容を部分的に上書きする <phrase role="original">Partial overwrite of existing content</phrase></title>
+                <para><phrase role="original">A <link linkend="sec:complete-overwrite">complete overwrite</link> causes all existing content to be discarded,
                     thereby losing any changes made directly in the IDE. The <code>beforeMerged</code> hook makes it possible
                     to overwrite just certain parts of the existing content. The following example removes all existing dependencies
-                    from the <literal>Module</literal> domain object:
+                    from the <literal>Module</literal> domain object:</phrase>
+                    <link linkend="sec:complete-overwrite-i">完全な上書き</link>は、既存の内容を全て破棄するので、IDEで直接行った変更も失われてしまいます。<code>beforeMerged</code>フックを使うと、既存の内容のうち特定の部分だけを上書きすることができます。
+                    次の例では、<code>Module</code>ドメインオブジェクトから、既存の依存関係を全て削除しています。
                     <sample id="partialOverwrites" dir="idea"
-                            title="Partial Overwrite for Module">
+                            title="モジュールの部分的な上書き / Partial Overwrite for Module">
                         <sourcefile file="build.gradle" snippet="module-before-merged"/>
                     </sample>
+                    <phrase role="original">
                     The resulting module file will only contain Gradle-generated dependency entries, but
                     not any other dependency entries that may have been present in the original file. (In the case of dependency entries,
                     this is also the default behavior.) Other sections of the module file will be either left as-is or merged.
                     The same could be done for the module paths in the project file:
+                    </phrase>
+                    結果として生成されるモジュールファイルには、Gradleが生成した依存関係のエントリのみが含まれており、元のファイルにあった他のエントリは含まれていません(依存関係エントリの場合、これがデフォルトの動作でもあります)。
+                    そして、モジュールファイルの別のセクションはそのまま、またはマージされた状態で残されます。
+                    同じことはプロジェクトファイルのモジュールパスを使用しても実現可能です。
                     <sample id="partialOverwritesProject" dir="idea"
-                            title="Partial Overwrite for Project">
+                            title="プロジェクトの部分的な上書き / Partial Overwrite for Project">
                         <sourcefile file="build.gradle" snippet="project-before-merged"/>
                     </sample>
                 </para>
             </section>
             <section>
-                <title>Modifying the fully populated domain objects</title>
-                <para>The <code>whenMerged</code> hook allows to manipulate the fully populated domain objects. Often this is the
-                    preferred way to customize IDEA files. Here is how you would export all the dependencies of an IDEA module:
+                <title>読み込まれた全ドメインオブジェクトを編集する <phrase role="original">Modifying the fully populated domain objects</phrase></title>
+                <para><phrase role="original">The <code>whenMerged</code> hook allows to manipulate the fully populated domain objects. Often this is the
+                    preferred way to customize IDEA files. Here is how you would export all the dependencies of an IDEA module:</phrase>
+                <code>whenMerged</code>フックを使うと、読み込まれた全てのドメインオブジェクトを操作できます。
+                IDEAファイルをカスタマイズするときは、多くの場合このフックを使うのが好ましい方法です。例えば、IDEAモジュールの全ての依存関係をエクスポートするには、以下のようにします。
                     <sample id="exportDependencies" dir="idea"
                             title="Export Dependencies">
                         <sourcefile file="build.gradle" snippet="module-when-merged"/>
@@ -295,12 +341,15 @@
                 </para>
             </section>
             <section>
-                <title>Modifying the XML representation</title>
-                <para>The <code>withXml</code>hook allows to manipulate the in-memory XML representation just before the file gets written to disk.
+                <title>XMLデータを編集する <phrase role="original">Modifying the XML representation</phrase></title>
+                <para><phrase role="original">The <code>withXml</code>hook allows to manipulate the in-memory XML representation just before the file gets written to disk.
                     Although Groovy's XML support makes up for a lot, this approach is less convenient than manipulating the domain objects.
-                    In return, you get total control over the generated file, including sections not modeled by the domain objects.
+                    In return, you get total control over the generated file, including sections not modeled by the domain objects.</phrase>
+                    <code>withXml</code>フックを使うと、メモリ内のXMLデータを、ファイルに書き出される直前に操作できます。
+                    GroovyのXMLサポートで大幅にフォローされるものの、このアプローチはドメインオブジェクトを操作する方法ほど便利ではありません。
+                    その代わり、ドメインオブジェクトで表現されないような部分も含め、生成されるファイルの全てを制御することができます。
                     <sample id="projectWithXml" dir="idea"
-                            title="Customizing the XML">
+                            title="XMLをカスタマイズする / Customizing the XML">
                         <sourcefile file="build.gradle" snippet="project-with-xml"/>
                         <test args="idea"/>
                     </sample>
@@ -309,10 +358,15 @@
         </section>
     </section>
     <section>
-        <title>Further things to consider</title>
-        <para>The paths of the dependencies in the generated IDEA files are absolute. If you manually define a path variable
+        <title>その他の注意事項 <phrase role="original">Further things to consider</phrase></title>
+        <para role="original">The paths of the dependencies in the generated IDEA files are absolute. If you manually define a path variable
             pointing to the Gradle dependency cache, IDEA will automatically replace the absolute dependency paths with
             this path variable. If you use such a path variable, you need to configure this path variable via <literal>idea.pathVariables</literal>,
             so that it can do a proper merge without creating duplicates.</para>
+        <para>
+        生成されるIDEAファイルでは、依存関係が絶対パスで保存されます。
+        しかし、Gradleキャッシュを場所を参照するパス変数を定義すれば、IDEAは依存関係の絶対パスをそのパス変数で自動的に置き換えます。
+        そのようなパス変数を使いたい場合は、<literal>idea.pathVariables</literal>を使って変数を設定してください。それにより、重複なしで正しくマージを行うこともできます。
+        </para>
     </section>
 </chapter>
