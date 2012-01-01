@@ -16,107 +16,70 @@
 
 package org.gradle.api.internal.artifacts.ivyservice.ivyresolve;
 
-import org.apache.ivy.core.cache.ArtifactOrigin;
+import org.apache.ivy.core.module.descriptor.Artifact;
 import org.apache.ivy.core.module.descriptor.DependencyDescriptor;
 import org.apache.ivy.core.module.id.ModuleRevisionId;
-import org.apache.ivy.core.resolve.ResolveData;
-import org.apache.ivy.core.resolve.ResolvedModuleRevision;
 import org.apache.ivy.plugins.latest.ArtifactInfo;
 import org.apache.ivy.plugins.latest.ComparatorLatestStrategy;
-import org.apache.ivy.plugins.resolver.ChainResolver;
-import org.apache.ivy.plugins.resolver.DependencyResolver;
+import org.apache.ivy.plugins.resolver.ResolverSettings;
 import org.apache.ivy.util.StringUtils;
-import org.gradle.api.internal.artifacts.configurations.dynamicversion.CachePolicy;
-import org.gradle.api.internal.artifacts.ivyservice.artifactcache.ArtifactFileStore;
-import org.gradle.api.internal.artifacts.ivyservice.dynamicversions.ForceChangeDependencyDescriptor;
-import org.gradle.api.internal.artifacts.ivyservice.dynamicversions.ModuleResolutionCache;
-import org.gradle.api.internal.artifacts.ivyservice.modulecache.ModuleDescriptorCache;
+import org.gradle.api.internal.artifacts.ivyservice.ArtifactToFileResolver;
+import org.gradle.api.internal.artifacts.ivyservice.DependencyToModuleResolver;
+import org.gradle.api.internal.artifacts.ivyservice.ModuleVersionResolver;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.util.*;
 
-public class UserResolverChain extends ChainResolver implements DependencyResolvers {
+public class UserResolverChain implements DependencyToModuleResolver, ArtifactToFileResolver {
     private static final Logger LOGGER = LoggerFactory.getLogger(UserResolverChain.class);
 
     private final Map<ModuleRevisionId, ModuleVersionRepository> artifactRepositories = new HashMap<ModuleRevisionId, ModuleVersionRepository>();
-    private final ModuleResolutionCache moduleResolutionCache;
-    private final ModuleDescriptorCache moduleDescriptorCache;
-    private final ArtifactFileStore artifactFileStore;
-    private CachePolicy cachePolicy;
+    private final List<ModuleVersionRepository> moduleVersionRepositories = new ArrayList<ModuleVersionRepository>();
+    private ResolverSettings settings;
 
-    public UserResolverChain(ModuleResolutionCache moduleResolutionCache, ModuleDescriptorCache moduleDescriptorCache, ArtifactFileStore artifactFileStore) {
-        this.moduleDescriptorCache = moduleDescriptorCache;
-        this.moduleResolutionCache = moduleResolutionCache;
-        this.artifactFileStore = artifactFileStore;
+    public void setSettings(ResolverSettings settings) {
+        this.settings = settings;
     }
 
-    public void setCachePolicy(CachePolicy cachePolicy) {
-        this.cachePolicy = cachePolicy;
+    public void add(ModuleVersionRepository repository) {
+        moduleVersionRepositories.add(repository);
     }
 
-    @Override
-    public void add(DependencyResolver resolver) {
-        if (!(resolver instanceof ModuleVersionRepository)) {
-            throw new IllegalArgumentException("Can only add ModuleVersionRepository instances.");
-        }
-        super.add(resolver);
-    }
-
-    @Override
-    public ResolvedModuleRevision getDependency(DependencyDescriptor dd, ResolveData data) {
-
-        List<ModuleResolution> resolutionList = createResolutionList(dd, data);
-
-        // Otherwise delegate to each resolver in turn
-        ModuleResolution latestResolved = findLatestModule(resolutionList);
+    public ModuleVersionResolver create(DependencyDescriptor dependencyDescriptor) {
+        ModuleResolution latestResolved = findLatestModule(dependencyDescriptor);
         if (latestResolved != null) {
-            ResolvedModuleRevision downloadedModule = latestResolved.getModule();
-            LOGGER.debug("Found module '{}' using resolver '{}'", downloadedModule, downloadedModule.getArtifactResolver());
+            ModuleVersionDescriptor downloadedModule = latestResolved.module;
+            LOGGER.debug("Found module '{}' using resolver '{}'", downloadedModule, latestResolved.repository);
             rememberResolverToUseForArtifactDownload(latestResolved.repository, downloadedModule);
             return downloadedModule;
         }
         return null;
     }
 
-    private List<ModuleResolution> createResolutionList(DependencyDescriptor dd, ResolveData data) {
-        boolean staticVersion = !getSettings().getVersionMatcher().isDynamic(dd.getDependencyRevisionId());
-        List<ModuleResolution> resolutionList = new ArrayList<ModuleResolution>();
-        for (ModuleVersionRepository resolver : getResolvers()) {
-            resolutionList.add(new ModuleResolution(resolver, dd, data, staticVersion));
-        }
-        return resolutionList;
-    }
-
-    private ModuleResolution findLatestModule(List<ModuleResolution> resolutionList) {
-
+    private ModuleResolution findLatestModule(DependencyDescriptor dependencyDescriptor) {
         List<RuntimeException> errors = new ArrayList<RuntimeException>();
-        for (ModuleResolution moduleResolution : resolutionList) {
+        boolean isStaticVersion = !settings.getVersionMatcher().isDynamic(dependencyDescriptor.getDependencyRevisionId());
+        
+        ModuleResolution best = null;
+        for (ModuleVersionRepository repository : moduleVersionRepositories) {
             try {
-                moduleResolution.findModule();
-                if (moduleResolution.getModule() != null && moduleResolution.isStaticVersion() && !moduleResolution.isGeneratedModuleDescriptor()) {
-                    return moduleResolution;
+                ModuleVersionDescriptor module = repository.getDependency(dependencyDescriptor);
+                if (module != null) {
+                    ModuleResolution moduleResolution = new ModuleResolution(repository, module);
+                    if (isStaticVersion && !moduleResolution.isGeneratedModuleDescriptor()) {
+                        return moduleResolution;
+                    }
+                    best = chooseBest(best, moduleResolution);
                 }
             } catch (RuntimeException e) {
                 errors.add(e);
             }
         }
 
-        ModuleResolution mr = chooseBestResult(resolutionList);
-        if (mr == null && !errors.isEmpty()) {
+        if (best == null && !errors.isEmpty()) {
             throwResolutionFailure(errors);
-        }
-        return mr;
-    }
-
-    private ModuleResolution chooseBestResult(List<ModuleResolution> resolutionList) {
-        ModuleResolution best = null;
-        for (ModuleResolution moduleResolution : resolutionList) {
-            best = chooseBest(best, moduleResolution);
-        }
-        if (best == null || best.getModule() == null) {
-            return null;
         }
         return best;
     }
@@ -125,11 +88,11 @@ public class UserResolverChain extends ChainResolver implements DependencyResolv
         if (one == null || two == null) {
             return two == null ? one : two;
         }
-        if (one.getModule() == null || two.getModule() == null) {
-            return two.getModule() == null ? one : two;
+        if (one.module == null || two.module == null) {
+            return two.module == null ? one : two;
         }
 
-        ComparatorLatestStrategy latestStrategy = (ComparatorLatestStrategy) getLatestStrategy();
+        ComparatorLatestStrategy latestStrategy = (ComparatorLatestStrategy) settings.getDefaultLatestStrategy();
         Comparator<ArtifactInfo> comparator = latestStrategy.getComparator();
         int comparison = comparator.compare(one, two);
 
@@ -143,7 +106,7 @@ public class UserResolverChain extends ChainResolver implements DependencyResolv
         return comparison < 0 ? two : one;
     }
 
-    private void rememberResolverToUseForArtifactDownload(ModuleVersionRepository repository, ResolvedModuleRevision cachedModule) {
+    private void rememberResolverToUseForArtifactDownload(ModuleVersionRepository repository, ModuleVersionDescriptor cachedModule) {
         artifactRepositories.put(cachedModule.getId(), repository);
     }
 
@@ -160,160 +123,56 @@ public class UserResolverChain extends ChainResolver implements DependencyResolv
         }
     }
 
-    public List<ModuleVersionRepository> getArtifactResolversForModule(ModuleRevisionId moduleRevisionId) {
+    private List<ModuleVersionRepository> getArtifactResolversForModule(ModuleRevisionId moduleRevisionId) {
         ModuleVersionRepository moduleDescriptorRepository = artifactRepositories.get(moduleRevisionId);
         if (moduleDescriptorRepository != null && moduleDescriptorRepository != this) {
             return Collections.singletonList(moduleDescriptorRepository);
         }
-        return getResolvers();
+        return moduleVersionRepositories;
     }
 
-    @Override
-    public List<ModuleVersionRepository> getResolvers() {
-        return super.getResolvers();
+    public File resolve(Artifact artifact) {
+        ArtifactResolutionExceptionBuilder exceptionBuilder = new ArtifactResolutionExceptionBuilder(artifact);
+
+        List<ModuleVersionRepository> artifactRepositories = getArtifactResolversForModule(artifact.getModuleRevisionId());
+        LOGGER.debug("Attempting to download {} using resolvers {}", artifact, artifactRepositories);
+        for (ModuleVersionRepository resolver : artifactRepositories) {
+            try {
+                File artifactDownload = resolver.download(artifact);
+                if (artifactDownload != null) {
+                    return artifactDownload;
+                }
+            } catch (ArtifactResolveException e) {
+                LOGGER.warn(e.getMessage());
+                exceptionBuilder.addDownloadFailure(e);
+            }
+        }
+
+        throw exceptionBuilder.buildException();
     }
 
     private class ModuleResolution implements ArtifactInfo {
-        private final ModuleVersionRepository repository;
-        private final DependencyDescriptor requestedDependencyDescriptor;
-        private final ResolveData resolveData;
-        private final boolean staticVersion;
-        private DependencyDescriptor resolvedDependencyDescriptor;
-        private ResolvedModuleRevision resolvedModule;
+        public final ModuleVersionRepository repository;
+        public final ModuleVersionDescriptor module;
 
-        public ModuleResolution(ModuleVersionRepository repository, DependencyDescriptor moduleDescriptor, ResolveData resolveData, boolean staticVersion) {
+        public ModuleResolution(ModuleVersionRepository repository, ModuleVersionDescriptor module) {
             this.repository = repository;
-            this.requestedDependencyDescriptor = moduleDescriptor;
-            this.resolveData = resolveData;
-            this.staticVersion = staticVersion;
-        }
-
-        public boolean isStaticVersion() {
-            return staticVersion;
+            this.module = module;
         }
 
         public boolean isGeneratedModuleDescriptor() {
-            if (resolvedModule == null) {
+            if (module == null) {
                 throw new IllegalStateException();
             }
-            return resolvedModule.getDescriptor().isDefault();
-        }
-
-        public void findModule() {
-            resolvedDependencyDescriptor = null;
-            resolvedModule = null;
-
-            resolveModuleSelector();
-            if (!lookupModuleInCache()) {
-                resolveModule();
-            }
-        }
-
-        private void resolveModuleSelector() {
-            if (bypassCache()) {
-                // No caching for local resolvers
-                resolvedDependencyDescriptor = requestedDependencyDescriptor;
-                return;
-            }
-
-            resolvedDependencyDescriptor = maybeUseCachedDynamicVersion(repository, requestedDependencyDescriptor);
-        }
-
-        private DependencyDescriptor maybeUseCachedDynamicVersion(ModuleVersionRepository repository, DependencyDescriptor original) {
-            ModuleRevisionId originalId = original.getDependencyRevisionId();
-            ModuleResolutionCache.CachedModuleResolution cachedModuleResolution = moduleResolutionCache.getCachedModuleResolution(repository, originalId);
-            if (cachedModuleResolution != null && cachedModuleResolution.isDynamicVersion()) {
-                if (cachePolicy.mustRefreshDynamicVersion(cachedModuleResolution.getResolvedModule(), cachedModuleResolution.getAgeMillis())) {
-                    LOGGER.debug("Resolved revision in dynamic revision cache is expired: will perform fresh resolve of '{}'", originalId);
-                    return original;
-                } else {
-                    LOGGER.debug("Found resolved revision in dynamic revision cache: Using '{}' for '{}'", cachedModuleResolution.getResolvedVersion(), originalId);
-                    return original.clone(cachedModuleResolution.getResolvedVersion());
-                }
-            }
-            return original;
-        }
-
-        public boolean lookupModuleInCache() {
-            // No caching for local resolvers
-            if (bypassCache()) {
-                return false;
-            }
-
-            ModuleRevisionId resolvedModuleVersionId = resolvedDependencyDescriptor.getDependencyRevisionId();
-            ModuleDescriptorCache.CachedModuleDescriptor cachedModuleDescriptor = moduleDescriptorCache.getCachedModuleDescriptor(repository, resolvedModuleVersionId);
-            if (cachedModuleDescriptor == null) {
-                return false;
-            }
-            if (cachedModuleDescriptor.isMissing()) {
-                if (cachePolicy.mustRefreshMissingArtifact(cachedModuleDescriptor.getAgeMillis())) {
-                    LOGGER.debug("Cached meta-data for missing module is expired: will perform fresh resolve of '{}'", resolvedModuleVersionId);
-                    return false;
-                }
-                LOGGER.debug("Detected non-existence of module '{}' in resolver cache", resolvedModuleVersionId);
-                return true;
-            }
-            if (cachedModuleDescriptor.isChangingModule() || resolvedDependencyDescriptor.isChanging()) {
-                if (cachePolicy.mustRefreshChangingModule(cachedModuleDescriptor.getModuleVersion(), cachedModuleDescriptor.getAgeMillis())) {
-                    // TODO:DAZ Move expiring of changing module artifacts into here, once we can rely on sha1 comparison to prevent re-download
-                    LOGGER.debug("Cached meta-data for changing module is expired: will perform fresh resolve of '{}'", resolvedModuleVersionId);
-                    return false;
-                }
-                LOGGER.debug("Found cached version of changing module: '{}'", resolvedModuleVersionId);
-            }
-
-            LOGGER.debug("Using cached module metadata for '{}'", resolvedModuleVersionId);
-            resolvedModule = new ResolvedModuleRevision((DependencyResolver) repository, (DependencyResolver) repository, cachedModuleDescriptor.getModuleDescriptor(), null);
-            return true;
-        }
-
-        public void resolveModule() {
-            resolvedModule = repository.getDependency(ForceChangeDependencyDescriptor.forceChangingFlag(resolvedDependencyDescriptor, true), resolveData);
-
-            // No caching for local resolvers
-            if (bypassCache()) {
-                return;
-            }
-
-            if (resolvedModule == null) {
-                moduleDescriptorCache.cacheModuleDescriptor(repository, resolvedDependencyDescriptor.getDependencyRevisionId(), null, requestedDependencyDescriptor.isChanging());
-            } else {
-                cacheArtifactFile();
-                moduleResolutionCache.cacheModuleResolution(repository, requestedDependencyDescriptor.getDependencyRevisionId(), resolvedModule.getId());
-                moduleDescriptorCache.cacheModuleDescriptor(repository, resolvedModule.getId(), resolvedModule.getDescriptor(), isChangingDependency(requestedDependencyDescriptor, resolvedModule));
-            }
-        }
-
-        private void cacheArtifactFile() {
-            ArtifactOrigin artifactOrigin = resolvedModule.getReport().getArtifactOrigin();
-            File artifactFile = resolvedModule.getReport().getOriginalLocalFile();
-            if (artifactOrigin != null && artifactFile != null) {
-                artifactFileStore.storeArtifactFile(repository, artifactOrigin.getArtifact().getId(), artifactFile);
-            }
-        }
-
-        public ResolvedModuleRevision getModule() {
-            return resolvedModule;
+            return module.getDescriptor().isDefault();
         }
 
         public long getLastModified() {
-            return resolvedModule.getPublicationDate().getTime();
+            return module.getDescriptor().getResolvedPublicationDate().getTime();
         }
 
         public String getRevision() {
-            return resolvedModule.getId().getRevision();
-        }
-
-        private boolean isChangingDependency(DependencyDescriptor descriptor, ResolvedModuleRevision downloadedModule) {
-            if (descriptor.isChanging()) {
-                return true;
-            }
-
-            return repository.isChanging(downloadedModule, resolveData);
-        }
-
-        private boolean bypassCache() {
-            return repository.isLocal();
+            return module.getId().getRevision();
         }
     }
 }

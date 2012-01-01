@@ -15,11 +15,16 @@
  */
 package org.gradle.api.internal.artifacts.repositories.transport;
 
+import org.apache.ivy.core.cache.RepositoryCacheManager;
+import org.apache.ivy.plugins.repository.Repository;
 import org.apache.ivy.plugins.repository.TransferListener;
 import org.apache.ivy.plugins.resolver.AbstractResolver;
 import org.gradle.api.artifacts.repositories.PasswordCredentials;
+import org.gradle.api.internal.artifacts.ivyservice.filestore.ArtifactFileStore;
 import org.gradle.api.internal.artifacts.ivyservice.filestore.ExternalArtifactCache;
 import org.gradle.api.internal.artifacts.repositories.ProgressLoggingTransferListener;
+import org.gradle.api.internal.artifacts.repositories.cachemanager.DownloadingRepositoryCacheManager;
+import org.gradle.api.internal.artifacts.repositories.cachemanager.LocalFileRepositoryCacheManager;
 import org.gradle.api.internal.artifacts.repositories.transport.file.FileTransport;
 import org.gradle.api.internal.artifacts.repositories.transport.http.HttpTransport;
 import org.gradle.logging.ProgressLoggerFactory;
@@ -29,25 +34,46 @@ import java.net.URI;
 public class RepositoryTransportFactory {
     private final ExternalArtifactCache externalArtifactCache;
     private final TransferListener transferListener;
+    private final RepositoryCacheManager downloadingCacheManager;
+    private final RepositoryCacheManager localCacheManager;
 
-    public RepositoryTransportFactory(ExternalArtifactCache externalArtifactCache, ProgressLoggerFactory progressLoggerFactory) {
+    public RepositoryTransportFactory(ExternalArtifactCache externalArtifactCache, ProgressLoggerFactory progressLoggerFactory, ArtifactFileStore fileStore) {
         this.externalArtifactCache = externalArtifactCache;
         this.transferListener = new ProgressLoggingTransferListener(progressLoggerFactory, RepositoryTransport.class);
+        this.downloadingCacheManager = new DownloadingRepositoryCacheManager("downloading", fileStore);
+        this.localCacheManager = new LocalFileRepositoryCacheManager("local");
     }
 
     public RepositoryTransport createHttpTransport(String name, PasswordCredentials credentials) {
-        return decorate(new HttpTransport(name, credentials, externalArtifactCache));
+        return decorate(new HttpTransport(name, credentials, externalArtifactCache, downloadingCacheManager));
     }
 
     public RepositoryTransport createFileTransport(String name) {
-        // TODO:DAZ Might not want a transfer listener here
-        return decorate(new FileTransport(name));
+        return decorate(new FileTransport(name, localCacheManager));
     }
     
     private RepositoryTransport decorate(RepositoryTransport original) {
         return new ListeningRepositoryTransport(original);
     }
-    
+
+    public void attachListener(Repository repository) {
+        if (!repository.hasTransferListener(transferListener)) {
+            repository.addTransferListener(transferListener);
+        }
+    }
+
+    public RepositoryCacheManager getDownloadingCacheManager() {
+        return downloadingCacheManager;
+    }
+
+    public RepositoryCacheManager getLocalCacheManager() {
+        return localCacheManager;
+    }
+
+    public TransferListener getTransferListener() {
+        return transferListener;
+    }
+
     private class ListeningRepositoryTransport implements RepositoryTransport {
         private final RepositoryTransport delegate;
 
@@ -61,9 +87,7 @@ public class RepositoryTransportFactory {
 
         public ResourceCollection getRepositoryAccessor() {
             ResourceCollection resourceCollection = delegate.getRepositoryAccessor();
-            if (!resourceCollection.hasTransferListener(transferListener)) {
-                resourceCollection.addTransferListener(transferListener);
-            }
+            attachListener(resourceCollection);
             return resourceCollection;
         }
 

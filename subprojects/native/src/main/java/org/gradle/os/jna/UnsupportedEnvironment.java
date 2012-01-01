@@ -16,13 +16,14 @@
 package org.gradle.os.jna;
 
 import org.gradle.os.NativeIntegrationException;
+import org.gradle.os.NativeIntegrationUnavailableException;
 import org.gradle.os.OperatingSystem;
 import org.gradle.os.ProcessEnvironment;
 
 import java.io.File;
 import java.util.Map;
 
-class UnsupportedEnvironment implements ProcessEnvironment {
+public class UnsupportedEnvironment implements ProcessEnvironment {
     public boolean maybeSetEnvironment(Map<String, String> source) {
         return false;
     }
@@ -64,6 +65,6 @@ class UnsupportedEnvironment implements ProcessEnvironment {
     }
 
     private NativeIntegrationException notSupported() {
-        return new NativeIntegrationException("We don't support this operating system: " + OperatingSystem.current());
+        return new NativeIntegrationUnavailableException("We don't support this operating system: " + OperatingSystem.current());
     }
 }

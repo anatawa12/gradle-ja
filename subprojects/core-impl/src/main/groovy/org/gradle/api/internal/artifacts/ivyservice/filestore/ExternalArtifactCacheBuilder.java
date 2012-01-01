@@ -16,7 +16,6 @@
 package org.gradle.api.internal.artifacts.ivyservice.filestore;
 
 import org.gradle.api.internal.artifacts.ivyservice.ArtifactCacheMetaData;
-import org.gradle.api.internal.artifacts.ivyservice.artifactcache.ArtifactFileStore;
 import org.gradle.api.internal.artifacts.mvnsettings.LocalMavenCacheLocator;
 
 import java.io.File;
@@ -33,6 +32,10 @@ public class ExternalArtifactCacheBuilder {
 
     public void addCurrent(ArtifactFileStore artifactFileStore) {
         composite.addExternalArtifactCache(artifactFileStore.asExternalArtifactCache());
+    }
+
+    public void addMilestone7() {
+        addExternalCache(new File(rootCachesDirectory, "artifacts-7"), "*/[organisation]/[module](/[branch])/[revision]/[type]/[artifact]-[revision](-[classifier])(.[ext])");
     }
 
     public void addMilestone6() {

@@ -24,6 +24,7 @@ import org.gradle.tooling.model.eclipse.EclipseProject;
 import org.gradle.tooling.model.eclipse.HierarchicalEclipseProject;
 import org.gradle.tooling.model.idea.BasicIdeaProject;
 import org.gradle.tooling.model.idea.IdeaProject;
+import org.gradle.tooling.model.internal.TestModel;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -38,14 +39,28 @@ class DefaultProjectConnection implements ProjectConnection {
         this.connection = connection;
         this.parameters = parameters;
         this.adapter = adapter;
-        modelTypeMap.put(Project.class, ProjectVersion3.class);
-        modelTypeMap.put(BuildableProject.class, BuildableProjectVersion1.class);
-        modelTypeMap.put(HierarchicalProject.class, HierarchicalProjectVersion1.class);
-        modelTypeMap.put(HierarchicalEclipseProject.class, HierarchicalEclipseProjectVersion1.class);
-        modelTypeMap.put(EclipseProject.class, EclipseProjectVersion3.class);
-        modelTypeMap.put(IdeaProject.class, InternalIdeaProject.class);
-        modelTypeMap.put(GradleProject.class, InternalGradleProject.class);
-        modelTypeMap.put(BasicIdeaProject.class, InternalBasicIdeaProject.class);
+        modelTypeMap.putAll(getModelsUpToM6());
+        modelTypeMap.putAll(getModelsPostM6());
+    }
+
+    public static Map<Class<? extends Element>, Class<? extends ProjectVersion3>> getModelsUpToM6() {
+        Map<Class<? extends Element>, Class<? extends ProjectVersion3>> map = new HashMap<Class<? extends Element>, Class<? extends ProjectVersion3>>();
+        map.put(Project.class, ProjectVersion3.class);
+        map.put(BuildableProject.class, BuildableProjectVersion1.class);
+        map.put(HierarchicalProject.class, HierarchicalProjectVersion1.class);
+        map.put(HierarchicalEclipseProject.class, HierarchicalEclipseProjectVersion1.class);
+        map.put(EclipseProject.class, EclipseProjectVersion3.class);
+        map.put(IdeaProject.class, InternalIdeaProject.class);
+        map.put(GradleProject.class, InternalGradleProject.class);
+        map.put(BasicIdeaProject.class, InternalBasicIdeaProject.class);
+        return map;
+    }
+
+    public static Map<Class<? extends Element>, Class<? extends ProjectVersion3>> getModelsPostM6() {
+        Map<Class<? extends Element>, Class<? extends ProjectVersion3>> map = new HashMap<Class<? extends Element>, Class<? extends ProjectVersion3>>();
+        map.put(BuildEnvironment.class, InternalBuildEnvironment.class);
+        map.put(TestModel.class, InternalTestModel.class);
+        return map;
     }
 
     public void close() {
@@ -71,7 +86,11 @@ class DefaultProjectConnection implements ProjectConnection {
     private Class<? extends ProjectVersion3> mapToProtocol(Class<? extends Element> viewType) {
         Class<? extends ProjectVersion3> protocolViewType = modelTypeMap.get(viewType);
         if (protocolViewType == null) {
-            throw new UnsupportedVersionException(String.format("Model of type '%s' is not supported.", viewType.getSimpleName()));
+            throw new UnknownModelException(
+                    "Unknown model: '" + viewType.getSimpleName() + "'.\n"
+                        + "Most likely you are trying to acquire a model for a class that is not a valid Tooling API model class.\n"
+                        + "Review the documentation on the version of Tooling API you use to find out what models can be build."
+            );
         }
         return protocolViewType;
     }

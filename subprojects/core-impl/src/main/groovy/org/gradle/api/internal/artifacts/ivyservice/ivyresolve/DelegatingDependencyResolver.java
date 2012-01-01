@@ -19,6 +19,7 @@ import org.apache.ivy.core.cache.ArtifactOrigin;
 import org.apache.ivy.core.cache.RepositoryCacheManager;
 import org.apache.ivy.core.module.descriptor.Artifact;
 import org.apache.ivy.core.module.descriptor.DependencyDescriptor;
+import org.apache.ivy.core.module.descriptor.ModuleDescriptor;
 import org.apache.ivy.core.module.id.ModuleRevisionId;
 import org.apache.ivy.core.report.ArtifactDownloadReport;
 import org.apache.ivy.core.report.DownloadReport;
@@ -38,8 +39,9 @@ import java.io.IOException;
 import java.text.ParseException;
 import java.util.Map;
 
-public class DelegatingDependencyResolver implements DependencyResolver {
+abstract class DelegatingDependencyResolver implements IvyDependencyResolver {
     private final DependencyResolver resolver;
+    private ResolverSettings settings;
 
     public DelegatingDependencyResolver(DependencyResolver resolver) {
         this.resolver = resolver;
@@ -51,6 +53,19 @@ public class DelegatingDependencyResolver implements DependencyResolver {
 
     public String getName() {
         return resolver.getName();
+    }
+
+    public ResolverSettings getSettings() {
+        return settings;
+    }
+
+    public void setSettings(ResolverSettings settings) {
+        this.settings = settings;
+        resolver.setSettings(settings);
+    }
+
+    public boolean isChangingModule(ModuleDescriptor moduleDescriptor) {
+        return new ChangingModuleDetector(resolver, settings).isChangingModule(moduleDescriptor);
     }
 
     public Namespace getNamespace() {
@@ -134,10 +149,6 @@ public class DelegatingDependencyResolver implements DependencyResolver {
     }
 
     public void dumpSettings() {
-        throw new UnsupportedOperationException();
-    }
-
-    public void setSettings(ResolverSettings settings) {
         throw new UnsupportedOperationException();
     }
 }

@@ -123,7 +123,7 @@ public class TopLevelBuildServiceRegistry extends DefaultServiceRegistry impleme
         return new DefaultCacheRepository(startParameter.getGradleUserHomeDir(), startParameter.getProjectCacheDir(),
                 startParameter.getCacheUsage(), factory);
     }
-
+    
     protected ProjectEvaluator createProjectEvaluator() {
         return new LifecycleProjectEvaluator(
                 new BuildScriptProcessor(

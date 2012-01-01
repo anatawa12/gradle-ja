@@ -30,7 +30,15 @@ class ToolingApiCompatibilitySuiteRunner extends AbstractCompatibilityTestRunner
     private static final Map<String, ClassLoader> TEST_CLASS_LOADERS = [:]
 
     ToolingApiCompatibilitySuiteRunner(Class<? extends ToolingApiSpecification> target) {
-        super(target)
+        super(target, includesAllPermutations(target))
+    }
+
+    static String includesAllPermutations(Class target) {
+        if (target.getAnnotation(IncludeAllPermutations)) {
+            return "all";
+        } else {
+            return null; //just use whatever is the default
+        }
     }
 
     @Override
@@ -77,11 +85,16 @@ class ToolingApiCompatibilitySuiteRunner extends AbstractCompatibilityTestRunner
             if (minTargetGradleVersion && GradleVersion.version(gradle.version) < extractVersion(minTargetGradleVersion)) {
                 return false
             }
+            MaxTargetGradleVersion maxTargetGradleVersion = target.getAnnotation(MaxTargetGradleVersion)
+            if (maxTargetGradleVersion && GradleVersion.version(gradle.version) > extractVersion(maxTargetGradleVersion)) {
+                return false
+            }
+
             return true
         }
 
         private GradleVersion extractVersion(annotation) {
-            if (annotation.currentOnly()) {
+            if (GradleVersion.current().isSnapshot() && GradleVersion.current().version.startsWith(annotation.value())) {
                 return GradleVersion.current()
             }
             return GradleVersion.version(annotation.value())

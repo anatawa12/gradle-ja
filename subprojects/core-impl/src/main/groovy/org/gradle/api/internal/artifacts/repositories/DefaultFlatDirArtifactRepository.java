@@ -19,21 +19,26 @@ import org.apache.ivy.plugins.resolver.DependencyResolver;
 import org.apache.ivy.plugins.resolver.FileSystemResolver;
 import org.gradle.api.InvalidUserDataException;
 import org.gradle.api.artifacts.repositories.FlatDirectoryArtifactRepository;
-import org.gradle.api.internal.artifacts.ivyservice.ivyresolve.LocalFileRepositoryCacheManager;
+import org.gradle.api.internal.artifacts.repositories.transport.RepositoryTransportFactory;
 import org.gradle.api.internal.file.FileResolver;
 
 import java.io.File;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Set;
 
 import static org.gradle.util.GUtil.toList;
 
 public class DefaultFlatDirArtifactRepository implements FlatDirectoryArtifactRepository, ArtifactRepositoryInternal {
     private final FileResolver fileResolver;
+    private final RepositoryTransportFactory repositoryTransportFactory;
     private String name;
     private List<Object> dirs = new ArrayList<Object>();
 
-    public DefaultFlatDirArtifactRepository(FileResolver fileResolver) {
+    public DefaultFlatDirArtifactRepository(FileResolver fileResolver, RepositoryTransportFactory repositoryTransportFactory) {
         this.fileResolver = fileResolver;
+        this.repositoryTransportFactory = repositoryTransportFactory;
     }
 
     public String getName() {
@@ -60,7 +65,7 @@ public class DefaultFlatDirArtifactRepository implements FlatDirectoryArtifactRe
         this.dirs.addAll(Arrays.asList(dirs));
     }
 
-    public void createResolvers(Collection<DependencyResolver> resolvers) {
+    public DependencyResolver createResolver() {
         Set<File> dirs = getDirs();
         if (dirs.isEmpty()) {
             throw new InvalidUserDataException("You must specify at least one directory for a flat directory repository.");
@@ -73,7 +78,8 @@ public class DefaultFlatDirArtifactRepository implements FlatDirectoryArtifactRe
             resolver.addArtifactPattern(root.getAbsolutePath() + "/[artifact](-[classifier]).[ext]");
         }
         resolver.setValidate(false);
-        resolver.setRepositoryCacheManager(new LocalFileRepositoryCacheManager(name));
-        resolvers.add(resolver);
+        resolver.setRepositoryCacheManager(repositoryTransportFactory.getLocalCacheManager());
+        resolver.getRepository().addTransferListener(repositoryTransportFactory.getTransferListener());
+        return resolver;
     }
 }
