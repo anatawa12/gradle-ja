@@ -14,8 +14,8 @@
   ~ limitations under the License.
   -->
 
-<chapter id='cpp'>
-    <title>C++ Support</title>
+<chapter id='cpp' xml:lang="ja">
+    <title>C++サポート <phrase role="original">C++ Support</phrase></title>
 
     <note>
         <para>
@@ -31,7 +31,7 @@
     <para>
         Currently, support is restricted to building with the <literal>g++</literal> (i.e. the C++ focussed frontend to <ulink url="http://gcc.gnu.org/">GCC</ulink>)
         compiler/linker. Furthermore, there is no direct support for creating multiple variants of the same binary (e.g. 32 bit vs. 64 bit) and there is no direct
-        support for cross platform source configuration (à la <ulink url="http://www.gnu.org/s/autoconf/">autoconf</ulink>) at this time. Support for different
+        support for cross platform source configuration (a la <ulink url="http://www.gnu.org/s/autoconf/">autoconf</ulink>) at this time. Support for different
         compiler chains, managing multiple variants and cross platform source configuration will be added over time, making Gradle a fully capable build tool for C++
         (and other “native” language) projects.
     </para>
