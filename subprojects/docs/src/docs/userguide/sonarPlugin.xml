@@ -21,10 +21,11 @@
         that analyzes the project to which the plugin is applied and its subprojects. The results are stored in
         the Sonar database. The plugin requires Sonar 2.9 or higher.
     </para>
-    <para>The Sonar plugin provides integration with <ulink url="http://www.sonarsource.org">Sonar</ulink>,
-        a web-based platform for monitoring code quality. The plugin adds a <literal>sonarAnalyze</literal> task
-        that analyzes the project to which the plugin is applied and its subprojects. The results are stored in
-        the Sonar database. The plugin requires Sonar 2.9 or higher.
+    <para>Sonarプラグインは、コード品質モニタリングのためのWebベースのプラットフォームである
+        <ulink url="http://www.sonarsource.org">Sonar</ulink>との統合機能を提供します。
+        プラグインは、適用されたプロジェクトとサブプロジェクトを解析する<literal>sonarAnalyze</literal>タスクを追加します。
+        結果はSonarデータベースに格納されます。
+        プラグインはSonar 2.9以上を必要とします。
     </para>
 
     <para role="original">
@@ -34,36 +35,38 @@
         build before the analysis. In a typical setup, analysis would be performed once per day on a build server.
     </para>
     <para>
-        The <literal>sonarAnalyze</literal> task is a standalone task that needs to be executed explicitly
-        and doesn't depend on any other tasks. Apart from source code, the task also analyzes class files
-        and test result files (if available). For best results, it is therefore recommended to run a full
-        build before the analysis. In a typical setup, analysis would be performed once per day on a build server.
+        <literal>sonarAnalyze</literal>タスクは明示的に実行する必要のあるスタンドアロンタスクで、
+        他のいかなるタスクにも依存しません。
+        ソースコードだけでなく、タスクはクラスファイルと(可能であれば)テスト結果ファイルも解析します。
+        そのため、最大限の結果を得るために、解析の前にフルビルドを実行することが推奨されます。
+        典型的なセットアップでは、解析はビルドサーバー上で1日1回実行されるようにします。
     </para>
 
     <section>
-        <title> <phrase role="original"></phrase>Usage</title>
+        <title>使用方法 <phrase role="original">Usage</phrase></title>
         <para role="original">At a minimum, the Sonar plugin has to be applied to the project.</para>
-        <para>At a minimum, the Sonar plugin has to be applied to the project.</para>
+        <para>必要最小限、Sonarプラグインがプロジェクトに適用されている必要があります。</para>
 
-        <sample id="quickstart" dir="sonar/quickstart" title=" / Applying the Sonar plugin">
+        <sample id="quickstart" dir="sonar/quickstart" title="Sonarプラグインの適用 / Applying the Sonar plugin">
             <sourcefile file="build.gradle" snippet="apply-plugin"/>
         </sample>
 
         <para role="original">Unless Sonar is run locally and with default settings, it is also necessary to configure
             connection settings for the Sonar server and database.</para>
-        <para>Unless Sonar is run locally and with default settings, it is also necessary to configure
-            connection settings for the Sonar server and database.</para>
+        <para>Sonarがデフォルト設定でローカル実行されるのでなければ、Sonarサーバーとデータベースへの接続設定も必要になります。
+        </para>
 
-        <sample id="quickstart" dir="sonar/quickstart" title=" / Configuring Sonar connection settings">
+        <sample id="quickstart" dir="sonar/quickstart" title="Sonar接続設定のコンフィグレーション / Configuring Sonar connection settings">
             <sourcefile file="build.gradle" snippet="connection-settings"/>
         </sample>
 
         <para role="original">Project settings determine how the project is going to be analyzed. The default configuration
             works well for analyzing standard Java projects and can be customized in many ways.</para>
-        <para>Project settings determine how the project is going to be analyzed. The default configuration
-            works well for analyzing standard Java projects and can be customized in many ways.</para>
+        <para>プロジェクト設定によって、プロジェクトをどのように解析するのかが決まります。
+            標準的なJavaプロジェクトに対してはデフォルト設定で事が足りますが、さまざまな方法でカスタマイズも可能です。
+        </para>
 
-        <sample id="quickstart" dir="sonar/quickstart" title=" / Configuring Sonar project settings">
+        <sample id="quickstart" dir="sonar/quickstart" title="Sonarプロジェクト設定のコンフィグレーション / Configuring Sonar project settings">
             <sourcefile file="build.gradle" snippet="project-settings"/>
         </sample>
 
@@ -74,22 +77,26 @@
             and <apilink class="org.gradle.api.plugins.sonar.model.SonarProject"/>, respectively. See their API documentation for further information.
         </para>
         <para>
-            The <literal>sonar</literal>, <literal>server</literal>, <literal>database</literal>, and <literal>project</literal>
-            blocks in the examples above configure objects of type <apilink class="org.gradle.api.plugins.sonar.model.SonarRootModel"/>,
-            <apilink class="org.gradle.api.plugins.sonar.model.SonarServer"/>, <apilink class="org.gradle.api.plugins.sonar.model.SonarDatabase"/>,
-            and <apilink class="org.gradle.api.plugins.sonar.model.SonarProject"/>, respectively. See their API documentation for further information.
+            サンプルの<literal>sonar</literal>、<literal>server</literal>、<literal>database</literal>、および<literal>project</literal>
+            ブロックは、それぞれコンフィグレーションオブジェクト
+            <apilink class="org.gradle.api.plugins.sonar.model.SonarRootModel"/>、
+            <apilink class="org.gradle.api.plugins.sonar.model.SonarServer"/>、
+            <apilink class="org.gradle.api.plugins.sonar.model.SonarDatabase"/>、
+            および<apilink class="org.gradle.api.plugins.sonar.model.SonarProject"/>に対応します。
+            詳細はAPIドキュメントを参照してください。
         </para>
     </section>
 
     <section>
-        <title> <phrase role="original"></phrase>Analyzing Multi-Project Builds</title>
+        <title>マルチプロジェクトビルドの解析 <phrase role="original">Analyzing Multi-Project Builds</phrase></title>
         <para role="original">The Sonar plugin is capable of analyzing a whole project hierarchy at once. This yields a hierarchical view in the
             Sonar web interface with aggregated metrics and the ability to drill down into subprojects. It is also faster and
             less likely to run into out-of-memory problems than analyzing each project separately.
         </para>
-        <para>The Sonar plugin is capable of analyzing a whole project hierarchy at once. This yields a hierarchical view in the
-            Sonar web interface with aggregated metrics and the ability to drill down into subprojects. It is also faster and
-            less likely to run into out-of-memory problems than analyzing each project separately.
+        <para>Sonarプラグインはプロジェクト階層全体を一度に解析する機能をもちます。
+            これはSonarのWebインターフェースに集約されたメトリクスを含む階層ビューを生成し、
+            サブプロジェクトへのドリルダウン機能を提供します。
+            個別のプロジェクトごとに解析を行うよりも高速で、out-of-memory問題の発生が抑えられます。
         </para>
 
         <para role="original">
@@ -99,35 +106,41 @@
             It holds all global configuration, most importantly server and database connection settings.
         </para>
         <para>
-            To analyze a project hierarchy, the Sonar plugin needs to be applied to the top-most project of the hierarchy.
-            Typically (but not necessarily) this will be the root project. The <literal>sonar</literal> block
-            in that project configures an object of type <apilink class="org.gradle.api.plugins.sonar.model.SonarRootModel"/>.
-            It holds all global configuration, most importantly server and database connection settings.
+            プロジェクト階層を解析するには、Sonarプラグインを階層の最上位のプロジェクトに適用する必要があります。
+            これは、典型的には(必須ではないですが)ルートプロジェクトです。
+            そのプロジェクトの<literal>sonar</literal>ブロックが
+            <apilink class="org.gradle.api.plugins.sonar.model.SonarRootModel"/>型のオブジェクトを構成します。
+            これはすべてのグローバルコンフィグレーションを保持しますが、
+            最も重要なのはサーバーとデータベース接続設定です。
         </para>
 
-        <sample id="multiProject" dir="sonar/multiProject" title=" / Global configuration in a multi-project build">
+        <sample id="multiProject" dir="sonar/multiProject" title="マルチプロジェクトビルドにおけるグローバルコンフィグレーション / Global configuration in a multi-project build">
             <sourcefile file="build.gradle" snippet="global-configuration"/>
         </sample>
         <para role="original">Each project in the hierarchy has its own project configuration. Common values can be set from a parent build script.</para>
-        <para>Each project in the hierarchy has its own project configuration. Common values can be set from a parent build script.</para>
+        <para>階層の各プロジェクトは独自のプロジェクトコンフィグレーションを持ちます。
+            共通の値は親のビルドスクリプトから設定可能です。</para>
 
-        <sample id="multiProject" dir="sonar/multiProject" title=" / Common project configuration in a multi-project build">
+        <sample id="multiProject" dir="sonar/multiProject" title="マルチプロジェクトビルドにおける共通のプロジェクトコンフィグレーション / Common project configuration in a multi-project build">
             <sourcefile file="build.gradle" snippet="common-project-configuration"/>
         </sample>
 
         <para role="original">The <literal>sonar</literal> block in a subproject configures an object of type <apilink class="org.gradle.api.plugins.sonar.model.SonarProjectModel"/>.</para>
-        <para>The <literal>sonar</literal> block in a subproject configures an object of type <apilink class="org.gradle.api.plugins.sonar.model.SonarProjectModel"/>.</para>
+        <para>サブプロジェクトの<literal>sonar</literal>ブロックは
+            <apilink class="org.gradle.api.plugins.sonar.model.SonarProjectModel"/>型のオブジェクトを構成します.</para>
 
         <para role="original">
             Projects can also be configured individually. For example, setting the <literal>skip</literal> property to <literal>true</literal>
             prevents a project (and its subprojects) from being analyzed. Skipped projects will not be displayed in the Sonar web interface.
         </para>
         <para>
-            Projects can also be configured individually. For example, setting the <literal>skip</literal> property to <literal>true</literal>
-            prevents a project (and its subprojects) from being analyzed. Skipped projects will not be displayed in the Sonar web interface.
+            プロジェクトを個別に構成することもできます。
+            例えば、<literal>skip</literal>プロパティを<literal>true</literal>に設定することで、
+            プロジェクト(およびそのサブプロジェクト)を解析対象から除外することができます。
+            スキップされたプロジェクトはSonar Webインターフェースには表示されません。
         </para>
 
-        <sample id="multiProject" dir="sonar/multiProject" title=" / Individual project configuration in a multi-project build">
+        <sample id="multiProject" dir="sonar/multiProject" title="マルチプロジェクトビルドにおけるプロジェクト個別コンフィグレーション / Individual project configuration in a multi-project build">
             <sourcefile file="build.gradle" snippet="individual-project-configuration"/>
         </sample>
 
@@ -135,10 +148,11 @@
             Another typical per-project configuration is the programming language to be analyzed. Note that Sonar can only analyze one language per project.
         </para>
         <para>
-            Another typical per-project configuration is the programming language to be analyzed. Note that Sonar can only analyze one language per project.
+            プロジェクト単位のコンフィグレーションでもう一つ典型的なのは、解析対象のプログラム言語です。
+            Sonarはプロジェクトあたり一つの言語しか解析できないことに注意してください。
         </para>
 
-        <sample id="multiProject" dir="sonar/multiProject" title=" / Configuring the language to be analyzed">
+        <sample id="multiProject" dir="sonar/multiProject" title="解析対象の言語のコンフィグレーション / Configuring the language to be analyzed">
             <sourcefile file="build.gradle" snippet="language-configuration"/>
         </sample>
 
@@ -146,32 +160,33 @@
             When setting only a single property at a time, the equivalent property syntax is more succinct:
         </para>
         <para>
-            When setting only a single property at a time, the equivalent property syntax is more succinct:
+            一度に単一のプロパティしか設定しないときは、等価なプロパティの文法はより簡潔になります:
         </para>
 
-        <sample id="multiProject" dir="sonar/multiProject" title=" / Using property syntax">
+        <sample id="multiProject" dir="sonar/multiProject" title="プロパティ文法の利用 / Using property syntax">
             <sourcefile file="build.gradle" snippet="property-syntax"/>
         </sample>
     </section>
 
     <section>
-        <title> <phrase role="original"></phrase>Analyzing Custom Source Sets</title>
+        <title>カスタムソースセットの解析 <phrase role="original">Analyzing Custom Source Sets</phrase></title>
         <para role="original">By default, the Sonar plugin will analyze the production sources in the <literal>main</literal> source set and
             the test sources in the <literal>test</literal> source set. This works independent of the project's source directory layout.
             Additional source sets can be added as needed.
         </para>
-        <para>By default, the Sonar plugin will analyze the production sources in the <literal>main</literal> source set and
-            the test sources in the <literal>test</literal> source set. This works independent of the project's source directory layout.
-            Additional source sets can be added as needed.
+        <para>デフォルトでは、Sonarプラグインは<literal>main</literal>ソースセットのプロダクションソースと、
+            <literal>test</literal>ソースセットのテストソースを解析します。
+            これはプロジェクトのソースディレクトリレイアウトとは独立して動作します。
+            ソースセットは必要に応じて追加できます。
         </para>
 
-        <sample id="advanced" dir="sonar/advanced" title=" / Analyzing custom source sets">
+        <sample id="advanced" dir="sonar/advanced" title="カスタムソースセットの解析 / Analyzing custom source sets">
             <sourcefile file="build.gradle" snippet="source-sets"/>
         </sample>
     </section>
 
     <section>
-        <title> <phrase role="original"></phrase>Setting Custom Sonar Properties</title>
+        <title>カスタムSonarプロパティの設定 <phrase role="original">Setting Custom Sonar Properties</phrase></title>
 
         <para role="original">
             Eventually, most configuration is passed to the Sonar code analyzer in the form of key-value pairs known as Sonar properties.
@@ -181,24 +196,25 @@
             by the plugin's object model.
         </para>
         <para>
-            Eventually, most configuration is passed to the Sonar code analyzer in the form of key-value pairs known as Sonar properties.
-            The <apilink class="org.gradle.api.plugins.sonar.model.SonarProperty"/> annotations in the API documentation show how properties
-            of the plugin's object model get mapped to the corresponding Sonar properties. The Sonar plugin offers hooks to post-process Sonar
-            properties before they get passed to the code analyzer. The same hooks can be used to add additional properties which aren't covered
-            by the plugin's object model.
+            最終的には、コンフィグレーションのほとんどは、
+            Sonarプロパティとして知られるkey-valueペアの形でSonarコードアナライザに渡されます。
+            プラグインのオブジェクトモデルのプロパティが対応するSonarプロパティにどのようにしてマップされるかは、
+            APIドキュメントの<apilink class="org.gradle.api.plugins.sonar.model.SonarProperty"/>アノテーションが示してます。
+            Sonarプラグインは、Sonarプロパティがコードアナライザに渡される前の後処理のためのフックを提供します。
+            このフックは、プラグインのオブジェクトモデルがカバーしていないプロパティを追加するためにも利用できます。
         </para>
 
         <para role="original">For global Sonar properties, use the <code>withGlobalProperties</code> hook on <apilink class="org.gradle.api.plugins.sonar.model.SonarRootModel"/>:</para>
-        <para>For global Sonar properties, use the <code>withGlobalProperties</code> hook on <apilink class="org.gradle.api.plugins.sonar.model.SonarRootModel"/>:</para>
+        <para>グローバルSonarプロパティに対しては、<apilink class="org.gradle.api.plugins.sonar.model.SonarRootModel"/>の<code>withGlobalProperties</code>フックを利用してください:</para>
 
-        <sample id="advanced" dir="sonar/advanced" title=" / Setting custom global properties">
+        <sample id="advanced" dir="sonar/advanced" title="カスタムグローバルプロパティ設定 / Setting custom global properties">
             <sourcefile file="build.gradle" snippet="global-properties"/>
         </sample>
 
         <para role="original">For per-project Sonar properties, use the <code>withProjectProperties</code> hook on <apilink class="org.gradle.api.plugins.sonar.model.SonarProject"/>:</para>
-        <para>For per-project Sonar properties, use the <code>withProjectProperties</code> hook on <apilink class="org.gradle.api.plugins.sonar.model.SonarProject"/>:</para>
+        <para>プロジェクト毎のSonarプロパティに対しては、<apilink class="org.gradle.api.plugins.sonar.model.SonarProject"/>の<code>withProjectProperties</code>フックを利用してください:</para>
 
-        <sample id="advanced" dir="sonar/advanced" title=" / Setting custom project properties">
+        <sample id="advanced" dir="sonar/advanced" title="カスタムプロジェクトプロパティ設定 / Setting custom project properties">
             <sourcefile file="build.gradle" snippet="project-properties"/>
         </sample>
 
@@ -207,30 +223,32 @@
             by the plugin's object model.) For configuring third-party Sonar plugins, consult their documentation.
         </para>
         <para>
-            The Sonar documentation provides a complete list of Sonar properties. (Note that most of these properties are already covered
-            by the plugin's object model.) For configuring third-party Sonar plugins, consult their documentation.
+            SonarのドキュメントはSonarプロパティの完全なリストを提供します。
+            (これらのプロパティのほとんどはプラグインのオブジェクトモデルでカバーされていることに注意してください。)
+            サードパーティのSonarプラグインに対しては、それらのドキュメントを参照してください。
         </para>
     </section>
 
     <section>
-        <title> <phrase role="original"></phrase>Tasks</title>
+        <title>タスク <phrase role="original">Tasks</phrase></title>
         <para role="original">The Sonar plugin adds the following tasks to the project.</para>
-        <para>The Sonar plugin adds the following tasks to the project.</para>
+        <para>Sonarプラグインはプロジェクトに以下のタスクを追加します。</para>
         <table>
-            <title> <phrase role="original"></phrase>Sonar plugin - tasks</title>
+            <title>Sonarプラグイン - タスク <phrase role="original">Sonar plugin - tasks</phrase></title>
             <thead>
                 <tr>
-                    <td> <phrase role="original"></phrase>Task name</td>
-                    <td> <phrase role="original"></phrase>Depends on</td>
-                    <td> <phrase role="original"></phrase>Type</td>
-                    <td> <phrase role="original"></phrase>Description</td>
+                    <td>タスク名 <phrase role="original">Task name</phrase></td>
+                    <td>依存先 <phrase role="original">Depends on</phrase></td>
+                    <td>タイプ <phrase role="original">Type</phrase></td>
+                    <td>説明 <phrase role="original">Description</phrase></td>
                 </tr>
             </thead>
             <tr>
                 <td><literal>sonarAnalyze</literal></td>
                 <td>-</td>
                 <td><apilink class="org.gradle.api.plugins.sonar.SonarAnalyze"/></td>
-                <td> <phrase role="original"></phrase>Analyzes a project hierarchy and stores the results in the Sonar database.</td>
+                <td>プロジェクト階層全体を解析し、結果をSonarデータベースに格納。
+                  <phrase role="original">Analyzes a project hierarchy and stores the results in the Sonar database.</phrase></td>
             </tr>
         </table>
     </section>
