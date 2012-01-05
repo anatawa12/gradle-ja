@@ -18,125 +18,174 @@
     <title>C++サポート <phrase role="original">C++ Support</phrase></title>
 
     <note>
-        <para>
+        <para role="original">
             The Gradle C++ support is experimental and in very early stages of development so should not be considered stable.
+        </para>
+        <para>
+            GradleのC++サポートは実験的な機能であり、開発も非常に初期の段階にあります。まだ安定していると考えるべきではありません。
         </para>
     </note>
 
-    <para>
+    <para role="original">
         The C++ plugins add support for building software comprised of C++ source code, and managing the process of building “native” software in general.
         While many excellent build tools exist for this space of software development, Gradle brings the dependency management practices more traditionally
         found in the JVM development space to C++ developers.
     </para>
     <para>
+        C++プラグインは、C++のソースコードから成るソフトウェアのビルドや、一般的な「ネイティブ」ソフトウェアのビルドプロセス管理をサポートします。
+        ソフトウェア開発におけるこの領域には、既にたくさんの素晴らしいビルドツールが存在しますが、Gradleは更に、JVM開発の領域で伝統的なプラクティスになっている依存関係の管理をC++開発者へ提供します。
+    </para>
+    <para role="original">
         Currently, support is restricted to building with the <literal>g++</literal> (i.e. the C++ focussed frontend to <ulink url="http://gcc.gnu.org/">GCC</ulink>)
         compiler/linker. Furthermore, there is no direct support for creating multiple variants of the same binary (e.g. 32 bit vs. 64 bit) and there is no direct
         support for cross platform source configuration (a la <ulink url="http://www.gnu.org/s/autoconf/">autoconf</ulink>) at this time. Support for different
         compiler chains, managing multiple variants and cross platform source configuration will be added over time, making Gradle a fully capable build tool for C++
         (and other “native” language) projects.
     </para>
+    <para>
+    現在サポートされているのは、<literal>g++</literal>(C++にフォーカスした<ulink url="http://gcc.gnu.org/">GCC</ulink>のフロントエンド)コンパイラ/リンカでのビルドに限られています。さらに、同じバイナリを複数の形態(64bit版と32bit版など)で作成することや、(<ulink url="http://www.gnu.org/s/autoconf/">autoconf</ulink>形式の)クロスプラットフォームでのソース設定もまだ直接はサポートされていません。
+    これらのサポート、つまり別のコンパイラ環境への対応や、複数形態の管理、クロスプラットフォーム上でのソース設定の機能は徐々に追加され、C++(およびその他の「ネイティブ」言語)プロジェクトのビルドツールとして完全な機能を備えるようになる予定です。
+    </para>
 
     <section>
-        <title>Usage</title>
-        <para>
+        <title>使用方法 <phrase role="original">Usage</phrase></title>
+        <para role="original">
             The build scripts DSLs, model elements and tasks used to manage C++ projects are added by the <literal>cpp</literal> plugin. However, it is typically
             more convenient to use either the <literal>cpp-lib</literal> or <literal>cpp-exe</literal> plugins that sit on top of the <literal>cpp</literal>
             plugin to preconfigure the project to build either a shared library or executable binary respectively.
         </para>
-        <sample id="useCppExePlugin" dir="cpp/dependencies" title="Using the 'cpp-exe' plugin">
+        <para>
+        C++プロジェクトを管理するのに使用されるビルド用DSLやモデル要素、タスクは、<literal>cpp</literal>プラグインによって追加されます。
+        しかし、典型的なプロジェクトでは<literal>cpp-lib</literal>プラグインや<literal>cpp-exe</literal>プラグインを使った方が便利でしょう。
+        これらのプラグインは<literal>cpp</literal>プラグインの上に構築されていて、共有ライブラリ、または実行バイナリのビルドに必要な設定を前もって行ってくれます。
+        </para>
+        <sample id="useCppExePlugin" dir="cpp/dependencies" title="'cpp-exe'プラグインを使う / Using the 'cpp-exe' plugin">
             <sourcefile file="build.gradle" snippet="use-plugin-exe"/>
         </sample>
-        <sample id="useCppLibPlugin" dir="cpp/dependencies" title="Using the 'cpp-lib' plugin">
+        <sample id="useCppLibPlugin" dir="cpp/dependencies" title="'cpp-lib'プラグインを使う / Using the 'cpp-lib' plugin">
             <sourcefile file="build.gradle" snippet="use-plugin-lib"/>
         </sample>
-        <para>
+        <para role="original">
             The <literal>cpp-exe</literal> plugin configures the project to build a single executable (at <filename>$buildDir/binaries/main</filename>) and
             the <literal>cpp-lib</literal> plugin configures the project to build a single shared library (at <filename>$buildDir/binaries/main.so</filename>).
+        </para>
+        <para>
+        <literal>cpp-exe</literal>プラグインは一つの実行バイナリを(<filename>$buildDir/binaries/main</filename>に)ビルドするようプロジェクトを設定し、
+        <literal>cpp-lib</literal>プラグインは一つの共有ライブラリを(<filename>$buildDir/binaries/main.so</filename>に)ビルドするようプロジェクトを設定します。
         </para>
     </section>
 
     <section>
-        <title>Source code locations</title>
-        <para>
+        <title>ソースコードの配置 <phrase role="original">Source code locations</phrase></title>
+        <para role="original">
             Both plugins configure the project to look for <literal>.cpp</literal> source files in <literal>src/main/cpp</literal> and use the <literal>src/main/headers</literal>
             directory as a header include root. For a library, the header files in <literal>src/main/headers</literal> are considered the “public” or “exported” headers.
             Header files that should not be exported (but are used internally) should be placed inside the <literal>src/main/cpp</literal> directory (though be aware that
             such header files should always be referenced in a manner relative to the file including them).
         </para>
+        <para>
+        どちらのプラグインも、<literal>.cpp</literal>ソースコードを<literal>src/main/cpp</literal>から探し、<literal>src/main/headers</literal>ディレクトリをヘッダのインクルードルートに使うよう、プロジェクトを設定します。
+        なお、エクスポートされるべきでない(内部的に使う)ヘッダファイルは、<literal>src/main/cpp</literal>ディレクトリに配置するべきです。(ただし、そのようなヘッダファイルは、インクルードされるファイルから常に相対的に参照されるべきであることに注意してください。)
+        </para>
     </section>
 
     <section>
-        <title>Compiling</title>
-        <para>
+        <title>コンパイル <phrase role="original">Compiling</phrase></title>
+        <para role="original">
             For both the <literal>cpp-lib</literal> and <literal>cpp-exe</literal> plugins, you can run the <literal>compileMain</literal> task.
         </para>
-        <para>
+        <para><literal>cpp-lib</literal>プラグインでも<literal>cpp-exe</literal>プラグインでも、<literal>compileMain</literal>タスクが使用できます。</para>
+        <para role="original">
             As previously stated, the C++ support is currently based on the <literal>g++</literal> tool which must be installed and on the <literal>PATH</literal>
             for the Gradle process.
         </para>
-        <para>Arbitrary arguments can be provided to <literal>g++</literal> by using the following syntax:</para>
-        <sample id="gppArgs" dir="cpp/exe" title="Supplying arbitrary args to gpp">
+        <para>前述の通り、C++サポートは現在<literal>g++</literal>ツールを基盤にしているので、<literal>g++</literal>をGradleプロセスの<literal>PATH</literal>上にインストールしておく必要があります。</para>
+        <para role="original">Arbitrary arguments can be provided to <literal>g++</literal> by using the following syntax:</para>
+        <para>次のようなシンタックスで、<literal>g++</literal>に任意の引数を渡すことができます。</para>
+        <sample id="gppArgs" dir="cpp/exe" title="gppに任意の引数を渡す / Supplying arbitrary args to gpp">
             <sourcefile file="build.gradle" snippet="args"/>
         </sample>
-        <para>
+        <para role="original">
             The above example applies to the <literal>cpp-exe</literal> plugin, to supply arguments for the <literal>cpp-lib</literal> plugin replace
             “<literal>executables</literal>” with “<literal>libraries</literal>”.
         </para>
+        <para>上の例では<literal>cpp-exe</literal>プラグインを適用していますが、<literal>cpp-lib</literal>プラグインで引数を渡すには「<literal>executables</literal>」 を 「<literal>libraries</literal>」に置き換えてください。</para>
     </section>
 
     <section>
-        <title>Dependencies</title>
-        <para>
+        <title>依存関係 <phrase role="original">Dependencies</phrase></title>
+        <para role="original">
             Dependencies for C++ projects are binary libraries that export header files. The header files are used during compilation, with the compiled
             binary dependency being used during the linking.
         </para>
+        <para>C++プロジェクトの依存関係は、ヘッダファイルをエクスポートしたバイナリのライブラリです。ヘッダファイルはコンパイルの際に使用され、コンパイル済みの依存先バイナリはリンク時に使用されます。</para>
         <section>
-            <title>External Dependencies</title>
-            <para>
+            <title>外部依存関係 <phrase role="original">External Dependencies</phrase></title>
+            <para role="original">
                 External dependencies (i.e. from a repository, not a subproject) must be specified using the following syntax:
             </para>
-            <sample id="gppArgs" dir="cpp/dependencies" title="Declaring dependencies">
+            <para>外部依存関係(つまりサブプロジェクトではなくリポジトリからのもの)は、次のようなシンタックスで指定する必要があります。</para>
+            <sample id="gppArgs" dir="cpp/dependencies" title="依存関係の宣言 / Declaring dependencies">
                 <sourcefile file="build.gradle" snippet="declaring-dependencies"/>
             </sample>
-            <para>
+            <para role="original">
                 Each dependency must be specified with the <literal>dependency</literal> method as above and must be declared as part of the source set. The
                 <literal>group</literal>, <literal>name</literal> and <literal>version</literal> arguments <emphasis>must</emphasis> be supplied.
             </para>
             <para>
+            依存関係は、上記のように<literal>dependency</literal>メソッドで指定し、ソースセットの一部として宣言しなければなりません。
+            <literal>group</literal>や<literal>name</literal>、<literal>version</literal>は<emphasis>必ず</emphasis>指定する必要があります。
+            </para>
+            <para role="original">
                 For each declared dependency, two actual dependencies are created. One with the classifer “<literal>headers</literal>” and extension
                 “<literal>zip</literal>” which is a zip file of the exported headers, and another with the classifier “<literal>so</literal>” and extension
                 “<literal>so</literal>” which is the compiled library binary to link against (which is supplied as a direct input to the g++ link operation).
             </para>
+            <para>
+                宣言一つにつき、依存関係は実質二つ作られます。
+                一つは、分類子(classifier)が「<literal>headers</literal>」で拡張子が「zip」の、エクスポートされたヘッダファイルが格納されたzipファイルです。
+                もう一つは分類子、拡張子が「so」の、リンクされるコンパイル済みライブラリのバイナリです(これはg++のリンク操作に、入力物として直接渡されます)。
+            </para>
         </section>
         <section>
-            <title>Project Dependencies</title>
-            <para>
+            <title>プロジェクト依存関係 <phrase role="original">Project Dependencies</phrase></title>
+            <para role="original">
                 The notation for project dependencies is slightly different.
             </para>
-            <sample id="cppProjectDependencies" dir="cpp/exewithlib" title="Declaring project dependencies">
+            <para>プロジェクト依存関係の表記方法は少し異なります。</para>
+            <sample id="cppProjectDependencies" dir="cpp/exewithlib" title="プロジェクト依存関係の定義 / Declaring project dependencies">
                 <sourcefile file="build.gradle" snippet="project-dependencies"/>
             </sample>
         </section>
     </section>
 
     <section>
-        <title>Publishing</title>
-        <para>
+        <title>公開 <phrase role="original">Publishing</phrase></title>
+        <para role="original">
             The <literal>cpp-exe</literal> and <literal>cpp-lib</literal> plugins configure their respective output binaries to be publishable as part of the
             <literal>archives</literal> configuration. To publish, simply configure the <literal>uploadArchives</literal> task as per usual.
         </para>
-        <sample id="cppPublish" dir="cpp/dependencies" title="Uploading exe or lib">
+        <para>
+        <literal>cpp-exe</literal>プラグインと<literal>cpp-lib</literal>プラグインは、それぞれ出力物を<literal>archives</literal>コンフィギュレーションの一部として公開可能にします。
+        実際に公開するには、いつもどおり単に<literal>uploadArchives</literal>タスクを設定するだけです。
+        </para>
+        <sample id="cppPublish" dir="cpp/dependencies" title="exeやライブラリをアップロードする / Uploading exe or lib">
             <sourcefile file="build.gradle" snippet="upload"/>
         </sample>
-        <para>
+        <para role="original">
             The <literal>cpp-exe</literal> plugin publishes a single artifact with extension “<literal>exe</literal>”. The <literal>cpp-lib</literal> plugin
             publishes two artifacts; one with classifier “<literal>headers</literal>” and extension “<literal>zip</literal>”, and one with classifier
             “<literal>so</literal>” and extension “<literal>so</literal>” (which is the format used when consuming dependencies).
         </para>
+        <para>
+        <literal>cpp-exe</literal>プラグインは、一つのアーティファクトを拡張子「exe」として公開します。
+        一方、<literal>cpp-lib</literal>プラグインは二つのアーティファクトを公開します。分類子が「headers」で拡張子が「zip」のものと、分類子、拡張子が「so」のものです(依存関係として使われるときに使用されるフォーマットです)。
+        </para>
         <note>
-            <para>
+            <para role="original">
                 Currently, there is no support for publishing the dependencies of artifacts in POM or Ivy files. Future versions will support this.
             </para>
+            <para>現在、POMやivyファイルでアーティファクトの依存関係を公開することはできません。将来のバージョンでサポートされる予定です。</para>
         </note>
     </section>
 
