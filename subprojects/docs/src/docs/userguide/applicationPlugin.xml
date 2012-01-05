@@ -125,8 +125,8 @@
     </section>
     
     <section id="application_distribution_resources">
-            <title>Including other resources in the distribution</title>
-            <para>
+            <title>ディストリビューションに他のリソースを含める <phrase role="original">Including other resources in the distribution</phrase></title>
+            <para role="original">
                 One of the convention properties added by the plugin is <literal>applicationDistribution</literal> which is a <apilink class="org.gradle.api.file.CopySpec"/>.
                 This specification is used by the <literal>installApp</literal> and <literal>distZip</literal> tasks as the specification of what is to be 
                 include in the distribution. Above copying the starting scripts to the <filename>bin</filename> dir and necessary jars to <filename>lib</filename> 
@@ -134,17 +134,27 @@
                 distribution, simply arrange them in the <filename>src/dist</filename> directory.
             </para>
             <para>
+            このプラグインは、<literal>applicationDistribution</literal>という<apilink class="org.gradle.api.file.CopySpec"/>型の規約プロパティを追加します。
+            これは、<literal>installApp</literal>タスクと<literal>distZip</literal>タスクにより何がディストリビューションに含められるのか、その仕様を定義したものです。
+            実行用スクリプトをディストリビューションの<filename>bin</filename>ディレクトリに、必要なjarを<filename>lib</filename>にコピーするほか、<filename>src/dist</filename>ディレクトリにある全てのファイルをコピーします。
+            何らかの静的ファイルをディストリビューションに含めたい場合は、単に<filename>src/dist</filename>ディレクトリにそれらのファイルを置くだけで大丈夫です。
+            </para>
+            <para role="original">
                 If your project generates files to be included in the distribution, e.g. documentation, you can add these files to the distribution by adding to the 
                 <literal>applicationDistribution</literal> copy spec.
             </para>
-            <sample id="includeTaskOutputInApplicationDistribution" dir="application" title="Include output from other tasks in the application distribution">
+            <para>あるプロジェクトが、ディストリビューションに含めるファイル(例えばドキュメントなど)を生成する、といったケースもあります。
+                そのような場合、<literal>applicationDistribution</literal>コピー仕様を追加することで、ファイルをディストリビューションに追加することができます。</para>
+            <sample id="includeTaskOutputInApplicationDistribution" dir="application" title="他タスクの出力をアプリケーションのディストリビューションに含める / Include output from other tasks in the application distribution">
                 <sourcefile file="build.gradle" snippet="distribution-spec"/>
             </sample>
-            <para>
+            <para role="original">
                 By specifying that the distribution should include the task's output files (see <xref linkend="sec:task_inputs_outputs"/>), Gradle knows 
                 that the task that produces the files must be invoked before the distribution can be assembled and will take care of this for you.
             </para>
-            <sample id="dependentTaskForApplicationDistributionOutput" dir="application" title="Automatically creating files for distribution">
+            <para>ディストリビューションにタスクの出力(<xref linkend="sec:task_inputs_outputs"/>参照)を格納するように指定すると、
+                Gradleは、ディストリビューションを作成する前にそのタスクを実行しなければならないのだと判断し、その作業を引き受けてくれます。</para>
+            <sample id="dependentTaskForApplicationDistributionOutput" dir="application" title="ディストリビューションのファイルを自動的に作成する / Automatically creating files for distribution">
                 <output args="distZip"/>
             </sample>
     </section>
