@@ -8,7 +8,7 @@
 
 # Uncomment those lines to set JVM options. GRADLE_OPTS and JAVA_OPTS can be used together.
 # I'm concatenating user's GRADLE_OPTS at the end so that they win in case the user has already configured memory settings.
-GRADLE_OPTS="-Xmx1024m -XX:MaxPermSize=256m $GRADLE_OPTS"
+#GRADLE_OPTS="-Xmx1024m -XX:MaxPermSize=256m $GRADLE_OPTS"
 JAVA_OPTS="$JAVA_OPTS -Xmx512m -Dgroovy.source.encoding=UTF-8 -Dfile.encoding=UTF-8"
 
 GRADLE_APP_NAME=Gradle

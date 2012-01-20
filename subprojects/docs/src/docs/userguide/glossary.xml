@@ -1,5 +1,5 @@
 <glossary>
-    <title>Glossary</title>
+    <title>用語集<phrase role="original">Glossary</phrase></title>
     <glossdiv>
         <title>A</title>
         <glossentry>
@@ -74,7 +74,7 @@
             <glossdef>
                 <para>A domain-specific language is a programming language or specification language dedicated
                     to a particular problem domain, a particular problem representation technique, and/or a particular
-                    solution technique. The concept isn't new—special-purpose programming languages and all kinds of
+                    solution technique. The concept isn't new窶敗pecial-purpose programming languages and all kinds of
                     modeling/specification languages have always existed, but the term has become more popular due to
                     the rise of domain-specific modeling.
                 </para>
