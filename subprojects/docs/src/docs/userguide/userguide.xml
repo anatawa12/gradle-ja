@@ -44,6 +44,10 @@
             <firstname>Kazuchika</firstname>
             <surname>Sekiya</surname>
         </othercredit>
+        <othercredit class="translator">
+            <firstname>Nobuhiro</firstname>
+            <surname>Sue</surname>
+        </othercredit>
     </bookinfo>
     <preface>
         <title>翻訳版について</title>
