@@ -16,10 +16,13 @@
 
 package org.gradle.integtests.samples
 
+import org.gradle.integtests.fixtures.AbstractIntegrationSpec
 import org.gradle.integtests.fixtures.Sample
-import org.gradle.integtests.fixtures.internal.AbstractIntegrationSpec
+import org.gradle.internal.nativeplatform.OperatingSystem
 import org.gradle.util.TestFile
 import org.junit.Rule
+import spock.lang.IgnoreIf
+import spock.lang.Timeout
 
 /**
  * @author Hans Dockter
@@ -48,46 +51,53 @@ class SamplesWebQuickstartIntegrationTest extends AbstractIntegrationSpec {
         )
     }
 
+    @Timeout(120)
+    @IgnoreIf({OperatingSystem.current().windows})
     def "can execute servlet"() {
+        def portFinder = org.gradle.util.AvailablePortFinder.createPrivate()
+
         given:
         // Inject some int test stuff
         sample.dir.file('build.gradle') << """
-def portFinder = org.gradle.util.AvailablePortFinder.createPrivate()
+httpPort = ${portFinder.nextAvailable}
+stopPort = ${portFinder.nextAvailable}
 
-httpPort = portFinder.nextAvailable
-stopPort = portFinder.nextAvailable
-println "http port = \$httpPort, stop port = \$stopPort"
-
-[jettyRun, jettyRunWar]*.daemon = true
-
-task runTest(dependsOn: jettyRun) << {
-    callServlet()
-}
-
-task runWarTest(dependsOn: jettyRunWar) << {
-    callServlet()
-}
-
-private void callServlet() {
+task runTest << {
     URL url = new URL("http://localhost:\$httpPort/quickstart")
-    println url.text
-    jettyStop.execute()
+    long expiry = System.currentTimeMillis() + 20000
+    while (System.currentTimeMillis() <= expiry) {
+        try {
+            println url.text
+            return
+        } catch (ConnectException e) {
+            Thread.sleep(200)
+        }
+    }
+    throw new RuntimeException("Timeout waiting for jetty to become available.")
 }
 
 """
 
         when:
         sample sample
-        run 'runTest'
+        def runJetty = executer.withDeprecationChecksDisabled().withTasks("jettyRun").withArguments("-d").start()
+
+        sample sample
+        def jettyStop = executer.withDeprecationChecksDisabled().withTasks('runTest', 'jettyStop').withArguments("-d").run()
+        runJetty.waitForFinish()
 
         then:
-        output.contains('hello Gradle')
+        jettyStop.output.contains('hello Gradle')
 
         when:
         sample sample
-        run 'runWarTest'
+        def runJettyWar = executer.withDeprecationChecksDisabled().withTasks("jettyRunWar").withArguments("-d").start()
+
+        sample sample
+        jettyStop = executer.withDeprecationChecksDisabled().withTasks('runTest', 'jettyStop').withArguments("-d").run()
+        runJettyWar.waitForFinish()
 
         then:
-        output.contains('hello Gradle')
+        jettyStop.output.contains('hello Gradle')
     }
 }

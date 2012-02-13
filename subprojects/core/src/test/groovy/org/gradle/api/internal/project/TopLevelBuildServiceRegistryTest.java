@@ -31,6 +31,8 @@ import org.gradle.configuration.ScriptPluginFactory;
 import org.gradle.groovy.scripts.DefaultScriptCompilerFactory;
 import org.gradle.groovy.scripts.ScriptCompilerFactory;
 import org.gradle.initialization.*;
+import org.gradle.internal.Factory;
+import org.gradle.internal.service.ServiceRegistry;
 import org.gradle.listener.DefaultListenerManager;
 import org.gradle.listener.ListenerManager;
 import org.gradle.logging.LoggingManagerInternal;

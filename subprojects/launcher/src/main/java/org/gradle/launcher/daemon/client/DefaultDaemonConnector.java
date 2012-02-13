@@ -19,12 +19,12 @@ import org.gradle.api.GradleException;
 import org.gradle.api.logging.Logger;
 import org.gradle.api.logging.Logging;
 import org.gradle.api.specs.Spec;
+import org.gradle.internal.UncheckedException;
+import org.gradle.launcher.daemon.context.DaemonContext;
 import org.gradle.launcher.daemon.registry.DaemonInfo;
 import org.gradle.launcher.daemon.registry.DaemonRegistry;
-import org.gradle.launcher.daemon.context.DaemonContext;
 import org.gradle.messaging.remote.internal.ConnectException;
 import org.gradle.messaging.remote.internal.OutgoingConnector;
-import org.gradle.util.UncheckedException;
 
 import java.util.List;
 
@@ -63,6 +63,10 @@ public class DefaultDaemonConnector implements DaemonConnector {
     private DaemonConnection findConnection(List<DaemonInfo> daemonInfos, Spec<? super DaemonContext> constraint) {
         for (DaemonInfo daemonInfo : daemonInfos) {
             if (!constraint.isSatisfiedBy(daemonInfo.getContext())) {
+                LOGGER.debug("Found daemon (address: {}, idle: {}) however it's context does not match the desired criteria.\n"
+                        + "  Wanted: {}.\n"
+                        + "  Found:  {}.\n"
+                        + "  Looking for a different daemon...", daemonInfo.getAddress(), daemonInfo.isIdle(), constraint, daemonInfo.getContext());
                 continue;
             }
 
@@ -91,14 +95,14 @@ public class DefaultDaemonConnector implements DaemonConnector {
         daemonStarter.run();
         long expiry = System.currentTimeMillis() + connectTimeout;
         do {
-            connection = findConnection(daemonRegistry.getIdle(), constraint);
-            if (connection != null) {
-                return connection;
-            }
             try {
                 Thread.sleep(200L);
             } catch (InterruptedException e) {
                 throw UncheckedException.asUncheckedException(e);
+            }
+            connection = findConnection(daemonRegistry.getIdle(), constraint);
+            if (connection != null) {
+                return connection;
             }
         } while (System.currentTimeMillis() < expiry);
 

@@ -16,14 +16,16 @@
 
 package org.gradle.tooling.internal.provider.input;
 
-import org.gradle.tooling.internal.CompatibleIntrospector;
+import org.gradle.api.logging.LogLevel;
 import org.gradle.tooling.internal.protocol.BuildOperationParametersVersion1;
 import org.gradle.tooling.internal.protocol.ProgressListenerVersion1;
+import org.gradle.tooling.internal.reflect.CompatibleIntrospector;
 
 import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -32,20 +34,58 @@ import java.util.concurrent.TimeUnit;
 public class AdaptedOperationParameters implements ProviderOperationParameters {
 
     private final BuildOperationParametersVersion1 delegate;
+    private CompatibleIntrospector introspector;
 
     public AdaptedOperationParameters(BuildOperationParametersVersion1 delegate) {
         this.delegate = delegate;
+        introspector = new CompatibleIntrospector(delegate);
     }
 
     public InputStream getStandardInput() {
         //Tooling api means embedded use. We don't want to consume standard input if we don't own the process.
         //Hence we use a dummy input stream by default
         ByteArrayInputStream safeDummy = new ByteArrayInputStream(new byte[0]);
-        return new CompatibleIntrospector(delegate).getSafely(safeDummy, "getStandardInput");
+        return maybeGet(safeDummy, "getStandardInput");
+    }
+
+    public LogLevel getProviderLogLevel() {
+        boolean verbose = getVerboseLogging();
+        if (verbose) {
+            return LogLevel.DEBUG;
+        } else {
+            //by default, tooling api provider infrastructure logs with:
+            return LogLevel.INFO;
+        }
+    }
+    
+    public LogLevel getBuildLogLevel() {
+        boolean verbose = getVerboseLogging();
+        if (verbose) {
+            return LogLevel.DEBUG;
+        } else {
+            //by default, the build logs with:
+            return LogLevel.LIFECYCLE;
+        }
     }
 
     public boolean getVerboseLogging() {
-        return new CompatibleIntrospector(delegate).getSafely(false, "getVerboseLogging");
+        return introspector.getSafely(false, "getVerboseLogging");
+    }
+
+    public File getJavaHome(File defaultJavaHome) {
+        return maybeGet(defaultJavaHome, "getJavaHome");
+    }
+
+    public List<String> getJvmArguments(List<String> defaultJvmArgs) {
+        return maybeGet(defaultJvmArgs, "getJvmArguments");
+    }
+
+    private <T> T maybeGet(T defaultValue, String methodName) {
+        T out = introspector.getSafely(defaultValue, methodName);
+        if (out == null) {
+            return defaultValue;
+        }
+        return out;
     }
 
     public File getProjectDir() {

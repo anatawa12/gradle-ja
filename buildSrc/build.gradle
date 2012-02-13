@@ -15,7 +15,8 @@
  */
 
 apply plugin: 'groovy'
-apply plugin: 'code-quality'
+apply plugin: 'checkstyle'
+apply plugin: 'codenarc'
 apply plugin: 'idea'
 apply plugin: 'eclipse'
 
@@ -46,3 +47,4 @@ configurations {
 
 apply from: '../gradle/compile.gradle'
 apply from: '../gradle/codeQuality.gradle'
+apply from: '../gradle/classycle.gradle'

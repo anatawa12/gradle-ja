@@ -15,12 +15,15 @@
  */
 package org.gradle.integtests.fixtures;
 
+import org.gradle.util.Jvm;
+import org.gradle.util.TextUtil;
+
 import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.InputStream;
 import java.util.*;
-import org.gradle.util.Jvm;
-import org.gradle.util.TextUtil;
+
+import static java.util.Arrays.asList;
 
 public abstract class AbstractGradleExecuter implements GradleExecuter {
     private final List<String> args = new ArrayList<String>();
@@ -40,6 +43,8 @@ public abstract class AbstractGradleExecuter implements GradleExecuter {
     private String buildScriptText;
     private File settingsFile;
     private InputStream stdin;
+    //gradle opts make sense only for forking executer but having them here makes more sense
+    protected final List<String> gradleOpts = new ArrayList<String>();
 
     public GradleExecuter reset() {
         args.clear();
@@ -110,6 +115,7 @@ public abstract class AbstractGradleExecuter implements GradleExecuter {
         if (stdin != null) {
             executer.withStdIn(stdin);
         }
+        executer.withGradleOpts(gradleOpts.toArray(new String[gradleOpts.size()]));
     }
 
     public GradleExecuter usingBuildScript(File buildScript) {
@@ -289,8 +295,12 @@ public abstract class AbstractGradleExecuter implements GradleExecuter {
         return allArgs;
     }
 
-    public GradleHandle createHandle() {
-        throw new UnsupportedOperationException(String.format("A %s does not support creating handles.", getClass().getSimpleName()));
+    public final GradleHandle start() {
+        try {
+            return doStart();
+        } finally {
+            reset();
+        }
     }
 
     public final ExecutionResult run() {
@@ -309,7 +319,21 @@ public abstract class AbstractGradleExecuter implements GradleExecuter {
         }
     }
 
+    protected GradleHandle doStart() {
+        throw new UnsupportedOperationException(String.format("%s does not support running asynchronously.", getClass().getSimpleName()));
+    }
+
     protected abstract ExecutionResult doRun();
 
     protected abstract ExecutionFailure doRunWithFailure();
+
+    /**
+     * {@inheritDoc}
+     */
+    public AbstractGradleExecuter withGradleOpts(String ... gradleOpts) {
+        this.gradleOpts.addAll(asList(gradleOpts));
+        return this;
+//        throw new UnsupportedOperationException("This executor: " + this.getClass().getSimpleName()
+//                + " does not support the gradle opts");
+    }
 }

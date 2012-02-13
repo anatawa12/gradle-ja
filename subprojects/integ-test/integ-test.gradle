@@ -1,4 +1,6 @@
-import org.gradle.os.OperatingSystem
+import org.gradle.internal.nativeplatform.OperatingSystem
+
+apply from: "$rootDir/gradle/classycle.gradle"
 
 dependencies {
     groovy libraries.groovy
@@ -11,6 +13,8 @@ dependencies {
 
     integTestRuntime rootProject.configurations.testRuntime.allDependencies
 }
+
+useTestFixtures(sourceSet: 'integTest', project: ':native')
 
 integTestTasks.all {
     dependsOn ':publishLocalArchives', ':binZip', ':allZip', ':srcZip', ':docs:userguideDocbook'

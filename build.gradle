@@ -30,7 +30,7 @@ import org.gradle.build.Releases
  */
 
 releases = new Releases(project(':core').file('src/releases.xml'), project)
-version = new Version(project)
+version = Version.forProject(project)
 
 defaultTasks 'assemble'
 
@@ -38,13 +38,16 @@ apply plugin: 'java-base'
 
 archivesBaseName = 'gradle'
 
+versions = [
+    commons_io: 'commons-io:commons-io:1.4'
+]
 libraries = [
     ant: dependencies.module('org.apache.ant:ant:1.8.2') {
         dependency 'org.apache.ant:ant-launcher:1.8.2@jar'
     },
     asm: 'asm:asm-all:3.3.1@jar',
     commons_cli: 'commons-cli:commons-cli:1.2@jar',
-    commons_io: 'commons-io:commons-io:1.4@jar',
+    commons_io: dependencies.module(versions.commons_io),
     commons_lang: 'commons-lang:commons-lang:2.6@jar',
     commons_collections: 'commons-collections:commons-collections:3.2.1@jar',
     ivy: 'org.apache.ivy:ivy:2.2.0@jar',
@@ -79,9 +82,11 @@ libraries.jetty = dependencies.module("org.mortbay.jetty:jetty:6.1.25") {
     dependency libraries.servlet_api
 }
 
-libraries.commons_httpclient = dependencies.module('commons-httpclient:commons-httpclient:3.1') {
+libraries.commons_httpclient = dependencies.module('org.apache.httpcomponents:httpclient:4.1.2') {
+    dependency "org.apache.httpcomponents:httpcore:4.1.2@jar"
     dependency libraries.jcl_to_slf4j
-    dependency "commons-codec:commons-codec:1.2@jar"
+    dependency "commons-codec:commons-codec:1.4@jar"
+    dependency "org.samba.jcifs:jcifs:1.3.17"
 }
 
 libraries.maven_ant_tasks = dependencies.module("org.apache.maven:maven-ant-tasks:2.1.3") {
@@ -93,8 +98,8 @@ libraries += [
         ant_antlr: 'org.apache.ant:ant-antlr:1.8.2@jar',
         antlr: 'antlr:antlr:2.7.7@jar',
         dom4j: 'dom4j:dom4j:1.6.1@jar',
-        guava: 'com.google.guava:guava:10.0.1@jar',
-        groovy: 'org.codehaus.groovy:groovy-all:1.8.4@jar',
+        guava: 'com.google.guava:guava:11.0.1@jar',
+        groovy: 'org.codehaus.groovy:groovy-all:1.8.6@jar',
         jaxen: 'jaxen:jaxen:1.1@jar',
         jcip: "net.jcip:jcip-annotations:1.0",
         jna: 'net.java.dev.jna:jna:3.2.2@jar',
@@ -131,19 +136,48 @@ allprojects {
         }
     }
 
-	configurations {
-		all {
-			resolutionStrategy {
+    configurations {
+        all {
+            resolutionStrategy {
                 //we cannot use 'hours' for now due to java 1.5 problem
-			    cacheDynamicVersionsFor 24*60*60, 'seconds'
-			    cacheChangingModulesFor 24*60*60, 'seconds'
-			}
-		}
-	}
+                cacheDynamicVersionsFor 24*60*60, 'seconds'
+                cacheChangingModulesFor 24*60*60, 'seconds'
+            }
+        }
+    }
 
     version = this.version
 
     apply from: "$rootDir/gradle/conventions-dsl.gradle"
+    
+    isDevBuild = {
+        gradle.taskGraph.hasTask(developerBuild)
+    }
+
+    isCIBuild = {
+        gradle.taskGraph.hasTask(ciBuild)
+    }
+
+    isCommitBuild = {
+        gradle.taskGraph.hasTask(commitBuild)
+    }
+
+    isFinalReleaseBuild = {
+        gradle.taskGraph.hasTask(releaseVersion)
+    }
+
+    isRcBuild = {
+        gradle.taskGraph.hasTask(rcVersion)
+    }
+
+    isNightlyBuild = {
+        gradle.taskGraph.hasTask(nightlyVersion)
+    }
+
+    isReleaseBuild = { // Are we doing any kind of “release”? i.e. final, nightly or rc
+        isFinalReleaseBuild() || isNightlyBuild() || isRcBuild()
+    }
+    
 }
 
 configure(groovyProjects()) {
@@ -198,7 +232,7 @@ task uploadArchives(dependsOn: publishedProjects()*.uploadArchives)
 task publishLocalArchives(dependsOn: publishedProjects()*.publishLocalArchives)
 
 task aggregateTestReports(type: TestReportAggregator) {
-    testReportDir = file("${reportsDir}/tests")
+    testReportDir = reporting.file("tests")
     testResultsDir = file("${buildDir}/test-results")
     projects = subprojects
 }
@@ -291,26 +325,16 @@ task intTestImage(type: Sync) {
     }
 }
 
-def isDevBuild() {
-    gradle.taskGraph.hasTask(developerBuild)
-}
-
-def isCIBuild() {
-    gradle.taskGraph.hasTask(ciBuild)
-}
-
-def isCommitBuild() {
-    gradle.taskGraph.hasTask(commitBuild)
+gradle.taskGraph.whenReady {
+    if (([isFinalReleaseBuild(), isNightlyBuild(), isRcBuild()].findAll { it }).size() > 1) {
+        throw new GradleException("This appears to be more than one type of release: final - ${isFinalReleaseBuild()}, rc - ${isRcBuild()}, nightly - ${isNightlyBuild() }")
+    }
 }
 
 def guessMaxForks() {
     int processors = Runtime.runtime.availableProcessors()
     return Math.max(2, (int) (processors / 2))
 }
-
-task testedDists(dependsOn: [assemble, check])
-
-task nightlyBuild(dependsOn: [clean, testedDists, ':docs:uploadDocs'])
 
 task install(type: Install) {
     description = 'Installs the minimal distribution into directory $gradle_installPath'
@@ -328,25 +352,27 @@ task installAll(type: Install) {
     installDirProperyName = 'gradle_installPath'
 }
 
-uploadDists {
-    dependsOn testedDists
-    uploadDescriptor = false
-    doFirst {
-        repositories {
-            ivy {
-                artifactPattern "${version.distributionUrl}/[artifact]-[revision](-[classifier]).[ext]"
-                userName = artifactoryUserName
-                password = artifactoryUserPassword
-            }
-        }
-    }
+task testedDists(dependsOn: [check]) {
+    outputs.files configurations.dists.allArtifacts.files
 }
 
 gradle.taskGraph.whenReady {graph ->
-    if (graph.hasTask(uploadDists) || graph.hasTask(uploadArchives)) {
+    if (graph.hasTask(uploadArchives)) {
         // check properties defined and fail early
         artifactoryUserName
         artifactoryUserPassword
+    }
+}
+
+task quickCheck {
+    def i = gradle.startParameter.taskNames.findIndexOf { it ==~ /(?i):?(quickCheck|qC)/ }
+    if (i >= 0) {
+        gradle.startParameter.taskNames.addAll(i, ["doc:checkstyleApi", "codeQuality", "classes", "test"])
+    }
+    doFirst {
+        if (i < 0) {
+            throw new GradleException("Due to the way it is implemented, the 'quickCheck' task has to be invoked directly, and its name can only be abbreviated to 'qC'.")
+        }
     }
 }
 
@@ -366,6 +392,13 @@ task commitBuild {
     dependsOn testedDists
 }
 
+task nightlyVersion
+
+task nightlyBuild {
+    description = 'Nightly build performed by the CI server'
+    dependsOn nightlyVersion, testedDists, "uploadAll"
+}
+
 gradle.taskGraph.whenReady {graph ->
     if (graph.hasTask(ciBuild)) {
         subprojects { reportsDirName = "$rootProject.reportsDir/${path.replaceFirst(':', '').replaceAll(':', '.')}" }
@@ -376,6 +409,14 @@ gradle.taskGraph.whenReady {graph ->
 task releaseVersion
 //TODO SF - this task name is inconsistent because other releaseXxx tasks actually upload some content somewhere. Should be called something like 'markReleaseVersion'
 
+// A marker task which indicates that we are building an rc of some sort
+task rcVersion
+
+task rc {
+    description "Builds a release candidate for the next release"
+    dependsOn rcVersion, testedDists, "uploadAll"
+}
+
 task tag(type: Tag)
 
 task testedTag(type: Tag, dependsOn: testedDists)
@@ -384,7 +425,7 @@ task releaseArtifacts {
     description = 'Builds the release artifacts'
     //TODO SF - this task name is inconsistent because other releaseXxx tasks actually upload some content somewhere. Should be called something like 'buildReleaseArtifacts'
     group = 'release'
-    dependsOn releaseVersion, assemble, ':docs:websiteDocs'
+    dependsOn releaseVersion, assemble
 }
 
 task checkJavaVersion << {
@@ -406,19 +447,33 @@ task incrementNextVersion << {
 
 task uploadAll {
     description = 'Uploads binaries, sources and documentation. Does not upload the website! Useful when release procedure breaks at upload and only upload tasks should executed again'
-    dependsOn uploadArchives, uploadDists, ':docs:uploadDocs'
+    dependsOn uploadArchives, "website:uploadDistributions", "website:uploadDocs", "website:pushReleasesXml"
 }
 
-task wrapper(type: Wrapper) {
-    gradleVersion = '1.0-milestone-4-20110508123756+0200'
+def wrapperUpdateTask = { name, label ->
+    task "${name}Wrapper"(type: Wrapper) {
+        doFirst {
+            try {
+                def version = new groovy.json.JsonSlurper().parseText(new URL("http://services.gradle.org/versions/$label").text)
+                println "updating wrapper to $label version: $version.version (downloadUrl: $version.downloadUrl)"
+                distributionUrl version.downloadUrl
+            } catch (FileNotFoundException e) {
+                throw new GradleException("Cannot update wrapper to '${label}' version as there is currently no version of that label")
+            }
+        }
+    }
 }
+
+wrapperUpdateTask("nightly", "nightly")
+wrapperUpdateTask("rc", "release-candidate")
+wrapperUpdateTask("current", "current")
 
 def groovyProjects() {
-    subprojects.findAll { it.name != 'docs' }
+    subprojects.findAll { !(it.name in ["docs", "website"]) }
 }
 
 def publishedProjects() {
-    [project(':core'), project(':toolingApi'), project(':wrapper')]
+    [project(':core'), project(':toolingApi'), project(':wrapper'), project(':baseServices')]
 }
 
 def pluginProjects() {

@@ -15,15 +15,19 @@
  */
 package org.gradle.util
 
-import spock.lang.Specification
+import org.gradle.internal.nativeplatform.OperatingSystem
 import org.gradle.util.Jvm.AppleJvm
 import org.junit.Rule
-import org.gradle.os.OperatingSystem
+import spock.lang.Specification
 
 class AppleJvmTest extends Specification {
     @Rule TemporaryFolder tmpDir = new TemporaryFolder()
     @Rule SetSystemProperties sysProp = new SetSystemProperties()
-    AppleJvm jvm = new AppleJvm(Mock(OperatingSystem))
+    OperatingSystem os = Mock(OperatingSystem)
+
+    AppleJvm getJvm() {
+        new AppleJvm(os)
+    }
 
     def "looks for runtime Jar in Java home directory"() {
         TestFile javaHomeDir = tmpDir.createDir('Home')
@@ -50,5 +54,38 @@ class AppleJvmTest extends Specification {
 
         expect:
         jvm.getInheritableEnvironmentVariables(env) == ['OTHER': 'value']
+    }
+
+    def "finds executable if java home supplied"() {
+        when:
+        def home = tmpDir.createDir("home")
+        home.create {
+            bin { file 'java' }
+        }
+        os.getExecutableName(_ as String) >> home.file('bin/java').absolutePath
+
+        AppleJvm jvm = new AppleJvm(os, home)
+
+        then:
+        home.file('bin/java').absolutePath == jvm.getExecutable('java').absolutePath
+    }
+
+    def "provides decent feedback when executable not found"() {
+        given:
+        def home = tmpDir.createDir("home")
+        home.create {
+            bin { file 'java' }
+        }
+        os.getExecutableName({it.contains('java')}) >> home.file('bin/java').absolutePath
+        os.getExecutableName({it.contains('foobar')}) >> home.file('bin/foobar').absolutePath
+
+        AppleJvm jvm = new AppleJvm(os, home)
+
+        when:
+        jvm.getExecutable('foobar')
+        
+        then:
+        def ex = thrown(JavaHomeException)
+        ex.message.contains('foobar')
     }
 }

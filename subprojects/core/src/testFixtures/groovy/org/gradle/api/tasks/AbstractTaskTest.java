@@ -39,13 +39,14 @@ import org.jmock.lib.legacy.ClassImposteriser;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
+import spock.lang.Issue;
 
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-import static org.gradle.util.Matchers.*;
-import static org.hamcrest.Matchers.*;
+import static org.gradle.util.Matchers.dependsOn;
+import static org.hamcrest.Matchers.notNullValue;
+import static org.hamcrest.Matchers.sameInstance;
 import static org.junit.Assert.*;
 
 /**
@@ -135,47 +136,18 @@ public abstract class AbstractTaskTest {
     }
 
     @Test
-    public void testDoFirst() {
-        Action<Task> action1 = createTaskAction();
-        Action<Task> action2 = createTaskAction();
-        int actionSizeBefore = getTask().getActions().size();
-        assertSame(getTask(), getTask().doFirst(action2));
-        assertEquals(actionSizeBefore + 1, getTask().getActions().size());
-        assertEquals(action2, getTask().getActions().get(0));
-        assertSame(getTask(), getTask().doFirst(action1));
-        assertEquals(action1, getTask().getActions().get(0));
-    }
-
-    @Test
-    public void testDoLast() {
-        Action<Task> action1 = createTaskAction();
-        Action<Task> action2 = createTaskAction();
-        int actionSizeBefore = getTask().getActions().size();
-        assertSame(getTask(), getTask().doLast(action1));
-        assertEquals(actionSizeBefore + 1, getTask().getActions().size());
-        assertEquals(action1, getTask().getActions().get(getTask().getActions().size() - 1));
-        assertSame(getTask(), getTask().doLast(action2));
-        assertEquals(action2, getTask().getActions().get(getTask().getActions().size() - 1));
-    }
-
-    @Test
     public void testDeleteAllActions() {
         Action<Task> action1 = createTaskAction();
         Action<Task> action2 = createTaskAction();
         getTask().doLast(action1);
         getTask().doLast(action2);
         assertSame(getTask(), getTask().deleteAllActions());
-        assertEquals(new ArrayList(), getTask().getActions());
+        assertTrue(getTask().getActions().isEmpty());
     }
 
     @Test(expected = InvalidUserDataException.class)
     public void testAddActionWithNull() {
         getTask().doLast((Closure) null);
-    }
-
-    @Test
-    public void testAddActionsWithClosures() {
-        GroovyTaskTestHelper.checkAddActionsWithClosures(getTask());
     }
 
     @Test
@@ -190,12 +162,6 @@ public abstract class AbstractTaskTest {
         }});
 
         task.execute();
-    }
-
-    @Test
-    public void testConfigure() {
-        getTask().setActions(new ArrayList());
-        GroovyTaskTestHelper.checkConfigure(getTask());
     }
 
     public AbstractProject getProject() {
@@ -333,9 +299,20 @@ public abstract class AbstractTaskTest {
     public static Action<Task> createTaskAction() {
         return new Action<Task>() {
             public void execute(Task task) {
-
             }
         };
     }
-
+    
+    @Test
+    @Issue("http://issues.gradle.org/browse/GRADLE-2022")
+    public void testGoodErrorMessageWhenTaskInstantiatedDirectly() {
+        try {
+            Class<? extends AbstractTask> clazz = getTask().getClass();
+            clazz.newInstance();
+            throw new RuntimeException("Direct instantiation of " + clazz + " should have produced an exception");
+        } catch (Exception e) {
+            assertEquals(TaskInstantiationException.class, e.getClass());
+            assert e.getMessage().contains("has been instantiated directly which is not supported");
+        }
+    }
 }

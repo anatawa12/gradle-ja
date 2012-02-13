@@ -15,12 +15,12 @@
  */
 package org.gradle.tooling.internal.consumer;
 
+import org.gradle.internal.UncheckedException;
 import org.gradle.tooling.model.DomainObjectSet;
 import org.gradle.tooling.model.idea.IdeaModuleDependency;
 import org.gradle.tooling.model.idea.IdeaSingleEntryLibraryDependency;
 import org.gradle.tooling.model.internal.Exceptions;
 import org.gradle.tooling.model.internal.ImmutableDomainObjectSet;
-import org.gradle.util.UncheckedException;
 
 import java.lang.reflect.*;
 import java.util.*;
@@ -30,8 +30,8 @@ public class ProtocolToModelAdapter {
     Map<String, Class<?>> configuredTargetTypes = new HashMap<String, Class<?>>();
 
     public ProtocolToModelAdapter() {
-        configuredTargetTypes.put("org.gradle.tooling.internal.idea.DefaultIdeaSingleEntryLibraryDependency", IdeaSingleEntryLibraryDependency.class);
-        configuredTargetTypes.put("org.gradle.tooling.internal.idea.DefaultIdeaModuleDependency",  IdeaModuleDependency.class);
+        configuredTargetTypes.put(IdeaSingleEntryLibraryDependency.class.getCanonicalName(), IdeaSingleEntryLibraryDependency.class);
+        configuredTargetTypes.put(IdeaModuleDependency.class.getCanonicalName(), IdeaModuleDependency.class);
     }
 
     public <T, S> T adapt(Class<T> targetType, S protocolObject) {
@@ -44,10 +44,13 @@ public class ProtocolToModelAdapter {
      * occasionally we want to use preconfigured target type instead of passed target type.
      */
     private <T, S> Class<T> guessTarget(Class<T> targetType, S protocolObject) {
-        Class configuredType = configuredTargetTypes.get(protocolObject.getClass().getCanonicalName());
-        if (configuredType != null){
-            return configuredType;
+        Class<?>[] interfaces = protocolObject.getClass().getInterfaces();
+        for (Class<?> i : interfaces) {
+            if (configuredTargetTypes.containsKey(i.getName())) {
+                return (Class<T>) configuredTargetTypes.get(i.getName());
+            }
         }
+
         return targetType;
     }
 
@@ -136,9 +139,8 @@ public class ProtocolToModelAdapter {
             try {
                 match = delegate.getClass().getMethod(method.getName(), method.getParameterTypes());
             } catch (NoSuchMethodException e) {
-                //TODO SF - find a place for it in the documentation.
-                String methodName = method.getDeclaringClass().getSimpleName() + "." + method.getName();
-                throw Exceptions.unsupportedMethod(methodName, e);
+                String methodName = method.getDeclaringClass().getSimpleName() + "." + method.getName() + "()";
+                throw Exceptions.unsupportedModelMethod(methodName, e);
             }
 
             LinkedList<Class<?>> queue = new LinkedList<Class<?>>();

@@ -18,14 +18,16 @@ package org.gradle.api.internal.artifacts.ivyservice.ivyresolve;
 import org.apache.ivy.core.IvyContext;
 import org.apache.ivy.core.cache.ArtifactOrigin;
 import org.apache.ivy.core.module.descriptor.Artifact;
+import org.apache.ivy.core.module.descriptor.DefaultDependencyDescriptor;
 import org.apache.ivy.core.module.descriptor.DependencyDescriptor;
 import org.apache.ivy.core.resolve.ResolveData;
 import org.apache.ivy.core.resolve.ResolvedModuleRevision;
 import org.apache.ivy.plugins.resolver.DependencyResolver;
 import org.apache.ivy.plugins.resolver.ResolverSettings;
-import org.gradle.api.internal.Factory;
 import org.gradle.api.internal.artifacts.ivyservice.CacheLockingManager;
-import org.gradle.api.internal.artifacts.ivyservice.ModuleVersionResolver;
+import org.gradle.api.internal.artifacts.ivyservice.ModuleVersionNotFoundException;
+import org.gradle.api.internal.artifacts.ivyservice.ModuleVersionResolveResult;
+import org.gradle.internal.Factory;
 
 import java.io.File;
 import java.text.ParseException;
@@ -59,11 +61,11 @@ public class LoopbackDependencyResolver extends RestrictedDependencyResolver {
         final DependencyResolver loopback = this;
         return cacheLockingManager.useCache(String.format("Resolve %s", dd), new Factory<ResolvedModuleRevision>() {
             public ResolvedModuleRevision create() {
-                ModuleVersionResolver dependency;
+                ModuleVersionResolveResult dependency;
                 IvyContext ivyContext = IvyContext.pushNewCopyContext();
                 try {
                     ivyContext.setResolveData(data);
-                    dependency = userResolverChain.create(dd);
+                    dependency = userResolverChain.resolve(dd);
                 } finally {
                     IvyContext.popContext();
                 }
@@ -78,8 +80,11 @@ public class LoopbackDependencyResolver extends RestrictedDependencyResolver {
         return cacheLockingManager.useCache(String.format("Locate %s", artifact), new Factory<ArtifactOrigin>() {
             public ArtifactOrigin create() {
                 try {
-                    File artifactFile = userResolverChain.resolve(artifact);
+                    DependencyDescriptor dependencyDescriptor = new DefaultDependencyDescriptor(artifact.getModuleRevisionId(), false);
+                    File artifactFile = userResolverChain.resolve(dependencyDescriptor).getArtifactResolver().resolve(artifact).getFile();
                     return new ArtifactOrigin(artifact, false, artifactFile.getAbsolutePath());
+                } catch (ModuleVersionNotFoundException e) {
+                    return null;
                 } catch (ArtifactNotFoundException e) {
                     return null;
                 }

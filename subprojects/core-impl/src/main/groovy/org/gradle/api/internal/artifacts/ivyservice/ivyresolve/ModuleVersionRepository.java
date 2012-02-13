@@ -17,6 +17,7 @@ package org.gradle.api.internal.artifacts.ivyservice.ivyresolve;
 
 import org.apache.ivy.core.module.descriptor.Artifact;
 import org.apache.ivy.core.module.descriptor.DependencyDescriptor;
+import org.gradle.api.internal.artifacts.ivyservice.ModuleVersionResolveException;
 
 import java.io.File;
 
@@ -24,14 +25,20 @@ import java.io.File;
  * A repository of module versions.
  *
  * <p>Current contains a subset of methods from {@link org.apache.ivy.plugins.resolver.DependencyResolver}, while we transition away from it.
- * The plan is to sync with (or replace with) {@link org.gradle.api.internal.artifacts.ivyservice.ModuleVersionResolver}.
+ * The plan is to sync with (or replace with) {@link org.gradle.api.internal.artifacts.ivyservice.DependencyToModuleResolver}.
  */
 public interface ModuleVersionRepository {
     String getId();
 
-    ModuleVersionDescriptor getDependency(DependencyDescriptor dd);
+    /**
+     * @return null if not found.
+     */
+    ModuleVersionDescriptor getDependency(DependencyDescriptor dd) throws ModuleVersionResolveException;
 
-    File download(Artifact artifact);
+    /**
+     * @return null if not found.
+     */
+    File download(Artifact artifact) throws ArtifactResolveException;
 
     // TODO - should be internal to the implementation of this (is only used to communicate DependencyResolverAdapter -> CachingModuleVersionRepository)
     boolean isLocal();

@@ -17,8 +17,8 @@
 package org.gradle.initialization;
 
 import org.gradle.CacheUsage;
+import org.gradle.RefreshOptions;
 import org.gradle.StartParameter;
-import org.gradle.api.internal.artifacts.ProjectDependenciesBuildInstruction;
 import org.gradle.api.logging.LogLevel;
 import org.gradle.cli.CommandLineArgumentException;
 import org.gradle.groovy.scripts.UriScriptSource;
@@ -31,7 +31,11 @@ import org.junit.Test;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 import static java.util.Arrays.asList;
 import static org.gradle.util.WrapUtil.*;
@@ -53,8 +57,7 @@ public class DefaultCommandLineConverterTest {
     private File expectedProjectDir = currentDir;
     private List<String> expectedTaskNames = toList();
     private Set<String> expectedExcludedTasks = toSet();
-    private ProjectDependenciesBuildInstruction expectedProjectDependenciesBuildInstruction
-            = new ProjectDependenciesBuildInstruction(true);
+    private boolean buildProjectDependencies = true;
     private Map<String, String> expectedSystemProperties = new HashMap<String, String>();
     private Map<String, String> expectedProjectProperties = new HashMap<String, String>();
     private List<File> expectedInitScripts = new ArrayList<File>();
@@ -71,7 +74,9 @@ public class DefaultCommandLineConverterTest {
 
     private final DefaultCommandLineConverter commandLineConverter = new DefaultCommandLineConverter();
     private boolean expectedContinue;
-
+    private boolean expectedOffline;
+    private RefreshOptions expectedRefreshOptions = RefreshOptions.NONE;
+    
     @Test
     public void withoutAnyOptions() {
         checkConversion();
@@ -84,8 +89,7 @@ public class DefaultCommandLineConverterTest {
     private void checkStartParameter(StartParameter startParameter) {
         assertEquals(expectedBuildFile, startParameter.getBuildFile());
         assertEquals(expectedTaskNames, startParameter.getTaskNames());
-        assertEquals(expectedProjectDependenciesBuildInstruction,
-                startParameter.getProjectDependenciesBuildInstruction());
+        assertEquals(buildProjectDependencies, startParameter.isBuildProjectDependencies());
         assertEquals(expectedProjectDir.getAbsoluteFile(), startParameter.getCurrentDir().getAbsoluteFile());
         assertEquals(expectedCacheUsage, startParameter.getCacheUsage());
         assertEquals(expectedSearchUpwards, startParameter.isSearchUpwards());
@@ -100,6 +104,8 @@ public class DefaultCommandLineConverterTest {
         assertEquals(expectedInitScripts, startParameter.getInitScripts());
         assertEquals(expectedProfile, startParameter.isProfile());
         assertEquals(expectedContinue, startParameter.isContinueOnFailure());
+        assertEquals(expectedOffline, startParameter.isOffline());
+        assertEquals(expectedRefreshOptions, startParameter.getRefreshOptions());
         assertEquals(expectedProjectCacheDir, startParameter.getProjectCacheDir());
     }
 
@@ -182,6 +188,24 @@ public class DefaultCommandLineConverterTest {
         expectedSystemProperties = toMap(prop1, valueProp1);
         expectedSystemProperties.put(prop2, valueProp2);
         checkConversion("-D", prop1 + "=" + valueProp1, "-D", prop2 + "=" + valueProp2);
+    }
+    
+    @Test
+    public void withSpecifiedGradleUserHomeDirectoryBySystemProperty() {
+        expectedGradleUserHome = testDir.file("home");
+        String propName = "gradle.user.home";
+        String propValue = expectedGradleUserHome.getAbsolutePath();
+        expectedSystemProperties = toMap(propName, propValue);
+        checkConversion("-D", propName+"="+propValue);
+    }
+
+    @Test
+    public void privilegeCmdLineOptionOverSystemPrefForGradleUserHome() {
+        expectedGradleUserHome = testDir.file("home");
+        String propName = "gradle.user.home";
+        String propValue = "home2";
+        expectedSystemProperties = toMap(propName, propValue);
+        checkConversion("-D", propName+"="+propValue, "-g", expectedGradleUserHome.getAbsolutePath());
     }
 
     @Test
@@ -277,7 +301,7 @@ public class DefaultCommandLineConverterTest {
 
     @Test
     public void withNoProjectDependencyRebuild() {
-        expectedProjectDependenciesBuildInstruction = new ProjectDependenciesBuildInstruction(false);
+        buildProjectDependencies = false;
         checkConversion("-a");
     }
 
@@ -361,6 +385,23 @@ public class DefaultCommandLineConverterTest {
     public void withContinue() {
         expectedContinue = true;
         checkConversion("--continue");
+    }
+
+    @Test
+    public void withOffline() {
+        expectedOffline = true;
+        checkConversion("--offline");
+    }
+
+    @Test
+    public void withRefreshDependenciesSet() {
+        expectedRefreshOptions = new RefreshOptions(asList(RefreshOptions.Option.DEPENDENCIES));
+        checkConversion("--refresh", "dependencies");
+    }
+
+    @Test(expected = CommandLineArgumentException.class)
+    public void withUnknownRefreshOption() {
+        checkConversion("--refresh", "unknown");
     }
 
     @Test(expected = CommandLineArgumentException.class)

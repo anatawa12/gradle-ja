@@ -13,43 +13,30 @@
   ~ See the License for the specific language governing permissions and
   ~ limitations under the License.
   -->
-<chapter id='gradle_wrapper' xml:lang="ja">
-    <title>Gradle Wrapper<phrase role="original">The Gradle Wrapper</phrase></title>
-    <para role="original">Gradle is a new tool. You can't expect it to be installed on machines beyond your sphere of influence. An
-        example are continuous integration server where Gradle is not installed and where you have no admin rights for
-        the machine. Or what if you provide an open source project and you want to make it as easy as possible for your
-        users to build it?
+<chapter id='gradle_wrapper'>
+    <title>The Gradle Wrapper</title>
+    <para>
+        The Gradle Wrapper (henceforth referred to as the “wrapper) is the preferred way of starting a Gradle build. The wrapper
+        is a batch script on Windows, and a shell script for other operating systems. When you start a Gradle build via the wrapper,
+        Gradle will be automatically downloaded and used to run the build. 
     </para>
-    <para>Gradle は新しいツールです。自分が何とかできる範囲を超えたマシンにまでインストールされていることは期待できません。
-        Gradle がインストールされておらず、しかも管理者権限のない継続的インテグレーションサーバがその一例です。
-        また、あなたが提供しているオープンソースプロジェクトをユーザでも簡単にビルドできるようにしたい場合はどうでしょうか?
-
+    <para>
+        The wrapper is something you <emphasis>should</emphasis> check into version control. By distributing the wrapper with your project,
+        anyone can work with it without needing to install Gradle beforehand. Even better, users of the build are guaranteed to use the 
+        version of Gradle that the build was designed to work with. Of course, this is also great for 
+        <ulink url="http://en.wikipedia.org/wiki/Continuous_integration">continuous integration</ulink> servers (i.e. servers that regularly
+        build your project) as it requires no configuration on the server.
     </para>
-    <para role="original">There is a simple and good <apilink class="org.gradle.api.tasks.wrapper.Wrapper"/> task.
-        <footnote>
-            <para role="original">If you download the Gradle source distribution or check out Gradle from SVN, you can build Gradle via
-                the Gradle wrapper. Gradle itself is continuously built by Bamboo and Teamcity via this wrapper. See
-                <ulink url='website:ci-server.html'/>
-            </para>
-        </footnote>
-        You can create such a task in your build script.
-    </para>
-    <para>Gradle には とっても簡単な <apilink class="org.gradle.api.tasks.wrapper.Wrapper"/> タスクがあります。
-        <footnote>
-            <para>もし ダウンロードしたソースディストリビューションか、SVN (現在は Git) からチェックアウトしたソースがあれば、
-                Gradle Wrapper を使って Gradle をビルドすることができます。
-                Banboo 氏と Teamcity氏 による Gradle 自身の継続的なビルドにも この Gradle Wrapper が使われています。
-                詳しくは、<ulink url='website:ci-server.html'/> を参照してみてください。
-            </para>
-        </footnote>
-        ビルドスクリプトには こんな感じでタスクを追加するだけです。
+    <para>
+        You install the wrapper into your project by adding and configuring a <apilink class="org.gradle.api.tasks.wrapper.Wrapper"/> 
+        task in your build script, and then executing it.
     </para>
     <sample id="wrapperSimple" dir="userguide/wrapper/simple" title="Wrapper task">
         <sourcefile file="build.gradle"/>
     </sample>
-    <para role="original">The build master usually explicitly executes this task. After such
-        an execution you find the following new or updated files in your project directory (in case the default configuration of the wrapper task is
-        used).
+    <para>
+        After such an execution you find the following new or updated files in your project directory 
+        (in case the default configuration of the wrapper task is used).
     </para>
     <para>このタスクは、通常、ビルドマスターが実行します。このタスクを実行すると (wrapper タスクのデフォルト構成の場合) プロジェクトディレクトリには
         以下のようなファイルが作成されます。
@@ -62,8 +49,10 @@
             gradle/wrapper/gradle-wrapper.properties
         </layout>
     </sample>
-    <para role="original">All these files must be submitted to your version control system. The <command>gradlew</command> command
-        can be used <emphasis>exactly</emphasis> the same way as the <command>gradle</command> command.
+    <para>
+        All of these files <emphasis>should</emphasis> be submitted to your version control system. This only needs to be done once. After
+        these files have been added to the project, the project should then be built with the added <command>gradlew</command> command.
+        The <command>gradlew</command> command can be used <emphasis>exactly</emphasis> the same way as the <command>gradle</command> command.
     </para>
     <para>これらのファイルは必ずバージョン管理システムに公開してください。
         <command>gradlew</command> コマンドは <command>gradle</command> コマンドと <emphasis>全く</emphasis> 同じように利用できます。

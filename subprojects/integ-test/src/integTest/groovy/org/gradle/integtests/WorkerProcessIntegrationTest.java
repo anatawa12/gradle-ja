@@ -28,14 +28,15 @@ import org.gradle.api.internal.file.BaseDirFileResolver;
 import org.gradle.api.logging.LogLevel;
 import org.gradle.cache.CacheRepository;
 import org.gradle.cache.internal.*;
+import org.gradle.internal.nativeplatform.services.NativeServices;
 import org.gradle.listener.ListenerBroadcast;
 import org.gradle.messaging.dispatch.Dispatch;
 import org.gradle.messaging.dispatch.MethodInvocation;
 import org.gradle.messaging.remote.MessagingServer;
 import org.gradle.messaging.remote.ObjectConnection;
 import org.gradle.messaging.remote.internal.MessagingServices;
-import org.gradle.os.NativeServices;
-import org.gradle.os.ProcessEnvironment;
+import org.gradle.internal.nativeplatform.FileSystems;
+import org.gradle.internal.nativeplatform.ProcessEnvironment;
 import org.gradle.process.internal.*;
 import org.gradle.process.internal.child.WorkerProcessClassPathProvider;
 import org.gradle.util.LongIdGenerator;
@@ -68,7 +69,7 @@ public class WorkerProcessIntegrationTest {
     private final CacheRepository cacheRepository = new DefaultCacheRepository(tmpDir.getDir(), null, CacheUsage.ON, factory);
     private final ModuleRegistry moduleRegistry = new DefaultModuleRegistry();
     private final ClassPathRegistry classPathRegistry = new DefaultClassPathRegistry(new DefaultClassPathProvider(moduleRegistry), new WorkerProcessClassPathProvider(cacheRepository, moduleRegistry));
-    private final DefaultWorkerProcessFactory workerFactory = new DefaultWorkerProcessFactory(LogLevel.INFO, server, classPathRegistry, new BaseDirFileResolver(tmpDir.getTestDir()), new LongIdGenerator());
+    private final DefaultWorkerProcessFactory workerFactory = new DefaultWorkerProcessFactory(LogLevel.INFO, server, classPathRegistry, new BaseDirFileResolver(FileSystems.getDefault(), tmpDir.getTestDir()), new LongIdGenerator());
     private final ListenerBroadcast<TestListenerInterface> broadcast = new ListenerBroadcast<TestListenerInterface>(
             TestListenerInterface.class);
     private final RemoteExceptionListener exceptionListener = new RemoteExceptionListener(broadcast);
@@ -289,7 +290,11 @@ public class WorkerProcessIntegrationTest {
             assertThat(antClassLoader, not(sameInstance(systemClassLoader)));
             assertThat(thisClassLoader, not(sameInstance(systemClassLoader)));
             assertThat(antClassLoader.getParent(), equalTo(systemClassLoader.getParent()));
-            assertThat(thisClassLoader.getParent().getParent().getParent(), sameInstance(antClassLoader));
+            try {
+                assertThat(thisClassLoader.loadClass(Project.class.getName()), sameInstance((Object)Project.class));
+            } catch (ClassNotFoundException e) {
+                throw new RuntimeException(e);
+            }
 
             // Send some messages
             TestListenerInterface sender = workerProcessContext.getServerConnection().addOutgoing(

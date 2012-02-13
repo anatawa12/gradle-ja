@@ -16,18 +16,10 @@
 
 package org.gradle.tooling.internal.protocol;
 
-import java.io.File;
-import java.util.List;
-
 /**
+ * Marker interface for the internal protocol purposes.
+ * Corresponding client facing model is {@link org.gradle.tooling.model.build.BuildEnvironment}
+ * <p>
  * by Szczepan Faber, created at: 12/17/11
  */
-public interface InternalBuildEnvironment extends ProjectVersion3, InternalProtocolInterface {
-
-    String getGradleVersion();
-
-    File getJavaHome();
-
-    List<String> getJvmArguments();
-
-}
+public interface InternalBuildEnvironment extends InternalProtocolInterface {}

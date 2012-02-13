@@ -17,8 +17,13 @@ package org.gradle.tooling.internal.consumer;
 
 import org.gradle.messaging.concurrent.DefaultExecutorFactory;
 import org.gradle.tooling.ProjectConnection;
+import org.gradle.tooling.internal.consumer.async.AsyncConnection;
+import org.gradle.tooling.internal.consumer.async.DefaultAsyncConnection;
+import org.gradle.tooling.internal.consumer.connection.ConsumerConnection;
+import org.gradle.tooling.internal.consumer.connection.LazyConnection;
+import org.gradle.tooling.internal.consumer.connection.LoggingInitializerConnection;
+import org.gradle.tooling.internal.consumer.connection.ProgressLoggingConnection;
 import org.gradle.tooling.internal.consumer.loader.ToolingImplementationLoader;
-import org.gradle.tooling.internal.protocol.ConnectionVersion4;
 
 public class ConnectionFactory {
     private final ProtocolToModelAdapter adapter = new ProtocolToModelAdapter();
@@ -31,9 +36,9 @@ public class ConnectionFactory {
 
     public ProjectConnection create(Distribution distribution, ConnectionParameters parameters) {
         SynchronizedLogging synchronizedLogging = new SynchronizedLogging();
-        ConnectionVersion4 lazyConnection = new LazyConnection(distribution, toolingImplementationLoader, synchronizedLogging);
-        ConnectionVersion4 progressLoggingConnection = new ProgressLoggingConnection(lazyConnection, synchronizedLogging);
-        ConnectionVersion4 initializingConnection = new LoggingInitializerConnection(progressLoggingConnection, synchronizedLogging);
+        ConsumerConnection lazyConnection = new LazyConnection(distribution, toolingImplementationLoader, synchronizedLogging);
+        ConsumerConnection progressLoggingConnection = new ProgressLoggingConnection(lazyConnection, synchronizedLogging);
+        ConsumerConnection initializingConnection = new LoggingInitializerConnection(progressLoggingConnection, synchronizedLogging);
         AsyncConnection asyncConnection = new DefaultAsyncConnection(initializingConnection, executorFactory);
         return new DefaultProjectConnection(asyncConnection, adapter, parameters);
     }

@@ -17,27 +17,54 @@ package org.gradle.tooling;
 
 import org.gradle.tooling.model.Task;
 
+import java.io.File;
 import java.io.InputStream;
 import java.io.OutputStream;
 
 /**
- * <p>A {@code BuildLauncher} allows you to configure and execute a Gradle build.
- *
- * <p>You use a {@code BuildLauncher} as follows:
+ * A {@code BuildLauncher} allows you to configure and execute a Gradle build.
+ * <p>
+ * Instances of {@code BuildLauncher} are not thread-safe. You use a {@code BuildLauncher} as follows:
  *
  * <ul>
- *
  * <li>Create an instance of {@code BuildLauncher} by calling {@link org.gradle.tooling.ProjectConnection#newBuild()}.
- *
  * <li>Configure the launcher as appropriate.
- *
  * <li>Call either {@link #run()} or {@link #run(ResultHandler)} to execute the build.
- *
  * <li>Optionally, you can reuse the launcher to launcher additional builds.
- *
  * </ul>
  *
- * <p>Instances of {@code BuildLauncher} are not thread-safe.
+ * Example:
+ * <pre autoTested=''>
+ * ProjectConnection connection = GradleConnector.newConnector()
+ *    .forProjectDirectory(new File("someFolder"))
+ *    .connect();
+ *
+ * try {
+ *    BuildLauncher build = connection.newBuild();
+ *
+ *    //select tasks to run:
+ *    build.forTasks("clean", "test");
+ *
+ *    //configure the standard input:
+ *    build.setStandardInput(new ByteArrayInputStream("consume this!".getBytes()));
+ *
+ *    //in case you want the build to use java different than default:
+ *    build.setJavaHome(new File("/path/to/java"));
+ *
+ *    //if your build needs crazy amounts of memory:
+ *    build.setJvmArguments("-Xmx2048m", "-XX:MaxPermSize=512m");
+ *
+ *    //if you want to listen to the progress events:
+ *    ProgressListener listener = null; // use your implementation
+ *    build.addProgressListener(listener);
+ *
+ *    //kick the build off:
+ *    build.run();
+ * } finally {
+ *    connection.close();
+ * }
+ * </pre>
+ *
  */
 public interface BuildLauncher extends LongRunningOperation {
     /**
@@ -82,12 +109,25 @@ public interface BuildLauncher extends LongRunningOperation {
     /**
      * {@inheritDoc}
      */
+    BuildLauncher setJavaHome(File javaHome);
+
+    /**
+     * {@inheritDoc}
+     */
+    BuildLauncher setJvmArguments(String... jvmArguments);
+
+    /**
+     * {@inheritDoc}
+     */
     BuildLauncher addProgressListener(ProgressListener listener);
 
     /**
      * Execute the build, blocking until it is complete.
      *
      * @throws UnsupportedVersionException When the target Gradle version does not support the features required for this build.
+     *  For example, when you have configured the long running operation with a settings
+     *  like: {@link #setStandardInput(java.io.InputStream)}, {@link #setJavaHome(java.io.File)}, {@link #setJvmArguments(String...)}
+     *  but those settings are not supported on the target Gradle.
      * @throws BuildException On some failure executing the Gradle build.
      * @throws GradleConnectionException On some other failure using the connection.
      * @throws IllegalStateException When the connection has been closed or is closing.

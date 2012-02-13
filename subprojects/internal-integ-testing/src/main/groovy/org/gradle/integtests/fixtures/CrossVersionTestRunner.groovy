@@ -15,7 +15,7 @@
  */
 package org.gradle.integtests.fixtures
 
-import org.gradle.integtests.fixtures.internal.CrossVersionIntegrationSpec
+import org.gradle.util.GradleVersion
 
 /**
  * <p>Executes instances of {@link CrossVersionIntegrationSpec} against each previous Gradle version.
@@ -56,11 +56,19 @@ class CrossVersionTestRunner extends AbstractCompatibilityTestRunner {
                 return true
             }
             for (String targetGradleVersion: targetGradleVersions.value()) {
-                if (previousVersion.version == targetGradleVersion) {
+                if (isMatching(targetGradleVersion, previousVersion.version)) {
                     return true
                 }
             }
             return false
+        }
+        
+        private boolean isMatching(String targetGradleVersion, String candidate) {
+            if (targetGradleVersion.endsWith('+')) {
+                def minVersion = targetGradleVersion.substring(0, targetGradleVersion.length() - 1)
+                return GradleVersion.version(minVersion) <= GradleVersion.version(candidate)
+            }
+            return targetGradleVersion == candidate
         }
     }
 }

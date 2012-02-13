@@ -19,28 +19,12 @@ import org.gradle.groovy.scripts.ScriptSource;
 
 /**
  * A {@code ScriptCompilationException} is thrown when a script cannot be compiled.
+ *
+ * @deprecated No replacement
  */
-public class ScriptCompilationException extends GradleScriptException {
-    private final ScriptSource scriptSource;
-    private final Integer lineNumber;
-
-    public ScriptCompilationException(ScriptCompilationException source) {
-        super(source.getMessage(), source.getCause());
-        scriptSource = source.scriptSource;
-        lineNumber = source.lineNumber;
-    }
-
+@Deprecated
+public class ScriptCompilationException extends org.gradle.groovy.scripts.ScriptCompilationException {
     public ScriptCompilationException(String message, Throwable cause, ScriptSource scriptSource, Integer lineNumber) {
-        super(message, cause);
-        this.scriptSource = scriptSource;
-        this.lineNumber = lineNumber;
-    }
-
-    public ScriptSource getScriptSource() {
-        return scriptSource;
-    }
-
-    public Integer getLineNumber() {
-        return lineNumber;
+        super(message, cause, scriptSource, lineNumber);
     }
 }

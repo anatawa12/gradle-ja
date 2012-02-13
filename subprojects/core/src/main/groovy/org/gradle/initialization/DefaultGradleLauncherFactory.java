@@ -21,7 +21,7 @@ import org.gradle.api.internal.ExceptionAnalyser;
 import org.gradle.api.internal.GradleInternal;
 import org.gradle.api.internal.Instantiator;
 import org.gradle.api.internal.project.GlobalServicesRegistry;
-import org.gradle.api.internal.project.ServiceRegistry;
+import org.gradle.internal.service.ServiceRegistry;
 import org.gradle.api.internal.project.TopLevelBuildServiceRegistry;
 import org.gradle.api.logging.Logging;
 import org.gradle.api.logging.StandardOutputListener;
@@ -127,9 +127,8 @@ public class DefaultGradleLauncherFactory implements GradleLauncherFactory {
                 gradle,
                 serviceRegistry.get(InitScriptHandler.class),
                 new SettingsHandler(
-                        new EmbeddedScriptSettingsFinder(
-                                new DefaultSettingsFinder(
-                                        new BuildLayoutFactory())),
+                        new DefaultSettingsFinder(
+                                new BuildLayoutFactory()),
                         serviceRegistry.get(SettingsProcessor.class),
                         new BuildSourceBuilder(
                                 this,
@@ -140,6 +139,7 @@ public class DefaultGradleLauncherFactory implements GradleLauncherFactory {
                 gradle.getBuildListenerBroadcaster(),
                 serviceRegistry.get(ExceptionAnalyser.class),
                 loggingManager,
+                listenerManager.getBroadcaster(ModelConfigurationListener.class),
                 gradle.getServices().get(BuildExecuter.class));
     }
 

@@ -15,101 +15,200 @@
  */
 package org.gradle.api.internal.artifacts.repositories.transport.http;
 
-import org.apache.commons.httpclient.*;
-import org.apache.commons.httpclient.auth.AuthScope;
-import org.apache.commons.httpclient.methods.GetMethod;
-import org.apache.commons.httpclient.methods.PutMethod;
-import org.apache.commons.httpclient.methods.RequestEntity;
-import org.apache.commons.httpclient.params.HttpMethodParams;
-import org.apache.commons.io.output.CloseShieldOutputStream;
+import org.apache.http.HttpResponse;
+import org.apache.http.client.methods.HttpGet;
+import org.apache.http.client.methods.HttpHead;
+import org.apache.http.client.methods.HttpPut;
+import org.apache.http.client.methods.HttpRequestBase;
+import org.apache.http.client.methods.HttpUriRequest;
+import org.apache.http.entity.FileEntity;
+import org.apache.http.impl.client.ContentEncodingHttpClient;
+import org.apache.http.impl.client.DefaultHttpClient;
+import org.apache.http.protocol.BasicHttpContext;
+import org.apache.http.util.EntityUtils;
 import org.apache.ivy.core.module.id.ArtifactRevisionId;
-import org.apache.ivy.plugins.repository.*;
-import org.apache.ivy.util.FileUtil;
+import org.apache.ivy.plugins.repository.AbstractRepository;
+import org.apache.ivy.plugins.repository.BasicResource;
+import org.apache.ivy.plugins.repository.RepositoryCopyProgressListener;
+import org.apache.ivy.plugins.repository.Resource;
+import org.apache.ivy.plugins.repository.TransferEvent;
 import org.apache.ivy.util.url.ApacheURLLister;
 import org.gradle.api.UncheckedIOException;
-import org.gradle.api.artifacts.repositories.PasswordCredentials;
 import org.gradle.api.internal.artifacts.ivyservice.filestore.CachedArtifact;
 import org.gradle.api.internal.artifacts.ivyservice.filestore.ExternalArtifactCache;
 import org.gradle.api.internal.artifacts.repositories.transport.ResourceCollection;
-import org.gradle.util.GUtil;
-import org.gradle.util.GradleVersion;
-import org.gradle.util.UncheckedException;
+import org.gradle.internal.UncheckedException;
+import org.gradle.util.hash.HashValue;
 import org.jfrog.wharf.ivy.checksum.ChecksumType;
-import org.jfrog.wharf.ivy.util.WharfUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.IOException;
-import java.io.OutputStream;
-import java.lang.reflect.InvocationHandler;
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
-import java.lang.reflect.Proxy;
 import java.net.URL;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 /**
  * A repository which uses commons-httpclient to access resources using HTTP/HTTPS.
  */
 public class HttpResourceCollection extends AbstractRepository implements ResourceCollection {
     private static final Logger LOGGER = LoggerFactory.getLogger(HttpResourceCollection.class);
-    private final Map<String, HttpResource> resources = new HashMap<String, HttpResource>();
-    private final HttpClient client = new HttpClient();
-    private final HttpProxySettings proxySettings;
+    private final DefaultHttpClient client = new ContentEncodingHttpClient();
+    private final BasicHttpContext httpContext = new BasicHttpContext();
     private final RepositoryCopyProgressListener progress = new RepositoryCopyProgressListener(this);
+    private final List<HttpResource> openResources = new ArrayList<HttpResource>();
 
     private final ExternalArtifactCache externalArtifactCache;
+    private final HttpClientConfigurer configurer;
 
     public HttpResourceCollection(HttpSettings httpSettings, ExternalArtifactCache externalArtifactCache) {
-        PasswordCredentials credentials = httpSettings.getCredentials();
-        if (GUtil.isTrue(credentials.getUsername())) {
-            client.getParams().setAuthenticationPreemptive(true);
-            client.getState().setCredentials(AuthScope.ANY, new UsernamePasswordCredentials(credentials.getUsername(), credentials.getPassword()));
-        }
-        this.proxySettings = httpSettings.getProxySettings();
         this.externalArtifactCache = externalArtifactCache;
+        configurer = new HttpClientConfigurer(httpSettings);
+        configurer.configure(client);
     }
 
-    public HttpResource getResource(final String source, ArtifactRevisionId artifactId) throws IOException {
-        LOGGER.debug("Constructing GET resource: {}", source);
-
-        List<CachedArtifact> cachedArtifacts = new ArrayList<CachedArtifact>();
-        externalArtifactCache.addMatchingCachedArtifacts(artifactId, cachedArtifacts);
-
-        releasePriorResources();
-        GetMethod method = new GetMethod(source);
-        configureMethod(method);
-        HttpResource resource = createLazyResource(source, method, cachedArtifacts);
-        resources.put(source, resource);
-        return resource;
-    }
-
-    public HttpResource getResource(final String source) throws IOException {
+    public HttpResource getResource(String source) throws IOException {
         return getResource(source, null);
     }
 
-    private void releasePriorResources() {
-        for (Resource resource : resources.values()) {
-            LazyResourceInvocationHandler invocationHandler = (LazyResourceInvocationHandler) Proxy.getInvocationHandler(resource);
-            invocationHandler.release();
+    public HttpResource getResource(final String source, ArtifactRevisionId artifactId) throws IOException {
+        return getResource(source, artifactId, true);
+    }
+
+    public HttpResource getResource(String source, ArtifactRevisionId artifactId, boolean forDownload) throws IOException {
+        abortOpenResources();
+        if (forDownload) {
+            HttpResource httpResource = initGet(source, artifactId);
+            return recordOpenGetResource(httpResource);
+        }
+        return initHead(source);
+    }
+
+    private void abortOpenResources() {
+        for (HttpResource openResource : openResources) {
+            LOGGER.warn("Forcing close on abandoned resource: " + openResource);
+            try {
+                openResource.close();
+            } catch (IOException e) {
+                LOGGER.warn("Failed to close abandoned resource", e);
+            }
+        }
+        openResources.clear();
+    }
+
+    private HttpResource recordOpenGetResource(HttpResource httpResource) {
+        if (httpResource instanceof HttpResponseResource) {
+            openResources.add(httpResource);
+        }
+        return httpResource;
+    }
+
+    private HttpResource initGet(String source, ArtifactRevisionId artifactId) {
+        LOGGER.debug("Constructing GET resource: {}", source);
+        
+        List<CachedArtifact> candidateArtifacts = new ArrayList<CachedArtifact>();
+        externalArtifactCache.addMatchingCachedArtifacts(artifactId, candidateArtifacts);
+
+        // First see if we can use any of the candidates directly.
+        if (candidateArtifacts.size() > 0) {
+            CachedHttpResource cachedResource = findCachedResource(source, candidateArtifacts);
+            if (cachedResource != null) {
+                return cachedResource;
+            }
+        }
+
+        HttpGet request = new HttpGet(source);
+        return processHttpRequest(source, request);
+    }
+
+    private HttpResource initHead(String source) {
+        LOGGER.debug("Constructing HEAD resource: {}", source);
+        HttpHead request = new HttpHead(source);
+        return processHttpRequest(source, request);
+    }
+
+    private HttpResource processHttpRequest(String source, HttpRequestBase request) {
+        String method = request.getMethod();
+        configurer.configureMethod(request);
+        HttpResponse response;
+        try {
+            response = executeMethod(request);
+        } catch (IOException e) {
+            throw new UncheckedIOException(String.format("Could not %s '%s'.", method, source), e);
+        }
+        if (wasMissing(response)) {
+            LOGGER.info("Resource missing. [HTTP {}: {}]", method, source);
+            return new MissingHttpResource(source);
+        }
+        if (!wasSuccessful(response)) {
+            LOGGER.info("Failed to get resource: {}. [HTTP {}: {}]", new Object[]{method, response.getStatusLine(), source});
+            throw new UncheckedIOException(String.format("Could not %s '%s'. Received status code %s from server: %s",
+                                                         method, source, response.getStatusLine().getStatusCode(), response.getStatusLine().getReasonPhrase()));
+        }
+        LOGGER.info("Resource found. [HTTP {}: {}]", method, source);
+        return new HttpResponseResource(method, source, response) {
+            @Override
+            public void close() throws IOException {
+                super.close();
+                HttpResourceCollection.this.openResources.remove(this);
+            }
+        };
+    }
+
+    private CachedHttpResource findCachedResource(String source, List<CachedArtifact> candidates) {
+        ChecksumType checksumType = ChecksumType.sha1;
+        String checksumUrl = source + checksumType.ext();
+
+        HashValue sha1 = downloadSha1(checksumUrl);
+        if (sha1 == null) {
+            LOGGER.info("Checksum {} unavailable. [HTTP GET: {}]", checksumType, checksumUrl);
+        } else {
+            for (CachedArtifact candidate : candidates) {
+                if (candidate.getSha1().equals(sha1)) {
+                    LOGGER.info("Checksum {} matched cached resource: [HTTP GET: {}]", checksumType, checksumUrl);
+                    return new CachedHttpResource(source, candidate, HttpResourceCollection.this);
+                }
+            }
+            LOGGER.info("Checksum {} did not match cached resources: [HTTP GET: {}]", checksumType, checksumUrl);
+        }
+        return null;
+    }
+
+    private HashValue downloadSha1(String checksumUrl) {
+        HttpGet get = new HttpGet(checksumUrl);
+        configurer.configureMethod(get);
+        try {
+            HttpResponse httpResponse = executeMethod(get);
+            if (wasSuccessful(httpResponse)) {
+                String checksumValue = EntityUtils.toString(httpResponse.getEntity());
+                return HashValue.parse(checksumValue);
+            }
+            if (!wasMissing(httpResponse)) {
+                LOGGER.info("Request for checksum at {} failed: {}", checksumUrl, httpResponse.getStatusLine());
+            }
+            return null;
+        } catch (Exception e) {
+            LOGGER.warn("Checksum missing at {} due to: {}", checksumUrl, e.getMessage());
+            return null;
+        } finally {
+            // TODO:DAZ Don't need this
+            get.abort();
         }
     }
 
-    private HttpResource createLazyResource(String source, GetMethod method, List<CachedArtifact> artifacts) {
-        LazyResourceInvocationHandler invocationHandler = new LazyResourceInvocationHandler(source, method, artifacts);
-        return HttpResource.class.cast(Proxy.newProxyInstance(getClass().getClassLoader(), new Class<?>[]{HttpResource.class}, invocationHandler));
+    public void get(String source, File destination) throws IOException {
+        throw new UnsupportedOperationException();
     }
 
-    public void get(String source, File destination) throws IOException {
-        HttpResource resource = resources.get(source);
+    public void downloadResource(Resource res, File destination) throws IOException {
+        if (!(res instanceof HttpResource)) {
+            throw new IllegalArgumentException("Can only download HttpResource");
+        }
+        HttpResource resource = (HttpResource) res;
         fireTransferInitiated(resource, TransferEvent.REQUEST_GET);
         try {
-            progress.setTotalLength(resource.getContentLength());
+            progress.setTotalLength(resource.getContentLength() > 0 ? resource.getContentLength() : null);
             resource.writeTo(destination, progress);
         } catch (IOException e) {
             fireTransferError(e);
@@ -119,6 +218,7 @@ public class HttpResourceCollection extends AbstractRepository implements Resour
             throw UncheckedException.asUncheckedException(e);
         } finally {
             progress.setTotalLength(null);
+            openResources.remove(resource);
         }
     }
 
@@ -142,49 +242,27 @@ public class HttpResourceCollection extends AbstractRepository implements Resour
     }
 
     private void doPut(File source, String destination) throws IOException {
-        PutMethod method = new PutMethod(destination);
-        configureMethod(method);
-        method.setRequestEntity(new FileRequestEntity(source));
-        int result = executeMethod(method);
-        if (!wasSuccessful(result)) {
-            throw new IOException(String.format("Could not PUT '%s'. Received status code %s from server: %s", destination, result, method.getStatusText()));
+        HttpPut method = new HttpPut(destination);
+        configurer.configureMethod(method);
+        method.setEntity(new FileEntity(source, "application/octet-stream"));
+        LOGGER.debug("Performing HTTP PUT: {}", method.getURI());
+        HttpResponse response = client.execute(method, httpContext);
+        EntityUtils.consume(response.getEntity());
+        if (!wasSuccessful(response)) {
+            throw new IOException(String.format("Could not PUT '%s'. Received status code %s from server: %s",
+                                                destination, response.getStatusLine().getStatusCode(), response.getStatusLine().getReasonPhrase()));
         }
     }
 
-    private void configureMethod(HttpMethod method) {
-        method.setRequestHeader("User-Agent", "Gradle/" + GradleVersion.current().getVersion());
-        method.setRequestHeader("Accept-Encoding", "identity");
-        method.getParams().setParameter(HttpMethodParams.RETRY_HANDLER, new HttpMethodRetryHandler() {
-            public boolean retryMethod(HttpMethod method, IOException exception, int executionCount) {
-                return false;
-            }
-        });
-    }
-
-    private int executeMethod(HttpMethod method) throws IOException {
+    private HttpResponse executeMethod(HttpUriRequest method) throws IOException {
         LOGGER.debug("Performing HTTP GET: {}", method.getURI());
-        configureProxyIfRequired(method);
-        return client.executeMethod(method);
-    }
-
-    private void configureProxyIfRequired(HttpMethod method) throws URIException {
-        HttpProxySettings.HttpProxy proxy = proxySettings.getProxy(method.getURI().getHost());
-        if (proxy != null) {
-            setProxyForClient(client, proxy);
-        } else {
-            client.getHostConfiguration().setProxyHost(null);
+        HttpResponse httpResponse = client.execute(method, httpContext);
+        // Consume content for non-successful, responses. This avoids the connection being left open.
+        if (!wasSuccessful(httpResponse)) {
+            EntityUtils.consume(httpResponse.getEntity());
+            return httpResponse;
         }
-    }
-
-    private void setProxyForClient(HttpClient httpClient, HttpProxySettings.HttpProxy proxy) {
-        // Only set proxy host once
-        if (client.getHostConfiguration().getProxyHost() != null) {
-            return;
-        }
-        httpClient.getHostConfiguration().setProxy(proxy.host, proxy.port);
-        if (proxy.username != null) {
-            httpClient.getState().setProxyCredentials(AuthScope.ANY, new UsernamePasswordCredentials(proxy.username, proxy.password));
-        }
+        return httpResponse;
     }
 
     public List list(String parent) throws IOException {
@@ -201,135 +279,13 @@ public class HttpResourceCollection extends AbstractRepository implements Resour
         return null;
     }
 
-    private boolean wasSuccessful(int result) {
-        return result >= 200 && result < 300;
+    private boolean wasMissing(HttpResponse response) {
+        int statusCode = response.getStatusLine().getStatusCode();
+        return statusCode == 404;
     }
 
-    private class LazyResourceInvocationHandler implements InvocationHandler {
-        private final String source;
-        private final GetMethod method;
-        private final List<CachedArtifact> candidates;
-        private Resource delegate;
-
-        private LazyResourceInvocationHandler(String source, GetMethod method, List<CachedArtifact> candidates) {
-            this.method = method;
-            this.source = source;
-            this.candidates = candidates;
-        }
-
-        public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
-            if (delegate == null) {
-                delegate = init();
-            }
-            try {
-                return method.invoke(delegate, args);
-            } catch (InvocationTargetException e) {
-                throw UncheckedException.asUncheckedException(e.getTargetException());
-            }
-        }
-
-        private Resource init() {
-            // First see if we can use any of the candidates directly.
-            if (candidates.size() > 0) {
-                CachedHttpResource cachedResource = findCachedResource();
-                if (cachedResource != null) {
-                    return cachedResource;
-                }
-            }
-
-            int result;
-            try {
-                result = executeMethod(method);
-            } catch (IOException e) {
-                throw new UncheckedIOException(String.format("Could not GET '%s'.", source), e);
-            }
-            if (result == 404) {
-                LOGGER.info("Resource missing. [HTTP GET: {}]", source);
-                return new MissingHttpResource(source);
-            }
-            if (!wasSuccessful(result)) {
-                LOGGER.info("Failed to get resource: {} ({}). [HTTP GET: {}]", new Object[]{result, method.getStatusText(), source});
-                throw new UncheckedIOException(String.format("Could not GET '%s'. Received status code %s from server: %s", source, result, method.getStatusText()));
-            }
-            LOGGER.info("Resource found. [HTTP GET: {}]", source);
-            return new HttpGetResource(source, method);
-        }
-
-        private CachedHttpResource findCachedResource() {
-            ChecksumType checksumType = ChecksumType.sha1;
-            String checksumUrl = source + checksumType.ext();
-
-            String sha1 = downloadChecksum(checksumUrl);
-            if (sha1 == null) {
-                LOGGER.info("Checksum {} unavailable. [HTTP GET: {}]", checksumType, checksumUrl);
-            } else {
-                for (CachedArtifact candidate : candidates) {
-                    if (candidate.getSha1().equals(sha1)) {
-                        LOGGER.info("Checksum {} matched cached resource: [HTTP GET: {}]", checksumType, checksumUrl);
-                        return new CachedHttpResource(source, candidate, HttpResourceCollection.this);
-                    }
-                }
-                LOGGER.info("Checksum {} did not match cached resources: [HTTP GET: {}]", checksumType, checksumUrl);
-            }
-            return null;
-        }
-
-        private String downloadChecksum(String checksumUrl) {
-            GetMethod get = new GetMethod(checksumUrl);
-            configureMethod(get);
-            try {
-                int result = executeMethod(get);
-                if (wasSuccessful(result)) {
-                    return WharfUtils.getCleanChecksum(get.getResponseBodyAsString());
-                }
-                if (result != 404) {
-                    LOGGER.info("Request for checksum at {} failed: {}", checksumUrl, get.getStatusText());
-                }
-                return null;
-            } catch (IOException e) {
-                LOGGER.warn("Checksum missing at {} due to: {}", checksumUrl, e.getMessage());
-                return null;
-            } finally {
-                get.releaseConnection();
-            }
-        }
-
-        public void release() {
-            if (delegate != null && delegate.exists()) {
-                if (method != null) {
-                    method.releaseConnection();
-                }
-                delegate = null;
-            }
-        }
-    }
-
-    private class FileRequestEntity implements RequestEntity {
-        private final File source;
-
-        public FileRequestEntity(File source) {
-            this.source = source;
-        }
-
-        public boolean isRepeatable() {
-            return false;
-        }
-
-        public void writeRequest(OutputStream out) throws IOException {
-            FileInputStream inputStream = new FileInputStream(source);
-            try {
-                FileUtil.copy(inputStream, new CloseShieldOutputStream(out), progress);
-            } finally {
-                inputStream.close();
-            }
-        }
-
-        public long getContentLength() {
-            return source.length();
-        }
-
-        public String getContentType() {
-            return "application/octet-stream";
-        }
+    private boolean wasSuccessful(HttpResponse response) {
+        int statusCode = response.getStatusLine().getStatusCode();
+        return statusCode >= 200 && statusCode < 300;
     }
 }

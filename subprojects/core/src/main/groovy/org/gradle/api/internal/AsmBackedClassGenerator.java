@@ -89,9 +89,10 @@ public class AsmBackedClassGenerator extends AbstractClassGenerator {
                     new String[0]);
             methodVisitor.visitCode();
 
-            // super(p0 .. pn)
-            for (int i = 0; i <= constructor.getParameterTypes().length; i++) {
-                methodVisitor.visitVarInsn(Opcodes.ALOAD, i);
+            // this.super(p0 .. pn)
+            methodVisitor.visitVarInsn(Opcodes.ALOAD, 0);
+            for (int i = 0; i < constructor.getParameterTypes().length; i++) {
+                methodVisitor.visitVarInsn(Type.getType(constructor.getParameterTypes()[i]).getOpcode(Opcodes.ILOAD), i+1);
             }
             methodVisitor.visitMethodInsn(Opcodes.INVOKESPECIAL, superclassType.getInternalName(), "<init>",
                     methodDescriptor);
@@ -531,7 +532,16 @@ public class AsmBackedClassGenerator extends AbstractClassGenerator {
             methodVisitor.visitMethodInsn(Opcodes.INVOKESPECIAL, superclassType.getInternalName(), getter.getName(),
                     methodDescriptor);
 
+            Type boxedType = null;
+            if (getter.getReturnType().isPrimitive()) {
+                // Box value
+                boxedType = Type.getType(ReflectionUtil.getWrapperTypeForPrimitiveType(getter.getReturnType()));
+                String valueOfMethodDescriptor = Type.getMethodDescriptor(boxedType, new Type[]{returnType});
+                methodVisitor.visitMethodInsn(Opcodes.INVOKESTATIC, boxedType.getInternalName(), "valueOf", valueOfMethodDescriptor);
+            }
+
             methodVisitor.visitLdcInsn(property.getName());
+
             methodVisitor.visitVarInsn(Opcodes.ALOAD, 0);
             methodVisitor.visitFieldInsn(Opcodes.GETFIELD, generatedType.getInternalName(), flagName,
                     Type.BOOLEAN_TYPE.getDescriptor());
@@ -541,11 +551,19 @@ public class AsmBackedClassGenerator extends AbstractClassGenerator {
             methodVisitor.visitMethodInsn(Opcodes.INVOKEINTERFACE, conventionMappingType.getInternalName(),
                     "getConventionValue", getConventionValueDesc);
 
-            methodVisitor.visitTypeInsn(Opcodes.CHECKCAST,
-                    getter.getReturnType().isArray() ? "[" + returnType.getElementType().getDescriptor()
-                            : returnType.getInternalName());
+            if (getter.getReturnType().isPrimitive()) {
+                // Unbox value
+                methodVisitor.visitTypeInsn(Opcodes.CHECKCAST, boxedType.getInternalName());
+                String valueMethodDescriptor = Type.getMethodDescriptor(returnType, new Type[0]);
+                methodVisitor.visitMethodInsn(Opcodes.INVOKEVIRTUAL, boxedType.getInternalName(), getter.getReturnType().getName() + "Value", valueMethodDescriptor);
+            } else {
+                // Cast to return type
+                methodVisitor.visitTypeInsn(Opcodes.CHECKCAST,
+                        getter.getReturnType().isArray() ? "[" + returnType.getElementType().getDescriptor()
+                                : returnType.getInternalName());
+            }
 
-            methodVisitor.visitInsn(Opcodes.ARETURN);
+            methodVisitor.visitInsn(returnType.getOpcode(Opcodes.IRETURN));
             methodVisitor.visitMaxs(0, 0);
             methodVisitor.visitEnd();
         }
@@ -564,7 +582,7 @@ public class AsmBackedClassGenerator extends AbstractClassGenerator {
             // GENERATE super.<setter>(v)
 
             methodVisitor.visitVarInsn(Opcodes.ALOAD, 0);
-            methodVisitor.visitVarInsn(Opcodes.ALOAD, 1);
+            methodVisitor.visitVarInsn(paramType.getOpcode(Opcodes.ILOAD), 1);
 
             methodVisitor.visitMethodInsn(Opcodes.INVOKESPECIAL, superclassType.getInternalName(), setter.getName(), setterDescriptor);
 
@@ -625,6 +643,13 @@ public class AsmBackedClassGenerator extends AbstractClassGenerator {
 
             methodVisitor.visitMethodInsn(Opcodes.INVOKESPECIAL, superclassType.getInternalName(), metaMethod.getName(), methodDescriptor);
 
+            // GENERATE <prop>Set = true
+
+            methodVisitor.visitVarInsn(Opcodes.ALOAD, 0);
+            methodVisitor.visitLdcInsn(true);
+            methodVisitor.visitFieldInsn(Opcodes.PUTFIELD, generatedType.getInternalName(), String.format("%sSet",
+                    property.getName()), Type.BOOLEAN_TYPE.getDescriptor());
+
             // END
 
             methodVisitor.visitInsn(returnType.getOpcode(Opcodes.IRETURN));
@@ -675,8 +700,18 @@ public class AsmBackedClassGenerator extends AbstractClassGenerator {
     }
 
     public static class MixInDynamicObject extends DynamicObjectHelper {
+
+        private static Instantiator getInstantiator() {
+            Instantiator instantiator = ThreadGlobalInstantiator.get();
+            if (instantiator != null) {
+                return instantiator;
+            } else {
+                return new ClassGeneratorBackedInstantiator(new AsmBackedClassGenerator(), new DirectInstantiator());
+            }
+        }
+
         public MixInDynamicObject(Object delegateObject, DynamicObject dynamicObject) {
-            super(wrap(delegateObject, dynamicObject), new DefaultConvention());
+            super(wrap(delegateObject, dynamicObject), new DefaultConvention(getInstantiator()));
         }
 
         private static AbstractDynamicObject wrap(Object delegateObject, DynamicObject dynamicObject) {

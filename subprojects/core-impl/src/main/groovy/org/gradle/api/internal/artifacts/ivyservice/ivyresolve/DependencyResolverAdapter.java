@@ -15,7 +15,6 @@
  */
 package org.gradle.api.internal.artifacts.ivyservice.ivyresolve;
 
-import org.apache.ivy.core.cache.ArtifactOrigin;
 import org.apache.ivy.core.module.descriptor.Artifact;
 import org.apache.ivy.core.module.descriptor.DependencyDescriptor;
 import org.apache.ivy.core.report.ArtifactDownloadReport;
@@ -24,8 +23,9 @@ import org.apache.ivy.core.resolve.DownloadOptions;
 import org.apache.ivy.core.resolve.ResolveData;
 import org.apache.ivy.core.resolve.ResolvedModuleRevision;
 import org.apache.ivy.plugins.resolver.DependencyResolver;
+import org.gradle.api.internal.artifacts.repositories.EnhancedArtifactDownloadReport;
 import org.gradle.api.internal.artifacts.repositories.cachemanager.LocalFileRepositoryCacheManager;
-import org.gradle.util.UncheckedException;
+import org.gradle.internal.UncheckedException;
 
 import java.io.File;
 import java.text.ParseException;
@@ -47,6 +47,11 @@ public class DependencyResolverAdapter implements ModuleVersionRepository {
         return id;
     }
 
+    @Override
+    public String toString() {
+        return String.format("Repository '%s'", resolver.getName());
+    }
+
     public boolean isLocal() {
         return resolver.getRepositoryCacheManager() instanceof LocalFileRepositoryCacheManager;
     }
@@ -54,7 +59,11 @@ public class DependencyResolverAdapter implements ModuleVersionRepository {
     public File download(Artifact artifact) {
         ArtifactDownloadReport artifactDownloadReport = resolver.download(new Artifact[]{artifact}, downloadOptions).getArtifactReport(artifact);
         if (downloadFailed(artifactDownloadReport)) {
-            throw ArtifactResolutionExceptionBuilder.downloadFailure(artifactDownloadReport.getArtifact(), artifactDownloadReport.getDownloadDetails());
+            if (artifactDownloadReport instanceof EnhancedArtifactDownloadReport) {
+                EnhancedArtifactDownloadReport enhancedReport = (EnhancedArtifactDownloadReport) artifactDownloadReport;
+                throw new ArtifactResolveException(artifactDownloadReport.getArtifact(), enhancedReport.getFailure());
+            }
+            throw new ArtifactResolveException(artifactDownloadReport.getArtifact(), artifactDownloadReport.getDownloadDetails());
         }
         return artifactDownloadReport.getLocalFile();
     }
@@ -72,25 +81,13 @@ public class DependencyResolverAdapter implements ModuleVersionRepository {
             if (revision == null) {
                 return null;
             }
-            return new DefaultModuleVersionDescriptor(revision.getDescriptor(), getOriginalMetadataArtifact(revision), getOriginalMetadataFile(revision), isChanging(revision));
+            return new DefaultModuleVersionDescriptor(revision.getDescriptor(), isChanging(revision));
         } catch (ParseException e) {
             throw UncheckedException.asUncheckedException(e);
         }
     }
 
-    private Artifact getOriginalMetadataArtifact(ResolvedModuleRevision revision) {
-        ArtifactOrigin artifactOrigin = revision.getReport().getArtifactOrigin();
-        return artifactOrigin == null ? null : artifactOrigin.getArtifact();
-    }
-
-    private File getOriginalMetadataFile(ResolvedModuleRevision revision) {
-        return revision.getReport().getOriginalLocalFile();
-    }
-
     private boolean isChanging(ResolvedModuleRevision resolvedModuleRevision) {
-        if (resolver instanceof IvyDependencyResolver) {
-            return ((IvyDependencyResolver) resolver).isChangingModule(resolvedModuleRevision.getDescriptor());
-        }
-        return false;
+        return new ChangingModuleDetector(resolver).isChangingModule(resolvedModuleRevision.getDescriptor());
     }
 }

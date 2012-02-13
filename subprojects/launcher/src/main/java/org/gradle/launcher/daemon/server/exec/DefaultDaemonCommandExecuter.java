@@ -15,9 +15,8 @@
  */
 package org.gradle.launcher.daemon.server.exec;
 
-import org.gradle.api.internal.project.ServiceRegistry;
-import org.gradle.initialization.DefaultGradleLauncherFactory;
 import org.gradle.initialization.GradleLauncherFactory;
+import org.gradle.internal.nativeplatform.ProcessEnvironment;
 import org.gradle.launcher.daemon.context.DaemonContext;
 import org.gradle.launcher.daemon.protocol.Command;
 import org.gradle.launcher.daemon.server.DaemonStateCoordinator;
@@ -25,7 +24,6 @@ import org.gradle.logging.LoggingManagerInternal;
 import org.gradle.messaging.concurrent.ExecutorFactory;
 import org.gradle.messaging.remote.internal.Connection;
 import org.gradle.messaging.remote.internal.DisconnectAwareConnectionDecorator;
-import org.gradle.os.ProcessEnvironment;
 
 import java.util.Arrays;
 import java.util.LinkedList;
@@ -41,11 +39,12 @@ public class DefaultDaemonCommandExecuter implements DaemonCommandExecuter {
     private final GradleLauncherFactory launcherFactory;
     private final ProcessEnvironment processEnvironment;
 
-    public DefaultDaemonCommandExecuter(ServiceRegistry loggingServices, ExecutorFactory executorFactory, ProcessEnvironment processEnvironment) {
+    public DefaultDaemonCommandExecuter(GradleLauncherFactory launcherFactory, ExecutorFactory executorFactory,
+                                        ProcessEnvironment processEnvironment, LoggingManagerInternal loggingManager) {
         this.executorFactory = executorFactory;
         this.processEnvironment = processEnvironment;
-        this.loggingManager = loggingServices.getFactory(LoggingManagerInternal.class).create();
-        this.launcherFactory = new DefaultGradleLauncherFactory(loggingServices);
+        this.loggingManager = loggingManager;
+        this.launcherFactory = launcherFactory;
     }
 
     public void executeCommand(Connection<Object> connection, Command command, DaemonContext daemonContext, DaemonStateCoordinator daemonStateCoordinator) {
@@ -54,11 +53,11 @@ public class DefaultDaemonCommandExecuter implements DaemonCommandExecuter {
             command,
             daemonContext,
             daemonStateCoordinator,
-            createActions()
+            createActions(daemonContext)
         ).proceed();
     }
 
-    protected List<DaemonCommandAction> createActions() {
+    protected List<DaemonCommandAction> createActions(DaemonContext daemonContext) {
         return new LinkedList<DaemonCommandAction>(Arrays.asList(
             new StopConnectionAfterExecution(),
             new HandleClientDisconnectBeforeSendingCommand(),
@@ -66,11 +65,10 @@ public class DefaultDaemonCommandExecuter implements DaemonCommandExecuter {
             new HandleStop(),
             new StartBuildOrRespondWithBusy(),
             new EstablishBuildEnvironment(processEnvironment),
-            new LogToClient(loggingManager), // from this point down, logging is sent back to the client
+            new LogToClient(loggingManager, daemonContext.getPid()), // from this point down, logging is sent back to the client
             new ForwardClientInput(executorFactory),
             new ReturnResult(),
             new ResetDeprecationLogger(),
-            new CatchAndForwardDaemonFailureAsResult(), //TODO SF Luke & me believe it can be removed. Let's get rid of it after Xmas.
             new WatchForDisconnection(),
             new ExecuteBuild(launcherFactory)
         ));

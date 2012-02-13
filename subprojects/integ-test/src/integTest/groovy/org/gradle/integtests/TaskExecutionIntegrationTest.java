@@ -16,9 +16,10 @@
 
 package org.gradle.integtests;
 
-import org.gradle.integtests.fixtures.internal.AbstractIntegrationTest;
+import org.gradle.integtests.fixtures.AbstractIntegrationTest;
 import org.gradle.util.TestFile;
 import org.junit.Test;
+import spock.lang.Issue;
 
 import static org.hamcrest.Matchers.*;
 
@@ -122,6 +123,22 @@ public class TaskExecutionIntegrationTest extends AbstractIntegrationTest {
     }
 
     @Test
+    public void executesTaskActionsInCorrectEnvironment() {
+        TestFile buildFile = testFile("build.gradle");
+        buildFile.writelns(
+                // An action attached to built-in task
+                "task a << { assert Thread.currentThread().contextClassLoader == getClass().classLoader }",
+                // An action defined by a custom task
+                "task b(type: CustomTask)",
+                "class CustomTask extends DefaultTask { @TaskAction def go() { assert Thread.currentThread().contextClassLoader == getClass().classLoader } } ",
+                // An action implementation
+                "task c; c.doLast new Action<Task>() { void execute(Task t) { assert Thread.currentThread().contextClassLoader == getClass().classLoader } }"
+        );
+
+        usingBuildFile(buildFile).withTasks("a", "b", "c").run();
+    }
+
+    @Test
     public void excludesTasksWhenExcludePatternSpecified() {
         testFile("settings.gradle").write("include 'sub'");
         TestFile buildFile = testFile("build.gradle");
@@ -150,5 +167,14 @@ public class TaskExecutionIntegrationTest extends AbstractIntegrationTest {
         usingBuildFile(buildFile).withArguments("-x", "b").run().assertTasksExecuted(":a", ":c", ":d", ":sub:c", ":sub:d");
         // Unknown task
         usingBuildFile(buildFile).withTasks("d").withArguments("-x", "unknown").runWithFailure().assertThatDescription(startsWith("Task 'unknown' not found in root project"));
+    }
+
+    @Test
+    @Issue("http://issues.gradle.org/browse/GRADLE-2022")
+    public void tryingToInstantiateTaskDirectlyFailsWithGoodErrorMessage() {
+        usingBuildFile(testFile("build.gradle").write("new DefaultTask()")).
+        withTasks("tasks").
+        runWithFailure().
+        assertHasCause("Task of type 'org.gradle.api.DefaultTask' has been instantiated directly which is not supported");
     }
 }

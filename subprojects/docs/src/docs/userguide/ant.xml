@@ -151,12 +151,13 @@
 
         <section>
             <title>ビルドでカスタムAntタスクを使う<phrase role="original">Using custom Ant tasks in your build</phrase></title>
-            <para role="original">To make custom tasks available in your build, you use the <literal>typedef</literal> Ant task, just
-                as you would in a <literal>build.xml</literal> file. You can then refer to the custom Ant task as you
+            <para role="original">To make custom tasks available in your build,
+                you can use the <literal>taskdef</literal> (usually easier) or <literal>typedef</literal> Ant task,
+                just as you would in a <literal>build.xml</literal> file. You can then refer to the custom Ant task as you
                 would a built-in Ant task.
             </para>
             <para>ビルドでカスタムタスクを有効にするためには、
-                <literal>build.xml</literal>ファイルと同じくAntタスク<literal>taskdef</literal>を利用します。
+                <literal>build.xml</literal>ファイルと同じくAntタスクの<literal>taskdef</literal>（大抵はこちらの方が簡単です）か<literal>typedef</literal>を利用します。
                 これにより組み込みのAntタスクと同様にカスタムAntタスクが参照できるようになります。
             </para>
             <sample id="useExternalAntTask" dir="userguide/ant/useExternalAntTask" title="カスタムAntタスクの利用 / Using a custom Ant task">

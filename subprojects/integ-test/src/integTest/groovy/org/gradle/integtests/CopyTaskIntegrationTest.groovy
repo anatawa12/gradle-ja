@@ -16,7 +16,7 @@
 package org.gradle.integtests
 
 import org.gradle.integtests.fixtures.TestResources
-import org.gradle.integtests.fixtures.internal.AbstractIntegrationTest
+import org.gradle.integtests.fixtures.AbstractIntegrationTest
 import org.gradle.util.TestFile
 import org.junit.Rule
 import org.junit.Test
@@ -282,7 +282,7 @@ public class CopyTaskIntegrationTest extends AbstractIntegrationTest {
                 dependencies { compile files('a.jar') }
                 task copy << {
                    copy {
-                        from files('src2') + fileTree { from 'src'; exclude '**/ignore/**' } + configurations.compile
+                        from files('src2') + fileTree('src') { exclude '**/ignore/**' } + configurations.compile
                         into 'dest'
                         include { fte -> fte.relativePath.segments.length < 3 && (fte.file.directory || fte.file.name.contains('a')) }
                     }

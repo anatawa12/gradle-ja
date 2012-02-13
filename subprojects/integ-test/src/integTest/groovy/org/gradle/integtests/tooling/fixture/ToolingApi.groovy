@@ -18,7 +18,7 @@ package org.gradle.integtests.tooling.fixture
 import java.util.concurrent.TimeUnit
 import org.gradle.integtests.fixtures.GradleDistribution
 import org.gradle.integtests.fixtures.GradleDistributionExecuter
-import org.gradle.integtests.fixtures.internal.IntegrationTestHint
+import org.gradle.integtests.fixtures.IntegrationTestHint
 import org.gradle.tooling.GradleConnector
 import org.gradle.tooling.ProjectConnection
 import org.gradle.tooling.UnsupportedVersionException
@@ -31,6 +31,7 @@ class ToolingApi {
     private GradleDistribution dist
     private final List<Closure> connectorConfigurers = []
     boolean isEmbedded = GradleDistributionExecuter.systemPropertyExecuter == GradleDistributionExecuter.Executer.embedded
+    boolean verboseLogging = true
 
     ToolingApi(GradleDistribution dist) {
         this.dist = dist
@@ -42,6 +43,10 @@ class ToolingApi {
 
     def withConnection(Closure cl) {
         GradleConnector connector = connector()
+        withConnection(connector, cl)
+    }
+
+    def withConnection(GradleConnector connector, Closure cl) {
         try {
             withConnectionRaw(connector, cl)
         } catch (UnsupportedVersionException e) {
@@ -79,7 +84,7 @@ class ToolingApi {
         connector.searchUpwards(false)
         connector.daemonMaxIdleTime(300, TimeUnit.SECONDS)
         if (connector.metaClass.hasProperty(connector, 'verboseLogging')) {
-            connector.verboseLogging = true
+            connector.verboseLogging = verboseLogging
         }
         if (isEmbedded) {
             LOGGER.info("Using embedded tooling API provider");

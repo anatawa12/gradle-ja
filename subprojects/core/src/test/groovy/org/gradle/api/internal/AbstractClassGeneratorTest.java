@@ -24,7 +24,6 @@ import org.gradle.api.plugins.Convention;
 import org.gradle.api.plugins.ExtensionAware;
 import org.gradle.api.plugins.ExtensionContainer;
 import org.gradle.api.tasks.ConventionValue;
-import org.gradle.util.GUtil;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -131,6 +130,9 @@ public abstract class AbstractClassGeneratorTest {
 
         bean = generator.newInstance(BeanWithConstructor.class);
         assertThat(bean.getProp(), equalTo("default value"));
+
+        bean = generator.newInstance(BeanWithConstructor.class, 127);
+        assertThat(bean.getProp(), equalTo("127"));
     }
 
     @Test
@@ -223,6 +225,18 @@ public abstract class AbstractClassGeneratorTest {
         assertThat(bean.getBooleanProperty(), equalTo(false));
         assertThat(bean.getLongProperty(), equalTo(12L));
         assertThat(bean.setReturnValueProperty("p"), sameInstance(bean));
+
+        IConventionAware conventionAware = (IConventionAware) bean;
+        conventionAware.getConventionMapping().map("booleanProperty", new Callable<Object>() {
+            public Object call() throws Exception {
+                return true;
+            }
+        });
+
+        assertThat(bean.getBooleanProperty(), equalTo(true));
+
+        bean.setBooleanProperty(false);
+        assertThat(bean.getBooleanProperty(), equalTo(false));
     }
 
     @Test
@@ -240,28 +254,26 @@ public abstract class AbstractClassGeneratorTest {
     public void doesNotOverrideMethodsFromSuperclassesMarkedWithAnnotation() throws Exception {
         BeanSubClass bean = generator.generate(BeanSubClass.class).newInstance();
         IConventionAware conventionAware = (IConventionAware) bean;
-        conventionAware.getConventionMapping().map(GUtil.map(
-                "property", new ConventionValue() {
-                    public Object getValue(Convention convention, IConventionAware conventionAwareObject) {
-                        throw new UnsupportedOperationException();
-                    }
-                },
-                "interfaceProperty", new ConventionValue() {
-                    public Object getValue(Convention convention, IConventionAware conventionAwareObject) {
-                        throw new UnsupportedOperationException();
-                    }
-                },
-                "overriddenProperty", new ConventionValue() {
-                    public Object getValue(Convention convention, IConventionAware conventionAwareObject) {
-                        return "conventionValue";
-                    }
-                },
-                "otherProperty", new ConventionValue() {
-            public Object getValue(Convention convention, IConventionAware conventionAwareObject) {
+        conventionAware.getConventionMapping().map("property", new Callable<Object>() {
+            public Object call() throws Exception {
+                throw new UnsupportedOperationException();
+            }
+        });
+        conventionAware.getConventionMapping().map("interfaceProperty", new Callable<Object>() {
+            public Object call() throws Exception {
+                throw new UnsupportedOperationException();
+            }
+        });
+        conventionAware.getConventionMapping().map("overriddenProperty", new Callable<Object>() {
+            public Object call() throws Exception {
                 return "conventionValue";
             }
-        }
-        ));
+        });
+        conventionAware.getConventionMapping().map("otherProperty", new Callable<Object>() {
+            public Object call() throws Exception {
+                return "conventionValue";
+            }
+        });
         assertEquals(null, bean.getProperty());
         assertEquals(null, bean.getInterfaceProperty());
         assertEquals("conventionValue", bean.getOverriddenProperty());
@@ -520,6 +532,10 @@ public abstract class AbstractClassGeneratorTest {
         public BeanWithConstructor(String value) {
             setProp(value);
         }
+
+        public BeanWithConstructor(int value) {
+            setProp(String.valueOf(value));
+        }
     }
 
     public static class BeanWithDslMethods extends Bean {
@@ -633,12 +649,14 @@ public abstract class AbstractClassGeneratorTest {
     }
 
     public static class BeanWithVariousPropertyTypes {
+        private boolean b;
+
         public String[] getArrayProperty() {
             return new String[1];
         }
 
         public boolean getBooleanProperty() {
-            return false;
+            return b;
         }
 
         public long getLongProperty() {
@@ -651,6 +669,10 @@ public abstract class AbstractClassGeneratorTest {
 
         public BeanWithVariousPropertyTypes setReturnValueProperty(String val) {
             return this;
+        }
+
+        public void setBooleanProperty(boolean b) {
+            this.b = b;
         }
     }
 

@@ -21,12 +21,10 @@ import org.gradle.api.artifacts.dsl.ArtifactHandler;
 import org.gradle.api.artifacts.dsl.DependencyHandler;
 import org.gradle.api.internal.ClassPathRegistry;
 import org.gradle.api.internal.DomainObjectContext;
-import org.gradle.api.internal.Factory;
 import org.gradle.api.internal.Instantiator;
 import org.gradle.api.internal.artifacts.configurations.ConfigurationContainerInternal;
 import org.gradle.api.internal.artifacts.configurations.DefaultConfigurationContainer;
 import org.gradle.api.internal.artifacts.configurations.DependencyMetaDataProvider;
-import org.gradle.api.internal.artifacts.ivyservice.ivyresolve.ResolveModeOverride;
 import org.gradle.api.internal.artifacts.dependencies.DefaultExternalModuleDependency;
 import org.gradle.api.internal.artifacts.dsl.DefaultArtifactHandler;
 import org.gradle.api.internal.artifacts.dsl.DefaultPublishArtifactFactory;
@@ -37,14 +35,13 @@ import org.gradle.api.internal.artifacts.dsl.dependencies.ProjectFinder;
 import org.gradle.api.internal.artifacts.ivyservice.*;
 import org.gradle.api.internal.artifacts.ivyservice.artifactcache.ArtifactResolutionCache;
 import org.gradle.api.internal.artifacts.ivyservice.artifactcache.DefaultArtifactResolutionCache;
-import org.gradle.api.internal.artifacts.ivyservice.clientmodule.ClientModuleRegistry;
-import org.gradle.api.internal.artifacts.ivyservice.clientmodule.DefaultClientModuleRegistry;
 import org.gradle.api.internal.artifacts.ivyservice.dynamicversions.ModuleResolutionCache;
 import org.gradle.api.internal.artifacts.ivyservice.dynamicversions.SingleFileBackedModuleResolutionCache;
 import org.gradle.api.internal.artifacts.ivyservice.filestore.ArtifactFileStore;
 import org.gradle.api.internal.artifacts.ivyservice.filestore.DefaultArtifactFileStore;
 import org.gradle.api.internal.artifacts.ivyservice.filestore.ExternalArtifactCacheBuilder;
 import org.gradle.api.internal.artifacts.ivyservice.ivyresolve.ResolveIvyFactory;
+import org.gradle.api.internal.artifacts.ivyservice.ivyresolve.StartParameterResolutionOverride;
 import org.gradle.api.internal.artifacts.ivyservice.modulecache.DefaultModuleDescriptorCache;
 import org.gradle.api.internal.artifacts.ivyservice.modulecache.ModuleDescriptorCache;
 import org.gradle.api.internal.artifacts.ivyservice.moduleconverter.*;
@@ -59,12 +56,13 @@ import org.gradle.api.internal.file.FileResolver;
 import org.gradle.api.internal.file.IdentityFileResolver;
 import org.gradle.api.internal.notations.*;
 import org.gradle.api.internal.notations.api.NotationParser;
-import org.gradle.api.internal.project.DefaultServiceRegistry;
-import org.gradle.api.internal.project.ServiceRegistry;
+import org.gradle.internal.service.ServiceRegistry;
 import org.gradle.cache.CacheRepository;
+import org.gradle.internal.Factory;
+import org.gradle.internal.service.DefaultServiceRegistry;
 import org.gradle.listener.ListenerManager;
 import org.gradle.logging.ProgressLoggerFactory;
-import org.gradle.util.TimeProvider;
+import org.gradle.util.BuildCommencedTimeProvider;
 import org.gradle.util.WrapUtil;
 
 import java.util.List;
@@ -80,7 +78,7 @@ public class DefaultDependencyManagementServices extends DefaultServiceRegistry 
     }
 
     protected ResolveModuleDescriptorConverter createResolveModuleDescriptorConverter() {
-        DependencyDescriptorFactory dependencyDescriptorFactoryDelegate = get(DependencyDescriptorFactory.class);
+        DependencyDescriptorFactory dependencyDescriptorFactoryDelegate = get(DependencyDescriptorFactoryDelegate.class);
         return new ResolveModuleDescriptorConverter(
                 get(ModuleDescriptorFactory.class),
                 get(ConfigurationsToModuleDescriptorConverter.class),
@@ -112,13 +110,13 @@ public class DefaultDependencyManagementServices extends DefaultServiceRegistry 
         return new DefaultConfigurationsToModuleDescriptorConverter();
     }
 
-    protected DependencyDescriptorFactory createDependencyDescriptorFactory() {
+    protected DependencyDescriptorFactoryDelegate createDependencyDescriptorFactory() {
         DefaultModuleDescriptorFactoryForClientModule clientModuleDescriptorFactory = new DefaultModuleDescriptorFactoryForClientModule();
-        DependencyDescriptorFactory dependencyDescriptorFactoryDelegate = new DependencyDescriptorFactoryDelegate(
+        DependencyDescriptorFactoryDelegate dependencyDescriptorFactoryDelegate = new DependencyDescriptorFactoryDelegate(
                 new ClientModuleDependencyDescriptorFactory(
                         get(ExcludeRuleConverter.class),
-                        clientModuleDescriptorFactory,
-                        get(ClientModuleRegistry.class)),
+                        clientModuleDescriptorFactory
+                ),
                 new ProjectDependencyDescriptorFactory(
                         get(ExcludeRuleConverter.class)),
                 get(ExternalModuleDependencyDescriptorFactory.class));
@@ -129,12 +127,14 @@ public class DefaultDependencyManagementServices extends DefaultServiceRegistry 
     protected DependencyFactory createDependencyFactory() {
         Instantiator instantiator = get(Instantiator.class);
 
+        ProjectDependenciesBuildInstruction projectDependenciesBuildInstruction = new ProjectDependenciesBuildInstruction(get(StartParameter.class).isBuildProjectDependencies());
+        
         ProjectDependencyFactory projectDependencyFactory = new ProjectDependencyFactory(
-                get(StartParameter.class).getProjectDependenciesBuildInstruction(),
+                projectDependenciesBuildInstruction,
                 instantiator);
 
         DependencyProjectNotationParser projParser = new DependencyProjectNotationParser(
-                get(StartParameter.class).getProjectDependenciesBuildInstruction(),
+                projectDependenciesBuildInstruction,
                 instantiator);
 
         NotationParser<? extends Dependency> moduleMapParser = new DependencyMapNotationParser<DefaultExternalModuleDependency>(instantiator, DefaultExternalModuleDependency.class);
@@ -161,11 +161,15 @@ public class DefaultDependencyManagementServices extends DefaultServiceRegistry 
                 get(CacheRepository.class)
         );
     }
+    
+    protected BuildCommencedTimeProvider createBuildTimeProvider() {
+        return new BuildCommencedTimeProvider();
+    }
 
     protected ModuleResolutionCache createModuleResolutionCache() {
         return new SingleFileBackedModuleResolutionCache(
                 get(ArtifactCacheMetaData.class),
-                get(TimeProvider.class),
+                get(BuildCommencedTimeProvider.class),
                 get(CacheLockingManager.class)
         );
     }
@@ -173,21 +177,21 @@ public class DefaultDependencyManagementServices extends DefaultServiceRegistry 
     protected ModuleDescriptorCache createModuleDescriptorCache() {
         return new DefaultModuleDescriptorCache(
                 get(ArtifactCacheMetaData.class),
-                get(TimeProvider.class),
+                get(BuildCommencedTimeProvider.class),
+                get(CacheLockingManager.class)
+        );
+    }
+
+    protected ArtifactResolutionCache createArtifactResolutionCache() {
+        return new DefaultArtifactResolutionCache(
+                get(ArtifactCacheMetaData.class),
+                get(BuildCommencedTimeProvider.class),
                 get(CacheLockingManager.class)
         );
     }
 
     protected ArtifactFileStore createArtifactFileStore() {
         return new DefaultArtifactFileStore(get(ArtifactCacheMetaData.class));
-    }
-
-    protected ArtifactResolutionCache createArtifactResolutionCache() {
-        return new DefaultArtifactResolutionCache(
-                get(ArtifactCacheMetaData.class),
-                get(TimeProvider.class),
-                get(CacheLockingManager.class)
-        );
     }
 
     protected SettingsConverter createSettingsConverter() {
@@ -200,10 +204,6 @@ public class DefaultDependencyManagementServices extends DefaultServiceRegistry 
 
     protected IvyFactory createIvyFactory() {
         return new DefaultIvyFactory();
-    }
-
-    protected ClientModuleRegistry createClientModuleRegistry() {
-        return new DefaultClientModuleRegistry();
     }
 
     protected LocalMavenCacheLocator createLocalMavenCacheLocator() {
@@ -295,7 +295,7 @@ public class DefaultDependencyManagementServices extends DefaultServiceRegistry 
 
         ArtifactDependencyResolver createDependencyResolver(DefaultRepositoryHandler resolverProvider) {
             StartParameter startParameter = get(StartParameter.class);
-            ResolveModeOverride resolveModeOverride = new ResolveModeOverride(startParameter.getResolveMode());
+            StartParameterResolutionOverride startParameterResolutionOverride = new StartParameterResolutionOverride(startParameter);
             ResolveIvyFactory ivyFactory = new ResolveIvyFactory(
                     get(IvyFactory.class),
                     resolverProvider,
@@ -303,9 +303,8 @@ public class DefaultDependencyManagementServices extends DefaultServiceRegistry 
                     get(ModuleResolutionCache.class),
                     get(ModuleDescriptorCache.class),
                     get(ArtifactResolutionCache.class),
-                    get(ArtifactFileStore.class),
                     get(CacheLockingManager.class),
-                    resolveModeOverride
+                    startParameterResolutionOverride
             );
 
             ResolvedArtifactFactory resolvedArtifactFactory = new ResolvedArtifactFactory(
@@ -317,15 +316,14 @@ public class DefaultDependencyManagementServices extends DefaultServiceRegistry 
                     get(PublishModuleDescriptorConverter.class),
                     resolvedArtifactFactory,
                     new DefaultProjectModuleRegistry(
-                            get(PublishModuleDescriptorConverter.class)),
-                    get(ClientModuleRegistry.class));
+                            get(PublishModuleDescriptorConverter.class))
+            );
             return new ErrorHandlingArtifactDependencyResolver(
-                    new EventBroadcastingArtifactDependencyResolver(
-                            new ShortcircuitEmptyConfigsArtifactDependencyResolver(
-                                    new SelfResolvingDependencyResolver(
-                                            new CacheLockingArtifactDependencyResolver(
-                                                    get(CacheLockingManager.class),
-                                                    resolver)))));
+                        new ShortcircuitEmptyConfigsArtifactDependencyResolver(
+                                new SelfResolvingDependencyResolver(
+                                        new CacheLockingArtifactDependencyResolver(
+                                                get(CacheLockingManager.class),
+                                                resolver))));
         }
 
         ArtifactPublisher createArtifactPublisher(DefaultRepositoryHandler resolverProvider) {

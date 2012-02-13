@@ -18,6 +18,7 @@ package org.gradle.launcher.daemon.server.exec;
 import org.gradle.api.GradleException;
 import org.gradle.api.logging.Logger;
 import org.gradle.api.logging.Logging;
+import org.gradle.internal.UncheckedException;
 import org.gradle.launcher.daemon.protocol.CloseInput;
 import org.gradle.launcher.daemon.protocol.ForwardInput;
 import org.gradle.messaging.concurrent.ExecutorFactory;
@@ -25,7 +26,6 @@ import org.gradle.messaging.concurrent.StoppableExecutor;
 import org.gradle.messaging.dispatch.AsyncReceive;
 import org.gradle.messaging.dispatch.Dispatch;
 import org.gradle.util.StdinSwapper;
-import org.gradle.util.UncheckedException;
 
 import java.io.IOException;
 import java.io.PipedInputStream;
@@ -66,23 +66,23 @@ public class ForwardClientInput implements DaemonCommandAction {
                 if (command instanceof ForwardInput) {
                     try {
                         ForwardInput forwardedInput = (ForwardInput)command;
-                        LOGGER.info("putting forwarded input '{}' on daemon's stdin", new String(forwardedInput.getBytes()).replace("\n", "\\n"));
+                        LOGGER.info("Putting forwarded input '{}' on daemon's stdin", new String(forwardedInput.getBytes()).replace("\n", "\\n"));
                         inputSource.write(forwardedInput.getBytes());
 
-                    } catch (IOException e) {
-                        LOGGER.warn("received IO exception trying to forward client input", e);
+                    } catch (Exception e) {
+                        LOGGER.warn("Received exception trying to forward client input", e);
                     }
                 } else if (command instanceof CloseInput) {
                     try {
-                        LOGGER.info("received {}, closing daemons stdin", command);
+                        LOGGER.info("Closing daemons standard input as requested by received command: {}", command);
                         inputSource.close();
-                    } catch (IOException e) {
-                        LOGGER.warn("IO exception closing output stream connected to replacement stdin", e);
+                    } catch (Exception e) {
+                        LOGGER.warn("Exception closing output stream connected to replacement stdin", e);
                     } finally {
                         countDownInputOrConnectionClosedLatch.run();
                     }
                 } else {
-                    LOGGER.warn("while listening for IOCommands, received unexpected command: {}", command);
+                    LOGGER.warn("While listening for IOCommands, received unexpected command: {}", command);
                 }
             }
         };
@@ -97,11 +97,14 @@ public class ForwardClientInput implements DaemonCommandAction {
                 // very soon because we are assuming we've just sent back the build result. We do this here
                 // in case the client tries to send input in between us sending back the result and it closing the connection.
                 try {
+                    LOGGER.debug("Waiting until the client disconnects so that we may no longer consume input...");
                     inputOrConnectionClosedLatch.await();
                 } catch (InterruptedException e) {
+                    LOGGER.debug("Interrupted while waiting for client to disconnect.");
                     throw UncheckedException.asUncheckedException(e);
                 } finally {
                     inputReceiver.stop();
+                    LOGGER.debug("The input receiver has been stopped.");
                 }
             }
         });

@@ -17,18 +17,11 @@
 package org.gradle.integtests
 
 import org.gradle.integtests.fixtures.ExecutionFailure
-import org.gradle.integtests.fixtures.internal.AbstractIntegrationTest
+import org.gradle.integtests.fixtures.AbstractIntegrationTest
 import org.gradle.util.TestFile
 import org.junit.Test
 
 class JavaProjectIntegrationTest extends AbstractIntegrationTest {
-
-    @Test
-    public void handlesEmptyProject() {
-        testFile("build.gradle").writelns("apply plugin: 'java'");
-        inTestDirectory().withTasks("build").run();
-    }
-
     @Test
     public void compilationFailureBreaksBuild() {
         TestFile buildFile = testFile("build.gradle");

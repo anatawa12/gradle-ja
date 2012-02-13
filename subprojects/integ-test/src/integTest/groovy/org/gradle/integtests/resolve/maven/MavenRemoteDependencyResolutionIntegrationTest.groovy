@@ -18,7 +18,7 @@ package org.gradle.integtests.resolve.maven
 import org.gradle.integtests.fixtures.HttpServer
 import org.gradle.integtests.fixtures.MavenRepository
 import org.gradle.integtests.fixtures.TestResources
-import org.gradle.integtests.fixtures.internal.AbstractIntegrationSpec
+import org.gradle.integtests.fixtures.AbstractIntegrationSpec
 import org.gradle.util.TestFile
 import org.junit.Rule
 
@@ -108,7 +108,7 @@ task listJars << {
         when:
         // TODO: Should meta-data be fetched for an artifact-only dependency?
         server.expectGetMissing('/repo1/group/projectA/1.2/projectA-1.2.pom')
-        server.expectGetMissing('/repo1/group/projectA/1.2/projectA-1.2.jar')
+        server.expectHeadMissing('/repo1/group/projectA/1.2/projectA-1.2.jar')
 
         server.expectGet('/repo2/group/projectA/1.2/projectA-1.2.pom', module.pomFile)
         server.expectGet('/repo2/group/projectA/1.2/projectA-1.2.jar', module.artifactFile)
@@ -231,7 +231,7 @@ task listJars << {
 
         // Looks for POM and JAR in repo1 before looking in repo2 (jar is an attempt to handle publication without module descriptor)
         server.expectGetMissing('/repo1/group/projectB/1.0/projectB-1.0.pom')
-        server.expectGetMissing('/repo1/group/projectB/1.0/projectB-1.0.jar')
+        server.expectHeadMissing('/repo1/group/projectB/1.0/projectB-1.0.jar')
         server.expectGet('/repo2/group/projectB/1.0/projectB-1.0.pom', projectB.pomFile)
 
         server.expectGet('/repo1/group/projectA/1.0/projectA-1.0.jar', projectA.artifactFile)

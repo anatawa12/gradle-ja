@@ -58,6 +58,7 @@ class StartParameterTest {
         testObj.logLevel = LogLevel.WARN
         testObj.colorOutput = false
         testObj.continueOnFailure = true
+        testObj.refreshOptions = RefreshOptions.fromCommandLineOptions(['dependencies'])
 
         StartParameter startParameter = testObj.newInstance()
         assertEquals(testObj, startParameter)
@@ -80,6 +81,7 @@ class StartParameterTest {
         assertThat(parameter.defaultProjectSelector, reflectionEquals(new DefaultProjectSpec(parameter.currentDir)))
         assertFalse(parameter.dryRun)
         assertFalse(parameter.continueOnFailure)
+        assertThat(parameter.refreshOptions, equalTo(RefreshOptions.NONE))
         assertThat(parameter, isSerializable())
     }
 
@@ -179,6 +181,15 @@ class StartParameterTest {
         parameter.useEmbeddedBuildFile("<content>")
         assertThat(parameter.buildScriptSource, instanceOf(StringScriptSource.class))
         assertThat(parameter.buildScriptSource.resource.text, equalTo("<content>"))
+        assertThat(parameter.settingsScriptSource, instanceOf(StringScriptSource.class))
+        assertThat(parameter.settingsScriptSource.resource.text, equalTo(""))
+        assertThat(parameter.searchUpwards, equalTo(false))
+        assertThat(parameter, isSerializable())
+    }
+
+    @Test public void testUseEmptySettingsScript() {
+        StartParameter parameter = new StartParameter();
+        parameter.useEmptySettingsScript()
         assertThat(parameter.settingsScriptSource, instanceOf(StringScriptSource.class))
         assertThat(parameter.settingsScriptSource.resource.text, equalTo(""))
         assertThat(parameter.searchUpwards, equalTo(false))

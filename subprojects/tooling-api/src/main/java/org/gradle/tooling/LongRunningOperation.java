@@ -16,6 +16,7 @@
 
 package org.gradle.tooling;
 
+import java.io.File;
 import java.io.InputStream;
 import java.io.OutputStream;
 
@@ -49,12 +50,58 @@ public interface LongRunningOperation {
     LongRunningOperation setStandardError(OutputStream outputStream);
 
     /**
-     * Sets the standard {@link java.io.InputStream} that will be used by builds. Useful when the tooling api drives interactive builds.
+     * If the target gradle version supports it you can use this setting
+     * to set the standard {@link java.io.InputStream} that will be used by builds.
+     * Useful when the tooling api drives interactive builds.
+     * <p>
+     * If the target gradle version does not support it the long running operation will fail eagerly with
+     * {@link org.gradle.tooling.model.UnsupportedMethodException} when the operation is started.
+     * <p>
+     * If not configured or null passed the dummy input stream with zero bytes is used to avoid the build hanging problems.
      *
      * @param inputStream The input stream
      * @return this
+     * @since 1.0-milestone-8
      */
     LongRunningOperation setStandardInput(InputStream inputStream);
+
+    /**
+     * If the target gradle version supports it you can use this setting
+     * to specify the java home directory to use for the long running operation.
+     * <p>
+     * If the target gradle version does not support it the long running operation will fail eagerly with
+     * {@link org.gradle.tooling.model.UnsupportedMethodException} when the operation is started.
+     * <p>
+     * {@link org.gradle.tooling.model.build.BuildEnvironment} model contains information such as java or gradle environment.
+     * If you want to get hold of this information you can ask tooling API to build this model.
+     * <p>
+     * If not configured or null passed the sensible default will be used.
+     *
+     * @param javaHome to use for the gradle process
+     * @return this
+     * @since 1.0-milestone-8
+     * @throws IllegalArgumentException when supplied javaHome is not a valid folder.
+     *          Also when javaHome does not seem to be a valid jdk or jre folder.
+     */
+    LongRunningOperation setJavaHome(File javaHome) throws IllegalArgumentException;
+
+    /**
+     * If the target gradle version supports it you can use this setting
+     * to specify the java vm arguments to use for the long running operation.
+     * <p>
+     * If the target gradle version does not support it the long running operation will fail eagerly with
+     * {@link org.gradle.tooling.model.UnsupportedMethodException} when the operation is started.
+     * <p>
+     * {@link org.gradle.tooling.model.build.BuildEnvironment} model contains information such as java or gradle environment.
+     * If you want to get hold of this information you can ask tooling API to build this model.
+     * <p>
+     * If not configured or null passed the sensible default will be used.
+     *
+     * @param jvmArguments to use for the gradle process
+     * @return this
+     * @since 1.0-milestone-8
+     */
+    LongRunningOperation setJvmArguments(String... jvmArguments);
 
     /**
      * Adds a progress listener which will receive progress events as the operation runs.

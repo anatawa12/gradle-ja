@@ -16,33 +16,29 @@
 
 package org.gradle.tooling.internal.consumer;
 
-import org.gradle.tooling.internal.VersionOnlyBuildEnvironment;
-import org.gradle.tooling.internal.protocol.BuildOperationParametersVersion1;
-import org.gradle.tooling.internal.protocol.ConnectionVersion4;
+import org.gradle.tooling.internal.build.VersionOnlyBuildEnvironment;
+import org.gradle.tooling.internal.consumer.connection.ConsumerConnection;
+import org.gradle.tooling.internal.consumer.parameters.ConsumerOperationParameters;
+import org.gradle.tooling.internal.consumer.versioning.VersionDetails;
 import org.gradle.tooling.internal.protocol.InternalBuildEnvironment;
-import org.gradle.tooling.internal.protocol.ProjectVersion3;
-import org.gradle.util.GradleVersion;
 
 /**
  * by Szczepan Faber, created at: 12/21/11
  */
 public class ModelProvider {
 
-    private final static GradleVersion M5 = GradleVersion.version("1.0-milestone-5");
-    private final static GradleVersion M6 = GradleVersion.version("1.0-milestone-6");
-
-    public ProjectVersion3 provide(ConnectionVersion4 connection, Class<? extends ProjectVersion3> type, BuildOperationParametersVersion1 operationParameters) {
-        GradleVersion version = GradleVersion.version(connection.getMetaData().getVersion());
-        if (type == InternalBuildEnvironment.class && version.compareTo(M6) <= 0) {
+    public <T> T provide(ConsumerConnection connection, Class<T> type, ConsumerOperationParameters operationParameters) {
+        VersionDetails version = connection.getMetaData().getVersionDetails();
+        if (type == InternalBuildEnvironment.class && !version.supportsCompleteBuildEnvironment()) {
             //early versions of provider do not support BuildEnvironment model
             //since we know the gradle version at least we can give back some result
-            return new VersionOnlyBuildEnvironment(connection.getMetaData().getVersion());
+            VersionOnlyBuildEnvironment out = new VersionOnlyBuildEnvironment(version.getVersion());
+            return type.cast(out);
         }
-        if (version.equals(M5) || version.equals(M6)) {
+        if (version.clientHangsOnEarlyDaemonFailure()) {
             //those version require special handling because of the client hanging bug
             //it is due to the exception handing on the daemon side in M5 and M6
-
-            if (DefaultProjectConnection.getModelsPostM6().containsValue(type)) {
+            if (version.isPostM6Model(type)) {
                 String message = String.format("I don't know how to build a model of type '%s'.", type.getSimpleName());
                 throw new UnsupportedOperationException(message);
             }

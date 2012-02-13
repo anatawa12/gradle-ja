@@ -17,10 +17,9 @@
 package org.gradle.api.tasks.compile;
 
 import org.gradle.api.AntBuilder;
-import org.gradle.api.internal.Factory;
-import org.gradle.api.internal.tasks.compile.AntJavaCompiler;
-import org.gradle.api.internal.tasks.compile.IncrementalJavaCompiler;
-import org.gradle.api.internal.tasks.compile.JavaCompiler;
+import org.gradle.api.internal.project.ProjectInternal;
+import org.gradle.api.internal.tasks.compile.*;
+import org.gradle.internal.Factory;
 import org.gradle.api.tasks.Nested;
 import org.gradle.api.tasks.OutputDirectory;
 import org.gradle.api.tasks.TaskAction;
@@ -34,14 +33,16 @@ import java.io.File;
  * @author Hans Dockter
  */
 public class Compile extends AbstractCompile {
-
     private JavaCompiler javaCompiler;
 
     private File dependencyCacheDir;
 
     public Compile() {
         Factory<AntBuilder> antBuilderFactory = getServices().getFactory(AntBuilder.class);
-        javaCompiler = new IncrementalJavaCompiler(new AntJavaCompiler(antBuilderFactory), antBuilderFactory, getOutputs());
+        JavaCompilerFactory inProcessCompilerFactory = new InProcessJavaCompilerFactory();
+        JavaCompilerFactory forkingCompilerFactory = new DefaultJavaCompilerFactory((ProjectInternal) getProject(), antBuilderFactory, inProcessCompilerFactory);
+        JavaCompiler delegatingCompiler = new DelegatingJavaCompiler(forkingCompilerFactory);
+        javaCompiler = new IncrementalJavaCompiler(delegatingCompiler, antBuilderFactory, getOutputs());
     }
 
     @TaskAction

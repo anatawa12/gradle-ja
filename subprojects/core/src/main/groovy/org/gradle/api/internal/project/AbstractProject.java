@@ -51,6 +51,7 @@ import org.gradle.configuration.ProjectEvaluator;
 import org.gradle.configuration.ScriptPlugin;
 import org.gradle.configuration.ScriptPluginFactory;
 import org.gradle.groovy.scripts.ScriptSource;
+import org.gradle.internal.Factory;
 import org.gradle.listener.ListenerBroadcast;
 import org.gradle.logging.LoggingManagerInternal;
 import org.gradle.logging.StandardOutputCapture;
@@ -682,11 +683,16 @@ public abstract class AbstractProject implements ProjectInternal, DynamicObjectA
         return fileOperations.fileTree(baseDir);
     }
 
+    public ConfigurableFileTree fileTree(Object baseDir, Closure closure) {
+        return fileOperations.fileTree(baseDir, closure);
+    }
+
     public ConfigurableFileTree fileTree(Map<String, ?> args) {
         return fileOperations.fileTree(args);
     }
 
     public ConfigurableFileTree fileTree(Closure closure) {
+        DeprecationLogger.nagUserWith("fileTree(Closure) is a deprecated method. Use fileTree((Object){ baseDir }) to have the closure used as the file tree base directory");
         return fileOperations.fileTree(closure);
     }
 
@@ -807,7 +813,11 @@ public abstract class AbstractProject implements ProjectInternal, DynamicObjectA
     }
 
     public Map<String, ?> getProperties() {
-        return dynamicObjectHelper.getProperties();
+        return DeprecationLogger.whileDisabled(new Factory<Map<String, ?>>() {
+            public Map<String, ?> create() {
+                return dynamicObjectHelper.getProperties();
+            }
+        });
     }
 
     public WorkResult copy(Closure closure) {

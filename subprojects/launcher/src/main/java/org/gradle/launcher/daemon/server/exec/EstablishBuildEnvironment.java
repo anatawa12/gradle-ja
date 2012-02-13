@@ -15,8 +15,10 @@
  */
 package org.gradle.launcher.daemon.server.exec;
 
+import org.gradle.api.logging.Logger;
+import org.gradle.api.logging.Logging;
+import org.gradle.internal.nativeplatform.ProcessEnvironment;
 import org.gradle.launcher.daemon.protocol.Build;
-import org.gradle.os.ProcessEnvironment;
 import org.gradle.util.GFileUtils;
 
 import java.io.File;
@@ -28,6 +30,7 @@ import java.util.Properties;
  */
 public class EstablishBuildEnvironment extends BuildCommandOnly {
     private final ProcessEnvironment processEnvironment;
+    private final static Logger LOGGER = Logging.getLogger(EstablishBuildEnvironment.class);
 
     public EstablishBuildEnvironment(ProcessEnvironment processEnvironment) {
         this.processEnvironment = processEnvironment;
@@ -40,9 +43,16 @@ public class EstablishBuildEnvironment extends BuildCommandOnly {
 
         Properties clientSystemProperties = new Properties();
         clientSystemProperties.putAll(build.getParameters().getSystemProperties());
+
+        //Let's ignore client's java.home
+        //We want to honour the java.home configured when the daemon process was started
+        //It does not make sense to update this property per job anyway as we have a daemon per java home
+        clientSystemProperties.put("java.home", originalSystemProperties.get("java.home"));
+
         System.setProperties(clientSystemProperties);
 
         Map<String, String> originalEnv = System.getenv();
+        LOGGER.debug("Configuring env variables: {}", build.getParameters().getEnvVariables());
         processEnvironment.maybeSetEnvironment(build.getParameters().getEnvVariables());
 
         processEnvironment.maybeSetProcessDir(build.getParameters().getCurrentDir());

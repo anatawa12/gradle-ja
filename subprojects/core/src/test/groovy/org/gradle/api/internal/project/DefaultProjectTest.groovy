@@ -55,11 +55,12 @@ import org.junit.Before
 import org.junit.Ignore
 import org.junit.Test
 import org.junit.runner.RunWith
-import org.gradle.api.internal.Factory
+import org.gradle.internal.Factory
 import org.gradle.api.*
 import org.gradle.api.internal.*
 import static org.hamcrest.Matchers.*
 import static org.junit.Assert.*
+import org.gradle.internal.service.ServiceRegistry
 
 /**
  * @author Hans Dockter
@@ -600,13 +601,13 @@ class DefaultProjectTest {
         expectedMap[childchild] = [] as TreeSet
 
         context.checking {
-            one(taskContainerMock).size(); will(returnValue(1))
+            atMost(1).of(taskContainerMock).size(); will(returnValue(1))
             one(taskContainerMock).iterator(); will(returnValue(([projectTask] as Set).iterator()))
-            one(taskContainerMock).size(); will(returnValue(1))
+            atMost(1).of(taskContainerMock).size(); will(returnValue(1))
             one(taskContainerMock).iterator(); will(returnValue(([child1Task] as Set).iterator()))
-            one(taskContainerMock).size(); will(returnValue(1))
+            atMost(1).of(taskContainerMock).size(); will(returnValue(1))
             one(taskContainerMock).iterator(); will(returnValue(([child2Task] as Set).iterator()))
-            one(taskContainerMock).size(); will(returnValue(0))
+            atMost(1).of(taskContainerMock).size(); will(returnValue(0))
             one(taskContainerMock).iterator(); will(returnValue(([] as Set).iterator()))
         }
 
@@ -620,7 +621,7 @@ class DefaultProjectTest {
         expectedMap[project] = [projectTask] as TreeSet
 
         context.checking {
-            one(taskContainerMock).size(); will(returnValue(1))
+            allowing(taskContainerMock).size(); will(returnValue(1))
             one(taskContainerMock).iterator(); will(returnValue(([projectTask] as Set).iterator()))
         }
 

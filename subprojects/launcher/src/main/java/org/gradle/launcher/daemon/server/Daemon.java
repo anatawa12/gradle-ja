@@ -17,13 +17,14 @@ package org.gradle.launcher.daemon.server;
 
 import org.gradle.api.logging.Logger;
 import org.gradle.api.logging.Logging;
+import org.gradle.internal.Stoppable;
 import org.gradle.launcher.daemon.context.DaemonContext;
+import org.gradle.launcher.daemon.logging.DaemonMessages;
 import org.gradle.launcher.daemon.protocol.Command;
 import org.gradle.launcher.daemon.protocol.DaemonFailure;
 import org.gradle.launcher.daemon.registry.DaemonRegistry;
 import org.gradle.launcher.daemon.server.exec.DaemonCommandExecuter;
 import org.gradle.messaging.concurrent.ExecutorFactory;
-import org.gradle.messaging.concurrent.Stoppable;
 import org.gradle.messaging.concurrent.StoppableExecutor;
 import org.gradle.messaging.remote.Address;
 import org.gradle.messaging.remote.internal.Connection;
@@ -100,7 +101,7 @@ public class Daemon implements Runnable, Stoppable {
                         public void run() {
                             try {
                                 command = (Command) connection.receive();
-                                LOGGER.debug("received command {} in new thread", command);
+                                LOGGER.info("Daemon (pid: {}) received command: {}", daemonContext.getPid(), command);
                             } catch (RuntimeException e) {
                                 String message = String.format("Unable to receive command from connection: '%s'", connection);
                                 LOGGER.warn(message + ". Dispatching the failure to the daemon client...", e);
@@ -110,13 +111,14 @@ public class Daemon implements Runnable, Stoppable {
                             }
 
                             try {
+                                LOGGER.debug(DaemonMessages.STARTED_EXECUTING_COMMAND + command + " with connection: " + connection + ".");
                                 commandExecuter.executeCommand(connection, command, daemonContext, stateCoordinator);
                             } catch (RuntimeException e) {
                                 String message = String.format("Uncaught exception when executing command: '%s' from connection: '%s'.", command, connection);
                                 LOGGER.warn(message + ". Dispatching the failure to the daemon client...", e);
                                 connection.dispatch(new DaemonFailure(new RuntimeException(message, e)));
                             } finally {
-                                LOGGER.debug("finishing processing of command {}", command);
+                                LOGGER.debug(DaemonMessages.FINISHED_EXECUTING_COMMAND + command);
                             }
                         }
                     });
@@ -146,13 +148,19 @@ public class Daemon implements Runnable, Stoppable {
             
             Runnable onStop = new Runnable() {
                 public void run() {
-                    LOGGER.info("Stop requested. Daemon is stopping accepting new connections...");
-                    registryUpdater.onStop();
+                    LOGGER.info("Daemon is stopping accepting new connections...");
                     connector.stop(); // will block until any running commands are finished
                 }
             };
 
-            stateCoordinator = new DaemonStateCoordinator(onStart, onStartCommand, onFinishCommand, onStop);
+            Runnable onStopRequested = new Runnable() {
+                public void run() {
+                    LOGGER.info("Stop requested. Daemon is removing its presence from the registry...");
+                    registryUpdater.onStop();
+                }
+            };
+
+            stateCoordinator = new DaemonStateCoordinator(onStart, onStartCommand, onFinishCommand, onStop, onStopRequested);
 
             // ready, set, go
             stateCoordinator.start();

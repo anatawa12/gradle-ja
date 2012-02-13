@@ -47,8 +47,6 @@ import java.util.Properties;
  * @author Hans Dockter
  */
 public class Wrapper extends DefaultTask {
-    static final String DISTRIBUTION_BASE_PROPERTY = WrapperExecutor.DISTRIBUTION_BASE_PROPERTY;
-
     public static final String DEFAULT_DISTRIBUTION_PARENT_NAME = Install.DEFAULT_DISTRIBUTION_PATH;
     public static final String DEFAULT_ARCHIVE_NAME = "gradle";
     public static final String DEFAULT_ARCHIVE_CLASSIFIER = "bin";
@@ -106,7 +104,7 @@ public class Wrapper extends DefaultTask {
 
         writeProperties(getPropertiesFile());
 
-        URL jarFileSource = getClass().getResource("/gradle-wrapper.jar");
+        URL jarFileSource = Wrapper.class.getResource("/gradle-wrapper.jar");
         if (jarFileSource == null) {
             throw new GradleException("Cannot locate wrapper JAR resource.");
         }

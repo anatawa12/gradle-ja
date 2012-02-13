@@ -17,8 +17,9 @@ package org.gradle.integtests.fixtures
 
 import java.text.SimpleDateFormat
 import junit.framework.AssertionFailedError
-import org.gradle.util.HashUtil
+
 import org.gradle.util.TestFile
+import org.gradle.util.hash.HashUtil
 
 /**
  * A fixture for dealing with Maven repositories.
@@ -191,7 +192,7 @@ class MavenModule {
   <description>Published on $publishTimestamp</description>"""
 
         if (parentPomSection) {
-           pomFile << "\n$parentPomSection\n"
+            pomFile << "\n$parentPomSection\n"
         }
 
         dependencies.each { dependency ->
@@ -228,25 +229,27 @@ class MavenModule {
     private Map<String, Object> toArtifact(Map<String, ?> options) {
         options = new HashMap<String, Object>(options)
         def artifact = [type: options.remove('type') ?: type, classifier: options.remove('classifier') ?: null]
-        assert options.isEmpty() : "Unknown options : ${options.keySet()}"
+        assert options.isEmpty(): "Unknown options : ${options.keySet()}"
         return artifact
     }
 
     private void createHashFiles(File file) {
-        sha1File(file).text = getHash(file, "SHA1")
-        md5File(file).text = getHash(file, "MD5")
-    }
-
-    private String getHash(File file, String algorithm) {
-        return HashUtil.createHashString(file, algorithm)
+        sha1File(file)
+        md5File(file)
     }
 
     TestFile sha1File(File file) {
-        return moduleDir.file("${file.name}.sha1")
+        hashFile(file, "sha1");
     }
-    
+
     TestFile md5File(File file) {
-        return moduleDir.file("${file.name}.md5")
+        hashFile(file, "md5")
+    }
+
+    private TestFile hashFile(File file, String algorithm) {
+        def hashFile = moduleDir.file("${file.name}.${algorithm}")
+        hashFile.text = HashUtil.createHash(file, algorithm.toUpperCase()).asHexString()
+        return hashFile
     }
 }
 

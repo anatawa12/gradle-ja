@@ -15,12 +15,11 @@
  */
 package org.gradle.launcher.daemon.client;
 
-import org.gradle.api.internal.project.ServiceRegistry;
+import org.gradle.internal.service.ServiceRegistry;
 import org.gradle.launcher.daemon.context.DaemonContextBuilder;
 import org.gradle.launcher.daemon.registry.DaemonDir;
 import org.gradle.launcher.daemon.registry.DaemonRegistry;
 import org.gradle.launcher.daemon.registry.DaemonRegistryServices;
-import org.gradle.launcher.daemon.server.DaemonParameters;
 
 import java.io.InputStream;
 
@@ -44,12 +43,13 @@ public class DaemonClientServices extends DaemonClientServicesSupport {
     }
 
     public Runnable makeDaemonStarter() {
-        return new DaemonStarter(registryServices.get(DaemonDir.class), daemonParameters.getJvmArgs(), daemonParameters.getIdleTimeout());
+        return new DaemonStarter(registryServices.get(DaemonDir.class), daemonParameters);
     }
 
     protected void configureDaemonContextBuilder(DaemonContextBuilder builder) {
         builder.setDaemonRegistryDir(registryServices.get(DaemonDir.class).getBaseDir());
-        builder.setDaemonOpts(daemonParameters.getJvmArgs());
+        builder.setDaemonOpts(daemonParameters.getEffectiveJvmArgs());
+        builder.setJavaHome(daemonParameters.getEffectiveJavaHome());
     }
 
     public DaemonParameters getDaemonParameters() {

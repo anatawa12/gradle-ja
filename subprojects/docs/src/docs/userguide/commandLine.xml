@@ -240,6 +240,10 @@
             <para>実行を除外するタスクを指定します。<xref linkend="sec:excluding_tasks_from_the_command_line"/>参照。</para>
             </listitem>
         </varlistentry>
+        <varlistentry>
+            <term><option>--continue</option></term>
+            <listitem><para>Continues task execution after a task failure.</para></listitem>
+        </varlistentry>
     </variablelist>
     <para role="original">The above information is printed to the console when you execute <userinput>gradle -h</userinput>.</para>
     <para>これらの情報は<userinput>gradle -h</userinput>を実行するとコンソールに表示されます。</para>
@@ -284,45 +288,35 @@
         </variablelist>
     </section>
 
-    <section>
-        <title>実験的なコマンドラインオプション<phrase role="original">Experimental command-line options</phrase></title>
-        <para role="original">The following options are experimental:</para>
-        <para>以下のオプションは実験的なものです:</para>
+    <section id='daemon_cli'>
+        <title>Daemon command-line options:</title>
+        <para>The <xref linkend="gradle_daemon"/> contains more information about the daemon.
+            For example it includes information how to turn on the daemon by default
+            so that you can avoid using <literal>--daemon</literal> all the time.
+        </para>
         <variablelist>
             <varlistentry>
-                <term><option>--continue</option></term>
-                <listitem>
-                <para role="original">Continues task execution after a task failure.</para>
-                <para>タスクが失敗してもタスクの実行を継続します。</para>
-                </listitem>
-            </varlistentry>
-            <varlistentry>
                 <term><option>--daemon</option></term>
-                <listitem>
-                <para role="original">Uses the Gradle daemon to run the build. Starts the daemon if not running.</para>
-                <para>ビルドの実行にGradleデーモンを利用します。デーモンが起動済みでなければ起動します。</para>
-                </listitem>
+                <listitem><para>Uses the Gradle daemon to run the build.
+                    Starts the daemon if not running or existing daemon busy.
+                    <xref linkend="gradle_daemon"/> contains more detailed
+                    information when new daemon processes are started.</para></listitem>
             </varlistentry>
             <varlistentry>
                 <term><option>--foreground</option></term>
-                <listitem>
-                <para role="original">Starts the Gradle daemon in the foreground.</para>
-                <para>Gradleデーモンをフォアグラウンドで起動します。</para>
-                </listitem>
+                <listitem><para>Starts the Gradle daemon in the foreground. Useful for debugging or troubleshooting
+                    because you can easily monitor the build execution.</para></listitem>
             </varlistentry>
             <varlistentry>
                 <term><option>--no-daemon</option></term>
-                <listitem>
-                <para role="original">Do not use the Gradle daemon to run the build.</para>
-                <para>ビルドの実行にGradleデーモンを利用しません。</para>
-                </listitem>
+                <listitem><para>Do not use the Gradle daemon to run the build.
+                    Useful occasionally if you have configured gradle to always run with the daemon by default.</para></listitem>
             </varlistentry>
             <varlistentry>
                 <term><option>--stop</option></term>
-                <listitem>
-                <para role="original">Stops the Gradle daemon if it is running.</para>
-                <para>Gradleデーモンが起動済みであれば停止します。</para>
-                </listitem>
+                <listitem><para>Stops the Gradle daemon if it is running.
+                    You can only stop daemons that were started with
+                    the gradle version you use when running <literal>--stop</literal>.</para></listitem>
             </varlistentry>
         </variablelist>
     </section>
@@ -342,13 +336,8 @@
             <para>Gradleのuser homeディレクトリを指定します。</para>
             </listitem>
         </varlistentry>
-        <varlistentry>
-            <term><literal>org.gradle.daemon</literal></term>
-            <listitem>
-            <para role="original">When set to <literal>true</literal>, use the Gradle daemon to run the build.</para>
-            <para><literal>true</literal>をセットすると、ビルドの実行にGradleデーモンを利用します。</para>
-            </listitem>
-        </varlistentry>
+        <para>The <xref linkend="sec:gradle_configuration_properties"/> contains specific information about
+            gradle configuration available via system properties.</para>
     </section>
 
     <section>
@@ -366,7 +355,8 @@
                 <para role="original">Specifies command-line arguments to use to start the JVM. This can be useful for setting
                     the system properties to use for running Gradle. For example you could set <literal>GRADLE_OPTS="-Dorg.gradle.daemon=true"</literal>
                     to use the Gradle daemon without needing to use the <option>--daemon</option> option every time you
-                    run Gradle.
+                    run Gradle. <xref linkend="sec:gradle_configuration_properties"/> contains more information about ways of configuring the daemon
+                    without using environmental variables, e.g. in more maintainable and explicit way.
                 </para>
                 <para>JVM起動時のコマンドライン引数を指定します。
                     これはGradle実行時に利用するシステムプロパティの設定に便利です。

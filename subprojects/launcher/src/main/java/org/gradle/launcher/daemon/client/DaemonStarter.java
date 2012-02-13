@@ -15,17 +15,17 @@
  */
 package org.gradle.launcher.daemon.client;
 
+import org.gradle.api.GradleException;
 import org.gradle.api.internal.classpath.DefaultModuleRegistry;
-import org.gradle.launcher.daemon.registry.DaemonDir;
-import org.gradle.launcher.daemon.bootstrap.GradleDaemon;
 import org.gradle.api.logging.Logger;
 import org.gradle.api.logging.Logging;
-import org.gradle.util.GradleVersion;
-import org.gradle.util.Jvm;
+import org.gradle.internal.nativeplatform.OperatingSystem;
+import org.gradle.internal.nativeplatform.jna.WindowsProcessStarter;
+import org.gradle.launcher.daemon.bootstrap.GradleDaemon;
+import org.gradle.launcher.daemon.logging.DaemonGreeter;
+import org.gradle.launcher.daemon.registry.DaemonDir;
 import org.gradle.util.GUtil;
-import org.gradle.api.GradleException;
-import org.gradle.os.OperatingSystem;
-import org.gradle.os.jna.WindowsProcessStarter;
+import org.gradle.util.GradleVersion;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -38,13 +38,11 @@ public class DaemonStarter implements Runnable {
     private static final Logger LOGGER = Logging.getLogger(DaemonStarter.class);
 
     private final DaemonDir daemonDir;
-    private final List<String> daemonOpts;
-    private final int idleTimeout;
+    private final DaemonParameters daemonParameters;
 
-    public DaemonStarter(DaemonDir daemonDir, List<String> daemonOpts, int idleTimeout) {
+    public DaemonStarter(DaemonDir daemonDir, DaemonParameters daemonParameters) {
         this.daemonDir = daemonDir;
-        this.daemonOpts = daemonOpts;
-        this.idleTimeout = idleTimeout;
+        this.daemonParameters = daemonParameters;
     }
 
     public void run() {
@@ -60,7 +58,9 @@ public class DaemonStarter implements Runnable {
         }
 
         List<String> daemonArgs = new ArrayList<String>();
-        daemonArgs.add(Jvm.current().getJavaExecutable().getAbsolutePath());
+        daemonArgs.add(daemonParameters.getEffectiveJavaExecutable());
+
+        List<String> daemonOpts = daemonParameters.getEffectiveJvmArgs();
         LOGGER.debug("Using daemon opts: {}", daemonOpts);
         daemonArgs.addAll(daemonOpts);
         //Useful for debugging purposes - simply uncomment and connect to debug
@@ -71,7 +71,7 @@ public class DaemonStarter implements Runnable {
         daemonArgs.add(GradleDaemon.class.getName());
         daemonArgs.add(GradleVersion.current().getVersion());
         daemonArgs.add(daemonDir.getBaseDir().getAbsolutePath());
-        daemonArgs.add(String.valueOf(idleTimeout));
+        daemonArgs.add(String.valueOf(daemonParameters.getIdleTimeout()));
 
         startProcess(daemonArgs, daemonDir.getVersionedDir());
     }
@@ -87,14 +87,19 @@ public class DaemonStarter implements Runnable {
                     commandLine.append(arg);
                     commandLine.append("\" ");
                 }
-
+                LOGGER.debug("Windows command line for starting daemon: {}", commandLine);
+                LOGGER.debug("Windows environment variables: {}", System.getenv());
                 new WindowsProcessStarter().start(workingDir, commandLine.toString());
             } else {
-                Process process = new ProcessBuilder(args).directory(workingDir).start();
+                Process process = new ProcessBuilder(args).redirectErrorStream(true).directory(workingDir).start();
+                new DaemonGreeter().verifyGreetingReceived(process);
+
                 process.getOutputStream().close();
                 process.getErrorStream().close();
                 process.getInputStream().close();
             }
+        } catch (GradleException e) {
+            throw e;
         } catch (Exception e) {
             throw new GradleException("Could not start Gradle daemon.", e);
         }

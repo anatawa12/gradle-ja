@@ -22,8 +22,8 @@ import org.gradle.api.InvalidUserDataException;
 import org.gradle.api.internal.plugins.DefaultConvention;
 import org.gradle.api.plugins.Convention;
 import org.gradle.api.tasks.ConventionValue;
+import org.gradle.internal.UncheckedException;
 import org.gradle.util.ReflectionUtil;
-import org.gradle.util.UncheckedException;
 
 import java.util.Collection;
 import java.util.Collections;
@@ -109,27 +109,24 @@ public class ConventionAwareHelper implements ConventionMapping {
         }
     }
 
-    public Object getConventionValue(String propertyName) {
-        Object value = ReflectionUtil.getProperty(source, propertyName);
-        return getConventionValue(value, propertyName);
-    }
-
-    public <T> T getConventionValue(T internalValue, String propertyName) {
-        Object returnValue = internalValue;
-        boolean useMapping = internalValue == null
-                || internalValue instanceof Collection && ((Collection) internalValue).isEmpty()
-                || internalValue instanceof Map && ((Map) internalValue).isEmpty();
-        if (useMapping && conventionMapping.keySet().contains(propertyName)) {
-            returnValue = conventionMapping.get(propertyName).getValue(convention, source);
-        }
-        return (T) returnValue;
-    }
-
     public <T> T getConventionValue(T actualValue, String propertyName, boolean isExplicitValue) {
         if (isExplicitValue) {
             return actualValue;
         }
-        return getConventionValue(actualValue, propertyName);
+
+        Object returnValue = actualValue;
+        if (conventionMapping.keySet().contains(propertyName)) {
+            boolean useMapping = true;
+            if (actualValue instanceof Collection && !((Collection<?>) actualValue).isEmpty()) {
+                useMapping = false;
+            } else if (actualValue instanceof Map && !((Map<?, ?>) actualValue).isEmpty()) {
+                useMapping = false;
+            }
+            if (useMapping) {
+                returnValue = conventionMapping.get(propertyName).getValue(convention, source);
+            }
+        }
+        return (T) returnValue;
     }
 
     public Convention getConvention() {

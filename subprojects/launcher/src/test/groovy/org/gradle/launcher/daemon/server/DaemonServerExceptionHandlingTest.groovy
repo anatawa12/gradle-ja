@@ -19,19 +19,22 @@ package org.gradle.launcher.daemon.server
 import org.gradle.BuildResult
 import org.gradle.GradleLauncher
 import org.gradle.configuration.GradleLauncherMetaData
+import org.gradle.initialization.DefaultGradleLauncherFactory
 import org.gradle.initialization.GradleLauncherAction
+import org.gradle.internal.nativeplatform.ProcessEnvironment
 import org.gradle.launcher.daemon.client.DaemonClient
 import org.gradle.launcher.daemon.client.EmbeddedDaemonClientServices
+import org.gradle.launcher.daemon.context.DaemonContext
 import org.gradle.launcher.daemon.server.exec.DaemonCommandAction
 import org.gradle.launcher.daemon.server.exec.DaemonCommandExecuter
 import org.gradle.launcher.daemon.server.exec.DefaultDaemonCommandExecuter
 import org.gradle.launcher.daemon.server.exec.ForwardClientInput
 import org.gradle.launcher.exec.DefaultBuildActionParameters
+import org.gradle.logging.LoggingManagerInternal
 import org.gradle.messaging.concurrent.ExecutorFactory
 import org.gradle.util.TemporaryFolder
 import org.junit.Rule
 import spock.lang.Specification
-import org.gradle.os.ProcessEnvironment
 
 /**
  * by Szczepan Faber, created at: 12/21/11
@@ -71,9 +74,10 @@ class DaemonServerExceptionHandlingTest extends Specification {
         //we need to override some methods to inject a failure action into the sequence
         def services = new EmbeddedDaemonClientServices() {
             DaemonCommandExecuter createDaemonCommandExecuter() {
-                return new DefaultDaemonCommandExecuter(loggingServices, get(ExecutorFactory), get(ProcessEnvironment)) {
-                    List<DaemonCommandAction> createActions() {
-                        def actions = super.createActions();
+                return new DefaultDaemonCommandExecuter(new DefaultGradleLauncherFactory(loggingServices), get(ExecutorFactory), get(ProcessEnvironment),
+                        loggingServices.getFactory(LoggingManagerInternal.class).create()) {
+                    List<DaemonCommandAction> createActions(DaemonContext daemonContext) {
+                        def actions = super.createActions(daemonContext);
                         def failingAction = { throw new RuntimeException("boo!") } as DaemonCommandAction
                         //we need to inject the failing action in an appropriate place in the sequence
                         //that is after the ForwardClientInput
