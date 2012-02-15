@@ -242,7 +242,10 @@
         </varlistentry>
         <varlistentry>
             <term><option>--continue</option></term>
-            <listitem><para>Continues task execution after a task failure.</para></listitem>
+            <listitem>
+                <para role="original">Continues task execution after a task failure.</para>
+                <para>タスクが失敗しても、タスクの実行を継続します。</para>
+            </listitem>
         </varlistentry>
     </variablelist>
     <para role="original">The above information is printed to the console when you execute <userinput>gradle -h</userinput>.</para>
@@ -289,34 +292,51 @@
     </section>
 
     <section id='daemon_cli'>
-        <title>Daemon command-line options:</title>
-        <para>The <xref linkend="gradle_daemon"/> contains more information about the daemon.
+        <title>デーモン用コマンドラインオプション <phrase role="original">Daemon command-line options:</phrase></title>
+        <para role="original">The <xref linkend="gradle_daemon"/> contains more information about the daemon.
             For example it includes information how to turn on the daemon by default
             so that you can avoid using <literal>--daemon</literal> all the time.
+        </para>
+        <para>
+            <xref linkend="gradle_daemon"/>に、デーモンについて更に多くの情報が記載されています。
+            例えば、デーモン実行をデフォルトにして、毎回<literal>--deamon</literal>を指定しなくてもいいようにする方法などを知ることができます。
         </para>
         <variablelist>
             <varlistentry>
                 <term><option>--daemon</option></term>
-                <listitem><para>Uses the Gradle daemon to run the build.
+                <listitem><para role="original">Uses the Gradle daemon to run the build.
                     Starts the daemon if not running or existing daemon busy.
                     <xref linkend="gradle_daemon"/> contains more detailed
-                    information when new daemon processes are started.</para></listitem>
+                    information when new daemon processes are started.</para>
+                    <para>Gradleデーモンを使用してビルドを実行します。
+                    デーモンが実行されていなかったり、実行中のデーモンがビジー状態だった場合、デーモンを新しく起動します。
+                    新しいデーモンプロセスがいつ実行されるのかについては、<xref linkend="gradle_daemon"/>でより詳しく知ることができます。</para>
+                </listitem>
             </varlistentry>
             <varlistentry>
                 <term><option>--foreground</option></term>
-                <listitem><para>Starts the Gradle daemon in the foreground. Useful for debugging or troubleshooting
-                    because you can easily monitor the build execution.</para></listitem>
+                <listitem><para role="original">Starts the Gradle daemon in the foreground. Useful for debugging or troubleshooting
+                    because you can easily monitor the build execution.</para>
+                    <para>Gradleデーモンをフォアグラウンドで開始します。
+                    ビルドの実行を簡単にモニターできるので、デバッグやトラブルシューティングの際に便利です。</para>
+                </listitem>
             </varlistentry>
             <varlistentry>
                 <term><option>--no-daemon</option></term>
-                <listitem><para>Do not use the Gradle daemon to run the build.
-                    Useful occasionally if you have configured gradle to always run with the daemon by default.</para></listitem>
+                <listitem><para role="original">Do not use the Gradle daemon to run the build.
+                    Useful occasionally if you have configured gradle to always run with the daemon by default.</para>
+                    <para>Gradleデーモンを使わずにビルドを実行します。
+                    デーモン実行をデフォルトにしていて、常にビルドをデーモン実行している場合に有用なことがあります。</para>
+                </listitem>
             </varlistentry>
             <varlistentry>
                 <term><option>--stop</option></term>
-                <listitem><para>Stops the Gradle daemon if it is running.
+                <listitem><para role="original">Stops the Gradle daemon if it is running.
                     You can only stop daemons that were started with
-                    the gradle version you use when running <literal>--stop</literal>.</para></listitem>
+                    the gradle version you use when running <literal>--stop</literal>.</para>
+                    <para>Gradleデーモンが実行されていれば、それを停止します。
+                    停止できるのは、<literal>--stop</literal>を付けて実行したバージョンのGradleと同じバージョンのGradleでデーモンを開始していた場合のみです。</para>
+                </listitem>
             </varlistentry>
         </variablelist>
     </section>
@@ -336,8 +356,9 @@
             <para>Gradleのuser homeディレクトリを指定します。</para>
             </listitem>
         </varlistentry>
-        <para>The <xref linkend="sec:gradle_configuration_properties"/> contains specific information about
+        <para role="original">The <xref linkend="sec:gradle_configuration_properties"/> contains specific information about
             gradle configuration available via system properties.</para>
+        <para><xref linkend="sec:gradle_configuration_properties"/>に、システムプロパティで行えるGradleの設定について具体的に記載されています。</para>
     </section>
 
     <section>
@@ -362,6 +383,7 @@
                     これはGradle実行時に利用するシステムプロパティの設定に便利です。
                     例えば、<literal>GRADLE_OPTS="-Dorg.gradle.daemon=true"</literal>をセットしておけば、
                     Gradleデーモンを利用するためにGradleを実行するたびに毎回<option>--daemon</option>オプションを指定する必要がありません。
+                    <xref linkend="sec:gradle_configuration_properties"/>には、環境変数を使用せず、もっと保守性のいい明示的な方法でデーモンを設定する方法も記載されています。
                 </para>
                 </listitem>
             </varlistentry>
