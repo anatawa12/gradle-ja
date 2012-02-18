@@ -13,14 +13,18 @@
   ~ See the License for the specific language governing permissions and
   ~ limitations under the License.
   -->
-<chapter id='gradle_wrapper'>
-    <title>The Gradle Wrapper</title>
-    <para>
+<chapter id='gradle_wrapper' xml:lang="ja">
+    <title>Gradleラッパー <phrase role="original">The Gradle Wrapper</phrase></title>
+    <para role="original">
         The Gradle Wrapper (henceforth referred to as the “wrapper) is the preferred way of starting a Gradle build. The wrapper
         is a batch script on Windows, and a shell script for other operating systems. When you start a Gradle build via the wrapper,
         Gradle will be automatically downloaded and used to run the build. 
     </para>
     <para>
+        Gradleのビルドを実行する際は、Gradleラッパー（以後ラッパーとします）を使用した方がいいでしょう。
+        ラッパー本体はバッチスクリプト（Windows用）とシェルスクリプト（その他のOS用）で、これを使ってGradleビルドを実行すると、使用されるGradleが自動的にダウンロードされます。
+    </para>
+    <para role="original">
         The wrapper is something you <emphasis>should</emphasis> check into version control. By distributing the wrapper with your project,
         anyone can work with it without needing to install Gradle beforehand. Even better, users of the build are guaranteed to use the 
         version of Gradle that the build was designed to work with. Of course, this is also great for 
@@ -28,20 +32,27 @@
         build your project) as it requires no configuration on the server.
     </para>
     <para>
+        ラッパーは、バージョン管理システムにチェックインするべきです。ラッパーと一緒にプロジェクトを配布することで、前もってGradleをインストールすることなく、誰もがプロジェクトで作業できるようになります。
+        それよりもっといいのは、ビルドを行うユーザーが、想定したバージョンのGradleを使用することを保証できることです。
+        もちろん、ラッパーは<ulink url="http://ja.wikipedia.org/wiki/%E7%B6%99%E7%B6%9A%E7%9A%84%E3%82%A4%E3%83%B3%E3%83%86%E3%82%B0%E3%83%AC%E3%83%BC%E3%82%B7%E3%83%A7%E3%83%B3">継続的インテグレーション</ulink>サーバーで作業するときも非常に便利です。サーバーでビルドの設定を行う必要がないからです。
+    </para>
+    <para role="original">
         You install the wrapper into your project by adding and configuring a <apilink class="org.gradle.api.tasks.wrapper.Wrapper"/> 
         task in your build script, and then executing it.
     </para>
-    <sample id="wrapperSimple" dir="userguide/wrapper/simple" title="Wrapper task">
+    <para>ラッパーを自分のプロジェクトにインストールするには、<apilink class="org.gradle.api.tasks.wrapper.Wrapper"/>タスクをビルドスクリプトに追加、設定してから、タスクを実行します。</para>
+    <sample id="wrapperSimple" dir="userguide/wrapper/simple" title="ラッパータスク / Wrapper task">
         <sourcefile file="build.gradle"/>
     </sample>
-    <para>
+    <para role="original">
         After such an execution you find the following new or updated files in your project directory 
         (in case the default configuration of the wrapper task is used).
     </para>
-    <para>このタスクは、通常、ビルドマスターが実行します。このタスクを実行すると (wrapper タスクのデフォルト構成の場合) プロジェクトディレクトリには
-        以下のようなファイルが作成されます。
+    <para>
+        このタスクを実行すると (wrapperタスクのデフォルト設定が使われていれば) 、
+        プロジェクトディレクトリに以下のファイルが作成、または更新されます。
     </para>
-    <sample id="wrapperSimple" dir="userguide/wrapper/simple" title="Wrapper generated files">
+    <sample id="wrapperSimple" dir="userguide/wrapper/simple" title="ラッパーにより生成されるファイル / Wrapper generated files">
         <layout after="wrapper">
             gradlew
             gradlew.bat
@@ -49,21 +60,22 @@
             gradle/wrapper/gradle-wrapper.properties
         </layout>
     </sample>
-    <para>
+    <para role="original">
         All of these files <emphasis>should</emphasis> be submitted to your version control system. This only needs to be done once. After
         these files have been added to the project, the project should then be built with the added <command>gradlew</command> command.
         The <command>gradlew</command> command can be used <emphasis>exactly</emphasis> the same way as the <command>gradle</command> command.
     </para>
-    <para>これらのファイルは必ずバージョン管理システムに公開してください。
-        <command>gradlew</command> コマンドは <command>gradle</command> コマンドと <emphasis>全く</emphasis> 同じように利用できます。
+    <para>
+        これらのファイルは、すべてバージョン管理システムに格納する<emphasis>べき</emphasis>です。この作業は一回だけ行えば大丈夫です。これらのファイルがプロジェクトに追加されたら、以後のビルドはこの<command>gradlew</command>コマンドで行ってください。
+        <command>gradlew</command>コマンドは、<command>gradle</command>コマンドと<emphasis>全く</emphasis>同じように使うことができます。
     </para>
     <para role="original">If you want to switch to a new version of Gradle you don't need to rerun the wrapper task. It is good enough
         to change the respective entry in the <literal>gradle-wrapper.properties</literal> file. But if there is for
         example an improvement in the gradle-wrapper functionality you need to regenerate the wrapper files.
     </para>
-    <para>Gradle の新しいバージョンに変更する場合でも、wrapper タスクを再実行する必要はありません。
-        <literal>gradle-wrapper.properties</literal> ファイルを変更するだけです。
-        ただ、gradle-wrapper の機能が改良された場合は wrapper ファイルを再作成してください。
+    <para>Gradleを新しいバージョンに変更する場合でも、wrapperタスクを再実行する必要はありません。
+        <literal>gradle-wrapper.properties</literal> ファイルの、関係するエントリを変更するだけです。
+        ただ、例えばgradle-wrapperの機能が改良された場合などは、wrapperファイルを再作成してください。
     </para>
     <section id='sec:configuration'>
         <title>設定<phrase role="original">Configuration</phrase></title>
@@ -72,12 +84,11 @@
             command of this distribution with all the arguments passed originally to the <command>gradlew</command>
             command.
         </para>
-        <para><command>gradlew</command> を実行した場合、Gradle は まず、Gradle Wrapper の使える ディストリビューションが
-            ないかチェックします。もし、なければ ダウンロードしてくれます。もし あれば <command>gradlew</command> コマンドに
-            指定された引数を そのディストリビューションの <command>gradle</command> コマンドにそのまま渡して実行します。
+        <para><command>gradlew</command>を実行すると、Gradleはまず、そのラッパーで指定されたディストリビューションが利用できるかどうか確認します。
+            利用できなければディストリビューションを新しくダウンロードし、利用可能なら<command>gradlew</command>コマンドに指定された引数を、そのディストリビューションの<command>gradle</command>コマンドにそのまま渡して実行します。
         </para>
         <para role="original">You can specify where the wrapper files should be stored (within your project directory):</para>
-        <para>Gradle Wrapper ファイルの保存先は (プロジェクトディレクトリのどこかに) 変更することもできます。</para>
+        <para>ラッパーファイルの保存先は (プロジェクトディレクトリのどこかに) 変更することもできます。</para>
         <sample id="wrapperCustomized" dir="userguide/wrapper/customized" title="Configuration of wrapper task">
             <sourcefile file="build.gradle"/>
             <layout after="wrapper">
@@ -94,40 +105,38 @@
             the specified place. If there is no unpacked wrapper distribution Gradle unpacks the local archive of the
             wrapper distribution at the specified place. All the configuration options have defaults except the version of the wrapper distribution.</para>
         <para>
-            Gradle Wrapper ディストリビューションのダウンロード URL は変更することもできます。
-            Gradle Wrapper ディストリビューションの保存先や解凍先も (プロジェクトディレクトリ か gradle ユーザホームディレクトリのどちらかの配下で)
-            変更できます。
-            もし、Gradle Wrapper を実行した際に、指定した保存場所に アーカイブファイルがなければ、
-            Gradle は ダウンロードして そこに保存してくれます。
-            また、指定の解凍先に アーカイブファイルを解凍したディレクトリがなければ そこに 解凍しようとします。
-            Gradle Wrapper のバージョン以外の設定オプションにはデフォルト値が設定されています。
+            ラッパーで使用するディストリビューションのダウンロード URLは変更することもできます。
+            ディストリビューションの保存先や解凍先も (プロジェクトディレクトリ か gradleユーザホームディレクトリのどちらかの配下で)変更できます。
+            もし、ラッパーを実行した際に、指定した保存場所にアーカイブファイルがなければ、Gradleはディストリビューションをダウンロードしてそこに保存します。
+            また、指定の解凍先にアーカイブファイルを解凍したディレクトリがなければ、そこに解凍しようとします。
+            ディストリビューションのバージョン以外のラッパー設定値にはデフォルト値が設定されています。
             </para>
         <para role="original">For the details on how to configure the wrapper, see <apilink class="org.gradle.api.tasks.wrapper.Wrapper"/>
         </para>
-        <para>Gradle Wrapper の詳細な設定方法については <apilink class="org.gradle.api.tasks.wrapper.Wrapper"/> を参照してください。
+        <para>ラッパーの詳細な設定方法については<apilink class="org.gradle.api.tasks.wrapper.Wrapper"/>を参照してください。
         </para>
         <para role="original">If you don't
             want any download to happen when your project is build via <command>gradlew</command>, simply add the Gradle
             distribution zip to your version control at the location specified by your wrapper configuration.
             Relative url is supported - you can specify a distribution file relative to the location of <literal>gradle-wrapper.properties</literal> file.
         </para>
-        <para>プロジェクトをビルドする際に、なにもダウンロードしたくない場合は、Wrapper の設定で指定した場所に
-              Gradle の zip ファイルを追加してバージョン管理してください。
+        <para><command>gradlew</command>コマンドでプロジェクトをビルドする際、ダウンロード処理を一切走らせたくない場合は、単にラッパーの設定で指定した場所にGradleのzipファイルを追加してバージョン管理してください。
+            相対パスもサポートされています。<literal>gradle-wrapper.properties</literal>からの相対パスでディストリビューションファイルを指定することができます。
         </para>
         <para role="original">If you build via the wrapper, any existing Gradle distribution installed on the machine is ignored.
         </para>
-        <para>Gradle Wrapper を使ってビルドする場合はマシンにインストールされている Gradle ディストリビューションがあったとしても無視されます。
+        <para>ラッパーを使ってビルドする場合は、マシンにインストールされているGradleディストリビューションがあったとしても無視されます。
         </para>
     </section>
     <section id='sec:unix_file_permissions'>
-        <title>Unix ファイルパーミッション<phrase role="original">Unix file permissions</phrase></title>
+        <title>Unixファイルパーミッション <phrase role="original">Unix file permissions</phrase></title>
         <para role="original">The Wrapper task adds appropriate file permissions to allow the execution for the gradlew *NIX command.
             Subversion preserves this file permission. We are not sure how other version control systems deal with this.
             What should always work is to execute <literal>sh gradlew</literal>.
         </para>
-        <para>wrapper タスクは 生成した gradlew *NIX コマンドに 実行を許可するように適切なファイルパーミションを追加します。
-            Subversion は ちゃんと このファイルパーミッションを保存してくれますが、他のバージョン管理システムではどのように扱われるのかわかりません。
-            しかし、どんな場合でも <literal>sh gradlew</literal> のように実行すれば 必ずうまくいくはずです。
+        <para>Wrapperタスクは、生成したgradlew *NIXコマンドを実行できるよう、適切なファイルパーミッションを追加します。
+            Subversionはちゃんとこのファイルパーミッションを保存してくれますが、他のバージョン管理システムではどのように扱われるのかわかりません。
+            しかし、どんな場合でも<literal>sh gradlew</literal>のように実行すれば必ずうまくいくはずです。
         </para>
     </section>
     <section id='sec:environment_variable'>
@@ -139,15 +148,14 @@
             you have no admin right on the continuous integration server to remove the corrupt files, Gradle offers a
             solution via environment variables.
         </para>
-        <para>Gradle Wrapper を実行している時に いくつか珍しい ユースケースが起こる場合もあります。
-            例えば、継続的インテグレーションサーバが zip ファイルを解凍している最中にダウンしてしまうこともあるでしょう。
-            その場合 ディストリビューション ディレクトリがあると判断して、<command>gradlew</command> は 不正なディストリビューションに処理を投げてしまいます。
-            また zip ファイルがちゃんとダウンロードされないことだってあるでしょう。
-            継続的インテグレーションサーバの管理者権限がないため、それらの不正なファイルが削除できない場合は
-            環境変数を利用して解決できます。
+        <para>ラッパーを実行している時に、いくつか珍しいユースケースが起こる場合もあります。
+            例えば、継続的インテグレーションサーバがzipファイルを解凍している最中にダウンしてしまうこともあるでしょう。
+            その場合、ディストリビューションディレクトリがあると判断して、<command>gradlew</command>は不正なディストリビューションに処理を投げてしまいます。
+            また、zipファイルがちゃんとダウンロードされないことだってあるでしょう。
+            継続的インテグレーションサーバの管理者権限がないため、それらの不正なファイルが削除できない場合は、環境変数を利用して解決できます。
         </para>
         <table>
-            <title>Gradle Wrapper 環境変数<phrase role="original">Gradle wrapper environment variables</phrase></title>
+            <title>Gradleラッパー環境変数 <phrase role="original">Gradle wrapper environment variables</phrase></title>
             <thead>
                 <tr>
                     <td>名称<phrase role="original">Variable Name</phrase></td>
@@ -156,22 +164,20 @@
             </thead>
             <tr>
                 <td>GRADLE_WRAPPER_ALWAYS_UNPACK</td>
-                <td><literal>true</literal> の場合、 <command>gradlew</command> コマンドが実行される度に
-                    ディストリビューション ディレクトリは削除され、再度 zip ファイルが解凍されます。
-                    zip ファイルがなければ、ダウンロードされます。
-                    <phrase role="original">If set to <literal>true</literal>, the distribution directory gets always deleted when
+                <td><phrase role="original">If set to <literal>true</literal>, the distribution directory gets always deleted when
                     <command>gradlew</command>
                     is run and the distribution zip is freshly unpacked. If the zip is not there, Gradle tries to
                     download it.</phrase>
+                    <literal>true</literal> の場合、<command>gradlew</command>コマンドが実行される度にディストリビューションディレクトリは削除され、再度zipファイルが解凍されます。
+                    zipファイルがなければ、ダウンロードされます。
                 </td>
             </tr>
             <tr>
                 <td>GRADLE_WRAPPER_ALWAYS_DOWNLOAD</td>
-                <td><literal>true</literal> の場合、 <command>gradlew</command> コマンドが実行される度に
-                    zip ファイルとそれを展開したディレクトリは削除され、再度 zip ファイルがダウンロードされます。
-                    <phrase role="original">If set to <literal>true</literal>, the distribution directory and the distribution zip gets always
+                <td><phrase role="original">If set to <literal>true</literal>, the distribution directory and the distribution zip gets always
                     deleted when <command>gradlew</command>
                     is run and the distribution zip is freshly downloaded.</phrase>
+                    <literal>true</literal> の場合、<command>gradlew</command>コマンドが実行される度にzipファイルとそれを展開したディレクトリは削除され、再度zipファイルがダウンロードされます。
                 </td>
             </tr>
 
