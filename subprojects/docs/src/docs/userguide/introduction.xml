@@ -83,6 +83,6 @@
             guide. You can find out more about contributing to the documentation at the
             <ulink url="website:contribute">Gradle web site</ulink>.
         </para>
-        <para>このユーザーガイドは、Gradle同様、現在活発に更新されているところです。まだGradleについて必要な部分がすべてドキュメント化されているわけではありません。また、記載内容には明確でない部分やGradleについて読者が知っている以上の知識を要求する部分があるかもしれません。このガイドを改良していくため、力を貸してください。ドキュメンテーションへ参加、貢献していただける方は<ulink url="website:contributing.html">Gradleのウェブサイト</ulink>をご参照ください。</para>
+        <para>このユーザーガイドは、Gradle同様、現在活発に更新されているところです。まだGradleについて必要な部分がすべてドキュメント化されているわけではありません。また、記載内容には明確でない部分やGradleについて読者が知っている以上の知識を要求する部分があるかもしれません。このガイドを改良していくため、力を貸してください。ドキュメンテーションへ参加、貢献していただける方は<ulink url="website:contribute">Gradleのウェブサイト</ulink>をご参照ください。</para>
     </section>
 </chapter>
