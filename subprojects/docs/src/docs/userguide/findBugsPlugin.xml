@@ -4,7 +4,7 @@
         and generates reports from these checks.
     </para>
     <para>FindBugsプラグインは <ulink url="http://findbugs.sourceforge.net">FindBugs</ulink>を使用して、あなたのプロジェクトのJavaソース・ファイルの品質チェックを行ないます。
-        そして、これらのチェック結果から報告書を生成します。
+        そして、これらのチェック結果から結果レポートを生成します。
     </para>
 
     <section>
