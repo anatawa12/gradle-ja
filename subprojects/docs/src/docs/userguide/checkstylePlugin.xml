@@ -1,28 +1,34 @@
-<chapter id="checkstyle_plugin">
-    <title>The Checkstyle Plugin</title>
-    <para>The Checkstyle plugin performs quality checks on your project's Java source files using <ulink url="http://checkstyle.sourceforge.net/index.html">Checkstyle</ulink>
+<chapter id="checkstyle_plugin" xmlns:xi="http://www.w3.org/2001/XInclude" xml:lang="ja">
+    <title>Checkstyleプラグイン<phrase role="original">The Checkstyle Plugin</phrase></title>
+    <para role="original">The Checkstyle plugin performs quality checks on your project's Java source files using <ulink url="http://checkstyle.sourceforge.net/index.html">Checkstyle</ulink>
         and generates reports from these checks.
+    </para>
+    <para>Checkstyleプラグインは <ulink url="http://checkstyle.sourceforge.net/index.html">Checkstyle</ulink>を使用して、あなたのプロジェクトのJavaソースファイルの品質チェックを行ないます。
+        そして、これらのチェック結果から結果レポートを生成します。
     </para>
 
     <section>
-        <title>Usage</title>
-        <para>To use the Checkstyle plugin, include in your build script:</para>
-        <sample id="useCheckstylePlugin" dir="codeQuality" title="Using the Checkstyle plugin">
+        <title>使用方法<phrase role="original">Usage</phrase></title>
+        <para role="original">To use the Checkstyle plugin, include in your build script:</para>
+        <para>Checkstyleプラグインを使うためには、ビルドスクリプトに下記を含めます：</para>
+        <sample id="useCheckstylePlugin" dir="codeQuality" title="Checkstyleプラグインの使用 / Using the Checkstyle plugin">
             <sourcefile file="build.gradle" snippet="use-checkstyle-plugin"/>
         </sample>
-        <para>The plugin adds a number of tasks to the project that perform the quality checks. You can execute the checks by running <userinput>gradle check</userinput>.</para>
+        <para role="original">The plugin adds a number of tasks to the project that perform the quality checks. You can execute the checks by running <userinput>gradle check</userinput>.</para>
+        <para>このプラグインは、品質チェックを行なうプロジェクトへの多くのタスクを加えます。 貴方はタスク実行時にチェック処理を実行させることが出来ます。 <userinput>gradle check</userinput>.</para>
     </section>
     <section>
-        <title>Tasks</title>
-        <para>The Checkstyle plugin adds the following tasks to the project:</para>
+        <title>タスク<phrase role="original">Tasks</phrase></title>
+        <para role="original">The Checkstyle plugin adds the following tasks to the project:</para>
+        <para>Checkstyleプラグインは、以下のタスクをプロジェクトに追加します:</para>
         <table>
-            <title>Checkstyle plugin - tasks</title>
+            <title>Checkstyleプラグイン - タスク<phrase role="original">Checkstyle plugin - tasks</phrase></title>
             <thead>
                 <tr>
-                    <td>Task name</td>
-                    <td>Depends on</td>
-                    <td>Type</td>
-                    <td>Description</td>
+                    <td>タスク名<phrase role="original">Task name</phrase></td>
+                    <td>依存先<phrase role="original">Depends on</phrase></td>
+                    <td>型<phrase role="original">Type</phrase></td>
+                    <td>説明<phrase role="original">Description</phrase></td>
                 </tr>
             </thead>
             <tr>
@@ -31,7 +37,7 @@
                 </td>
                 <td><literal>classes</literal></td>
                 <td><apilink class="org.gradle.api.plugins.quality.Checkstyle"/></td>
-                <td>Runs Checkstyle against the production Java source files.</td>
+                <td>製品のJavaソースを対象にCheckstyleを実行します。<phrase role="original">Runs Checkstyle against the production Java source files.</phrase></td>
             </tr>
             <tr>
                 <td>
@@ -39,7 +45,7 @@
                 </td>
                 <td><literal>testClasses</literal></td>
                 <td><apilink class="org.gradle.api.plugins.quality.Checkstyle"/></td>
-                <td>Runs Checkstyle against the test Java source files.</td>
+                <td>テストのJavaソースを対象にCheckstyleを実行します。<phrase role="original">Runs Checkstyle against the test Java source files.</phrase></td>
             </tr>
             <tr>
                 <td>
@@ -47,67 +53,71 @@
                 </td>
                 <td><literal><replaceable>sourceSet</replaceable>Classes</literal></td>
                 <td><apilink class="org.gradle.api.plugins.quality.Checkstyle"/></td>
-                <td>Runs Checkstyle against the given source set's Java source files.</td>
+                <td>特定のソースセットで指定されたJavaソースを対象にCheckstyleを実行します。<phrase role="original">Runs Checkstyle against the given source set's Java source files.</phrase></td>
             </tr>
         </table>
 
-        <para>The Checkstyle plugin adds the following dependencies to tasks defined by the Java plugin.</para>
+        <para role="original">The Checkstyle plugin adds the following dependencies to tasks defined by the Java plugin.</para>
+        <para>Checkstyleプラグインは、Javaプラグインによって追加されたタスクに以下の依存関係を追加します。</para>
         <table>
-            <title>Checkstyle plugin - additional task dependencies</title>
+            <title>Checkstyleプラグイン - タスクの追加依存関係<phrase role="original">Checkstyle plugin - additional task dependencies</phrase></title>
             <thead>
-                <td>Task name</td>
-                <td>Depends on</td>
+                <td>タスク名<phrase role="original">Task name</phrase></td>
+                <td>依存先<phrase role="original">Depends on</phrase></td>
             </thead>
             <tr>
                 <td><literal>check</literal></td>
-                <td>All Checkstyle tasks, including <literal>checkstyleMain</literal> and <literal>checkstyleTest</literal>.</td>
+                <td>全てのCheckstyleタスクは、<literal>checkstyleMain</literal> と <literal>checkstyleTest</literal>を含みます。<phrase role="original">All Checkstyle tasks, including <literal>checkstyleMain</literal> and <literal>checkstyleTest</literal>.</phrase></td>
             </tr>
         </table>
     </section>
 
     <section>
-        <title>Project layout</title>
-        <para>The Checkstyle plugin expects the following project layout:</para>
+        <title>プロジェクトレイアウト<phrase role="original">Project layout</phrase></title>
+        <para role="original">The Checkstyle plugin expects the following project layout:</para>
+        <para>Checkstyleプラグインは、以下のようなプロジェクトレイアウトを想定しています:</para>
         <table>
-            <title>Checkstyle plugin - project layout</title>
+            <title>Checkstyle プラグイン - プロジェクトレイアウト<phrase role="original">Checkstyle plugin - project layout</phrase></title>
             <thead>
                 <tr>
-                    <td>File</td>
-                    <td>Meaning</td>
+                    <td>ファイル<para role="original">File</para></td>
+                    <td>意味<para role="original">Meaning</para></td>
                 </tr>
             </thead>
             <tr>
                 <td>
                     <filename>config/checkstyle/checkstyle.xml</filename>
                 </td>
-                <td>Checkstyle configuration file</td>
+                <td>Checkstyle の設定ファイル<para role="original">Checkstyle configuration file</para></td>
             </tr>
         </table>
     </section>
 
     <section>
-        <title>Dependency management</title>
-        <para>The Checkstyle plugin adds the following dependency configurations:</para>
+        <title>依存関係の管理<phrase role="original">Dependency management</phrase></title>
+        <para role="original">The Checkstyle plugin adds the following dependency configurations:</para>
+        <para>Checkstyleプラグインは、以下の依存関係設定を追加します。</para>
         <table>
-            <title>Checkstyle plugin - dependency configurations</title>
+            <title>Checkstyleプラグイン - 依存関係設定<para role="original">Checkstyle plugin - dependency configurations</para></title>
             <thead>
                 <tr>
-                    <td>Name</td>
-                    <td>Meaning</td>
+                    <td>名前<para role="original">Name</para></td>
+                    <td>意味<para role="original">Meaning</para></td>
                 </tr>
             </thead>
             <tr>
                 <td>
                     <filename>checkstyle</filename>
                 </td>
-                <td>The Checkstyle libraries to use</td>
+                <td>Checkstyleのライブラリを使用します。<para role="original">The Checkstyle libraries to use</para></td>
             </tr>
         </table>
     </section>
 
     <section>
-        <title>Configuration</title>
-        <para>See <apilink class="org.gradle.api.plugins.quality.CheckstyleExtension"/>.</para>
+        <title>設定<para role="original">Configuration</para></title>
+        <para role="original">See <apilink class="org.gradle.api.plugins.quality.CheckstyleExtension"/>.</para>
+        <para><apilink class="org.gradle.api.plugins.quality.CheckstyleExtension"/>を参照。</para>
     </section>
 
 </chapter>

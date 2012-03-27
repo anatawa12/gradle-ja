@@ -11,7 +11,7 @@
         <title>使用方法<phrase role="original">Usage</phrase></title>
         <para role="original">To use the JDepend plugin, include in your build script:</para>
         <para>JDependプラグインを使うためには、ビルドスクリプトに下記を含めます：</para>
-        <sample id="useJDependPlugin" dir="codeQuality" title="Using the JDepend plugin">
+        <sample id="useJDependPlugin" dir="codeQuality" title="JDependプラグインの使用 / Using the JDepend plugin">
             <sourcefile file="build.gradle" snippet="use-jdepend-plugin"/>
         </sample>
         <para role="original">The plugin adds a number of tasks to the project that perform the quality checks. You can execute the checks by running <userinput>gradle check</userinput>.</para>
@@ -56,7 +56,7 @@
                     <literal><replaceable>sourceSet</replaceable>Classes</literal>
                 </td>
                 <td><apilink class="org.gradle.api.plugins.quality.JDepend"/></td>
-                <td>特定のソースセットで指定されたソースを対象にJDependを実行します。<phrase role="original">Runs JDepend against the given source set's Java source files.</phrase></td>
+                <td>特定のソースセットで指定されたJavaソースを対象にJDependを実行します。<phrase role="original">Runs JDepend against the given source set's Java source files.</phrase></td>
             </tr>
         </table>
 

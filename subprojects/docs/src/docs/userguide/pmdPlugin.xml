@@ -11,7 +11,7 @@
         <title>使用方法<phrase role="original">Usage</phrase></title>
         <para role="original">To use the PMD plugin, include in your build script:</para>
         <para>PMDプラグインを使うためには、ビルドスクリプトに下記を含めます：</para>
-        <sample id="usePmdPlugin" dir="codeQuality" title="Using the PMD plugin">
+        <sample id="usePmdPlugin" dir="codeQuality" title="PMDプラグインの使用 / Using the PMD plugin">
             <sourcefile file="build.gradle" snippet="use-pmd-plugin"/>
         </sample>
         <para role="original">The plugin adds a number of tasks to the project that perform the quality checks. You can execute the checks by running <userinput>gradle check</userinput>.</para>
@@ -54,7 +54,7 @@
                 </td>
                 <td>-</td>
                 <td><apilink class="org.gradle.api.plugins.quality.Pmd"/></td>
-                <td>特定のソースセットで指定されたソースを対象にPMDを実行します。<phrase role="original">Runs PMD against the given source set's Java source files.</phrase></td>
+                <td>特定のソースセットで指定されたJavaソースを対象にPMDを実行します。<phrase role="original">Runs PMD against the given source set's Java source files.</phrase></td>
             </tr>
         </table>
 

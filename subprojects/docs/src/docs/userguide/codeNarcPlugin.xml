@@ -1,29 +1,35 @@
-<chapter id="codenarc_plugin">
-    <title>The CodeNarc Plugin</title>
-    <para>The CodeNarc plugin performs quality checks on your project's Groovy source files using <ulink url="http://codenarc.sourceforge.net/index.html">CodeNarc</ulink>
+<chapter id="codenarc_plugin" xmlns:xi="http://www.w3.org/2001/XInclude" xml:lang="ja">
+    <title>CodeNarcプラグイン<phrase role="original">The CodeNarc Plugin</phrase></title>
+    <para role="original">The CodeNarc plugin performs quality checks on your project's Groovy source files using <ulink url="http://codenarc.sourceforge.net/index.html">CodeNarc</ulink>
         and generates reports from these checks.
+    </para>
+    <para>CodeNarcプラグインは <ulink url="http://codenarc.sourceforge.net/index.html">CodeNarc</ulink>を使用して、あなたのプロジェクトのGroovyソースファイルの品質チェックを行ないます。
+        そして、これらのチェック結果から結果レポートを生成します。
     </para>
 
     <section>
-        <title>Usage</title>
-        <para>To use the CodeNarc plugin, include in your build script:</para>
-        <sample id="useCodeNarcPlugin" dir="codeQuality" title="Using the CodeNarc plugin">
+        <title>使用方法<phrase role="original">Usage</phrase></title>
+        <para role="original">To use the CodeNarc plugin, include in your build script:</para>
+        <para>CodeNarcプラグインを使うためには、ビルドスクリプトに下記を含めます：</para>
+        <sample id="useCodeNarcPlugin" dir="codeQuality" title="CodeNarcプラグインの使用 / Using the CodeNarc plugin">
             <sourcefile file="build.gradle" snippet="use-codenarc-plugin"/>
         </sample>
-        <para>The plugin adds a number of tasks to the project that perform the quality checks. You can execute the checks by running <userinput>gradle check</userinput>.</para>
+        <para role="original">The plugin adds a number of tasks to the project that perform the quality checks. You can execute the checks by running <userinput>gradle check</userinput>.</para>
+        <para>このプラグインは、品質チェックを行なうプロジェクトへの多くのタスクを加えます。 貴方はタスク実行時にチェック処理を実行させることが出来ます。 <userinput>gradle check</userinput>.</para>
     </section>
 
     <section>
-        <title>Tasks</title>
-        <para>The CodeNarc plugin adds the following tasks to the project:</para>
+        <title>タスク<phrase role="original">Tasks</phrase></title>
+        <para role="original">The CodeNarc plugin adds the following tasks to the project:</para>
+        <para>CodeNarcプラグインを使うためには、ビルドスクリプトに下記を含めます：</para>
         <table>
-            <title>CodeNarc plugin - tasks</title>
+            <title>CodeNarcプラグイン - タスク<phrase role="original">CodeNarc plugin - tasks</phrase></title>
             <thead>
                 <tr>
-                    <td>Task name</td>
-                    <td>Depends on</td>
-                    <td>Type</td>
-                    <td>Description</td>
+                    <td>タスク名<phrase role="original">Task name</phrase></td>
+                    <td>依存先<phrase role="original">Depends on</phrase></td>
+                    <td>型<phrase role="original">Type</phrase></td>
+                    <td>説明<phrase role="original">Description</phrase></td>
                 </tr>
             </thead>
             <tr>
@@ -32,7 +38,7 @@
                 </td>
                 <td>-</td>
                 <td><apilink class="org.gradle.api.plugins.quality.CodeNarc"/></td>
-                <td>Runs CodeNarc against the production Groovy source files.</td>
+                <td>製品のGroovyソースを対象にCodeNarcを実行します。<phrase role="original">Runs CodeNarc against the production Groovy source files.</phrase></td>
             </tr>
             <tr>
                 <td>
@@ -41,6 +47,7 @@
                 <td>-</td>
                 <td><apilink class="org.gradle.api.plugins.quality.CodeNarc"/></td>
                 <td>Runs CodeNarc against the test Groovy source files.</td>
+                <td>テストのGroovyソースを対象にCodeNarcを実行します。<phrase role="original">Runs Checkstyle against the test Groovy source files.</phrase></td>
             </tr>
             <tr>
                 <td>
@@ -48,67 +55,71 @@
                 </td>
                 <td>-</td>
                 <td><apilink class="org.gradle.api.plugins.quality.CodeNarc"/></td>
-                <td>Runs CodeNarc against the given source set's Groovy source files.</td>
+                <td>特定のソースセットで指定されたGroovyソースを対象にCodeNarcを実行します。<phrase role="original">Runs CodeNarc against the given source set's Groovy source files.</phrase></td>
             </tr>
         </table>
 
-        <para>The CodeNarc plugin adds the following dependencies to tasks defined by the Groovy plugin.</para>
+        <para role="original">The CodeNarc plugin adds the following dependencies to tasks defined by the Groovy plugin.</para>
+        <para>CodeNarcプラグインは、Groovyプラグインによって追加されたタスクに以下の依存関係を追加します。</para>
         <table>
-            <title>CodeNarc plugin - additional task dependencies</title>
+            <title>CodeNarcプラグイン - タスクの追加依存関係<phrase role="original">CodeNarc plugin - additional task dependencies</phrase></title>
             <thead>
-                <td>Task name</td>
-                <td>Depends on</td>
+                <td>タスク名<phrase role="original">Task name</phrase></td>
+                <td>依存先<phrase role="original">Depends on</phrase></td>
             </thead>
             <tr>
                 <td><literal>check</literal></td>
-                <td>All CodeNarc tasks, including <literal>codenarcMain</literal> and <literal>codenarcTest</literal>.</td>
+                <td>全てのCodeNarcタスクは、<literal>codenarcMain</literal> と <literal>codenarcTest</literal>を含みます。<phrase role="original">All CodeNarc tasks, including <literal>codenarcMain</literal> and <literal>codenarcTest</literal>.</phrase></td>
             </tr>
         </table>
     </section>
 
     <section>
-        <title>Project layout</title>
-        <para>The CodeNarc plugin expects the following project layout:</para>
+        <title>プロジェクトレイアウト<phrase role="original">Project layout</phrase></title>
+        <para role="original">The CodeNarc plugin expects the following project layout:</para>
+        <para>CodeNarcプラグインは、以下のようなプロジェクトレイアウトを想定しています:</para>
         <table>
-            <title>CodeNarc plugin - project layout</title>
+            <title>CodeNarc プラグイン - プロジェクトレイアウト<phrase role="original">CodeNarc plugin - project layout</phrase></title>
             <thead>
                 <tr>
-                    <td>File</td>
-                    <td>Meaning</td>
+                    <td>ファイル<para role="original">File</para></td>
+                    <td>意味<para role="original">Meaning</para></td>
                 </tr>
             </thead>
             <tr>
                 <td>
                     <filename>config/codenarc/codenarc.xml</filename>
                 </td>
-                <td>CodeNarc configuration file</td>
+                <td>CodeNarc の設定ファイル<para role="original">CodeNarc configuration file</para></td>
             </tr>
         </table>
     </section>
 
     <section>
-        <title>Dependency management</title>
-        <para>The CodeNarc plugin adds the following dependency configurations:</para>
+        <title>依存関係の管理<phrase role="original">Dependency management</phrase></title>
+        <para role="original">The CodeNarc plugin adds the following dependency configurations:</para>
+        <para>CodeNarcプラグインは、以下の依存関係設定を追加します。</para>
         <table>
-            <title>CodeNarc plugin - dependency configurations</title>
+            <title>CodeNarcプラグイン - 依存関係設定<para role="original">CodeNarc plugin - dependency configurations</para></title>
             <thead>
                 <tr>
-                    <td>Name</td>
-                    <td>Meaning</td>
+                    <td>名前<para role="original">Name</para></td>
+                    <td>意味<para role="original">Meaning</para></td>
                 </tr>
             </thead>
             <tr>
                 <td>
                     <filename>codenarc</filename>
                 </td>
-                <td>The CodeNarc libraries to use</td>
+                <td>CodeNarcのライブラリを使用します。<para role="original">The CodeNarc libraries to use</para></td>
             </tr>
         </table>
     </section>
 
     <section>
-        <title>Configuration</title>
-        <para>See <apilink class="org.gradle.api.plugins.quality.CodeNarcExtension"/>.</para>
+        <title>設定<para role="original">Configuration</para></title>
+        <para role="original">See <apilink class="org.gradle.api.plugins.quality.CodeNarcExtension"/>.</para>
+        <para><apilink class="org.gradle.api.plugins.quality.CodeNarcExtension"/>を参照。</para>
     </section>
 
 </chapter>

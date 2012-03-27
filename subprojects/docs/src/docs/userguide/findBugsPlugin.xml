@@ -56,7 +56,7 @@
                     <literal><replaceable>sourceSet</replaceable>Classes</literal>
                 </td>
                 <td><apilink class="org.gradle.api.plugins.quality.FindBugs"/></td>
-                <td>特定のソースセットで指定されたソースを対象にFindBugsを実行します。<phrase role="original">Runs FindBugs against the given source set's Java source files.</phrase></td>
+                <td>特定のソースセットで指定されたJavaソースを対象にFindBugsを実行します。<phrase role="original">Runs FindBugs against the given source set's Java source files.</phrase></td>
             </tr>
         </table>
 
