@@ -20,11 +20,12 @@ import org.gradle.integtests.fixtures.ExecutionFailure
 import org.gradle.integtests.fixtures.GradleDistribution
 import org.gradle.integtests.fixtures.GradleDistributionExecuter
 import org.gradle.integtests.fixtures.TestResources
-import org.gradle.internal.nativeplatform.FileSystems
-import org.gradle.internal.nativeplatform.OperatingSystem
+import org.gradle.internal.nativeplatform.filesystem.FileSystems
+import org.gradle.internal.os.OperatingSystem
 import org.junit.Rule
 import org.junit.Test
 import org.gradle.util.*
+import org.gradle.internal.jvm.Jvm
 
 public class CommandLineIntegrationTest {
     @Rule public final GradleDistribution dist = new GradleDistribution()

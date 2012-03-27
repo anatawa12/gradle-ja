@@ -29,6 +29,10 @@ public class MutableURLClassLoader extends URLClassLoader {
         super(urls.toArray(new URL[urls.size()]), parent);
     }
 
+    public MutableURLClassLoader(ClassLoader parent, ClassPath classPath) {
+        super(classPath.getAsURLArray(), parent);
+    }
+
     @Override
     public void addURL(URL url) {
         super.addURL(url);

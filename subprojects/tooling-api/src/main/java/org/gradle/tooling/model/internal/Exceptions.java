@@ -16,6 +16,7 @@
 
 package org.gradle.tooling.model.internal;
 
+import org.gradle.tooling.exceptions.UnsupportedOperationConfigurationException;
 import org.gradle.tooling.model.UnsupportedMethodException;
 
 /**
@@ -27,11 +28,11 @@ public class Exceptions {
             "Most likely the model of that type is not supported in the target Gradle version."
             + "\nTo resolve the problem you can change/upgrade the Gradle version the tooling api connects to.";
 
-    public static UnsupportedMethodException unsupportedModelMethod(String method, Throwable cause) {
+    public static UnsupportedMethodException unsupportedMethod(String method, Throwable cause) {
         return new UnsupportedMethodException(formatUnsupportedModelMethod(method), cause);
     }
 
-    public static UnsupportedMethodException unsupportedModelMethod(String method) {
+    public static UnsupportedMethodException unsupportedMethod(String method) {
         return new UnsupportedMethodException(formatUnsupportedModelMethod(method));
     }
 
@@ -43,12 +44,14 @@ public class Exceptions {
                 , method);
     }
 
-    public static UnsupportedMethodException unsupportedOperationConfiguration(String operation) {
-        return new UnsupportedMethodException(String.format("Unsupported configuration: %s."
+    public static UnsupportedOperationConfigurationException unsupportedOperationConfiguration(String operation) {
+        //we only need that cause for backwards-compatibility.
+        UnsupportedMethodException cause = new UnsupportedMethodException(operation);
+        return new UnsupportedOperationConfigurationException(String.format("Unsupported configuration: %s."
                 + "\nYou configured the LongRunningOperation (ModelBuilder or BuildLauncher) with an unsupported option."
                 + "\nThe version of Gradle you connect to does not support this configuration option."
                 + "\nTo resolve the problem you can change/upgrade the target version of Gradle you connect to."
-                + "\nAlternatively, please stop using this configuration option."
-                , operation));
+                + "\nAlternatively, you may stop using this configuration option."
+                , operation), cause);
     }
 }

@@ -50,10 +50,12 @@ task performanceTest(dependsOn: tasks.integTest) {
     description = "Runs the performance test (note that performanceTest is not a part of 'check' or 'test')"
 }
 
+tasks.integTest.testLogging.showStandardStreams = true
+
 gradle.taskGraph.whenReady {
     if (!it.hasTask(':performance:performanceTest')) {
         project.tasks.withType(Test) {
-            logger.lifecycle("Skipping $it because task 'performanceTest' was not requested.")
+            logger.info("Skipping $it because task 'performanceTest' was not requested.")
             enabled = false
         }
     }

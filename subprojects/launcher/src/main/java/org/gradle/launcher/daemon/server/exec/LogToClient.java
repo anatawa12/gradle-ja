@@ -18,6 +18,7 @@ package org.gradle.launcher.daemon.server.exec;
 import org.gradle.api.logging.LogLevel;
 import org.gradle.api.logging.Logger;
 import org.gradle.api.logging.Logging;
+import org.gradle.launcher.daemon.diagnostics.DaemonDiagnostics;
 import org.gradle.launcher.daemon.logging.DaemonMessages;
 import org.gradle.launcher.daemon.protocol.Build;
 import org.gradle.logging.LoggingManagerInternal;
@@ -29,13 +30,13 @@ class LogToClient extends BuildCommandOnly {
     private static final Logger LOGGER = Logging.getLogger(LogToClient.class);
 
     private final LoggingManagerInternal loggingManager;
-    private final Long daemonPid;
+    private final DaemonDiagnostics diagnostics;
 
-    public LogToClient(LoggingManagerInternal loggingManager, Long daemonPid) {
+    public LogToClient(LoggingManagerInternal loggingManager, DaemonDiagnostics diagnostics) {
         this.loggingManager = loggingManager;
-        this.daemonPid = daemonPid;
+        this.diagnostics = diagnostics;
     }
-        
+
     protected void doBuild(final DaemonCommandExecution execution, Build build) {
         final LogLevel buildLogLevel = build.getStartParameter().getLogLevel();
         OutputEventListener listener = new OutputEventListener() {
@@ -53,7 +54,7 @@ class LogToClient extends BuildCommandOnly {
 
         LOGGER.info(DaemonMessages.ABOUT_TO_START_RELAYING_LOGS);
         loggingManager.addOutputEventListener(listener);
-        LOGGER.info(DaemonMessages.STARTED_RELAYING_LOGS + daemonPid + ").");
+        LOGGER.info(DaemonMessages.STARTED_RELAYING_LOGS + diagnostics.getPid() + "). The daemon log file: " + diagnostics.getDaemonLog());
 
         try {
             execution.proceed();

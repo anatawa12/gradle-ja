@@ -18,10 +18,11 @@ package org.gradle.launcher.daemon.client;
 import org.gradle.api.logging.Logger;
 import org.gradle.api.logging.Logging;
 import org.gradle.api.specs.Spec;
-import org.gradle.api.specs.Specs;
 import org.gradle.initialization.BuildClientMetaData;
 import org.gradle.initialization.GradleLauncherAction;
+import org.gradle.internal.UncheckedException;
 import org.gradle.launcher.daemon.context.DaemonContext;
+import org.gradle.launcher.daemon.diagnostics.DaemonDiagnostics;
 import org.gradle.launcher.daemon.logging.DaemonMessages;
 import org.gradle.launcher.daemon.protocol.*;
 import org.gradle.launcher.exec.BuildActionParameters;
@@ -29,6 +30,7 @@ import org.gradle.launcher.exec.GradleLauncherActionExecuter;
 import org.gradle.logging.internal.OutputEvent;
 import org.gradle.logging.internal.OutputEventListener;
 import org.gradle.messaging.remote.internal.Connection;
+import org.gradle.util.GFileUtils;
 
 import java.io.InputStream;
 
@@ -53,8 +55,8 @@ import java.io.InputStream;
  */
 public class DaemonClient implements GradleLauncherActionExecuter<BuildActionParameters> {
     private static final Logger LOGGER = Logging.getLogger(DaemonClient.class);
-    private final DaemonConnector connector;
-    private final BuildClientMetaData clientMetaData;
+    protected final DaemonConnector connector;
+    protected final BuildClientMetaData clientMetaData;
     private final OutputEventListener outputEventListener;
     private final Spec<DaemonContext> compatibilitySpec;
     private final InputStream buildStandardInput;
@@ -74,8 +76,7 @@ public class DaemonClient implements GradleLauncherActionExecuter<BuildActionPar
      * Stops all daemons, if any is running.
      */
     public void stop() {
-        Spec<DaemonContext> stoppableDaemonSpec = Specs.satisfyAll();
-        DaemonConnection connection = connector.maybeConnect(stoppableDaemonSpec);
+        DaemonConnection connection = connector.maybeConnect(compatibilitySpec);
         if (connection == null) {
             LOGGER.lifecycle(DaemonMessages.NO_DAEMONS_RUNNING);
             return;
@@ -86,7 +87,7 @@ public class DaemonClient implements GradleLauncherActionExecuter<BuildActionPar
         while (connection != null) {
             new StopDispatcher().dispatch(clientMetaData, connection.getConnection());
             LOGGER.lifecycle("Gradle daemon stopped.");
-            connection = connector.maybeConnect(stoppableDaemonSpec);
+            connection = connector.maybeConnect(compatibilitySpec);
         }
     }
 
@@ -97,42 +98,48 @@ public class DaemonClient implements GradleLauncherActionExecuter<BuildActionPar
      * @throws org.gradle.launcher.exec.ReportedException On failure, when the failure has already been logged/reported.
      */
     public <T> T execute(GradleLauncherAction<T> action, BuildActionParameters parameters) {
-        LOGGER.warn("Note: the Gradle build daemon is an experimental feature.");
-        LOGGER.warn("As such, you may experience unexpected build failures. You may need to occasionally stop the daemon.");
-        while(true) {
+        Build build = new Build(action, parameters);
+        int saneNumberOfAttempts = 100; //is it sane enough?
+        for (int i = 1; i < saneNumberOfAttempts; i++) {
             DaemonConnection daemonConnection = connector.connect(compatibilitySpec);
             Connection<Object> connection = daemonConnection.getConnection();
-            Build build = new Build(action, parameters);
 
-            Object firstResult;
             try {
-                LOGGER.info("Connected to the daemon. Dispatching {} request.", build);
-                connection.dispatch(build);
-                firstResult = connection.receive();
-            } catch (Exception e) {
-                //TODO SF find a way to test it.
-                LOGGER.info("Unable to receive the first result from the daemon. Trying a different daemon...", e);
-                continue;
+                return (T) executeBuild(build, connection);
+            } catch (DaemonInitialConnectException e) {
+                LOGGER.info(e.getMessage() + " Trying a different daemon...", e.getCause());
             }
+        }
+        throw new NoUsableDaemonFoundException("Unable to find a usable idle daemon. I have connected to "
+                + saneNumberOfAttempts + " different daemons but I could not use any of them to run build: " + build + ".");
+    }
 
-            if (firstResult instanceof BuildStarted) {
-                return (T) monitorBuild(build, connection).getValue();
-            } else if (firstResult instanceof DaemonBusy) {
-                LOGGER.info("The daemon we connected to was busy. Trying a different daemon...");
-            } else if (firstResult instanceof Failure) {
-                // Could potentially distinguish between CommandFailure and DaemonFailure here.
-                throw ((Failure) firstResult).getValue();
-            } else if (firstResult == null) {
-                LOGGER.info("The first result from the daemon was empty. Most likely the daemon has died. Trying a different daemon...");
-            } else {
-                throw new IllegalStateException(String.format(
-                    "The first result from the Daemon: %s is a Result of a type we don't have a strategy to handle."
-                    + "Earlier, %s request was sent to the daemon.", firstResult, build));
-            }
+    protected Object executeBuild(Build build, Connection<Object> connection) throws DaemonInitialConnectException {
+        Object firstResult;
+        try {
+            LOGGER.info("Connected to the daemon. Dispatching {} request.", build);
+            connection.dispatch(build);
+            firstResult = connection.receive();
+        } catch (Exception e) {
+            throw new DaemonInitialConnectException("Exception when attempted to send and receive first result from the daemon.", e);
+        }
+
+        if (firstResult instanceof BuildStarted) {
+            DaemonDiagnostics diagnostics = ((BuildStarted) firstResult).getDiagnostics();
+            return monitorBuild(build, diagnostics, connection).getValue();
+        } else if (firstResult instanceof Failure) {
+            // Could potentially distinguish between CommandFailure and DaemonFailure here.
+            throw UncheckedException.throwAsUncheckedException(((Failure) firstResult).getValue());
+        } else if (firstResult instanceof DaemonBusy) {
+            throw new DaemonInitialConnectException("The daemon we connected to was busy.");
+        } else if (firstResult == null) {
+            throw new DaemonInitialConnectException("The first result from the daemon was empty. Most likely the process died immediately after connection.");
+        } else {
+            throw invalidResponse(firstResult, build);
         }
     }
 
-    private Result monitorBuild(Build build, Connection<Object> connection) {
+    private Result monitorBuild(Build build, DaemonDiagnostics diagnostics, Connection<Object> connection) {
         DaemonClientInputForwarder inputForwarder = new DaemonClientInputForwarder(buildStandardInput, build.getClientMetaData(), connection);
         try {
             inputForwarder.start();
@@ -143,24 +150,50 @@ public class DaemonClient implements GradleLauncherActionExecuter<BuildActionPar
                 LOGGER.trace("Received object #{}, type: {}", objectsReceived++, object == null ? null : object.getClass().getName());
 
                 if (object == null) {
-                    throw new DaemonDisappearedException(build, connection);
-                    //TODO SF we can try sending something to the daemon and try out if he is really dead
-                    //if he's really dead we should deregister it if it is not already deregistered.
-                    //if the daemon is not dead we might continue receiving from him (and try to find the bug in messaging infrastructure)
+                    return handleDaemonDisappearance(build, diagnostics);
                 } else if (object instanceof Failure) {
                     // Could potentially distinguish between CommandFailure and DaemonFailure here.
-                    throw ((Failure) object).getValue();
+                    throw UncheckedException.throwAsUncheckedException(((Failure) object).getValue());
                 } else if (object instanceof OutputEvent) {
                     outputEventListener.onOutput((OutputEvent) object);
                 } else if (object instanceof Result) {
                     return (Result) object;
                 } else {
-                    throw new IllegalStateException(String.format("Daemon returned %s (type: %s) as for which there is no strategy to handle", object, object.getClass()));
+                    throw invalidResponse(object, build);
                 }
             }
         } finally {
             inputForwarder.stop();
             connection.stop();
         }
+    }
+
+    private Result handleDaemonDisappearance(Build build, DaemonDiagnostics diagnostics) {
+        //we can try sending something to the daemon and try out if he is really dead or use jps
+        //if he's really dead we should deregister it if it is not already deregistered.
+        //if the daemon is not dead we might continue receiving from him (and try to find the bug in messaging infrastructure)
+        int daemonLogLines = 20;
+        LOGGER.error("The message received from the daemon indicates that the daemon has disappeared."
+                + "\nDaemon pid: " + diagnostics.getPid()
+                + "\nDaemon log: " + diagnostics.getDaemonLog()
+                + "\nBuild request sent: " + build
+                + "\nAttempting to read last " + daemonLogLines + " lines from the daemon log...");
+
+        try {
+            String tail = GFileUtils.tail(diagnostics.getDaemonLog(), daemonLogLines);
+            LOGGER.error("Last " + daemonLogLines + " lines from " + diagnostics.getDaemonLog().getName() + ":"
+                    + "\n----------\n" + tail + "----------\n");
+        } catch (GFileUtils.TailReadingException e) {
+            LOGGER.error("Unable to read from the daemon log file because of: " + e);
+            LOGGER.debug("Problem reading the daemon log file.", e);
+        }
+
+        throw new DaemonDisappearedException();
+    }
+
+    private IllegalStateException invalidResponse(Object response, Build command) {
+        return new IllegalStateException(String.format(
+                "Received invalid response from the daemon: '%s' is a result of a type we don't have a strategy to handle."
+                        + "Earlier, '%s' request was sent to the daemon.", response, command));
     }
 }

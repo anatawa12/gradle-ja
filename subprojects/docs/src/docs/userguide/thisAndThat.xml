@@ -1,4 +1,4 @@
-<!--
+﻿<!--
   ~ Copyright 2009 the original author or authors.
   ~
   ~ Licensed under the Apache License, Version 2.0 (the "License");
@@ -30,28 +30,6 @@
             <sourcefile file="build.gradle"/>
             <output args="-q compile"/>
         </sample>
-        <para role="original">But Gradle offers you also <emphasis>Directory Tasks</emphasis> to deal with this.</para>
-        <para>しかし、Gradleではもっといい方法があります。<emphasis>Directoryタスク</emphasis>です。</para>
-        <sample id="directoryTask" dir="userguide/tutorial/directoryTask" title="Directory creation with Directory tasks">
-            <sourcefile file="build.gradle"/>
-            <output args="-q otherResources"/>
-        </sample>
-        <para role="original">A <emphasis>Directory Task</emphasis>
-            is a simple task whose name is a relative path to the project dir
-            <footnote>
-                <para role="original">The notation <literal>dir('/somepath')</literal> is a convenience method for
-                    <literal>tasks.add('somepath', type: Directory)</literal>
-                </para>
-            </footnote>
-            . During the execution phase the directory corresponding to this path gets created if it does not exist yet.
-            Another interesting thing to note in this example, is that you can also pass tasks objects to the dependsOn
-            declaration of a task.
-        </para>
-        <para><emphasis>Directoryタスク</emphasis>はプロジェクトディレクトリからの相対パスを名前とする単純なタスクです。
-            <footnote>
-                <para><literal>dir('/somepath')</literal>は<literal>tasks.add('somepath', type: Directory)</literal>の略記法です。</para>
-            </footnote>
-            実行フェーズでそのパスにディレクトリがなければ作成します。さらに上の例で注目すべきところは、DirectoryタスクをタスクのdependsOn宣言に引き渡すことができるという点です。</para>
     </section>
     <section id='sec:gradle_properties_and_system_properties'>
         <title>Gradleプロパティとシステムプロパティ<phrase role="original">Gradle properties and system properties</phrase></title>
@@ -119,93 +97,6 @@
         </section>
     </section>
 
-    <section id="sec:gradle_configuration_properties">
-        <title>Configuring gradle via gradle.properties</title>
-        <para>The idea is that certain settings like jvm memory settings, java home, deamon on/off
-            are best useful if they can versioned with the project in your VCS so that
-            the entire team can work with consistent environment.
-            You can place those settings in the <filename>gradle.properties</filename>.
-            The configuration is applied in following order
-            (in case an option is configured in multiple locations the last one wins):
-            <itemizedlist>
-                <listitem>from <filename>gradle.properties</filename> located in <literal>gradle user home</literal>.</listitem>
-                <listitem>from <filename>gradle.properties</filename> located in project build dir.</listitem>
-                <listitem>from system properties, e.g. when <literal>-Dsome.property</literal> is used in the command line.</listitem>
-            </itemizedlist>
-        </para>
-        <para>
-            The following properties can be used to configure gradle:
-            <varlistentry>
-                <term><literal>org.gradle.daemon</literal></term>
-                <listitem><para>When set to <literal>true</literal> the gradle daemon is to run the build.
-                    This is our favorite property because we nearly always run gradle jobs with the daemon.</para>
-                </listitem>
-            </varlistentry>
-            <varlistentry>
-                <term><literal>org.gradle.jvmargs</literal></term>
-                <listitem><para>Specifies the jvmargs used for the daemon process.
-                    In future this setting will be honored by regular gradle builds.
-                    Currently, only daemon uses it.
-                    The setting is particularly useful for tweaking memory settings.
-                    At the moment the default settings are pretty generous with regards to memory.</para>
-                </listitem>
-            </varlistentry>
-            <varlistentry>
-                <term><literal>org.gradle.java.home</literal></term>
-                <listitem><para>Specifies the java home for the daemon process.
-                    In future this setting will be honored by regular gradle builds.
-                    Currently, only daemon uses it.
-                    The value can be set to either <literal>jdk</literal> or <literal>jre</literal> location,
-                    however, depending on what does your build do, <literal>jdk</literal> is safer.
-                    Reasonable default is used if the setting is unspecified.</para>
-                </listitem>
-            </varlistentry>
-        </para>
-    </section>
-
-    <section id='sec:accessing_the_web_via_a_proxy'>
-        <title>プロキシを通してWebにアクセスする<phrase role="original">Accessing the web via a proxy</phrase></title>
-        <para role="original">Setting a proxy for web access (for example for downloading dependencies) is easy. Gradle does not need to
-            provide special functionality for this. The JVM can be instructed to go via proxy by setting certain system
-            properties. You could set these system properties directly in your build script with <literal>
-                System.properties['proxy.proxyUser'] = 'userid'</literal>. An arguably nicer way is shown in
-            <xref linkend='sec:gradle_properties_and_system_properties'/>. Your gradle.properties file could look like
-            this:
-        </para>
-        <para>Webにアクセスする(依存関係に含まれるライブラリをダウンロードするときなど)ためのプロキシの設定も簡単にできます。Gradle自身がこのために特別な機能を用意しているわけではありませんが、規定のシステムプロパティを設定すればJVMがプロキシを使用してくれます。ビルドスクリプトで<literal>System.properties['proxy.proxyUser'] = 'userid'</literal>とやってもいいですが、システムプロパティを設定するためのよりよい方法は<xref linkend='sec:gradle_properties_and_system_properties'/>で見てきたとおりです。次のような<filename>gradle.properties</filename>で設定できます。</para>
-        <example>
-            <title>プロキシを通してWebにアクセスする<phrase role="original">Accessing the web via a proxy</phrase></title>
-            <para><filename>gradle.properties</filename></para>
-            <programlisting><![CDATA[
-systemProp.http.proxyHost=www.somehost.org
-systemProp.http.proxyPort=8080
-systemProp.http.proxyUser=userid
-systemProp.http.proxyPassword=password
-systemProp.http.nonProxyHosts=*.nonproxyrepos.com|localhost	
-]]></programlisting>
-        </example>
-        <para role="original">We could not find a good overview for all possible proxy settings. One place to look are the constants
-            in a file from the ant project. Here a
-            <ulink url='http://svn.apache.org/viewvc/ant/core/trunk/src/main/org/apache/tools/ant/util/ProxySetup.java?view=markup&amp;pathrev=556977'>
-                link
-            </ulink> to the svn view. The other is a
-            <ulink url='http://download.oracle.com/javase/6/docs/technotes/guides/net/properties.html'>
-                Networking Properties page
-            </ulink> from the JDK docs. If anyone knows a better overview please let us know via the mailing list.
-        </para>
-        <section id='sub:ntlm_authentication'>
-            <title>NTLM Authentication</title>
-            <para>If your proxy requires NTLM authentication, you may need to provide the authentication domain as well as the username and password.
-                There are 2 ways that you can provide the domain for authenticating to a NTLM proxy:
-                <itemizedlist>
-                    <listitem>Set the <literal>http.proxyUser</literal> system property to a value like <literal><replaceable>domain</replaceable>/<replaceable>username</replaceable></literal>.
-                    </listitem>
-                    <listitem>Provide the authentication domain via the <literal>http.auth.ntlm.domain</literal> system property.
-                    </listitem>
-                </itemizedlist>
-            </para>
-        </section>
-    </section>
     <section id="sec:configuring_using_external_script">
         <title>外部のビルドスクリプトをプロジェクトに取り込む<phrase role="original">Configuring the project using an external build script</phrase></title>
         <para role="original">You can configure the current project using an external build script. All of the Gradle build language
@@ -246,7 +137,7 @@ systemProp.http.nonProxyHosts=*.nonproxyrepos.com|localhost
             <filename>.gradle</filename> directory in which it puts the compiled script. The next time you run this
             build, Gradle uses the compiled script, if the script has not changed since it was compiled.  Otherwise the
             script gets compiled and the new version is stored in the cache. If you run Gradle with the
-            <option>-C rebuild</option> option, the cached script is discarded and the script is compiled and stored
+            <option>--recompile-scripts</option> option, the cached script is discarded and the script is compiled and stored
             in the cache. This way you can force Gradle to rebuild the cache.
         </para>
         <para>応答速度を上げるため、Gradleはコンパイル済みのスクリプトをデフォルトですべてキャッシュします。キャッシュ対象にはすべてのビルドスクリプトや初期化スクリプト、その他のスクリプトまで含まれています。最初にプロジェクトをビルドしたとき、Gradleは<filename>.gradle</filename>ディレクトリをプロジェクトディレクトリに作成し、そこのコンパイル済みのスクリプトを保存します。次にプロジェクトをビルドしたときにはGradleはそのコンパイル済みのスクリプトを使用します。前回コンパイルしたときからスクリプトが変更されていた場合は再度コンパイルして保存します。Gradleを実行するときに、リビルドオプションの<option>-C</option>オプションを使えばキャッシュはすべて破棄され、再度コンパイル、保存されます。</para>

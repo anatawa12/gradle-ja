@@ -1,4 +1,4 @@
-<!--
+﻿<!--
   ~ Copyright 2009 the original author or authors.
   ~
   ~ Licensed under the Apache License, Version 2.0 (the "License");
@@ -17,7 +17,7 @@
     <title>Groovyクイックスタート<phrase role="original">Groovy Quickstart</phrase></title>
 
     <para role="original">To build a Groovy project, you use the <firstterm>Groovy plugin</firstterm>. This plugin extends the Java
-        plugin to add Groovy compilation capabilties to your project. Your project can contain Groovy source code,
+        plugin to add Groovy compilation capabilities to your project. Your project can contain Groovy source code,
         Java source code, or a mix of the two. In every other respect, a Groovy project is identical to a Java project,
         which we have already seen in <xref linkend="tutorial_java_projects"/>.
     </para>

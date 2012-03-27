@@ -1,4 +1,4 @@
-<!--
+﻿<!--
   ~ Copyright 2009 the original author or authors.
   ~
   ~ Licensed under the Apache License, Version 2.0 (the "License");
@@ -255,7 +255,7 @@
     <section id="build_lifecycle_events">
         <title>ライフサイクルからの通知に応答する<phrase role="original">Responding to the lifecycle in the build script</phrase></title>
 
-        <para role="original">Your build script can receive notifications as the build progresses through its lifecyle. These
+        <para role="original">Your build script can receive notifications as the build progresses through its lifecycle. These
             notifications generally take 2 forms: You can either implement a particular listener interface, or you can
             provide a closure to execute when the notification is fired. The examples below use closures. For details on
             how to use the listener interfaces, refer to the API documentation.

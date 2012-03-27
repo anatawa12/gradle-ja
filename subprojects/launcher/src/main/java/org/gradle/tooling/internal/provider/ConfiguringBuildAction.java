@@ -19,26 +19,36 @@ import org.gradle.BuildResult;
 import org.gradle.GradleLauncher;
 import org.gradle.StartParameter;
 import org.gradle.api.logging.LogLevel;
+import org.gradle.cli.CommandLineArgumentException;
+import org.gradle.initialization.DefaultCommandLineConverter;
 import org.gradle.initialization.GradleLauncherAction;
 import org.gradle.launcher.exec.InitializationAware;
 import org.gradle.logging.ShowStacktrace;
+import org.gradle.tooling.internal.protocol.exceptions.InternalUnsupportedBuildArgumentException;
+import org.gradle.tooling.internal.provider.input.ProviderOperationParameters;
 
 import java.io.File;
 import java.io.Serializable;
+import java.util.List;
 
 class ConfiguringBuildAction<T> implements GradleLauncherAction<T>, InitializationAware, Serializable {
-    private final LogLevel buildLogLevel;
-    private final GradleLauncherAction<T> action;
-    private final File projectDirectory;
-    private final File gradleUserHomeDir;
-    private final Boolean searchUpwards;
+    private LogLevel buildLogLevel;
+    private List<String> arguments;
+    private List<String> tasks;
+    private GradleLauncherAction<T> action;
+    private File projectDirectory;
+    private File gradleUserHomeDir;
+    private Boolean searchUpwards;
 
-    ConfiguringBuildAction(File gradleUserHomeDir, File projectDirectory, Boolean searchUpwards,
-                           LogLevel buildLogLevel, GradleLauncherAction<T> action) {
-        this.gradleUserHomeDir = gradleUserHomeDir;
-        this.projectDirectory = projectDirectory;
-        this.searchUpwards = searchUpwards;
-        this.buildLogLevel = buildLogLevel;
+    public ConfiguringBuildAction() {}
+
+    public ConfiguringBuildAction(ProviderOperationParameters parameters, GradleLauncherAction<T> action) {
+        this.gradleUserHomeDir = parameters.getGradleUserHomeDir();
+        this.projectDirectory = parameters.getProjectDir();
+        this.searchUpwards = parameters.isSearchUpwards();
+        this.buildLogLevel = parameters.getBuildLogLevel();
+        this.arguments = parameters.getArguments();
+        this.tasks = parameters.getTasks();
         this.action = action;
     }
 
@@ -50,13 +60,32 @@ class ConfiguringBuildAction<T> implements GradleLauncherAction<T>, Initializati
         if (searchUpwards != null) {
             startParameter.setSearchUpwards(searchUpwards);
         }
-        startParameter.setShowStacktrace(ShowStacktrace.ALWAYS);
-        if (action instanceof InitializationAware) {
-            InitializationAware initializationAware = (InitializationAware) action;
-            initializationAware.configureStartParameter(startParameter);
+
+        if (tasks != null) {
+            startParameter.setTaskNames(tasks);
         }
 
-        startParameter.setLogLevel(buildLogLevel);
+        if (arguments != null) {
+            DefaultCommandLineConverter converter = new DefaultCommandLineConverter();
+            try {
+                converter.convert(arguments, startParameter);
+            } catch (CommandLineArgumentException e) {
+                throw new InternalUnsupportedBuildArgumentException(
+                    "Problem with provided build arguments: " + arguments + ". "
+                    + "\n" + e.getMessage()
+                    + "\nEither it is not a valid build option or it is not supported in the target Gradle version."
+                    + "\nNot all of the Gradle command line options are supported build arguments."
+                    + "\nExamples of supported build arguments: '--info', '-u', '-p'."
+                    + "\nExamples of unsupported build options: '--daemon', '-?', '-v'."
+                    + "\nPlease find more information in the javadoc for the BuildLauncher class.", e);
+            }
+        }
+
+        if (buildLogLevel != null) {
+            startParameter.setLogLevel(buildLogLevel);
+        }
+
+        startParameter.setShowStacktrace(ShowStacktrace.ALWAYS);
     }
 
     public BuildResult run(GradleLauncher launcher) {

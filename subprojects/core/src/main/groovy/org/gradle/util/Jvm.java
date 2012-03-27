@@ -1,5 +1,5 @@
 /*
- * Copyright 2010 the original author or authors.
+ * Copyright 2012 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,292 +16,78 @@
 
 package org.gradle.util;
 
-import org.gradle.api.logging.Logger;
-import org.gradle.api.logging.Logging;
-import org.gradle.internal.nativeplatform.OperatingSystem;
-import org.gradle.util.jvm.JavaInfo;
+import org.gradle.internal.jvm.JavaHomeException;
+import org.gradle.internal.jvm.JavaInfo;
 
 import java.io.File;
-import java.util.HashMap;
 import java.util.Map;
 
+@Deprecated
 public class Jvm implements JavaInfo {
-    
-    private final static Logger LOGGER = Logging.getLogger(Jvm.class);
-    
-    private final OperatingSystem os;
-    //supplied java location
-    private final File javaBase;
-    //discovered java location
-    private final File javaHome;
-    private final boolean userSupplied;
+    private final org.gradle.internal.jvm.Jvm jvm;
+
+    public Jvm(org.gradle.internal.jvm.Jvm current) {
+        this.jvm = current;
+    }
 
     public static Jvm current() {
-        return create(null);
+        DeprecationLogger.nagUserWith("The class org.gradle.util.Jvm has been deprecated and will be removed in the next version of Gradle.");
+        return new Jvm(org.gradle.internal.jvm.Jvm.current());
     }
 
-    private static Jvm create(File javaBase) {
-        String vendor = System.getProperty("java.vm.vendor");
-        if (vendor.toLowerCase().startsWith("apple inc.")) {
-            return new AppleJvm(OperatingSystem.current(), javaBase);
-        }
-        if (vendor.toLowerCase().startsWith("ibm corporation")) {
-            return new IbmJvm(OperatingSystem.current(), javaBase);
-        }
-        return new Jvm(OperatingSystem.current(), javaBase);
-    }
-
-    Jvm(OperatingSystem os) {
-        this(os, null);
-    }
-
-    /**
-     * @param os the OS
-     * @param suppliedJavaBase initial location to discover from. May be jdk or jre.
-     */
-    Jvm(OperatingSystem os, File suppliedJavaBase) {
-        this.os = os;
-        if (suppliedJavaBase == null) {
-            //discover based on what's in the sys. property
-            this.javaBase = GFileUtils.canonicalise(new File(System.getProperty("java.home")));
-            File toolsJar = getToolsJar(javaBase);
-            this.javaHome = toolsJar == null ? javaBase : toolsJar.getParentFile().getParentFile();
-            this.userSupplied = false;
-        } else {
-            //precisely use what the user wants and validate strictly further on
-            this.javaBase = suppliedJavaBase;
-            this.javaHome = suppliedJavaBase;
-            this.userSupplied = true;
-        }
-    }
-    
-    /**
-     * Creates jvm instance for given java home. Attempts to validate if provided javaHome is a valid jdk or jre location.
-     *
-     * @param javaHome - location of your jdk or jre (jdk is safer), cannot be null
-     * @return jvm for given java home
-     *
-     * @throws org.gradle.util.JavaHomeException when supplied javaHome does not seem to be a valid jdk or jre location
-     * @throws IllegalArgumentException when supplied javaHome is not a valid folder
-     */
-    public static JavaInfo forHome(File javaHome) throws JavaHomeException, IllegalArgumentException {
-        if (javaHome == null || !javaHome.isDirectory()) {
-            throw new IllegalArgumentException("Supplied javaHome must be a valid directory. You supplied: " + javaHome);
-        }
-        Jvm jvm = create(javaHome);
-        //some validation:
-        jvm.getJavaExecutable();
-        return jvm;
-    }
-
-    @Override
-    public String toString() {
-        if (userSupplied) {
-            return "User-supplied java: " + javaBase;
-        }
-        return String.format("%s (%s %s)", SystemProperties.getJavaVersion(), System.getProperty("java.vm.vendor"), System.getProperty("java.vm.version"));
-    }
-
-    private File findExecutable(String command) {
-        File exec = new File(getJavaHome(), "bin/" + command);
-        File executable = new File(os.getExecutableName(exec.getAbsolutePath()));
-        if (executable.isFile()) {
-            return executable;
-        }
-
-        if (userSupplied) { //then we want to validate strictly
-            throw new JavaHomeException(String.format("The supplied javaHome seems to be invalid."
-                    + " I cannot find the %s executable. Tried location: %s", command, executable.getAbsolutePath()));
-        }
-
-        File pathExecutable = os.findInPath(command);
-        if (pathExecutable != null) {
-            LOGGER.info("Unable to find the '{}' executable using home: {}. We found it on the PATH: {}.",
-                    command, getJavaHome(), pathExecutable);
-            return pathExecutable;
-        }
-
-        LOGGER.warn("Unable to find the '{}' executable. Tried the java home: {} and the PATH."
-                + " We will assume the executable can be ran in the current working folder.",
-                command, getJavaHome());
-        return new File(os.getExecutableName(command));
-    }
-
-    /**
-     * {@inheritDoc}
-     */
     public File getJavaExecutable() throws JavaHomeException {
-        return findExecutable("java");
+        return jvm.getJavaExecutable();
     }
 
-    /**
-     * {@inheritDoc}
-     */
     public File getJavadocExecutable() throws JavaHomeException {
-        return findExecutable("javadoc");
+        return jvm.getJavadocExecutable();
     }
 
-    /**
-     * {@inheritDoc}
-     */
     public File getExecutable(String name) throws JavaHomeException {
-        return findExecutable(name);
+        return jvm.getExecutable(name);
     }
 
     public boolean isJava5() {
-        return SystemProperties.getJavaVersion().startsWith("1.5");    
+        return jvm.isJava5();
     }
 
     public boolean isJava6() {
-        return SystemProperties.getJavaVersion().startsWith("1.6");
+        return jvm.isJava6();
     }
 
     public boolean isJava7() {
-        return SystemProperties.getJavaVersion().startsWith("1.7");
+        return jvm.isJava7();
     }
 
     public boolean isJava5Compatible() {
-         return isJava5() || isJava6Compatible();
+        return jvm.isJava5Compatible();
     }
 
     public boolean isJava6Compatible() {
-        return isJava6() || isJava7();
+        return jvm.isJava6Compatible();
     }
 
-    /**
-     * {@inheritDoc}
-     */
     public File getJavaHome() {
-        return javaHome;
+        return jvm.getJavaHome();
     }
 
-    /**
-     * {@inheritDoc}
-     */
     public File getRuntimeJar() {
-        File runtimeJar = new File(javaBase, "lib/rt.jar");
-        return runtimeJar.exists() ? runtimeJar : null;
+        return jvm.getRuntimeJar();
     }
 
-    /**
-     * {@inheritDoc}
-     */
     public File getToolsJar() {
-        return getToolsJar(javaBase);
+        return jvm.getToolsJar();
     }
 
-    private File getToolsJar(File javaHome) {
-        File toolsJar = new File(javaHome, "lib/tools.jar");
-        if (toolsJar.exists()) {
-            return toolsJar;
-        }
-        if (javaHome.getName().equalsIgnoreCase("jre")) {
-            javaHome = javaHome.getParentFile();
-            toolsJar = new File(javaHome, "lib/tools.jar");
-            if (toolsJar.exists()) {
-                return toolsJar;
-            }
-        }
-        if (javaHome.getName().matches("jre\\d+") && os.isWindows()) {
-            javaHome = new File(javaHome.getParentFile(), String.format("jdk%s", SystemProperties.getJavaVersion()));
-            toolsJar = new File(javaHome, "lib/tools.jar");
-            if (toolsJar.exists()) {
-                return toolsJar;
-            }
-        }
-
-        return null;
-    }
-
-    /**
-     * {@inheritDoc}
-     */
     public Map<String, ?> getInheritableEnvironmentVariables(Map<String, ?> envVars) {
-        return envVars;
+        return jvm.getInheritableEnvironmentVariables(envVars);
     }
 
-    /**
-     * {@inheritDoc}
-     */
     public boolean getSupportsAppleScript() {
-        return false;
+        return jvm.getSupportsAppleScript();
     }
 
     public boolean isIbmJvm() {
-        return false;
-    }
-
-    static class IbmJvm extends Jvm {
-        IbmJvm(OperatingSystem os, File suppliedJavaBase) {
-            super(os, suppliedJavaBase);
-        }
-
-        @Override
-        public boolean isIbmJvm() {
-            return true;
-        }
-    }
-
-    /**
-     * Note: Implementation assumes that an Apple JVM always comes with a JDK rather than a JRE,
-     * but this is likely an over-simplification.
-     */
-    static class AppleJvm extends Jvm {
-        AppleJvm(OperatingSystem os) {
-            super(os);
-        }
-
-        AppleJvm(OperatingSystem current, File javaHome) {
-            super(current, javaHome);
-        }
-
-        /**
-         * {@inheritDoc}
-         */
-        @Override
-        public File getJavaHome() {
-            return super.getJavaHome();
-        }
-
-        /**
-         * {@inheritDoc}
-         */
-        @Override
-        public File getRuntimeJar() {
-            File javaHome = super.getJavaHome();
-            File runtimeJar = new File(javaHome.getParentFile(), "Classes/classes.jar");
-            return runtimeJar.exists() ? runtimeJar : null;
-        }
-
-        /**
-         * {@inheritDoc}
-         */
-        @Override
-        public File getToolsJar() {
-            return getRuntimeJar();
-        }
-
-        /**
-         * {@inheritDoc}
-         */
-        @Override
-        public Map<String, ?> getInheritableEnvironmentVariables(Map<String, ?> envVars) {
-            Map<String, Object> vars = new HashMap<String, Object>();
-            for (Map.Entry<String, ?> entry : envVars.entrySet()) {
-                if (entry.getKey().matches("APP_NAME_\\d+") || entry.getKey().matches("JAVA_MAIN_CLASS_\\d+")) {
-                    continue;
-                }
-                vars.put(entry.getKey(), entry.getValue());
-            }
-            return vars;
-        }
-
-        /**
-         * {@inheritDoc}
-         */
-        @Override
-        public boolean getSupportsAppleScript() {
-            return true;
-        }
+        return jvm.isIbmJvm();
     }
 }

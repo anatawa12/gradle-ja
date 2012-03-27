@@ -1,4 +1,4 @@
-<!--
+﻿<!--
   ~ Copyright 2010 the original author or authors.
   ~
   ~ Licensed under the Apache License, Version 2.0 (the "License");
@@ -261,7 +261,7 @@
                         ファイルが読み込まれる。ファイルが存在しない場合は、Gradleがデフォルトの内容を用意する。</listitem>
                     <listitem><phrase role="original">The <code>beforeMerged</code> hook is executed with a domain object representing the existing file</phrase>
                         <code>beforeMerged</code>フックが実行され、既存の設定内容を表すドメインオブジェクトがフックに引き渡される。</listitem>
-                    <listitem><phrase role="original">The existing content is merged with the configuration inferred from the gradle build or defined explicitly in the eclipse DSL</phrase>
+                    <listitem><phrase role="original">The existing content is merged with the configuration inferred from the Gradle build or defined explicitly in the eclipse DSL</phrase>
                         Gradleのビルド内容から推測される、またはDSLで明示された設定内容と、既存の設定内容がマージされる。</listitem>
                     <listitem><phrase role="original">The <code>whenMerged</code> hook is executed with a domain object representing contents of the file to be persisted</phrase>
                         <code>whenMerged</code>フックが実行され、保存される予定の設定内容を表すドメインオブジェクトがフックに引き渡される。</listitem>

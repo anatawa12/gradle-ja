@@ -21,6 +21,7 @@ import org.gradle.api.UncheckedIOException;
 
 import java.io.*;
 import java.net.URL;
+import java.net.URLConnection;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -51,7 +52,6 @@ public class GUtil {
     }
 
     public static <T extends Collection> T flatten(Collection elements, T addTo, boolean flattenMapsAndArrays) {
-        //TODO SF - for some reason, flattening of arrays is controlled by flattenMaps. Consider some refactorings.
         return flatten(elements, addTo, flattenMapsAndArrays, flattenMapsAndArrays);
     }
 
@@ -72,7 +72,6 @@ public class GUtil {
         return addTo;
     }
 
-    //TODO SF - consider moving all flatteing and collectionzizing methods to the CollectionUtil
     /**
      * Flattens input collections (including arrays *but* not maps).
      * If input is not a collection wraps it in a collection and returns it.
@@ -215,7 +214,9 @@ public class GUtil {
 
     public static Properties loadProperties(URL url) {
         try {
-            return loadProperties(url.openStream());
+            URLConnection uc = url.openConnection();
+            uc.setUseCaches(false);
+            return loadProperties(uc.getInputStream());
         } catch (IOException e) {
             throw new UncheckedIOException(e);
         }

@@ -32,8 +32,6 @@ import java.util.concurrent.TimeUnit;
  */
 public interface ProviderOperationParameters {
 
-    LogLevel getProviderLogLevel();
-
     LogLevel getBuildLogLevel();
 
     InputStream getStandardInput();
@@ -61,4 +59,8 @@ public interface ProviderOperationParameters {
     ProgressListenerVersion1 getProgressListener();
 
     TimeUnit getDaemonMaxIdleTimeUnits();
+
+    List<String> getArguments();
+
+    List<String> getTasks();
 }

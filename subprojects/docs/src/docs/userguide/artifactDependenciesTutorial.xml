@@ -1,4 +1,4 @@
-<chapter id="artifact_dependencies_tutorial" xml:lang="ja">
+﻿<chapter id="artifact_dependencies_tutorial" xml:lang="ja">
     <title>依存関係管理の基本 <phrase role="original">Dependency Management Basics</phrase></title>
     <para role="original">
         This chapter introduces some of the basics of dependency management in Gradle.
@@ -93,7 +93,7 @@
         </para>
     </section>
 
-    <section>
+    <section id="configurations">
         <title>依存関係のコンフィグレーション <phrase role="original">Dependency configurations</phrase></title>
         <para role="original">In Gradle dependencies are grouped into <firstterm>configurations</firstterm>. A configuration is simply a named set of dependencies.
             We will refer to them as <firstterm>dependency configurations</firstterm>. You can use them to declare the external dependencies of your project.

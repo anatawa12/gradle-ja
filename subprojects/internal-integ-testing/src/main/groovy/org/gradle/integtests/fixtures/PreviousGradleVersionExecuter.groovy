@@ -23,13 +23,13 @@ import org.gradle.cache.internal.DefaultCacheFactory
 import org.gradle.cache.internal.DefaultFileLockManager
 import org.gradle.cache.internal.DefaultProcessMetaDataProvider
 import org.gradle.cache.internal.FileLockManager.LockMode
-import org.gradle.launcher.daemon.registry.DaemonRegistry
-import org.gradle.internal.nativeplatform.services.NativeServices
-import org.gradle.internal.nativeplatform.OperatingSystem
 import org.gradle.internal.nativeplatform.ProcessEnvironment
+import org.gradle.internal.nativeplatform.services.NativeServices
+import org.gradle.internal.os.OperatingSystem
+import org.gradle.launcher.daemon.registry.DaemonRegistry
 import org.gradle.util.DistributionLocator
 import org.gradle.util.GradleVersion
-import org.gradle.util.Jvm
+import org.gradle.internal.jvm.Jvm
 import org.gradle.util.TestFile
 
 public class PreviousGradleVersionExecuter extends AbstractGradleExecuter implements BasicGradleDistribution {
@@ -90,7 +90,7 @@ public class PreviousGradleVersionExecuter extends AbstractGradleExecuter implem
         throw new UnsupportedOperationException()
     }
     
-    boolean daemonSupported() {
+    boolean isDaemonSupported() {
         // Milestone 7 was broken on the IBM jvm
         if (Jvm.current().ibmJvm && version == GradleVersion.version('1.0-milestone-7')) {
             return false
@@ -105,6 +105,10 @@ public class PreviousGradleVersionExecuter extends AbstractGradleExecuter implem
         }
     }
 
+    boolean isDaemonIdleTimeoutConfigurable() {
+        return version > GradleVersion.version('1.0-milestone-6')
+    }
+
     boolean isOpenApiSupported() {
         return version >= GradleVersion.version('0.9-rc-1')
     }
@@ -115,11 +119,18 @@ public class PreviousGradleVersionExecuter extends AbstractGradleExecuter implem
 
     boolean wrapperCanExecute(String version) {
         if (version == '0.8' || this.version == GradleVersion.version('0.8')) {
+            // There was a breaking change after 0.8
             return false
         }
         if (this.version == GradleVersion.version('0.9.1')) {
             // 0.9.1 couldn't handle anything with a timestamp whose timezone was behind GMT
             return version.matches('.*+\\d{4}')
+        }
+        if (this.version >= GradleVersion.version('0.9.2') && this.version <= GradleVersion.version('1.0-milestone-2')) {
+            // These versions couldn't handle milestone patches
+            if (version.matches('1.0-milestone-\\d+[a-z]-.+')) {
+                return false
+            }
         }
         return true
     }
@@ -157,7 +168,7 @@ public class PreviousGradleVersionExecuter extends AbstractGradleExecuter implem
                 zipFile.copyFrom(url)
                 zipFile.usingNativeTools().unzipTo(versionDir)
             }
-            cache = CACHE_FACTORY.open(versionDir, version.toString(), CacheUsage.ON, [:], LockMode.Shared, downloadAction as Action)
+            cache = CACHE_FACTORY.open(versionDir, version.toString(), CacheUsage.ON, null, [:], LockMode.Shared, downloadAction as Action)
         }
         zipFile.assertIsFile()
         homeDir.assertIsDir()

@@ -19,18 +19,16 @@ package org.gradle.util;
 import org.gradle.api.Buildable;
 import org.gradle.api.Task;
 import org.gradle.api.file.FileCollection;
+import org.gradle.api.internal.file.CompositeFileCollection;
 import org.gradle.api.internal.file.UnionFileCollection;
 import org.gradle.api.internal.file.collections.DefaultConfigurableFileCollection;
+import org.gradle.api.internal.file.collections.DefaultFileCollectionResolveContext;
 import org.hamcrest.*;
 import org.jmock.api.Action;
 import org.jmock.api.Invocation;
 import org.jmock.internal.ReturnDefaultValueAction;
 
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.StringReader;
-import java.io.ObjectOutputStream;
-import java.io.ByteArrayOutputStream;
+import java.io.*;
 import java.util.*;
 import java.util.regex.Pattern;
 
@@ -129,6 +127,12 @@ public class Matchers {
     }
 
     @Factory
+    @Deprecated
+    /**
+     * Please avoid using as the hamcrest way of reporting error wraps a multi-line
+     * text into a single line and makes hard to understand the problem.
+     * Instead, please try to use the spock/groovy assert and {@link #containsLine(String, String)}
+     */
     public static Matcher<String> containsLine(final String line) {
         return new BaseMatcher<String>() {
             public boolean matches(Object o) {
@@ -331,6 +335,12 @@ public class Matchers {
                 if (expected instanceof DefaultConfigurableFileCollection) {
                     DefaultConfigurableFileCollection collection = (DefaultConfigurableFileCollection) expected;
                     return new ArrayList<FileCollection>((Set) collection.getFrom());
+                }
+                if (expected instanceof CompositeFileCollection) {
+                    CompositeFileCollection collection = (CompositeFileCollection) expected;
+                    DefaultFileCollectionResolveContext context = new DefaultFileCollectionResolveContext();
+                    collection.resolve(context);
+                    return context.resolveAsFileCollections();
                 }
                 throw new RuntimeException("Cannot get children of " + expected);
             }

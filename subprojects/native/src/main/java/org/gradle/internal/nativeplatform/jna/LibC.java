@@ -25,5 +25,7 @@ public interface LibC extends Library {
     public int chdir(String dirAbsolutePath);
     public int errno();
     public int getpid();
+    public int isatty(int fdes);
+    public int chmod(String filename, int mode);
     //CHECKSTYLE:ON
 }

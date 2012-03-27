@@ -21,7 +21,7 @@ import org.gradle.build.docs.Docbook2Xhtml
 import org.gradle.build.docs.dsl.docbook.AssembleDslDocTask
 import org.gradle.build.docs.dsl.ExtractDslMetaDataTask
 import org.gradle.build.GenerateReleasesXml
-import org.gradle.internal.nativeplatform.OperatingSystem
+import org.gradle.internal.os.OperatingSystem
 
 apply plugin: 'base'
 
@@ -46,16 +46,18 @@ dependencies {
     userGuideStyleSheets 'docbook:docbook-xsl:1.75.2@zip'
 }
 
-srcDocsDir = file('src/docs')
-userguideSrcDir = new File(srcDocsDir, 'userguide')
-cssSrcDir = new File(srcDocsDir, 'css')
-dslSrcDir = new File(srcDocsDir, 'dsl')
-docsDir = file("$buildDir/docs")
-userguideDir = new File(docsDir, 'userguide')
-distDocsDir = new File(buildDir, 'distDocs')
-samplesDir = file("$buildDir/samples")
-docbookSrc = new File(project.buildDir, 'src')
-samplesSrcDir = file('src/samples')
+ext {
+    srcDocsDir = file('src/docs')
+    userguideSrcDir = new File(srcDocsDir, 'userguide')
+    cssSrcDir = new File(srcDocsDir, 'css')
+    dslSrcDir = new File(srcDocsDir, 'dsl')
+    docsDir = file("$buildDir/docs")
+    userguideDir = new File(docsDir, 'userguide')
+    distDocsDir = new File(buildDir, 'distDocs')
+    samplesDir = file("$buildDir/samples")
+    docbookSrc = new File(project.buildDir, 'src')
+    samplesSrcDir = file('src/samples')
+}
 
 pdfFontNameKey = "gradleDocsPdfFontName"
 pdfFontFileKey = "gradleDocsPdfFontFile"
@@ -63,7 +65,7 @@ pdfGeneratable = {
     project.hasProperty(pdfFontFileKey) && project.hasProperty(pdfFontNameKey)
 }
 
-outputs = [:]
+ext.outputs = [:]
 outputs.samples = files(samplesDir) {
     builtBy 'samples'
 }
@@ -257,9 +259,18 @@ task userguidePdf(type: Xhtml2Pdf, dependsOn: pdfUserguideXhtml) {
     classpath = configurations.userGuideTask
 }
 
+def javaApiUrl = "http://docs.oracle.com/javase/1.5.0/docs/api/"
+def groovyApiUrl = "http://groovy.codehaus.org/gapi/"
+
 task javadoc(type: Javadoc) {
+    ext.stylesheetFile = file("src/docs/css/javadoc.css")
+    inputs.file stylesheetFile
+
     group = 'documentation'
     options.encoding = 'utf-8'
+    options.docEncoding = 'utf-8'
+    options.charSet = 'utf-8'
+    options.addStringOption "stylesheetfile", stylesheetFile.absolutePath
     source groovyProjects().collect {project -> project.sourceSets.main.allJava }
     destinationDir = new File(docsDir, 'javadoc')
     classpath = files(groovyProjects().collect {project -> [project.sourceSets.main.compileClasspath, project.sourceSets.main.output] })
@@ -271,10 +282,54 @@ task javadoc(type: Javadoc) {
     include 'org/gradle/testfixtures/**'
     include 'org/gradle/tooling/**'
     exclude '**/internal/**'
-    options.links("http://docs.oracle.com/javase/1.5.0/docs/api/", "http://groovy.codehaus.org/gapi/", "http://maven.apache.org/ref/2.2.1/maven-core/apidocs",
+    options.links(javaApiUrl, groovyApiUrl, "http://maven.apache.org/ref/2.2.1/maven-core/apidocs",
         "http://maven.apache.org/ref/2.2.1/maven-model/apidocs")
     doFirst {
         title = "Gradle API $version"
+    }
+}
+
+task configureGroovydoc {
+    doFirst {
+        project.configure(groovydoc) {
+            [javaApiUrl, groovyApiUrl].each {
+                link(it, *(new URL("$it/package-list").text.tokenize("\n")))
+            }
+            docTitle = "Gradle API $version"
+            windowTitle = "Gradle API $version"
+            footer = "Gradle API $version"
+        }
+    }
+}
+
+task groovydoc(type: Groovydoc, dependsOn: configureGroovydoc) {
+    group = 'documentation'
+    source groovyProjects().collect {project -> project.sourceSets.main.groovy + project.sourceSets.main.java }
+    destinationDir = new File(docsDir, 'groovydoc')
+    classpath = javadoc.classpath
+    includes = javadoc.includes
+    excludes = javadoc.excludes
+    doFirst {
+        windowTitle = "Gradle API $version"
+        docTitle = windowTitle
+    }
+    groovyClasspath = project(':core').configurations.groovy
+    doLast {
+        def index = new File(destinationDir, "index.html")
+        index.text = index.text.replace("{todo.title}", windowTitle) // workaround groovydoc bug
+    }
+
+    gradle.taskGraph.whenReady {
+        if (it.hasTask(groovydoc)) {
+            def systemCharset = java.nio.charset.Charset.defaultCharset().name()
+            if (systemCharset != "UTF-8") {
+                if (isReleaseBuild()) {
+                    throw new InvalidUserDataException("Cannot run $groovydoc.name task unless system charset is UTF-8 (it's $systemCharset, set -Dfile.encoding=UTF-8) in GRADLE_OPTS")
+                } else {
+                    logger.warn("Groovydoc will be generated in this build, but the default character encoding is '$systemCharset'. It should be 'UTF-8'. This is ok for a non release build.")
+                }
+            }
+        }
     }
 }
 
@@ -283,20 +338,6 @@ task checkstyleApi(type: Checkstyle) {
     configFile = file("$checkstyleConfigDir/checkstyle-api.xml")
     classpath = files()
     reports.xml.destination = file("$checkstyle.reportsDir/checkstyle-api.xml")
-}
-
-//TODO SF - generates for java as well, rename to codedoc?
-task groovydoc(type: Groovydoc) {
-    group = 'documentation'
-    source groovyProjects().collect {project -> project.sourceSets.main.groovy + project.sourceSets.main.java }
-    destinationDir = new File(docsDir, 'groovydoc')
-    classpath = javadoc.classpath
-    includes = javadoc.includes
-    excludes = javadoc.excludes
-    doFirst {
-        title = "Gradle API $version"
-    }
-    groovyClasspath = project(':core').configurations.groovy
 }
 
 task userguideFragmentSrc(type: UserGuideTransformTask, dependsOn: [userguideStyleSheets, samples]) {

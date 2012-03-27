@@ -25,7 +25,6 @@ import org.gradle.api.artifacts.cache.ModuleResolutionControl;
 import org.gradle.api.artifacts.cache.ResolutionRules;
 import org.gradle.api.internal.artifacts.ivyservice.ModuleVersionResolveException;
 
-import java.io.File;
 import java.util.concurrent.TimeUnit;
 
 public class StartParameterResolutionOverride {
@@ -52,7 +51,7 @@ public class StartParameterResolutionOverride {
                     artifactResolutionControl.useCachedResult();
                 }
             });
-        } else if (startParameter.getRefreshOptions().refreshDependencies()) {
+        } else if (startParameter.isRefreshDependencies() || startParameter.getRefreshOptions().refreshDependencies()) {
             resolutionRules.eachDependency(new Action<DependencyResolutionControl>() {
                 public void execute(DependencyResolutionControl dependencyResolutionControl) {
                     dependencyResolutionControl.cacheFor(0, TimeUnit.SECONDS);
@@ -73,20 +72,24 @@ public class StartParameterResolutionOverride {
 
     public ModuleVersionRepository overrideModuleVersionRepository(ModuleVersionRepository original) {
         if (startParameter.isOffline() && !original.isLocal()) {
-            return new OfflineModuleVersionRepository(original.getId());
+            return new OfflineModuleVersionRepository(original);
         }
         return original;
     }
 
     private static class OfflineModuleVersionRepository implements ModuleVersionRepository {
-        private final String id;
+        private final ModuleVersionRepository original;
 
-        public OfflineModuleVersionRepository(String id) {
-            this.id = id;
+        public OfflineModuleVersionRepository(ModuleVersionRepository original) {
+            this.original = original;
         }
 
         public String getId() {
-            return id;
+            return original.getId();
+        }
+
+        public String getName() {
+            return original.getName();
         }
 
         public boolean isLocal() {
@@ -97,7 +100,7 @@ public class StartParameterResolutionOverride {
             throw new ModuleVersionResolveException("No cached version available for offline mode");
         }
 
-        public File download(Artifact artifact) {
+        public DownloadedArtifact download(Artifact artifact) {
             throw new ArtifactResolveException(artifact, "No cached version available for offline mode");
         }
     }

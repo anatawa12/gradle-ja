@@ -1,4 +1,4 @@
-<!--
+﻿<!--
   ~ Copyright 2009 the original author or authors.
   ~
   ~ Licensed under the Apache License, Version 2.0 (the "License");
@@ -15,7 +15,7 @@
   -->
 <chapter id="tutorial_gradle_gui" xml:lang="ja">
     <title>GradleのGUIを使う<phrase role="original">Using the Gradle Graphical User Interface</phrase></title>
-    <para role="original">In addition to supporting a traditional command line interface, gradle offers
+    <para role="original">In addition to supporting a traditional command line interface, Gradle offers
     a graphical user interface.  This is a stand alone user interface that can be launched with the
     <command>--gui</command> option.</para>
     <para>伝統的なコマンドラインインターフェースに加え、Gradleはグラフィカルユーザーインターフェースも提供しています。これはスタンドアローンのインターフェースで、<command>--gui</command>オプションを使って起動できます。</para>
@@ -25,10 +25,10 @@
 gradle --gui
 ]]></programlisting>
     </example>
-    <para role="original">Note that this command blocks until the gradle GUI is closed.  Under *nix it is probably preferable to run
+    <para role="original">Note that this command blocks until the Gradle GUI is closed.  Under *nix it is probably preferable to run
         this as a background task (<command>gradle --gui&amp;</command>)</para>
     <para>このコマンドは、GUIをクローズするまでブロックされることに注意してください。*nixでは、バックグラウンドタスク(<command>gradle --gui&amp;</command>)で実行した方がいいかもしれません。</para>
-    <para role="original">If you run this from your gradle project working directory, you should see a tree of tasks.</para>
+    <para role="original">If you run this from your Gradle project working directory, you should see a tree of tasks.</para>
     <para>このコマンドをgradleプロジェクトの作業ディレクトリで実行すると、タスクのツリーが表示されることが分かります。</para>
     <figure>
         <title>GUI Task Tree</title>
@@ -36,7 +36,7 @@ gradle --gui
             <imagedata fileref="img/guiTaskTree.png" width="586px" depth="597px"/>
         </imageobject>
     </figure>
-    <para role="original">It is preferable to run this command from your gradle project directory so that the settings of the UI will be
+    <para role="original">It is preferable to run this command from your Gradle project directory so that the settings of the UI will be
         stored in your project directory. However, you can run it then change the working directory via the Setup tab in
         the UI.
     </para>
@@ -79,7 +79,7 @@ gradle --gui
         <title>Favorites（お気に入り）<phrase role="original">Favorites</phrase></title>
         <para role="original">
             The Favorites tab is place to store commonly-executed commands. These can be complex commands
-            (anything that's legal to gradle) and you can provide them with a display name. This is useful for creating,
+            (anything that's legal to Gradle) and you can provide them with a display name. This is useful for creating,
             say, a custom build command that explicitly skips tests, documentation, and samples that you could call
             &quot;fast build&quot;.
         </para>
@@ -99,7 +99,7 @@ gradle --gui
     <section>
         <title>Command Line（コマンドライン）<phrase role="original">Command Line</phrase></title>
         <para role="original">
-            The Command Line tab is place to execute a single gradle command directly.
+            The Command Line tab is place to execute a single Gradle command directly.
             Just enter whatever you would normally enter after 'gradle' on the command line.  This also provides
             a place to try out commands before adding them to favorites.
         </para>
@@ -119,7 +119,7 @@ gradle --gui
         <itemizedlist>
             <listitem>
                 <para>Current Directory</para>
-                <para role="original">Defines the root directory of your gradle project (typically where build.gradle is located).</para>
+                <para role="original">Defines the root directory of your Gradle project (typically where build.gradle is located).</para>
                 <para>gradleプロジェクトのルートディレクトリを設定します（典型的には、build.gradleが置かれているディレクトリになります）。</para>
             </listitem>
 
@@ -143,7 +143,7 @@ gradle --gui
                 <para role="original">Use Custom Gradle Executor - Advanced feature</para>
                 <para>Use Custom Gradle Executor - 高度な機能</para>
                 <para role="original">
-                    This provides you with an alternate way to launch gradle commands.
+                    This provides you with an alternate way to launch Gradle commands.
                     This is useful if your project requires some extra setup that is done inside another batch file or shell script
                     (such as specifying an init script).
                 </para>

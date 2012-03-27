@@ -1,4 +1,4 @@
-<!--
+﻿<!--
   ~ Copyright 2010 the original author or authors.
   ~
   ~ Licensed under the Apache License, Version 2.0 (the "License");
@@ -17,7 +17,9 @@
     <xsl:import href="xhtml/docbook.xsl"/>
     <xsl:import href="userGuideHtmlCommon.xsl"/>
 
-    <xsl:output method="xhtml" encoding="UTF-8" indent="no"/>
+    <xsl:output method="xml"
+                encoding="UTF-8"
+                indent="no"/>
 
     <!-- Use custom <head> content, to include stylesheets and bookmarks -->
 

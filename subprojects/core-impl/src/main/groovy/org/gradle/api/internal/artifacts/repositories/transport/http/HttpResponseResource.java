@@ -16,16 +16,18 @@
 package org.gradle.api.internal.artifacts.repositories.transport.http;
 
 import org.apache.http.Header;
+import org.apache.http.HttpHeaders;
 import org.apache.http.HttpResponse;
+import org.apache.http.impl.cookie.DateUtils;
 import org.apache.http.util.EntityUtils;
+import org.gradle.api.internal.externalresource.AbstractExternalResource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.Date;
 
-class HttpResponseResource extends AbstractHttpResource {
+class HttpResponseResource extends AbstractExternalResource {
     private static final Logger LOGGER = LoggerFactory.getLogger(HttpResponseResource.class);
 
     private final String method;
@@ -53,14 +55,28 @@ class HttpResponseResource extends AbstractHttpResource {
             return 0;
         }
         try {
-            return Date.parse(responseHeader.getValue());
+            return DateUtils.parseDate(responseHeader.getValue()).getTime();
         } catch (Exception e) {
             return 0;
         }
     }
 
     public long getContentLength() {
-        return response.getEntity().getContentLength();
+        Header header = response.getFirstHeader(HttpHeaders.CONTENT_LENGTH);
+        if (header == null) {
+            return -1;            
+        }
+
+        String value = header.getValue();
+        if (value == null) {
+            return -1;
+        }
+
+        try {
+            return Long.parseLong(value);
+        } catch (NumberFormatException e) {
+            return -1;
+        }
     }
 
     public boolean exists() {

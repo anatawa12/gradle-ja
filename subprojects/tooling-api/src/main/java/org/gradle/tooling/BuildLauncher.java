@@ -15,6 +15,7 @@
  */
 package org.gradle.tooling;
 
+import org.gradle.tooling.exceptions.UnsupportedBuildArgumentException;
 import org.gradle.tooling.model.Task;
 
 import java.io.File;
@@ -44,6 +45,9 @@ import java.io.OutputStream;
  *
  *    //select tasks to run:
  *    build.forTasks("clean", "test");
+ *
+ *    //include some build arguments:
+ *    build.withArguments("--no-search-upward", "-i", "--project-dir", "someProjectDir");
  *
  *    //configure the standard input:
  *    build.setStandardInput(new ByteArrayInputStream("consume this!".getBytes()));
@@ -92,6 +96,37 @@ public interface BuildLauncher extends LongRunningOperation {
     BuildLauncher forTasks(Iterable<? extends Task> tasks);
 
     /**
+     * Specify the command line build arguments.
+     * <p>
+     * Be aware that not all of the Gradle command line options are supported!
+     * Only the build arguments that configure the build execution are supported.
+     * They are modelled in the Gradle API via {@link org.gradle.StartParameter}.
+     * Examples of supported build arguments: '--info', '-u', '-p'.
+     * The command line instructions that are actually separate commands (like '-?', '-v') are not supported.
+     * Some other instructions like '--daemon' are also not supported - the tooling API always runs with the daemon.
+     * <p>
+     * If you specify unknown or unsupported command line option the {@link UnsupportedBuildArgumentException}
+     * will be thrown but only at the time when you run the build, i.e. execute {@link #run()}.
+     * <p>
+     * For the list of all Gradle command line options please refer to the user guide
+     * or take a look at the output of the 'gradle -?' command. Supported arguments are those modelled by
+     * {@link org.gradle.StartParameter}.
+     * <p>
+     * The arguments can potentially override some other settings you have configured.
+     * For example, the project directory or Gradle user home directory that are configured
+     * in the {@link GradleConnector}.
+     * Also, the task names configured by {@link #forTasks(String...)} can be overridden
+     * if you happen to specify other tasks via the build arguments.
+     * <p>
+     * See the example in the docs for {@link BuildLauncher}
+     *
+     * @param arguments gradle command line arguments
+     * @return this
+     * @since 1.0-rc-1
+     */
+    BuildLauncher withArguments(String ... arguments);
+
+    /**
      * {@inheritDoc}
      */
     BuildLauncher setStandardOutput(OutputStream outputStream);
@@ -125,14 +160,17 @@ public interface BuildLauncher extends LongRunningOperation {
      * Execute the build, blocking until it is complete.
      *
      * @throws UnsupportedVersionException When the target Gradle version does not support the features required for this build.
-     *  For example, when you have configured the long running operation with a settings
-     *  like: {@link #setStandardInput(java.io.InputStream)}, {@link #setJavaHome(java.io.File)}, {@link #setJvmArguments(String...)}
-     *  but those settings are not supported on the target Gradle.
+     * @throws org.gradle.tooling.exceptions.UnsupportedOperationConfigurationException
+     *          when you have configured the long running operation with a settings
+     *          like: {@link #setStandardInput(java.io.InputStream)}, {@link #setJavaHome(java.io.File)},
+     *          {@link #setJvmArguments(String...)} but those settings are not supported on the target Gradle.
      * @throws BuildException On some failure executing the Gradle build.
      * @throws GradleConnectionException On some other failure using the connection.
+     * @throws UnsupportedBuildArgumentException When there is a problem with build arguments provided by {@link #withArguments(String...)}
      * @throws IllegalStateException When the connection has been closed or is closing.
      */
-    void run() throws GradleConnectionException;
+    void run() throws GradleConnectionException, UnsupportedBuildArgumentException, IllegalStateException,
+            BuildException, UnsupportedVersionException;
 
     /**
      * Launchers the build. This method returns immediately, and the result is later passed to the given handler.

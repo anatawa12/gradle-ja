@@ -16,15 +16,11 @@
 
 package org.gradle.integtests
 
-import org.gradle.integtests.fixtures.AbstractIntegrationSpec
-import org.gradle.integtests.fixtures.ExecutionFailure
-import org.gradle.integtests.fixtures.ExecutionResult
-import org.gradle.integtests.fixtures.GradleDistributionExecuter
-import org.gradle.integtests.fixtures.HttpServer
-import org.gradle.integtests.fixtures.TestProxyServer
 import org.gradle.util.SetSystemProperties
+import org.gradle.util.TextUtil
 import org.junit.Rule
 import spock.lang.Issue
+import org.gradle.integtests.fixtures.*
 import static org.hamcrest.Matchers.containsString
 import static org.junit.Assert.assertThat
 
@@ -32,12 +28,9 @@ import static org.junit.Assert.assertThat
  * @author Hans Dockter
  */
 class WrapperProjectIntegrationTest extends AbstractIntegrationSpec {
-    @Rule
-    public final HttpServer server = new HttpServer()
-    @Rule
-    public final TestProxyServer proxyServer = new TestProxyServer(server)
-    @Rule
-    public SetSystemProperties systemProperties = new SetSystemProperties()
+    @Rule HttpServer server = new HttpServer()
+    @Rule TestProxyServer proxyServer = new TestProxyServer(server)
+    @Rule SetSystemProperties systemProperties = new SetSystemProperties()
 
     void setup() {
         server.start()
@@ -48,11 +41,11 @@ class WrapperProjectIntegrationTest extends AbstractIntegrationSpec {
     }
 
     private prepareWrapper(String baseUrl) {
+        assert distribution.binDistribution.exists() : "bin distribution must exist to run this test, you need to run the :binZip task"
+
         file("build.gradle") << """
     import org.gradle.api.tasks.wrapper.Wrapper
     task wrapper(type: Wrapper) {
-        zipBase = Wrapper.PathBase.PROJECT
-        zipPath = 'wrapper'
         archiveBase = Wrapper.PathBase.PROJECT
         archivePath = 'dist'
         distributionUrl = '${baseUrl}/gradlew/dist'
@@ -151,5 +144,29 @@ class WrapperProjectIntegrationTest extends AbstractIntegrationSpec {
 
         then:
         assertThat(result.output, containsString("fooD=bar"))
+    }
+
+    public void "generated wrapper scripts use correct line separators"(){
+        given:
+        assert distribution.binDistribution.exists() : "bin distribution must exist to run this test, you need to run the :binZip task"
+
+        file("build.gradle") << """
+            import org.gradle.api.tasks.wrapper.Wrapper
+            task wrapper(type: Wrapper) {
+                archiveBase = Wrapper.PathBase.PROJECT
+                archivePath = 'dist'
+                distributionUrl = 'http://localhost:${server.port}/gradlew/dist'
+                distributionBase = Wrapper.PathBase.PROJECT
+                distributionPath = 'dist'
+            }
+        """
+
+        when:
+        run "wrapper"
+        then:
+        assert file("gradlew").text.split(TextUtil.unixLineSeparator).length > 1
+        assert file("gradlew").text.split(TextUtil.windowsLineSeparator).length == 1
+        assert file("gradlew.bat").text.split(TextUtil.windowsLineSeparator).length > 1
+        noExceptionThrown()
     }
 }

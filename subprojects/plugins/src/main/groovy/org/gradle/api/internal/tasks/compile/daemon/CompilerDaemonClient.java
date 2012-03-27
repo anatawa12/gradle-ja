@@ -15,6 +15,7 @@
  */
 package org.gradle.api.internal.tasks.compile.daemon;
 
+import org.gradle.api.internal.tasks.compile.CompileSpec;
 import org.gradle.api.internal.tasks.compile.Compiler;
 import org.gradle.internal.UncheckedException;
 
@@ -22,20 +23,26 @@ import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.SynchronousQueue;
 
 public class CompilerDaemonClient implements CompilerDaemon, CompilerDaemonClientProtocol {
+    private final DaemonForkOptions forkOptions;
     private final CompilerDaemonServerProtocol server;
     private final BlockingQueue<CompileResult> compileResults = new SynchronousQueue<CompileResult>();
 
-    public CompilerDaemonClient(CompilerDaemonServerProtocol server) {
+    public CompilerDaemonClient(DaemonForkOptions forkOptions, CompilerDaemonServerProtocol server) {
+        this.forkOptions = forkOptions;
         this.server = server;
     }
 
-    public CompileResult execute(Compiler compiler) {
-        server.execute(compiler);
+    public <T extends CompileSpec> CompileResult execute(Compiler<T> compiler, T spec) {
+        server.execute(compiler, spec);
         try {
             return compileResults.take();
         } catch (InterruptedException e) {
-            throw UncheckedException.asUncheckedException(e);
+            throw UncheckedException.throwAsUncheckedException(e);
         }
+    }
+
+    public boolean isCompatibleWith(DaemonForkOptions required) {
+        return forkOptions.isCompatibleWith(required);
     }
 
     public void stop() {
@@ -46,7 +53,7 @@ public class CompilerDaemonClient implements CompilerDaemon, CompilerDaemonClien
         try {
             compileResults.put(result);
         } catch (InterruptedException e) {
-            throw UncheckedException.asUncheckedException(e);
+            throw UncheckedException.throwAsUncheckedException(e);
         }
     }
 }

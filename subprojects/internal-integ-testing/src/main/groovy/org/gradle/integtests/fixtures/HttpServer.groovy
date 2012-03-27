@@ -19,33 +19,28 @@ import java.security.Principal
 import java.util.zip.GZIPOutputStream
 import javax.servlet.http.HttpServletRequest
 import javax.servlet.http.HttpServletResponse
-import org.junit.rules.MethodRule
-import org.junit.runners.model.FrameworkMethod
-import org.junit.runners.model.Statement
-import org.mortbay.jetty.Handler
-import org.mortbay.jetty.HttpHeaders
-import org.mortbay.jetty.HttpStatus
-import org.mortbay.jetty.MimeTypes
-import org.mortbay.jetty.Request
-import org.mortbay.jetty.Server
+import org.junit.rules.ExternalResource
 import org.mortbay.jetty.handler.AbstractHandler
 import org.mortbay.jetty.handler.HandlerCollection
-import org.mortbay.jetty.security.BasicAuthenticator
-import org.mortbay.jetty.security.Constraint
-import org.mortbay.jetty.security.ConstraintMapping
-import org.mortbay.jetty.security.SecurityHandler
-import org.mortbay.jetty.security.UserRealm
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
+import org.mortbay.jetty.*
+import org.mortbay.jetty.security.*
 
-class HttpServer implements MethodRule {
-    private Logger logger = LoggerFactory.getLogger(HttpServer.class)
+class HttpServer extends ExternalResource {
+
+    static enum IfModResponse {
+        UNMODIFIED, MODIFIED
+    }
+
+    private static Logger logger = LoggerFactory.getLogger(HttpServer.class)
+
     private final Server server = new Server(0)
     private final HandlerCollection collection = new HandlerCollection()
     private Throwable failure
     private TestUserRealm realm
 
-    def HttpServer() {
+    HttpServer() {
         HandlerCollection handlers = new HandlerCollection()
         handlers.addHandler(new AbstractHandler() {
             void handle(String target, HttpServletRequest request, HttpServletResponse response, int dispatch) {
@@ -71,7 +66,7 @@ class HttpServer implements MethodRule {
     }
 
     void stop() {
-        server.stop()
+        server?.stop()
     }
 
     void resetExpectations() {
@@ -81,20 +76,9 @@ class HttpServer implements MethodRule {
         collection.setHandlers()
     }
 
-    Statement apply(Statement base, FrameworkMethod method, Object target) {
-        return new Statement() {
-            @Override
-            void evaluate() {
-                try {
-                    base.evaluate()
-                } finally {
-                    stop()
-                }
-                if (failure != null) {
-                    throw failure
-                }
-            }
-        }
+    @Override
+    protected void after() {
+        stop()
     }
 
     /**
@@ -147,7 +131,6 @@ class HttpServer implements MethodRule {
         })
     }
 
-
     /**
      * Allows one HEAD request for the given URL, which return 404 status code
      */
@@ -198,6 +181,28 @@ class HttpServer implements MethodRule {
                 }
             }
         });
+    }
+
+    /**
+     * Allow one GET request for the given URL, responding with a redirect.
+     */
+    void expectGetRedirected(String path, String location) {
+        expectRedirected('GET', path, location)
+    }
+
+    /**
+     * Allow one HEAD request for the given URL, responding with a redirect.
+     */
+    void expectHeadRedirected(String path, String location) {
+        expectRedirected('HEAD', path, location)
+    }
+
+    private void expectRedirected(String method, String path, String location) {
+        expect(path, false, [method], new AbstractHandler() {
+            void handle(String target, HttpServletRequest request, HttpServletResponse response, int dispatch) {
+                response.sendRedirect(location)
+            }
+        })
     }
 
     /**
@@ -331,6 +336,36 @@ class HttpServer implements MethodRule {
 
     int getPort() {
         return server.connectors[0].localPort
+    }
+
+    void expectGetIfNotModifiedSince(String path, File file, IfModResponse ifModResponse) {
+        expectGetIfNotModifiedSince(path, new Date(file.lastModified()), file, ifModResponse)
+    }
+
+    void expectGetIfNotModifiedSince(String path, Date date, File file, IfModResponse ifModResponse) {
+        expect(path, false, ["GET"], new AbstractHandler() {
+            void handle(String target, HttpServletRequest request, HttpServletResponse response, int dispatch) {
+                long ifModifiedSinceLong = request.getDateHeader("If-Modified-Since")
+                if (ifModifiedSinceLong < 0) {
+                    throw new AssertionError("Expected request to have If-Modified-Since header")
+                }
+                Date ifModifiedSince = new Date(ifModifiedSinceLong)
+                if (ifModifiedSince != date) {
+                    throw new AssertionError("Expected request to have If-Modified-Since of '$date' (got: $ifModifiedSince")
+                }
+                handleIfModified(response, file, ifModResponse)
+            }
+        })
+    }
+
+    private void handleIfModified(HttpServletResponse response, File file, IfModResponse ifModResponse) {
+        if (ifModResponse == IfModResponse.UNMODIFIED) {
+            response.sendError(304, "Unmodified")
+        } else if (ifModResponse == IfModResponse.MODIFIED) {
+            sendFile(response, file)
+        } else {
+            throw new IllegalStateException("Can't handle IfModResponse $ifModResponse")
+        }
     }
 
     static class TestUserRealm implements UserRealm {

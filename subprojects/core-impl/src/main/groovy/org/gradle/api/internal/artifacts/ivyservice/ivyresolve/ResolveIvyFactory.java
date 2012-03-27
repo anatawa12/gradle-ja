@@ -26,11 +26,12 @@ import org.gradle.api.internal.artifacts.configurations.ResolverProvider;
 import org.gradle.api.internal.artifacts.ivyservice.CacheLockingManager;
 import org.gradle.api.internal.artifacts.ivyservice.IvyFactory;
 import org.gradle.api.internal.artifacts.ivyservice.SettingsConverter;
-import org.gradle.api.internal.artifacts.ivyservice.artifactcache.ArtifactResolutionCache;
+import org.gradle.api.internal.externalresource.ivy.ArtifactAtRepositoryKey;
+import org.gradle.api.internal.externalresource.CachedExternalResourceIndex;
 import org.gradle.api.internal.artifacts.ivyservice.dynamicversions.ModuleResolutionCache;
 import org.gradle.api.internal.artifacts.ivyservice.modulecache.ModuleDescriptorCache;
+import org.gradle.util.TimeProvider;
 import org.gradle.util.WrapUtil;
-import org.jfrog.wharf.ivy.model.WharfResolverMetadata;
 
 import java.util.List;
 
@@ -40,22 +41,26 @@ public class ResolveIvyFactory {
     private final SettingsConverter settingsConverter;
     private final ModuleResolutionCache moduleResolutionCache;
     private final ModuleDescriptorCache moduleDescriptorCache;
-    private final ArtifactResolutionCache artifactResolutionCache;
+    private final CachedExternalResourceIndex<ArtifactAtRepositoryKey> artifactAtRepositoryCachedResolutionIndex;
     private final CacheLockingManager cacheLockingManager;
     private final StartParameterResolutionOverride startParameterResolutionOverride;
+    private final TimeProvider timeProvider;
+
 
     public ResolveIvyFactory(IvyFactory ivyFactory, ResolverProvider resolverProvider, SettingsConverter settingsConverter,
                              ModuleResolutionCache moduleResolutionCache, ModuleDescriptorCache moduleDescriptorCache,
-                             ArtifactResolutionCache artifactResolutionCache,
-                             CacheLockingManager cacheLockingManager, StartParameterResolutionOverride startParameterResolutionOverride) {
+                             CachedExternalResourceIndex<ArtifactAtRepositoryKey> artifactAtRepositoryCachedResolutionIndex,
+                             CacheLockingManager cacheLockingManager, StartParameterResolutionOverride startParameterResolutionOverride,
+                             TimeProvider timeProvider) {
         this.ivyFactory = ivyFactory;
         this.resolverProvider = resolverProvider;
         this.settingsConverter = settingsConverter;
         this.moduleResolutionCache = moduleResolutionCache;
         this.moduleDescriptorCache = moduleDescriptorCache;
-        this.artifactResolutionCache = artifactResolutionCache;
+        this.artifactAtRepositoryCachedResolutionIndex = artifactAtRepositoryCachedResolutionIndex;
         this.cacheLockingManager = cacheLockingManager;
         this.startParameterResolutionOverride = startParameterResolutionOverride;
+        this.timeProvider = timeProvider;
     }
 
     public IvyAdapter create(ConfigurationInternal configuration) {
@@ -66,23 +71,21 @@ public class ResolveIvyFactory {
         LoopbackDependencyResolver loopbackDependencyResolver = new LoopbackDependencyResolver(SettingsConverter.LOOPBACK_RESOLVER_NAME, userResolverChain, cacheLockingManager);
         List<DependencyResolver> rawResolvers = resolverProvider.getResolvers();
 
-        // Unfortunately, WharfResolverMetadata requires the resolver to have settings to calculate an id.
-        // We then need to set the ivySettings on the delegating resolver as well
         IvySettings ivySettings = settingsConverter.convertForResolve(loopbackDependencyResolver, rawResolvers);
         Ivy ivy = ivyFactory.createIvy(ivySettings);
         ResolveData resolveData = createResolveData(ivy, configuration.getName());
 
         IvyContextualiser contextualiser = new IvyContextualiser(ivy, resolveData);
         for (DependencyResolver rawResolver : rawResolvers) {
+            // TODO:DAZ This could be lazily provided via the ivy context. Then we can change resolverProvider.getResolvers() -> getRepositories().
             rawResolver.setSettings(ivySettings);
-            String resolverId = new WharfResolverMetadata(rawResolver).getId();
 
-            ModuleVersionRepository moduleVersionRepository = new DependencyResolverAdapter(resolverId, rawResolver);
+            ModuleVersionRepository moduleVersionRepository = new DependencyResolverAdapter(rawResolver);
             moduleVersionRepository = new CacheLockingModuleVersionRepository(moduleVersionRepository, cacheLockingManager);
             moduleVersionRepository = startParameterResolutionOverride.overrideModuleVersionRepository(moduleVersionRepository);
             ModuleVersionRepository cachingRepository =
-                    new CachingModuleVersionRepository(moduleVersionRepository, moduleResolutionCache, moduleDescriptorCache, artifactResolutionCache,
-                                                       configuration.getResolutionStrategy().getCachePolicy());
+                    new CachingModuleVersionRepository(moduleVersionRepository, moduleResolutionCache, moduleDescriptorCache, artifactAtRepositoryCachedResolutionIndex,
+                                                       configuration.getResolutionStrategy().getCachePolicy(), timeProvider);
             // Need to contextualise outside of caching, since parsing of module descriptors in the cache requires ivy settings, which is provided via the context atm
             ModuleVersionRepository ivyContextualisedRepository = contextualiser.contextualise(ModuleVersionRepository.class, cachingRepository);
             userResolverChain.add(ivyContextualisedRepository);

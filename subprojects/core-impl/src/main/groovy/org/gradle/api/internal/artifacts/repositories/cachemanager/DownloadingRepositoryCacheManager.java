@@ -22,6 +22,7 @@ import org.apache.ivy.core.cache.DownloadListener;
 import org.apache.ivy.core.module.descriptor.Artifact;
 import org.apache.ivy.core.module.descriptor.DependencyDescriptor;
 import org.apache.ivy.core.module.descriptor.ModuleDescriptor;
+import org.apache.ivy.core.module.id.ArtifactRevisionId;
 import org.apache.ivy.core.report.ArtifactDownloadReport;
 import org.apache.ivy.core.report.DownloadStatus;
 import org.apache.ivy.core.report.MetadataArtifactDownloadReport;
@@ -31,22 +32,28 @@ import org.apache.ivy.plugins.repository.ResourceDownloader;
 import org.apache.ivy.plugins.resolver.DependencyResolver;
 import org.apache.ivy.plugins.resolver.util.ResolvedResource;
 import org.apache.ivy.util.Message;
-import org.gradle.api.internal.artifacts.ivyservice.filestore.ArtifactFileStore;
+import org.gradle.api.internal.artifacts.ivyservice.ivyresolve.ArtifactOriginWithMetaData;
 import org.gradle.api.internal.artifacts.repositories.EnhancedArtifactDownloadReport;
+import org.gradle.api.internal.externalresource.CachedExternalResourceIndex;
+import org.gradle.api.internal.externalresource.DefaultExternalResourceMetaData;
+import org.gradle.api.internal.filestore.FileStore;
 
 import java.io.File;
 import java.io.IOException;
 import java.text.ParseException;
+import java.util.Date;
 
 /**
  * A cache manager for remote repositories, that downloads files and stores them in the FileStore provided.
  */
 public class DownloadingRepositoryCacheManager extends AbstractRepositoryCacheManager {
-    private final ArtifactFileStore fileStore;
+    private final FileStore<ArtifactRevisionId> fileStore;
+    private final CachedExternalResourceIndex<String> artifactUrlCachedResolutionIndex;
 
-    public DownloadingRepositoryCacheManager(String name, ArtifactFileStore fileStore) {
+    public DownloadingRepositoryCacheManager(String name, FileStore<ArtifactRevisionId> fileStore, CachedExternalResourceIndex<String> artifactUrlCachedResolutionIndex) {
         super(name);
         this.fileStore = fileStore;
+        this.artifactUrlCachedResolutionIndex = artifactUrlCachedResolutionIndex;
     }
 
     public ArtifactDownloadReport download(Artifact artifact, ArtifactResourceResolver resourceResolver,
@@ -62,7 +69,10 @@ public class DownloadingRepositoryCacheManager extends AbstractRepositoryCacheMa
         try {
             ResolvedResource artifactRef = resourceResolver.resolve(artifact);
             if (artifactRef != null) {
-                ArtifactOrigin origin = new ArtifactOrigin(artifact, artifactRef.getResource().isLocal(), artifactRef.getResource().getName());
+                ArtifactOrigin origin = new ArtifactOriginWithMetaData(
+                        artifact, artifactRef.getResource().isLocal(), artifactRef.getResource().getName(),
+                        artifactRef.getLastModified(), artifactRef.getResource().getContentLength()
+                );
                 if (listener != null) {
                     listener.startArtifactDownload(this, artifactRef, artifact, origin);
                 }
@@ -92,7 +102,15 @@ public class DownloadingRepositoryCacheManager extends AbstractRepositoryCacheMa
     private File downloadArtifactFile(Artifact artifact, ResourceDownloader resourceDownloader, ResolvedResource artifactRef) throws IOException {
         File tempFile = fileStore.getTempFile();
         resourceDownloader.download(artifact, artifactRef.getResource(), tempFile);
-        return fileStore.add(artifact.getId(), tempFile);
+
+        File fileInFileStore = fileStore.add(artifact.getId(), tempFile);
+        
+        String url = artifactRef.getResource().getName();
+        long lastModifiedTimestamp = artifactRef.getResource().getLastModified();
+        Date lastModified = lastModifiedTimestamp > 0 ? new Date(lastModifiedTimestamp) : null;
+        artifactUrlCachedResolutionIndex.store(artifactRef.getResource().getName(), fileInFileStore, new DefaultExternalResourceMetaData(url, lastModified, -1));
+
+        return fileInFileStore;
     }
 
     public ResolvedModuleRevision cacheModuleDescriptor(DependencyResolver resolver, final ResolvedResource resolvedResource, DependencyDescriptor dd, Artifact moduleArtifact, ResourceDownloader downloader, CacheMetadataOptions options) throws ParseException {

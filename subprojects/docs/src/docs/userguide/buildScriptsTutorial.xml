@@ -1,4 +1,4 @@
-<!--
+﻿<!--
   ~ Copyright 2009 the original author or authors.
   ~
   ~ Licensed under the Apache License, Version 2.0 (the "License");
@@ -183,15 +183,17 @@
             (e.g. <literal>compile</literal>).</para>
         <para>この略記法は、コードをとても読みやすいものにします。特に、プラグインなどで外部から提供されるタスク(たとえば<literal>compile</literal>)にアクセスするときには威力を発揮します。</para>
     </section>
-    <section id='sec:dynamic_properties'>
-        <title>動的なタスクプロパティ<phrase role="original">Dynamic task properties</phrase></title>
-        <para role="original">You can assign arbitrary <emphasis>new</emphasis> properties to any task.
+    <section id='sec:extra_task_properties'>
+        <title>Extra task properties</title>
+        <para>You can add your own properties to a task. To add a property named <literal>myProperty</literal>,
+            set <literal>ext.myProperty</literal> to an initial value. From that point on, the property can be read
+            and set like a predefined task property.
         </para>
-        <para>タスクには、任意のプロパティを新しく定義することができます。</para>
-        <sample id="dynamicProperties" dir="userguide/tutorial/dynamicProperties" title="タスクのプロパティを定義する / Assigning properties to a task">
-            <sourcefile file="build.gradle"/>
+        <sample id="extraTaskProperties" dir="userguide/tutorial/extraProperties" title="Adding extra properties to a task">
+            <sourcefile file="build.gradle" snippet="taskProperty"/>
             <output args="-q showProps"/>
         </sample>
+        Extra properties aren't limited to tasks. You can read more about them in <xref linkend='sec:extra_properties'/>.
     </section>
     <section>
         <title>Antタスクの使用<phrase role="original">Using Ant Tasks</phrase></title>

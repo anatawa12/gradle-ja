@@ -15,12 +15,13 @@
  */
 package org.gradle.integtests.fixtures;
 
-import org.gradle.util.Jvm;
+import org.gradle.internal.jvm.Jvm;
 import org.gradle.util.TextUtil;
 
 import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.InputStream;
+import java.nio.charset.Charset;
 import java.util.*;
 
 import static java.util.Arrays.asList;
@@ -40,9 +41,9 @@ public abstract class AbstractGradleExecuter implements GradleExecuter {
     private File javaHome;
     private File buildScript;
     private File projectDir;
-    private String buildScriptText;
     private File settingsFile;
     private InputStream stdin;
+    private String defaultCharacterEncoding;
     //gradle opts make sense only for forking executer but having them here makes more sense
     protected final List<String> gradleOpts = new ArrayList<String>();
 
@@ -53,7 +54,6 @@ public abstract class AbstractGradleExecuter implements GradleExecuter {
         workingDir = null;
         projectDir = null;
         buildScript = null;
-        buildScriptText = null;
         settingsFile = null;
         quiet = false;
         taskList = false;
@@ -64,6 +64,7 @@ public abstract class AbstractGradleExecuter implements GradleExecuter {
         javaHome = null;
         environmentVars.clear();
         stdin = null;
+        defaultCharacterEncoding = null;
         return this;
     }
 
@@ -85,9 +86,6 @@ public abstract class AbstractGradleExecuter implements GradleExecuter {
         }
         if (buildScript != null) {
             executer.usingBuildScript(buildScript);
-        }
-        if (buildScriptText != null) {
-            executer.usingBuildScript(buildScriptText);
         }
         if (settingsFile != null) {
             executer.usingSettingsFile(settingsFile);
@@ -115,6 +113,9 @@ public abstract class AbstractGradleExecuter implements GradleExecuter {
         if (stdin != null) {
             executer.withStdIn(stdin);
         }
+        if (defaultCharacterEncoding != null) {
+            executer.withDefaultCharacterEncoding(defaultCharacterEncoding);
+        }
         executer.withGradleOpts(gradleOpts.toArray(new String[gradleOpts.size()]));
     }
 
@@ -125,11 +126,6 @@ public abstract class AbstractGradleExecuter implements GradleExecuter {
 
     public File getBuildScript() {
         return buildScript;
-    }
-
-    public GradleExecuter usingBuildScript(String scriptText) {
-        this.buildScriptText = scriptText;
-        return this;
     }
 
     public GradleExecuter usingProjectDirectory(File projectDir) {
@@ -190,6 +186,15 @@ public abstract class AbstractGradleExecuter implements GradleExecuter {
 
     public InputStream getStdin() {
         return stdin == null ? new ByteArrayInputStream(new byte[0]) : stdin;
+    }
+
+    public GradleExecuter withDefaultCharacterEncoding(String defaultCharacterEncoding) {
+        this.defaultCharacterEncoding = defaultCharacterEncoding;
+        return this;
+    }
+
+    public String getDefaultCharacterEncoding() {
+        return defaultCharacterEncoding == null ? Charset.defaultCharset().name() : defaultCharacterEncoding;
     }
 
     public GradleExecuter withSearchUpwards() {
@@ -257,10 +262,6 @@ public abstract class AbstractGradleExecuter implements GradleExecuter {
         if (buildScript != null) {
             allArgs.add("--build-file");
             allArgs.add(buildScript.getAbsolutePath());
-        }
-        if (buildScriptText != null) {
-            allArgs.add("--embedded");
-            allArgs.add(buildScriptText);
         }
         if (projectDir != null) {
             allArgs.add("--project-dir");

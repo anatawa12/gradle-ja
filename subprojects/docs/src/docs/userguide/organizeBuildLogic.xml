@@ -1,4 +1,4 @@
-<!--
+﻿<!--
   ~ Copyright 2009 the original author or authors.
   ~
   ~ Licensed under the Apache License, Version 2.0 (the "License");
@@ -72,7 +72,7 @@
             <para><link linkend="custom_tasks">カスタムタスク</link>。ビルドロジックをカスタムタスクにすれば、いろんな場所でそのロジックを再利用できます。</para>
         </listitem>
         <listitem>
-            <para role="original"><link linkend="custom_plugins">Custom plugins</link>. Put your build build logic into a custom plugin,
+            <para role="original"><link linkend="custom_plugins">Custom plugins</link>. Put your build logic into a custom plugin,
                 and apply that plugin to multiple projects. The plugin must be in the classpath of your build script.
                 You can achieve this either by using <link linkend="sec:build_sources"><filename>build sources</filename></link> or
                 by adding an <link linkend="sec:external_dependencies">external library</link> that contains the plugin. 

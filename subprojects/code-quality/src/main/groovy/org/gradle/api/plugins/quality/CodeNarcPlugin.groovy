@@ -17,7 +17,6 @@ package org.gradle.api.plugins.quality
 
 import org.gradle.api.plugins.GroovyBasePlugin
 import org.gradle.api.plugins.quality.internal.AbstractCodeQualityPlugin
-import org.gradle.api.reporting.ReportingExtension
 import org.gradle.api.tasks.SourceSet
 
 class CodeNarcPlugin extends AbstractCodeQualityPlugin<CodeNarc> {
@@ -40,15 +39,11 @@ class CodeNarcPlugin extends AbstractCodeQualityPlugin<CodeNarc> {
 
     @Override
     protected CodeQualityExtension createExtension() {
-        extension = instantiator.newInstance(CodeNarcExtension)
-        project.extensions.codenarc = extension
+        extension = project.extensions.create("codenarc", CodeNarcExtension)
         extension.with {
             toolVersion = "0.16.1"
-        }
-        extension.conventionMapping.with {
-            configFile = { project.rootProject.file("config/codenarc/codenarc.xml") }
-            reportFormat = { "html" }
-            reportsDir = { project.extensions.getByType(ReportingExtension).file("codenarc") }
+            configFile = project.rootProject.file("config/codenarc/codenarc.xml")
+            reportFormat = "html"
         }
         return extension
     }
@@ -85,8 +80,6 @@ class CodeNarcPlugin extends AbstractCodeQualityPlugin<CodeNarc> {
         task.with {
             description = "Run CodeNarc analysis for $sourceSet.name classes"
         }
-        task.conventionMapping.with {
-            defaultSource = { sourceSet.allGroovy }
-        }
+        task.setSource( sourceSet.allGroovy )
     }
 }

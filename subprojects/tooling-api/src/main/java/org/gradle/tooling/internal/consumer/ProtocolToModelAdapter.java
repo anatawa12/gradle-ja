@@ -36,6 +36,9 @@ public class ProtocolToModelAdapter {
 
     public <T, S> T adapt(Class<T> targetType, S protocolObject) {
         Class<T> target = guessTarget(targetType, protocolObject);
+        if (target.isInstance(protocolObject)) {
+            return target.cast(protocolObject);
+        }
         Object proxy = Proxy.newProxyInstance(target.getClassLoader(), new Class<?>[]{target}, new InvocationHandlerImpl(protocolObject));
         return target.cast(proxy);
     }
@@ -67,7 +70,7 @@ public class ProtocolToModelAdapter {
                 equalsMethod = Object.class.getMethod("equals", Object.class);
                 hashCodeMethod = Object.class.getMethod("hashCode");
             } catch (NoSuchMethodException e) {
-                throw UncheckedException.asUncheckedException(e);
+                throw UncheckedException.throwAsUncheckedException(e);
             }
         }
 
@@ -140,7 +143,7 @@ public class ProtocolToModelAdapter {
                 match = delegate.getClass().getMethod(method.getName(), method.getParameterTypes());
             } catch (NoSuchMethodException e) {
                 String methodName = method.getDeclaringClass().getSimpleName() + "." + method.getName() + "()";
-                throw Exceptions.unsupportedModelMethod(methodName, e);
+                throw Exceptions.unsupportedMethod(methodName, e);
             }
 
             LinkedList<Class<?>> queue = new LinkedList<Class<?>>();

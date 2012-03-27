@@ -16,8 +16,6 @@
 
 package org.gradle.tooling.internal.reflect;
 
-import org.gradle.tooling.model.UnsupportedMethodException;
-
 import java.lang.reflect.Method;
 
 /**
@@ -33,12 +31,14 @@ public class CompatibleIntrospector {
         this.target = target;
     }
 
-    private Method getMethod(String methodName) {
-        try {
-            return target.getClass().getDeclaredMethod(methodName, new Class[0]);
-        } catch (NoSuchMethodException e) {
-            throw new UnsupportedMethodException("The method: " + methodName + " is not supported on instance: " + target + ".\n", e);
+    private Method getMethod(String methodName) throws NoSuchMethodException {
+        Method[] methods = target.getClass().getDeclaredMethods();
+        for (Method m : methods) {
+            if (m.getName().equals(methodName)) {
+                return m;
+            }
         }
+        throw new NoSuchMethodException("No such method: '" + methodName + "' on type: '" + target.getClass().getSimpleName() + "'.");
     }
 
     public <T> T getSafely(T defaultValue, String methodName) {
@@ -46,14 +46,26 @@ public class CompatibleIntrospector {
             Method method = getMethod(methodName);
             method.setAccessible(true);
             return (T) method.invoke(target);
-        } catch (UnsupportedMethodException e) {
+        } catch (NoSuchMethodException e) {
             return defaultValue;
         } catch (Exception e) {
             throw new RuntimeException("Unable to get value reflectively", e);
         }
     }
 
-    public boolean isConfigured(String methodName) {
-        return getSafely(null, methodName) != null;
+    public void callSafely(String methodName, Object ... params) {
+        Method method;
+        try {
+            method = getMethod(methodName);
+        } catch (NoSuchMethodException e) {
+            return; // ignore
+        }
+
+        method.setAccessible(true);
+        try {
+            method.invoke(target, params);
+        } catch (Exception e) {
+            throw new RuntimeException("Unable to call method reflectively", e);
+        }
     }
 }

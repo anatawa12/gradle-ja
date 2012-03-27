@@ -104,7 +104,7 @@
         </sample>
         <para role="original">You might know this approach from the Hibernates Criteria Query API or JMock. Of course the API of a task
             has to support this. The <literal>from</literal>, <literal>to</literal> and <literal>include</literal>
-            methods all return an object that may be used to chain to additional configuration methods. Gradle's build-in tasks usually
+            methods all return an object that may be used to chain to additional configuration methods. Gradle's built-in tasks usually
             support this configuration style.
         </para>
         <para>Hibernateのクライテリアクエリや、JMockでこの種のインターフェースに触れたことがあるかもしれません。タスクのAPIでも、当然このインターフェースをサポートする必要があるでしょう。<literal>from</literal>, <literal>to</literal> and <literal>include</literal>の各設定メソッドはすべて、設定メソッドを呼び出せるオブジェクトを返します。そのため、設定メソッドを追加してつなげていくことができるのです。Gradleの組み込みタスクは、大抵このスタイルの設定方法をサポートしています。</para>

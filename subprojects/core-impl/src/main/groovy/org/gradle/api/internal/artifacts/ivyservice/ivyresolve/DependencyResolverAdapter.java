@@ -15,6 +15,7 @@
  */
 package org.gradle.api.internal.artifacts.ivyservice.ivyresolve;
 
+import org.apache.ivy.core.cache.ArtifactOrigin;
 import org.apache.ivy.core.module.descriptor.Artifact;
 import org.apache.ivy.core.module.descriptor.DependencyDescriptor;
 import org.apache.ivy.core.report.ArtifactDownloadReport;
@@ -25,7 +26,10 @@ import org.apache.ivy.core.resolve.ResolvedModuleRevision;
 import org.apache.ivy.plugins.resolver.DependencyResolver;
 import org.gradle.api.internal.artifacts.repositories.EnhancedArtifactDownloadReport;
 import org.gradle.api.internal.artifacts.repositories.cachemanager.LocalFileRepositoryCacheManager;
+import org.gradle.api.internal.externalresource.ExternalResourceMetaData;
 import org.gradle.internal.UncheckedException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.text.ParseException;
@@ -34,17 +38,23 @@ import java.text.ParseException;
  * A {@link ModuleVersionRepository} wrapper around an Ivy {@link DependencyResolver}.
  */
 public class DependencyResolverAdapter implements ModuleVersionRepository {
-    private final String id;
+    private static final Logger LOGGER = LoggerFactory.getLogger(DependencyResolverAdapter.class);
+
+    private final DependencyResolverIdentifier identifier;
     private final DependencyResolver resolver;
     private final DownloadOptions downloadOptions = new DownloadOptions();
 
-    public DependencyResolverAdapter(String id, DependencyResolver resolver) {
-        this.id = id;
+    public DependencyResolverAdapter(DependencyResolver resolver) {
+        this.identifier = new DependencyResolverIdentifier(resolver);
         this.resolver = resolver;
     }
 
     public String getId() {
-        return id;
+        return identifier.getUniqueId();
+    }
+
+    public String getName() {
+        return identifier.getName();
     }
 
     @Override
@@ -56,7 +66,7 @@ public class DependencyResolverAdapter implements ModuleVersionRepository {
         return resolver.getRepositoryCacheManager() instanceof LocalFileRepositoryCacheManager;
     }
 
-    public File download(Artifact artifact) {
+    public DownloadedArtifact download(Artifact artifact) {
         ArtifactDownloadReport artifactDownloadReport = resolver.download(new Artifact[]{artifact}, downloadOptions).getArtifactReport(artifact);
         if (downloadFailed(artifactDownloadReport)) {
             if (artifactDownloadReport instanceof EnhancedArtifactDownloadReport) {
@@ -65,7 +75,19 @@ public class DependencyResolverAdapter implements ModuleVersionRepository {
             }
             throw new ArtifactResolveException(artifactDownloadReport.getArtifact(), artifactDownloadReport.getDownloadDetails());
         }
-        return artifactDownloadReport.getLocalFile();
+
+        ArtifactOrigin artifactOrigin = artifactDownloadReport.getArtifactOrigin();
+
+        File localFile = artifactDownloadReport.getLocalFile();
+        if (localFile != null) {
+            ExternalResourceMetaData metaData = null;
+            if (artifactOrigin instanceof ArtifactOriginWithMetaData) {
+                metaData = ((ArtifactOriginWithMetaData) artifactOrigin).getMetaData();
+            }
+            return new DownloadedArtifact(localFile, metaData);
+        } else {
+            return null;
+        }
     }
 
     private boolean downloadFailed(ArtifactDownloadReport artifactReport) {
@@ -79,11 +101,13 @@ public class DependencyResolverAdapter implements ModuleVersionRepository {
         try {
             ResolvedModuleRevision revision = resolver.getDependency(dd, resolveData);
             if (revision == null) {
+                LOGGER.debug("Performed resolved of module '{}' in repository '{}': not found", dd.getDependencyRevisionId(), getName());
                 return null;
             }
+            LOGGER.debug("Performed resolved of module '{}' in repository '{}': found", dd.getDependencyRevisionId(), getName());
             return new DefaultModuleVersionDescriptor(revision.getDescriptor(), isChanging(revision));
         } catch (ParseException e) {
-            throw UncheckedException.asUncheckedException(e);
+            throw UncheckedException.throwAsUncheckedException(e);
         }
     }
 

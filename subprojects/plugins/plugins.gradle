@@ -42,10 +42,8 @@ dependencies {
 
     runtime libraries.commons_cli
 
-    testCompile 'net.sourceforge.nekohtml:nekohtml:1.9.14'
+    testCompile libraries.nekohtml
 }
-
-useTestFixtures(project: ':native')
 
 evaluationDependsOn(":wrapper")
 task wrapperJar(type: Copy) {

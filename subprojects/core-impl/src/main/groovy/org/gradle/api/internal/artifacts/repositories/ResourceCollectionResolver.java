@@ -37,8 +37,11 @@ import org.apache.ivy.plugins.version.VersionMatcher;
 import org.apache.ivy.util.ChecksumHelper;
 import org.apache.ivy.util.FileUtil;
 import org.apache.ivy.util.Message;
+import org.gradle.api.internal.artifacts.ivyservice.ivyresolve.ArtifactOriginWithMetaData;
 import org.gradle.api.internal.artifacts.repositories.transport.ResourceCollection;
-import org.gradle.api.internal.artifacts.repositories.transport.http.HttpResource;
+import org.gradle.api.internal.externalresource.ExternalResource;
+import org.gradle.api.internal.file.TemporaryFileProvider;
+import org.gradle.api.internal.file.TmpDirTemporaryFileProvider;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -57,6 +60,7 @@ import java.util.Set;
 public class ResourceCollectionResolver extends BasicResolver {
     private static final Logger LOGGER = LoggerFactory.getLogger(ResourceCollectionResolver.class);
 
+    private final TemporaryFileProvider temporaryFileProvider = new TmpDirTemporaryFileProvider();
     private List<String> ivyPatterns = new ArrayList<String>();
     private List<String> artifactPatterns = new ArrayList<String>();
     private boolean m2compatible;
@@ -106,10 +110,13 @@ public class ResourceCollectionResolver extends BasicResolver {
     public ArtifactOrigin locate(Artifact artifact) {
         ResolvedResource artifactRef = getArtifactRef(artifact, null, false);
         if (artifactRef != null && artifactRef.getResource().exists()) {
-            return new ArtifactOrigin(
+            return new ArtifactOriginWithMetaData(
                     artifact,
                     artifactRef.getResource().isLocal(),
-                    artifactRef.getResource().getName());
+                    artifactRef.getResource().getName(),
+                    artifactRef.getLastModified(),
+                    artifactRef.getResource().getContentLength()
+            );
         }
         return null;
     }
@@ -271,9 +278,9 @@ public class ResourceCollectionResolver extends BasicResolver {
     }
 
     protected void discardResource(Resource resource) {
-        if (resource instanceof HttpResource) {
+        if (resource instanceof ExternalResource) {
             try {
-                ((HttpResource) resource).close();
+                ((ExternalResource) resource).close();
             } catch (IOException e) {
                 LOGGER.warn("Exception closing resource " + resource.getName(), e);
             }
@@ -362,7 +369,7 @@ public class ResourceCollectionResolver extends BasicResolver {
 
     private void putChecksum(Artifact artifact, File src, String destination, boolean overwrite,
                                String algorithm) throws IOException {
-        File csFile = File.createTempFile("ivytemp", algorithm);
+        File csFile = temporaryFileProvider.createTemporaryFile("ivytemp", algorithm);
         try {
             FileUtil.copy(new ByteArrayInputStream(ChecksumHelper.computeAsString(src, algorithm)
                     .getBytes()), csFile, null);

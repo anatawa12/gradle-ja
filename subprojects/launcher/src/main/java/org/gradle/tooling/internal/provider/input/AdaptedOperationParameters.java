@@ -17,7 +17,10 @@
 package org.gradle.tooling.internal.provider.input;
 
 import org.gradle.api.logging.LogLevel;
+import org.gradle.logging.LoggingConfiguration;
+import org.gradle.logging.internal.LoggingCommandLineConverter;
 import org.gradle.tooling.internal.protocol.BuildOperationParametersVersion1;
+import org.gradle.tooling.internal.protocol.BuildParametersVersion1;
 import org.gradle.tooling.internal.protocol.ProgressListenerVersion1;
 import org.gradle.tooling.internal.reflect.CompatibleIntrospector;
 
@@ -25,6 +28,8 @@ import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.util.Arrays;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
@@ -34,11 +39,22 @@ import java.util.concurrent.TimeUnit;
 public class AdaptedOperationParameters implements ProviderOperationParameters {
 
     private final BuildOperationParametersVersion1 delegate;
-    private CompatibleIntrospector introspector;
+    private final List<String> tasks;
+    
+    CompatibleIntrospector introspector;
 
-    public AdaptedOperationParameters(BuildOperationParametersVersion1 delegate) {
+    public AdaptedOperationParameters(BuildOperationParametersVersion1 operationParameters) {
+        this(operationParameters, Arrays.<String>asList());
+    }
+
+    public AdaptedOperationParameters(BuildOperationParametersVersion1 operationParameters, BuildParametersVersion1 buildParameters) {
+        this(operationParameters, buildParameters.getTasks());
+    }
+
+    private AdaptedOperationParameters(BuildOperationParametersVersion1 delegate, List<String> tasks) {
         this.delegate = delegate;
-        introspector = new CompatibleIntrospector(delegate);
+        this.introspector = new CompatibleIntrospector(delegate);
+        this.tasks = new LinkedList<String>(tasks);
     }
 
     public InputStream getStandardInput() {
@@ -48,23 +64,13 @@ public class AdaptedOperationParameters implements ProviderOperationParameters {
         return maybeGet(safeDummy, "getStandardInput");
     }
 
-    public LogLevel getProviderLogLevel() {
-        boolean verbose = getVerboseLogging();
-        if (verbose) {
-            return LogLevel.DEBUG;
-        } else {
-            //by default, tooling api provider infrastructure logs with:
-            return LogLevel.INFO;
-        }
-    }
-    
     public LogLevel getBuildLogLevel() {
         boolean verbose = getVerboseLogging();
         if (verbose) {
             return LogLevel.DEBUG;
         } else {
-            //by default, the build logs with:
-            return LogLevel.LIFECYCLE;
+            LoggingConfiguration loggingConfiguration = new LoggingCommandLineConverter().convert(getArguments());
+            return loggingConfiguration.getLogLevel();
         }
     }
 
@@ -126,5 +132,13 @@ public class AdaptedOperationParameters implements ProviderOperationParameters {
 
     public ProgressListenerVersion1 getProgressListener() {
         return delegate.getProgressListener();
+    }
+
+    public List<String> getArguments() {
+        return maybeGet(Arrays.<String>asList(), "getArguments");
+    }
+    
+    public List<String> getTasks() {
+        return tasks;
     }
 }

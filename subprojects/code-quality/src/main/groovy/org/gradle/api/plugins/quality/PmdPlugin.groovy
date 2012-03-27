@@ -16,7 +16,6 @@
 package org.gradle.api.plugins.quality
 
 import org.gradle.api.plugins.quality.internal.AbstractCodeQualityPlugin
-import org.gradle.api.reporting.ReportingExtension
 import org.gradle.api.tasks.SourceSet
 
 /**
@@ -47,15 +46,11 @@ class PmdPlugin extends AbstractCodeQualityPlugin<Pmd> {
 
     @Override
     protected CodeQualityExtension createExtension() {
-        extension = instantiator.newInstance(PmdExtension, project)
-        project.extensions.pmd = extension
+        extension = project.extensions.create("pmd", PmdExtension, project)
         extension.with {
             toolVersion = "4.3"
             ruleSets = ["basic"]
             ruleSetFiles = project.files()
-        }
-        extension.conventionMapping.with {
-            reportsDir = { project.extensions.getByType(ReportingExtension).file("pmd") }
         }
         return extension
     }
@@ -90,8 +85,6 @@ class PmdPlugin extends AbstractCodeQualityPlugin<Pmd> {
         task.with {
             description = "Run PMD analysis for ${sourceSet.name} classes"
         }
-        task.conventionMapping.with {
-            defaultSource = { sourceSet.allJava }
-        }
+        task.setSource(sourceSet.allJava)
     }
 }

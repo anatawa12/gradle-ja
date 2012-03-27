@@ -15,8 +15,8 @@
  */
 package org.gradle.internal.service;
 
-import org.gradle.internal.Factory;
 import org.gradle.internal.CompositeStoppable;
+import org.gradle.internal.Factory;
 import org.gradle.internal.Stoppable;
 import org.gradle.internal.UncheckedException;
 
@@ -178,9 +178,9 @@ public class DefaultServiceRegistry implements ServiceRegistry {
             method.setAccessible(true);
             return method.invoke(target, args);
         } catch (InvocationTargetException e) {
-            throw UncheckedException.asUncheckedException(e.getCause());
+            throw UncheckedException.throwAsUncheckedException(e.getCause());
         } catch (Exception e) {
-            throw UncheckedException.asUncheckedException(e);
+            throw UncheckedException.throwAsUncheckedException(e);
         }
     }
 
@@ -251,18 +251,7 @@ public class DefaultServiceRegistry implements ServiceRegistry {
 
         public void stop() {
             try {
-                if (instance != null) {
-                    try {
-                        invoke(instance.getClass().getMethod("stop"), instance);
-                    } catch (NoSuchMethodException e) {
-                        // ignore
-                    }
-                    try {
-                        invoke(instance.getClass().getMethod("close"), instance);
-                    } catch (NoSuchMethodException e) {
-                        // ignore
-                    }
-                }
+                new CompositeStoppable().add(instance).stop();
             } finally {
                 instance = null;
             }

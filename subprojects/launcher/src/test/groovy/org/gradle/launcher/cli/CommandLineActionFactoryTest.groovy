@@ -15,33 +15,39 @@
  */
 package org.gradle.launcher.cli
 
+import org.gradle.BuildResult
+import org.gradle.GradleLauncher
+import org.gradle.StartParameter
+import org.gradle.cli.CommandLineArgumentException
+import org.gradle.cli.CommandLineConverter
+import org.gradle.initialization.GradleLauncherFactory
 import org.gradle.internal.Factory
 import org.gradle.internal.service.ServiceRegistry
-import org.gradle.cli.CommandLineConverter
+import org.gradle.launcher.daemon.bootstrap.DaemonMain
+import org.gradle.launcher.exec.ExceptionReportingAction
+import org.gradle.launcher.exec.ExecutionListener
 import org.gradle.logging.LoggingConfiguration
 import org.gradle.logging.LoggingManagerInternal
+import org.gradle.logging.ProgressLoggerFactory
 import org.gradle.logging.internal.OutputEventListener
 import org.gradle.util.GradleVersion
 import org.gradle.util.RedirectStdOutAndErr
 import org.gradle.util.SetSystemProperties
+import org.gradle.util.TemporaryFolder
 import org.junit.Rule
 import spock.lang.Specification
-import org.gradle.*
-import org.gradle.cli.CommandLineArgumentException
-import org.gradle.initialization.GradleLauncherFactory
-
-import org.gradle.logging.ProgressLoggerFactory
-import org.gradle.launcher.daemon.bootstrap.DaemonMain
-import org.gradle.launcher.exec.ExceptionReportingAction
-import org.gradle.launcher.exec.ExecutionListener
 
 import static org.gradle.launcher.cli.CommandLineActionFactory.*
+import org.gradle.internal.os.OperatingSystem
+import org.gradle.launcher.daemon.configuration.DaemonParameters
 
 class CommandLineActionFactoryTest extends Specification {
     @Rule
     public final RedirectStdOutAndErr outputs = new RedirectStdOutAndErr();
     @Rule
     public final SetSystemProperties sysProperties = new SetSystemProperties();
+    @Rule
+    TemporaryFolder tmpDir = new TemporaryFolder();
     final ExecutionListener buildCompleter = Mock()
     final CommandLineConverter<StartParameter> startParameterConverter = Mock()
     final GradleLauncherFactory gradleLauncherFactory = Mock()
@@ -151,9 +157,7 @@ class CommandLineActionFactoryTest extends Specification {
         def action = factory.convert(['args'])
 
         then:
-        action instanceof WithLoggingAction
-        action.action instanceof ExceptionReportingAction
-        action.action.action instanceof RunBuildAction
+        isInProcess(action)
     }
 
     def executesBuildUsingDaemon() {
@@ -161,10 +165,7 @@ class CommandLineActionFactoryTest extends Specification {
         def action = factory.convert(['--daemon', 'args'])
 
         then:
-        action instanceof WithLoggingAction
-        action.action instanceof ExceptionReportingAction
-        action.action.action instanceof ActionAdapter
-        action.action.action.action instanceof DaemonBuildAction
+        isDaemon action
     }
 
     def executesBuildUsingDaemonWhenSystemPropertyIsSetToTrue() {
@@ -173,16 +174,14 @@ class CommandLineActionFactoryTest extends Specification {
         def action = factory.convert(['args'])
 
         then:
-        action instanceof WithLoggingAction
-        action.action.action instanceof RunBuildAction
+        isInProcess action
 
         when:
         System.properties['org.gradle.daemon'] = 'true'
         action = factory.convert(['args'])
 
         then:
-        action instanceof WithLoggingAction
-        action.action.action.action instanceof DaemonBuildAction
+        isDaemon action
     }
 
     def doesNotUseDaemonWhenNoDaemonOptionPresent() {
@@ -190,8 +189,7 @@ class CommandLineActionFactoryTest extends Specification {
         def action = factory.convert(['--no-daemon', 'args'])
 
         then:
-        action instanceof WithLoggingAction
-        action.action.action instanceof RunBuildAction
+        isInProcess action
     }
 
     def daemonOptionTakesPrecedenceOverSystemProperty() {
@@ -200,18 +198,16 @@ class CommandLineActionFactoryTest extends Specification {
         def action = factory.convert(['--daemon', 'args'])
 
         then:
-        action instanceof WithLoggingAction
-        action.action.action.action instanceof DaemonBuildAction
+        isDaemon action
 
         when:
         System.properties['org.gradle.daemon'] = 'true'
         action = factory.convert(['--no-daemon', 'args'])
 
         then:
-        action instanceof WithLoggingAction
-        action.action.action instanceof RunBuildAction
+        isInProcess action
     }
-    
+
     def stopsDaemon() {
         when:
         def action = factory.convert(['--stop'])
@@ -232,5 +228,86 @@ class CommandLineActionFactoryTest extends Specification {
         action.action instanceof ExceptionReportingAction
         action.action.action instanceof ActionAdapter
         action.action.action.action instanceof DaemonMain
+    }
+
+    def executesBuildWithSingleUseDaemonIfJavaHomeIsNotCurrent() {
+        when:
+        def javaHome = tmpDir.createDir("javahome")
+        javaHome.createFile(OperatingSystem.current().getExecutableName("bin/java"))
+
+        System.properties['org.gradle.java.home'] = javaHome.canonicalPath
+        def action = factory.convert([])
+
+        then:
+        isSingleUseDaemon action
+    }
+
+    def "daemon setting in precedence is system prop, user home then project directory"() {
+        given:
+        def userHome = tmpDir.createDir("user_home")
+        userHome.file("gradle.properties").withOutputStream { outstr ->
+            new Properties((DaemonParameters.DAEMON_SYS_PROPERTY): 'false').store(outstr, "HEADER")
+        }
+        def projectDir = tmpDir.createDir("project_dir")
+        projectDir.createFile("settings.gradle")
+        projectDir.file("gradle.properties").withOutputStream { outstr ->
+            new Properties((DaemonParameters.DAEMON_SYS_PROPERTY): 'true').store(outstr, "HEADER")
+        }
+
+        when:
+        def action = factory.convert([])
+
+        then:
+        startParameterConverter.convert(!null, !null) >> { args, startParam ->
+            startParam.currentDir = projectDir
+        }
+
+        and:
+        isDaemon action
+
+        when:
+        action = factory.convert([])
+
+        then:
+        startParameterConverter.convert(!null, !null) >> { args, startParam ->
+            startParam.gradleUserHomeDir = userHome
+            startParam.currentDir = projectDir
+        }
+
+        and:
+        isInProcess action
+
+        when:
+        System.properties['org.gradle.daemon'] = 'true'
+        action = factory.convert([])
+
+        then:
+        startParameterConverter.convert(!null, !null) >> { args, startParam ->
+            startParam.gradleUserHomeDir = userHome
+            startParam.currentDir = projectDir
+        }
+
+        and:
+        isDaemon action
+    }
+
+    def isDaemon(def action) {
+        assert action instanceof WithLoggingAction
+        assert action.action instanceof ExceptionReportingAction
+        assert action.action.action instanceof ActionAdapter
+        action.action.action.action instanceof DaemonBuildAction
+    }
+
+    def isInProcess(def action) {
+        assert action instanceof WithLoggingAction
+        assert action.action instanceof ExceptionReportingAction
+        action.action.action instanceof RunBuildAction
+    }
+
+    def isSingleUseDaemon(def action) {
+        assert action instanceof WithLoggingAction
+        assert action.action instanceof ExceptionReportingAction
+        assert action.action.action instanceof ActionAdapter
+        action.action.action.action instanceof DaemonBuildAction
     }
 }

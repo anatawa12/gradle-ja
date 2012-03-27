@@ -20,6 +20,9 @@ import org.gradle.api.logging.Logging
 
 public class PerformanceResults {
 
+    int accuracyMs
+    String displayName
+
     private final static LOGGER = Logging.getLogger(PerformanceTestRunner.class)
 
     List<MeasuredOperation> previous = new LinkedList<MeasuredOperation>()
@@ -48,13 +51,19 @@ public class PerformanceResults {
         long averagePrevious = previous.collect { it.executionTime }.sum() / previous.size()
         long averageCurrent  = current.collect { it.executionTime }.sum() / current.size()
 
-        LOGGER.info("Asserting on build times. The stats are:\n"
-            + "  previous: $previous\n"
-            + "  current : $current")
+        LOGGER.info("\n---------------\nBuild duration stats. $displayName:\n"
+            + " -previous: $previous\n"
+            + " -current : $current\n---------------\n")
 
-        assert averageCurrent <= averagePrevious : """Looks like the current gradle is slower than latest release.
-previous release build times: ${previous}
-current gradle build times:   ${current}
+        if (averageCurrent > averagePrevious) {
+            LOGGER.warn("Before applying any statistical tuning, the current release average build time is slower than the previous.")
+        }
+
+        assert (averageCurrent - accuracyMs) <= averagePrevious : """Looks like the current gradle is slower than latest release.
+  Previous release build times: ${previous}
+  Current gradle build times:   ${current}
+  Difference between average current and average previous: ${averageCurrent - averagePrevious} millis.
+  Currently configured accuracy treshold: $accuracyMs
 """
     }
 }

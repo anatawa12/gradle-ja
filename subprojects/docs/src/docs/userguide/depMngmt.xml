@@ -1,4 +1,4 @@
-<!--
+﻿<!--
   ~ Copyright 2009 the original author or authors.
   ~
   ~ Licensed under the Apache License, Version 2.0 (the "License");
@@ -574,6 +574,38 @@
                 <apilink class="org.gradle.api.artifacts.Configuration"/>.
             </para>
             <para>コンフィギュレーションに対して除外設定した場合、そのコンフィギュレーション(とそれを継承したコンフィギュレーション)に属する依存関係すべてから、指定した推移的依存関係が取り除かれます。すべてのコンフィギュレーションから、ある依存関係を除外したい場合は、例にあるように、Groovyの展開演算子を使うことで簡単に実現できます。除外設定では、group名だけ、またはモジュール名だけで指定することもできますし、その両方で指定することもできます。APIドキュメントの<apilink class="org.gradle.api.artifacts.Dependency"/>と<apilink class="org.gradle.api.artifacts.Configuration"/>もご参照ください。</para>
+            <para>
+                Not every transitive dependency can be excluded - some transitive dependencies might be essential
+                for correct runtime behavior of the application. Generally, one can exclude transitive
+                dependencies that are either not required by runtime or that are guaranteed to be available
+                on the target environment/platform.
+            </para>
+            <para>
+                Should you exclude per-dependency or per-configuration?
+                It turns out that in majority of cases you want to use the per-configuration exclusion.
+                Here are the some exemplary reasons why one might want to exclude a transitive dependency.
+                Bear in mind that for some of those use cases there are better solutions than exclusions!
+                <itemizedlist>
+                    <listitem>The dependency is undesired due to licensing reasons.</listitem>
+                    <listitem>The dependency is not available in any of remote repositories.</listitem>
+                    <listitem>The dependency is not needed for runtime.</listitem>
+                    <listitem>The dependency has a version that conflicts with a desired version.
+                        For that use case please refer to <xref linkend='sub:version_conflicts'/>
+                        and the documentation on <apilink class='org.gradle.api.artifacts.ResolutionStrategy'/>
+                        for a potentially better solution to the problem.
+                    </listitem>
+                </itemizedlist>
+                Basically, in most of the cases excluding the transitive dependency should be done per configuration.
+                This way the dependency declaration is more explicit. It is also more accurate because a per-dependency
+                exclude rule does not guarantee the given transitive dependency does not show up in the configuration.
+                For example, some other dependency, which does not have any exclude rules, might pull in
+                that unwanted transitive dependency.
+            </para>
+            <para>
+                Other examples of the dependency exclusions can be found in the reference for
+                <apilink class='org.gradle.api.artifacts.ModuleDependency'/> or
+                <apilink class='org.gradle.api.artifacts.dsl.DependencyHandler'/>.
+            </para>
         </section>
         <section>
             <title>オプショナル属性<phrase role="original">Optional attributes</phrase></title>
@@ -661,7 +693,7 @@
         then filters the retrieved files by specified dependencies. As you can see in the example, transitive dependencies are included.
         </para>
         <para><code>Configuration.files</code>は、常にすべてのコンフィギュレーションに含まれるすべてのアーティファクトを取得します。ここでは、取得したファイルを依存関係名でフィルタして表示しました。この例の通り、推移的な依存関係も含まれています。</para>
-        <para role="original">You can also copy a configuration. You can optionally specify that only a subset of dependencies from the orginal configuration
+        <para role="original">You can also copy a configuration. You can optionally specify that only a subset of dependencies from the original configuration
             should be copied. The copying methods come in two flavors. The <code>copy</code> method copies only the dependencies belonging
             explicitly to the configuration. The <code>copyRecursive</code> method copies all the dependencies, including the dependencies from extended
             configurations.
@@ -805,7 +837,7 @@
 
         <section id='sec:flat_dir_resolver'>
             <title>フラットディレクトリリポジトリ <phrase role="original">Flat directory repository</phrase></title>
-            <para role="original">If you want to use a (flat) filesytem directory as a repository, simply type:
+            <para role="original">If you want to use a (flat) filesystem directory as a repository, simply type:
             </para>
             <para>ファイルシステム上の(フラットな)ディレクトリをリポジトリとして使用したい場合は、単に次のようにタイプしてください。</para>
             <sample id="flatDirMulti" dir="userguide/artifacts/defineRepository" title="フラットディレクトリ・リゾルバ / Flat repository resolver">
@@ -937,6 +969,43 @@ someroot/[artifact]-[revision].[ext]
             </para>
             <para>Ivyで(つまりGradleで)どんなリゾルバを使えるか、概要を<ulink url='http://ant.apache.org/ivy/history/latest-milestone/settings/resolvers.html'>ここ</ulink>で見ることができます。Gradleを使えば、XMLを経由することなく、直接これらのAPIを操作できます。</para>
         </section>
+    </section>
+    <section id='sec:dependency_resolution'>
+        <title>How dependency resolution works</title>
+        <para>Gradle takes your dependency declarations and repository definitions and attempts to download all of your dependencies by a process called <emphasis>dependency resolution</emphasis>.
+        Below is a brief outline of how this process works.</para>
+        <itemizedlist>
+            <listitem>
+                <para>
+                    Given a required dependency, Gradle first attempts to resolve the <emphasis>module</emphasis> for that dependency. Each repository is inspected in order, searching
+                    first for a <emphasis>module descriptor</emphasis> file (pom or ivy file) that indicates the presence of that module. If no module descriptor is found,
+                    Gradle will search for the presence of the primary <emphasis>module artifact</emphasis> file indicating that the module exists in the repository.
+                </para>
+                <itemizedlist>
+                    <listitem>
+                        <para>If the dependency is declared as a dynamic version (like <literal>1.+</literal>), Gradle will resolve this to the newest available static version (like <literal>1.2</literal>)
+                            in the repository. For maven repositories, this is done using the <literal>maven-metadata.xml</literal> file, while for ivy repositories this is done by directory listing.</para>
+                    </listitem>
+                    <listitem>
+                        <para>If the module descriptor is a <literal>pom</literal> file that has a parent pom declared, Gradle will recursively attempt to resolve each of the parent modules for the pom.</para>
+                    </listitem>
+                </itemizedlist>
+            </listitem>
+            <listitem>
+                <para>Once each repository has been inspected for the module, Gradle will choose the 'best' one to use. This is done using the following criteria:
+                    <itemizedlist>
+                        <listitem>For a dynamic version, a 'higher' static version is preferred over a 'lower' version.</listitem>
+                        <listitem>Modules declared by a module descriptor file (ivy or pom file) are preferred over modules that have an artifact file only.</listitem>
+                        <listitem>Modules from earlier repositories are preferred over modules in later repositories.</listitem>
+                    </itemizedlist>
+                </para>
+                <para>When the dependency is declared by a static version and a module descriptor file is found in a repository, there is no need to continue searching later
+                repositories and the remainder of the process is short-circuited.</para>
+            </listitem>
+            <listitem>
+                <para>All of the artifacts for the module are then requested from the <emphasis>same repository</emphasis> that was chosen in the process above.</para>
+            </listitem>
+        </itemizedlist>
     </section>
     <section id='sec:dependency_cache'>
         <title>依存関係のキャッシュ <phrase role="original">The dependency cache</phrase></title>
@@ -1078,19 +1147,20 @@ someroot/[artifact]-[revision].[ext]
             <section id='sub:cache_refresh'>
                 <title>リフレッシュ <phrase role="original">Refresh</phrase></title>
                 <para role="original">At times, the Gradle Dependency Cache can be out of sync with the actual state of the configured repositories. Perhaps a repository was initially misconfigured,
-                    or perhaps a "non-changing" module was published incorrectly. To refresh all dependencies in the dependency cache, use the <literal>--refresh dependencies</literal>
+                    or perhaps a "non-changing" module was published incorrectly. To refresh all dependencies in the dependency cache, use the <literal>--refresh-dependencies</literal>
                     option on the command line.</para>
+                <para>The <literal>--refresh dependencies</literal> option tells Gradle to ignore all cached entries for resolved modules and artifacts.</para>
                 <para>
                     Gradleの依存関係キャッシュが、設定されたリポジトリの実際の状態と同期が取れていないこともあります。
                     おそらくは最初リポジトリが間違った設定になっていたか、未変更のモジュールが間違って公開されたのでしょう。
-                    キャッシュにある全ての依存関係をリフレッシュするには、コマンドラインで<literal>--refresh dependencies</literal>オプションを使用してください。
+                    キャッシュにある全ての依存関係をリフレッシュするには、コマンドラインで<literal>--refresh-dependencies</literal>オプションを使用してください。
                 </para>
-                <para role="original">The <literal>--refresh dependencies</literal> option tells Gradle to ignore all cached entries for resolved modules and artifacts.
+                <para role="original">The <literal>--refresh-dependencies</literal> option tells Gradle to ignore all cached entries for resolved modules and artifacts.
                     A fresh resolve will be performed against all configured repositories, with dynamic versions recalculated, modules refreshed, and artifacts downloaded.
                     However, where possible Gradle will attempt to if the previously downloaded artifacts are valid before downloading again.
                     This is done by comparing published SHA1 values in the repository with the SHA1 values for existing downloaded artifacts.</para>
                 <para>
-                    <literal>--refresh dependencies</literal>オプションは、解決済みのモジュールとアーティファクトに対する全てのキャッシュエントリを無視するようGradleに指示するものです。
+                    <literal>--refresh-dependencies</literal>オプションは、解決済みのモジュールとアーティファクトに対する全てのキャッシュエントリを無視するようGradleに指示するものです。
                     対象のリポジトリ全てに対して、新規に解決処理が実行されます。動的バージョンは再取得され、モジュールは再解決され、アーティファクトも再度ダウンロードされます。
                 </para>
             </section>

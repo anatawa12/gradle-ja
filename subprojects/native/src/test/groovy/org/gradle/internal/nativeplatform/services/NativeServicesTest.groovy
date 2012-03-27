@@ -15,10 +15,10 @@
  */
 package org.gradle.internal.nativeplatform.services
 
-import org.gradle.internal.nativeplatform.FileSystem
-import org.gradle.internal.nativeplatform.OperatingSystem
 import org.gradle.internal.nativeplatform.ProcessEnvironment
-import org.jruby.ext.posix.POSIX
+import org.gradle.internal.nativeplatform.TerminalDetector
+import org.gradle.internal.nativeplatform.filesystem.FileSystem
+import org.gradle.internal.os.OperatingSystem
 import spock.lang.Specification
 
 class NativeServicesTest extends Specification {
@@ -34,13 +34,13 @@ class NativeServicesTest extends Specification {
         services.get(OperatingSystem) != null
     }
 
-    def "makes a POSIX available"() {
-        expect:
-        services.get(POSIX) != null
-    }
-
     def "makes a FileSystem available"() {
         expect:
         services.get(FileSystem) != null
+    }
+
+    def "makes a TerminalDetector available"() {
+        expect:
+        services.get(TerminalDetector) != null
     }
 }

@@ -18,7 +18,6 @@ package org.gradle.plugins.ide.eclipse
 import java.util.regex.Pattern
 import org.gradle.util.TestFile
 import org.gradle.api.internal.artifacts.ivyservice.DefaultCacheLockingManager
-import org.gradle.internal.nativeplatform.OperatingSystem
 
 class EclipseClasspathFixture {
     final TestFile projectDir
@@ -117,18 +116,8 @@ class EclipseClasspathFixture {
             assert entry.attributes[0].attribute[0].@value == jarUrl(file)
         }
 
-        void assertHasJavadoc(String file) {
-            assert entry.attributes
-            assert entry.attributes[0].attribute[0].@name == 'javadoc_location'
-            assert entry.attributes[0].attribute[0].@value == jarUrl(file)
-        }
-
-        String jarUrl(String filePath) {
-            "jar:file:${OperatingSystem.current().windows ? '/' : ''}${filePath.replace(File.separator, '/')}!/"
-        }
-        
-        String jarUrl(File filePath){
-            jarUrl(filePath.absolutePath)
+        private String jarUrl(File filePath){
+            "jar:${filePath.toURI().toURL()}!/"
         }
 
         void assertHasNoJavadoc() {

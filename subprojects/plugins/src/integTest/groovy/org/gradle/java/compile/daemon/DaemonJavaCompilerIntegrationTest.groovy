@@ -15,70 +15,19 @@
  */
 package org.gradle.java.compile.daemon
 
-import org.gradle.integtests.fixtures.AbstractIntegrationSpec
-import org.gradle.integtests.fixtures.TestResources
-import org.hamcrest.Matchers
-import org.junit.Rule
+import org.gradle.java.compile.JavaCompilerIntegrationSpec
 
-class DaemonJavaCompilerIntegrationTest extends AbstractIntegrationSpec {
-    @Rule TestResources resources = new TestResources()
-
-    def compileGoodCode() {
-        expect:
-        succeeds("compileJava")
-        !errorOutput
-        file("build/classes/main/compile/fork/Person.class").exists()
-    }
-    
-    def compileBadCode() {
-        expect:
-        fails("compileJava")
-        errorOutput.contains("';' expected")
-        !file("build/classes/main/compile/fork/Person.class").exists()
+class DaemonJavaCompilerIntegrationTest extends JavaCompilerIntegrationSpec {
+    def compilerConfiguration() {
+        '''
+compileJava.options.with {
+    useAnt = false
+    fork = true
+}
+'''
     }
 
-    def compileBadCodeWithoutFailing() {
-        expect:
-        succeeds("compileJava")
-        errorOutput.contains("';' expected")
-        !file("build/classes/main/compile/fork/Person.class").exists()
-    }
-    
-    def compileWithLongClasspath() {
-        expect:
-        succeeds("compileJava")
-        !errorOutput
-        file("build/classes/main/compile/fork/Person.class").exists()
-    }
-
-    def compileWithCustomHeapSettings() {
-        expect:
-        succeeds("compileJava")
-        !errorOutput
-        file("build/classes/main/compile/fork/Person.class").exists()
-        // couldn't find a good way to verify that heap settings take effect
-    }
-
-    def useAntForking() {
-        expect:
-        succeeds("compileJava")
-        !errorOutput
-        file("build/classes/main/compile/fork/Person.class").exists()
-    }
-    
-    def listSourceFiles() {
-        expect:
-        succeeds("compileJava")
-        output.contains(new File("src/main/java/compile/fork/Person1.java").toString())
-        output.contains(new File("src/main/java/compile/fork/Person2.java").toString())
-        !errorOutput
-        file("build/classes/main/compile/fork/Person1.class").exists()
-        file("build/classes/main/compile/fork/Person2.class").exists()
-    }
-    
-    def nonJavaSourceFilesAreNotTolerated() {
-        expect:
-        fails("compileJava")
-        failure.assertThatCause(Matchers.startsWith("Cannot compile non-Java source file"))
+    def logStatement() {
+        "in compiler daemon"
     }
 }

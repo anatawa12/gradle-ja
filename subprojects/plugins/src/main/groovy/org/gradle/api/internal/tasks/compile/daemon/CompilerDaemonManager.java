@@ -15,57 +15,85 @@
  */
 package org.gradle.api.internal.tasks.compile.daemon;
 
+import net.jcip.annotations.NotThreadSafe;
+
 import org.gradle.BuildAdapter;
 import org.gradle.BuildResult;
 import org.gradle.api.internal.project.ProjectInternal;
 import org.gradle.api.logging.Logger;
 import org.gradle.api.logging.Logging;
+import org.gradle.internal.jvm.Jvm;
 import org.gradle.process.internal.JavaExecHandleBuilder;
 import org.gradle.process.internal.WorkerProcess;
 import org.gradle.process.internal.WorkerProcessBuilder;
-import org.gradle.util.Jvm;
 
 import java.io.File;
 
 /**
  * Controls the lifecycle of the compiler daemon and provides access to it.
  */
+@NotThreadSafe
 public class CompilerDaemonManager {
     private static final Logger LOGGER = Logging.getLogger(CompilerDaemonManager.class);
     private static final CompilerDaemonManager INSTANCE = new CompilerDaemonManager();
     
     private volatile CompilerDaemonClient client;
-    private WorkerProcess process;
+    private volatile WorkerProcess process;
     
     public static CompilerDaemonManager getInstance() {
         return INSTANCE;
     }
     
-    public CompilerDaemon getDaemon(ProjectInternal project) {
+    public CompilerDaemon getDaemon(ProjectInternal project, DaemonForkOptions forkOptions) {
+        if (client != null && !client.isCompatibleWith(forkOptions)) {
+            stop();
+        }
         if (client == null) {
-            startDaemon(project);
+            startDaemon(project, forkOptions);
             stopDaemonOnceBuildFinished(project);
         }
         return client;
     }
     
-    private void startDaemon(ProjectInternal project) {
+    public void stop() {
+        if (client == null) {
+            return;
+        }
+
+        LOGGER.info("Stopping Gradle compiler daemon.");
+
+        client.stop();
+        client = null;
+        process.waitForStop();
+        process = null;
+
+        LOGGER.info("Gradle compiler daemon stopped.");
+    }
+    
+    private void startDaemon(ProjectInternal project, DaemonForkOptions forkOptions) {
         LOGGER.info("Starting Gradle compiler daemon.");
+        if (LOGGER.isDebugEnabled()) {
+            LOGGER.debug(forkOptions.toString());
+        }
+
         WorkerProcessBuilder builder = project.getServices().getFactory(WorkerProcessBuilder.class).create();
-        builder.setLogLevel(project.getGradle().getStartParameter().getLogLevel()); // TODO: respect per-compile-task log level
+        builder.setLogLevel(project.getGradle().getStartParameter().getLogLevel()); // NOTE: might make sense to respect per-compile-task log level
+        builder.applicationClasspath(forkOptions.getClasspath());
+        builder.sharedPackages(forkOptions.getSharedPackages());
         File toolsJar = Jvm.current().getToolsJar();
         if (toolsJar != null) {
             builder.getApplicationClasspath().add(toolsJar); // for SunJavaCompiler
         }
         JavaExecHandleBuilder javaCommand = builder.getJavaCommand();
-        javaCommand.setMinHeapSize("128m"); // TODO: add extension object on Gradle for configuring daemon
-        javaCommand.setMaxHeapSize("1g");
+        javaCommand.setMinHeapSize(forkOptions.getMinHeapSize());
+        javaCommand.setMaxHeapSize(forkOptions.getMaxHeapSize());
         javaCommand.setWorkingDir(project.getRootProject().getProjectDir());
         process = builder.worker(new CompilerDaemonServer()).build();
         process.start();
         CompilerDaemonServerProtocol server = process.getConnection().addOutgoing(CompilerDaemonServerProtocol.class);
-        client = new CompilerDaemonClient(server);
+        client = new CompilerDaemonClient(forkOptions, server);
         process.getConnection().addIncoming(CompilerDaemonClientProtocol.class, client);
+
         LOGGER.info("Gradle compiler daemon started.");
     }
     
@@ -73,9 +101,7 @@ public class CompilerDaemonManager {
         project.getGradle().addBuildListener(new BuildAdapter() {
             @Override
             public void buildFinished(BuildResult result) {
-                client.stop();
-                client = null;
-                process.waitForStop();
+                stop();
             }
         });
     }

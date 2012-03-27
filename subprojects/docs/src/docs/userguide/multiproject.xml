@@ -1,4 +1,4 @@
-<!--
+﻿<!--
   ~ Copyright 2009 the original author or authors.
   ~
   ~ Licensed under the Apache License, Version 2.0 (the "License");
@@ -164,7 +164,8 @@
             </section>
             <section id='ssub:filtering_by_properties'>
                 <title>プロパティによるフィルタリング<phrase role="original">Filtering by properties</phrase></title>
-                <para role="original">Using the project name for filtering is one option. Using dynamic project properties is another.
+                <para>Using the project name for filtering is one option. Using extra project properties is another.
+                    (See <xref linkend='sec:extra_properties'/> for more information on extra properties.)
                 </para>
                 <para>フィルタリングに使用できるのはプロジェクト名だけではありません。プロジェクトの動的なプロパティもフィルタリングに使用できます。</para>
                 <sample id="multiprojectTropicalWithProperties" dir="userguide/multiproject/tropicalWithProperties/water" includeLocation="true" title="プロジェクトに振る舞いを追加する(プロパティによるフィルタリング) / Adding custom behaviour to some projects (filtered by project properties)">
@@ -353,41 +354,20 @@
                     <output args="-q action"/>
                 </sample>
                 <para role="original">We have now declared that the
-                    <literal>consumer</literal>
+                    <literal>action</literal> task in the <literal>consumer</literal>
                     project has an
                     <emphasis>execution dependency</emphasis>
-                    on the
+                    on the <literal>action</literal> task on the
                     <literal>producer</literal>
-                    project. For Gradle declaring
-                    <emphasis>execution dependencies</emphasis>
-                    between
-                    <emphasis>projects</emphasis>
-                    is syntactic sugar. Under the hood Gradle creates task dependencies out of them. You can also create
-                    cross project tasks dependencies manually by using the absolute path of the tasks.
+                    project.
                 </para>
                 <para><literal>consumer</literal>プロジェクトは<literal>producer</literal>プロジェクトの実行に依存することを宣言しました。プロジェクト間の実行依存の宣言はGradleの構文糖衣で、実際にはタスク間の実行依存を作成しています。タスクの絶対パスを使って、プロジェクト間にまたがるタスクの実行依存関係を手で定義することもできます。</para>
             </section>
-            <section id='ssub:the_nature_of_project_dependencies'>
-                <title>プロジェクト間依存関係の性質<phrase role="original">The nature of project dependencies</phrase></title>
-                <para role="original">Let's change the naming of our tasks and execute the build.
+            <section id='ssub:the_nature_of_cross_project_task_dependencies'>
+                <title>The nature of cross project task dependencies</title>
+                <para>Of course, task dependencies across different projects are not limited to tasks with the same name.
+                    Let's change the naming of our tasks and execute the build.
                 </para>
-                <para>タスクの名前を変えてビルドしてみましょう。</para>
-                <sample id="multiprojectMessagesDifferentTaskNames" dir="userguide/multiproject/dependencies/messagesDifferentTaskNames/messages" title="プロジェクト間の実行依存 / Project execution dependencies">
-                    <sourcefile file="consumer/build.gradle"/>
-                    <sourcefile file="producer/build.gradle"/>
-                    <output args="-q consume"/>
-                </sample>
-                <para role="original">Oops. Why does this not work? The
-                    <literal>dependsOn</literal>
-                    command is created for projects with a common lifecycle. Provided you have two Java projects where
-                    one depends on the other. If you trigger a compile for the dependent project you don't want that
-                    <emphasis>all</emphasis>
-                    tasks of the other project get executed. Therefore a
-                    <literal>dependsOn</literal>
-                    creates dependencies between tasks with equal names. To deal with the scenario above you would do
-                    the following:
-                </para>
-                <para>おっと、失敗してしまいました…なんででしょうか？ プロジェクトに対する<literal>dependsOn</literal>コマンドは、同じライフサイクルをもつプロジェクトの間で使用されることを前提にしています。二つのJavaプロジェクトがあるとして、一つのプロジェクトの<literal>compile</literal>タスクを実行したときに、依存先プロジェクトにある<emphasis>すべての</emphasis>タスクを実行されたくはないでしょう。なので、プロジェクトに対する<literal>dependsOn</literal>は同じ名前のタスク間でのみ依存関係を作成するのです。この例に挙げたシナリオでは、次のように依存関係を宣言する必要があるでしょう。</para>
                 <sample id="multiprojectMessagesTaskDependencies" dir="userguide/multiproject/dependencies/messagesTaskDependencies/messages" title="プロジェクトにまたがるタスク間の依存関係 / Cross project task dependencies">
                     <sourcefile file="consumer/build.gradle"/>
                     <sourcefile file="producer/build.gradle"/>
@@ -450,6 +430,10 @@
                 The default configuration order is top down, which is usually what is needed.
             </para>
             <para>評価順序の依存関係は、実行時の依存関係と大きく異なる点がいくつかあります。まず、実行の依存関係は最終的には常にタスク間の依存関係になりますが、評価順序の依存関係はプロジェクト間の依存関係です。さらに、サブプロジェクトをビルドしたとしても、常にマルチプロジェクトのプロジェクトすべてが評価されるという違いもあります。デフォルトでは、ルートプロジェクトからトップダウンでサブプロジェクトに向かって評価されていきます。普通はその順序で評価する必要があるからです。</para>
+            <para>
+                To change the the default configuration order to be bottom up, That means that a project configuration
+                depends on the configuration of its child projects, the <literal>evaluationDependsOnChildren()</literal> method can be used.
+            </para>
             <para role="original">On the same nesting level the configuration order depends on the alphanumeric position. The most
                 common use case is to have multi-project builds that share a common lifecycle (e.g. all projects use the
                 Java plugin). If you declare with
@@ -526,28 +510,6 @@
                 hacks which are hard to maintain and massively afflict your productivity as a build master.
             </para>
             <para>この手の依存関係は、マルチプロジェクトのビルドではよく発生します。ビルドシステムがこのような依存関係に対応できなければ、解決できない問題が発生したり、苦し紛れのハックを行うハメになるでしょう。ビルドのメンテナンスが難しくなり、ビルドの管理者として生産性を大きく落としてしまうことになりかねません。</para>
-            <para role="original">There is one more thing to note from the current example. We have used the command <literal>
-                dependsOnChildren()</literal>. It is a convenience method and calls the
-                <literal>dependsOn</literal>
-                method of the parent project for every child project (not every sub project). It declares a
-                <literal>execution</literal>
-                dependency of
-                <literal>webDist</literal>
-                on
-                <literal>date</literal>
-                and <literal>hello</literal>.
-            </para>
-            <para>この例には、注目すべき点がもう一つあります。dependsOnChildren()というコマンドです。これは親プロジェクトがすべての子プロジェクト(すべてのサブプロジェクトではありません)に対してdependsOnを呼び出す便利なメソッドです。webDistがdateとhelloに実行の依存関係を持っていることを宣言しているのです。</para>
-            <para role="original">Another use case would be a situation where the subprojects have a configuration
-                <emphasis>and</emphasis>
-                execution dependency on the parent project. This is the case when the parent project does configuration
-                injection into its subprojects, and additionally produces something at execution time that is needed by
-                its child projects (e.g. code generation). In this case the parent project would call the
-                <literal>childrenDependOnMe</literal>
-                method to create an execution dependency for the child projects. We might add an example for this in a
-                future version of the user guide.
-            </para>
-            <para>そのほかのユースケースとしては、サブプロジェクトが評価順の依存と実行依存を親プロジェクトに対して持っているケースも考えられます。このケースでは、親プロジェクトは設定のインジェクションをそれぞれのプロジェクトに対して行い、さらに子プロジェクトが必要とする何かを実行時に作成するわけです(たとえば、コード生成など)。この場合、親プロジェクトが<literal>childrenDependOnMe</literal>メソッドを呼び出します。そうすることで、子プロジェクトが自分に依存していることを宣言することができます。将来のバージョンのユーザーガイドでこの例を追加するつもりです。</para>
         </section>
     </section>
     <section id='sec:project_jar_dependencies'>
@@ -640,7 +602,7 @@
         <section id="disable_dependency_projects">
             <title>依存プロジェクトをビルドしないようにする<phrase role="original">Disabling the build of dependency projects</phrase></title>
             <para role="original">Sometimes you don't want depended on projects to be built when doing a partial build.
-                To disable the build of the depended on projects you can run gradle with the <code>-a</code> option.
+                To disable the build of the depended on projects you can run Gradle with the <code>-a</code> option.
             </para>
             <para>部分ビルドを実行する際、依存しているプロジェクトはビルドしたくない、という場合もあるかもしれません。依存しているプロジェクトのビルドを無効化するには、<option>-a</option>オプションをつけてプロジェクトをビルドしてください。</para>
         </section>
@@ -671,7 +633,7 @@
         <para role="original">While you are working in a typical development cycle repeatedly building and testing changes to
             the :api project (knowing that you are only changing files in this one project), you may not want to
             even suffer the expense of :shared:compile checking to see what has changed in the :shared project.
-            Adding the <literal>-a</literal> option will cause gradle to use cached jars to resolve any project lib
+            Adding the <literal>-a</literal> option will cause Gradle to use cached jars to resolve any project lib
             dependencies and not try to re-build the depended on projects.
         </para>
         <para>典型的な開発サイクルでは、:apiプロジェクトに何か変更を加えるたびビルドとテストを繰り返すことになります。このとき、:shared:compileタスクは、ビルドのたび:sharedプロジェクトが変更されていないか確認しに行きます。:apiプロジェクトしか変更していないことが分かっている場合、このコストさえ苦痛かもしれません。<option>-a</option>オプションをつけてビルドすると、依存プロジェクトのライブラリを解決する際、キャッシュされたjarが使用されるので、依存プロジェクトが再ビルドされることありません。</para>
@@ -699,9 +661,8 @@
         <sample id="multitestingBuildDependents" dir="userguide/multiproject/dependencies/java" title="依存されているプロジェクトのビルドとテスト / Build and Test Dependent Projects">
             <output args=":api:buildDependents"/>
         </sample>
-        <para role="original">Finally, you may want to build and test everything in all projects.  If the root project has declared
-        <literal>dependsOnChildren()</literal> (as this one does), then any task you run against the root project
-        will cause that same named task to be run on all the children.  So you can just run
+        <para>Finally, you may want to build and test everything in all projects. Any task you run in the root project folder
+        will cause that same named task to be run on all the children. So you can just run
         <literal>gradle build</literal> to build and test all projects.
         </para>
         <para>最後に、すべてのプロジェクトを完全に再ビルド、テストしたいと思うことがあるかもしれません。この例のように、ルートプロジェクトに<literal>dependsOnChildren()</literal>宣言がある場合、ルートプロジェクトでタスクを実行すれば子プロジェクトすべてでそのタスクと同名のタスクが実行されます。なので、ただ<command>gradle build</command>と実行すれば大丈夫です。すべてのプロジェクトがビルドされテストされます。</para>
@@ -729,9 +690,8 @@
         <para role="original">Writing this chapter was pretty exhausting and reading it might have a similar effect. Our final message
             for this chapter is that multi-project builds with Gradle are usually
             <emphasis>not</emphasis>
-            difficult. There are six elements you need to remember: <literal>allprojects</literal>, <literal>
-            subprojects</literal>, <literal>dependsOn</literal>, <literal>childrenDependOnMe</literal>,
-            <literal>dependsOnChildren</literal>
+            difficult. There are five elements you need to remember: <literal>allprojects</literal>, <literal>
+            subprojects</literal>, <literal>evaluationDependsOn</literal>, <literal>evaluationDependsOnChildren</literal>
             and project lib dependencies.
             <footnote>
                 <para role="original">So we are well in the range of the

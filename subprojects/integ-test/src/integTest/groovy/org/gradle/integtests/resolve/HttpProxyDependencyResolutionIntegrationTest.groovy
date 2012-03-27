@@ -15,25 +15,13 @@
  */
 package org.gradle.integtests.resolve
 
-import org.gradle.integtests.fixtures.AbstractIntegrationSpec
-import org.gradle.integtests.fixtures.HttpServer
-import org.gradle.integtests.fixtures.IvyRepository
+import org.gradle.integtests.fixtures.TestProxyServer
 import org.gradle.util.SetSystemProperties
 import org.junit.Rule
 
-import org.gradle.integtests.fixtures.TestProxyServer
-
-class HttpProxyDependencyResolutionIntegrationTest extends AbstractIntegrationSpec {
-    @Rule
-    public final HttpServer server = new HttpServer()
-    @Rule
-    public final TestProxyServer proxyServer = new TestProxyServer(server)
-    @Rule
-    public SetSystemProperties systemProperties = new SetSystemProperties()
-
-    def "setup"() {
-        requireOwnUserHomeDir()
-    }
+class HttpProxyDependencyResolutionIntegrationTest extends AbstractDependencyResolutionTest {
+    @Rule TestProxyServer proxyServer = new TestProxyServer(server)
+    @Rule SetSystemProperties systemProperties = new SetSystemProperties()
 
     public void "uses configured proxy to access remote HTTP repository"() {
         server.start()
@@ -154,9 +142,5 @@ task listJars << {
 
         and:
         proxyServer.requestCount == 2
-    }
-
-    IvyRepository ivyRepo() {
-        return new IvyRepository(file('ivy-repo'))
     }
 }

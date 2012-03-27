@@ -17,7 +17,6 @@ package org.gradle.api.plugins.quality
 
 import org.gradle.api.plugins.quality.internal.AbstractCodeQualityPlugin
 import org.gradle.api.reporting.Report
-import org.gradle.api.reporting.ReportingExtension
 import org.gradle.api.tasks.SourceSet
 
 /**
@@ -62,13 +61,9 @@ class FindBugsPlugin extends AbstractCodeQualityPlugin<FindBugs> {
 
     @Override
     protected CodeQualityExtension createExtension() {
-        extension = instantiator.newInstance(FindBugsExtension)
-        project.extensions.findbugs = extension
+        extension = project.extensions.create("findbugs", FindBugsExtension)
         extension.with {
             toolVersion = "2.0.0"
-        }
-        extension.conventionMapping.with {
-            reportsDir = { project.extensions.getByType(ReportingExtension).file("findbugs") }
         }
         return extension
     }
@@ -83,8 +78,7 @@ class FindBugsPlugin extends AbstractCodeQualityPlugin<FindBugs> {
                 def config = project.configurations['findbugs']
                 if (config.dependencies.empty) {
                     project.dependencies {
-                        findbugs "com.google.code.findbugs:findbugs:$extension.toolVersion"
-                        findbugs "com.google.code.findbugs:findbugs-ant:$extension.toolVersion"
+                        findbugs("com.google.code.findbugs:findbugs:$extension.toolVersion")
                     }
                 }
                 config
@@ -104,8 +98,8 @@ class FindBugsPlugin extends AbstractCodeQualityPlugin<FindBugs> {
         task.with {
             description = "Run FindBugs analysis for ${sourceSet.name} classes"
         }
+        task.source = sourceSet.allJava
         task.conventionMapping.with {
-            defaultSource = { sourceSet.allJava }
             classes = {
                 // the simple "classes = sourceSet.output" may lead to non-existing resources directory
                 // being passed to FindBugs Ant task, resulting in an error

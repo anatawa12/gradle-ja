@@ -1,4 +1,4 @@
-<!--
+﻿<!--
   ~ Copyright 2010 the original author or authors.
   ~
   ~ Licensed under the Apache License, Version 2.0 (the "License");
@@ -318,11 +318,11 @@
     <section>
         <title>生成されたファイルをカスタマイズする<phrase role="original">Customizing the generated files</phrase></title>
         <para role="original">
-            The Eclipse plugin allows you to customise the generated metadata files. The plugin provides a DSL for configurinh model objects
+            The Eclipse plugin allows you to customise the generated metadata files. The plugin provides a DSL for configuring model objects
             that model the Eclipse view of the project. These model objects are then merged with the existing Eclipse XML metadata to ultimately
             generate new metadata. The model objects provide lower level hooks for working with domain objects representing the file content 
             before and after merging with the model configuration. They also provide a very low level hook for working directly with the raw 
-            XML for adjustment before it is persisted, for fine tuning and and configuration that the Eclipse plugin does not model.
+            XML for adjustment before it is persisted, for fine tuning and configuration that the Eclipse plugin does not model.
         </para>
         <para>Eclipseプラグインは、生成されるメタデータファイルをカスタマイズできるようになっています。
             このプラグインでは、DSLを使ってモデルオブジェクトの設定を行うことができます。このモデルオブジェクトは、Eclipseのプロジェクトを表すものです。
@@ -365,7 +365,7 @@
                         ファイルが読み込まれる。ファイルが存在しない場合は、Gradleがデフォルトの内容を用意する。</listitem>
                     <listitem><phrase role="original">The <code>beforeMerged</code> hook is executed with a domain object representing the existing file</phrase>
                         <code>beforeMerged</code>フックが実行され、既存の設定内容を表すドメインオブジェクトがフックに引き渡される。</listitem>
-                    <listitem><phrase role="original">The existing content is merged with the configuration inferred from the gradle build or defined explicitly in the eclipse DSL</phrase>
+                    <listitem><phrase role="original">The existing content is merged with the configuration inferred from the Gradle build or defined explicitly in the eclipse DSL</phrase>
                         Gradleのビルド内容から推測される、またはEclipse DSLで明示された設定内容と、既存の設定内容がマージされる。</listitem>
                     <listitem><phrase role="original">The <code>whenMerged</code> hook is executed with a domain object representing contents of the file to be persisted</phrase>
                         <code>whenMerged</code>フックが実行され、保存される予定の設定内容を表すドメインオブジェクトがフックに引き渡される。</listitem>

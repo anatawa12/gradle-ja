@@ -1,4 +1,4 @@
-<!--
+﻿<!--
   ~ Copyright 2009 the original author or authors.
   ~
   ~ Licensed under the Apache License, Version 2.0 (the "License");
@@ -132,6 +132,12 @@
                 <listitem>
                     <para role="original">The output files of the task are included in the file collection.</para>
                     <para>タスクの出力ファイルがファイルコレクションに追加される。</para>
+                </listitem>
+            </varlistentry>
+            <varlistentry>
+                <term><classname>TaskOutputs</classname></term>
+                <listitem>
+                    <para>The output files of the TaskOutputs are included in the file collection.</para>
                 </listitem>
             </varlistentry>
         </variablelist>
@@ -475,5 +481,5 @@
         <para>アーカイブを別のプロジェクトで使えるようにするために、そのアーカイブを公開したくなることがよくあります。この処理については、<xref linkend="artifact_management"/>に記載されています。</para>
 
     </section>
-    
+
 </chapter>

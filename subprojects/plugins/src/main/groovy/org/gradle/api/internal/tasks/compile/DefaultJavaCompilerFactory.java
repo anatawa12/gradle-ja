@@ -16,49 +16,72 @@
 package org.gradle.api.internal.tasks.compile;
 
 import org.gradle.api.AntBuilder;
+import org.gradle.api.internal.file.TemporaryFileProvider;
 import org.gradle.api.internal.project.ProjectInternal;
 import org.gradle.api.internal.tasks.compile.daemon.DaemonJavaCompiler;
-import org.gradle.api.internal.tasks.compile.fork.ForkingJavaCompiler;
+import org.gradle.api.logging.Logger;
+import org.gradle.api.logging.Logging;
 import org.gradle.api.tasks.compile.CompileOptions;
 import org.gradle.internal.Factory;
-import org.gradle.util.Jvm;
 
 public class DefaultJavaCompilerFactory implements JavaCompilerFactory {
+    private final static Logger LOGGER = Logging.getLogger(DefaultJavaCompilerFactory.class);
+
     private final ProjectInternal project;
+    private final TemporaryFileProvider tempFileProvider;
     private final Factory<AntBuilder> antBuilderFactory;
     private final JavaCompilerFactory inProcessCompilerFactory;
-    private Jvm jvmInstance;
+    private boolean groovyJointCompilation;
 
-    public DefaultJavaCompilerFactory(ProjectInternal project, Factory<AntBuilder> antBuilderFactory, JavaCompilerFactory inProcessCompilerFactory) {
-        this(project, antBuilderFactory, inProcessCompilerFactory, Jvm.current());
-    }
-
-    DefaultJavaCompilerFactory(ProjectInternal project, Factory<AntBuilder> antBuilderFactory, JavaCompilerFactory inProcessCompilerFactory, Jvm jvm){
+    public DefaultJavaCompilerFactory(ProjectInternal project, TemporaryFileProvider tempFileProvider, Factory<AntBuilder> antBuilderFactory, JavaCompilerFactory inProcessCompilerFactory){
         this.project = project;
+        this.tempFileProvider = tempFileProvider;
         this.antBuilderFactory = antBuilderFactory;
         this.inProcessCompilerFactory = inProcessCompilerFactory;
-        this.jvmInstance = jvm;
     }
 
-    public JavaCompiler create(CompileOptions options) {
+    /**
+     * If true, the Java compiler to be created is used for joint compilation
+     * together with a Groovy compiler in the compiler daemon.
+     * In that case, the Groovy normalizing and daemon compilers should be used.
+     */
+    public void setGroovyJointCompilation(boolean flag) {
+        groovyJointCompilation = flag;
+    }
+
+    public Compiler<JavaCompileSpec> create(CompileOptions options) {
+        fallBackToAntIfNecessary(options);
+
         if (options.isUseAnt()) {
             return new AntJavaCompiler(antBuilderFactory);
         }
-        JavaCompiler normalizingJavaCompiler = new NormalizingJavaCompiler(createTargetCompiler(options));
-        if (jvmInstance.isJava7()) {
-            return new Jdk7CompliantJavaCompiler(normalizingJavaCompiler);
-        } else {
-            return normalizingJavaCompiler;
+
+        Compiler<JavaCompileSpec> result = createTargetCompiler(options);
+        if (!groovyJointCompilation) {
+            result = new NormalizingJavaCompiler(result);
+        }
+        return result;
+    }
+
+    private void fallBackToAntIfNecessary(CompileOptions options) {
+        if (options.isUseAnt()) { return; }
+
+        if (options.getCompiler() != null) {
+            LOGGER.warn("Falling back to Ant javac task ('CompileOptions.useAnt = true') because 'CompileOptions.compiler' is set.");
+            options.setUseAnt(true);
         }
     }
 
-    private JavaCompiler createTargetCompiler(CompileOptions options) {
-        if (!options.isFork()) {
-            return inProcessCompilerFactory.create(options);
+    private Compiler<JavaCompileSpec> createTargetCompiler(CompileOptions options) {
+        if (options.isFork() && options.getForkOptions().getExecutable() != null) {
+            return new CommandLineJavaCompiler(tempFileProvider, project.getProjectDir());
         }
-        if (options.getForkOptions().isUseCompilerDaemon()) {
-            return new DaemonJavaCompiler(project, inProcessCompilerFactory.create(options));
+
+        Compiler<JavaCompileSpec> compiler = inProcessCompilerFactory.create(options);
+        if (options.isFork() && !groovyJointCompilation) {
+            return new DaemonJavaCompiler(project, compiler);
         }
-        return new ForkingJavaCompiler(project);
+
+        return compiler;
     }
 }

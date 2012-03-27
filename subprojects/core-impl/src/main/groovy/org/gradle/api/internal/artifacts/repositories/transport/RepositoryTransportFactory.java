@@ -16,12 +16,14 @@
 package org.gradle.api.internal.artifacts.repositories.transport;
 
 import org.apache.ivy.core.cache.RepositoryCacheManager;
+import org.apache.ivy.core.module.id.ArtifactRevisionId;
 import org.apache.ivy.plugins.repository.Repository;
 import org.apache.ivy.plugins.repository.TransferListener;
 import org.apache.ivy.plugins.resolver.AbstractResolver;
 import org.gradle.api.artifacts.repositories.PasswordCredentials;
-import org.gradle.api.internal.artifacts.ivyservice.filestore.ArtifactFileStore;
-import org.gradle.api.internal.artifacts.ivyservice.filestore.ExternalArtifactCache;
+import org.gradle.api.internal.externalresource.local.LocallyAvailableResourceFinder;
+import org.gradle.api.internal.externalresource.CachedExternalResourceIndex;
+import org.gradle.api.internal.filestore.FileStore;
 import org.gradle.api.internal.artifacts.repositories.ProgressLoggingTransferListener;
 import org.gradle.api.internal.artifacts.repositories.cachemanager.DownloadingRepositoryCacheManager;
 import org.gradle.api.internal.artifacts.repositories.cachemanager.LocalFileRepositoryCacheManager;
@@ -32,20 +34,24 @@ import org.gradle.logging.ProgressLoggerFactory;
 import java.net.URI;
 
 public class RepositoryTransportFactory {
-    private final ExternalArtifactCache externalArtifactCache;
     private final TransferListener transferListener;
     private final RepositoryCacheManager downloadingCacheManager;
     private final RepositoryCacheManager localCacheManager;
+    private final LocallyAvailableResourceFinder<ArtifactRevisionId> locallyAvailableResourceFinder;
+    private final CachedExternalResourceIndex<String> byUrlCachedExternalResourceIndex;
 
-    public RepositoryTransportFactory(ExternalArtifactCache externalArtifactCache, ProgressLoggerFactory progressLoggerFactory, ArtifactFileStore fileStore) {
-        this.externalArtifactCache = externalArtifactCache;
+    public RepositoryTransportFactory(
+            LocallyAvailableResourceFinder<ArtifactRevisionId> locallyAvailableResourceFinder, ProgressLoggerFactory progressLoggerFactory,
+            FileStore<ArtifactRevisionId> fileStore, CachedExternalResourceIndex<String> byUrlCachedExternalResourceIndex) {
+        this.locallyAvailableResourceFinder = locallyAvailableResourceFinder;
+        this.byUrlCachedExternalResourceIndex = byUrlCachedExternalResourceIndex;
         this.transferListener = new ProgressLoggingTransferListener(progressLoggerFactory, RepositoryTransport.class);
-        this.downloadingCacheManager = new DownloadingRepositoryCacheManager("downloading", fileStore);
+        this.downloadingCacheManager = new DownloadingRepositoryCacheManager("downloading", fileStore, byUrlCachedExternalResourceIndex);
         this.localCacheManager = new LocalFileRepositoryCacheManager("local");
     }
 
     public RepositoryTransport createHttpTransport(String name, PasswordCredentials credentials) {
-        return decorate(new HttpTransport(name, credentials, externalArtifactCache, downloadingCacheManager));
+        return decorate(new HttpTransport(name, credentials, locallyAvailableResourceFinder, byUrlCachedExternalResourceIndex, downloadingCacheManager));
     }
 
     public RepositoryTransport createFileTransport(String name) {

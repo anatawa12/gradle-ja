@@ -1,4 +1,4 @@
-<chapter id="custom_plugins" xml:lang="ja">
+﻿<chapter id="custom_plugins" xml:lang="ja">
     <title>カスタムプラグインの作成<phrase role="original">Writing Custom Plugins</phrase></title>
 
     <para role="original">A Gradle plugin packages up reusable pieces of build logic, which can be used across many different
@@ -162,64 +162,6 @@
             ビルドスクリプトにおけるクロージャブロックの名前(<literal>greeting</literal>)は、extensionオブジェクトの名前と一致している必要があります。
             そして、クロージャが実行されると、Groovyの標準のクロージャ委譲機能に基づいて、extensionオブジェクトのフィールドはクロージャ内の変数にマップされます。
         </para>
-        
-        <section>
-            <title>デフォルト値のためにextensionを使う<phrase role="original">Using extensions for default values</phrase></title>
-            <para role="original">
-                The extension mechanism is also a powerful way of declaring default values for objects such as tasks. Furthermore, these default values
-                can be specified in terms of other properties.
-            </para>
-            <para>
-                extensionの仕組みは、タスクなどのオブジェクトのデフォルト値を宣言する強力な方法でもあります。
-                さらに、これらのデフォルト値は他のプロパティから指定することもできます。
-            </para>
-            <sample id="conventionTaskWithProperty" dir="userguide/tasks/customTaskUsingConvention" title="コンフィグレーションプロパティを持つタスク / A task with a configuration property">
-                <sourcefile file="build.gradle" snippet="task"/>
-            </sample>
-            <para role="original">
-                Given the above task, we can wire in a default value for the <literal>greeting</literal> property that is any value. In this case we defer
-                to a project property of the same name.
-            </para>
-            <para>
-                上のタスクに対して、<literal>greeting</literal>プロパティのデフォルト値として任意の値を結びつけることができます。
-            </para>
-            <sample id="customTaskApplyingConventionInPlugin" dir="userguide/tasks/customTaskUsingConvention" title="規約によってタスクプロパティのデフォルト値を結びつける / Wiring in the task property default value with conventions">
-                <sourcefile file="build.gradle" snippet="plugin"/>
-            </sample>
-            <para role="original">
-                By using the convention mapping above to map the value of the project property <literal>greeting</literal> as the value for the 
-                <literal>greeting</literal> property on all <literal>GreetingTask</literal> tasks, we have effectively configured this as the default value.
-                That is, individual tasks can be overridden in such a way to override this default.
-            </para>
-            <para>
-                上記の規約によるマッピングで、プロジェクトプロパティ<literal>greeting</literal>の値をすべての<literal>GreetingTask</literal>タスクの<literal>greeting</literal>プロパティに対する値としてマップすることで、
-                実質的にこれをデフォルト値として設定したことになります。
-                それはつまり、個々のタスクはこのデフォルトを次のようにして上書きできるということです。
-            </para>
-            <sample id="customTaskWithConventionUsage" dir="userguide/tasks/customTaskUsingConvention" title="規約によるデフォルトの上書き / Overriding conventional defaults">
-                <sourcefile file="build.gradle" snippet="tasks"/>
-            </sample>
-            <para role="original">
-                In the above, the <literal>hello</literal> task will assume the default value, while <literal>bonjour</literal> overrides this explicitly.
-            </para>
-            <para>
-                上記では、<literal>hello</literal>タスクはデフォルト値を前提としているのに対し、<literal>bonjour</literal>は明示的に上書きしています。
-            </para>
-            <sample id="customTaskWithConventionOutput" dir="userguide/tasks/customTaskUsingConvention" title="規約によるデフォルトの実行結果 / Conventional defaults in action">
-                <output args="-q hello bonjour"/>
-            </sample>
-            <para role="original">
-                Note that the convention mapping is “live” in that the convention mapping closure will be evaluated everytime that the value is requested.
-                In this example this means that the default value for the task property will always be the value of <literal>project.greeting</literal>, 
-                no matter when or how it changes.
-            </para>
-            <para>
-                規約マッピングは「動的」であることに注意してください。
-                規約マッピングのクロージャは、値が要求されるたびに毎回評価されます。
-                このサンプルでは、タスクプロパティのデフォルト値は常に<literal>project.greeting</literal>の値であるということを意味し、いつどのように変更されるかわかりません。
-            </para>
-        </section>
-        
     </section>
 
     <section>

@@ -16,47 +16,70 @@
 package org.gradle.api.internal.tasks.compile
 
 import org.gradle.api.internal.project.ProjectInternal
+import org.gradle.api.internal.tasks.compile.daemon.DaemonJavaCompiler
 import org.gradle.api.tasks.compile.CompileOptions
+import org.gradle.api.internal.file.TemporaryFileProvider
 import org.gradle.internal.Factory
-import org.gradle.util.Jvm
 
 import spock.lang.Specification
 
 class DefaultJavaCompilerFactoryTest extends Specification {
-    CompileOptions compileOptionsMock = Mock()
-    ProjectInternal projectInternal = Mock()
-    Factory factoryMock = Mock()
-    JavaCompilerFactory jcFactory = Mock()
-    Jvm jvmMock = Mock()
-    DefaultJavaCompilerFactory factory = new DefaultJavaCompilerFactory(projectInternal, factoryMock, jcFactory, jvmMock)
-
-    def "does not decorate Ant compiler"() {
-        when:
-        JavaCompiler compiler = factory.create(compileOptionsMock)
-
-        then:
-        0 * jvmMock.isJava7()
-        1 * compileOptionsMock.isUseAnt() >> true
-        compiler instanceof AntJavaCompiler
+    def inProcessCompiler = Mock(Compiler)
+    def inProcessCompilerFactory = Mock(JavaCompilerFactory)
+    def factory = new DefaultJavaCompilerFactory(Mock(ProjectInternal), Mock(TemporaryFileProvider), Mock(Factory), inProcessCompilerFactory)
+    def options = new CompileOptions()
+    
+    def setup() {
+        inProcessCompilerFactory.create(_) >> inProcessCompiler
     }
 
-    def "decorates with NormalizingJavaCompiler if useAnt=false and JDK is not 1.7"() {
-        when:
-        JavaCompiler compiler = factory.create(compileOptionsMock)
+    def "creates Ant compiler when useAnt=true"() {
+        options.useAnt = true
+        options.fork = fork
+        
+        expect:
+        factory.create(options) instanceof AntJavaCompiler
+        
+        where: fork << [false, true]
+    }
 
-        then:
-        1 * jvmMock.isJava7() >> false
+    def "falls back to Ant compiler when options.compiler is set"() {
+        options.useAnt = false
+        options.compiler = "jikes"
+
+        expect:
+        factory.create(options) instanceof AntJavaCompiler
+    }
+    
+    def "creates in-process compiler when fork=false"() {
+        options.useAnt = false
+        options.fork = false
+
+        expect:
+        def compiler = factory.create(options)
         compiler instanceof NormalizingJavaCompiler
+        compiler.delegate.is(inProcessCompiler)
     }
 
-    def "decorates with NormalizingJavaCompiler and Jdk7CompliantJavaCompiler if useAnt=false and JDK is 1.7"() {
-        when:
-        JavaCompiler compiler = factory.create(compileOptionsMock)
+    def "creates command line compiler when fork=true and forkOptions.executable is set"() {
+        options.useAnt = false
+        options.fork = true
+        options.forkOptions.executable = "/path/to/javac"
 
-        then:
-        1 * compileOptionsMock.isUseAnt() >> false
-        1 * jvmMock.isJava7() >> true
-        compiler instanceof Jdk7CompliantJavaCompiler
-        compiler.compilerDelegate instanceof NormalizingJavaCompiler
+        expect:
+        expect:
+        def compiler = factory.create(options)
+        compiler instanceof NormalizingJavaCompiler
+        compiler.delegate instanceof CommandLineJavaCompiler
+    }
+
+    def "creates daemon compiler when fork=true"() {
+        options.useAnt = false
+        options.fork = true
+
+        expect:
+        def compiler = factory.create(options)
+        compiler instanceof NormalizingJavaCompiler
+        compiler.delegate instanceof DaemonJavaCompiler
     }
 }

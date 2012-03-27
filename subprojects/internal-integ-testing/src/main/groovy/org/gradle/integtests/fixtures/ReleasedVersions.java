@@ -1,5 +1,5 @@
 /*
- * Copyright 2011 the original author or authors.
+ * Copyright 2012 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,31 +17,20 @@
 package org.gradle.integtests.fixtures;
 
 import org.gradle.api.Transformer;
+import org.gradle.integtests.fixtures.versions.VersionsInfo;
 import org.gradle.util.CollectionUtils;
 import org.gradle.util.GradleVersion;
 
-import java.util.Arrays;
 import java.util.List;
+
+import static org.gradle.util.GradleVersion.version;
 
 /**
  * by Szczepan Faber, created at: 1/12/12
  */
 public class ReleasedVersions {
 
-    //TODO SF - it should feed from releases.xml
-    private final static List<String> RELEASED = Arrays.asList(
-                "0.8",
-                "0.9-rc-3",
-                "0.9",
-                "0.9.1",
-                "0.9.2",
-                "1.0-milestone-1",
-                "1.0-milestone-2",
-                "1.0-milestone-3",
-                "1.0-milestone-4",
-                "1.0-milestone-5",
-                "1.0-milestone-6",
-                "1.0-milestone-7");
+    private final static List<String> VERSIONS = new VersionsInfo().getVersions();
 
     private final GradleDistribution current;
 
@@ -49,12 +38,20 @@ public class ReleasedVersions {
         this.current = current;
     }
 
+    /**
+     * @return last released version. Never returns the RC.
+     */
     public BasicGradleDistribution getLast() {
-        return current.previousVersion(RELEASED.get(RELEASED.size() - 1));
+        for (String v : VERSIONS) {
+            if (!version(v).isSnapshot()) {
+                return current.previousVersion(v);
+            }
+        }
+        throw new RuntimeException("Unable to get the last version");
     }
 
     public List<BasicGradleDistribution> getAll() {
-        return CollectionUtils.collect(RELEASED, new Transformer<BasicGradleDistribution, String>() {
+        return CollectionUtils.collect(VERSIONS, new Transformer<BasicGradleDistribution, String>() {
             public BasicGradleDistribution transform(String original) {
                 return current.previousVersion(original);
             }
@@ -62,21 +59,15 @@ public class ReleasedVersions {
     }
 
     public BasicGradleDistribution getPreviousOf(BasicGradleDistribution distro) {
-        GradleVersion ver = GradleVersion.version(distro.getVersion());
-        if (ver.isSnapshot()) {
-            //assuming that the snapshot is always the latest and greatest
-            //last of the already released is what we're after
-            return getLast();
+        GradleVersion distroVersion = version(distro.getVersion());
+
+        for (String candidate : VERSIONS) {
+            GradleVersion candidateVersion = version(candidate);
+            if (distroVersion.compareTo(candidateVersion) > 0) {
+                return current.previousVersion(candidate);
+            }
         }
 
-        //simply iterate the list and get the previous element
-        String previous = RELEASED.get(0);
-        for (String version : RELEASED.subList(1, RELEASED.size())) {
-            if (ver.getVersion().equals(version)) {
-                return current.previousVersion(previous);
-            }
-            previous = version;
-        }
         throw new RuntimeException("I don't know the previous version of: " + distro);
     }
 }

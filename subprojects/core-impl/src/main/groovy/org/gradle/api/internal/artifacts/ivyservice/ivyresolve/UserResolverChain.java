@@ -27,7 +27,6 @@ import org.gradle.api.internal.artifacts.ivyservice.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.File;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Comparator;
@@ -37,6 +36,7 @@ public class UserResolverChain implements DependencyToModuleResolver {
     private static final Logger LOGGER = LoggerFactory.getLogger(UserResolverChain.class);
 
     private final List<ModuleVersionRepository> moduleVersionRepositories = new ArrayList<ModuleVersionRepository>();
+    private final List<String> moduleVersionRepositoryNames = new ArrayList<String>();
     private ResolverSettings settings;
 
     public void setSettings(ResolverSettings settings) {
@@ -45,14 +45,16 @@ public class UserResolverChain implements DependencyToModuleResolver {
 
     public void add(ModuleVersionRepository repository) {
         moduleVersionRepositories.add(repository);
+        moduleVersionRepositoryNames.add(repository.getName());
     }
 
     public ModuleVersionResolveResult resolve(DependencyDescriptor dependencyDescriptor) {
+        LOGGER.debug("Attempting to resolve module '{}' using repositories '{}'", dependencyDescriptor.getDependencyRevisionId(), moduleVersionRepositoryNames);
         List<Throwable> errors = new ArrayList<Throwable>();
         final ModuleResolution latestResolved = findLatestModule(dependencyDescriptor, errors);
         if (latestResolved != null) {
             final ModuleVersionDescriptor downloadedModule = latestResolved.module;
-            LOGGER.debug("Found module {} using repository {}", downloadedModule.getId(), latestResolved.repository);
+            LOGGER.debug("Using module '{}' from repository '{}'", downloadedModule.getId(), latestResolved.repository.getName());
             return latestResolved;
         }
         if (!errors.isEmpty()) {
@@ -155,17 +157,17 @@ public class UserResolverChain implements DependencyToModuleResolver {
         }
 
         public ArtifactResolveResult resolve(Artifact artifact) {
-            LOGGER.debug("Attempting to download {} using repository {}", artifact, repository);
-            File file;
+            LOGGER.debug("Attempting to download {} using repository '{}'", artifact, repository.getName());
+            DownloadedArtifact downloadedArtifact;
             try {
-                file = repository.download(artifact);
+                downloadedArtifact = repository.download(artifact);
             } catch (ArtifactResolveException e) {
                 return new BrokenArtifactResolveResult(e);
             }
-            if (file == null) {
+            if (downloadedArtifact == null) {
                 return new BrokenArtifactResolveResult(new ArtifactNotFoundException(artifact));
             }
-            return new FileBackedArtifactResolveResult(file);
+            return new FileBackedArtifactResolveResult(downloadedArtifact.getLocalFile());
         }
     }
 }

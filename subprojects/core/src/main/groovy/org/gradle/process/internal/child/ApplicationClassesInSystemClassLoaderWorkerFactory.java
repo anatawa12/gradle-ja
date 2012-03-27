@@ -17,6 +17,8 @@
 package org.gradle.process.internal.child;
 
 import org.gradle.api.internal.ClassPathRegistry;
+import org.gradle.api.internal.file.TemporaryFileProvider;
+import org.gradle.api.internal.file.TmpDirTemporaryFileProvider;
 import org.gradle.messaging.remote.Address;
 import org.gradle.process.internal.WorkerProcessBuilder;
 import org.gradle.process.internal.launcher.BootstrapClassLoaderWorker;
@@ -24,6 +26,7 @@ import org.gradle.util.GUtil;
 
 import java.io.File;
 import java.net.URL;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.concurrent.Callable;
@@ -49,29 +52,41 @@ import java.util.concurrent.Callable;
  *                          implementation
  *         (ActionExecutionWorker + worker action implementation)
  * </pre>
- *
  */
 public class ApplicationClassesInSystemClassLoaderWorkerFactory implements WorkerFactory {
+    private final TemporaryFileProvider temporaryFileProvider = new TmpDirTemporaryFileProvider();
     private final Object workerId;
     private final String displayName;
     private final WorkerProcessBuilder processBuilder;
     private final List<URL> implementationClassPath;
     private final Address serverAddress;
     private final ClassPathRegistry classPathRegistry;
+    private final File classpathJarFile;
 
     public ApplicationClassesInSystemClassLoaderWorkerFactory(Object workerId, String displayName, WorkerProcessBuilder processBuilder,
-                                          List<URL> implementationClassPath, Address serverAddress,
-                                          ClassPathRegistry classPathRegistry) {
+                                                              List<URL> implementationClassPath, Address serverAddress,
+                                                              ClassPathRegistry classPathRegistry) {
         this.workerId = workerId;
         this.displayName = displayName;
         this.processBuilder = processBuilder;
         this.implementationClassPath = implementationClassPath;
         this.serverAddress = serverAddress;
         this.classPathRegistry = classPathRegistry;
+        classpathJarFile = createClasspathJarFile(processBuilder);
+    }
+
+    private File createClasspathJarFile(WorkerProcessBuilder processBuilder) {
+        File classpathJarFile = temporaryFileProvider.createTemporaryFile("GradleWorkerProcess", "classpath.jar");
+        new UtilityJarFactory().createClasspathJarFile(classpathJarFile, processBuilder.getApplicationClasspath());
+        classpathJarFile.deleteOnExit();
+        return classpathJarFile;
     }
 
     public Collection<File> getSystemClasspath() {
-        return classPathRegistry.getClassPathFiles("WORKER_MAIN");
+        List<File> systemClasspath = new ArrayList<File>();
+        systemClasspath.addAll(classPathRegistry.getClassPath("WORKER_MAIN").getAsFiles());
+        systemClasspath.add(classpathJarFile);
+        return systemClasspath;
     }
 
     public Callable<?> create() {
@@ -81,6 +96,7 @@ public class ApplicationClassesInSystemClassLoaderWorkerFactory implements Worke
                 implementationClassPath, injectedWorker);
         byte[] serializedWorker = GUtil.serialize(worker);
 
-        return new BootstrapClassLoaderWorker(classPathRegistry.getClassPath("WORKER_PROCESS"), processBuilder.getApplicationClasspath(), serializedWorker);
+        return new BootstrapClassLoaderWorker(classPathRegistry.getClassPath("WORKER_PROCESS").getAsURLs(), serializedWorker);
     }
+
 }

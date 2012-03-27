@@ -16,22 +16,21 @@
 package org.gradle.tooling.internal.provider;
 
 import org.gradle.StartParameter;
+import org.gradle.api.logging.LogLevel;
 import org.gradle.initialization.GradleLauncherAction;
 import org.gradle.internal.Factory;
 import org.gradle.launcher.daemon.client.DaemonClient;
 import org.gradle.launcher.daemon.client.DaemonClientServices;
-import org.gradle.launcher.daemon.client.DaemonParameters;
+import org.gradle.launcher.daemon.configuration.DaemonParameters;
 import org.gradle.launcher.exec.GradleLauncherActionExecuter;
 import org.gradle.logging.LoggingManagerInternal;
 import org.gradle.logging.LoggingServiceRegistry;
 import org.gradle.logging.internal.OutputEventRenderer;
-import org.gradle.logging.internal.SingleOpLoggingConfigurer;
 import org.gradle.logging.internal.slf4j.SimpleSlf4jLoggingConfigurer;
 import org.gradle.tooling.internal.build.DefaultBuildEnvironment;
 import org.gradle.tooling.internal.protocol.*;
 import org.gradle.tooling.internal.provider.input.AdaptedOperationParameters;
 import org.gradle.tooling.internal.provider.input.ProviderOperationParameters;
-import org.gradle.tooling.internal.provider.logging.ToolingProviderMessages;
 import org.gradle.util.GUtil;
 import org.gradle.util.GradleVersion;
 import org.slf4j.Logger;
@@ -43,13 +42,18 @@ import java.util.List;
 public class DefaultConnection implements InternalConnection {
     private static final Logger LOGGER = LoggerFactory.getLogger(DefaultConnection.class);
     private final EmbeddedExecuterSupport embeddedExecuterSupport;
-    private final SingleOpLoggingConfigurer slf4jLoggingConfigurer = new SingleOpLoggingConfigurer(new SimpleSlf4jLoggingConfigurer());
+    private final SimpleSlf4jLoggingConfigurer loggingConfigurer = new SimpleSlf4jLoggingConfigurer();
 
     public DefaultConnection() {
-        LOGGER.debug(ToolingProviderMessages.PROVIDER_HELLO);
+        LOGGER.debug("Provider implementation created.");
         //embedded use of the tooling api is not supported publicly so we don't care about its thread safety
         //we can keep still keep this state:
         embeddedExecuterSupport = new EmbeddedExecuterSupport();
+    }
+
+    public void configureLogging(boolean verboseLogging) {
+        LogLevel providerLogLevel = verboseLogging? LogLevel.DEBUG : LogLevel.INFO;
+        loggingConfigurer.configure(providerLogLevel);
     }
 
     public ConnectionMetaDataVersion1 getMetaData() {
@@ -67,13 +71,15 @@ public class DefaultConnection implements InternalConnection {
     public void stop() {
     }
 
-    public void executeBuild(final BuildParametersVersion1 buildParameters, BuildOperationParametersVersion1 parameters) {
+    public void executeBuild(final BuildParametersVersion1 buildParameters,
+                             BuildOperationParametersVersion1 operationParameters) {
         logTargetVersion();
-        run(new ExecuteBuildAction(buildParameters.getTasks()), new AdaptedOperationParameters(parameters));
+        AdaptedOperationParameters adapterdParams = new AdaptedOperationParameters(operationParameters, buildParameters);
+        run(new ExecuteBuildAction(), adapterdParams);
     }
 
     private void logTargetVersion() {
-        LOGGER.info(ToolingProviderMessages.TOOLING_API_HELLO + " {}.", GradleVersion.current().getVersion());
+        LOGGER.info("Tooling API uses target gradle version:" + " {}.", GradleVersion.current().getVersion());
     }
 
     @Deprecated //getTheModel method has much convenient interface, e.g. avoids locking to building only models of a specific type
@@ -101,8 +107,7 @@ public class DefaultConnection implements InternalConnection {
 
     private <T> T run(GradleLauncherAction<T> action, ProviderOperationParameters operationParameters) {
         GradleLauncherActionExecuter<ProviderOperationParameters> executer = createExecuter(operationParameters);
-        ConfiguringBuildAction<T> configuringAction = new ConfiguringBuildAction<T>(operationParameters.getGradleUserHomeDir(),
-                operationParameters.getProjectDir(), operationParameters.isSearchUpwards(), operationParameters.getBuildLogLevel(), action);
+        ConfiguringBuildAction<T> configuringAction = new ConfiguringBuildAction<T>(operationParameters, action);
         return executer.execute(configuringAction, operationParameters);
     }
 
@@ -126,8 +131,6 @@ public class DefaultConnection implements InternalConnection {
     }
 
     private DaemonParameters init(ProviderOperationParameters operationParameters) {
-        slf4jLoggingConfigurer.configure(operationParameters.getProviderLogLevel());
-
         File gradleUserHomeDir = GUtil.elvis(operationParameters.getGradleUserHomeDir(), StartParameter.DEFAULT_GRADLE_USER_HOME);
         DaemonParameters daemonParams = new DaemonParameters();
 

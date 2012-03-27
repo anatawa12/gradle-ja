@@ -15,12 +15,16 @@
  */
 package org.gradle.internal.nativeplatform.services;
 
-import org.gradle.internal.nativeplatform.*;
+import com.sun.jna.Native;
+import org.gradle.internal.nativeplatform.NoOpTerminalDetector;
+import org.gradle.internal.nativeplatform.ProcessEnvironment;
+import org.gradle.internal.nativeplatform.TerminalDetector;
+import org.gradle.internal.nativeplatform.WindowsTerminalDetector;
+import org.gradle.internal.nativeplatform.filesystem.FileSystem;
+import org.gradle.internal.nativeplatform.filesystem.FileSystems;
+import org.gradle.internal.nativeplatform.jna.*;
+import org.gradle.internal.os.OperatingSystem;
 import org.gradle.internal.service.DefaultServiceRegistry;
-import org.gradle.internal.nativeplatform.jna.PosixBackedProcessEnvironment;
-import org.gradle.internal.nativeplatform.jna.UnsupportedEnvironment;
-import org.gradle.internal.nativeplatform.jna.WindowsProcessEnvironment;
-import org.jruby.ext.posix.POSIX;
 
 /**
  * Provides various native platform integration services.
@@ -30,10 +34,6 @@ public class NativeServices extends DefaultServiceRegistry {
         return OperatingSystem.current();
     }
 
-    protected POSIX createPOSIX() {
-        return PosixUtil.current();
-    }
-
     protected FileSystem createFileSystem() {
         return FileSystems.getDefault();
     }
@@ -41,7 +41,7 @@ public class NativeServices extends DefaultServiceRegistry {
     protected ProcessEnvironment createProcessEnvironment() {
         try {
             if (OperatingSystem.current().isUnix()) {
-                return new PosixBackedProcessEnvironment();
+                return new LibCBackedProcessEnvironment(get(LibC.class));
             } else if (OperatingSystem.current().isWindows()) {
                 return new WindowsProcessEnvironment();
             } else {
@@ -51,5 +51,21 @@ public class NativeServices extends DefaultServiceRegistry {
             // Thrown when jna cannot initialize the native stuff
             return new UnsupportedEnvironment();
         }
+    }
+
+    protected TerminalDetector createTerminalDetector() {
+        try {
+            if (get(OperatingSystem.class).isWindows()) {
+                return new WindowsTerminalDetector();
+            }
+            return new LibCBackedTerminalDetector(get(LibC.class));
+        } catch (LinkageError e) {
+            // Thrown when jna cannot initialize the native stuff
+            return new NoOpTerminalDetector();
+        }
+    }
+    
+    protected LibC createLibC() {
+        return (LibC) Native.loadLibrary("c", LibC.class);
     }
 }

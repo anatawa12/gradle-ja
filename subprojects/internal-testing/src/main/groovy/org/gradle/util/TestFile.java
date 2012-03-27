@@ -335,6 +335,11 @@ public class TestFile extends File implements TestFileContext {
         return this;
     }
 
+    public String readLink() {
+        assertExists();
+        return new TestFileHelper(this).readLink();
+    }
+
     public String getPermissions() {
         assertExists();
         return new TestFileHelper(this).getPermissions();
@@ -344,6 +349,11 @@ public class TestFile extends File implements TestFileContext {
         assertExists();
         new TestFileHelper(this).setPermissions(permissions);
         return this;
+    }
+
+    public int getMode() {
+        assertExists();
+        return new TestFileHelper(this).getMode();
     }
 
     /**
@@ -391,8 +401,14 @@ public class TestFile extends File implements TestFileContext {
     }
 
     public TestFile createDir() {
-        assertTrue(isDirectory() || mkdirs());
-        return this;
+        if (isDirectory()) {
+            return this;
+        }
+        if (mkdirs()) {
+            return this;
+        }
+        throw new AssertionError("Problems creating dir: " + this
+                + ". Diagnostics: exists=" + this.exists() + ", isFile=" + this.isFile() + ", isDirectory=" + this.isDirectory());
     }
 
     public TestFile createDir(Object path) {
@@ -517,8 +533,8 @@ public class TestFile extends File implements TestFileContext {
         }
     }
     
-    public Map<String, ?> exec() {
-        return new TestFileHelper(this).exec();
+    public Map<String, ?> exec(Object... args) {
+        return new TestFileHelper(this).exec(args);
     }
 
     public class Snapshot {
@@ -528,6 +544,10 @@ public class TestFile extends File implements TestFileContext {
         public Snapshot() {
             modTime = lastModified();
             hash = getHash("MD5");
+        }
+
+        public long lastModified() {
+            return modTime;
         }
     }
 }

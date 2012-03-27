@@ -26,6 +26,25 @@ dependencies {
         dependency libraries.slf4j_api
         dependency "org.jboss.netty:netty:3.2.4.Final"
     }
+    compile "org.apache.sshd:sshd-core:0.6.0"
 }
 
 useTestFixtures(sourceSet: 'main')
+
+task prepareVersionsInfo {
+    ext.destDir = file("$buildDir/generated-resources/main")
+
+    doLast {
+        def url = "http://services.gradle.org/versions/all"
+        logger.info "Getting the released versions from: $url"
+
+        def json = new URL("http://services.gradle.org/versions/all").text
+        def destFile = new File(ext.destDir, "all-released-versions.json")
+        assert destDir.mkdirs() || destDir.exists()
+        destFile.text = json
+
+        logger.info "Saved released versions information in: $destFile"
+    }
+}
+
+sourceSets.main.output.dir prepareVersionsInfo.destDir, builtBy: prepareVersionsInfo

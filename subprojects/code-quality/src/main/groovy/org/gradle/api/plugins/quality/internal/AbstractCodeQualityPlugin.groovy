@@ -16,21 +16,19 @@
 package org.gradle.api.plugins.quality.internal
 
 import org.gradle.api.Plugin
-import org.gradle.api.internal.Instantiator
 import org.gradle.api.internal.project.ProjectInternal
 import org.gradle.api.plugins.JavaBasePlugin
 import org.gradle.api.plugins.ReportingBasePlugin
 import org.gradle.api.plugins.quality.CodeQualityExtension
+import org.gradle.api.reporting.ReportingExtension
 import org.gradle.api.tasks.SourceSet
 
 abstract class AbstractCodeQualityPlugin<T> implements Plugin<ProjectInternal> {
     protected ProjectInternal project
     protected CodeQualityExtension extension
-    protected Instantiator instantiator
 
     final void apply(ProjectInternal project) {
         this.project = project
-        instantiator = project.services.get(Instantiator)
 
         beforeApply()
         project.plugins.apply(ReportingBasePlugin)
@@ -54,6 +52,10 @@ abstract class AbstractCodeQualityPlugin<T> implements Plugin<ProjectInternal> {
         return toolName.toLowerCase()
     }
 
+    protected String getReportName() {
+        return toolName.toLowerCase()
+    }
+
     protected Class<?> getBasePlugin() {
         return JavaBasePlugin
     }
@@ -69,6 +71,7 @@ abstract class AbstractCodeQualityPlugin<T> implements Plugin<ProjectInternal> {
             // Don't need these things, they're provided by the runtime
             exclude group: 'ant', module: 'ant'
             exclude group: 'org.apache.ant', module: 'ant'
+            exclude group: 'org.apache.ant', module: 'ant-launcher'
             exclude group: 'org.codehaus.groovy', module: 'groovy'
             exclude group: 'org.codehaus.groovy', module: 'groovy-all'
             exclude group: 'org.slf4j', module: 'slf4j-api'
@@ -82,7 +85,11 @@ abstract class AbstractCodeQualityPlugin<T> implements Plugin<ProjectInternal> {
     protected abstract CodeQualityExtension createExtension()
 
     private void configureExtensionRule() {
-        extension.conventionMapping.sourceSets = { [] }
+        extension.conventionMapping.with {
+            sourceSets = { [] }
+            reportsDir = { project.extensions.getByType(ReportingExtension).file(reportName) }
+        }
+
         project.plugins.withType(basePlugin) {
             extension.conventionMapping.sourceSets = { project.sourceSets }
         }
