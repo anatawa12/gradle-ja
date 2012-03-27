@@ -1,29 +1,35 @@
-<chapter id="pmd_plugin">
-    <title>The PMD Plugin</title>
-    <para>The PMD plugin performs quality checks on your project's Java source files using <ulink url="http://pmd.sourceforge.net">PMD</ulink>
+<chapter id="pmd_plugin" xmlns:xi="http://www.w3.org/2001/XInclude" xml:lang="ja">
+    <title>PMDプラグイン<phrase role="original">The PMD Plugin</phrase></title>
+    <para role="original">The PMD plugin performs quality checks on your project's Java source files using <ulink url="http://pmd.sourceforge.net">PMD</ulink>
         and generates reports from these checks.
+    </para>
+    <para>PMDプラグインは <ulink url="http://pmd.sourceforge.net">PMD</ulink>を使用して、あなたのプロジェクトのJavaソースファイルの品質チェックを行ないます。
+        そして、これらのチェック結果から結果レポートを生成します。
     </para>
 
     <section>
-        <title>Usage</title>
-        <para>To use the PMD plugin, include in your build script:</para>
+        <title>使用方法<phrase role="original">Usage</phrase></title>
+        <para role="original">To use the PMD plugin, include in your build script:</para>
+        <para>PMDプラグインを使うためには、ビルドスクリプトに下記を含めます：</para>
         <sample id="usePmdPlugin" dir="codeQuality" title="Using the PMD plugin">
             <sourcefile file="build.gradle" snippet="use-pmd-plugin"/>
         </sample>
-        <para>The plugin adds a number of tasks to the project that perform the quality checks. You can execute the checks by running <userinput>gradle check</userinput>.</para>
+        <para role="original">The plugin adds a number of tasks to the project that perform the quality checks. You can execute the checks by running <userinput>gradle check</userinput>.</para>
+        <para>このプラグインは、品質チェックを行なうプロジェクトへの多くのタスクを加えます。 貴方はタスク実行時にチェック処理を実行させることが出来ます。 <userinput>gradle check</userinput>.</para>
     </section>
 
     <section>
-        <title>Tasks</title>
-        <para>The PMD plugin adds the following tasks to the project:</para>
+        <title>タスク<phrase role="original">Tasks</phrase></title>
+        <para role="original">The PMD plugin adds the following tasks to the project:</para>
+        <para>PMDプラグインは、以下のタスクをプロジェクトに追加します:</para>
         <table>
-            <title>PMD plugin - tasks</title>
+            <title>PMDプラグイン - タスク<phrase role="original">PMD plugin - tasks</phrase></title>
             <thead>
                 <tr>
-                    <td>Task name</td>
-                    <td>Depends on</td>
-                    <td>Type</td>
-                    <td>Description</td>
+                    <td>タスク名<phrase role="original">Task name</phrase></td>
+                    <td>依存先<phrase role="original">Depends on</phrase></td>
+                    <td>型<phrase role="original">Type</phrase></td>
+                    <td>説明<phrase role="original">Description</phrase></td>
                 </tr>
             </thead>
             <tr>
@@ -32,7 +38,7 @@
                 </td>
                 <td>-</td>
                 <td><apilink class="org.gradle.api.plugins.quality.Pmd"/></td>
-                <td>Runs PMD against the production Java source files.</td>
+                <td>製品のJavaソースを対象にPMDを実行します。<phrase role="original">Runs PMD against the production Java source files.</phrase></td>
             </tr>
             <tr>
                 <td>
@@ -40,7 +46,7 @@
                 </td>
                 <td>-</td>
                 <td><apilink class="org.gradle.api.plugins.quality.Pmd"/></td>
-                <td>Runs PMD against the test Java source files.</td>
+                <td>テストのJavaソースを対象にPMDを実行します。<phrase role="original">Runs PMD against the test Java source files.</phrase></td>
             </tr>
             <tr>
                 <td>
@@ -48,47 +54,50 @@
                 </td>
                 <td>-</td>
                 <td><apilink class="org.gradle.api.plugins.quality.Pmd"/></td>
-                <td>Runs PMD against the given source set's Java source files.</td>
+                <td>特定のソースセットで指定されたソースを対象にPMDを実行します。<phrase role="original">Runs PMD against the given source set's Java source files.</phrase></td>
             </tr>
         </table>
 
-        <para>The PMD plugin adds the following dependencies to tasks defined by the Java plugin.</para>
+        <para role="original">The PMD plugin adds the following dependencies to tasks defined by the Java plugin.</para>
+        <para>PMDプラグインは、Javaプラグインによって追加されたタスクに以下の依存関係を追加します。</para>
         <table>
-            <title>PMD plugin - additional task dependencies</title>
+            <title>PMDプラグイン - タスクの追加依存関係<phrase role="original">PMD plugin - additional task dependencies</phrase></title>
             <thead>
-                <td>Task name</td>
-                <td>Depends on</td>
+                <td>タスク名<phrase role="original">Task name</phrase></td>
+                <td>依存先<phrase role="original">Depends on</phrase></td>
             </thead>
             <tr>
                 <td><literal>check</literal></td>
-                <td>All PMD tasks, including <literal>pmdMain</literal> and <literal>pmdTest</literal>.</td>
+                <td>全てのPMDタスクは、<literal>pmdMain</literal> と <literal>pmdTest</literal>を含みます。<phrase role="original">All PMD tasks, including <literal>pmdMain</literal> and <literal>pmdTest</literal>.</phrase></td>
             </tr>
         </table>
     </section>
 
     <section>
-        <title>Dependency management</title>
-        <para>The PMD plugin adds the following dependency configurations:</para>
+        <title>依存関係の管理<phrase role="original">Dependency management</phrase></title>
+        <para role="original">The PMD plugin adds the following dependency configurations:</para>
+        <para>PMDプラグインは、以下の依存関係設定を追加します。</para>
         <table>
-            <title>PMD plugin - dependency configurations</title>
+            <title>PMDプラグイン - 依存関係設定<para role="original">PMD plugin - dependency configurations</para></title>
             <thead>
                 <tr>
-                    <td>Name</td>
-                    <td>Meaning</td>
+                    <td>名前<para role="original">Name</para></td>
+                    <td>意味<para role="original">Meaning</para></td>
                 </tr>
             </thead>
             <tr>
                 <td>
                     <filename>pmd</filename>
                 </td>
-                <td>The PMD libraries to use</td>
+                <td>PMDのライブラリを使用します。<para role="original">The PMD libraries to use</para></td>
             </tr>
         </table>
     </section>
 
     <section>
-        <title>Configuration</title>
-        <para>See <apilink class="org.gradle.api.plugins.quality.PmdExtension"/>.</para>
+        <title>設定<para role="original">Configuration</para></title>
+        <para role="original">See <apilink class="org.gradle.api.plugins.quality.PmdExtension"/>.</para>
+        <para><apilink class="org.gradle.api.plugins.quality.PmdExtension"/>を参照。</para>
     </section>
 
 </chapter>

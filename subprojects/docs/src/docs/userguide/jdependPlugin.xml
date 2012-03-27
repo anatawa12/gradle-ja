@@ -3,7 +3,7 @@
     <para role="original">The JDepend plugin performs quality checks on your project's source files using <ulink url="http://clarkware.com/software/JDepend.html">JDepend</ulink>
         and generates reports from these checks.
     </para>
-    <para>JDependプラグインは <ulink url="http://clarkware.com/software/JDepend.html">JDepend</ulink>を使用して、あなたのプロジェクトのJavaソース・ファイルの品質チェックを行ないます。
+    <para>JDependプラグインは <ulink url="http://clarkware.com/software/JDepend.html">JDepend</ulink>を使用して、あなたのプロジェクトのJavaソースファイルの品質チェックを行ないます。
         そして、これらのチェック結果から結果レポートを生成します。
     </para>
 
