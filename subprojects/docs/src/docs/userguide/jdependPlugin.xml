@@ -1,29 +1,35 @@
-<chapter id="jdepend_plugin">
-    <title>The JDepend Plugin</title>
-    <para>The JDepend plugin performs quality checks on your project's source files using <ulink url="http://clarkware.com/software/JDepend.html">JDepend</ulink>
+<chapter id="jdepend_plugin" xmlns:xi="http://www.w3.org/2001/XInclude" xml:lang="ja">
+    <title>JDependプラグイン<phrase role="original">The JDepend Plugin</phrase></title>
+    <para role="original">The JDepend plugin performs quality checks on your project's source files using <ulink url="http://clarkware.com/software/JDepend.html">JDepend</ulink>
         and generates reports from these checks.
+    </para>
+    <para>JDependプラグインは <ulink url="http://clarkware.com/software/JDepend.html">JDepend</ulink>を使用して、あなたのプロジェクトのJavaソース・ファイルの品質チェックを行ないます。
+        そして、これらのチェック結果から結果レポートを生成します。
     </para>
 
     <section>
-        <title>Usage</title>
-        <para>To use the JDepend plugin, include in your build script:</para>
+        <title>使用方法<phrase role="original">Usage</phrase></title>
+        <para role="original">To use the JDepend plugin, include in your build script:</para>
+        <para>JDependプラグインを使うためには、ビルドスクリプトに下記を含めます：</para>
         <sample id="useJDependPlugin" dir="codeQuality" title="Using the JDepend plugin">
             <sourcefile file="build.gradle" snippet="use-jdepend-plugin"/>
         </sample>
-        <para>The plugin adds a number of tasks to the project that perform the quality checks. You can execute the checks by running <userinput>gradle check</userinput>.</para>
+        <para role="original">The plugin adds a number of tasks to the project that perform the quality checks. You can execute the checks by running <userinput>gradle check</userinput>.</para>
+        <para>このプラグインは、品質チェックを行なうプロジェクトへの多くのタスクを加えます。 貴方はタスク実行時にチェック処理を実行させることが出来ます。 <userinput>gradle check</userinput>.</para>
     </section>
 
     <section>
-        <title>Tasks</title>
-        <para>The JDepend plugin adds the following tasks to the project:</para>
+        <title>タスク<phrase role="original">Tasks</phrase></title>
+        <para role="original">The JDepend plugin adds the following tasks to the project:</para>
+        <para>JDependプラグインは、以下のタスクをプロジェクトに追加します:</para>
         <table>
-            <title>JDepend plugin - tasks</title>
+            <title>JDependプラグイン - タスク<phrase role="original">JDepend plugin - tasks</phrase></title>
             <thead>
                 <tr>
-                    <td>Task name</td>
-                    <td>Depends on</td>
-                    <td>Type</td>
-                    <td>Description</td>
+                    <td>タスク名<phrase role="original">Task name</phrase></td>
+                    <td>依存先<phrase role="original">Depends on</phrase></td>
+                    <td>型<phrase role="original">Type</phrase></td>
+                    <td>説明<phrase role="original">Description</phrase></td>
                 </tr>
             </thead>
             <tr>
@@ -32,7 +38,7 @@
                 </td>
                 <td><literal>classes</literal></td>
                 <td><apilink class="org.gradle.api.plugins.quality.JDepend"/></td>
-                <td>Runs JDepend against the production Java source files.</td>
+                <td>製品のJavaソースを対象にJDependを実行します。<phrase role="original">Runs JDepend against the production Java source files.</phrase></td>
             </tr>
             <tr>
                 <td>
@@ -40,7 +46,7 @@
                 </td>
                 <td><literal>testClasses</literal></td>
                 <td><apilink class="org.gradle.api.plugins.quality.JDepend"/></td>
-                <td>Runs JDepend against the test Java source files.</td>
+                <td>テストのJavaソースを対象にJDependを実行します。<phrase role="original">Runs JDepend against the test Java source files.</phrase></td>
             </tr>
             <tr>
                 <td>
@@ -50,46 +56,49 @@
                     <literal><replaceable>sourceSet</replaceable>Classes</literal>
                 </td>
                 <td><apilink class="org.gradle.api.plugins.quality.JDepend"/></td>
-                <td>Runs JDepend against the given source set's Java source files.</td>
+                <td>特定のソースセットで指定されたソースを対象にJDependを実行します。<phrase role="original">Runs JDepend against the given source set's Java source files.</phrase></td>
             </tr>
         </table>
 
-        <para>The JDepend plugin adds the following dependencies to tasks defined by the Java plugin.</para>
+        <para role="original">The JDepend plugin adds the following dependencies to tasks defined by the Java plugin.</para>
+        <para>JDependプラグインは、Javaプラグインによって追加されたタスクに以下の依存関係を追加します。</para>
         <table>
-            <title>JDepend plugin - additional task dependencies</title>
+            <title>JDependプラグイン - タスクの追加依存関係<phrase role="original">JDepend plugin - additional task dependencies</phrase></title>
             <thead>
-                <td>Task name</td>
-                <td>Depends on</td>
+                <td>タスク名<phrase role="original">Task name</phrase></td>
+                <td>依存先<phrase role="original">Depends on</phrase></td>
             </thead>
             <tr>
                 <td><literal>check</literal></td>
-                <td>All JDepend tasks, including <literal>jdependMain</literal> and <literal>jdependTest</literal>.</td>
+                <td>全てのJDependタスクは、<literal>jdependMain</literal> と <literal>jdependTest</literal>を含みます。<phrase role="original">All JDepend tasks, including <literal>jdependMain</literal> and <literal>jdependTest</literal>.</phrase></td>
             </tr>
         </table>
     </section>
 
     <section>
-        <title>Dependency management</title>
-        <para>The JDepend plugin adds the following dependency configurations:</para>
+        <title>依存関係の管理<phrase role="original">Dependency management</phrase></title>
+        <para role="original">The JDepend plugin adds the following dependency configurations:</para>
+        <para>JDependプラグインは、以下の依存関係設定を追加します。</para>
         <table>
-            <title>JDepend plugin - dependency configurations</title>
+            <title>JDependプラグイン - 依存関係設定<para role="original">JDepend plugin - dependency configurations</para></title>
             <thead>
                 <tr>
-                    <td>Name</td>
-                    <td>Meaning</td>
+                    <td>名前<para role="original">Name</para></td>
+                    <td>意味<para role="original">Meaning</para></td>
                 </tr>
             </thead>
             <tr>
                 <td>
                     <filename>jdepend</filename>
                 </td>
-                <td>The JDepend libraries to use</td>
+                <td>JDependのライブラリを使用します。<para role="original">The JDepend libraries to use</para></td>
             </tr>
         </table>
     </section>
 
     <section>
-        <title>Configuration</title>
-        <para>See <apilink class="org.gradle.api.plugins.quality.JDependExtension"/>.</para>
+        <title>設定<para role="original">Configuration</para></title>
+        <para role="original">See <apilink class="org.gradle.api.plugins.quality.JDependExtension"/>.</para>
+        <para><apilink class="org.gradle.api.plugins.quality.JDependExtension"/>を参照。</para>
     </section>
 </chapter>
