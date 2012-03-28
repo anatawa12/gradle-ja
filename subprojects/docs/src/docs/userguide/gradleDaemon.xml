@@ -13,11 +13,11 @@
   ~ See the License for the specific language governing permissions and
   ~ limitations under the License.
   -->
-<chapter id='gradle_daemon'>
-    <title>The Gradle Daemon</title>
+<chapter id='gradle_daemon' xml:lang="ja">　
+    <title>Gradleのデーモン<phrase role="original">The Gradle Daemon</phrase></title>
 
     <section id='enter_the_daemon'>
-        <title>Enter the daemon</title>
+        <title>デーモン入門<phrase role="original">Enter the daemon</phrase></title>
         <para><emphasis>The Gradle daemon</emphasis> (sometimes referred as <emphasis>the build daemon</emphasis>)
             aims to improve the startup and execution time of Gradle.
         </para>

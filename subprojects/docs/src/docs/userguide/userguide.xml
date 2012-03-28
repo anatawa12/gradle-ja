@@ -48,6 +48,10 @@
             <firstname>Nobuhiro</firstname>
             <surname>Sue</surname>
         </othercredit>
+        <othercredit class="translator">
+            <firstname>Shinya</firstname>
+            <surname>Mochida</surname>
+        </othercredit>
     </bookinfo>
     <preface>
         <title>翻訳版について</title>
