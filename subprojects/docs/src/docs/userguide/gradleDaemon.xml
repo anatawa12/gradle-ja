@@ -14,15 +14,17 @@
   ~ limitations under the License.
   -->
 <chapter id='gradle_daemon' xml:lang="ja">　
-    <title>Gradleのデーモン<phrase role="original">The Gradle Daemon</phrase></title>
+    <title>Gradleデーモン<phrase role="original">The Gradle Daemon</phrase></title>
 
     <section id='enter_the_daemon'>
         <title>デーモン入門<phrase role="original">Enter the daemon</phrase></title>
-        <para><emphasis>The Gradle daemon</emphasis> (sometimes referred as <emphasis>the build daemon</emphasis>)
+        <para role="original"><emphasis>The Gradle daemon</emphasis> (sometimes referred as <emphasis>the build daemon</emphasis>)
             aims to improve the startup and execution time of Gradle.
         </para>
+        <para>Gradleデーモン(ビルドデーモンと呼ばれることもあります)はGradleの起動と実行の速度を改善します。
+        </para>
 
-        <para>
+        <para role="original">
             We came up with several use cases where the daemon is very useful.
             For some workflows, the user invokes Gradle many times to execute a small number of relatively quick tasks.
             For example:
@@ -34,6 +36,17 @@
             For above sorts of workflows, it is important that the startup cost of invoking Gradle is as small as possible.
         </para>
         <para>
+            時おりデーモンが非常に有効であるような時があるでしょう。
+            場合によっては、ユーザーはGradleをちょっとしたタスクを何度も実行することがあるでしょう。
+            例えば、次のようなケースがあります。
+            <itemizedlist>
+                <listitem>テスト駆動開発にて、ユニットテストを度々実行するような場合</listitem>
+                <listitem>Webアプリケーション開発にて、アプリケーションを何度も構築する場合</listitem>
+                <listitem>ビルドの挙動を調べるために、gradle -tを何度も実行する場合</listitem>
+            </itemizedlist>
+            これらの場合、Gradleを起動・実行するための時間は出来る限り短いことが重要でしょう。
+        </para>
+        <para role="original">
             In addition, user interfaces can provide some interesting features if the Gradle model can be built relatively quickly.
             For example, the daemon might be useful for following scenarios:
             <itemizedlist>
@@ -43,9 +56,22 @@
             </itemizedlist>
         </para>
         <para>
+            さらに、もしGradleモデルがより早く実行されることにより、ユーザーインターフェースは優れたものになるでしょう。
+            例えば、デーモンは次のようなケースで有効となるかもしれません。
+            <itemizedlist>
+                <listitem>統合開発環境で入力補完する場合</listitem>
+                <listitem>GUIでビルド状況を表示する場合</listitem>
+                <listitem>コマンドラインインターフェースでのタブ補完する場合</listitem>
+            </itemizedlist>
+        </para>
+        <para role="original">
             In general, snappy behavior of the build tool is always handy.
             If you try using the daemon for your local builds it's going to be hard
             for you to go back to regular use of Gradle.
+        </para>
+        <para>
+            一般的には、ビルドツールの軽快な動作は常に便利です。
+            デーモンをローカルで使い始めると、通常のGradle利用に戻りたくなくなるでしょう。
         </para>
         <para>
             The Tooling API (see <xref linkend="embedding"/>)
