@@ -1,5 +1,5 @@
-﻿<appendix id='gradle_command_line'>
-    <title>Gradle Command Line</title>
+﻿<appendix id='gradle_command_line' xmlns:xi="http://www.w3.org/2001/XInclude" xml:lang="ja">
+    <title>Gradle コマンドライン<phrase role="original">Gradle Command Line</phrase></title>
     <para>The
         <command>gradle</command>
         command has the following usage:
@@ -17,14 +17,17 @@
             <term><option>-?</option>, <option>-h</option>, <option>--help</option>
             </term>
             <listitem>
-                <para>Shows a help message.</para>
+                <para role="original">Shows a help message.</para>
+                <para>ヘルプのメッセージを参照</para>
             </listitem>
         </varlistentry>
         <varlistentry>
             <term><option>-a</option>, <option>--no-rebuild</option>
             </term>
             <listitem>
-                <para>Do not rebuild project dependencies.
+                <para role="original">Do not rebuild project dependencies.
+                </para>
+                <para>プロジェクトの依存関係をリビルドしません。
                 </para>
             </listitem>
         </varlistentry>
