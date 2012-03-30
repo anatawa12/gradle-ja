@@ -73,13 +73,19 @@
             一般的には、ビルドツールの軽快な動作は常に便利です。
             デーモンをローカルで使い始めると、通常のGradle利用に戻りたくなくなるでしょう。
         </para>
-        <para>
+        <para role="original">
             The Tooling API (see <xref linkend="embedding"/>)
             uses the daemon all the time, e.g. you cannot officially use the Tooling API without the daemon.
             This means that if you use the STS Gradle plugin for Eclipse or new Intellij IDEA plugin (IDEA>10)
             the daemon acts behind the hood.
         </para>
-        <para>In future the daemon will offer more features:
+        <para>
+            ツールAPI (参照 <xref linkend="embedding"/>)
+            は常にデーモンを利用しています。つまり、通常デーモンなしでツールAPIを使えません。
+            したがって、EclipseのSTS GradleプラグインやIDEA10以降に搭載されたIntelliJ IDEAプラグインを用いる場合、
+            デーモンが背後で起動しています。
+        </para>
+        <para role="original">In future the daemon will offer more features:
             <itemizedlist>
                 <listitem>Snappy up-to-date checks: use native file system change notifications (eg via jdk7 nio.2)
                     to preemptively perform up-to-date analysis.</listitem>
@@ -95,10 +101,26 @@
                 <listitem>Periodically garbage collect the Gradle caches.</listitem>
             </itemizedlist>
         </para>
+        <para>
+            <itemizedlist>今後は下記の機能が追加される予定である :
+                <listitem>イケてる更新チェック : ファイルシステムの変更通知(jdk7 nio.2)を利用して
+                    事前に更新されたファイルの差分分析を実行する</listitem>
+                <listitem>より高速なビルド : 事前にプロジェクトを評価して、次にユーザーがGradleを起動する前には
+                    モデルが準備されている状態にする</listitem>
+                <listitem>より高速なビルドについて言ったっけ？デーモンは能力としては事前に依存ライブラリーをダウンロードして
+                    新バージョンの依存ファイルのスナップショットがないか確認する</listitem>
+                <listitem>コンパイルプロセスとテストプロセスの再利用化を促進する。
+                    例えばGroovyとScalaコンパイラーの起動には多大なコストがかかる。
+                    そこで、ビルドデーモンはGroovyとScala双方のコンパイラーが起動された状態を維持する。</listitem>
+                <listitem>ある種のタスクは事前に実行しておく。例えば、コンパイルなど。より早いフィードバックを可能とする。</listitem>
+                <listitem>速くて正確なbash上のタブ補完</listitem>
+                <listitem>Gradleキャッシュを定期的にガーベージコレクトする</listitem>
+            </itemizedlist>
+        </para>
     </section>
 
     <section id='daemon_implementation'>
-        <title>Implementation notes</title>
+        <title>実装ノート<phrase role="original">Implementation notes</phrase></title>
         <para>The basic idea is that the gradle command forks a daemon process, which performs the actual build.
             Subsequent invocations of the gradle command will reuse the daemon, avoiding the startup costs.
         </para>
