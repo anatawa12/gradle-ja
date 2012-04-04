@@ -64,17 +64,25 @@
                 When Gradle is executed without the daemon, then a new JVM must be launched for every build execution,
                 unless the JVM launched by the Gradle start script happens to have the same parameters.
             </para>
-            <para>
+            <para role="original">
             This launching of an extra JVM on every build execution is quite expensive, which is why we highly recommend that you use the Gradle Daemon if you are
             specifying <literal>org.gradle.java.home</literal> or <literal>org.gradle.jvmargs</literal>. See <xref linkend="gradle_daemon"/> for more details.</para>
+            <para>
+            毎回のビルド実行において余分なJVM起動はとても厳しいです。もし<literal>org.gradle.java.home</literal> 又は <literal>org.gradle.jvmargs</literal>
+						を設定していれば、Gradle デーモンを使う事を凄く推奨します。詳細は<xref linkend="gradle_daemon"/>を参照してください。</para>
         </section>
     </section>
 
     <section id='sec:accessing_the_web_via_a_proxy'>
         <title>プロクシ経由のWebアクセス<phrase role="original">Accessing the web via a proxy</phrase></title>
-        <para>Configuring an HTTP proxy (for example for downloading dependencies) is done via standard JVM system properties. These properties can be set directly in the build script; for example <literal>
+        <para role="original">Configuring an HTTP proxy (for example for downloading dependencies) is done via standard JVM system properties. These properties can be set directly in the build script; for example <literal>
                 System.setProperty('http.proxyHost', 'www.somehost.org')</literal> for the proxy host. Alternatively, the properties can be specified in a gradle.properties file,
             either in the build's root directory or in the Gradle home directory.
+        </para>
+        <para>HTTPプロクシの設定は(例えば依存関係のダウンロードの) 標準的なJVMのシステムプロパティに依存しています。 これらの設定は、直接ビルドスクリプト上で設定することが可能です。
+								例えばプロクシのホストの為に<literal>
+                System.setProperty('http.proxyHost', 'www.somehost.org')</literal>と設定できます。
+								あるいは、ビルドのルートディレクトリ上 又は Gradleホームディレクトリ上にある gradle.propertiesファイルにそれらの値を設定できます。
         </para>
         <example>
             <title>HTTPプロクシの設定<phrase role="original">Configuring an HTTP proxy</phrase></title>
@@ -100,7 +108,7 @@ systemProp.https.proxyPassword=password
 systemProp.https.nonProxyHosts=*.nonproxyrepos.com|localhost
 ]]></programlisting>
         </example>
-        <para>We could not find a good overview for all possible proxy settings. One place to look are the constants
+        <para role="original">We could not find a good overview for all possible proxy settings. One place to look are the constants
             in a file from the Ant project. Here a
             <ulink url='http://svn.apache.org/viewvc/ant/core/trunk/src/main/org/apache/tools/ant/util/ProxySetup.java?view=markup&amp;pathrev=556977'>
                 link
@@ -109,14 +117,33 @@ systemProp.https.nonProxyHosts=*.nonproxyrepos.com|localhost
                 Networking Properties page
             </ulink> from the JDK docs. If anyone knows a better overview, please let us know via the mailing list.
         </para>
+        <para>私たちは全てのプロクシを通過する為の良い方法を知りません。一つの情報はAntプロジェクトの固定値です. 
+						Subversion上の下記のリンクを参照してください。
+            <ulink url='http://svn.apache.org/viewvc/ant/core/trunk/src/main/org/apache/tools/ant/util/ProxySetup.java?view=markup&amp;pathrev=556977'>
+                リンク
+            </ulink>
+						他にはJDKドキュメントの
+            <ulink url='http://download.oracle.com/javase/6/docs/technotes/guides/net/properties.html'>
+                ネットワーク設定値のページ
+            </ulink> です。 どなたか良い方法を知っている場合、メーリングリストで教えてください。
+        </para>
         <section id='sub:ntlm_authentication'>
             <title>NTLM認証<phrase role="original">NTLM Authentication</phrase></title>
-            <para>If your proxy requires NTLM authentication, you may need to provide the authentication domain as well as the username and password.
+            <para role="original">If your proxy requires NTLM authentication, you may need to provide the authentication domain as well as the username and password.
                 There are 2 ways that you can provide the domain for authenticating to a NTLM proxy:
                 <itemizedlist>
                     <listitem>Set the <literal>http.proxyUser</literal> system property to a value like <literal><replaceable>domain</replaceable>/<replaceable>username</replaceable></literal>.
                     </listitem>
                     <listitem>Provide the authentication domain via the <literal>http.auth.ntlm.domain</literal> system property.
+                    </listitem>
+                </itemizedlist>
+            </para>
+            <para>NTLM認証が必要なプロクシを使う場合,認証ドメインが提供するユーザ名とパスワードが必要です。
+                NTLMプロクシの認証が必要なドメインに対して二つの方法を設定できます:
+                <itemizedlist>
+                    <listitem><literal>http.proxyUser</literal>を<literal><replaceable>domain</replaceable>/<replaceable>username</replaceable></literal>のようにシステムプロパティに設定する
+                    </listitem>
+                    <listitem><literal>http.auth.ntlm.domain</literal>システムプロパティの設定で認証ドメインに提供する
                     </listitem>
                 </itemizedlist>
             </para>
