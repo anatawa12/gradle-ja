@@ -13,11 +13,11 @@
   ~ See the License for the specific language governing permissions and
   ~ limitations under the License.
   -->
-<chapter id='build_environment'>
-    <title>The build environment</title>
+<chapter id='build_environment' xmlns:xi="http://www.w3.org/2001/XInclude" xml:lang="ja">
+    <title>ビルド環境<phrase role="original">The build environment</phrase></title>
 
     <section id="sec:gradle_configuration_properties">
-        <title>Configuring the build environment via gradle.properties</title>
+        <title>gradle.propertiesを使用したビルド環境の構築<phrase role="original">Configuring the build environment via gradle.properties</phrase></title>
         <para>Gradle provides several options that make it easy to configure the Java process that will be used to execute your build.
             While it's possible to configure these in your local environment via GRADLE_OPTS or JAVA_OPTS,
             certain settings like jvm memory settings, java home, daemon on/off
@@ -57,7 +57,7 @@
             </varlistentry>
         </para>
         <section>
-            <title>Forked java processes</title>
+            <title>javaプロセスのフォーク<phrase role="original">Forked java processes</phrase></title>
             <para>Many settings (like the java version and maximum heap size) can only be specified when launching a new JVM for the build process. This means that Gradle
                 must launch a separate JVM process to execute the build after parsing the various <filename>gradle.properties</filename> files.
                 When running with the daemon, a JVM with the correct parameters is started once and reused for each daemon build execution.
@@ -71,13 +71,13 @@
     </section>
 
     <section id='sec:accessing_the_web_via_a_proxy'>
-        <title>Accessing the web via a proxy</title>
+        <title>プロクシ経由のWebアクセス<phrase role="original">Accessing the web via a proxy</phrase></title>
         <para>Configuring an HTTP proxy (for example for downloading dependencies) is done via standard JVM system properties. These properties can be set directly in the build script; for example <literal>
                 System.setProperty('http.proxyHost', 'www.somehost.org')</literal> for the proxy host. Alternatively, the properties can be specified in a gradle.properties file,
             either in the build's root directory or in the Gradle home directory.
         </para>
         <example>
-            <title>Configuring an HTTP proxy</title>
+            <title>HTTPプロクシの設定<phrase role="original">Configuring an HTTP proxy</phrase></title>
             <para><filename>gradle.properties</filename></para>
             <programlisting><![CDATA[
 systemProp.http.proxyHost=www.somehost.org
@@ -87,9 +87,10 @@ systemProp.http.proxyPassword=password
 systemProp.http.nonProxyHosts=*.nonproxyrepos.com|localhost	
 ]]></programlisting>
         </example>
-        <para>There are separate settings for HTTPS.</para>
+        <para role="original">There are separate settings for HTTPS.</para>
+        <para>HTTPS設定の分離</para>
         <example>
-            <title>Configuring an HTTPS proxy</title>
+            <title>HTTPSプロクシの設定<phrase role="original">Configuring an HTTPS proxy</phrase></title>
             <para><filename>gradle.properties</filename></para>
             <programlisting><![CDATA[
 systemProp.https.proxyHost=www.somehost.org
@@ -109,7 +110,7 @@ systemProp.https.nonProxyHosts=*.nonproxyrepos.com|localhost
             </ulink> from the JDK docs. If anyone knows a better overview, please let us know via the mailing list.
         </para>
         <section id='sub:ntlm_authentication'>
-            <title>NTLM Authentication</title>
+            <title>NTLM認証<phrase role="original">NTLM Authentication</phrase></title>
             <para>If your proxy requires NTLM authentication, you may need to provide the authentication domain as well as the username and password.
                 There are 2 ways that you can provide the domain for authenticating to a NTLM proxy:
                 <itemizedlist>
