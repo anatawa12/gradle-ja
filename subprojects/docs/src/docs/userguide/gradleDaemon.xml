@@ -121,8 +121,11 @@
 
     <section id='daemon_implementation'>
         <title>実装ノート<phrase role="original">Implementation notes</phrase></title>
-        <para>The basic idea is that the gradle command forks a daemon process, which performs the actual build.
+        <para role="original">The basic idea is that the gradle command forks a daemon process, which performs the actual build.
             Subsequent invocations of the gradle command will reuse the daemon, avoiding the startup costs.
+        </para>
+        <para>元々の発想はgradleコマンドがデーモンプロセスを起動して、そのデーモンに実際のビルドを実行させることであった。
+            そして引き続き実行されるgradleコマンドがデーモンを再利用して、起動にかかるコストが低下させられる。
         </para>
         <para>
             Here're all situations in which we fork a new daemon process:
@@ -139,17 +142,37 @@
             </itemizedlist>
             We plan to improve the ways of managing / pooling the daemons in future.
         </para>
+        <para>
+            新たなデーモンプロセスを起動する場面は以下のとおりである。
+            <itemizedlist>
+                <listitem>既存のデーモンがある処理を実行中の場合、新たなデーモンを起動する。</listitem>
+                <listitem>複数のデーモンプロセスをjava環境毎に起動する。何も処理を実行していないデーモンが存在していて
+                    別のjava環境でのビルドを実行した場合でも、新しいデーモンが起動するようになる。</listitem>
+                <listitem>デーモンがあるバージョンのGradleと関連づいている場合、
+                    つまりいくつかの稼動していないデーモンが存在し、ある別のバージョンのGradleが
+                    実行されているような場合でも、新しいデーモンが起動される。
+                    その結果<literal>--stop</literal>コマンドの入力が必要になる:
+                    デーモンを止められる唯一の方法は<literal>--stop</literal>コマンドと同時に起動した場合のみである。
+                </listitem>
+            </itemizedlist>
+            今後、デーモンの管理方法、プール方法の改善を行う予定である。
+        </para>
     </section>
 
     <section id='daemon_usage_and_troubleshooting'>
-        <title>Usage and troubleshooting</title>
-        <para>For command line usage take a look dedicated section in <xref linkend="gradle_command_line"/>.
+        <title>使い方とトラブルシューティング<phrase role="original">Usage and troubleshooting</phrase></title>
+        <para role="original">For command line usage take a look dedicated section in <xref linkend="gradle_command_line"/>.
             If you are tired of using the same command line options again and again, take a look at
             <xref linkend="sec:gradle_configuration_properties"/>.
             The section contains information on how to configure certain behavior of the daemon
             (including turning on the daemon by default) in a more 'persistent' way.
         </para>
-        <para>
+        <para>コマンドラインの利用方法は別途参照<xref linkend="gradle_command_line"/>
+            同じコマンドラインオプションを何度も使う場合は、こちらを参照
+            <xref linkend="sec:gradle_configuration_properties"/>
+            上記の節にはデーモンの振る舞いの記述法が(デフォルトでデーモンを起動する方法を含めて)詳細に記述されている。
+        </para>
+        <para role="original">
             As mentioned earlier we are actively improving the daemon. At the moment the daemon
             is marked as 'experimental' in the user interface. We encourage everyone to try the
             daemon out and get back to us with feedback (or even better: the pull requests).
@@ -165,13 +188,33 @@
                     mode to observe how the build is executed.</listitem>
             </itemizedlist>
         </para>
+        <para>
+            前述のとおり、ユーザーインターフェース上「experimental」と表示されている
+            現在はデーモンを改善中である。ぜひデーモンを利用して頂き、フィードバック
+            してもらいたい（。プル・リクエストはなおさら良い）。
+            Gradleデーモンのトラブルシューティング法は以下のとおりである。
+            <itemizedlist>
+                <listitem>ビルドで問題が発生した場合は、一時的にデーモンを利用できなくする。
+                （コマンドラインにスイッチ<literal>--no-daemon</literal>を渡すことで可能である）</listitem>
+                <listitem>時おり、デーモンを停止したい場合があるだろう。その場合は<literal>--stop</literal>
+                    コマンドラインオプションをつけることで強制的に停止できるであろう。</listitem>
+                <listitem>ログファイルを利用する場合は、デフォルトでは
+                    Gradleユーザーホームディレクトリーにある。</listitem>
+                <listitem><literal>--feoreground</literal>を使ってデーモンを起動することで、
+                    ビルドの実行状況を観察できる。</listitem>
+            </itemizedlist>
+        </para>
     </section>
 
     <section id="sec:daemon_properties">
-        <title>Daemon properties</title>
-        <para>Some daemon settings can be configured in <filename>gradle.properties</filename>.
+        <title>デーモンのプロパティ<phrase role="original" >Daemon properties</phrase></title>
+        <para role="original">Some daemon settings can be configured in <filename>gradle.properties</filename>.
             For example, jvm args - memory settings or the java home.
             Please find more information in <xref linkend="sec:gradle_properties_and_system_properties"/>
+        </para>
+        <para>デーモンの設定に関しては<filename>gradle.properties</filename>に記述できるものもある。
+            例えば、jvmの引数に関する記述 - メモリーの設定、java homeの設定など。
+            より詳細はこちらを参照。<xref linkend="sec:gradle_properties_and_system_properties"/>
         </para>
     </section>
 
