@@ -57,12 +57,12 @@ ext {
     samplesDir = file("$buildDir/samples")
     docbookSrc = new File(project.buildDir, 'src')
     samplesSrcDir = file('src/samples')
-}
 
-pdfFontNameKey = "gradleDocsPdfFontName"
-pdfFontFileKey = "gradleDocsPdfFontFile"
-pdfGeneratable = {
-    project.hasProperty(pdfFontFileKey) && project.hasProperty(pdfFontNameKey)
+    pdfFontNameKey = "gradleDocsPdfFontName"
+    pdfFontFileKey = "gradleDocsPdfFontFile"
+    pdfGeneratable = {
+        project.hasProperty(pdfFontFileKey) && project.hasProperty(pdfFontNameKey)
+    }
 }
 
 ext.outputs = [:]
