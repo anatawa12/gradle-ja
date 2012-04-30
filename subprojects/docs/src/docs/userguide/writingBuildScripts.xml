@@ -148,41 +148,68 @@
         <para>ビルドスクリプトが実行されるときは、スクリプトは<apilink class="org.gradle.api.Script"/>を実装したクラスにコンパイルされます。つまり、ビルドスクリプトでは<classname>Script</classname>インターフェースで宣言されているプロパティとメソッドを全て使うことができるということです。</para>
     </section>
     <section>
-        <title>Declaring variables</title>
-        <para>There are two kinds of variables that can be declared in a build script: local variables and extra properties.
+        <title>変数の宣言 <phrase role="original">Declaring variables</phrase></title>
+        <para role="original">There are two kinds of variables that can be declared in a build script: local variables and extra properties.
+        </para>
+        <para>
+            ビルドスクリプトでは、二つの方法で変数を宣言できます。ローカル変数と拡張プロパティです。
         </para>
         <section>
-            <title>Local variables</title>
-            <para>Local variables are declared with the <literal>def</literal> keyword. They are only visible in the scope where they have been declared.
+            <title>ローカル変数 <phrase role="original">Local variables</phrase></title>
+            <para role="original">Local variables are declared with the <literal>def</literal> keyword. They are only visible in the scope where they have been declared.
                 Local variables are a feature of the underlying Groovy language.
             </para>
-            <sample id="localVariables" dir="userguide/tutorial/localVariables" title="Using local variables">
+            <para>
+                ローカル変数は、<literal>def</literal>キーワードで宣言する変数です。変数のスコープは、変数が宣言されている場所に制限されます。なお、ローカル変数はGroovy言語に依る機能です。
+            </para>
+            <sample id="localVariables" dir="userguide/tutorial/localVariables" title="ローカル変数を使用する / Using local variables">
                 <sourcefile file="build.gradle"/>
             </sample>
         </section>
         <section id='sec:extra_properties'>
-            <title>Extra properties</title>
-            <para>All enhanced objects in Gradle's domain model can hold extra user-defined properties. This includes, but is not limited to, projects, tasks,
+            <title>拡張プロパティ <phrase role="original">Extra properties</phrase></title>
+            <para role="original">All enhanced objects in Gradle's domain model can hold extra user-defined properties. This includes, but is not limited to, projects, tasks,
                 and source sets. Extra properties can be added, read and set via the owning object's <literal>ext</literal> property.
             </para>
-            <sample id="extraProperties" dir="userguide/tutorial/extraProperties" title="Using extra properties">
+            <para>
+                Gradleのドメインモデルを構成する全ての拡張オブジェクトには、ユーザー定義のプロパティ、拡張プロパティを新たに追加することができます。
+                これらのオブジェクトには、projects、tasks、source setsを始め、様々なオブジェクトが含まれます。
+                拡張プロパティをセットしたり読み込んだりするには、対象オブジェクトの<literal>ext</literal>プロパティを使用して下さい。
+            </para>
+            <sample id="extraProperties" dir="userguide/tutorial/extraProperties" title="拡張プロパティを使用する / Using extra properties">
                 <sourcefile file="build.gradle" snippet="sourceSetProperty"/>
             </sample>
-            <para>In this example, a property named <literal>purpose</literal> is added to all source sets by setting <literal>ext.purpose</literal> to
+            <para role="original">In this example, a property named <literal>purpose</literal> is added to all source sets by setting <literal>ext.purpose</literal> to
                 <literal>null</literal> (<literal>null</literal> is a permissible value). Once the property has been added, it can be read and set like
                 a predefined property. Alternatively, <literal>ext.</literal> can be used as well.
             </para>
-            <para>By requiring special syntax for adding a property, Gradle can fail fast when an attempt is made to set a (predefined or extra) property
+            <para>
+                この例では、<literal>ext.purpose</literal>に<literal>null</literal>をセットすることで（<literal>null</literal>でも構いません）、全てのソースセットに<literal>purpose</literal>というプロパティを追加しています。
+                一度プロパティが追加されれば、定義済みのプロパティと同じように読み込んだり書き込んだりすることができるようになります。
+                また、<literal>ext.</literal>を付けてアクセスすることも可能です。
+            </para>
+            <para role="original">By requiring special syntax for adding a property, Gradle can fail fast when an attempt is made to set a (predefined or extra) property
                 but the property is misspelled or does not exist.
                 <footnote>
-                    <para>As of Gradle 1.0 milestone 9, using <literal>ext</literal> to add extra properties is strongly encouraged but not yet enforced.
+                    <para role="original">As of Gradle 1.0 milestone 9, using <literal>ext</literal> to add extra properties is strongly encouraged but not yet enforced.
                         Therefore, Gradle will not fail when an unknown property is set. However, it will print a warning.
                     </para>
                 </footnote>
                 Extra properties can be accessed from anywhere their owning object can be accessed, giving them a wider scope than local variables.
                 Extra properties on a parent project are visible from subprojects.
             </para>
-            <para>For further details on extra properties and their API, see <apilink class="org.gradle.api.plugins.ExtraPropertiesExtension"/>.</para>
+            <para>
+                プロパティを追加する際に特別な記法を要求することで、（定義済みのものであれ、拡張プロパティであれ）存在しないプロパティにアクセスしようとしたり、間違ったプロパティ名を使用しようとしたときのフェイルファストを実現できます。
+                <footnote>
+                    <para>Gradle 1.0 milestone 9より、拡張プロパティを追加する際には<literal>ext</literal>を使用することが強く推奨されるようになっていますが、まだ強制はされません。
+                        そのため存在しないプロパティに値を設定してもGradleの実行は失敗せず、警告が表示されます。
+                    </para>
+                </footnote>
+                拡張プロパティは、プロパティを追加したオブジェクトが参照できる場所であればどこからでもアクセスできるので、ローカル変数より広いスコープを持っていると言えます。
+                また、親プロジェクトの拡張プロパティは、サブプロジェクトからアクセスすることができます。
+            </para>
+            <para role="original">For further details on extra properties and their API, see <apilink class="org.gradle.api.plugins.ExtraPropertiesExtension"/>.</para>
+            <para>拡張プロパティに関してもっと詳しく知りたい場合、また、そのAPIについては、<apilink class="org.gradle.api.plugins.ExtraPropertiesExtension"/>を参照してください。</para>
         </section>
     </section>
     <section>
