@@ -184,16 +184,21 @@
         <para>この略記法は、コードをとても読みやすいものにします。特に、プラグインなどで外部から提供されるタスク(たとえば<literal>compile</literal>)にアクセスするときには威力を発揮します。</para>
     </section>
     <section id='sec:extra_task_properties'>
-        <title>Extra task properties</title>
-        <para>You can add your own properties to a task. To add a property named <literal>myProperty</literal>,
+        <title>拡張タスクプロパティ <phrase role="original">Extra task properties</phrase></title>
+        <para role="original">You can add your own properties to a task. To add a property named <literal>myProperty</literal>,
             set <literal>ext.myProperty</literal> to an initial value. From that point on, the property can be read
             and set like a predefined task property.
         </para>
-        <sample id="extraTaskProperties" dir="userguide/tutorial/extraProperties" title="Adding extra properties to a task">
+        <para>
+        独自のプロパティをタスクに追加することができます。例えば、<literal>myProperty</literal>というプロパティを追加するには、<literal>ext.myProperty</literal>に初期値を設定してください。
+        その時点で、このプロパティを定義済みのプロパティと同じように読み書きできるようになります。
+        </para>
+        <sample id="extraTaskProperties" dir="userguide/tutorial/extraProperties" title="拡張プロパティをタスクに追加する / Adding extra properties to a task">
             <sourcefile file="build.gradle" snippet="taskProperty"/>
             <output args="-q showProps"/>
         </sample>
-        Extra properties aren't limited to tasks. You can read more about them in <xref linkend='sec:extra_properties'/>.
+        <para role="original">Extra properties aren't limited to tasks. You can read more about them in <xref linkend='sec:extra_properties'/>.</para>
+        <para>拡張プロパティを追加できるのは、タスクだけではありません。詳細については、<xref linkend='sec:extra_properties'/>を参照してください。</para>
     </section>
     <section>
         <title>Antタスクの使用<phrase role="original">Using Ant Tasks</phrase></title>
