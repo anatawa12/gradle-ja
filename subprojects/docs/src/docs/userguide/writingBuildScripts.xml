@@ -1,4 +1,4 @@
-﻿﻿<!--
+﻿<!--
   ~ Copyright 2010 the original author or authors.
   ~
   ~ Licensed under the Apache License, Version 2.0 (the "License");
@@ -36,7 +36,8 @@
             <apilink class='org.gradle.api.Project'/> and associates this <classname>Project</classname> object with
             the build script. As the build script executes, it configures this <classname>Project</classname> object:
         </para>
-        <para>たとえば、<xref linkend='tutorial_java_projects'/>のチュートリアルで使用した<literal>apply()</literal>メソッド、このメソッドはどこから来たのでしょうか。前述のように、ビルドスクリプトはGradleの「プロジェクト」を定義するものです。定義されたGradleのプロジェクトは、<classname>Project</classname>型のインスタンスを一つ生成して、ビルドスクリプトに割り当てます。ビルドが実行されたとき、このプロジェクトオブジェクトは以下のように振る舞います。</para>
+        <para>例えば、<xref linkend='tutorial_java_projects'/>のチュートリアルで使用した<literal>apply()</literal>メソッド、このメソッドはどこから来たのでしょうか。まず、前述のようにビルドスクリプトはGradleのプロジェクトを定義します。
+            ビルドに含まれるプロジェクトそれぞれに対し、<classname>Project</classname>型のインスタンスが一つ作られ、ビルドスクリプトと関連づけられます。ビルドが実行されると、このプロジェクト・インスタンスは以下のように振る舞います。</para>
         <tip>
             <title>ビルドスクリプトのリファレンスを見たいときは<phrase role="original">Getting help writing build scripts</phrase></title>
             <para role="original">Don't forget that your build script is simply Groovy code that drives the Gradle API. And the
@@ -174,22 +175,22 @@
             </para>
             <para>
                 Gradleのドメインモデルを構成する全ての拡張オブジェクトには、ユーザー定義のプロパティ、拡張プロパティを新たに追加することができます。
-                これらのオブジェクトには、projects、tasks、source setsを始め、様々なオブジェクトが含まれます。
-                拡張プロパティをセットしたり読み込んだりするには、対象オブジェクトの<literal>ext</literal>プロパティを使用して下さい。
+                拡張プロパティを追加できるオブジェクトには、projects、tasks、source setsを始め、様々なオブジェクトがあります。
+                拡張プロパティをセットしたり読み込んだりするには、対象オブジェクトの<literal>ext</literal>プロパティを使用して下さい。また、<literal>ext</literal>ブロックを使って複数のプロパティを一気に追加することもできます。
             </para>
             <sample id="extraProperties" dir="userguide/tutorial/extraProperties" title="拡張プロパティを使用する / Using extra properties">
                 <sourcefile file="build.gradle" snippet="extraProperties"/>
                 <output args="-q printProperties"/>
             </sample>
-            <para>In this example, an <literal>ext</literal> block adds two extra properties to the <literal>project</literal> object. Additionally,
+            <para role="original">In this example, an <literal>ext</literal> block adds two extra properties to the <literal>project</literal> object. Additionally,
                 a property named <literal>purpose</literal> is added to each source set by setting <literal>ext.purpose</literal> to
                 <literal>null</literal> (<literal>null</literal> is a permissible value). Once the properties have been added, they can be read and set like
                 predefined properties.
             </para>
             <para>
-                この例では、<literal>ext.purpose</literal>に<literal>null</literal>をセットすることで（<literal>null</literal>でも構いません）、全てのソースセットに<literal>purpose</literal>というプロパティを追加しています。
+                この例では、<literal>ext</literal>ブロックで二つの拡張プロパティを<literal>project</literal>オブジェクトに追加しています。
+                さらに、<literal>ext.purpose</literal>に<literal>null</literal>をセットすることで（<literal>null</literal>でも構いません）、全てのソースセットに<literal>purpose</literal>という拡張プロパティを追加しています。
                 一度プロパティが追加されれば、定義済みのプロパティと同じように読み込んだり書き込んだりすることができるようになります。
-                また、<literal>ext.</literal>を付けてアクセスすることも可能です。
             </para>
             <para role="original">By requiring special syntax for adding a property, Gradle can fail fast when an attempt is made to set a (predefined or extra) property
                 but the property is misspelled or does not exist.

@@ -1,4 +1,4 @@
-﻿﻿<!--
+﻿<!--
   ~ Copyright 2009 the original author or authors.
   ~
   ~ Licensed under the Apache License, Version 2.0 (the "License");
@@ -113,7 +113,14 @@
                 file is also the location of the root project. But you can redefine the location of the root project
                 in the settings file.
             </para>
-            <para>マルチプロジェクトは、ある一つのプロジェクトをルートにしたツリー構造で表すことができます。ツリー構造の要素一つ一つがプロジェクトになっているわけです。マルチプロジェクト・ツリーを構成するそれぞれのプロジェクトは、ツリー内で自分をアドレスする仮想的なパスと、実際にプロジェクトが置かれているファイルシステム上のパスを持っています。プロジェクトのツリー構造は<filename>settings.gradle</filename>で定義します。デフォルトではこの設定ファイルがあるプロジェクトがルートプロジェクトになっていますが、どのプロジェクトをツリーのルートプロジェクトとするかは設定ファイルで再定義することができます。</para>
+            <para>
+            マルチプロジェクトは、常に、あるプロジェクトをルートにしたプロジェクトのツリー構造となります。
+            マルチプロジェクト・ツリーを構成するそれぞれのプロジェクトは、自分がツリー内のどこに位置しているかを示すパス情報を持っています。
+            ほとんどのケースで、そのパス情報は、ファイルシステム上でのプロジェクトの物理的な位置を反映したものになるはずです。
+            ただし、これは設定で変更することも可能です。
+            プロジェクト・ツリーは、<filename>settings.gradle</filename>ファイルで作成します。
+            デフォルトでは、<filename>settings.gradle</filename>ファイルがあるプロジェクトがルートプロジェクトになっていますが、ルートプロジェクトの位置もその設定ファイルで変更可能です。
+            </para>
         </section>
         <section id='sub:building_the_tree'>
             <title>プロジェクト・ツリーの構築<phrase role="original">Building the tree</phrase></title>
@@ -126,14 +133,20 @@
                 <sample id="standardLayouts" dir="userguide/multiproject/standardLayouts" title="階層構造のレイアウト / Hierarchical layout">
                     <sourcefile file="settings.gradle" snippet="hierarchical-layout"/>
                 </sample>
-                <para>The <literal>include</literal> method takes project paths as arguments.
+                <para role="original">The <literal>include</literal> method takes project paths as arguments.
                     The project path is assumed to be equal to the relative physical file system path.
                     For example a path 'services:api' by default is mapped to a folder 'services/api'
                     (relative from the project root). You only need to specify the leafs of the tree.
                     This means that the inclusion of path 'services:hotels:api' will result in creating 3 projects:
                     'services', 'services:hotels' and 'services:hotels:api'.
                 </para>
-                <para><literal>include</literal>メソッドに引き渡されている引数は、ルートプロジェクトを基点とした相対的な仮想パスです。この仮想パスは、ファイルシステム上の実際のパスと対応しています。仮想パスで示されるディレクトリがサブプロジェクトとして設定されるわけです。実際には<literal>include</literal>メソッドで指定する必要があるのはプロジェクト・ツリーの末端となるプロジェクトのみであり、そこに到達するまでのパスにあるすべてのディレクトリは自動的にサブプロジェクトとして設定されます。</para>
+                <para>
+                <literal>include</literal>メソッドは、プロジェクトのパスを引数にとります。
+                このパスは、ファイルシステム上の物理的な相対パスを表したものです。
+                例えば、'services:api'というパスは、デフォルトでは'services/api'フォルダ(プロジェクトルートからの相対)にマッピングされます。
+                指定するのは、ツリーの末端となるプロジェクトだけで構いません。
+                つまり、'services:hotels:api'を指定しただけで3つのプロジェクトが作成されるということです('services'、'services:hotels'、'services:hotels:api')。
+                </para>
             </section>
             <section>
                 <title>フラットなレイアウト<phrase role="original">Flat layouts</phrase></title>
@@ -144,7 +157,7 @@
                     need to exist at the same level as the root project directory. The location of those directories
                     are considered as child projects of the root project in the multi-project tree.
                 </para>
-                <para><literal>includeFlat</literal>メソッドは、ディレクトリ名を引数にとります。これらのディレクトリはルートプロジェクトのディレクトリと同じ階層になければなりませんが、マルチプロジェクト・ツリーの仮想的なパス上においてはルートプロジェクトの子プロジェクトに設定されます。</para>
+                <para><literal>includeFlat</literal>メソッドは、ディレクトリ名を引数にとります。これらのディレクトリはルートプロジェクトのディレクトリと同じ階層になければなりませんが、マルチプロジェクト・ツリーにおいてはルートプロジェクトの子プロジェクトに設定されます。</para>
             </section>
         </section>
         <section id='sub:modifying_element_of_the_project_tree'>
