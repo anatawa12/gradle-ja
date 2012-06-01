@@ -35,8 +35,8 @@ import org.gradle.internal.service.ServiceRegistry
 import org.gradle.listener.DefaultListenerManager
 import org.gradle.listener.ListenerManager
 import org.gradle.logging.LoggingManagerInternal
-import org.gradle.messaging.concurrent.DefaultExecutorFactory
-import org.gradle.messaging.concurrent.ExecutorFactory
+import org.gradle.internal.concurrent.DefaultExecutorFactory
+import org.gradle.internal.concurrent.ExecutorFactory
 import org.gradle.messaging.remote.MessagingServer
 import org.gradle.process.internal.DefaultWorkerProcessFactory
 import org.gradle.process.internal.WorkerProcessBuilder
@@ -54,6 +54,7 @@ import org.gradle.initialization.*
 import static org.hamcrest.Matchers.instanceOf
 import static org.hamcrest.Matchers.sameInstance
 import static org.junit.Assert.assertThat
+import org.gradle.internal.reflect.Instantiator
 
 public class TopLevelBuildServiceRegistryTest extends Specification {
     @Rule

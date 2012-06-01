@@ -1,4 +1,4 @@
-<!--
+﻿<!--
   ~ Copyright 2012 the original author or authors.
   ~
   ~ Licensed under the Apache License, Version 2.0 (the "License");
@@ -13,8 +13,8 @@
   ~ See the License for the specific language governing permissions and
   ~ limitations under the License.
   -->
-<chapter id='build_environment' xmlns:xi="http://www.w3.org/2001/XInclude" xml:lang="ja">
-    <title>ビルド環境<phrase role="original">The build environment</phrase></title>
+<chapter id='build_environment' xml:lang="ja">
+    <title>ビルド環境 <phrase role="original">The Build Environment</phrase></title>
 
     <section id="sec:gradle_configuration_properties">
         <title>gradle.propertiesを使用したビルド環境の構築<phrase role="original">Configuring the build environment via gradle.properties</phrase></title>
@@ -37,7 +37,11 @@
             <varlistentry>
                 <term><literal>org.gradle.daemon</literal></term>
                 <listitem><para>When set to <literal>true</literal> the Gradle daemon is to run the build.
-                    This is our favorite property because we nearly always run Gradle jobs with the daemon.</para>
+                    For local developer builds this is our favorite property. The developer environment is optimized for speed and feedback
+                    so we nearly always run Gradle jobs with the daemon.
+                    We don't run CI builds with the daemon (i.e. a long running process)
+                    as the CI environment is optimized for consistency and reliability.
+                </para>
                 </listitem>
             </varlistentry>
             <varlistentry>

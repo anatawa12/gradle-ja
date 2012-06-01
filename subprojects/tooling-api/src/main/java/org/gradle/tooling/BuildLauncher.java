@@ -31,7 +31,7 @@ import java.io.OutputStream;
  * <li>Create an instance of {@code BuildLauncher} by calling {@link org.gradle.tooling.ProjectConnection#newBuild()}.
  * <li>Configure the launcher as appropriate.
  * <li>Call either {@link #run()} or {@link #run(ResultHandler)} to execute the build.
- * <li>Optionally, you can reuse the launcher to launcher additional builds.
+ * <li>Optionally, you can reuse the launcher to launch additional builds.
  * </ul>
  *
  * Example:
@@ -96,33 +96,7 @@ public interface BuildLauncher extends LongRunningOperation {
     BuildLauncher forTasks(Iterable<? extends Task> tasks);
 
     /**
-     * Specify the command line build arguments.
-     * <p>
-     * Be aware that not all of the Gradle command line options are supported!
-     * Only the build arguments that configure the build execution are supported.
-     * They are modelled in the Gradle API via {@link org.gradle.StartParameter}.
-     * Examples of supported build arguments: '--info', '-u', '-p'.
-     * The command line instructions that are actually separate commands (like '-?', '-v') are not supported.
-     * Some other instructions like '--daemon' are also not supported - the tooling API always runs with the daemon.
-     * <p>
-     * If you specify unknown or unsupported command line option the {@link UnsupportedBuildArgumentException}
-     * will be thrown but only at the time when you run the build, i.e. execute {@link #run()}.
-     * <p>
-     * For the list of all Gradle command line options please refer to the user guide
-     * or take a look at the output of the 'gradle -?' command. Supported arguments are those modelled by
-     * {@link org.gradle.StartParameter}.
-     * <p>
-     * The arguments can potentially override some other settings you have configured.
-     * For example, the project directory or Gradle user home directory that are configured
-     * in the {@link GradleConnector}.
-     * Also, the task names configured by {@link #forTasks(String...)} can be overridden
-     * if you happen to specify other tasks via the build arguments.
-     * <p>
-     * See the example in the docs for {@link BuildLauncher}
-     *
-     * @param arguments gradle command line arguments
-     * @return this
-     * @since 1.0-rc-1
+     * {@inheritDoc}
      */
     BuildLauncher withArguments(String ... arguments);
 
@@ -157,7 +131,7 @@ public interface BuildLauncher extends LongRunningOperation {
     BuildLauncher addProgressListener(ProgressListener listener);
 
     /**
-     * Execute the build, blocking until it is complete.
+     * Executes the build, blocking until it is complete.
      *
      * @throws UnsupportedVersionException When the target Gradle version does not support the features required for this build.
      * @throws org.gradle.tooling.exceptions.UnsupportedOperationConfigurationException
@@ -173,7 +147,7 @@ public interface BuildLauncher extends LongRunningOperation {
             BuildException, UnsupportedVersionException;
 
     /**
-     * Launchers the build. This method returns immediately, and the result is later passed to the given handler.
+     * Launches the build. This method returns immediately, and the result is later passed to the given handler.
      *
      * @param handler The handler to supply the result to.
      * @throws IllegalStateException When the connection has been closed or is closing.

@@ -20,7 +20,7 @@ import org.apache.ivy.plugins.resolver.DependencyResolver
 import org.gradle.api.InvalidUserDataException
 import org.gradle.api.artifacts.dsl.RepositoryHandler
 import org.gradle.api.artifacts.repositories.ArtifactRepository
-import org.gradle.api.internal.DirectInstantiator
+import org.gradle.internal.reflect.DirectInstantiator
 import org.gradle.api.internal.artifacts.mvnsettings.LocalMavenRepositoryLocator
 import org.gradle.api.internal.artifacts.repositories.transport.RepositoryTransportFactory
 import org.gradle.api.internal.file.FileResolver
@@ -30,6 +30,8 @@ import org.jmock.integration.junit4.JMock
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
+import org.gradle.api.internal.externalresource.local.LocallyAvailableResourceFinder
+import org.gradle.api.internal.externalresource.cached.CachedExternalResourceIndex
 
 /**
  * @author Hans Dockter
@@ -46,7 +48,13 @@ class DefaultResolverFactoryTest {
     final LocalMavenRepositoryLocator localMavenRepoLocator = context.mock(LocalMavenRepositoryLocator.class)
     final FileResolver fileResolver = context.mock(FileResolver.class)
     final RepositoryTransportFactory transportFactory = context.mock(RepositoryTransportFactory.class)
-    final DefaultResolverFactory factory = new DefaultResolverFactory(localMavenRepoLocator, fileResolver, new DirectInstantiator(), transportFactory)
+    final LocallyAvailableResourceFinder locallyAvailableResourceFinder = context.mock(LocallyAvailableResourceFinder.class)
+    final CachedExternalResourceIndex cachedExternalResourceIndex = context.mock(CachedExternalResourceIndex);
+
+
+    final DefaultResolverFactory factory = new DefaultResolverFactory(
+            localMavenRepoLocator, fileResolver, new DirectInstantiator(), transportFactory, locallyAvailableResourceFinder, cachedExternalResourceIndex
+    )
 
     @Before public void setup() {
         context.checking {

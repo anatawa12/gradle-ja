@@ -19,42 +19,47 @@ import org.gradle.util.hash.HashUtil;
 import org.gradle.util.hash.HashValue;
 
 import java.io.File;
-import java.util.Date;
 
 public class DefaultLocallyAvailableResource implements LocallyAvailableResource {
     private final File origin;
-    private final HashValue sha1;
-    private final long contentLength;
-    private final long lastModified;
+    
+    // Calculated on demand
+    private HashValue sha1;
+    private Long contentLength;
+    private Long lastModified;
 
     public DefaultLocallyAvailableResource(File origin) {
-        this(origin, null);
-    }
-
-    public DefaultLocallyAvailableResource(File origin, Date lastModified) {
         this.origin = origin;
-        this.sha1 = getChecksum(origin);
-        this.contentLength = origin.length();
-        this.lastModified = (lastModified == null) ? origin.lastModified() : lastModified.getTime();
     }
 
-    public HashValue getSha1() {
-        return sha1;
+    public DefaultLocallyAvailableResource(File origin, HashValue sha1) {
+        this(origin);
+        this.sha1 = sha1;
     }
 
-    public File getOrigin() {
+    public File getFile() {
         return origin;
     }
 
+    public HashValue getSha1() {
+        if (sha1 == null) {
+            this.sha1 = HashUtil.sha1(origin);
+        }
+        return sha1;
+    }
+
     public long getContentLength() {
+        if (contentLength == null) {
+            contentLength = origin.length();
+        }
         return contentLength;
     }
 
     public long getLastModified() {
+        if (lastModified == null) {
+            lastModified = origin.lastModified();
+        }
         return lastModified;
     }
 
-    private HashValue getChecksum(File contentFile) {
-        return HashUtil.createHash(contentFile, "SHA1");
-    }
 }

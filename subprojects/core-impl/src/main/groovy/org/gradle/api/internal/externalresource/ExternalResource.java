@@ -17,6 +17,8 @@ package org.gradle.api.internal.externalresource;
 
 import org.apache.ivy.plugins.repository.Resource;
 import org.apache.ivy.util.CopyProgressListener;
+import org.gradle.api.Nullable;
+import org.gradle.api.internal.externalresource.metadata.ExternalResourceMetaData;
 
 import java.io.File;
 import java.io.IOException;
@@ -25,4 +27,7 @@ public interface ExternalResource extends Resource {
     void writeTo(File destination, CopyProgressListener progress) throws IOException;
 
     void close() throws IOException;
+
+    @Nullable
+    ExternalResourceMetaData getMetaData();
 }

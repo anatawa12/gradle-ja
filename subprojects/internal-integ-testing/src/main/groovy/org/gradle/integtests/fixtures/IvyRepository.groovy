@@ -84,12 +84,16 @@ class IvyModule {
         return this
     }
 
-    File getIvyFile() {
+    TestFile getIvyFile() {
         return moduleDir.file("ivy-${revision}.xml")
     }
 
     TestFile getJarFile() {
         return moduleDir.file("$module-${revision}.jar")
+    }
+
+    TestFile sha1File(File file) {
+        return moduleDir.file("${file.name}.sha1")
     }
 
     /**
@@ -128,7 +132,9 @@ class IvyModule {
 	<publications>
 """
         artifacts.each { artifact ->
-            file(artifact) << "add some content so that file size isn't zero: $publishCount"
+            def artifactFile = file(artifact)
+            artifactFile << "${artifactFile.name} : $publishCount"
+            publishSha1(artifactFile)
             ivyFile << """<artifact name="${artifact.name}" type="${artifact.type}" ext="${artifact.type}" conf="*" m:classifier="${artifact.classifier ?: ''}"/>
 """
         }
@@ -144,33 +150,87 @@ class IvyModule {
     </dependencies>
 </ivy-module>
         """
+        publishSha1(ivyFile)
 
+        publishSha1(ivyFile)
         return this
     }
 
-    private File file(def artifact) {
+    private TestFile file(def artifact) {
         return moduleDir.file("${artifact.name}-${revision}${artifact.classifier ? '-' + artifact.classifier : ''}.${artifact.type}")
+    }
+
+    private publishSha1(TestFile file) {
+        sha1File(file).text = getHash(file, "SHA1")
     }
 
     /**
      * Asserts that exactly the given artifacts have been published.
      */
     void assertArtifactsPublished(String... names) {
-        assert moduleDir.list() as Set == names as Set
+        Set allFileNames = [];
+        for (name in names) {
+            allFileNames += [name, "${name}.sha1"]
+        }
+        assert moduleDir.list() as Set == allFileNames
     }
 
-    private String getHash(File file, String algorithm) {
+    void assertChecksumPublishedFor(TestFile testFile) {
+        def sha1File = sha1File(testFile)
+        sha1File.assertIsFile()
+        assert sha1File.text == getHash(testFile, "SHA1")
+    }
+
+    public String getHash(File file, String algorithm) {
         return HashUtil.createHash(file, algorithm).asHexString()
-    }
-
-    TestFile sha1File(File file) {
-        def sha1File = moduleDir.file("${file.name}.sha1")
-        sha1File.text = getHash(file, "SHA1")
-        return sha1File
     }
 
     IvyDescriptor getIvy() {
         return new IvyDescriptor(ivyFile)
+    }
+
+    public expectIvyHead(HttpServer server, prefix = null) {
+        server.expectHead(ivyPath(prefix), ivyFile)
+    }
+
+    public expectIvyGet(HttpServer server, prefix = null) {
+        server.expectGet(ivyPath(prefix), ivyFile)
+    }
+
+    public ivyPath(prefix = null) {
+        path(prefix, ivyFile.name)
+    }
+
+    public expectIvySha1Get(HttpServer server, prefix = null) {
+        server.expectGet(ivySha1Path(prefix), sha1File(ivyFile))
+    }
+
+    public ivySha1Path(prefix = null) {
+        ivyPath(prefix) + ".sha1"
+    }
+
+    public expectArtifactHead(HttpServer server, prefix = null) {
+        server.expectHead(artifactPath(prefix), jarFile)
+    }
+
+    public expectArtifactGet(HttpServer server, prefix = null) {
+        server.expectGet(artifactPath(prefix), jarFile)
+    }
+
+    public artifactPath(prefix = null) {
+        path(prefix, jarFile.name)
+    }
+
+    public expectArtifactSha1Get(HttpServer server, prefix = null) {
+        server.expectGet(artifactSha1Path(prefix), sha1File(jarFile))
+    }
+
+    public artifactSha1Path(prefix = null) {
+        artifactPath(prefix) + ".sha1"
+    }
+
+    public path(prefix = null, String filename) {
+        "${prefix == null ? "" : prefix}/${organisation}/${module}/${revision}/${filename}"
     }
 }
 

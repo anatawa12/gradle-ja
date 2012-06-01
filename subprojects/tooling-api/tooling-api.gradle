@@ -1,11 +1,12 @@
-import org.gradle.internal.os.OperatingSystem
 
 dependencies {
     groovy libraries.groovy
 
     publishCompile project(':core')
     publishCompile project(':baseServices')
+    publishCompile project(':messaging')
     publishCompile project(':wrapper')
+    publishCompile libraries.slf4j_api
 
     // lots of integTest errors otherwise
     integTestRuntime project(':ide')
@@ -27,5 +28,3 @@ integTest {
 daemonIntegTest {
     enabled = false //tooling integ tests use daemon anyway, don't rerun
 }
-
-

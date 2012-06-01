@@ -32,12 +32,14 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
+import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
 
 import static org.gradle.cache.internal.FileLockManager.LockMode;
 import static org.hamcrest.Matchers.*;
+import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assert.fail;
 
@@ -123,13 +125,39 @@ public class DefaultPersistentDirectoryCacheTest {
 
         context.checking(new Expectations() {{
             one(action).execute(with(notNullValue(PersistentCache.class)));
-            one(invalidator).isValid();
+            exactly(2).of(invalidator).isValid();
             will(returnValue(false));
+            allowing(invalidator).isValid();
+            will(returnValue(true));
+
         }});
 
         DefaultPersistentDirectoryCache cache = new DefaultPersistentDirectoryCache(dir, "<display-name>", CacheUsage.ON, invalidator, properties, LockMode.Shared, action, lockManager);
         cache.open();
         assertThat(loadProperties(dir.file("cache.properties")), equalTo(properties));
+    }
+
+    @Test
+    public void exceptionThrownIfValidCacheCannotBeInitd() {
+        TestFile dir = createCacheDir();
+
+        context.checking(new Expectations() {{
+            allowing(action).execute(with(notNullValue(PersistentCache.class)));
+        }});
+
+        DefaultPersistentDirectoryCache cache = new DefaultPersistentDirectoryCache(dir, "<display-name>", CacheUsage.ON, null, properties, LockMode.Shared, action, lockManager) {
+            @Override
+            protected boolean determineIfCacheIsValid(FileLock lock) throws IOException {
+                return false;
+            }
+        };
+
+        try {
+            cache.open();
+            fail("expected exception");
+        } catch (CacheOpenException e) {
+            assertNotNull(e); // to make block not empty
+        }
     }
 
     @Test

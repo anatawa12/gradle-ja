@@ -19,7 +19,7 @@ package org.gradle.api.tasks.compile;
 import com.google.common.collect.Maps;
 import org.gradle.api.Nullable;
 import org.gradle.internal.UncheckedException;
-import org.gradle.util.JavaReflectionUtil;
+import org.gradle.internal.reflect.JavaReflectionUtil;
 
 import java.io.Serializable;
 import java.lang.reflect.Field;
@@ -40,7 +40,7 @@ public abstract class AbstractOptions implements Serializable {
     public void define(@Nullable Map<String, Object> args) {
         if (args == null) { return; }
         for (Map.Entry<String, Object> arg: args.entrySet()) {
-            JavaReflectionUtil.setProperty(this, arg.getKey(), arg.getValue());
+            JavaReflectionUtil.writeProperty(this, arg.getKey(), arg.getValue());
         }
     }
 
@@ -54,7 +54,7 @@ public abstract class AbstractOptions implements Serializable {
     }
 
     private void addValueToMapIfNotNull(Map<String, Object> map, Field field) {
-        Object value = JavaReflectionUtil.getProperty(this, field.getName());
+        Object value = JavaReflectionUtil.readProperty(this, field.getName());
         if (value != null) {
             map.put(antProperty(field.getName()), antValue(field.getName(), value));
         }

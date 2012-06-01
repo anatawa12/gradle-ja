@@ -16,15 +16,21 @@
 
 package org.gradle.plugins.ide.idea.model
 
+import org.gradle.api.artifacts.ModuleVersionIdentifier
+
 /**
  * Single entry module library
  */
 class SingleEntryModuleLibrary extends ModuleLibrary {
 
     /**
+     * Module identifier of the library. Can be null in case of libraries that are not from remote repos.
+     */
+    ModuleVersionIdentifier id
+
+    /**
      * Creates single entry module library
      *
-     * @param libraryFile jar or class folder
      * @param library a path to jar or class folder in idea format
      * @param javadoc a path to javadoc jar or javadoc folder
      * @param source a path to source jar or source folder
@@ -38,7 +44,6 @@ class SingleEntryModuleLibrary extends ModuleLibrary {
     /**
      * Creates single entry module library
      *
-     * @param libraryFile jar or class folder
      * @param library a path to jar or class folder in Path format
      * @param scope scope
      * @return

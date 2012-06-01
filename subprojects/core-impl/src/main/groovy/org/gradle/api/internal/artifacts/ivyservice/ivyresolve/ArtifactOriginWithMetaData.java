@@ -18,25 +18,32 @@ package org.gradle.api.internal.artifacts.ivyservice.ivyresolve;
 
 import org.apache.ivy.core.cache.ArtifactOrigin;
 import org.apache.ivy.core.module.descriptor.Artifact;
-import org.gradle.api.internal.externalresource.DefaultExternalResourceMetaData;
-import org.gradle.api.internal.externalresource.ExternalResourceMetaData;
-
-import java.util.Date;
+import org.apache.ivy.plugins.repository.Resource;
+import org.gradle.api.internal.externalresource.ExternalResource;
+import org.gradle.api.internal.externalresource.metadata.DefaultExternalResourceMetaData;
+import org.gradle.api.internal.externalresource.metadata.ExternalResourceMetaData;
 
 public class ArtifactOriginWithMetaData extends ArtifactOrigin {
 
     private final ExternalResourceMetaData metaData;
 
-    public ArtifactOriginWithMetaData(Artifact artifact, boolean isLocal, String location, long lastModified, long contentLength) {
-        this(artifact, isLocal, location, lastModified > 0 ? new Date(lastModified) : null, contentLength);
+    public ArtifactOriginWithMetaData(Artifact artifact, Resource resource) {
+        this(artifact, resource.isLocal(), getMetaData(resource));
     }
-
-    public ArtifactOriginWithMetaData(Artifact artifact, boolean isLocal, String location, Date lastModified, long contentLength) {
-        super(artifact, isLocal, location);
-        metaData = new DefaultExternalResourceMetaData(location, lastModified, contentLength);
+    public ArtifactOriginWithMetaData(Artifact artifact, boolean isLocal, ExternalResourceMetaData metaData) {
+        super(artifact, isLocal, metaData.getLocation());
+        this.metaData = metaData;
     }
 
     public ExternalResourceMetaData getMetaData() {
         return metaData;
+    }
+    
+    private static ExternalResourceMetaData getMetaData(Resource resource) {
+        if (resource instanceof ExternalResource) {
+            return ((ExternalResource) resource).getMetaData();
+        } else {
+            return new DefaultExternalResourceMetaData(resource.getName());
+        }
     }
 }

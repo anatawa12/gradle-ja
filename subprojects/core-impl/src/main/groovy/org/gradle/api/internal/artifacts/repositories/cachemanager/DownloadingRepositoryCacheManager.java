@@ -34,14 +34,14 @@ import org.apache.ivy.plugins.resolver.util.ResolvedResource;
 import org.apache.ivy.util.Message;
 import org.gradle.api.internal.artifacts.ivyservice.ivyresolve.ArtifactOriginWithMetaData;
 import org.gradle.api.internal.artifacts.repositories.EnhancedArtifactDownloadReport;
-import org.gradle.api.internal.externalresource.CachedExternalResourceIndex;
-import org.gradle.api.internal.externalresource.DefaultExternalResourceMetaData;
+import org.gradle.api.internal.externalresource.ExternalResource;
+import org.gradle.api.internal.externalresource.cached.CachedExternalResourceIndex;
+import org.gradle.api.internal.externalresource.metadata.ExternalResourceMetaData;
 import org.gradle.api.internal.filestore.FileStore;
 
 import java.io.File;
 import java.io.IOException;
 import java.text.ParseException;
-import java.util.Date;
 
 /**
  * A cache manager for remote repositories, that downloads files and stores them in the FileStore provided.
@@ -69,10 +69,7 @@ public class DownloadingRepositoryCacheManager extends AbstractRepositoryCacheMa
         try {
             ResolvedResource artifactRef = resourceResolver.resolve(artifact);
             if (artifactRef != null) {
-                ArtifactOrigin origin = new ArtifactOriginWithMetaData(
-                        artifact, artifactRef.getResource().isLocal(), artifactRef.getResource().getName(),
-                        artifactRef.getLastModified(), artifactRef.getResource().getContentLength()
-                );
+                ArtifactOrigin origin = new ArtifactOriginWithMetaData(artifact, artifactRef.getResource());
                 if (listener != null) {
                     listener.startArtifactDownload(this, artifactRef, artifact, origin);
                 }
@@ -104,11 +101,12 @@ public class DownloadingRepositoryCacheManager extends AbstractRepositoryCacheMa
         resourceDownloader.download(artifact, artifactRef.getResource(), tempFile);
 
         File fileInFileStore = fileStore.add(artifact.getId(), tempFile);
-        
-        String url = artifactRef.getResource().getName();
-        long lastModifiedTimestamp = artifactRef.getResource().getLastModified();
-        Date lastModified = lastModifiedTimestamp > 0 ? new Date(lastModifiedTimestamp) : null;
-        artifactUrlCachedResolutionIndex.store(artifactRef.getResource().getName(), fileInFileStore, new DefaultExternalResourceMetaData(url, lastModified, -1));
+
+        if (artifactRef.getResource() instanceof ExternalResource) {
+            ExternalResource resource = (ExternalResource) artifactRef.getResource();
+            ExternalResourceMetaData metaData = resource.getMetaData();
+            artifactUrlCachedResolutionIndex.store(metaData.getLocation(), fileInFileStore, metaData);
+        }
 
         return fileInFileStore;
     }

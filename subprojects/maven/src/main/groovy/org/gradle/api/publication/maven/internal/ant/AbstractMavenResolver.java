@@ -180,6 +180,7 @@ public abstract class AbstractMavenResolver implements MavenResolver, Dependency
         Set<MavenDeployment> mavenDeployments = getArtifactPomContainer().createDeployableFilesInfos();
         mavenSettingsSupplier.supply(installDeployTaskSupport);
         for (MavenDeployment mavenDeployment : mavenDeployments) {
+            ((CustomInstallDeployTaskSupport) installDeployTaskSupport).clearAttachedArtifactsList();
             beforeDeploymentActions.execute(mavenDeployment);
             addPomAndArtifact(installDeployTaskSupport, mavenDeployment);
             execute(installDeployTaskSupport);

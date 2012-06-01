@@ -15,19 +15,21 @@
  */
 package org.gradle.api.internal.externalresource;
 
-
 import org.apache.ivy.util.CopyProgressListener
-import org.gradle.api.internal.artifacts.repositories.transport.http.HttpResourceCollection
+import org.gradle.api.internal.externalresource.transfer.ExternalResourceAccessor
 import org.gradle.util.TemporaryFolder
 import org.gradle.util.hash.HashUtil
 import org.gradle.util.hash.HashValue
 import org.junit.Rule
 import spock.lang.Specification
+import org.gradle.api.internal.externalresource.cached.CachedExternalResourceAdapter
+import org.gradle.api.internal.externalresource.cached.CachedExternalResource
+import org.gradle.api.internal.externalresource.metadata.DefaultExternalResourceMetaData
 
 public class CachedExternalResourceAdapterTest extends Specification {
     @Rule final TemporaryFolder tmpDir = new TemporaryFolder()
 
-    HttpResourceCollection httpResourceCollection = Mock()
+    ExternalResourceAccessor accessor = Mock()
     CachedExternalResource cachedExternalResource = Mock()
     CopyProgressListener progress = Mock()
     CachedExternalResourceAdapter cachedResource
@@ -38,13 +40,13 @@ public class CachedExternalResourceAdapterTest extends Specification {
     def setup() {
         cachedExternalResource.cachedFile >> origin
         cachedExternalResource.sha1 >> { HashUtil.createHash(origin, "SHA1") }
-        cachedResource = new CachedExternalResourceAdapter("resource-source", cachedExternalResource, httpResourceCollection)
+        cachedResource = new CachedExternalResourceAdapter("resource-source", cachedExternalResource, accessor)
     }
 
     def "delegates to cached artifact"() {
         given:
         cachedExternalResource.contentLength >> 22
-        cachedExternalResource.externalResourceMetaData >> new DefaultExternalResourceMetaData("url", new Date(), 0)
+        cachedExternalResource.externalResourceMetaData >> new DefaultExternalResourceMetaData("url")
         cachedExternalResource.externalLastModifiedAsTimestamp >> 33
 
         expect:
@@ -77,7 +79,7 @@ public class CachedExternalResourceAdapterTest extends Specification {
         cachedExternalResource.sha1 >> new HashValue("1234")
 
         and:
-        httpResourceCollection.getResource("resource-source") >> resource
+        accessor.getResource("resource-source") >> resource
         resource.writeTo(destination, progress)
     }
 }

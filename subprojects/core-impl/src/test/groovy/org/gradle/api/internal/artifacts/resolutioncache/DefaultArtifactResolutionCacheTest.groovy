@@ -22,12 +22,12 @@ import org.gradle.cache.internal.CacheFactory
 import org.gradle.cache.internal.DefaultCacheRepository
 import org.gradle.testfixtures.internal.InMemoryCacheFactory
 import org.gradle.util.TemporaryFolder
-import org.gradle.util.TimeProvider
+import org.gradle.internal.TimeProvider
 import org.junit.Rule
 import spock.lang.Specification
 import spock.lang.Unroll
-import org.gradle.api.internal.externalresource.DefaultCachedExternalResourceIndex
-import org.gradle.api.internal.externalresource.DefaultExternalResourceMetaData
+import org.gradle.api.internal.externalresource.cached.DefaultCachedExternalResourceIndex
+import org.gradle.api.internal.externalresource.metadata.DefaultExternalResourceMetaData
 
 class DefaultArtifactResolutionCacheTest extends Specification {
 
@@ -56,7 +56,7 @@ class DefaultArtifactResolutionCacheTest extends Specification {
         def artifactFile = tmp.createFile("artifact") << "content"
         
         when:
-        index.store(key, artifactFile, new DefaultExternalResourceMetaData(artifactUrl, lastModified, 100))
+        index.store(key, artifactFile, new DefaultExternalResourceMetaData(artifactUrl, lastModified, 100, null, null))
         
         then:
         def cached = index.lookup(key)

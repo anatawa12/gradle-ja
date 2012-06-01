@@ -20,31 +20,26 @@ import org.apache.ivy.core.IvyPatternHelper;
 import org.apache.ivy.core.module.descriptor.DefaultArtifact;
 import org.apache.ivy.core.module.id.ArtifactRevisionId;
 import org.gradle.api.Transformer;
-import org.gradle.api.internal.externalresource.local.LocallyAvailableResourceFinder;
-import org.gradle.api.internal.externalresource.local.ivy.PatternBasedLocallyAvailableResourceFinder;
-import org.gradle.api.internal.filestore.CentralisedFileStore;
 import org.gradle.api.internal.filestore.GroupedAndNamedUniqueFileStore;
-
-import java.io.File;
+import org.gradle.api.internal.filestore.UniquePathFileStore;
 
 public class ArtifactRevisionIdFileStore extends GroupedAndNamedUniqueFileStore<ArtifactRevisionId> {
 
     private static final String GROUP_PATTERN = "[organisation]/[module](/[branch])/[revision]/[type]";
     private static final String NAME_PATTERN = "[artifact]-[revision](-[classifier])(.[ext])";
 
-    public ArtifactRevisionIdFileStore(CentralisedFileStore delegate) {
+    public ArtifactRevisionIdFileStore(UniquePathFileStore delegate) {
         super(delegate, toTransformer(GROUP_PATTERN), toTransformer(NAME_PATTERN));
     }
 
     private static Transformer<String, ArtifactRevisionId> toTransformer(final String pattern) {
         return new Transformer<String, ArtifactRevisionId>() {
             public String transform(ArtifactRevisionId id) {
-                return IvyPatternHelper.substitute(pattern, new DefaultArtifact(id, null, null, false));
+                String substitute = pattern;
+                substitute = IvyPatternHelper.substituteToken(substitute, "organisation", id.getModuleRevisionId().getOrganisation().replace('/', '.'));
+                return IvyPatternHelper.substitute(substitute, new DefaultArtifact(id, null, null, false));
             }
         };
     }
 
-    public static LocallyAvailableResourceFinder<ArtifactRevisionId> asArtifactCache(File baseDir) {
-        return new PatternBasedLocallyAvailableResourceFinder(baseDir, String.format("%s/*/%s", GROUP_PATTERN, NAME_PATTERN));
-    }
 }

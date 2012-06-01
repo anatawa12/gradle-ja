@@ -1,4 +1,4 @@
-﻿<!--
+﻿﻿<!--
   ~ Copyright 2009 the original author or authors.
   ~
   ~ Licensed under the Apache License, Version 2.0 (the "License");
@@ -13,7 +13,7 @@
   ~ See the License for the specific language governing permissions and
   ~ limitations under the License.
   -->
-<chapter id='build_lifecycle' xmlns:xi="http://www.w3.org/2001/XInclude" xml:lang="ja">
+<chapter id='build_lifecycle' xml:lang="ja">
     <title>ビルドのライフサイクル<phrase role="original">The Build Lifecycle</phrase></title>
     <para role="original">We said earlier, that the core of Gradle is a language for dependency based programming. In Gradle terms this
         means that you can define tasks and dependencies between tasks. Gradle guarantees that these tasks are executed
@@ -105,9 +105,11 @@
         <section id='sub:project_locations'>
             <title>プロジェクトの配置<phrase role="original">Project locations</phrase></title>
             <para role="original">Multi-project builds are always represented by a tree with a single root. Each element in the tree
-                represent a project. A project has a virtual and a physical path. The virtual path denotes the position
-                of the project in the multi-project build tree. The project tree is created in the
-                <filename>settings.gradle</filename> file. By default it is assumed that the location of the settings
+                represents a project. A project has a path which denotes the position
+                of the project in the multi-project build tree. In majority of cases the project path is consistent with
+                the physical location of the project in the file system. However, this behavior is configurable.
+                The project tree is created in the <filename>settings.gradle</filename> file.
+                By default it is assumed that the location of the settings
                 file is also the location of the root project. But you can redefine the location of the root project
                 in the settings file.
             </para>
@@ -124,11 +126,12 @@
                 <sample id="standardLayouts" dir="userguide/multiproject/standardLayouts" title="階層構造のレイアウト / Hierarchical layout">
                     <sourcefile file="settings.gradle" snippet="hierarchical-layout"/>
                 </sample>
-                <para role="original">The <literal>include</literal> method takes as an argument a relative virtual path to the root
-                    project. This relative virtual path is assumed to be equal to the relative physical path of the
-                    subproject to the root project. You only need to specify the leafs of the tree. Each parent path of
-                    the leaf project is assumed to be another subproject which obeys to the physical path assumption
-                    described above.
+                <para>The <literal>include</literal> method takes project paths as arguments.
+                    The project path is assumed to be equal to the relative physical file system path.
+                    For example a path 'services:api' by default is mapped to a folder 'services/api'
+                    (relative from the project root). You only need to specify the leafs of the tree.
+                    This means that the inclusion of path 'services:hotels:api' will result in creating 3 projects:
+                    'services', 'services:hotels' and 'services:hotels:api'.
                 </para>
                 <para><literal>include</literal>メソッドに引き渡されている引数は、ルートプロジェクトを基点とした相対的な仮想パスです。この仮想パスは、ファイルシステム上の実際のパスと対応しています。仮想パスで示されるディレクトリがサブプロジェクトとして設定されるわけです。実際には<literal>include</literal>メソッドで指定する必要があるのはプロジェクト・ツリーの末端となるプロジェクトのみであり、そこに到達するまでのパスにあるすべてのディレクトリは自動的にサブプロジェクトとして設定されます。</para>
             </section>
@@ -139,7 +142,7 @@
                 </sample>
                 <para role="original">The <literal>includeFlat</literal> method takes directory names as an argument. Those directories
                     need to exist at the same level as the root project directory. The location of those directories
-                    are considered as child projects of the root project in the virtual multi-project tree.
+                    are considered as child projects of the root project in the multi-project tree.
                 </para>
                 <para><literal>includeFlat</literal>メソッドは、ディレクトリ名を引数にとります。これらのディレクトリはルートプロジェクトのディレクトリと同じ階層になければなりませんが、マルチプロジェクト・ツリーの仮想的なパス上においてはルートプロジェクトの子プロジェクトに設定されます。</para>
             </section>

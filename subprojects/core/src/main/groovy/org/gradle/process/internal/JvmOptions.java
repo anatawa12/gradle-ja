@@ -35,6 +35,7 @@ public class JvmOptions {
     private static final Pattern MIN_HEAP_PATTERN = Pattern.compile("-Xms(.+)");
     private static final Pattern MAX_HEAP_PATTERN = Pattern.compile("-Xmx(.+)");
     private static final Pattern BOOTSTRAP_PATTERN = Pattern.compile("-Xbootclasspath:(.+)");
+    private static final String FILE_ENCODING_KEY = "file.encoding";
 
     private final List<Object> extraJvmArgs = new ArrayList<Object>();
     private final Map<String, Object> systemProperties = new TreeMap<String, Object>();
@@ -49,6 +50,9 @@ public class JvmOptions {
         this.bootstrapClasspath = new DefaultConfigurableFileCollection(resolver, null);
     }
 
+    /**
+     * @return all jvm args including system properties
+     */
     public List<String> getAllJvmArgs() {
         List<String> args = new LinkedList<String>();
         for (Map.Entry<String, Object> entry : getSystemProperties().entrySet()) {
@@ -80,7 +84,7 @@ public class JvmOptions {
 
     /**
      * @return the list of jvm args we manage explicitly, for example, max heaps size or file encoding.
-     *          The result is a subset of options returned by {@link #getAllImmutableJvmArgs()}
+     * The result is a subset of options returned by {@link #getAllImmutableJvmArgs()}
      */
     public List<String> getManagedJvmArgs() {
         List<String> args = new ArrayList<String>();
@@ -207,15 +211,23 @@ public class JvmOptions {
 
     public void setSystemProperties(Map<String, ?> properties) {
         systemProperties.clear();
-        systemProperties.putAll(properties);
+        systemProperties(properties);
     }
 
     public void systemProperties(Map<String, ?> properties) {
+        final Object fileEncoding = properties.remove(FILE_ENCODING_KEY);
+        if (fileEncoding != null) {
+            defaultCharacterEncoding = fileEncoding.toString();
+        }
         systemProperties.putAll(properties);
     }
 
     public void systemProperty(String name, Object value) {
-        systemProperties.put(name, value);
+        if (name.equals(FILE_ENCODING_KEY)) {
+            defaultCharacterEncoding = value.toString();
+        } else {
+            systemProperties.put(name, value);
+        }
     }
 
     public FileCollection getBootstrapClasspath() {
@@ -297,6 +309,7 @@ public class JvmOptions {
         target.setBootstrapClasspath(bootstrapClasspath);
         target.setEnableAssertions(assertionsEnabled);
         target.setDebug(debug);
+        target.setDefaultCharacterEncoding(defaultCharacterEncoding);
     }
 
     public static List<String> fromString(String input) {

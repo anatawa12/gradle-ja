@@ -17,12 +17,12 @@ package org.gradle.integtests.resolve.artifactreuse
 
 import org.gradle.integtests.fixtures.HttpServer
 import org.gradle.integtests.fixtures.MavenRepository
-import org.gradle.integtests.fixtures.TargetGradleVersions
+import org.gradle.integtests.fixtures.TargetVersions
 import org.gradle.integtests.fixtures.CrossVersionIntegrationSpec
 import org.junit.Rule
 
 // TODO:DAZ Support for milestone-3 does not include POM reuse. We should probably ditch milestone-3 support after 1.0.
-@TargetGradleVersions('1.0-milestone-3')
+@TargetVersions('1.0-milestone-3')
 class M3CacheReuseCrossVersionIntegrationTest extends CrossVersionIntegrationSpec {
     @Rule public final HttpServer server = new HttpServer()
 
@@ -61,6 +61,7 @@ task retrieve(type: Sync) {
         when:
         server.resetExpectations()
         server.expectGet("/org/name/projectB/1.0/projectB-1.0.pom", projectB.pomFile)
+        projectB.expectArtifactHead(server)
         server.expectGet("/org/name/projectB/1.0/projectB-1.0.jar.sha1", projectB.sha1File(projectB.artifactFile))
 
         and:
@@ -69,6 +70,10 @@ task retrieve(type: Sync) {
         then:
         file('libs').assertHasDescendants('projectB-1.0.jar')
         file('libs/projectB-1.0.jar').assertContentsHaveNotChangedSince(snapshot)
+    }
+
+    def cleanup() {
+        server.resetExpectations()
     }
 
 }

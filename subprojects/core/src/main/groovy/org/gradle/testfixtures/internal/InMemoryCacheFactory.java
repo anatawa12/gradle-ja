@@ -21,6 +21,7 @@ import org.gradle.internal.Factory;
 import org.gradle.api.internal.changedetection.InMemoryIndexedCache;
 import org.gradle.cache.*;
 import org.gradle.cache.internal.*;
+import org.gradle.messaging.serialize.Serializer;
 
 import java.io.File;
 import java.util.Collections;
@@ -50,11 +51,15 @@ public class InMemoryCacheFactory implements CacheFactory {
     }
 
     private static class NoOpFileLock extends AbstractFileAccess {
-        public <T> T readFromFile(Factory<? extends T> action) throws LockTimeoutException {
+        public <T> T readFile(Factory<? extends T> action) throws LockTimeoutException {
             return action.create();
         }
 
-        public void writeToFile(Runnable action) throws LockTimeoutException {
+        public void updateFile(Runnable action) throws LockTimeoutException {
+            action.run();
+        }
+
+        public void writeFile(Runnable action) throws LockTimeoutException {
             action.run();
         }
 

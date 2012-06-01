@@ -15,10 +15,11 @@
  */
 package org.gradle.tooling.internal.consumer;
 
-import org.gradle.api.internal.classpath.DefaultModuleRegistry;
+import org.gradle.api.internal.classpath.EffectiveClassPath;
 import org.gradle.initialization.layout.BuildLayout;
 import org.gradle.initialization.layout.BuildLayoutFactory;
-import org.gradle.internal.UncheckedException;
+import org.gradle.internal.classpath.ClassPath;
+import org.gradle.internal.classpath.DefaultClassPath;
 import org.gradle.logging.ProgressLogger;
 import org.gradle.logging.ProgressLoggerFactory;
 import org.gradle.tooling.GradleConnectionException;
@@ -29,7 +30,6 @@ import org.gradle.wrapper.*;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.net.URI;
-import java.net.URISyntaxException;
 import java.util.LinkedHashSet;
 import java.util.Set;
 
@@ -84,12 +84,7 @@ public class DistributionFactory {
     }
 
     private Distribution getDownloadedDistribution(String gradleVersion) {
-        URI distUri;
-        try {
-            distUri = new URI(new DistributionLocator().getDistributionFor(GradleVersion.version(gradleVersion)));
-        } catch (URISyntaxException e) {
-            throw UncheckedException.throwAsUncheckedException(e);
-        }
+        URI distUri = new DistributionLocator().getDistributionFor(GradleVersion.version(gradleVersion));
         return getDistribution(distUri);
     }
 
@@ -105,7 +100,7 @@ public class DistributionFactory {
             return String.format("Gradle distribution '%s'", wrapperConfiguration.getDistribution());
         }
 
-        public Set<File> getToolingImplementationClasspath(ProgressLoggerFactory progressLoggerFactory) {
+        public ClassPath getToolingImplementationClasspath(ProgressLoggerFactory progressLoggerFactory) {
             if (installedDistribution == null) {
                 File installDir;
                 try {
@@ -156,7 +151,7 @@ public class DistributionFactory {
             return displayName;
         }
 
-        public Set<File> getToolingImplementationClasspath(ProgressLoggerFactory progressLoggerFactory) {
+        public ClassPath getToolingImplementationClasspath(ProgressLoggerFactory progressLoggerFactory) {
             ProgressLogger progressLogger = progressLoggerFactory.newOperation(DistributionFactory.class);
             progressLogger.setDescription("Validate distribution");
             progressLogger.started();
@@ -167,7 +162,7 @@ public class DistributionFactory {
             }
         }
 
-        private Set<File> getToolingImpl() {
+        private ClassPath getToolingImpl() {
             if (!gradleHomeDir.exists()) {
                 throw new IllegalArgumentException(String.format("The specified %s does not exist.", locationDisplayName));
             }
@@ -184,7 +179,7 @@ public class DistributionFactory {
                     files.add(file);
                 }
             }
-            return files;
+            return new DefaultClassPath(files);
         }
     }
 
@@ -193,8 +188,8 @@ public class DistributionFactory {
             return "Gradle classpath distribution";
         }
 
-        public Set<File> getToolingImplementationClasspath(ProgressLoggerFactory progressLoggerFactory) {
-            return new DefaultModuleRegistry().getFullClasspath();
+        public ClassPath getToolingImplementationClasspath(ProgressLoggerFactory progressLoggerFactory) {
+            return new EffectiveClassPath(getClass().getClassLoader());
         }
     }
 }

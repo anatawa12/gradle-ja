@@ -15,23 +15,22 @@
  */
 package org.gradle.integtests.fixtures
 
-import java.security.Principal
-import java.util.zip.GZIPOutputStream
-import javax.servlet.http.HttpServletRequest
-import javax.servlet.http.HttpServletResponse
+import org.gradle.util.hash.HashUtil
 import org.junit.rules.ExternalResource
 import org.mortbay.jetty.handler.AbstractHandler
 import org.mortbay.jetty.handler.HandlerCollection
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
+
+import java.security.Principal
+import java.util.zip.GZIPOutputStream
+import javax.servlet.http.HttpServletRequest
+import javax.servlet.http.HttpServletResponse
+
 import org.mortbay.jetty.*
 import org.mortbay.jetty.security.*
 
 class HttpServer extends ExternalResource {
-
-    static enum IfModResponse {
-        UNMODIFIED, MODIFIED
-    }
 
     private static Logger logger = LoggerFactory.getLogger(HttpServer.class)
 
@@ -39,6 +38,40 @@ class HttpServer extends ExternalResource {
     private final HandlerCollection collection = new HandlerCollection()
     private Throwable failure
     private TestUserRealm realm
+    private SecurityHandler securityHandler
+    AuthScheme authenticationScheme = AuthScheme.BASIC
+
+    enum AuthScheme {
+        BASIC(new BasicAuthHandler()), DIGEST(new DigestAuthHandler())
+
+        final AuthSchemeHandler handler;
+
+        AuthScheme(AuthSchemeHandler handler) {
+            this.handler = handler
+        }
+    }
+
+    enum EtagStrategy {
+        NONE({ null }),
+        RAW_SHA1_HEX({ HashUtil.sha1(it as byte[]).asHexString() }),
+        NEXUS_ENCODED_SHA1({ "{SHA1{" + HashUtil.sha1(it as byte[]).asHexString() + "}}" })
+
+        private final Closure generator
+
+        EtagStrategy(Closure generator) {
+            this.generator = generator
+        }
+
+        String generate(byte[] bytes) {
+            generator.call(bytes)
+        }
+    }
+
+    // Can be an EtagStrategy, or a closure that receives a byte[] and returns an etag string, or anything that gets toString'd
+    def etags = EtagStrategy.NONE
+
+    boolean sendLastModified = true
+    boolean sendSha1Header = false
 
     HttpServer() {
         HandlerCollection handlers = new HandlerCollection()
@@ -88,7 +121,7 @@ class HttpServer extends ExternalResource {
         allow(path, true, ['GET', 'HEAD'], fileHandler(path, srcFile))
     }
 
-    private AbstractHandler fileHandler(String path, File srcFile) {
+    private AbstractHandler fileHandler(String path, File srcFile, Long lastModified = null, Long contentLength = null) {
         return new AbstractHandler() {
             void handle(String target, HttpServletRequest request, HttpServletResponse response, int dispatch) {
                 def file
@@ -99,7 +132,7 @@ class HttpServer extends ExternalResource {
                     file = new File(srcFile, relativePath)
                 }
                 if (file.isFile()) {
-                    sendFile(response, file)
+                    sendFile(response, file, lastModified, contentLength)
                 } else if (file.isDirectory()) {
                     sendDirectoryListing(response, file)
                 } else {
@@ -145,15 +178,23 @@ class HttpServer extends ExternalResource {
     /**
      * Allows one HEAD request for the given URL.
      */
-    void expectHead(String path, File srcFile) {
-        expect(path, false, ['HEAD'], fileHandler(path, srcFile))
+    void expectHead(String path, File srcFile, Long lastModified = null, Long contentLength = null) {
+        expect(path, false, ['HEAD'], fileHandler(path, srcFile, lastModified, contentLength))
     }
 
     /**
      * Allows one GET request for the given URL. Reads the request content from the given file.
      */
-    void expectGet(String path, File srcFile) {
-        expect(path, false, ['GET'], fileHandler(path, srcFile))
+    void expectGet(String path, File srcFile, Long lastModified = null, Long contentLength = null) {
+        expect(path, false, ['GET'], fileHandler(path, srcFile, lastModified, contentLength))
+    }
+
+    /**
+     * Allows one HEAD request, then one GET request for the given URL. Reads the request content from the given file.
+     */
+    void expectHeadThenGet(String path, File srcFile, Long lastModified = null, Long contentLength = null) {
+        expectHead(path, srcFile, lastModified, contentLength)
+        expectGet(path, srcFile, lastModified, contentLength)
     }
 
     /**
@@ -216,16 +257,39 @@ class HttpServer extends ExternalResource {
         })
     }
 
-    private sendFile(HttpServletResponse response, File file) {
-        response.setDateHeader(HttpHeaders.LAST_MODIFIED, file.lastModified())
-        response.setContentLength((int) file.length())
+    private sendFile(HttpServletResponse response, File file, Long lastModified, Long contentLength) {
+        if (sendLastModified) {
+            response.setDateHeader(HttpHeaders.LAST_MODIFIED, lastModified ?: file.lastModified())
+        }
+        response.setContentLength((contentLength ?: file.length()) as int)
         response.setContentType(new MimeTypes().getMimeByExtension(file.name).toString())
+        if (sendSha1Header) {
+            response.addHeader("X-Checksum-Sha1", HashUtil.sha1(file).asHexString())
+        }
+        addEtag(response, file.bytes, etags)
         response.outputStream << new FileInputStream(file)
+    }
+
+    private addEtag(HttpServletResponse response, byte[] bytes, etagStrategy) {
+        if (etagStrategy != null) {
+            String value
+            if (etags instanceof EtagStrategy) {
+                value = etags.generate(bytes)
+            } else if (etagStrategy instanceof Closure) {
+                value = etagStrategy.call(bytes)
+            } else {
+                value = etagStrategy.toString()
+            }
+
+            if (value != null) {
+                response.addHeader(HttpHeaders.ETAG, value)
+            }
+        }
     }
 
     private sendDirectoryListing(HttpServletResponse response, File directory) {
         def directoryListing = ""
-        for (String fileName: directory.list()) {
+        for (String fileName : directory.list()) {
             directoryListing += "<a href=\"$fileName\">$fileName</a>"
         }
 
@@ -265,21 +329,12 @@ class HttpServer extends ExternalResource {
         if (realm != null) {
             assert realm.username == username
             assert realm.password == password
+            authenticationScheme.handler.addConstraint(securityHandler, path)
         } else {
             realm = new TestUserRealm()
             realm.username = username
             realm.password = password
-            def constraint = new Constraint()
-            constraint.name = Constraint.__BASIC_AUTH
-            constraint.authenticate = true
-            constraint.roles = ['*'] as String[]
-            def constraintMapping = new ConstraintMapping()
-            constraintMapping.pathSpec = path
-            constraintMapping.constraint = constraint
-            def securityHandler = new SecurityHandler()
-            securityHandler.userRealm = realm
-            securityHandler.constraintMappings = [constraintMapping] as ConstraintMapping[]
-            securityHandler.authenticator = new BasicAuthenticator()
+            securityHandler = authenticationScheme.handler.createSecurityHandler(path, realm)
             collection.addHandler(securityHandler)
         }
 
@@ -335,36 +390,68 @@ class HttpServer extends ExternalResource {
     }
 
     int getPort() {
-        return server.connectors[0].localPort
+        def port = server.connectors[0].localPort
+        if (port < 0) {
+            throw new RuntimeException("""No port available for HTTP server. Still starting perhaps?
+connector: ${server.connectors[0]}
+connector state: ${server.connectors[0].dump()}
+server state: ${server.dump()}
+""")
+        }
+        return port
     }
 
-    void expectGetIfNotModifiedSince(String path, File file, IfModResponse ifModResponse) {
-        expectGetIfNotModifiedSince(path, new Date(file.lastModified()), file, ifModResponse)
+    abstract static class AuthSchemeHandler {
+        public SecurityHandler createSecurityHandler(String path, TestUserRealm realm) {
+            def constraintMapping = createConstraintMapping(path)
+            def securityHandler = new SecurityHandler()
+            securityHandler.userRealm = realm
+            securityHandler.constraintMappings = [constraintMapping] as ConstraintMapping[]
+            securityHandler.authenticator = authenticator
+            return securityHandler
+        }
+
+        public void addConstraint(SecurityHandler securityHandler, String path) {
+            securityHandler.constraintMappings = (securityHandler.constraintMappings as List) + createConstraintMapping(path)
+        }
+
+        private ConstraintMapping createConstraintMapping(String path) {
+            def constraint = new Constraint()
+            constraint.name = constraintName()
+            constraint.authenticate = true
+            constraint.roles = ['*'] as String[]
+            def constraintMapping = new ConstraintMapping()
+            constraintMapping.pathSpec = path
+            constraintMapping.constraint = constraint
+            return constraintMapping
+        }
+
+        protected abstract String constraintName();
+
+        protected abstract Authenticator getAuthenticator();
     }
 
-    void expectGetIfNotModifiedSince(String path, Date date, File file, IfModResponse ifModResponse) {
-        expect(path, false, ["GET"], new AbstractHandler() {
-            void handle(String target, HttpServletRequest request, HttpServletResponse response, int dispatch) {
-                long ifModifiedSinceLong = request.getDateHeader("If-Modified-Since")
-                if (ifModifiedSinceLong < 0) {
-                    throw new AssertionError("Expected request to have If-Modified-Since header")
-                }
-                Date ifModifiedSince = new Date(ifModifiedSinceLong)
-                if (ifModifiedSince != date) {
-                    throw new AssertionError("Expected request to have If-Modified-Since of '$date' (got: $ifModifiedSince")
-                }
-                handleIfModified(response, file, ifModResponse)
-            }
-        })
+    public static class BasicAuthHandler extends AuthSchemeHandler {
+        @Override
+        protected String constraintName() {
+            return Constraint.__BASIC_AUTH
+        }
+
+        @Override
+        protected Authenticator getAuthenticator() {
+            return new BasicAuthenticator()
+        }
     }
 
-    private void handleIfModified(HttpServletResponse response, File file, IfModResponse ifModResponse) {
-        if (ifModResponse == IfModResponse.UNMODIFIED) {
-            response.sendError(304, "Unmodified")
-        } else if (ifModResponse == IfModResponse.MODIFIED) {
-            sendFile(response, file)
-        } else {
-            throw new IllegalStateException("Can't handle IfModResponse $ifModResponse")
+    public static class DigestAuthHandler extends AuthSchemeHandler {
+        @Override
+        protected String constraintName() {
+            return Constraint.__DIGEST_AUTH
+        }
+
+        @Override
+        protected Authenticator getAuthenticator() {
+            return new DigestAuthenticator()
         }
     }
 
@@ -373,7 +460,8 @@ class HttpServer extends ExternalResource {
         String password
 
         Principal authenticate(String username, Object credentials, Request request) {
-            if (username == this.username && password == credentials) {
+            Password passwordCred = new Password(password)
+            if (username == this.username && passwordCred.check(credentials)) {
                 return getPrincipal(username)
             }
             return null

@@ -19,15 +19,17 @@ package org.gradle.api.internal.tasks.compile;
 import org.gradle.api.internal.ClassPathRegistry;
 import org.gradle.api.internal.project.IsolatedAntBuilder;
 import org.gradle.api.internal.project.ProjectInternal;
+import org.gradle.api.internal.tasks.compile.daemon.CompilerDaemonFactory;
+import org.gradle.api.internal.tasks.compile.daemon.CompilerDaemonManager;
 import org.gradle.api.internal.tasks.compile.daemon.DaemonGroovyCompiler;
-import org.gradle.api.logging.Logger;
-import org.gradle.api.logging.Logging;
+import org.gradle.api.internal.tasks.compile.daemon.InProcessCompilerDaemonFactory;
 import org.gradle.api.tasks.compile.CompileOptions;
 import org.gradle.api.tasks.compile.GroovyCompileOptions;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class GroovyCompilerFactory {
-    private static final Logger LOGGER = Logging.getLogger(GroovyCompilerFactory.class);
-    
+    private static final Logger LOGGER = LoggerFactory.getLogger(GroovyCompilerFactory.class);
     private final ProjectInternal project;
     private final IsolatedAntBuilder antBuilder;
     private final ClassPathRegistry classPathRegistry;
@@ -41,19 +43,29 @@ public class GroovyCompilerFactory {
     }
 
     Compiler<GroovyJavaJointCompileSpec> create(GroovyCompileOptions groovyOptions, CompileOptions javaOptions) {
-        if (groovyOptions.isUseAnt()) {
-            return new AntGroovyCompiler(antBuilder, classPathRegistry);
+        // Some sanity checking of options
+        if (groovyOptions.isUseAnt() && !javaOptions.isUseAnt()) {
+            LOGGER.warn("When groovyOptions.useAnt is enabled, options.useAnt must also be enabled. Ignoring options.useAnt = false.");
+            javaOptions.setUseAnt(true);
+        } else if (!groovyOptions.isUseAnt() && javaOptions.isUseAnt()) {
+            LOGGER.warn("When groovyOptions.useAnt is disabled, options.useAnt must also be disabled. Ignoring options.useAnt = true.");
+            javaOptions.setUseAnt(false);
         }
-        
-        if (!groovyOptions.isFork()) {
-            LOGGER.warn("Falling back to Ant groovyc task ('GroovyCompileOptions.useAnt = true') because 'GroovyCompileOptions.fork' is set to 'false'.");
+
+        if (groovyOptions.isUseAnt()) {
             return new AntGroovyCompiler(antBuilder, classPathRegistry);
         }
 
         javaCompilerFactory.setGroovyJointCompilation(true);
         Compiler<JavaCompileSpec> javaCompiler = javaCompilerFactory.create(javaOptions);
         Compiler<GroovyJavaJointCompileSpec> groovyCompiler = new ApiGroovyCompiler(javaCompiler);
-        groovyCompiler = new DaemonGroovyCompiler(project, groovyCompiler);
+        CompilerDaemonFactory daemonFactory;
+        if (groovyOptions.isFork()) {
+            daemonFactory = CompilerDaemonManager.getInstance();
+        } else {
+            daemonFactory = InProcessCompilerDaemonFactory.getInstance();
+        }
+        groovyCompiler = new DaemonGroovyCompiler(project, groovyCompiler, daemonFactory);
         return new NormalizingGroovyCompiler(groovyCompiler);
     }
 }

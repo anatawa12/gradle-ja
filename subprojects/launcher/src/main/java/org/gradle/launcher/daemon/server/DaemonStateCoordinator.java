@@ -1,5 +1,5 @@
 /*
- * Copyright 2011 the original author or authors.
+ * Copyright 2012 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,8 +19,9 @@ package org.gradle.launcher.daemon.server;
 import org.gradle.api.logging.Logging;
 import org.gradle.internal.Stoppable;
 import org.gradle.internal.UncheckedException;
+import org.gradle.internal.concurrent.DefaultExecutorFactory;
 import org.gradle.launcher.daemon.server.exec.DaemonCommandExecution;
-import org.gradle.messaging.concurrent.DefaultExecutorFactory;
+import org.gradle.launcher.daemon.server.exec.DaemonStateControl;
 
 import java.util.Date;
 import java.util.concurrent.locks.Condition;
@@ -35,7 +36,7 @@ import java.util.concurrent.locks.ReentrantLock;
  *
  * This is not exposed to clients of the daemon.
  */
-public class DaemonStateCoordinator implements Stoppable {
+public class DaemonStateCoordinator implements Stoppable, DaemonStateControl {
 
     private static final org.gradle.api.logging.Logger LOGGER = Logging.getLogger(DaemonStateCoordinator.class);
 

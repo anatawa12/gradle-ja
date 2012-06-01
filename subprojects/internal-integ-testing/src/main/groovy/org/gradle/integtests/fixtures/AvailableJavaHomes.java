@@ -15,9 +15,9 @@
  */
 package org.gradle.integtests.fixtures;
 
+import org.gradle.internal.jvm.Jvm;
 import org.gradle.internal.os.OperatingSystem;
 import org.gradle.util.GFileUtils;
-import org.gradle.internal.jvm.Jvm;
 
 import java.io.File;
 
@@ -36,9 +36,9 @@ abstract public class AvailableJavaHomes {
 
         // Use environment variables
         File javaHome = null;
-        if (jvm.isJava6Compatible()) {
+        if (jvm.getJavaVersion().isJava6Compatible()) {
             javaHome = firstAvailable("15", "17");
-        } else if (jvm.isJava5Compatible()) {
+        } else if (jvm.getJavaVersion().isJava5Compatible()) {
             javaHome = firstAvailable("16", "17");
         }
         if (javaHome != null) {
@@ -72,10 +72,10 @@ abstract public class AvailableJavaHomes {
             File[] files = installedJavas.listFiles();
             for (File file : files) {
                 if (file.getName().startsWith("jdk")) {
-                    if (jvm.isJava6() && !file.getName().contains("1.6")) {
+                    if (jvm.getJavaVersion().isJava6() && !file.getName().contains("1.6")) {
                         return file;
                     }
-                    if (jvm.isJava7() && !file.getName().contains("1.7")) {
+                    if (jvm.getJavaVersion().isJava7() && !file.getName().contains("1.7")) {
                         return file;
                     }
                 }
@@ -84,6 +84,71 @@ abstract public class AvailableJavaHomes {
 
         return null;
     }
+
+    public static File getBestJreAlternative() {
+        Jvm jvm = Jvm.current();
+
+        // Use environment variables
+        File jreHome = null;
+        if (jvm.getJavaVersion().isJava6Compatible()) {
+            jreHome = firstAvailableJRE("15", "17");
+        } else if (jvm.getJavaVersion().isJava5Compatible()) {
+            jreHome = firstAvailableJRE();
+        }
+        if (jreHome != null) {
+            return jreHome;
+        }
+
+        if (OperatingSystem.current().isMacOsX()) {
+            File registeredJvms = new File("/Library/Java/JavaVirtualMachines");
+            if (registeredJvms.isDirectory()) {
+                for (File candidate : registeredJvms.listFiles()) {
+                    jreHome = GFileUtils.canonicalise(new File(candidate, "Contents/Home/jre"));
+                    if (!jreHome.equals(jvm.getJavaHome()) && jreHome.isDirectory() && new File(jreHome, "bin/java").isFile()) {
+                        return jreHome;
+                    }
+                }
+            }
+        } else if (OperatingSystem.current().isLinux()) {
+            // Ubuntu specific
+            File installedJvms = new File("/usr/lib/jvm");
+            if (installedJvms.isDirectory()) {
+                for (File candidate : installedJvms.listFiles()) {
+                    jreHome = new File(GFileUtils.canonicalise(candidate), "jre");
+                    if (!jreHome.equals(jvm.getJavaHome()) && jreHome.isDirectory() && new File(jreHome, "bin/java").isFile()) {
+                        return jreHome;
+                    }
+                }
+            }
+        } else if (OperatingSystem.current().isWindows()) {
+            //very simple algorithm trying to find java on windows
+            File installedJavas = new File("c:/Program Files/Java");
+            File[] files = installedJavas.listFiles();
+            for (File file : files) {
+                if (file.getName().startsWith("jre")) {
+                    if (jvm.getJavaVersion().isJava6() && !file.getName().contains("1.6")) {
+                        return file;
+                    }
+                    if (jvm.getJavaVersion().isJava7() && !file.getName().contains("1.7")) {
+                        return file;
+                    }
+                }
+            }
+        }
+        return null;
+    }
+
+    private static File firstAvailableJRE(String... labels) {
+        File javaHome = firstAvailable(labels);
+        if (javaHome != null) {
+            final File jre = new File(javaHome, "jre");
+            if (jre.isDirectory()) {
+                return jre;
+            }
+        }
+        return null;
+    }
+
 
     public static File firstAvailable(String... labels) {
         for (String label : labels) {

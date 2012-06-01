@@ -1,5 +1,5 @@
 /*
- * Copyright 2010 the original author or authors.
+ * Copyright 2012 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 
 package org.gradle.internal.jvm;
 
+import org.gradle.api.JavaVersion;
 import org.gradle.internal.SystemProperties;
 import org.gradle.internal.UncheckedException;
 import org.gradle.internal.os.OperatingSystem;
@@ -37,6 +38,7 @@ public class Jvm implements JavaInfo {
     //discovered java location
     private final File javaHome;
     private final boolean userSupplied;
+    private final JavaVersion javaVersion;
 
     public static Jvm current() {
         return create(null);
@@ -71,12 +73,14 @@ public class Jvm implements JavaInfo {
                 throw new UncheckedException(e);
             }
             this.javaHome = findJavaHome(javaBase);
+            this.javaVersion = JavaVersion.current();
             this.userSupplied = false;
         } else {
             //precisely use what the user wants and validate strictly further on
             this.javaBase = suppliedJavaBase;
             this.javaHome = suppliedJavaBase;
             this.userSupplied = true;
+            this.javaVersion = null;
         }
     }
     
@@ -153,24 +157,11 @@ public class Jvm implements JavaInfo {
         return findExecutable(name);
     }
 
-    public boolean isJava5() {
-        return SystemProperties.getJavaVersion().startsWith("1.5");    
-    }
-
-    public boolean isJava6() {
-        return SystemProperties.getJavaVersion().startsWith("1.6");
-    }
-
-    public boolean isJava7() {
-        return SystemProperties.getJavaVersion().startsWith("1.7");
-    }
-
-    public boolean isJava5Compatible() {
-         return isJava5() || isJava6Compatible();
-    }
-
-    public boolean isJava6Compatible() {
-        return isJava6() || isJava7();
+    /**
+     * @return the {@link JavaVersion} information
+     */
+    public JavaVersion getJavaVersion() {
+        return javaVersion;
     }
 
     /**
@@ -319,9 +310,5 @@ public class Jvm implements JavaInfo {
         public boolean getSupportsAppleScript() {
             return true;
         }
-    }
-
-    private static String getJavaVersion() {
-        return System.getProperty("java.version");
     }
 }

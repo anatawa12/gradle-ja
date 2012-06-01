@@ -17,12 +17,15 @@ package org.gradle.util
 
 import java.util.zip.ZipInputStream
 import org.apache.commons.lang.StringUtils
+import org.apache.tools.ant.Project
 import org.apache.tools.ant.taskdefs.Expand
+import org.apache.tools.ant.taskdefs.Tar
 import org.apache.tools.ant.taskdefs.Untar
+import org.apache.tools.ant.taskdefs.Zip
 import static org.hamcrest.Matchers.equalTo
 import static org.junit.Assert.assertThat
 import static org.junit.Assert.assertTrue
-import org.apache.tools.ant.Project
+import org.apache.commons.io.FileUtils
 
 class TestFileHelper {
     TestFile file
@@ -67,7 +70,7 @@ class TestFileHelper {
     void untarTo(File target, boolean nativeTools) {
         if (nativeTools && isUnix()) {
             target.mkdirs()
-            def builder = new ProcessBuilder(['tar', '-xf', file.absolutePath])
+            def builder = new ProcessBuilder(['tar', '-xpf', file.absolutePath])
             builder.directory(target)
             def process = builder.start()
             process.consumeProcessOutput()
@@ -111,8 +114,15 @@ class TestFileHelper {
     }
 
     void setPermissions(String permissions) {
+        if (!isUnix()) {
+            return
+        }
         int m = toMode(permissions)
-        def process = ["chmod", Integer.toOctalString(m), file.absolutePath].execute()
+        setMode(m)
+    }
+
+    void setMode(int mode) {
+        def process = ["chmod", Integer.toOctalString(mode), file.absolutePath].execute()
         def error = process.errorStream.text
         def retval = process.waitFor()
         if (retval != 0) {
@@ -134,12 +144,25 @@ class TestFileHelper {
         return toMode(getPermissions())
     }
 
+    void delete(boolean nativeTools) {
+        if (isUnix() && nativeTools) {
+            def process = ["rm", "-rf", file.absolutePath].execute()
+            def error = process.errorStream.text
+            def retval = process.waitFor()
+            if (retval != 0) {
+                throw new RuntimeException("Could not delete '$file': $error")
+            }
+        } else {
+            FileUtils.deleteQuietly(file);
+        }
+    }
+
     String readLink() {
         def process = ["readlink", file.absolutePath].execute()
         def error = process.errorStream.text
         def retval = process.waitFor()
         if (retval != 0) {
-            throw new RuntimeException("Could not set permissions for '$file': $error")
+            throw new RuntimeException("Could not read link '$file': $error")
         }
         return process.inputStream.text.trim()
     }
@@ -152,5 +175,33 @@ class TestFileHelper {
             throw new RuntimeException("Could not execute $file. Error: $error, Output: $output")
         }
         return [out: output, error: error]
+    }
+
+    public void zipTo(TestFile zipFile, boolean nativeTools) {
+        if (nativeTools && isUnix()) {
+            def process = ['zip', zipFile.absolutePath, "-r", file.name].execute(null, zipFile.parentFile)
+            process.consumeProcessOutput(System.out, System.err)
+            assertThat(process.waitFor(), equalTo(0))
+        } else {
+            Zip zip = new Zip();
+            zip.setBasedir(file);
+            zip.setDestFile(zipFile);
+            zip.setProject(new Project());
+            zip.execute();
+        }
+    }
+
+    public void tarTo(TestFile tarFile, boolean nativeTools) {
+        if (nativeTools && isUnix()) {
+            def process = ['tar', "-cf", tarFile.absolutePath, file.name].execute(null, tarFile.parentFile)
+            process.consumeProcessOutput(System.out, System.err)
+            assertThat(process.waitFor(), equalTo(0))
+        } else {
+            Tar tar = new Tar();
+            tar.setBasedir(file);
+            tar.setDestFile(tarFile);
+            tar.setProject(new Project())
+            tar.execute()
+        }
     }
 }

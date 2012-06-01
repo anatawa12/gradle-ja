@@ -1,5 +1,5 @@
 /*
- * Copyright 2011 the original author or authors.
+ * Copyright 2012 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,14 +15,22 @@
  */
 package org.gradle.api.internal.externalresource;
 
+import org.gradle.api.internal.externalresource.metadata.DefaultExternalResourceMetaData;
+import org.gradle.api.internal.externalresource.metadata.ExternalResourceMetaData;
+
 import java.io.IOException;
 import java.io.InputStream;
 
+/**
+ * Sentinel for representing that there is no resource at some source location.
+ */
 public class MissingExternalResource extends AbstractExternalResource {
     private final String source;
+    private final ExternalResourceMetaData metaData;
 
     public MissingExternalResource(String source) {
         this.source = source;
+        this.metaData = new DefaultExternalResourceMetaData(source);
     }
 
     @Override
@@ -52,5 +60,9 @@ public class MissingExternalResource extends AbstractExternalResource {
 
     public InputStream openStream() throws IOException {
         throw new UnsupportedOperationException();
+    }
+
+    public ExternalResourceMetaData getMetaData() {
+        return this.metaData;
     }
 }

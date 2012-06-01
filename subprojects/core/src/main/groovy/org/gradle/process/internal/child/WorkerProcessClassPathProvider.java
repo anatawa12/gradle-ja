@@ -21,10 +21,10 @@ import org.gradle.api.internal.ClassPathProvider;
 import org.gradle.api.internal.classpath.ModuleRegistry;
 import org.gradle.cache.CacheRepository;
 import org.gradle.cache.PersistentCache;
+import org.gradle.internal.classpath.ClassPath;
+import org.gradle.internal.classpath.DefaultClassPath;
 import org.gradle.process.internal.launcher.BootstrapClassLoaderWorker;
 import org.gradle.process.internal.launcher.GradleWorkerMain;
-import org.gradle.util.ClassPath;
-import org.gradle.util.DefaultClassPath;
 import org.gradle.util.GFileUtils;
 
 import java.io.File;
@@ -49,6 +49,7 @@ public class WorkerProcessClassPathProvider implements ClassPathProvider {
             classpath = classpath.plus(moduleRegistry.getModule("gradle-core").getImplementationClasspath());
             classpath = classpath.plus(moduleRegistry.getModule("gradle-cli").getImplementationClasspath());
             classpath = classpath.plus(moduleRegistry.getModule("gradle-native").getImplementationClasspath());
+            classpath = classpath.plus(moduleRegistry.getModule("gradle-messaging").getImplementationClasspath());
             classpath = classpath.plus(moduleRegistry.getExternalModule("slf4j-api").getClasspath());
             classpath = classpath.plus(moduleRegistry.getExternalModule("logback-classic").getClasspath());
             classpath = classpath.plus(moduleRegistry.getExternalModule("logback-core").getClasspath());
@@ -75,7 +76,7 @@ public class WorkerProcessClassPathProvider implements ClassPathProvider {
     private static class CacheInitializer implements Action<PersistentCache> {
         public void execute(PersistentCache cache) {
             File classesDir = classesDir(cache);
-            for (Class<?> aClass : Arrays.asList(GradleWorkerMain.class, BootstrapClassLoaderWorker.class)) {
+            for (Class<?> aClass : Arrays.asList(GradleWorkerMain.class, BootstrapClassLoaderWorker.class, BootstrapSecurityManager.class, EncodedStream.EncodedInput.class)) {
                 String fileName = aClass.getName().replace('.', '/') + ".class";
                 GFileUtils.copyURLToFile(WorkerProcessClassPathProvider.class.getClassLoader().getResource(fileName),
                         new File(classesDir, fileName));

@@ -16,6 +16,8 @@
 
 package org.gradle.launcher.daemon.diagnostics;
 
+import org.gradle.util.GFileUtils;
+
 import java.io.File;
 import java.io.Serializable;
 
@@ -28,17 +30,50 @@ public class DaemonDiagnostics implements Serializable {
 
     private final Long pid;
     private final File daemonLog;
+    private final static int TAIL_SIZE = 20;
 
     public DaemonDiagnostics(File daemonLog, Long pid) {
         this.daemonLog = daemonLog;
         this.pid = pid;
     }
 
+    /**
+     * @return pid. Can be null, it means the daemon was not able to identify its pid.
+     */
     public Long getPid() {
         return pid;
     }
 
     public File getDaemonLog() {
         return daemonLog;
+    }
+
+    @Override
+    public String toString() {
+        return "{"
+                + "pid=" + pid
+                + ", daemonLog=" + daemonLog
+                + '}';
+    }
+
+    private String tailDaemonLog() {
+        try {
+            String tail = GFileUtils.tail(getDaemonLog(), TAIL_SIZE);
+            return formatTail(tail);
+        } catch (GFileUtils.TailReadingException e) {
+            return "Unable to read the tail from file: " + getDaemonLog().getAbsolutePath();
+        }
+    }
+
+    private String formatTail(String tail) {
+        return "----- Last  " + TAIL_SIZE + " lines from daemon log file - " + getDaemonLog().getName() + " -----\n"
+            + tail
+            + "----- End of the daemon log -----\n";
+    }
+
+    public String describe() {
+        return "Daemon pid: " + pid + "\n"
+             + "  log file: " + daemonLog + "\n"
+             + tailDaemonLog();
     }
 }

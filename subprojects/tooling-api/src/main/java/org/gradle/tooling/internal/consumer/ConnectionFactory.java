@@ -15,7 +15,7 @@
  */
 package org.gradle.tooling.internal.consumer;
 
-import org.gradle.messaging.concurrent.DefaultExecutorFactory;
+import org.gradle.internal.concurrent.DefaultExecutorFactory;
 import org.gradle.tooling.ProjectConnection;
 import org.gradle.tooling.internal.consumer.async.AsyncConnection;
 import org.gradle.tooling.internal.consumer.async.DefaultAsyncConnection;
@@ -24,6 +24,7 @@ import org.gradle.tooling.internal.consumer.connection.LazyConnection;
 import org.gradle.tooling.internal.consumer.connection.LoggingInitializerConnection;
 import org.gradle.tooling.internal.consumer.connection.ProgressLoggingConnection;
 import org.gradle.tooling.internal.consumer.loader.ToolingImplementationLoader;
+import org.gradle.tooling.internal.consumer.protocoladapter.ProtocolToModelAdapter;
 
 public class ConnectionFactory {
     private final ProtocolToModelAdapter adapter = new ProtocolToModelAdapter();

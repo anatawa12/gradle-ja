@@ -29,10 +29,10 @@ import org.gradle.api.internal.externalresource.ivy.ArtifactAtRepositoryKey
 import org.apache.ivy.core.module.id.ModuleId
 import org.apache.ivy.core.module.id.ArtifactId
 import org.apache.ivy.core.module.id.ModuleRevisionId
-import org.gradle.api.internal.externalresource.CachedExternalResourceIndex
-import org.gradle.api.internal.externalresource.ExternalResourceMetaData
-import org.gradle.api.internal.externalresource.DefaultExternalResourceMetaData
-import org.gradle.util.TrueTimeProvider
+import org.gradle.api.internal.externalresource.cached.CachedExternalResourceIndex
+import org.gradle.api.internal.externalresource.metadata.ExternalResourceMetaData
+import org.gradle.api.internal.externalresource.metadata.DefaultExternalResourceMetaData
+import org.gradle.internal.TrueTimeProvider
 
 class CachingModuleVersionRepositoryTest extends Specification {
 
@@ -46,7 +46,7 @@ class CachingModuleVersionRepositoryTest extends Specification {
     
     @Unroll "last modified date is cached - lastModified = #lastModified"(Date lastModified) {
         given:
-        ExternalResourceMetaData externalResourceMetaData = new DefaultExternalResourceMetaData("remote url", lastModified, -1)
+        ExternalResourceMetaData externalResourceMetaData = new DefaultExternalResourceMetaData("remote url", lastModified, -1, null, null)
         DownloadedArtifact downloadedArtifact = new DownloadedArtifact(new File("artifact"), externalResourceMetaData)
         Artifact artifact = Mock()
         ArtifactRevisionId id = arid()

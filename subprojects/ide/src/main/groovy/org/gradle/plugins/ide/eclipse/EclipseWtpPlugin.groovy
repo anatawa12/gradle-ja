@@ -19,7 +19,7 @@ package org.gradle.plugins.ide.eclipse
 import org.gradle.api.JavaVersion
 import org.gradle.api.Project
 import org.gradle.api.artifacts.ProjectDependency
-import org.gradle.api.internal.Instantiator
+import org.gradle.internal.reflect.Instantiator
 import org.gradle.api.plugins.JavaPlugin
 import org.gradle.api.plugins.WarPlugin
 import org.gradle.plugins.ear.EarPlugin
@@ -34,6 +34,7 @@ class EclipseWtpPlugin extends IdePlugin {
 
     static final String ECLIPSE_WTP_COMPONENT_TASK_NAME = "eclipseWtpComponent"
     static final String ECLIPSE_WTP_FACET_TASK_NAME = "eclipseWtpFacet"
+    static final String WEB_LIBS_CONTAINER = 'org.eclipse.jst.j2ee.internal.web.container'
 
     @Override protected String getLifecycleTaskName() {
         return "eclipseWtp"
@@ -62,6 +63,8 @@ class EclipseWtpPlugin extends IdePlugin {
 
     private void configureEclipseClasspathForWarPlugin(Project project) {
         project.plugins.withType(WarPlugin) {
+            project.eclipse.classpath.containers WEB_LIBS_CONTAINER
+
             project.eclipse.classpath.file.whenMerged { Classpath classpath ->
                 for (entry in classpath.entries) {
                     if (entry instanceof AbstractLibrary) {

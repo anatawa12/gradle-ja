@@ -16,13 +16,12 @@
 package org.gradle.launcher.daemon.server.exec;
 
 import org.gradle.initialization.GradleLauncherFactory;
+import org.gradle.internal.concurrent.ExecutorFactory;
 import org.gradle.internal.nativeplatform.ProcessEnvironment;
 import org.gradle.launcher.daemon.context.DaemonContext;
 import org.gradle.launcher.daemon.diagnostics.DaemonDiagnostics;
 import org.gradle.launcher.daemon.protocol.Command;
-import org.gradle.launcher.daemon.server.DaemonStateCoordinator;
 import org.gradle.logging.LoggingManagerInternal;
-import org.gradle.messaging.concurrent.ExecutorFactory;
 import org.gradle.messaging.remote.internal.Connection;
 import org.gradle.messaging.remote.internal.DisconnectAwareConnectionDecorator;
 
@@ -51,12 +50,12 @@ public class DefaultDaemonCommandExecuter implements DaemonCommandExecuter {
         this.launcherFactory = launcherFactory;
     }
 
-    public void executeCommand(Connection<Object> connection, Command command, DaemonContext daemonContext, DaemonStateCoordinator daemonStateCoordinator) {
+    public void executeCommand(Connection<Object> connection, Command command, DaemonContext daemonContext, DaemonStateControl daemonStateControl) {
         new DaemonCommandExecution(
             new DisconnectAwareConnectionDecorator<Object>(connection, executorFactory.create("DefaultDaemonCommandExecuter > DisconnectAwareConnectionDecorator")),
             command,
             daemonContext,
-            daemonStateCoordinator,
+            daemonStateControl,
             createActions(daemonContext)
         ).proceed();
     }

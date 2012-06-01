@@ -16,8 +16,8 @@
 
 package org.gradle.api.internal.externalresource;
 
-import org.apache.ivy.util.CopyProgressListener;
-import org.gradle.api.internal.artifacts.repositories.transport.http.HttpResourceCollection;
+import org.gradle.api.internal.externalresource.metadata.DefaultExternalResourceMetaData;
+import org.gradle.api.internal.externalresource.metadata.ExternalResourceMetaData;
 import org.gradle.util.hash.HashUtil;
 import org.gradle.util.hash.HashValue;
 
@@ -26,16 +26,26 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 
+/**
+ * Used when we find a file locally that matches the checksum of some external resource.
+ *
+ * It saves us downloading the file, but we don't get any metadata for it.
+ */
 public class LocalFileStandInExternalResource extends AbstractExternalResource {
 
     private final File localFile;
     private final String source;
-    private final HttpResourceCollection resourceCollection;
+    private HashValue sha1;
+    private ExternalResourceMetaData metaData;
 
-    public LocalFileStandInExternalResource(String source, File localFile, HttpResourceCollection resourceCollection) {
+    public LocalFileStandInExternalResource(String source, File localFile) {
+        this(source, localFile, null);
+    }
+
+    public LocalFileStandInExternalResource(String source, File localFile, ExternalResourceMetaData metaData) {
         this.source = source;
         this.localFile = localFile;
-        this.resourceCollection = resourceCollection;
+        this.metaData = metaData;
     }
 
     public String getName() {
@@ -62,31 +72,25 @@ public class LocalFileStandInExternalResource extends AbstractExternalResource {
         return new FileInputStream(localFile);
     }
 
-    public void writeTo(File destination, CopyProgressListener progress) throws IOException {
-        try {
-            super.writeTo(destination, progress);
-        } catch (IOException e) {
-            downloadResourceDirect(destination, progress);
-            return;
+    public ExternalResourceMetaData getMetaData() {
+        if (metaData == null) {
+            metaData = new DefaultExternalResourceMetaData(source, getLastModified(), getContentLength(), null, getLocalFileSha1());
         }
-
-        // If the checksum of the downloaded file does not match the cached artifact, download it directly.
-        // This may be the case if the cached artifact was changed before copying
-        if (!getSha1(destination).equals(getLocalFileSha1())) {
-            downloadResourceDirect(destination, progress);
-        }
+        return metaData;
     }
 
-    private void downloadResourceDirect(File destination, CopyProgressListener progress) throws IOException {
-        // Perform a regular download, without considering external caches
-        resourceCollection.getResource(source).writeTo(destination, progress);
+    protected File getLocalFile() {
+        return localFile;
     }
 
-    private HashValue getSha1(File contentFile) {
+    protected HashValue getSha1(File contentFile) {
         return HashUtil.createHash(contentFile, "SHA1");
     }
 
     protected HashValue getLocalFileSha1() {
-        return getSha1(localFile);
+        if (sha1 == null) {
+            sha1 = getSha1(getLocalFile());
+        }
+        return sha1;
     }
 }

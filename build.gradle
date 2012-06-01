@@ -16,8 +16,9 @@
 
 import org.gradle.build.Version
 import org.gradle.build.Install
-import org.gradle.build.Git
+import org.gradle.build.Tag
 import org.gradle.build.Releases
+import org.gradle.build.TestReportAggregator
 
 /**
  * For building Gradle you usually don't need to specify any properties. Only certain functionality of the Gradle requires
@@ -136,16 +137,6 @@ allprojects {
     repositories {
         maven { url 'http://repo.gradle.org/gradle/libs' }
         maven { url 'http://repository.codehaus.org/' }
-    }
-
-    configurations {
-        all {
-            resolutionStrategy {
-                //we cannot use 'hours' for now due to java 1.5 problem
-                cacheDynamicVersionsFor 24*60*60, 'seconds'
-                cacheChangingModulesFor 24*60*60, 'seconds'
-            }
-        }
     }
 
     version = this.version
@@ -347,7 +338,7 @@ task install(type: Install) {
     group = 'build'
     dependsOn binZip.taskDependencies
     with binDistImage
-    installDirProperyName = 'gradle_installPath'
+    installDirPropertyName = 'gradle_installPath'
 }
 
 task installAll(type: Install) {
@@ -355,7 +346,7 @@ task installAll(type: Install) {
     group = 'build'
     dependsOn allZip.taskDependencies
     with allDistImage
-    installDirProperyName = 'gradle_installPath'
+    installDirPropertyName = 'gradle_installPath'
 }
 
 task testedDists(dependsOn: [check]) {
@@ -411,7 +402,7 @@ task nightlyBuild {
 
 gradle.taskGraph.whenReady {graph ->
     if (graph.hasTask(ciBuild)) {
-        subprojects { reportsDirName = "$rootProject.reportsDir/${path.replaceFirst(':', '').replaceAll(':', '.')}" }
+        subprojects { reporting.baseDir "$rootProject.reporting.baseDir/${path.replaceFirst(':', '').replaceAll(':', '.')}" }
     }
 }
 
@@ -487,54 +478,12 @@ def groovyProjects() {
 }
 
 def publishedProjects() {
-    [project(':core'), project(':toolingApi'), project(':wrapper'), project(':baseServices')]
+    [project(':core'), project(':toolingApi'), project(':wrapper'), project(':baseServices'), project(':messaging')]
 }
 
 def pluginProjects() {
-    ['plugins', 'codeQuality', 'jetty', 'antlr', 'wrapper', 'osgi', 'maven', 'ide', 'announce', 'scala', 'sonar', 'signing', 'cpp', 'ear'].collect {
+    ['plugins', 'codeQuality', 'jetty', 'antlr', 'wrapper', 'osgi', 'maven', 'ide', 'announce', 'scala', 'sonar', 'signing', 'cpp', 'ear', 'javascript'].collect {
         project(it)
     }
 }
-
-class TestReportAggregator extends Copy {
-    def projects
-
-    File testResultsDir
-
-    @OutputDirectory
-    File testReportDir
-
-    def TestReportAggregator() {
-        dependsOn { testTasks }
-        from { inputTestResultDirs }
-        into { testResultsDir }
-    }
-
-    @TaskAction
-    def aggregate() {
-        def report = new org.gradle.api.internal.tasks.testing.junit.report.DefaultTestReport(testReportDir: testReportDir, testResultsDir: testResultsDir)
-        report.generateReport()
-    }
-
-    def getTestTasks() {
-        projects.collect { it.tasks.withType(Test) }.flatten()
-    }
-
-    def getInputTestResultDirs() {
-        testTasks*.testResultsDir
-    }
-
-}
-
-class Tag extends DefaultTask {
-    @TaskAction
-    def tagNow() {
-        def version = project.version
-        def git = new Git(project)
-        git.checkNoModifications()
-        git.tag("REL_$version", "Release $version")
-        git.branch("RB_$version")
-    }
-}
-
 

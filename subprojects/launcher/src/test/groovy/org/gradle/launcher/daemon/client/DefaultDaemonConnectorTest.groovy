@@ -15,9 +15,12 @@
  */
 package org.gradle.launcher.daemon.client
 
-import org.gradle.api.specs.Spec
+import org.gradle.api.GradleException
+import org.gradle.api.internal.specs.ExplainingSpec
+import org.gradle.api.internal.specs.ExplainingSpecs
 import org.gradle.launcher.daemon.context.DaemonContext
 import org.gradle.launcher.daemon.context.DefaultDaemonContext
+import org.gradle.launcher.daemon.diagnostics.DaemonStartupInfo
 import org.gradle.launcher.daemon.registry.EmbeddedDaemonRegistry
 import org.gradle.messaging.remote.Address
 import org.gradle.messaging.remote.internal.Connection
@@ -65,7 +68,7 @@ class DefaultDaemonConnectorTest extends Specification {
         def address = createAddress(daemonNum)
         registry.store(address, context, "password")
         registry.markBusy(address)
-        return daemonNum.toString()
+        return new DaemonStartupInfo(daemonNum.toString(), null);
     }
 
     def startIdleDaemon() {
@@ -92,13 +95,19 @@ class DefaultDaemonConnectorTest extends Specification {
         registry.all.size()
     }
 
+    abstract static class DummyExplainingSpec implements ExplainingSpec {
+        String whyUnsatisfied(Object element) {
+            ""
+        }
+    }
+
     def "maybeConnect() returns connection to any daemon that matches spec"() {
         given:
         startIdleDaemon()
         startIdleDaemon()
         
         expect:
-        def connection = connector.maybeConnect({it.pid < 12} as Spec)
+        def connection = connector.maybeConnect({it.pid < 12} as ExplainingSpec)
         connection && connection.connection.num < 12
     }
 
@@ -108,7 +117,7 @@ class DefaultDaemonConnectorTest extends Specification {
         startIdleDaemon()
 
         expect:
-        connector.maybeConnect({it.pid == 12} as Spec) == null
+        connector.maybeConnect({it.pid == 12} as DummyExplainingSpec) == null
     }
 
     def "maybeConnect() ignores daemons that do not match spec"() {
@@ -117,7 +126,7 @@ class DefaultDaemonConnectorTest extends Specification {
         startIdleDaemon()
 
         expect:
-        def connection = connector.maybeConnect({it.pid == 1} as Spec)
+        def connection = connector.maybeConnect({it.pid == 1} as DummyExplainingSpec)
         connection && connection.connection.num == 1
     }
 
@@ -127,7 +136,7 @@ class DefaultDaemonConnectorTest extends Specification {
         startIdleDaemon()
 
         expect:
-        def connection = connector.connect({it.pid < 12} as Spec)
+        def connection = connector.connect({it.pid < 12} as ExplainingSpec)
         connection && connection.connection.num < 12
 
         and:
@@ -139,7 +148,7 @@ class DefaultDaemonConnectorTest extends Specification {
         startIdleDaemon()
 
         expect:
-        def connection = connector.connect({it.pid > 0} as Spec)
+        def connection = connector.connect({it.pid > 0} as DummyExplainingSpec)
         connection && connection.connection.num > 0
 
         and:
@@ -151,21 +160,18 @@ class DefaultDaemonConnectorTest extends Specification {
         startIdleDaemon()
 
         expect:
-        def connection = connector.connect({it.pid != 0} as Spec)
+        def connection = connector.connect({it.pid != 0} as DummyExplainingSpec)
         connection && connection.connection.num != 0
 
         and:
         numAllDaemons == 2
     }
 
-    def "connect() will use daemon started by connector even if it fails compatibility spec"() {
+    def "connect() will fail early if newly started daemon fails the compatibility spec"() {
         when:
-        def connection = connector.connect({false} as Spec)
-        connection && connection.connection.num == 0
+        connector.connect(ExplainingSpecs.satisfyNone())
 
         then:
-        numAllDaemons == 1
+        thrown(GradleException)
     }
-
-
 }

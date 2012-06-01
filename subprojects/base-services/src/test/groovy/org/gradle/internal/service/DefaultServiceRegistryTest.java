@@ -117,7 +117,7 @@ public class DefaultServiceRegistryTest {
         try {
             registry.get(Object.class);
             fail();
-        } catch (IllegalArgumentException e) {
+        } catch (ServiceLookupException e) {
             assertThat(e.getMessage(), equalTo("Multiple services of type Object available in RegistryWithAmbiguousFactoryMethods."));
         }
     }
@@ -140,7 +140,7 @@ public class DefaultServiceRegistryTest {
         try {
             new RegistryWithDecoratorMethods();
             fail();
-        } catch (IllegalArgumentException e) {
+        } catch (ServiceLookupException e) {
             assertThat(e.getMessage(), equalTo("Cannot use decorator methods when no parent registry is provided."));
         }
     }
@@ -171,7 +171,7 @@ public class DefaultServiceRegistryTest {
 
     @Test
     public void delegatesToParentForUnknownFactory() {
-        final Factory<Map> factory = context.mock(Factory.class);
+        @SuppressWarnings("unchecked") final Factory<Map> factory = context.mock(Factory.class);
         final ServiceRegistry parent = context.mock(ServiceRegistry.class);
         TestRegistry registry = new TestRegistry(parent);
 
@@ -186,7 +186,7 @@ public class DefaultServiceRegistryTest {
     @Test
     public void usesDecoratorMethodToDecorateParentFactoryInstance() {
         final ServiceRegistry parent = context.mock(ServiceRegistry.class);
-        final Factory<Long> factory = context.mock(Factory.class);
+        @SuppressWarnings("unchecked") final Factory<Long> factory = context.mock(Factory.class);
         ServiceRegistry registry = new RegistryWithDecoratorMethods(parent);
 
         context.checking(new Expectations() {{
@@ -217,7 +217,7 @@ public class DefaultServiceRegistryTest {
         try {
             registry.getFactory(Object.class);
             fail();
-        } catch (IllegalArgumentException e) {
+        } catch (ServiceLookupException e) {
             assertThat(e.getMessage(), equalTo("Multiple factories for objects of type Object available in RegistryWithAmbiguousFactoryMethods."));
         }
     }
@@ -257,7 +257,7 @@ public class DefaultServiceRegistryTest {
     @Test
     public void returnsServiceFactoriesManagedByNestedServiceRegistry() {
         final ServiceRegistry nested = context.mock(ServiceRegistry.class);
-        final Factory<Runnable> factory = context.mock(Factory.class);
+        @SuppressWarnings("unchecked") final Factory<Runnable> factory = context.mock(Factory.class);
         registry.add(nested);
 
         context.checking(new Expectations() {{

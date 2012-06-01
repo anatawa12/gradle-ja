@@ -16,8 +16,10 @@
 
 package org.gradle.internal.nativeplatform.filesystem;
 
+import com.sun.jna.LastErrorException;
 import com.sun.jna.Native;
-import org.gradle.internal.jvm.Jvm;
+import org.gradle.api.JavaVersion;
+import org.gradle.internal.UncheckedException;
 import org.gradle.internal.nativeplatform.jna.LibC;
 import org.gradle.internal.os.OperatingSystem;
 import org.slf4j.Logger;
@@ -31,16 +33,14 @@ public class FilePermissionHandlerFactory {
     private static final Logger LOGGER = LoggerFactory.getLogger(FilePermissionHandlerFactory.class);
 
     public static FilePermissionHandler createDefaultFilePermissionHandler() {
-        if (OperatingSystem.current().isWindows()) {
-            return new WindowsFilePermissionHandler();
-        } else if (Jvm.current().isJava7()) {
+        if (JavaVersion.current().isJava7() && !OperatingSystem.current().isWindows()) {
+            String jdkFilePermissionclass = "org.gradle.internal.nativeplatform.filesystem.jdk7.PosixJdk7FilePermissionHandler";
             try {
-                String jdkFilePermissionclass = "org.gradle.internal.nativeplatform.filesystem.jdk7.PosixJdk7FilePermissionHandler";
-                FilePermissionHandler jdk7FilePermissionHandler =
-                        (FilePermissionHandler) FilePermissionHandler.class.getClassLoader().loadClass(jdkFilePermissionclass).newInstance();
-                return jdk7FilePermissionHandler;
+                return (FilePermissionHandler) FilePermissionHandler.class.getClassLoader().loadClass(jdkFilePermissionclass).newInstance();
+            } catch (ClassNotFoundException e) {
+                LOGGER.warn(String.format("Unable to load %s. Continuing with fallback.", jdkFilePermissionclass));
             } catch (Exception e) {
-                LOGGER.warn("Unable to load Jdk7FilePermissionHandler", e);
+                throw UncheckedException.throwAsUncheckedException(e);
             }
         }
         ComposableFilePermissionHandler.Chmod chmod = createChmod();
@@ -51,7 +51,8 @@ public class FilePermissionHandlerFactory {
         try {
             LibC libc = (LibC) Native.loadLibrary("c", LibC.class);
             return new LibcChmod(libc);
-        } catch (Throwable e) {
+        } catch (LinkageError e) {
+            LOGGER.debug("Unable to load LibC library. Falling back to EmptyChmod implementation.");
             return new EmptyChmod();
         }
     }
@@ -63,8 +64,12 @@ public class FilePermissionHandlerFactory {
             this.libc = libc;
         }
 
-        public void chmod(File f, int mode) {
-            libc.chmod(f.getAbsolutePath(), mode);
+        public void chmod(File f, int mode) throws IOException {
+            try{
+                libc.chmod(f.getAbsolutePath(), mode);
+            }catch(LastErrorException exception){
+                throw new IOException(String.format("Failed to set file permissions %s on file %s. errno: %d", mode, f.getName(), exception.getErrorCode()));
+            }
         }
     }
 

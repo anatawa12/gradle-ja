@@ -89,7 +89,7 @@ public class DefaultCommandLineConverter extends AbstractCommandLineConverter<St
         return new StartParameter();
     }
 
-    public StartParameter convert(ParsedCommandLine options, StartParameter startParameter) throws CommandLineArgumentException {
+    public StartParameter convert(final ParsedCommandLine options, final StartParameter startParameter) throws CommandLineArgumentException {
         loggingConfigurationCommandLineConverter.convert(options, startParameter);
         FileResolver resolver = new BaseDirFileResolver(FileSystems.getDefault(), startParameter.getCurrentDir());
 
@@ -173,8 +173,7 @@ public class DefaultCommandLineConverter extends AbstractCommandLineConverter<St
         }
 
         if (options.hasOption(REFRESH)) {
-            RefreshOptions refreshOptions = RefreshOptions.fromCommandLineOptions(options.option(REFRESH).getValues());
-            startParameter.setRefreshOptions(refreshOptions);
+            startParameter.setRefreshOptions(RefreshOptions.fromCommandLineOptions(options.option(REFRESH).getValues()));
         }
 
         if (options.hasOption(REFRESH_DEPENDENCIES)) {

@@ -149,22 +149,6 @@ public class GUtil {
         return isTrue(object) ? object : defaultValue;
     }
 
-    public static <T> Set<T> addSets(Iterable<? extends T>... sets) {
-        return addToCollection(new HashSet<T>(), sets);
-    }
-    
-    public static <T> Set<T> toSet(Iterable<? extends T> elements) {
-        return addToCollection(new HashSet<T>(), elements);
-    }
-
-    public static <T> List<T> addLists(Iterable<? extends T>... lists) {
-        return addToCollection(new ArrayList<T>(), lists);
-    }
-
-    public static <T> List<T> toList(Iterable<? extends T> list) {
-        return addToCollection(new ArrayList<T>(), list);
-    }
-
     public static <V, T extends Collection<? super V>> T addToCollection(T dest, Iterable<? extends V>... srcs) {
         for (Iterable<? extends V> src : srcs) {
             for (V v : src) {
@@ -343,6 +327,11 @@ public class GUtil {
 
     public static byte[] serialize(Object object) {
         ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+        serialize(object, outputStream);
+        return outputStream.toByteArray();
+    }
+
+    public static void serialize(Object object, OutputStream outputStream) {
         try {
             ObjectOutputStream objectOutputStream = new ObjectOutputStream(outputStream);
             objectOutputStream.writeObject(object);
@@ -350,7 +339,6 @@ public class GUtil {
         } catch (IOException e) {
             throw new UncheckedIOException(e);
         }
-        return outputStream.toByteArray();
     }
 
     public static <T> Comparator<T> last(final Comparator<? super T> comparator, final T lastValue) {

@@ -21,7 +21,7 @@ import org.gradle.api.artifacts.Module;
 import org.gradle.api.artifacts.dsl.ArtifactHandler;
 import org.gradle.api.artifacts.dsl.DependencyHandler;
 import org.gradle.api.artifacts.dsl.RepositoryHandler;
-import org.gradle.api.internal.Instantiator;
+import org.gradle.internal.reflect.Instantiator;
 import org.gradle.api.internal.TaskInternal;
 import org.gradle.api.internal.artifacts.ArtifactPublicationServices;
 import org.gradle.api.internal.artifacts.DefaultModule;
@@ -78,8 +78,8 @@ public class ProjectInternalServiceRegistry extends DefaultServiceRegistry imple
     }
 
     protected TemporaryFileProvider createTemporaryFileProvider() {
-        return new DefaultTemporaryFileProvider(new FileSource() {
-            public File get() {
+        return new DefaultTemporaryFileProvider(new Factory<File>() {
+            public File create() {
                 return new File(project.getBuildDir(), "tmp");
             }
         });

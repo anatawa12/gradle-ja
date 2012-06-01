@@ -1,4 +1,4 @@
-﻿<!--
+﻿﻿<!--
   ~ Copyright 2009 the original author or authors.
   ~
   ~ Licensed under the Apache License, Version 2.0 (the "License");
@@ -194,8 +194,8 @@
         その時点で、このプロパティを定義済みのプロパティと同じように読み書きできるようになります。
         </para>
         <sample id="extraTaskProperties" dir="userguide/tutorial/extraProperties" title="拡張プロパティをタスクに追加する / Adding extra properties to a task">
-            <sourcefile file="build.gradle" snippet="taskProperty"/>
-            <output args="-q showProps"/>
+            <sourcefile file="build.gradle" snippet="taskProperties"/>
+            <output args="-q printTaskProperties"/>
         </sample>
         <para role="original">Extra properties aren't limited to tasks. You can read more about them in <xref linkend='sec:extra_properties'/>.</para>
         <para>拡張プロパティを追加できるのは、タスクだけではありません。詳細については、<xref linkend='sec:extra_properties'/>を参照してください。</para>

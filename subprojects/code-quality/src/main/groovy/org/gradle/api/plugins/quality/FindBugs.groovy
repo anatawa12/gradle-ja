@@ -17,15 +17,16 @@ package org.gradle.api.plugins.quality
 
 import org.gradle.api.GradleException
 import org.gradle.api.file.FileCollection
-import org.gradle.api.internal.Instantiator
+import org.gradle.internal.reflect.Instantiator
 import org.gradle.api.plugins.quality.internal.FindBugsReportsImpl
-import org.gradle.api.plugins.quality.internal.findbugs.FindBugsDaemon
-import org.gradle.api.plugins.quality.internal.findbugs.FindBugsDaemonManager
+import org.gradle.api.plugins.quality.internal.findbugs.FindBugsWorkerManager
 import org.gradle.api.plugins.quality.internal.findbugs.FindBugsResult
+import org.gradle.api.plugins.quality.internal.findbugs.FindBugsSpec
 import org.gradle.api.plugins.quality.internal.findbugs.FindBugsSpecBuilder
 import org.gradle.api.reporting.Reporting
 import org.gradle.api.reporting.SingleFileReport
 import org.gradle.api.tasks.*
+import org.gradle.api.logging.LogLevel
 
 /**
  * Analyzes code with <a href="http://findbugs.sourceforge.net">FindBugs</a>.
@@ -106,28 +107,30 @@ class FindBugs extends SourceTask implements VerificationTask, Reporting<FindBug
                 .withDebugging(logger.isDebugEnabled())
                 .configureReports(reports)
 
-        FindBugsDaemonManager manager = FindBugsDaemonManager.getInstance();
-        FindBugsDaemon daemon = manager.getDaemon(getProject(), getFindbugsClasspath())
-        FindBugsResult findbugsResult = daemon.execute(argumentBuilder.build());
+        FindBugsSpec spec = argumentBuilder.build()
+        FindBugsWorkerManager manager = new FindBugsWorkerManager();
+
+        logging.captureStandardOutput(LogLevel.DEBUG)
+        logging.captureStandardError(LogLevel.DEBUG)
+
+        FindBugsResult findbugsResult = manager.runWorker(getProject(), getFindbugsClasspath(), spec)
         evaluateResult(findbugsResult);
     }
 
     void evaluateResult(FindBugsResult findbugsResult) {
-        //TODO handle errors in findbugs
-        if (findbugsResult.bugsFound && !ignoreFailures) {
+        if (findbugsResult.exception){
+            throw new GradleException("FindBugs encountered an error. Run with --debug to get more information.", findbugsResult.exception)
+        }
+        if (findbugsResult.errorCount){
+            throw new GradleException("FindBugs encountered an error. Run with --debug to get more information.")
+        }
+        if (findbugsResult.bugCount && !getIgnoreFailures()) {
             SingleFileReport reportSetup = reports.firstEnabled
             if (reports.firstEnabled) {
                 throw new GradleException("FindBugs rule violations were found. See the report at ${reportSetup.destination}.")
             } else {
                 throw new GradleException("FindBugs rule violations were found.")
             }
-        }
-
-    }
-
-    protected void addUnlessEmpty(Object ant, FileCollection files, String nodeName) {
-        if (!files.empty) {
-          files.addToAntBuilder(ant, nodeName)
         }
     }
 }

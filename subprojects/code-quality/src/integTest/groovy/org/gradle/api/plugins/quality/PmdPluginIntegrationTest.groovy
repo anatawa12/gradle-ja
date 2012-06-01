@@ -41,26 +41,32 @@ class PmdPluginIntegrationTest extends WellBehavedPluginTest {
         file("build/reports/pmd/test.xml").exists()
     }
 
-    private goodCode() {
-        file("src/main/java/org/gradle/Class1.java") <<
-                "package org.gradle; class Class1 { public boolean isFoo(Object arg) { return true; } }"
-        file("src/test/java/org/gradle/Class1Test.java") <<
-                "package org.gradle; class Class1Test { public boolean isFoo(Object arg) { return true; } }"
-    }
-
     def "analyze bad code"() {
-        file("src/main/java/org/gradle/Class1.java") <<
-                "package org.gradle; class Class1 { public boolean isFoo(Object arg) { return true; } }"
-        file("src/test/java/org/gradle/Class1Test.java") <<
-                "package org.gradle; class Class1Test { {} public boolean equals(Object arg) { return true; } }"
-        
+        badCode()
+
         expect:
         fails("check")
-		failure.assertHasDescription("Execution failed for task ':pmdTest'")
-		failure.assertThatCause(containsString("PMD found 2 rule violations"))
+        failure.assertHasDescription("Execution failed for task ':pmdTest'")
+        failure.assertThatCause(containsString("PMD found 2 rule violations"))
         file("build/reports/pmd/main.xml").assertContents(not(containsClass("org.gradle.Class1")))
-		file("build/reports/pmd/test.xml").assertContents(containsClass("org.gradle.Class1Test"))
+        file("build/reports/pmd/test.xml").assertContents(containsClass("org.gradle.Class1Test"))
     }
+
+
+    void "can ignore failures"() {
+        badCode()
+
+        file("build.gradle") << """
+            pmd {
+                ignoreFailures = true
+            }
+            """
+        expect:
+        succeeds("check")
+        file("build/reports/pmd/main.xml").assertContents(not(containsClass("org.gradle.Class1")))
+        file("build/reports/pmd/test.xml").assertContents(containsClass("org.gradle.Class1Test"))
+    }
+
 
     def "can configure reporting"() {
         given:
@@ -77,11 +83,11 @@ class PmdPluginIntegrationTest extends WellBehavedPluginTest {
         """
         expect:
         succeeds("check")
-        
+
         !file("build/reports/pmd/main.xml").exists()
         file("htmlReport.html").exists()
     }
-    
+
     private void writeBuildFile() {
         file("build.gradle") << """
 apply plugin: "java"
@@ -95,5 +101,19 @@ repositories {
 
     private Matcher<String> containsClass(String className) {
         containsLine(containsString(className.replace(".", File.separator)))
+    }
+
+    private goodCode() {
+        file("src/main/java/org/gradle/Class1.java") <<
+                "package org.gradle; class Class1 { public boolean isFoo(Object arg) { return true; } }"
+        file("src/test/java/org/gradle/Class1Test.java") <<
+                "package org.gradle; class Class1Test { public boolean isFoo(Object arg) { return true; } }"
+    }
+
+    private badCode() {
+        file("src/main/java/org/gradle/Class1.java") <<
+                "package org.gradle; class Class1 { public boolean isFoo(Object arg) { return true; } }"
+        file("src/test/java/org/gradle/Class1Test.java") <<
+                "package org.gradle; class Class1Test { {} public boolean equals(Object arg) { return true; } }"
     }
 }

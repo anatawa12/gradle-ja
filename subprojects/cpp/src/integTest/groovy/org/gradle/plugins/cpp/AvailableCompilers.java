@@ -17,6 +17,7 @@
 package org.gradle.plugins.cpp;
 
 import org.gradle.internal.os.OperatingSystem;
+import org.gradle.plugins.cpp.gpp.internal.version.GppVersionDeterminer;
 
 import java.io.File;
 import java.util.*;
@@ -28,7 +29,8 @@ public class AvailableCompilers {
             compilers.add(findVisualCpp());
             compilers.add(findMinGW());
         } else {
-            compilers.add(findGpp());
+            compilers.add(findGpp("3", "/opt/gcc/3.4.6/g++"));
+            compilers.add(findGpp("4", null));
         }
         return compilers;
     }
@@ -69,14 +71,23 @@ public class AvailableCompilers {
         return new UnavailableCompiler("mingw");
     }
 
-    static private CompilerCandidate findGpp() {
-        // Search in path
-        File compilerExe = OperatingSystem.current().findInPath("g++");
-        if (compilerExe != null) {
-            return new InstalledCompiler("g++");
+    static private CompilerCandidate findGpp(String versionPrefix, String hardcodedFallback) {
+        String name = String.format("g++ (%s)", versionPrefix);
+        GppVersionDeterminer versionDeterminer = new GppVersionDeterminer();
+        for (File candidate : OperatingSystem.current().findAllInPath("g++")) {
+            if (versionDeterminer.transform(candidate).startsWith(versionPrefix)) {
+                return new InstalledCompiler(name, candidate.getParentFile());
+            }
         }
 
-        return new UnavailableCompiler("g++");
+        if (hardcodedFallback != null) {
+            File fallback = new File(hardcodedFallback);
+            if (fallback.isFile()) {
+                return new InstalledCompiler(name, fallback.getParentFile());
+            }
+        }
+
+        return new UnavailableCompiler(name);
     }
 
     public static abstract class CompilerCandidate {

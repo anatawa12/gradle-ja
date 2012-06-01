@@ -43,6 +43,9 @@ import java.io.OutputStream;
  * try {
  *    ModelBuilder&lt;GradleProject&gt; builder = connection.model(GradleProject.class);
  *
+ *    //if you use a different than usual build file name:
+ *    builder.withArguments("--build-file", "theBuild.gradle");
+ *
  *    //configure the standard input in case your build is interactive:
  *    builder.setStandardInput(new ByteArrayInputStream("consume this!".getBytes()));
  *
@@ -63,6 +66,11 @@ import java.io.OutputStream;
  * @param <T> The type of model to build
  */
 public interface ModelBuilder<T extends Model> extends LongRunningOperation {
+
+    /**
+     * {@inheritDoc}
+     */
+    ModelBuilder<T> withArguments(String ... arguments);
 
     /**
      * {@inheritDoc}

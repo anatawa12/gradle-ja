@@ -28,28 +28,34 @@ import org.gradle.api.internal.tasks.testing.TestResultProcessor;
 import org.gradle.api.internal.tasks.testing.detection.DefaultTestExecuter;
 import org.gradle.api.internal.tasks.testing.detection.TestExecuter;
 import org.gradle.api.internal.tasks.testing.junit.JUnitTestFramework;
-import org.gradle.api.internal.tasks.testing.logging.DefaultTestLogging;
-import org.gradle.api.internal.tasks.testing.logging.StandardStreamsLogger;
-import org.gradle.api.internal.tasks.testing.results.TestListenerAdapter;
-import org.gradle.api.internal.tasks.testing.results.TestLogger;
-import org.gradle.api.internal.tasks.testing.results.TestSummaryListener;
+import org.gradle.api.internal.tasks.testing.logging.*;
+import org.gradle.api.internal.tasks.testing.results.*;
 import org.gradle.api.internal.tasks.testing.testng.TestNGTestFramework;
+import org.gradle.api.logging.LogLevel;
+import org.gradle.api.logging.Logger;
+import org.gradle.api.logging.Logging;
 import org.gradle.api.specs.Spec;
 import org.gradle.api.tasks.*;
+import org.gradle.api.tasks.testing.logging.TestLogging;
+import org.gradle.api.tasks.testing.logging.TestLoggingContainer;
 import org.gradle.api.tasks.util.PatternFilterable;
 import org.gradle.api.tasks.util.PatternSet;
+import org.gradle.internal.UncheckedException;
+import org.gradle.internal.os.OperatingSystem;
 import org.gradle.listener.ListenerBroadcast;
 import org.gradle.listener.ListenerManager;
 import org.gradle.logging.ProgressLoggerFactory;
+import org.gradle.logging.internal.OutputEventListener;
 import org.gradle.messaging.actor.ActorFactory;
 import org.gradle.process.JavaForkOptions;
 import org.gradle.process.ProcessForkOptions;
 import org.gradle.process.internal.DefaultJavaForkOptions;
 import org.gradle.process.internal.WorkerProcessBuilder;
 import org.gradle.util.ConfigureUtil;
-import org.slf4j.LoggerFactory;
 
 import java.io.File;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -60,7 +66,7 @@ import java.util.Set;
  * <p>
  * An example with a blend of various settings
  * <pre autoTested=''>
- * apply plugin: 'java' //so that 'test' task is added
+ * apply plugin: 'java' // adds 'test' task
  *
  * test {
  *   //configuring a system property for tests
@@ -89,6 +95,8 @@ import java.util.Set;
  * @author Hans Dockter
  */
 public class Test extends ConventionTask implements JavaForkOptions, PatternFilterable, VerificationTask {
+    private static final Logger LOGGER = Logging.getLogger(Test.class);
+
     private TestExecuter testExecuter;
     private final DefaultJavaForkOptions options;
     private List<File> testSrcDirs = new ArrayList<File>();
@@ -105,7 +113,8 @@ public class Test extends ConventionTask implements JavaForkOptions, PatternFilt
     private int maxParallelForks = 1;
     private ListenerBroadcast<TestListener> testListenerBroadcaster;
     private final ListenerBroadcast<TestOutputListener> testOutputListenerBroadcaster;
-    private final TestLogging testLogging = new DefaultTestLogging();
+    private OutputEventListener outputListener;
+    private final TestLoggingContainer testLogging = new DefaultTestLoggingContainer();
 
     public Test() {
         testListenerBroadcaster = getServices().get(ListenerManager.class).createAnonymousBroadcaster(
@@ -113,6 +122,8 @@ public class Test extends ConventionTask implements JavaForkOptions, PatternFilt
         testOutputListenerBroadcaster = getServices().get(ListenerManager.class).createAnonymousBroadcaster(TestOutputListener.class);
         this.testExecuter = new DefaultTestExecuter(getServices().getFactory(WorkerProcessBuilder.class), getServices().get(
                 ActorFactory.class));
+        outputListener = getServices().get(OutputEventListener.class);
+
         options = new DefaultJavaForkOptions(getServices().get(FileResolver.class));
         options.setEnableAssertions(true);
     }
@@ -385,20 +396,58 @@ public class Test extends ConventionTask implements JavaForkOptions, PatternFilt
 
     @TaskAction
     public void executeTests() {
-        TestSummaryListener listener = new TestSummaryListener(LoggerFactory.getLogger(Test.class));
-        addTestListener(listener);
-        addTestListener(new TestLogger(getServices().get(ProgressLoggerFactory.class)));
-        addTestOutputListener(new StandardStreamsLogger(LoggerFactory.getLogger(Test.class), testLogging));
+        for (LogLevel level: LogLevel.values()) {
+            if (!LOGGER.isEnabled(level)) {
+                continue;
+            }
+            TestLogging levelLogging = testLogging.get(level);
+            TestExceptionFormatter exceptionFormatter = getExceptionFormatter(testLogging);
+            TestEventLogger eventLogger = new TestEventLogger(outputListener, level, levelLogging, exceptionFormatter);
+            addTestListener(eventLogger);
+            addTestOutputListener(eventLogger);
+        }
+
+        ProgressLoggerFactory progressLoggerFactory = getServices().get(ProgressLoggerFactory.class);
+        TestCountLogger testCountLogger = new TestCountLogger(progressLoggerFactory);
+        addTestListener(testCountLogger);
 
         TestResultProcessor resultProcessor = new TestListenerAdapter(
                 getTestListenerBroadcaster().getSource(), testOutputListenerBroadcaster.getSource());
         testExecuter.execute(this, resultProcessor);
 
         testFramework.report();
+        
+        testFramework = null;
 
-        if (!getIgnoreFailures() && listener.hadFailures()) {
-            throw new GradleException("There were failing tests. See the report at " + getTestReportDir() + ".");
+        if (!getIgnoreFailures() && testCountLogger.hadFailures()) {
+            throw new GradleException("There were failing tests. See the report at " + getTestReportUrl() + ".");
         }
+    }
+
+    private TestExceptionFormatter getExceptionFormatter(TestLogging testLogging) {
+        switch (testLogging.getExceptionFormat()) {
+            case SHORT:
+                return new ShortExceptionFormatter(testLogging);
+            case FULL:
+                return new FullExceptionFormatter(testLogging);
+            default:
+                throw new AssertionError();
+        }
+    }
+    private String getTestReportUrl() {
+        // File.toURI().toString() leads to an URL like this on Mac: file:/reports/index.html
+        // This URL is not recognized by the Mac terminal (too few leading slashes). We solve
+        // this be creating an URI with an empty authority.
+        File indexFile = new File(getTestReportDir(), "index.html");
+        try {
+            if (OperatingSystem.current().isWindows()) {
+                return indexFile.toURI().toString();
+            }
+            return new URI("file", "", indexFile.toString(), null, null).toString();
+        } catch (URISyntaxException e) {
+            throw UncheckedException.throwAsUncheckedException(e);
+        }
+
     }
 
     /**
@@ -471,7 +520,7 @@ public class Test extends ConventionTask implements JavaForkOptions, PatternFilt
 
     /**
      * <p>Adds a closure to be notified after a test suite has executed. A {@link org.gradle.api.tasks.testing.TestDescriptor}
-     * and {@link org.gradle.api.tasks.testing.TestResult} instance are passed to the closure as a parameter.</p>
+     * and {@link TestResult} instance are passed to the closure as a parameter.</p>
      *
      * <p>This method is also called after all test suites are executed. The provided descriptor will have a null parent
      * suite.</p>
@@ -494,7 +543,7 @@ public class Test extends ConventionTask implements JavaForkOptions, PatternFilt
 
     /**
      * Adds a closure to be notified after a test has executed. A {@link org.gradle.api.tasks.testing.TestDescriptor}
-     * and {@link org.gradle.api.tasks.testing.TestResult} instance are passed to the closure as a parameter.
+     * and {@link TestResult} instance are passed to the closure as a parameter.
      *
      * @param closure The closure to call.
      */

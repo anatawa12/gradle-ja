@@ -16,7 +16,6 @@
 package org.gradle.integtests.resolve.ivy
 
 import org.gradle.integtests.resolve.AbstractDependencyResolutionTest
-import static org.gradle.integtests.fixtures.HttpServer.IfModResponse.*
 
 class IvyChangingModuleRemoteResolutionIntegrationTest extends AbstractDependencyResolutionTest {
 
@@ -70,10 +69,10 @@ task retrieve(type: Copy) {
         server.resetExpectations()
         // Server will be hit to get updated versions
         server.expectGet('/repo/group/projectA/1.1/ivy-1.1.xml.sha1', module.sha1File(module.ivyFile))
-        server.expectGet('/repo/group/projectA/1.1/ivy-1.1.xml', module.ivyFile)
+        server.expectHeadThenGet('/repo/group/projectA/1.1/ivy-1.1.xml', module.ivyFile)
         server.expectGet('/repo/group/projectA/1.1/projectA-1.1.jar.sha1', module.sha1File(module.jarFile))
-        server.expectGet('/repo/group/projectA/1.1/projectA-1.1.jar', module.jarFile)
-        server.expectGet('/repo/group/projectA/1.1/other-1.1.jar', module.moduleDir.file('other-1.1.jar'))
+        server.expectHeadThenGet('/repo/group/projectA/1.1/projectA-1.1.jar', module.jarFile)
+        server.expectHeadThenGet('/repo/group/projectA/1.1/other-1.1.jar', module.moduleDir.file('other-1.1.jar'))
         server.expectGet('/repo/group/projectB/2.0/ivy-2.0.xml', moduleB.ivyFile)
         server.expectGet('/repo/group/projectB/2.0/projectB-2.0.jar', moduleB.jarFile)
 
@@ -172,9 +171,12 @@ task retrieve(type: Copy) {
 
         server.resetExpectations()
         // Server will be hit to get updated versions
-        server.expectGet('/repo/group/projectA/1.1/ivy-1.1.xml.sha1', module.sha1File(module.ivyFile))
-        server.expectGet('/repo/group/projectA/1.1/projectA-1.1.jar.sha1', module.sha1File(module.jarFile))
-        server.expectGet('/repo/group/projectA/1.1/projectA-1.1.jar', module.jarFile)
+        module.expectIvyHead(server, '/repo')
+        module.expectIvySha1Get(server, '/repo')
+        module.expectIvyGet(server, '/repo')
+        module.expectArtifactHead(server, '/repo')
+        module.expectArtifactSha1Get(server, '/repo')
+        module.expectArtifactGet(server, '/repo')
 
         run 'retrieve'
 
@@ -243,10 +245,10 @@ task retrieve(type: Copy) {
         server.resetExpectations()
         // Server will be hit to get updated versions
         server.expectGet('/repo/group/projectA/1.1/ivy-1.1.xml.sha1', module.sha1File(module.ivyFile))
-        server.expectGet('/repo/group/projectA/1.1/ivy-1.1.xml', module.ivyFile)
+        server.expectHeadThenGet('/repo/group/projectA/1.1/ivy-1.1.xml', module.ivyFile)
         server.expectGet('/repo/group/projectA/1.1/projectA-1.1.jar.sha1', module.sha1File(module.jarFile))
-        server.expectGet('/repo/group/projectA/1.1/projectA-1.1.jar', module.jarFile)
-        server.expectGet('/repo/group/projectA/1.1/other-1.1.jar', module.moduleDir.file('other-1.1.jar'))
+        server.expectHeadThenGet('/repo/group/projectA/1.1/projectA-1.1.jar', module.jarFile)
+        server.expectHeadThenGet('/repo/group/projectA/1.1/other-1.1.jar', module.moduleDir.file('other-1.1.jar'))
 
         and: "We request 1.1 (changing) again, with zero expiry for dynamic revision cache"
         executer.withArguments("-PdoNotCacheChangingModules")
@@ -320,10 +322,10 @@ task retrieve(type: Copy) {
         server.resetExpectations()
         // Server will be hit to get updated versions
         server.expectGet('/repo/group/projectA/1-CHANGING/ivy-1-CHANGING.xml.sha1', module.sha1File(module.ivyFile))
-        server.expectGet('/repo/group/projectA/1-CHANGING/ivy-1-CHANGING.xml', module.ivyFile)
+        server.expectHeadThenGet('/repo/group/projectA/1-CHANGING/ivy-1-CHANGING.xml', module.ivyFile)
         server.expectGet('/repo/group/projectA/1-CHANGING/projectA-1-CHANGING.jar.sha1', module.sha1File(module.jarFile))
-        server.expectGet('/repo/group/projectA/1-CHANGING/projectA-1-CHANGING.jar', module.jarFile)
-        server.expectGet('/repo/group/projectA/1-CHANGING/other-1-CHANGING.jar', module.moduleDir.file('other-1-CHANGING.jar'))
+        server.expectHeadThenGet('/repo/group/projectA/1-CHANGING/projectA-1-CHANGING.jar', module.jarFile)
+        server.expectHeadThenGet('/repo/group/projectA/1-CHANGING/other-1-CHANGING.jar', module.moduleDir.file('other-1-CHANGING.jar'))
 
         and: "We request 1-CHANGING again"
         executer.withArguments()
@@ -372,10 +374,12 @@ task retrieve(type: Copy) {
         def base = "/repo/group/projectA/1.1"
         def ivyPath = "$base/$module.ivyFile.name"
         def ivySha1Path = "${ivyPath}.sha1"
-        def originalIvyLastMod = new Date(module.ivyFile.lastModified())
+        def originalIvyLastMod = module.ivyFile.lastModified()
+        def originalIvyContentLength = module.ivyFile.length()
         def jarPath = "$base/$module.jarFile.name"
         def jarSha1Path = "${jarPath}.sha1"
-        def originalJarLastMod = new Date(module.jarFile.lastModified())
+        def originalJarLastMod = module.jarFile.lastModified()
+        def originalJarContentLength = module.jarFile.length()
 
         when:
         server.expectGet(ivyPath, module.ivyFile)
@@ -394,9 +398,9 @@ task retrieve(type: Copy) {
         when:
         server.resetExpectations()
         server.expectGetMissing(ivySha1Path)
-        server.expectGetIfNotModifiedSince(ivyPath, originalIvyLastMod, module.ivyFile, UNMODIFIED)
+        server.expectHead(ivyPath, module.ivyFile, originalIvyLastMod, originalIvyContentLength)
         server.expectGetMissing(jarSha1Path)
-        server.expectGetIfNotModifiedSince(jarPath, originalJarLastMod, module.jarFile, UNMODIFIED)
+        server.expectHead(jarPath, module.jarFile, originalJarLastMod, originalJarContentLength)
 
         run 'retrieve'
 
@@ -406,9 +410,11 @@ task retrieve(type: Copy) {
         when:
         server.resetExpectations()
         server.expectGetMissing(ivySha1Path)
-        server.expectGetIfNotModifiedSince(ivyPath, originalIvyLastMod, module.ivyFile, MODIFIED)
+        server.expectHead(ivyPath, module.ivyFile)
+        server.expectGet(ivyPath, module.ivyFile)
         server.expectGetMissing(jarSha1Path)
-        server.expectGetIfNotModifiedSince(jarPath, originalJarLastMod, module.jarFile, MODIFIED)
+        server.expectHead(jarPath, module.jarFile)
+        server.expectGet(jarPath, module.jarFile)
 
         run 'retrieve'
 

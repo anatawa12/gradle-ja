@@ -15,12 +15,13 @@
  */
 package org.gradle.launcher.daemon.client;
 
+import org.gradle.api.internal.specs.ExplainingSpec;
 import org.gradle.api.logging.Logger;
 import org.gradle.api.logging.Logging;
-import org.gradle.api.specs.Spec;
-import org.gradle.initialization.BuildClientMetaData;
 import org.gradle.initialization.GradleLauncherAction;
 import org.gradle.internal.UncheckedException;
+import org.gradle.internal.concurrent.ExecutorFactory;
+import org.gradle.internal.id.IdGenerator;
 import org.gradle.launcher.daemon.context.DaemonContext;
 import org.gradle.launcher.daemon.diagnostics.DaemonDiagnostics;
 import org.gradle.launcher.daemon.logging.DaemonMessages;
@@ -55,21 +56,31 @@ import java.io.InputStream;
  */
 public class DaemonClient implements GradleLauncherActionExecuter<BuildActionParameters> {
     private static final Logger LOGGER = Logging.getLogger(DaemonClient.class);
-    protected final DaemonConnector connector;
-    protected final BuildClientMetaData clientMetaData;
+    private final DaemonConnector connector;
     private final OutputEventListener outputEventListener;
-    private final Spec<DaemonContext> compatibilitySpec;
+    private final ExplainingSpec<DaemonContext> compatibilitySpec;
     private final InputStream buildStandardInput;
+    private final ExecutorFactory executorFactory;
+    private final IdGenerator<?> idGenerator;
 
     //TODO SF - outputEventListener and buildStandardInput are per-build settings
     //so down the road we should refactor the code accordingly and potentially attach them to BuildActionParameters
-    public DaemonClient(DaemonConnector connector, BuildClientMetaData clientMetaData, OutputEventListener outputEventListener,
-                        Spec<DaemonContext> compatibilitySpec, InputStream buildStandardInput) {
+    public DaemonClient(DaemonConnector connector, OutputEventListener outputEventListener, ExplainingSpec<DaemonContext> compatibilitySpec,
+                        InputStream buildStandardInput, ExecutorFactory executorFactory, IdGenerator<?> idGenerator) {
         this.connector = connector;
-        this.clientMetaData = clientMetaData;
         this.outputEventListener = outputEventListener;
         this.compatibilitySpec = compatibilitySpec;
         this.buildStandardInput = buildStandardInput;
+        this.executorFactory = executorFactory;
+        this.idGenerator = idGenerator;
+    }
+
+    protected IdGenerator<?> getIdGenerator() {
+        return idGenerator;
+    }
+
+    protected DaemonConnector getConnector() {
+        return connector;
     }
 
     /**
@@ -85,7 +96,7 @@ public class DaemonClient implements GradleLauncherActionExecuter<BuildActionPar
         LOGGER.lifecycle("Stopping daemon(s).");
         //iterate and stop all daemons
         while (connection != null) {
-            new StopDispatcher().dispatch(clientMetaData, connection.getConnection());
+            new StopDispatcher(idGenerator).dispatch(connection.getConnection());
             LOGGER.lifecycle("Gradle daemon stopped.");
             connection = connector.maybeConnect(compatibilitySpec);
         }
@@ -98,7 +109,7 @@ public class DaemonClient implements GradleLauncherActionExecuter<BuildActionPar
      * @throws org.gradle.launcher.exec.ReportedException On failure, when the failure has already been logged/reported.
      */
     public <T> T execute(GradleLauncherAction<T> action, BuildActionParameters parameters) {
-        Build build = new Build(action, parameters);
+        Build build = new Build(idGenerator.generateId(), action, parameters);
         int saneNumberOfAttempts = 100; //is it sane enough?
         for (int i = 1; i < saneNumberOfAttempts; i++) {
             DaemonConnection daemonConnection = connector.connect(compatibilitySpec);
@@ -140,7 +151,7 @@ public class DaemonClient implements GradleLauncherActionExecuter<BuildActionPar
     }
 
     private Result monitorBuild(Build build, DaemonDiagnostics diagnostics, Connection<Object> connection) {
-        DaemonClientInputForwarder inputForwarder = new DaemonClientInputForwarder(buildStandardInput, build.getClientMetaData(), connection);
+        DaemonClientInputForwarder inputForwarder = new DaemonClientInputForwarder(buildStandardInput, connection, executorFactory, idGenerator);
         try {
             inputForwarder.start();
             int objectsReceived = 0;
@@ -172,17 +183,12 @@ public class DaemonClient implements GradleLauncherActionExecuter<BuildActionPar
         //we can try sending something to the daemon and try out if he is really dead or use jps
         //if he's really dead we should deregister it if it is not already deregistered.
         //if the daemon is not dead we might continue receiving from him (and try to find the bug in messaging infrastructure)
-        int daemonLogLines = 20;
         LOGGER.error("The message received from the daemon indicates that the daemon has disappeared."
-                + "\nDaemon pid: " + diagnostics.getPid()
-                + "\nDaemon log: " + diagnostics.getDaemonLog()
                 + "\nBuild request sent: " + build
-                + "\nAttempting to read last " + daemonLogLines + " lines from the daemon log...");
+                + "\nAttempting to read last messages from the daemon log...");
 
         try {
-            String tail = GFileUtils.tail(diagnostics.getDaemonLog(), daemonLogLines);
-            LOGGER.error("Last " + daemonLogLines + " lines from " + diagnostics.getDaemonLog().getName() + ":"
-                    + "\n----------\n" + tail + "----------\n");
+            LOGGER.error(diagnostics.describe());
         } catch (GFileUtils.TailReadingException e) {
             LOGGER.error("Unable to read from the daemon log file because of: " + e);
             LOGGER.debug("Problem reading the daemon log file.", e);

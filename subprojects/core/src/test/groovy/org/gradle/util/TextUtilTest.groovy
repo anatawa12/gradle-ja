@@ -17,6 +17,7 @@
 package org.gradle.util
 
 import spock.lang.Specification
+import spock.lang.Unroll
 
 class TextUtilTest extends Specification {
     private static String sep = "separator"
@@ -53,5 +54,19 @@ class TextUtilTest extends Specification {
         "abcde "  | true
         "abc\tde" | true
         "abc\nde" | true
+    }
+
+    @Unroll
+    def indent() {
+        expect:
+        TextUtil.indent(text, indent) == result
+
+        where:
+        text            | indent | result
+        ""              | ""     | ""
+        "abc"           | "  "   | "  abc"
+        "abc"           | "def"  | "defabc"
+        "abc\ndef\nghi" | " "    | " abc\n def\n ghi"
+        "abc\n\t\n   \nghi" | "X"    | "Xabc\n\t\n   \nXghi"
     }
 }

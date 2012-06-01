@@ -16,12 +16,13 @@
 
 package org.gradle;
 
+import com.google.common.collect.Lists;
+import com.google.common.collect.Sets;
 import org.apache.commons.lang.builder.EqualsBuilder;
 import org.apache.commons.lang.builder.HashCodeBuilder;
 import org.gradle.internal.SystemProperties;
 import org.gradle.logging.LoggingConfiguration;
 import org.gradle.util.GFileUtils;
-import org.gradle.util.GUtil;
 
 import java.io.File;
 import java.io.Serializable;
@@ -58,12 +59,10 @@ public class StartParameter extends LoggingConfiguration implements Serializable
     private File buildFile;
     private List<File> initScripts = new ArrayList<File>();
     private boolean dryRun;
-    private boolean noOpt;
     private boolean rerunTasks;
     private boolean profile;
     private boolean continueOnFailure;
     private boolean offline;
-    private RefreshOptions refreshOptions = RefreshOptions.NONE;
     private File projectCacheDir;
     private boolean refreshDependencies;
     private boolean recompileScripts;
@@ -124,14 +123,12 @@ public class StartParameter extends LoggingConfiguration implements Serializable
         startParameter.setColorOutput(isColorOutput());
         startParameter.setShowStacktrace(getShowStacktrace());
         startParameter.dryRun = dryRun;
-        startParameter.noOpt = noOpt;
         startParameter.rerunTasks = rerunTasks;
         startParameter.recompileScripts = recompileScripts;
         startParameter.profile = profile;
         startParameter.projectCacheDir = projectCacheDir;
         startParameter.continueOnFailure = continueOnFailure;
         startParameter.offline = offline;
-        startParameter.refreshOptions = refreshOptions;
         startParameter.refreshDependencies = refreshDependencies;
         return startParameter;
     }
@@ -152,7 +149,6 @@ public class StartParameter extends LoggingConfiguration implements Serializable
         startParameter.profile = profile;
         startParameter.continueOnFailure = continueOnFailure;
         startParameter.offline = offline;
-        startParameter.refreshOptions = refreshOptions;
         startParameter.rerunTasks = rerunTasks;
         startParameter.recompileScripts = recompileScripts;
         startParameter.refreshDependencies = refreshDependencies;
@@ -242,7 +238,7 @@ public class StartParameter extends LoggingConfiguration implements Serializable
      * @param taskNames the names of the tasks to execute in this build.
      */
     public void setTaskNames(Iterable<String> taskNames) {
-        this.taskNames = GUtil.toList(taskNames);
+        this.taskNames = Lists.newArrayList(taskNames);
     }
 
     /**
@@ -260,7 +256,7 @@ public class StartParameter extends LoggingConfiguration implements Serializable
      * @param excludedTaskNames The task names. Can be null.
      */
     public void setExcludedTaskNames(Iterable<String> excludedTaskNames) {
-        this.excludedTaskNames = GUtil.toSet(excludedTaskNames);
+        this.excludedTaskNames = Sets.newLinkedHashSet(excludedTaskNames);
     }
 
     /**
@@ -356,10 +352,20 @@ public class StartParameter extends LoggingConfiguration implements Serializable
         return this;
     }
 
+    /**
+     *  Returns the configured CacheUsage.
+     *  @deprecated Use {@link #isRecompileScripts} and/or {@link #isRerunTasks} instead.
+     * */
+    @Deprecated
     public CacheUsage getCacheUsage() {
         return cacheUsage;
     }
 
+    /**
+     *  Sets the Cache usage.
+     *  @deprecated Use {@link #setRecompileScripts} and/or {@link #setRerunTasks} instead.
+     * */
+    @Deprecated
     public void setCacheUsage(CacheUsage cacheUsage) {
         this.cacheUsage = cacheUsage;
     }
@@ -372,12 +378,25 @@ public class StartParameter extends LoggingConfiguration implements Serializable
         this.dryRun = dryRun;
     }
 
+    /**
+     * Returns task optimization disabled flag.
+     *
+     * @deprecated Use {@link #isRerunTasks} instead.
+     * */
+    @Deprecated
     public boolean isNoOpt() {
-        return noOpt;
+        return rerunTasks;
     }
 
+   /**
+    * Get task optimization disabled.
+    *
+    * @param noOpt The boolean value for disabling task optimization.
+    * @deprecated Use {@link #setRefreshDependencies(boolean)} instead.
+    */
+    @Deprecated
     public void setNoOpt(boolean noOpt) {
-        this.noOpt = noOpt;
+        this.rerunTasks = noOpt;
     }
 
     /**
@@ -508,27 +527,31 @@ public class StartParameter extends LoggingConfiguration implements Serializable
 
     /**
      * Supplies the refresh options to use for the build.
+     * @deprecated Use {@link #setRefreshDependencies(boolean)} instead.
      */
+    @Deprecated
     public void setRefreshOptions(RefreshOptions refreshOptions) {
-        this.refreshOptions = refreshOptions;
+        this.refreshDependencies = refreshOptions.refreshDependencies();
     }
 
     /**
      * Returns the refresh options used for the build.
+     * @deprecated Use {@link #isRefreshDependencies()} instead.
      */
+    @Deprecated
     public RefreshOptions getRefreshOptions() {
-        return refreshOptions;
+        return isRefreshDependencies() ? new RefreshOptions(Arrays.asList(RefreshOptions.Option.DEPENDENCIES)) : RefreshOptions.NONE;
     }
 
     /**
-     * Specifies whether the depencendies should be refreshed..
+     * Specifies whether the dependencies should be refreshed..
      */
     public boolean isRefreshDependencies() {
         return refreshDependencies;
     }
 
     /**
-     * Specifies whether the depencendies should be refreshed..
+     * Specifies whether the dependencies should be refreshed..
      */
     public void setRefreshDependencies(boolean refreshDependencies) {
         this.refreshDependencies = refreshDependencies;
@@ -578,7 +601,6 @@ public class StartParameter extends LoggingConfiguration implements Serializable
                 + ", buildFile=" + buildFile
                 + ", initScripts=" + initScripts
                 + ", dryRun=" + dryRun
-                + ", noOpt=" + noOpt
                 + ", rerunTasks=" + rerunTasks
                 + ", recompileScripts=" + recompileScripts
                 + ", offline=" + offline

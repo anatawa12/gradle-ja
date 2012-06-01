@@ -22,7 +22,7 @@ import org.gradle.api.artifacts.ArtifactRepositoryContainer
 import org.gradle.api.artifacts.repositories.FlatDirectoryArtifactRepository
 import org.gradle.api.artifacts.repositories.IvyArtifactRepository
 import org.gradle.api.artifacts.repositories.MavenArtifactRepository
-import org.gradle.api.internal.DirectInstantiator
+import org.gradle.internal.reflect.DirectInstantiator
 import org.gradle.api.internal.artifacts.DefaultArtifactRepositoryContainerTest
 import org.gradle.api.internal.artifacts.repositories.ArtifactRepositoryInternal
 import org.jmock.integration.junit4.JMock
@@ -35,8 +35,6 @@ import static org.junit.Assert.assertEquals
  */
 @RunWith(JMock)
 class DefaultRepositoryHandlerTest extends DefaultArtifactRepositoryContainerTest {
-    static final String TEST_REPO_URL = 'http://www.gradle.org'
-
     private DefaultRepositoryHandler repositoryHandler
 
     public ArtifactRepositoryContainer createResolverContainer() {

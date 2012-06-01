@@ -33,7 +33,7 @@ import java.io.File;
  * Controls the lifecycle of the compiler daemon and provides access to it.
  */
 @NotThreadSafe
-public class CompilerDaemonManager {
+public class CompilerDaemonManager implements CompilerDaemonFactory {
     private static final Logger LOGGER = Logging.getLogger(CompilerDaemonManager.class);
     private static final CompilerDaemonManager INSTANCE = new CompilerDaemonManager();
     
@@ -87,6 +87,7 @@ public class CompilerDaemonManager {
         JavaExecHandleBuilder javaCommand = builder.getJavaCommand();
         javaCommand.setMinHeapSize(forkOptions.getMinHeapSize());
         javaCommand.setMaxHeapSize(forkOptions.getMaxHeapSize());
+        javaCommand.setJvmArgs(forkOptions.getJvmArgs());
         javaCommand.setWorkingDir(project.getRootProject().getProjectDir());
         process = builder.worker(new CompilerDaemonServer()).build();
         process.start();

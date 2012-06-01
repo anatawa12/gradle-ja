@@ -128,6 +128,16 @@ public class TestFile extends File implements TestFileContext {
         }
     }
 
+    public TestFile[] listFiles() {
+        File[] children = super.listFiles();
+        TestFile[] files = new TestFile[children.length];
+        for (int i = 0; i < children.length; i++) {
+            File child = children[i];
+            files[i] = new TestFile(child);
+        }
+        return files;
+    }
+
     public String getText() {
         assertIsFile();
         try {
@@ -351,6 +361,12 @@ public class TestFile extends File implements TestFileContext {
         return this;
     }
 
+    public TestFile setMode(int mode) {
+        assertExists();
+        new TestFileHelper(this).setMode(mode);
+        return this;
+    }
+
     public int getMode() {
         assertExists();
         return new TestFileHelper(this).getMode();
@@ -416,7 +432,7 @@ public class TestFile extends File implements TestFileContext {
     }
 
     public TestFile deleteDir() {
-        FileUtils.deleteQuietly(this);
+        new TestFileHelper(this).delete(useNativeTools);
         return this;
     }
 
@@ -458,19 +474,13 @@ public class TestFile extends File implements TestFileContext {
         return zipFile;
     }
 
-    public TestFile zipTo(TestFile zipFile) {
-        Zip zip = new Zip();
-        zip.setBasedir(this);
-        zip.setDestFile(zipFile);
-        execute(zip);
+    public TestFile zipTo(TestFile zipFile){
+        new TestFileHelper(this).zipTo(zipFile, useNativeTools);
         return this;
     }
 
-    public TestFile tarTo(TestFile zipFile) {
-        Tar tar = new Tar();
-        tar.setBasedir(this);
-        tar.setDestFile(zipFile);
-        execute(tar);
+    public TestFile tarTo(TestFile tarFile) {
+        new TestFileHelper(this).tarTo(tarFile, useNativeTools);
         return this;
     }
 

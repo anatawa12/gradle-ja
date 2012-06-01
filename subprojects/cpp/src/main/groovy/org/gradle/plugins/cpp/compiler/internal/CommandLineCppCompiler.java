@@ -17,34 +17,38 @@
 package org.gradle.plugins.cpp.compiler.internal;
 
 import groovy.lang.Closure;
-import org.gradle.api.internal.file.FileResolver;
-import org.gradle.api.internal.tasks.compile.Compiler;
+import org.gradle.api.internal.tasks.compile.CompileSpecToArguments;
+import org.gradle.api.internal.tasks.compile.ExecSpecBackedArgCollector;
 import org.gradle.api.internal.tasks.compile.SimpleWorkResult;
 import org.gradle.api.tasks.WorkResult;
-import org.gradle.internal.os.OperatingSystem;
-import org.gradle.plugins.cpp.gpp.GppCompileSpec;
-import org.gradle.process.internal.DefaultExecAction;
+import org.gradle.internal.Factory;
+import org.gradle.plugins.cpp.internal.CppCompileSpec;
 import org.gradle.process.internal.ExecAction;
 
 import java.io.File;
 
-public abstract class CommandLineCppCompiler implements Compiler<GppCompileSpec> {
-    private final FileResolver fileResolver;
+public class CommandLineCppCompiler<T extends CppCompileSpec> implements CppCompiler<T> {
+    private final File executable;
+    private final Factory<ExecAction> execActionFactory;
+    private final CompileSpecToArguments<T> toArguments;
 
-    public CommandLineCppCompiler(FileResolver fileResolver) {
-        this.fileResolver = fileResolver;
+    public CommandLineCppCompiler(File executable, Factory<ExecAction> execActionFactory, CompileSpecToArguments<T> toArguments) {
+        this.executable = executable;
+        this.execActionFactory = execActionFactory;
+        this.toArguments = toArguments;
     }
 
-    public WorkResult execute(GppCompileSpec spec) {
+    public WorkResult execute(T spec) {
         File workDir = spec.getWorkDir();
 
         ensureDirsExist(workDir, spec.getOutputFile().getParentFile());
 
-        ExecAction compiler = new DefaultExecAction(fileResolver);
-        compiler.executable(OperatingSystem.current().findInPath(getExecutable()));
+        ExecAction compiler = execActionFactory.create();
+        compiler.executable(executable);
         compiler.workingDir(workDir);
 
-        configure(compiler, spec);
+        toArguments.collectArguments(spec, new ExecSpecBackedArgCollector(compiler));
+
         // Apply all of the settings
         for (Closure closure : spec.getSettings()) {
             closure.call(compiler);
@@ -53,10 +57,6 @@ public abstract class CommandLineCppCompiler implements Compiler<GppCompileSpec>
         compiler.execute();
         return new SimpleWorkResult(true);
     }
-
-    protected abstract void configure(ExecAction compiler, GppCompileSpec spec);
-
-    protected abstract String getExecutable();
 
     private void ensureDirsExist(File... dirs) {
         for (File dir : dirs) {

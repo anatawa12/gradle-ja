@@ -19,19 +19,22 @@ import org.apache.ivy.core.cache.RepositoryCacheManager
 import org.gradle.api.InvalidUserDataException
 import org.gradle.api.artifacts.repositories.PasswordCredentials
 import org.gradle.api.internal.artifacts.repositories.transport.RepositoryTransportFactory
-import org.gradle.api.internal.artifacts.repositories.transport.file.FileTransport
-import org.gradle.api.internal.artifacts.repositories.transport.http.HttpTransport
+import org.gradle.api.internal.externalresource.transport.file.FileTransport
+import org.gradle.api.internal.externalresource.transport.http.HttpTransport
 import org.gradle.api.internal.file.FileResolver
 import spock.lang.Specification
 import org.gradle.api.internal.externalresource.local.LocallyAvailableResourceFinder
-import org.gradle.api.internal.externalresource.CachedExternalResourceIndex
+import org.gradle.api.internal.externalresource.cached.CachedExternalResourceIndex
 
 class DefaultMavenArtifactRepositoryTest extends Specification {
     final FileResolver resolver = Mock()
     final PasswordCredentials credentials = Mock()
     final RepositoryTransportFactory transportFactory = Mock()
     final RepositoryCacheManager cacheManager = Mock()
-    final DefaultMavenArtifactRepository repository = new DefaultMavenArtifactRepository(resolver, credentials, transportFactory)
+    final LocallyAvailableResourceFinder locallyAvailableResourceFinder = Mock()
+    final CachedExternalResourceIndex cachedExternalResourceIndex = Mock()
+
+    final DefaultMavenArtifactRepository repository = new DefaultMavenArtifactRepository(resolver, credentials, transportFactory, locallyAvailableResourceFinder, cachedExternalResourceIndex)
 
     def "creates local repository"() {
         given:
@@ -102,7 +105,7 @@ class DefaultMavenArtifactRepositoryTest extends Specification {
     }
 
     private HttpTransport createHttpTransport(String repo, PasswordCredentials credentials) {
-        return new HttpTransport(repo, credentials, Mock(LocallyAvailableResourceFinder), Mock(CachedExternalResourceIndex), cacheManager)
+        return new HttpTransport(repo, credentials, cacheManager)
     }
 
     def "fails when no root url specified"() {
