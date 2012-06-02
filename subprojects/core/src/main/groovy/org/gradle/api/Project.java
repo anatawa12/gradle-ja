@@ -46,10 +46,12 @@ import java.util.Map;
 import java.util.Set;
 
 /**
- * <p>This interface is the main API you use to interact with Gradle from your build file. From a <code>Project</code>,
+ * <p class="original">This interface is the main API you use to interact with Gradle from your build file. From a <code>Project</code>,
  * you have programmatic access to all of Gradle's features.</p>
  *
- * <h3>Lifecycle</h3>
+ * <p>このインターフェースは、ビルドファイル内でGradleとやりとりする際、メインで使用するAPIです。<code>Project</code>から、Gradleの全ての機能にプログラム的にアクセスできます。</p>
+ *
+ * <h3>ライフサイクル <span class="original">Lifecycle</span></h3>
  *
  * <p>There is a one-to-one relationship between a <code>Project</code> and a <code>{@value #DEFAULT_BUILD_FILE}</code>
  * file. During build initialisation, Gradle assembles a <code>Project</code> object for each project which is to
@@ -57,7 +59,7 @@ import java.util.Set;
  *
  * <ul>
  *
- * <li>Create a {@link org.gradle.api.initialization.Settings} instance for the build.</li>
+ * <li><span class="original">Create a {@link org.gradle.api.initialization.Settings} instance for the build.</span> ビルド用に、{@link org.gradle.api.initialization.Settings}インスタンスを作成します。</li>
  *
  * <li>Evaluate the <code>{@value org.gradle.api.initialization.Settings#DEFAULT_SETTINGS_FILE}</code> script, if
  * present, against the {@link org.gradle.api.initialization.Settings} object to configure it.</li>

@@ -16,13 +16,14 @@
 
 <book id="dsl">
     <bookinfo>
-        <title>Gradle Build Language Reference</title>
+        <title>Gradleビルド言語リファレンス <phrase role="original">Gradle Build Language Reference</phrase></title>
         <titleabbrev>Gradle DSL</titleabbrev>
     </bookinfo>
 
     <section>
-        <title>Introduction</title>
-        <para>This reference guide describes the various types which make up the Gradle build language, or DSL.</para>
+        <title>はじめに <phrase role="original">Introduction</phrase></title>
+        <para role="original">This reference guide describes the various types which make up the Gradle build language, or DSL.</para>
+        <para>このリファレンスガイドは、Gradleビルド言語、DSLを構成する、様々な型について説明するものです。</para>
     </section>
 
     <section>

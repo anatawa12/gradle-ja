@@ -590,3 +590,11 @@ Formatting effect styles
 .subTitle {
     color: #4A9935;
 }
+
+
+/* SECTION 3 - Gradle translations overrides */
+.original {
+    display: none;
+    color: white;
+}
+

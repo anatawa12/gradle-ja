@@ -438,6 +438,7 @@ public class JavadocConverter {
             this.nodes = nodes;
             this.document = document;
             elementToElementMap.put("p", "para");
+            elementToElementMap.put("span", "phrase");
             elementToElementMap.put("ul", "itemizedlist");
             elementToElementMap.put("ol", "orderedlist");
             elementToElementMap.put("li", "listitem");
@@ -453,7 +454,11 @@ public class JavadocConverter {
             if (newElementName == null) {
                 return false;
             }
-            nodes.push(element, document.createElement(newElementName));
+            Element newElement = document.createElement(newElementName);
+            if (attributes.get("class") != null) {
+                newElement.setAttribute("role", attributes.get("class"));
+            }
+            nodes.push(element, newElement);
             return true;
         }
 
