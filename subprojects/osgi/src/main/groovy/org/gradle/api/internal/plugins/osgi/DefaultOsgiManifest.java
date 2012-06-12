@@ -86,6 +86,15 @@ public class DefaultOsgiManifest extends DefaultManifest implements OsgiManifest
             analyzer.setProperty(Analyzer.IMPORT_PACKAGE,
                     "*, !org.apache.ant.*, !org.junit.*, !org.jmock.*, !org.easymock.*, !org.mockito.*");
         }
+        if(!instructionNames.contains(Analyzer.BUNDLE_VERSION)){
+            analyzer.setProperty(Analyzer.BUNDLE_VERSION, getVersion());
+        }
+        if(!instructionNames.contains(Analyzer.BUNDLE_NAME)){
+            analyzer.setProperty(Analyzer.BUNDLE_NAME, getName());
+        }
+        if(!instructionNames.contains(Analyzer.BUNDLE_SYMBOLICNAME)){
+            analyzer.setProperty(Analyzer.BUNDLE_SYMBOLICNAME, getSymbolicName());
+        }
         if (!instructionNames.contains(Analyzer.EXPORT_PACKAGE)) {
             analyzer.setProperty(Analyzer.EXPORT_PACKAGE, "*;-noimport:=false;version=" + getVersion());
         }

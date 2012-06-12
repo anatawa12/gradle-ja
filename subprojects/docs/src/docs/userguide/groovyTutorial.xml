@@ -1,4 +1,4 @@
-﻿<!--
+﻿﻿<!--
   ~ Copyright 2009 the original author or authors.
   ~
   ~ Licensed under the Apache License, Version 2.0 (the "License");
@@ -36,7 +36,7 @@
         <para role="original">This will also apply the Java plugin to the project, if it has not already been applied. The Groovy plugin
             extends the <literal>compile</literal> task to look for source files in directory
             <filename>src/main/groovy</filename>, and the <literal>compileTest</literal> task to look for test source
-            files in directory<filename>src/test/groovy</filename>. The compile tasks use joint compilation for these
+            files in directory <filename>src/test/groovy</filename>. The compile tasks use joint compilation for these
             directories, which means they can contain a mixture of java and groovy source files.
         </para>
         <para>これにより、（もしまだなら）プロジェクトにはJavaプラグインも適用されます。Groovyプラグインは<literal>compile</literal>タスクを拡張して<filename>src/main/groovy</filename>ディレクトリにあるソースファイルも参照するようにし、また<literal>compileTest</literal>タスクを拡張して<filename>src/test/groovy</filename>ディレクトリにあるテスト用ソースファイルも参照するようにします。compileタスクはこれらのディレクトリに対してジョイントコンパイルを使うので、javaとgroovyのソースファイルが混在していてもかまいません。
@@ -44,10 +44,10 @@
         <para role="original">To use the groovy compilation tasks, you must also declare the Groovy version to use and where to find the
             Groovy libraries. You do this by adding a dependency to the <literal>groovy</literal> configuration.
             The <literal>compile</literal> configuration inherits this dependency, so the groovy libraries will
-            be included in classpath when compiling Groovy and Java source.  For our sample, we will use Groovy 1.6.0
+            be included in classpath when compiling Groovy and Java source.  For our sample, we will use Groovy 1.7.10
             from the public Maven repository:</para>
         <para>Groovy用のcompileタスクを使うには、GroovyのバージョンとGroovyライブラリの存在場所を宣言する必要もあります。これは、<literal>groovy</literal>設定に依存関係を追加することによって行います。<literal>compile</literal>設定はこの依存関係を継承するので、GroovyやJavaソースをコンパイルするとき、クラスパスにはgroovyライブラリが含まれるようになります。この例では、公開MavenリポジトリのGroovyを使います：</para>
-        <sample id="groovyQuickstart" dir="groovy/quickstart" title="Groovyへの依存関係 / Dependency on Groovy 1.6.0">
+        <sample id="groovyQuickstart" dir="groovy/quickstart" title="Groovyへの依存関係 / Dependency on Groovy 1.7.10">
             <sourcefile file="build.gradle" snippet="groovy-dependency"/>
         </sample>
         <para role="original">Here is our complete build file:</para>

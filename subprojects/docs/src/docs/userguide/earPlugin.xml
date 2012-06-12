@@ -96,9 +96,9 @@
         <title>依存関係の管理<phrase role="original">Dependency management</phrase></title>
         <para role="original">The Ear plugin adds two dependency configurations: <literal>deploy</literal> and
             <literal>earlib</literal>. All dependencies in the <literal>deploy</literal> configuration are
-            placed in the root of the EAR archive, and are <em>not</em> transitive. All dependencies in the
+            placed in the root of the EAR archive, and are <emphasis>not</emphasis> transitive. All dependencies in the
             <literal>earlib</literal> configuration are placed in the 'lib' directory in the EAR archive and
-            <em>are</em> transitive.
+            <emphasis>are</emphasis> transitive.
         </para>
         <para>Earプラグインは2つの依存関係コンフィグレーションを追加します: <literal>deploy</literal>および<literal>earlib</literal>
             <literal>deploy</literal>コンフィグレーションにおけるすべての依存関係はEARアーカイブのルートに配置され、それらは<emphasis>推移的ではありません</emphasis>。
