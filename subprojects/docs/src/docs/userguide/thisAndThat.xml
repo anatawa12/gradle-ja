@@ -14,9 +14,9 @@
   ~ limitations under the License.
   -->
 <chapter id='tutorial_this_and_that' xml:lang="ja">
-    <title>いろんなあれこれについてのチュートリアル<phrase role="original">Tutorial - 'This and That'</phrase></title>
+    <title>色々なチュートリアル <phrase role="original">Tutorial - 'This and That'</phrase></title>
     <section id='sec:directory_creation'>
-        <title>ディレクトリの作成<phrase role="original">Directory creation</phrase></title>
+        <title>ディレクトリの作成 <phrase role="original">Directory creation</phrase></title>
         <para role="original">There is a common situation, that multiple tasks depend on the existence of a directory. Of course you can
             deal with this by adding a
             <literal>mkdir</literal>
@@ -25,7 +25,11 @@
             <emphasis>dependsOn</emphasis>
             relationship):
         </para>
-        <para>あるディレクトリが存在していることを前提にして、様々なタスクを作成することはよくあると思います。もちろんそういったタスクのはじめにいちいち<emphasis>mkdir</emphasis>を呼び出してもいいのですが、それではやはり冗長です。ディレクトリを作成するためのタスクを別に作成して、そのタスクに依存するように宣言するほうがいいでしょう。</para>
+        <para>
+        複数のタスクが、ある一つのディレクトリが存在していることを前提としている、ということがよくあります。
+        それらのタスク全てで<literal>mkdir</literal>を呼ぶことももちろんできますが、それではやはり冗長です。
+        この場合、次のように、ディレクトリを必要とするタスクにdependsOn関係を追加するのが良い方法です。
+        </para>
         <sample id="makeDirectory" dir="userguide/tutorial/makeDirectory" title="mkdirでディレクトリを作成する / Directory creation with mkdir">
             <sourcefile file="build.gradle"/>
             <output args="-q compile"/>
@@ -46,7 +50,7 @@
             The properties of the <filename>gradle.properties</filename> can be accessed via the project object. The
             properties file in the user's home directory has precedence over property files in the project directories.
         </para>
-        <para>propertiesファイルを記述することで、projectオブジェクトに直接プロパティを追加することもできます。このプロパティファイル<filename>gradle.properties</filename>はGradleのホームディレクトリ(デフォルトでは<filename><replaceable>USER_HOME</replaceable>/.gradle</filename>)かプロジェクトディレクトリに作成します。マルチプロジェクトの場合、gradle.properteisはすべてのサブプロジェクトディレクトリに置くことができます。<filename>gradle.properties</filename>に記述されたプロパティはprojectオブジェクトからアクセスすることができます。なお、ホームディレクトリの<filename>gradle.properties</filename>は、プロジェクトディレクトリの<filename>gradle.properties</filename>の定義を上書きし優先的に使用されます。</para>
+        <para>propertiesファイルを記述することで、projectオブジェクトに直接プロパティを追加することもできます。このプロパティファイル<filename>gradle.properties</filename>はGradleのホームディレクトリ(デフォルトでは<filename><replaceable>USER_HOME</replaceable>/.gradle</filename>)かプロジェクトディレクトリに作成します。マルチプロジェクトの場合、gradle.properteisはすべてのサブプロジェクトディレクトリに置くことができます。<filename>gradle.properties</filename>に記述されたプロパティはprojectオブジェクトからアクセスすることができます。なお、ホームディレクトリの<filename>gradle.properties</filename>は、プロジェクトディレクトリの<filename>gradle.properties</filename>の定義を上書きし、優先的に使用されます。</para>
         <para role="original">You can also add properties directly to your project object via the <option>-P</option>
             command line option. For more exotic use cases you can even pass properties <emphasis>directly</emphasis>
             to the project object via system and environment properties. For example if you run a build on a continuous
@@ -93,7 +97,7 @@
                 <literal>true</literal>
                 or <literal>false</literal>.
             </para>
-            <para>プロジェクトに設定されたプロパティは、ビルドスクリプト内では単にプロパティ名でアクセスできます。この場合、アクセスしたプロパティがプロジェクトに設定されてなければ例外が発生してビルドは失敗します。プロパティが設定されてても設定されてなくてもいいようにしたい場合、たとえばユーザーにgradle.propertiesでプロパティをセットさせたいときなどは、アクセスする前にプロパティがセットされているかどうか確認しましょう。<literal>hasProperty('propertyName')</literal>がtrueやfalseを返すので、それでプロパティの存在を確認できます。</para>
+            <para>プロジェクトに設定されたプロパティは、ビルドスクリプト内では単にプロパティ名でアクセスできます。この場合、アクセスしたプロパティがプロジェクトに設定されてなければ、例外が発生してビルドは失敗します。プロパティをオプションにして、必要なときのみgradle.propertiesなどでユーザーにプロパティをセットさせたい場合などは、アクセスする前にプロパティがセットされているかどうか確認しなければなりません。<literal>hasProperty('propertyName')</literal>がtrueやfalseを返すので、それでプロパティの存在を確認できます。</para>
         </section>
     </section>
 
@@ -110,28 +114,28 @@
         </sample>
     </section>
     <section id='sec:configuring_arbitrary_objects'>
-        <title>任意のオブジェクトを設定する<phrase role="original">Configuring arbitrary objects</phrase></title>
+        <title>任意のオブジェクトを組み立てる <phrase role="original">Configuring arbitrary objects</phrase></title>
         <para role="original">You can configure arbitrary objects in the following very readable way.
         </para>
-        <para>非常に読みやすい方法で任意のオブジェクトを設定できます。</para>
-        <sample id="configureObject" dir="userguide/tutorial/configureObject" title="任意のオブジェクトを設定する / Configuring arbitrary objects">
+        <para>次のような非常に読みやすい方法で、あらゆるオブジェクトを設定することができます。</para>
+        <sample id="configureObject" dir="userguide/tutorial/configureObject" title="任意のオブジェクトを組み立てる / Configuring arbitrary objects">
             <sourcefile file="build.gradle"/>
             <output args="-q configure"/>
         </sample>
     </section>
     <section>
-        <title>外部スクリプトから任意のオブジェクトを設定する<phrase role="original">Configuring arbitrary objects using an external script</phrase></title>
+        <title>外部スクリプトで任意のオブジェクトを組み立てる <phrase role="original">Configuring arbitrary objects using an external script</phrase></title>
         <para role="original">You can also configure arbitrary objects using an external script.
         </para>
-        <para>任意のオブジェクトを設定するのは、外部のスクリプトからでも可能です。</para>
-        <sample id="configureObjectUsingScript" dir="userguide/tutorial/configureObjectUsingScript" title="外部スクリプトから任意のオブジェクトを設定する / Configuring arbitrary objects using a script">
+        <para>外部スクリプトを使って、任意のオブジェクトを組み立てることもできます。</para>
+        <sample id="configureObjectUsingScript" dir="userguide/tutorial/configureObjectUsingScript" title="外部スクリプトで任意のオブジェクトを組み立てる / Configuring arbitrary objects using a script">
             <sourcefile file="build.gradle"/>
             <sourcefile file="other.gradle"/>
             <output args="-q configure"/>
         </sample>
     </section>
     <section id='sec:caching'>
-        <title>キャッシング<phrase role="original">Caching</phrase></title>
+        <title>キャッシング <phrase role="original">Caching</phrase></title>
         <para role="original">To improve responsiveness Gradle caches all compiled scripts by default. This includes all build scripts,
             initialization scripts, and other scripts. The first time you run a build for a project, Gradle creates a
             <filename>.gradle</filename> directory in which it puts the compiled script. The next time you run this
@@ -140,6 +144,6 @@
             <option>--recompile-scripts</option> option, the cached script is discarded and the script is compiled and stored
             in the cache. This way you can force Gradle to rebuild the cache.
         </para>
-        <para>応答速度を上げるため、Gradleはコンパイル済みのスクリプトをデフォルトですべてキャッシュします。キャッシュ対象にはすべてのビルドスクリプトや初期化スクリプト、その他のスクリプトまで含まれています。最初にプロジェクトをビルドしたとき、Gradleは<filename>.gradle</filename>ディレクトリをプロジェクトディレクトリに作成し、そこのコンパイル済みのスクリプトを保存します。次にプロジェクトをビルドしたときにはGradleはそのコンパイル済みのスクリプトを使用します。前回コンパイルしたときからスクリプトが変更されていた場合は再度コンパイルして保存します。Gradleを実行するときに、リビルドオプションの<option>-C</option>オプションを使えばキャッシュはすべて破棄され、再度コンパイル、保存されます。</para>
+        <para>応答速度を上げるため、Gradleはコンパイル済みのスクリプトをデフォルトですべてキャッシュします。キャッシュ対象には、すべてのビルドスクリプトや初期化スクリプトなどが含まれます。最初にプロジェクトをビルドしたとき、Gradleは<filename>.gradle</filename>ディレクトリをプロジェクトディレクトリに作成します。そこにコンパイル済みのスクリプトが保存され、次回のビルドからは、そのコンパイル済みのスクリプトが使用されるのです。もし前回コンパイルしたときからスクリプトが変更されていれば、キャッシュは再度コンパイルされます。<option>--recompile-scripts</option>オプションをつけてGradleを実行すれば、キャッシュはすべて破棄され、再度コンパイル、保存されます。これにより、Gradleにキャッシュを再構築させることができます。</para>
     </section>
 </chapter>
