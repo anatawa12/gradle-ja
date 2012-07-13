@@ -14,7 +14,7 @@
   ~ limitations under the License.
   -->
 <chapter id='plugins'>
-    <title>Gradle Plugins</title>
+    <title>Gradleのプラグインについて <phrase role="original">Gradle Plugins</phrase></title>
     <para>
         Gradle at its core intentionally provides little useful functionality for real world automation. All of the useful
         features, such as the ability to compile Java code for example, are added by <emphasis>plugins</emphasis>.
