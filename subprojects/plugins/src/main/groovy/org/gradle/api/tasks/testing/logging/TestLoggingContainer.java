@@ -17,15 +17,35 @@
 package org.gradle.api.tasks.testing.logging;
 
 import org.gradle.api.Action;
+import org.gradle.api.Experimental;
 import org.gradle.api.logging.LogLevel;
-
-import groovy.lang.Closure;
 
 /**
  * Container for all test logging related options. Different options
  * can be set for each log level. Options that are set directly (without
- * specifying a log level) apply to log level LIFECYCLE.
+ * specifying a log level) apply to log level LIFECYCLE. Example:
+ *
+ * <pre autoTested=''>
+ * apply plugin: 'java'
+ *
+ * test {
+ *     testLogging {
+ *         // set options for log level LIFECYCLE
+ *         events "failed"
+ *         exceptionFormat "short"
+ *         // set options for log level DEBUG
+ *         debug {
+ *             events "started", "skipped", "failed"
+ *             exceptionFormat "full"
+ *         }
+ *     }
+ * }
+ * </pre>
+ *
+ * The defaults that are in place show progressively more information
+ * on log levels LIFECYCLE, INFO, and DEBUG, respectively.
  */
+@Experimental
 public interface TestLoggingContainer extends TestLogging {
     /**
      * Returns logging options for debug level.
@@ -49,13 +69,6 @@ public interface TestLoggingContainer extends TestLogging {
     void debug(Action<TestLogging> action);
 
     /**
-     * Configures logging options for debug level.
-     *
-     * @param closure logging options for debug level
-     */
-    void debug(Closure<?> closure);
-
-    /**
      * Gets logging options for info level.
      *
      * @return logging options for info level
@@ -75,13 +88,6 @@ public interface TestLoggingContainer extends TestLogging {
      * @param action logging options for info level
      */
     void info(Action<TestLogging> action);
-
-    /**
-     * Configures logging options for info level.
-     *
-     * @param closure logging options for info level
-     */
-    void info(Closure<?> closure);
 
     /**
      * Returns logging options for lifecycle level.
@@ -105,13 +111,6 @@ public interface TestLoggingContainer extends TestLogging {
     void lifecycle(Action<TestLogging> action);
 
     /**
-     * Configures logging options for lifecycle level.
-     *
-     * @param closure logging options for lifecycle level
-     */
-    void lifecycle(Closure<?> closure);
-
-    /**
      * Gets logging options for warn level.
      *
      * @return logging options for warn level
@@ -131,13 +130,6 @@ public interface TestLoggingContainer extends TestLogging {
      * @param action logging options for warn level
      */
     void warn(Action<TestLogging> action);
-
-    /**
-     * Configures logging options for warn level.
-     *
-     * @param closure logging options for warn level
-     */
-    void warn(Closure<?> closure);
 
     /**
      * Returns logging options for quiet level.
@@ -161,13 +153,6 @@ public interface TestLoggingContainer extends TestLogging {
     void quiet(Action<TestLogging> action);
 
     /**
-     * Sets logging options for quiet level.
-     *
-     * @param closure logging options for quiet level
-     */
-    void quiet(Closure<?> closure);
-
-    /**
      * Returns logging options for error level.
      *
      * @return logging options for error level
@@ -187,13 +172,6 @@ public interface TestLoggingContainer extends TestLogging {
      * @param action logging options for error level
      */
     void error(Action<TestLogging> action);
-
-    /**
-     * Configures logging options for error level.
-     *
-     * @param closure logging options for error level
-     */
-    void error(Closure<?> closure);
 
     /**
      * Returns logging options for the specified level.

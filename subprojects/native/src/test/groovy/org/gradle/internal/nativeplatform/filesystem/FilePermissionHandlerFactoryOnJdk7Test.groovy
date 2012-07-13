@@ -52,7 +52,7 @@ class FilePermissionHandlerFactoryOnJdk7Test extends Specification {
         when:
         def handler = FilePermissionHandlerFactory.createDefaultFilePermissionHandler()
         then:
-        handler.getClass().name == "org.gradle.internal.nativeplatform.filesystem.jdk7.PosixJdk7FilePermissionHandler"
+        handler.class.name == "org.gradle.internal.nativeplatform.filesystem.jdk7.PosixJdk7FilePermissionHandler"
     }
 
     @Requires(TestPrecondition.UNKNOWN_OS)
@@ -69,4 +69,25 @@ class FilePermissionHandlerFactoryOnJdk7Test extends Specification {
         mode << [0722, 0644, 0744, 0755]
     }
 
+    @Requires(TestPrecondition.FILE_PERMISSIONS)
+    def "chmod supports unicode filenames"() {
+        setup:
+        def file = temporaryFolder.createFile("\u0627\u0644\u0627\u0655\u062F\u0627\u0631\u0629.lnk")
+        def handler = FilePermissionHandlerFactory.createDefaultFilePermissionHandler()
+        when:
+        handler.chmod(file, 0722);
+        then:
+        file.getMode() == 0722
+    }
+
+    @Requires(TestPrecondition.FILE_PERMISSIONS)
+    def "getUnixMode supports unicode filenames"() {
+        setup:
+        def file = temporaryFolder.createFile("\u0627\u0644\u0627\u0655\u062F\u0627\u0631\u0629.lnk")
+        def handler = FilePermissionHandlerFactory.createDefaultFilePermissionHandler()
+        when:
+        handler.chmod(file, 0722)
+        then:
+        handler.getUnixMode(file) == 0722
+    }
 }

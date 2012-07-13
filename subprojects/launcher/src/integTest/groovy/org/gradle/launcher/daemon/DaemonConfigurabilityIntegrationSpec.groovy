@@ -22,7 +22,6 @@ import org.gradle.internal.nativeplatform.filesystem.FileSystems
 import org.gradle.util.Requires
 import org.gradle.util.TestPrecondition
 import org.gradle.util.TextUtil
-import org.junit.Rule
 import spock.lang.IgnoreIf
 
 /**
@@ -45,14 +44,11 @@ assert java.lang.management.ManagementFactory.runtimeMXBean.inputArguments.conta
         """
     }
 
-    //TODO junit temp folder because our TemporaryFolder does not cope with symlinks that well
-    @Rule org.junit.rules.TemporaryFolder temp
-
     @Requires(TestPrecondition.SYMLINKS)
     def "connects to the daemon if java home is a symlink"() {
         given:
-        File javaHome = Jvm.current().javaHome
-        File javaLink = new File(temp.getRoot(), "javaLink")
+        def javaHome = Jvm.current().javaHome
+        def javaLink = distribution.testFile("javaLink")
         FileSystems.default.createSymbolicLink(javaLink, javaHome)
 
         String linkPath = TextUtil.escapeString(javaLink.absolutePath)
@@ -64,6 +60,9 @@ assert java.lang.management.ManagementFactory.runtimeMXBean.inputArguments.conta
         then:
         javaLink != javaHome
         javaLink.canonicalFile == javaHome.canonicalFile
+
+        cleanup:
+        javaLink.usingNativeTools().deleteDir()
     }
 
     //TODO SF add coverage for reconnecting to those daemons.

@@ -16,17 +16,20 @@
 
 package org.gradle.api.tasks.testing.logging;
 
+import org.gradle.api.Experimental;
+
 import java.util.Set;
 
 /**
  * Options that determine which test events get logged, and at which detail.
  */
-public interface TestLogging {
+public interface TestLogging extends org.gradle.api.tasks.testing.TestLogging {
     /**
      * Returns the events to be logged.
      *
      * @return the events to be logged
      */
+    @Experimental
     Set<TestLogEvent> getEvents();
 
     /**
@@ -34,7 +37,8 @@ public interface TestLogging {
      *
      * @param events the events to be logged
      */
-    void setEvents(Set<TestLogEvent> events);
+    @Experimental
+    void setEvents(Iterable<?> events);
 
     /**
      * Sets the events to be logged. Events can be passed as enum values
@@ -42,59 +46,82 @@ public interface TestLogging {
      *
      * @param events the events to be logged
      */
+    @Experimental
     void events(Object... events);
 
     /**
-     * Returns the minimum granularity of the events to be logged. In a typical
-     * JUnit setup, 0 corresponds to the overall test suite, 1 corresponds to
-     * the test suite of a particular test JVM, 2 corresponds to a test class,
+     * Returns the minimum granularity of the events to be logged. Typically, 0
+     * corresponds to the Gradle-generated test suite for the whole test run, 1 corresponds to
+     * the Gradle-generated test suite for a particular test JVM, 2 corresponds to a test class,
      * and 3 corresponds to a test method. These values will vary if user-defined
      * suites are executed.
-     * <p>-1 denotes the highest granularity, and will cause only atomic tests
-     * (test methods in above example) to be logged.
+     * <p>-1 denotes the highest granularity and corresponds to an atomic test.
      *
      * @return the minimum granularity of the events to be logged
      */
+    @Experimental
     int getMinGranularity();
 
     /**
-     * Sets the minimum granularity of the events to be logged. In a typical
-     * JUnit setup, 0 corresponds to the overall test suite, 1 corresponds to
-     * the test suite of a particular test JVM, 2 corresponds to a test class,
+     * Sets the minimum granularity of the events to be logged. Typically, 0
+     * corresponds to the Gradle-generated test suite for the whole test run, 1 corresponds to
+     * the Gradle-generated test suite for a particular test JVM, 2 corresponds to a test class,
      * and 3 corresponds to a test method. These values will vary if user-defined
      * suites are executed.
-     * <p>-1 denotes the highest granularity, and will cause only atomic tests
-     * (test methods in above example) to be logged.
+     * <p>-1 denotes the highest granularity and corresponds to an atomic test.
      *
      * @param granularity the minimum granularity of the events to be logged
      */
+    @Experimental
     void setMinGranularity(int granularity);
 
     /**
-     * Convenience method that delegates to {@link #setMinGranularity(int)}.
-     */
-    void minGranularity(int granularity);
-
-    /**
-     * Returns the maximum granularity of the events to be logged. See {@link #getMinGranularity()}
-     * for further details.
+     * Returns the maximum granularity of the events to be logged. Typically, 0
+     * corresponds to the Gradle-generated test suite for the whole test run, 1 corresponds to
+     * the Gradle-generated test suite for a particular test JVM, 2 corresponds to a test class,
+     * and 3 corresponds to a test method. These values will vary if user-defined
+     * suites are executed.
+     * <p>-1 denotes the highest granularity and corresponds to an atomic test.
      *
      * @return the maximum granularity of the events to be logged
      */
+    @Experimental
     int getMaxGranularity();
 
     /**
-     * Sets the maximum granularity of the events to be logged. See {@link #setMinGranularity(int)}
-     * for further details.
+     * Returns the maximum granularity of the events to be logged. Typically, 0
+     * corresponds to the Gradle-generated test suite for the whole test run, 1 corresponds to
+     * the Gradle-generated test suite for a particular test JVM, 2 corresponds to a test class,
+     * and 3 corresponds to a test method. These values will vary if user-defined
+     * suites are executed.
+     * <p>-1 denotes the highest granularity and corresponds to an atomic test.
      *
      * @param granularity the maximum granularity of the events to be logged
      */
+    @Experimental
     void setMaxGranularity(int granularity);
 
     /**
-     * Convenience method that delegates to {@link #setMaxGranularity(int)}.
+     * Returns the display granularity of the events to be logged. For example, if set to 0,
+     * a method-level event will be displayed as "Test Run > Test Worker x > org.SomeClass > org.someMethod".
+     * If set to 2, the same event will be displayed as "org.someClass > org.someMethod".
+     * <p>-1 denotes the highest granularity and corresponds to an atomic test.
+     *
+     * @return the display granularity of the events to be logged
      */
-    void maxGranularity(int granularity);
+    @Experimental
+    int getDisplayGranularity();
+
+    /**
+     * Sets the display granularity of the events to be logged. For example, if set to 0,
+     * a method-level event will be displayed as "Test Run > Test Worker x > org.SomeClass > org.someMethod".
+     * If set to 2, the same event will be displayed as "org.someClass > org.someMethod".
+     * <p>-1 denotes the highest granularity and corresponds to an atomic test.
+     *
+     * @param granularity the display granularity of the events to be logged
+     */
+    @Experimental
+    void setDisplayGranularity(int granularity);
 
     /**
      * Tells whether exceptions that occur during test execution will be logged.
@@ -102,6 +129,7 @@ public interface TestLogging {
      *
      * @return whether exceptions that occur during test execution will be logged
      */
+    @Experimental
     boolean getShowExceptions();
 
     /**
@@ -109,12 +137,8 @@ public interface TestLogging {
      *
      * @param flag whether exceptions that occur during test execution will be logged
      */
+    @Experimental
     void setShowExceptions(boolean flag);
-
-    /**
-     * Convenience method for {@link #setShowExceptions(boolean)}.
-     */
-    void showExceptions(boolean flag);
 
     /**
      * Tells whether causes of exceptions that occur during test execution will be logged.
@@ -122,6 +146,7 @@ public interface TestLogging {
      *
      * @return whether causes of exceptions that occur during test execution will be logged
      */
+    @Experimental
     boolean getShowCauses();
 
     /**
@@ -130,18 +155,15 @@ public interface TestLogging {
      *
      * @param flag whether causes of exceptions that occur during test execution will be logged
      */
+    @Experimental
     void setShowCauses(boolean flag);
-
-    /**
-     * Convenience method for {@link #setShowCauses(boolean)}.
-     */
-    void showCauses(boolean flag);
 
     /**
      * Tells whether stack traces of exceptions that occur during test execution will be logged.
      *
      * @return whether stack traces of exceptions that occur during test execution will be logged
      */
+    @Experimental
     boolean getShowStackTraces();
 
     /**
@@ -149,18 +171,15 @@ public interface TestLogging {
      *
      * @param flag whether stack traces of exceptions that occur during test execution will be logged
      */
+    @Experimental
     void setShowStackTraces(boolean flag);
-
-    /**
-     * Convenience method for {@link #setShowStackTraces(boolean)}.
-     */
-    void showStackTraces(boolean flag);
 
     /**
      * Returns the format to be used for logging test exceptions. Only relevant if {@code showStackTraces} is {@code true}.
      *
      * @return the format to be used for logging test exceptions
      */
+    @Experimental
     TestExceptionFormat getExceptionFormat();
 
     /**
@@ -168,18 +187,15 @@ public interface TestLogging {
      *
      * @param exceptionFormat the format to be used for logging test exceptions
      */
-    void setExceptionFormat(TestExceptionFormat exceptionFormat);
-
-    /**
-     * Convenience method for {@link #setExceptionFormat(TestExceptionFormat)}. Accepts both enum values and Strings.
-     */
-    void exceptionFormat(Object exceptionFormat);
+    @Experimental
+    void setExceptionFormat(Object exceptionFormat);
 
     /**
      * Returns the set of filters to be used for sanitizing test stack traces.
      *
      * @return the set of filters to be used for sanitizing test stack traces
      */
+    @Experimental
     Set<TestStackTraceFilter> getStackTraceFilters();
 
     /**
@@ -187,27 +203,24 @@ public interface TestLogging {
      *
      * @param stackTraces the set of filters to be used for sanitizing test stack traces
      */
-    void setStackTraceFilters(Set<TestStackTraceFilter> stackTraces);
+    @Experimental
+    void setStackTraceFilters(Iterable<?> stackTraces);
 
     /**
-     * Convenience method for {@link #setStackTraceFilters(java.util.Set)}. Accepts both enum values and Strings.
+     * Convenience method for {@link #setStackTraceFilters(java.lang.Iterable)}. Accepts both enum values and Strings.
      */
+    @Experimental
     void stackTraceFilters(Object... stackTraces);
 
     /**
-     * Tells whether log events {@link TestLogEvent#STANDARD_OUT}
-     * and {@link TestLogEvent#STANDARD_ERROR} will be logged.
+     * Tells whether output on standard out and standard error will be logged. Equivalent to checking if both
+     * log events {@link TestLogEvent#STANDARD_OUT} and {@link TestLogEvent#STANDARD_ERROR} are set.
      */
      boolean getShowStandardStreams();
 
     /**
-     * Adds log events {@link TestLogEvent#STANDARD_OUT}
-     * and {@link TestLogEvent#STANDARD_ERROR}.
+     * Sets whether output on standard out and standard error will be logged. Equivalent to setting
+     * log events {@link TestLogEvent#STANDARD_OUT} and {@link TestLogEvent#STANDARD_ERROR}.
      */
-     void setShowStandardStreams(boolean flag);
-
-    /**
-     * Convenience method for {@link #setShowStandardStreams(boolean)}.
-     */
-    void showStandardStreams(boolean flag);
+     TestLogging setShowStandardStreams(boolean flag);
 }

@@ -16,49 +16,73 @@
 
 package org.gradle.api.internal.tasks.testing.logging;
 
+import com.google.common.base.Joiner;
+import com.google.common.collect.Lists;
+import org.gradle.api.Nullable;
 import org.gradle.api.logging.LogLevel;
 import org.gradle.api.tasks.testing.TestDescriptor;
-import org.gradle.api.tasks.testing.TestListener;
-import org.gradle.api.tasks.testing.TestResult;
+import org.gradle.api.tasks.testing.logging.TestLogEvent;
 import org.gradle.logging.StyledTextOutput;
-import org.gradle.logging.internal.OutputEventListener;
-import org.gradle.logging.internal.StyledTextOutputEvent;
+import org.gradle.logging.StyledTextOutputFactory;
+import org.gradle.util.TextUtil;
 
-public abstract class AbstractTestLogger implements TestListener {
-    private final OutputEventListener outputListener;
+import java.util.List;
+
+public abstract class AbstractTestLogger {
+    private final StyledTextOutputFactory textOutputFactory;
     private final LogLevel logLevel;
+    private final int displayGranularity;
 
-    protected AbstractTestLogger(OutputEventListener outputListener, LogLevel logLevel) {
-        this.outputListener = outputListener;
+    protected AbstractTestLogger(StyledTextOutputFactory textOutputFactory, LogLevel logLevel, int displayGranularity) {
+        this.textOutputFactory = textOutputFactory;
         this.logLevel = logLevel;
+        this.displayGranularity = displayGranularity;
     }
 
-    public void beforeSuite(TestDescriptor descriptor) {
-        before(descriptor);
+    protected void logEvent(TestDescriptor descriptor, TestLogEvent event) {
+        logEvent(descriptor, event, null);
     }
 
-    public void afterSuite(TestDescriptor descriptor, TestResult result) {
-        after(descriptor, result);
+    protected void logEvent(TestDescriptor descriptor, TestLogEvent event, @Nullable String details) {
+        List<String> names = Lists.newArrayList();
+        TestDescriptor current = descriptor;
+        while (current != null) {
+            if (isAtomicTestWithTestClassThatIsNotReflectedInParent(current)) {
+                // This deals with the fact that in TestNG, there are no class-level events,
+                // but we nevertheless want to see the class name. We use "." rather than
+                // " > " as a separator to make it clear that the class is not a separate
+                // level. This matters when configuring min/max/displayGranularity.
+                names.add(current.getClassName() + "." + current.getName());
+            } else {
+                names.add(current.getName());
+            }
+            current = current.getParent();
+        }
+
+        int effectiveDisplayGranularity = displayGranularity == -1
+                ? names.size() - 1 : Math.min(displayGranularity, names.size() - 1);
+        List<String> displayedNames = Lists.reverse(names).subList(effectiveDisplayGranularity, names.size());
+        String path = Joiner.on(" > ").join(displayedNames) + " ";
+
+        StyledTextOutput output = textOutputFactory.create("TestEventLogger", logLevel);
+        output.append(path);
+        output.withStyle(getStyle(event)).println(event.toString());
+        if (details != null) {
+            output.println(TextUtil.toPlatformLineSeparators(details));
+        }
     }
 
-    public void beforeTest(TestDescriptor descriptor) {
-        before(descriptor);
+    private boolean isAtomicTestWithTestClassThatIsNotReflectedInParent(TestDescriptor current) {
+        return !current.isComposite() && current.getClassName() != null && (current.getParent() == null
+                || !current.getClassName().equals(current.getParent().getName()));
     }
 
-    public void afterTest(TestDescriptor descriptor, TestResult result) {
-        after(descriptor, result);
-    }
-
-    protected void before(TestDescriptor descriptor) {}
-
-    protected void after(TestDescriptor descriptor, TestResult result) {}
-
-    protected void log(StyledTextOutput.Style style, String message) {
-        log(new StyledTextOutputEvent.Span(style, message));
-    }
-
-    protected void log(StyledTextOutputEvent.Span... spans) {
-        outputListener.onOutput(new StyledTextOutputEvent(System.currentTimeMillis(),
-                "testLogging", logLevel, spans));
+    private StyledTextOutput.Style getStyle(TestLogEvent event) {
+        switch (event) {
+            case PASSED: return StyledTextOutput.Style.Identifier;
+            case FAILED: return StyledTextOutput.Style.Failure;
+            case SKIPPED: return StyledTextOutput.Style.Info;
+            default: return StyledTextOutput.Style.Normal;
+        }
     }
 }

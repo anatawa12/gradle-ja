@@ -1357,6 +1357,11 @@
             <literal>ignoreFailures</literal>がfalseのとき、失敗したテストがあるとそれ以降のビルドは停止されます。
             <literal>ignoreFailures</literal>のデフォルト値はfalseです。
             </para>
+            <para>The <literal>testLogging</literal> property allows to configure which test events are going to be logged and at
+                which detail level. By default, a concise message will be logged for every failed test. See
+                <apilink class="org.gradle.api.tasks.testing.logging.TestLoggingContainer"/> for how to tune test logging to your
+                preferences.
+            </para>
         </section>
 
         <section>

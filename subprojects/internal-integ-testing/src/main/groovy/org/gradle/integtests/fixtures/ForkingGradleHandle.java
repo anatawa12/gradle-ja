@@ -94,7 +94,7 @@ class ForkingGradleHandle extends OutputScrapingGradleHandle {
     }
 
     public ExecutionFailure waitForFailure() {
-        return (ExecutionFailure)waitForStop(true);
+        return (ExecutionFailure) waitForStop(true);
     }
 
     protected ExecutionResult waitForStop(boolean expectFailure) {
@@ -111,7 +111,6 @@ class ForkingGradleHandle extends OutputScrapingGradleHandle {
                     expectFailure ? "did not fail" : "failed", execHandle.getDirectory(), execHandle.getCommand(), output, error);
             throw new UnexpectedBuildFailure(message);
         }
-
         return expectFailure ? toExecutionFailure(output, error) : toExecutionResult(output, error);
     }
 }

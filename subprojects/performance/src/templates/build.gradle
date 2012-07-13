@@ -18,6 +18,11 @@ apply plugin: 'java'
 apply plugin: 'eclipse'
 
 repositories {
+<% if (repository) { %>
+    maven {
+        url "${repository.getUri()}"
+    }
+<% } %>
     mavenCentral()
 }
 
@@ -25,11 +30,15 @@ dependencies {
     compile 'commons-lang:commons-lang:2.5'
     compile "commons-httpclient:commons-httpclient:3.0"
     compile "commons-codec:commons-codec:1.2"
-    compile "org.slf4j:jcl-over-slf4j:1.6.4"
-    compile "org.codehaus.groovy:groovy:1.8.4"
+    compile "org.slf4j:jcl-over-slf4j:1.6.6"
+    compile "org.codehaus.groovy:groovy:1.8.6"
     compile "commons-codec:commons-codec:1.2"
     testCompile 'junit:junit:4.8.2'
     runtime 'com.googlecode:reflectasm:1.01'
+
+    <% if (dependencies) { dependencies.each { %>
+    compile "${it.shortNotation()}" <% } %>
+    <% } %>
 }
 
 test {
@@ -40,7 +49,7 @@ test {
 <% if (groovyProject) { %>
 apply plugin: 'groovy'
 dependencies {
-    groovy 'org.codehaus.groovy:groovy:1.8.4'
+    groovy 'org.codehaus.groovy:groovy:1.8.6'
 }
 <% } %>
 

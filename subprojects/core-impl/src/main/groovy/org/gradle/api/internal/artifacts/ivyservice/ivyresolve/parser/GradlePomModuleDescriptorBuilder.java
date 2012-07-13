@@ -42,6 +42,7 @@ import org.apache.ivy.plugins.parser.m2.PomReader.PomDependencyData;
 import org.apache.ivy.plugins.repository.Resource;
 import org.apache.ivy.plugins.resolver.DependencyResolver;
 import org.apache.ivy.util.Message;
+import org.gradle.util.DeprecationLogger;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -232,35 +233,47 @@ public class GradlePomModuleDescriptorBuilder {
     }
 
     public void addMainArtifact(String artifactId, String packaging) {
-        String ext;
-
-        /*
-        * TODO: we should make packaging to ext mapping configurable, since it's not possible to cover all cases.
-        */
         if ("pom".equals(packaging)) {
-            // no artifact defined! Add the default artifact if it exist.
+            // no artifact defined! Add the default artifact only if it exists
             DependencyResolver resolver = parserSettings.getResolver(mrid);
 
             if (resolver != null) {
-                DefaultArtifact artifact = new DefaultArtifact(
-                        mrid, new Date(), artifactId, "jar", "jar");
-                ArtifactOrigin artifactOrigin = resolver.locate(artifact);
+                DefaultArtifact artifact = new DefaultArtifact(mrid, new Date(), artifactId, "jar", "jar");
 
-                if (!ArtifactOrigin.isUnknown(artifactOrigin)) {
+                if (!ArtifactOrigin.isUnknown(resolver.locate(artifact))) {
                     mainArtifact = artifact;
                     ivyModuleDescriptor.addArtifact("master", mainArtifact);
                 }
             }
 
             return;
-        } else if (JAR_PACKAGINGS.contains(packaging)) {
-            ext = "jar";
-        } else {
-            ext = packaging;
         }
 
-        mainArtifact = new DefaultArtifact(mrid, new Date(), artifactId, packaging, ext);
+        if (!isKnownJarPackaging(packaging)) {
+            // Look for an artifact with extension = packaging. This is deprecated.
+            DependencyResolver resolver = parserSettings.getResolver(mrid);
+
+            if (resolver != null) {
+                DefaultArtifact artifact = new DefaultArtifact(mrid, new Date(), artifactId, packaging, packaging);
+
+                if (!ArtifactOrigin.isUnknown(resolver.locate(artifact))) {
+                    mainArtifact = artifact;
+                    ivyModuleDescriptor.addArtifact("master", mainArtifact);
+
+                    DeprecationLogger.nagUserWith("Deprecated: relying on packaging to define the extension of the main artifact is deprecated, "
+                            + "and will not be supported in a future version of Gradle.");
+
+                    return;
+                }
+            }
+        }
+
+        mainArtifact = new DefaultArtifact(mrid, new Date(), artifactId, packaging, "jar");
         ivyModuleDescriptor.addArtifact("master", mainArtifact);
+    }
+
+    private boolean isKnownJarPackaging(String packaging) {
+        return "jar".equals(packaging) || JAR_PACKAGINGS.contains(packaging);
     }
 
     public void addDependency(PomDependencyData dep) {

@@ -16,9 +16,12 @@
 
 package org.gradle.api.tasks.testing.logging;
 
+import org.gradle.api.Experimental;
+
 /**
  * Determines how exceptions are formatted in test logging.
  */
+@Experimental
 public enum TestExceptionFormat {
     /**
      * Short display of exceptions.

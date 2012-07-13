@@ -22,9 +22,15 @@ import org.gradle.integtests.fixtures.*
 import static org.gradle.util.Matchers.containsLine
 import static org.hamcrest.Matchers.*
 import static org.junit.Assert.assertThat
+import org.junit.Before
 
 public class JUnitIntegrationTest extends AbstractIntegrationTest {
     @Rule public final TestResources resources = new TestResources()
+
+    @Before
+    public void before() {
+        executer.allowExtraLogging = false
+    }
 
     @Test
     public void executesTestsInCorrectEnvironment() {
@@ -343,8 +349,8 @@ public class JUnitIntegrationTest extends AbstractIntegrationTest {
         '''
 
         ExecutionResult result = executer.withTasks("test").run();
-        assert containsLine(result.getOutput(), "START [tests] []");
-        assert containsLine(result.getOutput(), "FINISH [tests] [] [FAILURE] [4]");
+        assert containsLine(result.getOutput(), "START [tests] [Test Run]");
+        assert containsLine(result.getOutput(), "FINISH [tests] [Test Run] [FAILURE] [4]");
 
         assert containsLine(result.getOutput(), "START [test process 'Gradle Worker 1'] [Gradle Worker 1]");
         assert containsLine(result.getOutput(), "FINISH [test process 'Gradle Worker 1'] [Gradle Worker 1] [FAILURE] [4]");

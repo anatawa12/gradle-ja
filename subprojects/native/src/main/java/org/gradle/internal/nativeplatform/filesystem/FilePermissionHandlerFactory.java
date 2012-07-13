@@ -22,6 +22,10 @@ import org.gradle.api.JavaVersion;
 import org.gradle.internal.UncheckedException;
 import org.gradle.internal.nativeplatform.jna.LibC;
 import org.gradle.internal.os.OperatingSystem;
+import org.jruby.ext.posix.BaseNativePOSIX;
+import org.jruby.ext.posix.FileStat;
+import org.jruby.ext.posix.Linux64FileStat;
+import org.jruby.ext.posix.POSIX;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -45,12 +49,23 @@ public class FilePermissionHandlerFactory {
             }
         }
         ComposableFilePermissionHandler.Chmod chmod = createChmod();
-        return new ComposableFilePermissionHandler(chmod, PosixUtil.current());
+        ComposableFilePermissionHandler.Stat stat = createStat();
+        return new ComposableFilePermissionHandler(chmod, stat);
+    }
+
+    private static ComposableFilePermissionHandler.Stat createStat() {
+        final OperatingSystem operatingSystem = OperatingSystem.current();
+        if (operatingSystem.isLinux() || operatingSystem.isMacOsX()) {
+            LibC libc = loadLibC();
+            return new LibCStat(libc, operatingSystem, (BaseNativePOSIX) PosixUtil.current());
+        } else {
+            return new PosixStat(PosixUtil.current());
+        }
     }
 
     static ComposableFilePermissionHandler.Chmod createChmod() {
         try {
-            LibC libc = (LibC) Native.loadLibrary("c", LibC.class);
+            LibC libc = loadLibC();
             return new LibcChmod(libc);
         } catch (LinkageError e) {
             LOGGER.debug("Unable to load LibC library. Falling back to EmptyChmod implementation.");
@@ -74,29 +89,72 @@ public class FilePermissionHandlerFactory {
                 throw new IOException(String.format("Failed to set file permissions %s on file %s. errno: %d", mode, f.getName(), exception.getErrorCode()));
             }
         }
-
-        private byte[] getEncodedFilePath(File f) {
-            byte[] encoded;
-            if (!OperatingSystem.current().isMacOsX()) {
-                encoded =  f.getAbsolutePath().getBytes();
-            } else {
-                try {
-                    encoded = f.getAbsolutePath().getBytes("utf-8");
-                } catch (UnsupportedEncodingException e) {
-                    LOGGER.warn(String.format("Failed to encode file path %s as utf-8. Using default encoding %s", f.getAbsolutePath(), System.getProperty("file.encoding")));
-                    encoded = f.getAbsolutePath().getBytes();
-                }
-            }
-            byte[] zeroTerminatedByteArray = new byte[encoded.length + 1];
-            System.arraycopy(encoded, 0, zeroTerminatedByteArray, 0, encoded.length);
-            zeroTerminatedByteArray[encoded.length] = 0;
-            return zeroTerminatedByteArray;
-        }
     }
 
     private static class EmptyChmod implements ComposableFilePermissionHandler.Chmod {
         public void chmod(File f, int mode) throws IOException {
         }
+    }
+
+    static class LibCStat implements ComposableFilePermissionHandler.Stat {
+        private LibC libc;
+        private OperatingSystem operatingSystem;
+        private BaseNativePOSIX nativePOSIX;
+
+        public LibCStat(LibC libc, OperatingSystem operatingSystem, BaseNativePOSIX nativePOSIX) {
+            this.libc = libc;
+            this.operatingSystem = operatingSystem;
+            this.nativePOSIX = nativePOSIX;
+        }
+
+        public FileStat stat(File f) throws IOException {
+            FileStat stat = nativePOSIX.allocateStat();
+            initPlatformSpecificStat(stat, getEncodedFilePath(f));
+            return stat;
+        }
+
+        private void initPlatformSpecificStat(FileStat stat, byte[] encodedFilePath) {
+            if (operatingSystem.isMacOsX()) {
+                libc.stat(encodedFilePath, stat);
+            } else {
+                final int statVersion = stat instanceof Linux64FileStat ? 3 : 0;
+                libc.__xstat64(statVersion, encodedFilePath, stat);
+            }
+        }
+    }
+
+    private static class PosixStat implements ComposableFilePermissionHandler.Stat {
+        private final POSIX posix;
+
+        public PosixStat(POSIX posix) {
+            this.posix = posix;
+        }
+
+        public FileStat stat(File f) throws IOException {
+            return this.posix.stat(f.getAbsolutePath());
+        }
+    }
+
+    private static LibC loadLibC() {
+        return (LibC) Native.loadLibrary("c", LibC.class);
+    }
+
+    private static byte[] getEncodedFilePath(File f) {
+        byte[] encoded = new byte[0];
+        if (!OperatingSystem.current().isMacOsX()) {
+            //macosx default file encoding is not unicode
+            encoded = f.getAbsolutePath().getBytes();
+        } else {
+            try {
+                encoded = f.getAbsolutePath().getBytes("utf-8");
+            } catch (UnsupportedEncodingException e) {
+                UncheckedException.throwAsUncheckedException(e);
+            }
+        }
+        byte[] zeroTerminatedByteArray = new byte[encoded.length + 1];
+        System.arraycopy(encoded, 0, zeroTerminatedByteArray, 0, encoded.length);
+        zeroTerminatedByteArray[encoded.length] = 0;
+        return zeroTerminatedByteArray;
     }
 }
 

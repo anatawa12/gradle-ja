@@ -15,6 +15,14 @@
  */
 package org.gradle.build.docs.dsl.model;
 
+import java.util.List;
+
 public interface LanguageElement {
     String getRawCommentText();
+
+    List<String> getAnnotationTypeNames();
+
+    boolean isDeprecated();
+
+    boolean isExperimental();
 }

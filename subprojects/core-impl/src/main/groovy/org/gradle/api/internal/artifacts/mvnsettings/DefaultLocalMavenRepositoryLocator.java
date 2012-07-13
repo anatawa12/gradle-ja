@@ -15,15 +15,13 @@
  */
 package org.gradle.api.internal.artifacts.mvnsettings;
 
-import org.apache.maven.settings.DefaultMavenSettingsBuilder;
-import org.apache.maven.settings.MavenSettingsBuilder;
-import org.apache.maven.settings.Settings;
-import org.gradle.api.internal.artifacts.PlexusLoggerAdapter;
+import org.apache.maven.jarjar.settings.Settings;
+import org.apache.maven.jarjar.settings.building.*;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
-import java.lang.reflect.Field;
 import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -45,16 +43,23 @@ public class DefaultLocalMavenRepositoryLocator implements LocalMavenRepositoryL
         this.environmentVariables = environmentVariables;
     }
 
-    public File getLocalMavenRepository() {
-        Settings settings = buildSettings();
-        String repoPath = settings.getLocalRepository().trim();
-        return new File(resolvePlaceholders(repoPath));
+    public File getLocalMavenRepository() throws CannotLocateLocalMavenRepositoryException{
+        try {
+            Settings settings = buildSettings();
+            String repoPath = settings.getLocalRepository();
+            if (repoPath == null) {
+                repoPath = new File(System.getProperty("user.home"), "/.m2/repository").getAbsolutePath();
+                LOGGER.debug(String.format("No local repository in Settings file defined. Using default path: %s", repoPath));
+            }
+            return new File(resolvePlaceholders(repoPath.trim()));
+        } catch (SettingsBuildingException e) {
+            throw new CannotLocateLocalMavenRepositoryException(e.getMessage());
+        }
     }
 
     private String resolvePlaceholders(String value) {
         StringBuffer result = new StringBuffer();
         Matcher matcher = PLACEHOLDER_PATTERN.matcher(value);
-
         while (matcher.find()) {
             String placeholder = matcher.group(1);
             String replacement = placeholder.startsWith("env.") ? environmentVariables.get(placeholder.substring(4)) : systemProperties.get(placeholder);
@@ -68,26 +73,16 @@ public class DefaultLocalMavenRepositoryLocator implements LocalMavenRepositoryL
         return result.toString();
     }
 
-    private Settings buildSettings() {
-        try {
-            return createSettingsBuilder().buildSettings();
-        } catch (Exception e) {
-            throw new CannotLocateLocalMavenRepositoryException(e);
-        }
-    }
 
-    private MavenSettingsBuilder createSettingsBuilder() throws Exception {
-        DefaultMavenSettingsBuilder builder = new DefaultMavenSettingsBuilder();
-        builder.enableLogging(new PlexusLoggerAdapter(LOGGER));
-
-        Field userSettingsFileField = DefaultMavenSettingsBuilder.class.getDeclaredField("userSettingsFile");
-        userSettingsFileField.setAccessible(true);
-        userSettingsFileField.set(builder, mavenFileLocations.getUserSettingsFile());
-
-        Field globalSettingsFileField = DefaultMavenSettingsBuilder.class.getDeclaredField("globalSettingsFile");
-        globalSettingsFileField.setAccessible(true);
-        globalSettingsFileField.set(builder, mavenFileLocations.getGlobalSettingsFile());
-
-        return builder;
+    private Settings buildSettings() throws SettingsBuildingException {
+        DefaultSettingsBuilderFactory factory = new DefaultSettingsBuilderFactory();
+        DefaultSettingsBuilder defaultSettingsBuilder = factory.newInstance();
+        DefaultSettingsBuildingRequest settingsBuildingRequest = new DefaultSettingsBuildingRequest();
+        settingsBuildingRequest.setSystemProperties(System.getProperties());
+        settingsBuildingRequest.setUserSettingsFile(mavenFileLocations.getUserMavenDir());
+        settingsBuildingRequest.setUserSettingsFile(mavenFileLocations.getUserSettingsFile());
+        settingsBuildingRequest.setGlobalSettingsFile(mavenFileLocations.getGlobalSettingsFile());
+        SettingsBuildingResult settingsBuildingResult = defaultSettingsBuilder.build(settingsBuildingRequest);
+        return settingsBuildingResult.getEffectiveSettings();
     }
 }

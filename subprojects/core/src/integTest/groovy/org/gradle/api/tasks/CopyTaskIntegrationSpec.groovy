@@ -19,12 +19,14 @@ package org.gradle.api.tasks
 import org.gradle.integtests.fixtures.AbstractIntegrationSpec
 import org.gradle.internal.os.OperatingSystem
 import spock.lang.Issue
+import spock.lang.Ignore
 
 class CopyTaskIntegrationSpec extends AbstractIntegrationSpec {
 
+    @Ignore
     @Issue("http://issues.gradle.org/browse/GRADLE-2181")
-    // Note, once this is passing it can be rolled into the one below as a paramaterised test
-    def canCopyFilesWithUnicodeCharactersInNameWithNonUnicodePlatformEncoding() {
+    // Note, once this is passing it can be rolled into the one below as a parameterized test
+    def "can copy files with unicode characters in name with non-unicode platform encoding"() {
         given:
         def weirdFileName = "القيادة والسيطرة - الإدارة.lnk"
 
@@ -41,14 +43,15 @@ class CopyTaskIntegrationSpec extends AbstractIntegrationSpec {
 
         when:
         executer.withDefaultCharacterEncoding("ISO-8859-1").withTasks("copyFiles")
-        OperatingSystem.current().isWindows() ? executer.run() : executer.runWithFailure()
+        onWinOrMacOS() ? executer.run() : executer.runWithFailure()
 
         then:
         file("build/resources", weirdFileName).exists()
     }
 
+
     @Issue("http://issues.gradle.org/browse/GRADLE-2181")
-    def canCopyFilesWithUnicodeCharactersInNameWithUnicodePlatformEncoding() {
+    def "can copy files with unicode characters in name with unicode platform encoding"() {
         given:
         def weirdFileName = "القيادة والسيطرة - الإدارة.lnk"
 
@@ -68,6 +71,10 @@ class CopyTaskIntegrationSpec extends AbstractIntegrationSpec {
 
         then:
         file("build/resources", weirdFileName).exists()
+    }
+
+    private boolean onWinOrMacOS() {
+        OperatingSystem.current().isWindows() || OperatingSystem.current().isMacOsX()
     }
 
 }

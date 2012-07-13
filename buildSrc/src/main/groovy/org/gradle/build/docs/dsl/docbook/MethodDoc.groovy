@@ -19,7 +19,7 @@ import org.gradle.build.docs.dsl.model.ClassMetaData
 import org.gradle.build.docs.dsl.model.MethodMetaData
 import org.w3c.dom.Element
 
-class MethodDoc {
+class MethodDoc implements DslElementDoc {
     private final String id
     private final MethodMetaData metaData
     private final List<Element> comment
@@ -50,10 +50,18 @@ class MethodDoc {
         return metaData
     }
 
+    boolean isDeprecated() {
+        return metaData.deprecated
+    }
+
+    boolean isExperimental() {
+        return metaData.experimental
+    }
+
     Element getDescription() {
         return comment.find { it.nodeName == 'para' }
     }
-    
+
     List<Element> getComment() {
         return comment
     }

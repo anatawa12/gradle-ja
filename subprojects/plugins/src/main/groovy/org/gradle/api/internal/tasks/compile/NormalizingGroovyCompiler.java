@@ -48,14 +48,19 @@ public class NormalizingGroovyCompiler implements Compiler<GroovyJavaJointCompil
         return delegateAndHandleErrors(spec);
     }
 
-    private void resolveAndFilterSourceFiles(GroovyJavaJointCompileSpec spec) {
-        FileCollection groovyJavaOnly = spec.getSource().filter(new Spec<File>() {
+    private void resolveAndFilterSourceFiles(final GroovyJavaJointCompileSpec spec) {
+        FileCollection filtered = spec.getSource().filter(new Spec<File>() {
             public boolean isSatisfiedBy(File element) {
-                return element.getName().endsWith(".groovy") || element.getName().endsWith(".java");
+                for (String fileExtension : spec.getGroovyCompileOptions().getFileExtensions()) {
+                    if (element.getName().endsWith("." + fileExtension)) {
+                        return true;
+                    }
+                }
+                return false;
             }
         });
 
-        spec.setSource(new SimpleFileCollection(groovyJavaOnly.getFiles()));
+        spec.setSource(new SimpleFileCollection(filtered.getFiles()));
     }
 
     private void resolveClasspath(GroovyJavaJointCompileSpec spec) {
@@ -69,7 +74,7 @@ public class NormalizingGroovyCompiler implements Compiler<GroovyJavaJointCompil
     }
 
     private void logSourceFiles(GroovyJavaJointCompileSpec spec) {
-        if (!spec.getCompileOptions().isListFiles()) { return; }
+        if (!spec.getGroovyCompileOptions().isListFiles()) { return; }
 
         StringBuilder builder = new StringBuilder();
         builder.append("Source files to be compiled:");

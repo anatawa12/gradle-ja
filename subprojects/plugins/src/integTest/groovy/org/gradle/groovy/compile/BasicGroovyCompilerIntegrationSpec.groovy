@@ -23,7 +23,7 @@ import org.gradle.integtests.fixtures.TargetVersions
 import org.gradle.integtests.fixtures.ExecutionFailure
 import com.google.common.collect.Ordering
 
-@TargetVersions(['1.5.8', '1.6.9', '1.7.10', '1.8.6', '2.0.0-beta-3'])
+@TargetVersions(['1.5.8', '1.6.9', '1.7.10', '1.8.6', '2.0.0'])
 abstract class BasicGroovyCompilerIntegrationSpec extends MultiVersionIntegrationSpec {
     @Rule TestResources resources = new TestResources()
 
@@ -36,8 +36,12 @@ abstract class BasicGroovyCompilerIntegrationSpec extends MultiVersionIntegratio
         runAndFail("classes")
 
         then:
-        compileErrorOutput.contains 'unable to resolve class Unknown1'
-        compileErrorOutput.contains 'unable to resolve class Unknown2'
+        // for some reasons, line breaks occur in different places when running this
+        // test in different environments; hence we only check for short snippets
+        compileErrorOutput.contains 'unable'
+        compileErrorOutput.contains 'resolve'
+        compileErrorOutput.contains 'Unknown1'
+        compileErrorOutput.contains 'Unknown2'
         failure.assertHasCause(compilationFailureMessage)
     }
 
@@ -58,6 +62,18 @@ abstract class BasicGroovyCompilerIntegrationSpec extends MultiVersionIntegratio
         noExceptionThrown()
     }
 
+    def "canListSourceFiles"() {
+        when:
+        run("compileGroovy")
+
+        then:
+        output.contains(new File("src/main/groovy/compile/test/Person.groovy").toString())
+        output.contains(new File("src/main/groovy/compile/test/Person2.groovy").toString())
+        !errorOutput
+        file("build/classes/main/compile/test/Person.class").exists()
+        file("build/classes/main/compile/test/Person2.class").exists()
+    }
+
     @Override
     protected ExecutionResult run(String... tasks) {
         tweakBuildFile()
@@ -71,11 +87,22 @@ abstract class BasicGroovyCompilerIntegrationSpec extends MultiVersionIntegratio
     }
 
     private void tweakBuildFile() {
-        buildFile << """
-dependencies { groovy 'org.codehaus.groovy:groovy:$version' }
-"""
-        buildFile << compilerConfiguration()
+        if (version == "2.0.0") {
+            // groovy-all-2.0.0 isn't compatible with JDK 1.5
+            // see GROOVY-5591
+            buildFile << """
+dependencies {
+    groovy 'org.codehaus.groovy:groovy:$version'
+    groovy 'org.codehaus.groovy:groovy-test:$version'
+}
+            """
+        } else {
+            buildFile << """
+dependencies { groovy 'org.codehaus.groovy:groovy-all:$version' }
+            """
+        }
 
+        buildFile << compilerConfiguration()
         println "->> USING BUILD FILE: ${buildFile.text}"
     }
 

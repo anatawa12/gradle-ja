@@ -1,4 +1,4 @@
-<!--
+﻿<!--
   ~ Copyright 2009 the original author or authors.
   ~
   ~ Licensed under the Apache License, Version 2.0 (the "License");
@@ -90,16 +90,18 @@
     <section id="sec:selecting_build">
         <title>ビルドスクリプトを指定して実行する<phrase role="original">Selecting which build to execute</phrase></title>
         <para role="original">When you run the <command>gradle</command> command, it looks for a build file in the current directory.
-            You can use the <option>-b</option> option to select another build file. For example:
+            You can use the <option>-b</option> option to select another build file.
+            If you use <option>-b</option> option then <filename>settings.gradle</filename> file is not used. Example:
         </para>
         <para><command>gradle</command>コマンドは、デフォルトではカレントディレクトリにあるビルドスクリプトを探して実行しますが、<option>-b</option>オプションを使えば別のビルドスクリプトを指定することもできます。</para>
         <sample id="selectProjectUsingBuildFile" dir="userguide/tutorial/selectProject" title="ビルドスクリプトを指定してビルドするプロジェクトを選択する / Selecting the project using a build file">
             <sourcefile file="subdir/myproject.gradle"/>
             <output args="-q -b subdir/myproject.gradle hello"/>
         </sample>
-        <para role="original">Alternatively, you can use the <option>-p</option> option to specify the project directory to use:</para>
-        <para>また、<option>-p</option>オプションでプロジェクトのディレクトリを指定してビルドすることもできます。</para>
-        <sample id="selectProjectUsingProjectDir" dir="userguide/tutorial/selectProject" title="ディレクトリを指定してビルドするプロジェクトを選択する / Selecting the project using project directory">
+        <para>Alternatively, you can use the <option>-p</option> option to specify the project directory to use.
+        For multi-project builds you should use <option>-p</option> option instead of <option>-b</option> option.
+        </para>
+        <sample id="selectProjectUsingProjectDir" dir="userguide/tutorial/selectProject" title="Selecting the project using project directory">
             <output args="-q -p subdir hello"/>
         </sample>
     </section>

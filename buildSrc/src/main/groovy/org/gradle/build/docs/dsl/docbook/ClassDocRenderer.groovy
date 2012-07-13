@@ -47,6 +47,7 @@ class ClassDocRenderer {
                     seg { apilink('class': classDoc.name, style: classDoc.style) }
                 }
             }
+            addWarnings(classDoc, 'class', delegate)
             appendChildren classDoc.comment
         }
     }
@@ -63,10 +64,6 @@ class ClassDocRenderer {
             }
             return
         }
-
-        def propertyTableHeader = propertiesTable.thead[0].tr[0]
-        def cells = propertyTableHeader.td.collect { it }
-        cells = cells.subList(1, cells.size())
 
         propertiesTable.children = {
             title("Properties - $classDoc.simpleName")
@@ -94,6 +91,7 @@ class ClassDocRenderer {
                                 text(' (read-only)')
                             }
                         }
+                        addWarnings(propDoc, 'property', delegate)
                         appendChildren propDoc.comment
                         if (propDoc.additionalValues) {
                             segmentedlist {
@@ -173,6 +171,7 @@ class ClassDocRenderer {
                             }
                             text(')')
                         }
+                        addWarnings(method, 'method', delegate)
                         appendChildren method.comment
                     }
                 }
@@ -219,6 +218,7 @@ class ClassDocRenderer {
                         title {
                             literal(block.name); text(' { }')
                         }
+                        addWarnings(block, 'script block', delegate)
                         appendChildren block.comment
                         segmentedlist {
                             segtitle('Delegates to')
@@ -238,6 +238,27 @@ class ClassDocRenderer {
                             }
                         }
                     }
+                }
+            }
+        }
+    }
+
+    void addWarnings(DslElementDoc elementDoc, String description, Object delegate) {
+        if (elementDoc.deprecated) {
+            delegate.caution {
+                para{
+                    text("Note: This $description is ")
+                    link(linkend: 'dsl-element-types', "deprecated")
+                    text(" and will be removed in the next major version of Gradle.")
+                }
+            }
+        }
+        if (elementDoc.experimental) {
+            delegate.caution {
+                para{
+                    text("Note: This $description is ")
+                    link(linkend: 'dsl-element-types', "experimental")
+                    text(" and may change in a future version of Gradle.")
                 }
             }
         }

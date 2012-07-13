@@ -21,9 +21,7 @@ import com.google.common.collect.Maps;
 import org.gradle.api.Action;
 import org.gradle.api.logging.LogLevel;
 import org.gradle.api.tasks.testing.logging.*;
-import org.gradle.util.ConfigureUtil;
-
-import groovy.lang.Closure;
+import org.gradle.internal.reflect.Instantiator;
 
 import java.util.EnumSet;
 import java.util.Map;
@@ -32,16 +30,20 @@ import java.util.Set;
 public class DefaultTestLoggingContainer implements TestLoggingContainer {
     private final Map<LogLevel, TestLogging> perLevelTestLogging = Maps.newEnumMap(LogLevel.class);
 
-    public DefaultTestLoggingContainer() {
+    public DefaultTestLoggingContainer(Instantiator instantiator) {
         for (LogLevel level: LogLevel.values()) {
-            perLevelTestLogging.put(level, new DefaultTestLogging());
+            perLevelTestLogging.put(level, instantiator.newInstance(DefaultTestLogging.class));
         }
 
         setEvents(EnumSet.of(TestLogEvent.FAILED));
         setExceptionFormat(TestExceptionFormat.SHORT);
 
+        getInfo().setEvents(EnumSet.of(TestLogEvent.FAILED, TestLogEvent.SKIPPED, TestLogEvent.STANDARD_OUT, TestLogEvent.STANDARD_ERROR));
+        getInfo().setStackTraceFilters(EnumSet.of(TestStackTraceFilter.TRUNCATE));
+
         getDebug().setEvents(EnumSet.allOf(TestLogEvent.class));
-        getDebug().setStackTraceFilters(EnumSet.of(TestStackTraceFilter.TRUNCATE));
+        getDebug().setMinGranularity(0);
+        getDebug().setStackTraceFilters(EnumSet.noneOf(TestStackTraceFilter.class));
     }
 
     public TestLogging getDebug() {
@@ -56,10 +58,6 @@ public class DefaultTestLoggingContainer implements TestLoggingContainer {
         action.execute(getDebug());
     }
 
-    public void debug(Closure<?> closure) {
-        ConfigureUtil.configure(closure, getDebug());
-    }
-
     public TestLogging getInfo() {
         return perLevelTestLogging.get(LogLevel.INFO);
     }
@@ -70,10 +68,6 @@ public class DefaultTestLoggingContainer implements TestLoggingContainer {
 
     public void info(Action<TestLogging> action) {
         action.execute(getInfo());
-    }
-
-    public void info(Closure<?> closure) {
-        ConfigureUtil.configure(closure, getInfo());
     }
 
     public TestLogging getLifecycle() {
@@ -88,10 +82,6 @@ public class DefaultTestLoggingContainer implements TestLoggingContainer {
         action.execute(getLifecycle());
     }
 
-    public void lifecycle(Closure<?> closure) {
-        ConfigureUtil.configure(closure, getLifecycle());
-    }
-
     public TestLogging getWarn() {
         return perLevelTestLogging.get(LogLevel.WARN);
     }
@@ -102,10 +92,6 @@ public class DefaultTestLoggingContainer implements TestLoggingContainer {
 
     public void warn(Action<TestLogging> action) {
         action.execute(getWarn());
-    }
-
-    public void warn(Closure<?> closure) {
-        ConfigureUtil.configure(closure, getWarn());
     }
 
     public TestLogging getQuiet() {
@@ -120,10 +106,6 @@ public class DefaultTestLoggingContainer implements TestLoggingContainer {
         action.execute(getQuiet());
     }
 
-    public void quiet(Closure<?> closure) {
-        ConfigureUtil.configure(closure, getQuiet());
-    }
-
     public TestLogging getError() {
         return perLevelTestLogging.get(LogLevel.ERROR);
     }
@@ -136,15 +118,11 @@ public class DefaultTestLoggingContainer implements TestLoggingContainer {
         action.execute(getError());
     }
 
-    public void error(Closure<?> closure) {
-        ConfigureUtil.configure(closure, getError());
-    }
-
     public Set<TestLogEvent> getEvents() {
         return getLifecycle().getEvents();
     }
 
-    public void setEvents(Set<TestLogEvent> events) {
+    public void setEvents(Iterable<?> events) {
         getLifecycle().setEvents(events);
     }
 
@@ -160,10 +138,6 @@ public class DefaultTestLoggingContainer implements TestLoggingContainer {
         getLifecycle().setMinGranularity(granularity);
     }
 
-    public void minGranularity(int granularity) {
-        getLifecycle().minGranularity(granularity);
-    }
-
     public int getMaxGranularity() {
         return getLifecycle().getMaxGranularity();
     }
@@ -172,8 +146,12 @@ public class DefaultTestLoggingContainer implements TestLoggingContainer {
         getLifecycle().setMaxGranularity(granularity);
     }
 
-    public void maxGranularity(int granularity) {
-        getLifecycle().maxGranularity(granularity);
+    public int getDisplayGranularity() {
+        return getLifecycle().getDisplayGranularity();
+    }
+
+    public void setDisplayGranularity(int granularity) {
+        getLifecycle().setDisplayGranularity(granularity);
     }
 
     public boolean getShowExceptions() {
@@ -184,20 +162,12 @@ public class DefaultTestLoggingContainer implements TestLoggingContainer {
         getLifecycle().setShowExceptions(flag);
     }
 
-    public void showExceptions(boolean flag) {
-        getLifecycle().showExceptions(flag);
-    }
-
     public boolean getShowCauses() {
         return getLifecycle().getShowCauses();
     }
 
     public void setShowCauses(boolean flag) {
         getLifecycle().setShowCauses(flag);
-    }
-
-    public void showCauses(boolean flag) {
-        getLifecycle().showCauses(flag);
     }
 
     public boolean getShowStackTraces() {
@@ -208,27 +178,19 @@ public class DefaultTestLoggingContainer implements TestLoggingContainer {
         getLifecycle().setShowStackTraces(flag);
     }
 
-    public void showStackTraces(boolean flag) {
-        getLifecycle().showStackTraces(flag);
-    }
-
     public TestExceptionFormat getExceptionFormat() {
         return getLifecycle().getExceptionFormat();
     }
 
-    public void setExceptionFormat(TestExceptionFormat exceptionFormat) {
+    public void setExceptionFormat(Object exceptionFormat) {
         getLifecycle().setExceptionFormat(exceptionFormat);
-    }
-
-    public void exceptionFormat(Object exceptionFormat) {
-        getLifecycle().exceptionFormat(exceptionFormat);
     }
 
     public Set<TestStackTraceFilter> getStackTraceFilters() {
         return getLifecycle().getStackTraceFilters();
     }
 
-    public void setStackTraceFilters(Set<TestStackTraceFilter> stackTraces) {
+    public void setStackTraceFilters(Iterable<?> stackTraces) {
         getLifecycle().setStackTraceFilters(stackTraces);
     }
 
@@ -240,18 +202,12 @@ public class DefaultTestLoggingContainer implements TestLoggingContainer {
         return getLifecycle().getShowStandardStreams();
     }
 
-    public void setShowStandardStreams(boolean flag) {
+    public TestLoggingContainer setShowStandardStreams(boolean flag) {
         getLifecycle().setShowStandardStreams(flag);
-    }
-
-    public void showStandardStreams(boolean flag) {
-        getLifecycle().showStandardStreams(flag);
+        return this;
     }
 
     public TestLogging get(LogLevel level) {
-        if (level == null) {
-            return new DefaultTestLoggingContainer(); // has everything disabled
-        }
         return perLevelTestLogging.get(level);
     }
 }

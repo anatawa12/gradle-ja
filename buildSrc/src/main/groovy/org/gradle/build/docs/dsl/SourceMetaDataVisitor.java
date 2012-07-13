@@ -21,9 +21,7 @@ import org.codehaus.groovy.antlr.GroovySourceAST;
 import org.codehaus.groovy.antlr.LineColumn;
 import org.codehaus.groovy.antlr.SourceBuffer;
 import org.codehaus.groovy.antlr.treewalker.VisitorAdapter;
-import org.gradle.build.docs.dsl.model.ClassMetaData;
-import org.gradle.build.docs.dsl.model.MethodMetaData;
-import org.gradle.build.docs.dsl.model.TypeMetaData;
+import org.gradle.build.docs.dsl.model.*;
 import org.gradle.build.docs.model.ClassMetaDataRepository;
 
 import java.lang.reflect.Modifier;
@@ -110,6 +108,7 @@ public class SourceMetaDataVisitor extends VisitorAdapter {
                 outerClass.addInnerClassName(className);
                 currentClass.setOuterClassName(outerClass.getClassName());
             }
+            findAnnotations(t, currentClass);
             classStack.addFirst(currentClass);
             allClasses.add(currentClass);
             typeTokens.put(t, currentClass);
@@ -177,13 +176,17 @@ public class SourceMetaDataVisitor extends VisitorAdapter {
         TypeMetaData returnType = extractTypeName(children.current);
         MethodMetaData method = getCurrentClass().addMethod(name, returnType, rawCommentText);
 
+        findAnnotations(t, method);
         extractParameters(t, method);
 
         Matcher matcher = GETTER_METHOD_NAME.matcher(name);
         if (matcher.matches()) {
             int startName = matcher.start(2);
             String propName = name.substring(startName, startName + 1).toLowerCase() + name.substring(startName + 1);
-            getCurrentClass().addReadableProperty(propName, returnType, rawCommentText, method);
+            PropertyMetaData property = getCurrentClass().addReadableProperty(propName, returnType, rawCommentText, method);
+            for (String annotation : method.getAnnotationTypeNames()) {
+                property.addAnnotationTypeName(annotation);
+            }
             return;
         }
 
@@ -250,7 +253,8 @@ public class SourceMetaDataVisitor extends VisitorAdapter {
 
         MethodMetaData getterMethod = currentClass.addMethod(String.format("get%s", StringUtils.capitalize(
                 propertyName)), propertyType, "");
-        currentClass.addReadableProperty(propertyName, propertyType, getJavaDocCommentsBeforeNode(t), getterMethod);
+        PropertyMetaData property = currentClass.addReadableProperty(propertyName, propertyType, getJavaDocCommentsBeforeNode(t), getterMethod);
+        findAnnotations(t, property);
         if (!Modifier.isFinal(modifiers)) {
             MethodMetaData setterMethod = currentClass.addMethod(String.format("set%s", StringUtils.capitalize(
                     propertyName)), TypeMetaData.VOID, "");
@@ -434,6 +438,17 @@ public class SourceMetaDataVisitor extends VisitorAdapter {
         }
         lastLineCol = thisLineCol;
         return result;
+    }
+
+    private void findAnnotations(GroovySourceAST t, AbstractLanguageElement currentElement) {
+        GroovySourceAST modifiers = t.childOfType(MODIFIERS);
+        if (modifiers != null) {
+            List<GroovySourceAST> children = modifiers.childrenOfType(ANNOTATION);
+            for (GroovySourceAST child : children) {
+                String identifier = extractIdent(child);
+                currentElement.addAnnotationTypeName(identifier);
+            }
+        }
     }
 
     private String extractIdent(GroovySourceAST t) {

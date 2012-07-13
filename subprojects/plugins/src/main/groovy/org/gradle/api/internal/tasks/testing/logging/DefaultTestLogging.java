@@ -19,6 +19,7 @@ package org.gradle.api.internal.tasks.testing.logging;
 import org.gradle.api.tasks.testing.logging.*;
 import org.gradle.util.GUtil;
 
+import java.util.Arrays;
 import java.util.EnumSet;
 import java.util.Set;
 
@@ -26,22 +27,23 @@ public class DefaultTestLogging implements TestLogging {
     private Set<TestLogEvent> events = EnumSet.noneOf(TestLogEvent.class);
     private int minGranularity = -1;
     private int maxGranularity = -1;
+    private int displayGranularity = 2;
     private boolean showExceptions = true;
     private boolean showCauses = true;
     private boolean showStackTraces = true;
     private TestExceptionFormat exceptionFormat = TestExceptionFormat.FULL;
-    private Set<TestStackTraceFilter> stackTraceFilters = EnumSet.noneOf(TestStackTraceFilter.class);
+    private Set<TestStackTraceFilter> stackTraceFilters = EnumSet.of(TestStackTraceFilter.TRUNCATE);
 
     public Set<TestLogEvent> getEvents() {
         return events;
     }
 
-    public void setEvents(Set<TestLogEvent> events) {
-        this.events = events;
+    public void setEvents(Iterable<?> events) {
+        this.events = toEnumSet(TestLogEvent.class, events);
     }
 
     public void events(Object... events) {
-        setEvents(toEnumSet(TestLogEvent.class, events));
+        this.events.addAll(toEnumSet(TestLogEvent.class, events));
     }
 
     public int getMinGranularity() {
@@ -52,10 +54,6 @@ public class DefaultTestLogging implements TestLogging {
         minGranularity = granularity;
     }
 
-    public void minGranularity(int granularity) {
-        setMinGranularity(granularity);
-    }
-
     public int getMaxGranularity() {
         return maxGranularity;
     }
@@ -64,8 +62,12 @@ public class DefaultTestLogging implements TestLogging {
         maxGranularity = granularity;
     }
 
-    public void maxGranularity(int granularity) {
-        setMaxGranularity(granularity);
+    public int getDisplayGranularity() {
+        return displayGranularity;
+    }
+
+    public void setDisplayGranularity(int granularity) {
+        displayGranularity = granularity;
     }
 
     public boolean getShowExceptions() {
@@ -76,20 +78,12 @@ public class DefaultTestLogging implements TestLogging {
         showExceptions = flag;
     }
 
-    public void showExceptions(boolean flag) {
-        setShowExceptions(flag);
-    }
-
     public boolean getShowCauses() {
         return showCauses;
     }
 
     public void setShowCauses(boolean flag) {
         showCauses = flag;
-    }
-
-    public void showCauses(boolean flag) {
-        setShowCauses(flag);
     }
 
     public boolean getShowStackTraces() {
@@ -100,44 +94,33 @@ public class DefaultTestLogging implements TestLogging {
         showStackTraces = flag;
     }
 
-    public void showStackTraces(boolean flag) {
-        setShowStackTraces(flag);
-    }
-
     public TestExceptionFormat getExceptionFormat() {
         return exceptionFormat;
     }
 
-    public void setExceptionFormat(TestExceptionFormat exceptionFormat) {
-        this.exceptionFormat = exceptionFormat;
-    }
-
-    public void exceptionFormat(Object exceptionFormat) {
-        setExceptionFormat(toEnum(TestExceptionFormat.class, exceptionFormat));
+    public void setExceptionFormat(Object exceptionFormat) {
+        this.exceptionFormat = toEnum(TestExceptionFormat.class, exceptionFormat);
     }
 
     public Set<TestStackTraceFilter> getStackTraceFilters() {
         return stackTraceFilters;
     }
 
-    public void setStackTraceFilters(Set<TestStackTraceFilter> filters) {
-        stackTraceFilters = filters;
+    public void setStackTraceFilters(Iterable<?> filters) {
+        stackTraceFilters = toEnumSet(TestStackTraceFilter.class, filters);
     }
 
     public void stackTraceFilters(Object... filters) {
-        setStackTraceFilters(toEnumSet(TestStackTraceFilter.class, filters));
+        stackTraceFilters.addAll(toEnumSet(TestStackTraceFilter.class, filters));
     }
 
     public boolean getShowStandardStreams() {
         return events.contains(TestLogEvent.STANDARD_OUT) && events.contains(TestLogEvent.STANDARD_ERROR);
     }
 
-    public void setShowStandardStreams(boolean flag) {
+    public TestLogging setShowStandardStreams(boolean flag) {
         events.addAll(EnumSet.of(TestLogEvent.STANDARD_OUT, TestLogEvent.STANDARD_ERROR));
-    }
-
-    public void showStandardStreams(boolean flag) {
-        setShowStandardStreams(flag);
+        return this;
     }
 
     private <T extends Enum<T>> T toEnum(Class<T> enumType, Object value) {
@@ -151,7 +134,11 @@ public class DefaultTestLogging implements TestLogging {
                 value, value.getClass(), enumType));
     }
 
-    private <T extends Enum<T>> EnumSet<T> toEnumSet(Class<T> enumType, Object... values) {
+    private <T extends Enum<T>> EnumSet<T> toEnumSet(Class<T> enumType, Object[] values) {
+        return toEnumSet(enumType, Arrays.asList(values));
+    }
+
+    private <T extends Enum<T>> EnumSet<T> toEnumSet(Class<T> enumType, Iterable<?> values) {
         EnumSet<T> result = EnumSet.noneOf(enumType);
         for (Object value : values) {
             result.add(toEnum(enumType, value));
