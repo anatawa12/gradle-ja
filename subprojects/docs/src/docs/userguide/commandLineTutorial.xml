@@ -14,10 +14,10 @@
   ~ limitations under the License.
   -->
 <chapter id="tutorial_gradle_command_line" xml:lang="ja">
-    <title>Gradleのコマンドラインを使う<phrase role="original">Using the Gradle Command-Line</phrase></title>
+    <title>Gradleのコマンドラインを使う <phrase role="original">Using the Gradle Command-Line</phrase></title>
     <para role="original">This chapter introduces the basics of the Gradle command-line. You run a build using the
         <command>gradle</command> command, which you have already seen in action in previous chapters.</para>
-    <para>本章では、Gradleのコマンドラインインターフェースについて基本的なところを見ていきます。前回までの章で既に動作をみてきましたが、Gradleのビルドは<command>gradle</command>コマンドで実行します。</para>
+    <para>本章では、Gradleのコマンドラインについて基本的な部分を紹介します。これまで動かしてきたように、Gradleのビルドは<command>gradle</command>コマンドで実行します。</para>
     <section>
         <title>複数のタスクを実行する<phrase role="original">Executing multiple tasks</phrase></title>
         <para role="original">You can execute multiple tasks in a single build by listing each of the tasks on the command-line. For example,
@@ -27,7 +27,7 @@
             regardless of how it came to be included in the build: whether it was specified on the command-line, or it a
             dependency of another task, or both. Let's look at an example.</para>
         <para>
-        一回のビルドで、複数のタスクを実行することができます。ビルドを実行するときに、タスクを列挙して指定してください。たとえば、<userinput>gradle compile test</userinput>というコマンドを実行すれば、<literal>compile</literal>タスクと<literal>test</literal>タスクが実行されます。Gradleはタスクを列挙された順に実行するほか、それらが依存しているタスクも実行します。タスクは、明示的に指定されるにしろ別タスクに依存しているにしろ、またその両方で指定されているにしろ、実行されるのは一度だけです。次の例を見てください。
+        一回のビルドで、複数のタスクを実行することができます。ビルドを実行するときに、タスクを並べて指定してください。たとえば、<userinput>gradle compile test</userinput>というコマンドを実行すれば、<literal>compile</literal>タスクと<literal>test</literal>タスクが実行されます。Gradleはタスクを列挙された順に実行するほか、それらが依存しているタスクも実行します。また、タスクが実行されるのはそれぞれ一度だけです。コマンドラインで明示的に指定されたタスクも、それらに依存して実行されるタスクも、またその両方に含まれるタスクも同様です。次の例を見てください。
         </para>
         <para role="original">
             Below four tasks are defined. Both <literal>dist</literal> and <literal>test</literal> depend on the
@@ -42,14 +42,14 @@
                 <imagedata fileref="img/commandLineTutorialTasks.png"/>
             </imageobject>
         </figure>
-        <sample id="multipleTasksFromCommandLine" dir="userguide/tutorial/excludeTasks" title="Executing multiple tasks">
+        <sample id="multipleTasksFromCommandLine" dir="userguide/tutorial/excludeTasks" title="複数のタスクの実行 / Executing multiple tasks">
             <sourcefile file="build.gradle"/>
             <output args="dist test"/>
         </sample>
         <para role="original">
             Because each task is executed once only, executing <userinput>gradle test test</userinput> is exactly the same
             as executing <userinput>gradle test</userinput>.</para>
-        <para>つまり、<userinput>gradle test test</userinput>と打ち込んでも<userinput>gradle test</userinput>と打ち込んでも、実行される処理は同じだということです。</para>
+        <para>タスクが一度だけ実行されるということは、<userinput>gradle test test</userinput>と打ち込んでも<userinput>gradle test</userinput>と打ち込んでも、実行される処理は全く同じだということです。</para>
     </section>
 
     <section id="sec:excluding_tasks_from_the_command_line">
@@ -93,15 +93,18 @@
             You can use the <option>-b</option> option to select another build file.
             If you use <option>-b</option> option then <filename>settings.gradle</filename> file is not used. Example:
         </para>
-        <para><command>gradle</command>コマンドは、デフォルトではカレントディレクトリにあるビルドスクリプトを探して実行しますが、<option>-b</option>オプションを使えば別のビルドスクリプトを指定することもできます。</para>
+        <para><command>gradle</command>コマンドは、デフォルトではカレントディレクトリにあるビルドスクリプトを探して実行しますが、<option>-b</option>オプションを使えば別のビルドスクリプトを指定することもできます。次の例を見てください。
+        なお、<option>-b</option>を使うと、<filename>settings.gradle</filename>ファイルは使用されなくなります。</para>
         <sample id="selectProjectUsingBuildFile" dir="userguide/tutorial/selectProject" title="ビルドスクリプトを指定してビルドするプロジェクトを選択する / Selecting the project using a build file">
             <sourcefile file="subdir/myproject.gradle"/>
             <output args="-q -b subdir/myproject.gradle hello"/>
         </sample>
-        <para>Alternatively, you can use the <option>-p</option> option to specify the project directory to use.
+        <para role="original">Alternatively, you can use the <option>-p</option> option to specify the project directory to use.
         For multi-project builds you should use <option>-p</option> option instead of <option>-b</option> option.
         </para>
-        <sample id="selectProjectUsingProjectDir" dir="userguide/tutorial/selectProject" title="Selecting the project using project directory">
+        <para>別の方法として、<option>-p</option>オプションを指定して、使用するプロジェクトディレクトリを変更することもできます。
+        マルチプロジェクトの場合は、<option>-b</option>オプションでなく<option>-p</option>オプションを使用するべきです。</para>
+        <sample id="selectProjectUsingProjectDir" dir="userguide/tutorial/selectProject" title="プロジェクトディレクトリを使ってプロジェクトを選択する / Selecting the project using project directory">
             <output args="-q -p subdir hello"/>
         </sample>
     </section>
@@ -216,7 +219,7 @@
             This is complementary to the <option>tasks</option> task, which shows you the tasks which are available for
             execution.
         </para>
-        <para>コマンドラインにタスク名を並べて実行したときに、どのタスクがどの順番で実行されるのか知りたくなることがあります。しかしそのために実際にタスクを実行したくはありません。このような場合、<option>-m</option>オプションをつけて実行してください。たとえば、<userinput>gradle -m clean compile</userinput>と実行すれば、cleanタスクとcompileタスクの実行にあたって実際に実行されるすべてのタスクが実行順に表示されます。このレポートは、実行可能なタスクの一覧を表示する<option>-t</option>オプションのレポートとお互い補い合って使うことができます。</para>
+        <para>コマンドラインにタスク名を並べて実行したときに、どのタスクがどの順番で実行されるのか知りたくなることがあります。しかしそのために実際にタスクを実行したくはありません。このような場合、<option>-m</option>オプションをつけて実行してください。たとえば、<userinput>gradle -m clean compile</userinput>と実行すれば、cleanタスクとcompileタスクの実行にあたって実際に実行されるすべてのタスクが実行順に表示されます。これは、実行可能なタスクの一覧を表示する<option>tasks</option>タスクの補足にもなります。</para>
     </section>
 
     <section>
