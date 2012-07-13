@@ -104,7 +104,11 @@
                 classpath, whose sheer presence, as I found out after much research, accelerated LDAP access. So
                 removing this jar would not have led to any errors at compile or runtime.
             </para>
-            <para>推移的な依存関係が、なぜそんなに重要なのでしょうか。どの依存関係が直接依存しているもので、どの依存関係が推移的に依存しているのか分からなくなれば、ビルドシステムは早晩制御不能になるでしょう。Gradleでさえ20以上のjarから構成されています。SpringやHibernateなどのエンタープライズレベルのプロジェクトだと、jarの数はゆうに100を超えるでしょう。どのjarをどこからなぜ入れたのか、全部覚えておくようなことはできません。こうなると、なにか依存関係を破棄したいとなったとき、それに関連してどのjarを削除すればいいのか分からなくなります。削除しようとしているjarは、それ自身プロジェクトから直接使われているjarかもしれません。別の依存関係から推移的に依存されているかもしれません。ライブラリは、実行時のみ依存しているという場合も多いものです。もちろん、そこから推移する依存関係も実行時の依存関係になります。つまり、コンパイラは頼りにできないということです。このシナリオの行き着く先を、私たちはたくさん見てきました。もはや誰も、恐ろしくて何一つjarを削除できなくなってしまいます。プロジェクトのクラスパスは完全にめちゃくちゃになって、そのクラスパスで問題が発生しようものならこの世の地獄にご招待という話です。私が以前携わっていたプロジェクトでは、LDAPに関するjarをいくつかクラスパスに追加していました。後ほど調べて分かったのですが、このjarはあるだけでLDAPアクセスを高速化させます。つまり、このjarを取り除いたとしても、コンパイル時にも実行時にもエラーが発生することはなかったでしょう。</para>
+            <para>推移的な依存関係が、なぜそんなに重要なのでしょうか。どの依存関係が直接依存しているもので、どの依存関係が推移的に依存しているのか分からなくなれば、ビルドシステムは早晩制御不能になるでしょう。
+                Gradleでさえ20以上のjarから構成されています。SpringやHibernateなどのエンタープライズレベルのプロジェクトだと、jarの数はゆうに100を超えるでしょう。どのjarをどこからなぜ入れたのか、全部覚えておくようなことはできません。
+                こうなると、なにか依存関係を破棄したいとなったとき、それに関連してどのjarを削除すればいいのか分からなくなります。削除しようとしているjarは、それ自身プロジェクトから直接使われているjarかもしれません。別の依存関係から推移的に依存されているかもしれません。
+                また、ライブラリは、実行時のみ依存しているという場合も多いものです。もちろん、そこから推移する依存関係も実行時の依存関係になります。つまり、コンパイラは頼りにできないということです。このシナリオの行き着く先を、私たちはたくさん見てきました。もはや誰も、何一つjarを削除できなくなり、プロジェクトのクラスパスは完全にめちゃくちゃになって、そのクラスパスで問題が発生してこの世の地獄という話です。
+                私が以前携わっていたプロジェクトでは、LDAPに関するjarをいくつかクラスパスに追加していました。後ほど調べて分かったのですが、このjarはあるだけでLDAPアクセスを高速化させます。つまり、このjarを取り除いたとしても、コンパイル時にも実行時にもエラーが発生することはなかったでしょう。</para>
             <para role="original">Gradle offers you different ways to express what are first level and what are transitive dependencies.
                 Gradle allows you for example to store your jars in CVS or SVN without XML descriptor files and still
                 use transitive dependency management. Gradle also validates your dependency hierarchy against the
@@ -118,11 +122,10 @@
                 dependency. This frequently leads to conflicts. Different dependencies rely on different versions of
                 another dependency. The JVM unfortunately does not offer yet any easy way, to have different versions of
                 the same jar in the classpath (see <xref linkend='sub:dependency_management_and_java'/>).</para>
-            <para>依存関係を記述した際、つまり、ある依存関係が、特定のバージョンの別の依存関係を必要とする、ということをGradleに指示した際、これが競合してしまうことがよくあります。
-                同じ依存関係の異なるバージョンが要求される場合があるということです。
+            <para>依存関係の記述では、どのバージョンの依存物(ライブラリなど)が必要になるかGradleに設定しますが、その際、競合が発生してしまうことがよくあります。つまり、異なるバージョンの同じライブラリが、同時に要求される場合があります。
                 残念ながら、JVMではクラスパス上にバージョン違いの同じjarを混在させるのは、簡単なことではありません(<xref linkend='sub:dependency_management_and_java'/>参照)。</para>
             <para><phrase role="original">Gradle offers following conflict resolution strategies:</phrase>
-                Gradleは、競合を解決する戦略として、以下のものを提供しています。
+                Gradleは、競合が発生した際の戦略として、以下のものを提供しています。
                 <itemizedlist>
                     <listitem><phrase role="original"><emphasis>Newest</emphasis> - used by default by Gradle - the newest version of the dependency is used.
                     This strategy has been in Gradle since early days.</phrase>
@@ -137,7 +140,7 @@
                     </listitem>
                 </itemizedlist>
                 <phrase role="original">Gradle provides means to resolve version conflicts:</phrase>
-                Gradleは、バージョンの競合を解決するための手段を提供しています。
+                また、Gradleでは、バージョンの競合を解決するために以下のような方法を使うことができます。
                 <itemizedlist>
                     <listitem>
                         <phrase role="original">
@@ -146,7 +149,7 @@
                         This approach is useful if the dependency incurring conflict is already a first level dependency.
                         See examples in <apilink class='org.gradle.api.artifacts.dsl.DependencyHandler'/>
                         </phrase>
-                        直接の依存関係を<emphasis>forced</emphasis>に設定する。
+                        プロジェクトが直接依存している依存関係を、<emphasis>forced</emphasis>に設定する。
                         この機能は、以前からGradleに実装されていました。
                         これは、競合に突き当たった依存関係が、プロジェクトが直接依存しているものだったときに便利です。
                         使用例については、<apilink class='org.gradle.api.artifacts.dsl.DependencyHandler'/>を参照してください。
@@ -159,7 +162,7 @@
                         It also can be used to force versions of first level dependencies.
                         See examples in <apilink class='org.gradle.api.artifacts.ResolutionStrategy'/>
                         </phrase>
-                        すべての依存関係を（推移的なものかどうかにかかわらず）<emphasis>forced</emphasis>に設定する。
+                        依存関係を、直接的なものでも推移的なものでも、とにかく<emphasis>forced</emphasis>に設定する。
                         この機能は、<code>1.0-milestone-7</code>で導入されました。
                         これは、競合に突き当たった依存関係が、推移的な依存関係だったときに便利です。
                         また、直接の依存関係に対してバージョンを強制するのにも使用できます。
@@ -574,37 +577,55 @@
                 <apilink class="org.gradle.api.artifacts.Configuration"/>.
             </para>
             <para>コンフィギュレーションに対して除外設定した場合、そのコンフィギュレーション(とそれを継承したコンフィギュレーション)に属する依存関係すべてから、指定した推移的依存関係が取り除かれます。すべてのコンフィギュレーションから、ある依存関係を除外したい場合は、例にあるように、Groovyの展開演算子を使うことで簡単に実現できます。除外設定では、group名だけ、またはモジュール名だけで指定することもできますし、その両方で指定することもできます。APIドキュメントの<apilink class="org.gradle.api.artifacts.Dependency"/>と<apilink class="org.gradle.api.artifacts.Configuration"/>もご参照ください。</para>
-            <para>
+            <para role="original">
                 Not every transitive dependency can be excluded - some transitive dependencies might be essential
                 for correct runtime behavior of the application. Generally, one can exclude transitive
                 dependencies that are either not required by runtime or that are guaranteed to be available
                 on the target environment/platform.
             </para>
+            <para>すべての推移的な依存関係が除外できるとは限りません。依存関係によっては、アプリケーションの正しい動作のために必要なものかもしれません。一般的には、実行時に要求されないか、対象の環境・プラットフォームで使えることが保証されている場合に、その推移的な依存関係を除外することができます。</para>
             <para>
+                <phrase role="original">
                 Should you exclude per-dependency or per-configuration?
                 It turns out that in majority of cases you want to use the per-configuration exclusion.
                 Here are the some exemplary reasons why one might want to exclude a transitive dependency.
                 Bear in mind that for some of those use cases there are better solutions than exclusions!
+                </phrase>
+                依存関係ごとの除外を使うべきか、コンフィギュレーションごとの除外を使うべきかですが、大抵のケースではコンフィギュレーションごとに除外したくなると思います。透過的な依存関係を除外したくなる理由として、模範的なものをいくつか挙げてみました。
+                ただ、これらの場合でも、除外してしまうよりいい解決策があることもあります。覚えていてください。
                 <itemizedlist>
-                    <listitem>The dependency is undesired due to licensing reasons.</listitem>
-                    <listitem>The dependency is not available in any of remote repositories.</listitem>
-                    <listitem>The dependency is not needed for runtime.</listitem>
-                    <listitem>The dependency has a version that conflicts with a desired version.
+                    <listitem><phrase role="original">The dependency is undesired due to licensing reasons.</phrase> ライセンス上の理由により、その依存関係をもつことが望ましくない</listitem>
+                    <listitem><phrase role="original">The dependency is not available in any of remote repositories.</phrase> リモートのリポジトリにある依存関係が使えない</listitem>
+                    <listitem><phrase role="original">The dependency is not needed for runtime.</phrase> 実行時には要らない</listitem>
+                    <listitem><phrase role="original">The dependency has a version that conflicts with a desired version.
                         For that use case please refer to <xref linkend='sub:version_conflicts'/>
                         and the documentation on <apilink class='org.gradle.api.artifacts.ResolutionStrategy'/>
-                        for a potentially better solution to the problem.
+                        for a potentially better solution to the problem. </phrase> 
+                        依存関係のバージョンが、欲しいバージョンと競合している。
+                        この場合は、もしかするともっといい解決方法があるかもしれません。
+                        <apilink class='org.gradle.api.artifacts.ResolutionStrategy'/>および<apilink class='org.gradle.api.artifacts.ResolutionStrategy'/>のドキュメントを参照してみてください。
                     </listitem>
                 </itemizedlist>
+                <phrase role="original">
                 Basically, in most of the cases excluding the transitive dependency should be done per configuration.
                 This way the dependency declaration is more explicit. It is also more accurate because a per-dependency
                 exclude rule does not guarantee the given transitive dependency does not show up in the configuration.
                 For example, some other dependency, which does not have any exclude rules, might pull in
                 that unwanted transitive dependency.
+                </phrase>
+                基本的に、推移的な依存関係を除外する場合はコンフィギュレーションごとに行うべきです。
+                そうすることで、依存関係の宣言がより明示的なものになります。
+                また、依存関係ごとに除外ルールを記述しても、除外した推移的依存関係がコンフィグレーションに出現しないことは保証できないので、正確な記述とは言えません。
+                例えば、除外ルールを持たない別の依存関係が含まれていた場合、それらが不要な依存関係を引っ張ってきてしまうかもしれません。
             </para>
-            <para>
+            <para role="original">
                 Other examples of the dependency exclusions can be found in the reference for
                 <apilink class='org.gradle.api.artifacts.ModuleDependency'/> or
                 <apilink class='org.gradle.api.artifacts.dsl.DependencyHandler'/>.
+            </para>
+            <para>
+                依存関係の除外に関するサンプルは、リファレンスの
+                <apilink class='org.gradle.api.artifacts.ModuleDependency'/>や<apilink class='org.gradle.api.artifacts.dsl.DependencyHandler'/>にも載っています。
             </para>
         </section>
         <section>
@@ -801,9 +822,14 @@
             <sample id="mavenLocalRepo" dir="userguide/artifacts/defineRepository" title="ローカルのMavenキャッシュをリポジトリに使う / Adding the local Maven cache as a repository">
                 <sourcefile file="build.gradle" snippet="maven-local"/>
             </sample>
-            <para>Gradle uses the same logic as maven to identify the location of your local maven cache. If a local repository location is defined in a <filename>settings.xml</filename>, this location will be used.
+            <para role="original">Gradle uses the same logic as maven to identify the location of your local maven cache. If a local repository location is defined in a <filename>settings.xml</filename>, this location will be used.
                 The <filename>settings.xml</filename> in <filename><replaceable>USER_HOME</replaceable>/.m2</filename> takes precedence over the <filename>settings.xml</filename> in <filename><replaceable>M2_HOME</replaceable>/conf</filename>.
                 If no <filename>settings.xml</filename> is available, Gradle uses the default location <filename><replaceable>USER_HOME</replaceable>/.m2/repository</filename>.</para>
+            <para>Gradleは、Mavenが使っているのと同じ方法でMavenローカルキャッシュの場所を決定します。
+                もしローカルリポジトリの場所が<filename>settings.xml</filename>で定義されていれば、その場所が使用されます。
+                <filename><replaceable>USER_HOME</replaceable>/.m2</filename>の<filename>settings.xml</filename>は、<filename><replaceable>M2_HOME</replaceable>/conf</filename>の<filename>settings.xml</filename>よりも優先されます。
+                使用できる<filename>settings.xml</filename>がなければ、デフォルトの<filename><replaceable>USER_HOME</replaceable>/.m2/repository</filename>がローカルキャッシュの場所になります。
+            </para>
         </section>
 
         <section id='sub:maven_repo'>
@@ -974,39 +1000,50 @@ someroot/[artifact]-[revision].[ext]
         </section>
     </section>
     <section id='sec:dependency_resolution'>
-        <title>How dependency resolution works</title>
-        <para>Gradle takes your dependency declarations and repository definitions and attempts to download all of your dependencies by a process called <emphasis>dependency resolution</emphasis>.
+        <title>依存関係解決の仕組み <phrase role="original">How dependency resolution works</phrase></title>
+        <para role="original">Gradle takes your dependency declarations and repository definitions and attempts to download all of your dependencies by a process called <emphasis>dependency resolution</emphasis>.
         Below is a brief outline of how this process works.</para>
+        <para>Gradleは、あなたが定義した依存関係の宣言とリポジトリ定義を使い、<emphasis>依存関係解決</emphasis>と呼ばれる処理によって依存関係を全てダウンロードしようと試みます。以下に、その処理がどのように進むか、概要を記載しました。</para>
         <itemizedlist>
             <listitem>
-                <para>
+                <para role="original">
                     Given a required dependency, Gradle first attempts to resolve the <emphasis>module</emphasis> for that dependency. Each repository is inspected in order, searching
                     first for a <emphasis>module descriptor</emphasis> file (pom or ivy file) that indicates the presence of that module. If no module descriptor is found,
                     Gradle will search for the presence of the primary <emphasis>module artifact</emphasis> file indicating that the module exists in the repository.
                 </para>
+                <para>
+                    必要な依存関係が指示されると、Gradleはまず、リポジトリを順に検査して、その依存関係の<emphasis>モジュール</emphasis>を解決しようとします。
+                    <emphasis>モジュールディスクリプタ</emphasis>ファイル(pomまたはivyファイル)を探して、リポジトリにモジュールがあるかどうか確認しますが、ディスクリプタファイルが見つからない場合は、デフォルトの<emphasis>モジュールアーティファクト</emphasis>ファイルがあるかどうかでモジュールの有無を判断します。
+                </para>
                 <itemizedlist>
                     <listitem>
-                        <para>If the dependency is declared as a dynamic version (like <literal>1.+</literal>), Gradle will resolve this to the newest available static version (like <literal>1.2</literal>)
+                        <para role="original">If the dependency is declared as a dynamic version (like <literal>1.+</literal>), Gradle will resolve this to the newest available static version (like <literal>1.2</literal>)
                             in the repository. For maven repositories, this is done using the <literal>maven-metadata.xml</literal> file, while for ivy repositories this is done by directory listing.</para>
+                        <para>もし、依存関係が動的バージョン(<literal>1.+</literal>のような)で指定されていれば、Gradleは動的バージョンを、リポジトリ内の最新の静的バージョン(<literal>1.2</literal>など)に解決します。この処理は、Mavenリポジトリに対しては<literal>maven-metadata.xml</literal>ファイルを使って行われ、ivyリポジトリの場合はディレクトリの一覧で実行されます。</para>
                     </listitem>
                     <listitem>
-                        <para>If the module descriptor is a <literal>pom</literal> file that has a parent pom declared, Gradle will recursively attempt to resolve each of the parent modules for the pom.</para>
+                        <para role="original">If the module descriptor is a <literal>pom</literal> file that has a parent pom declared, Gradle will recursively attempt to resolve each of the parent modules for the pom.</para>
+                        <para>モジュールディスクリプタが、親pomの宣言を含むpomファイルだった場合、Gradleはpomの親モジュールを再帰的に解決しようとします。</para>
                     </listitem>
                 </itemizedlist>
             </listitem>
             <listitem>
-                <para>Once each repository has been inspected for the module, Gradle will choose the 'best' one to use. This is done using the following criteria:
+                <para><phrase role="original">Once each repository has been inspected for the module, Gradle will choose the 'best' one to use. This is done using the following criteria:</phrase>
+                    全てのリポジトリでモジュールの調査が終わると、Gradleはそれらのリポジトリの中から、使うのに"最も良い"リポジトリを選択します。何が最良かの基準は、以下の通りです。
                     <itemizedlist>
-                        <listitem>For a dynamic version, a 'higher' static version is preferred over a 'lower' version.</listitem>
-                        <listitem>Modules declared by a module descriptor file (ivy or pom file) are preferred over modules that have an artifact file only.</listitem>
-                        <listitem>Modules from earlier repositories are preferred over modules in later repositories.</listitem>
+                        <listitem><phrase role="original">For a dynamic version, a 'higher' static version is preferred over a 'lower' version.</phrase> 動的バージョンに関しては、なるべく新しい静的バージョンが使用できるリポジトリが好ましい</listitem>
+                        <listitem><phrase role="original">Modules declared by a module descriptor file (ivy or pom file) are preferred over modules that have an artifact file only.</phrase> モジュールディスクリプタ(ivyやpomファイル)で宣言されているモジュールは、アーティファクトファイルしかないモジュールよりも好ましい</listitem>
+                        <listitem><phrase role="original">Modules from earlier repositories are preferred over modules in later repositories.</phrase> 早く見に行ったリポジトリのほうが、後のリポジトリよりも優先される</listitem>
                     </itemizedlist>
                 </para>
-                <para>When the dependency is declared by a static version and a module descriptor file is found in a repository, there is no need to continue searching later
+                <para role="original">When the dependency is declared by a static version and a module descriptor file is found in a repository, there is no need to continue searching later
                 repositories and the remainder of the process is short-circuited.</para>
+                <para>依存関係が、静的バージョンとリポジトリのモジュールディスクリプタで宣言されていれば、後続のリポジトリを探索する必要は無く、残りの処理も短縮できます。
+                </para>
             </listitem>
             <listitem>
-                <para>All of the artifacts for the module are then requested from the <emphasis>same repository</emphasis> that was chosen in the process above.</para>
+                <para role="original">All of the artifacts for the module are then requested from the <emphasis>same repository</emphasis> that was chosen in the process above.</para>
+                <para>モジュール内の全アーティファクトが、上記処理で選択されたのと<emphasis>同じリポジトリ</emphasis>から取得されます。</para>
             </listitem>
         </itemizedlist>
     </section>
@@ -1152,7 +1189,6 @@ someroot/[artifact]-[revision].[ext]
                 <para role="original">At times, the Gradle Dependency Cache can be out of sync with the actual state of the configured repositories. Perhaps a repository was initially misconfigured,
                     or perhaps a "non-changing" module was published incorrectly. To refresh all dependencies in the dependency cache, use the <literal>--refresh-dependencies</literal>
                     option on the command line.</para>
-                <para>The <literal>--refresh dependencies</literal> option tells Gradle to ignore all cached entries for resolved modules and artifacts.</para>
                 <para>
                     Gradleの依存関係キャッシュが、設定されたリポジトリの実際の状態と同期が取れていないこともあります。
                     おそらくは最初リポジトリが間違った設定になっていたか、未変更のモジュールが間違って公開されたのでしょう。
@@ -1163,8 +1199,10 @@ someroot/[artifact]-[revision].[ext]
                     However, where possible Gradle will attempt to if the previously downloaded artifacts are valid before downloading again.
                     This is done by comparing published SHA1 values in the repository with the SHA1 values for existing downloaded artifacts.</para>
                 <para>
-                    <literal>--refresh-dependencies</literal>オプションは、解決済みのモジュールとアーティファクトに対する全てのキャッシュエントリを無視するようGradleに指示するものです。
+                    <literal>--refresh-dependencies</literal>オプションは、解決済みのモジュールとアーティファクトに対する全てのキャッシュエントリを無視するようGradleに指示します。
                     対象のリポジトリ全てに対して、新規に解決処理が実行されます。動的バージョンは再取得され、モジュールは再解決され、アーティファクトも再度ダウンロードされます。
+                    ただ、実際にアーティファクトをダウンロードする前に、Gradleは以前ダウンロードしたものが使用できないか確認します。
+                    これは、リポジトリで公開されているSHA1と、ダウンロード済みのアーティファクトのSHA1を比較することで行われます。
                 </para>
             </section>
         </section>
