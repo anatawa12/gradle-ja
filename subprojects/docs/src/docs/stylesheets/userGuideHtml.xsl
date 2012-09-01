@@ -84,4 +84,5 @@
         </div>
     </xsl:template>
 
+    <xsl:template match="//chapter/title/phrase[@role='original']" />
 </xsl:stylesheet>
