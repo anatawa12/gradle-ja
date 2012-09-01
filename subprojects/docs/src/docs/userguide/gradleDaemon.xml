@@ -29,10 +29,10 @@
             We came up with several use cases where the daemon is very useful.
             For some workflows, the user invokes Gradle many times to execute a small number of relatively quick tasks.
             For example:
+            </phrase>
             時おりデーモンが非常に有効であるような時があるでしょう。
             場合によっては、ユーザーはGradleをちょっとしたタスクを何度も実行することがあるでしょう。
             例えば、次のようなケースがあります。
-            </phrase>
             <itemizedlist>
                 <listitem><phrase role="original">When using test driven development, where the unit tests are executed many times.</phrase> テスト駆動開発にて、ユニットテストを度々実行するような場合</listitem>
                 <listitem><phrase role="original">When developing a web application, where the application is assembled many times.</phrase> Webアプリケーション開発にて、アプリケーションを何度も構築する場合</listitem>
@@ -76,7 +76,7 @@
             デーモンが背後で起動しています。
         </para>
         <para><phrase role="original">In future the daemon will offer more features:</phrase>
-            今後は下記の機能が追加される予定である :
+            今後は下記の機能が追加される予定です。
             <itemizedlist>
                 <listitem><phrase role="original">Snappy up-to-date checks: use native file system change notifications (eg via jdk7 nio.2)
                     to preemptively perform up-to-date analysis.</phrase> イケてる更新チェック : ファイルシステムの変更通知(jdk7 nio.2)を利用して
@@ -177,13 +177,13 @@
     </section>
 
     <section id="sec:daemon_properties">
-        <title>Configuring the daemon</title>
-        <para>Some daemon settings, such as JVM arguments, memory settings or the Java home, can be configured.
+        <title>デーモンの設定 <phrase role="original">Configuring the daemon</phrase></title>
+        <para role="original">Some daemon settings, such as JVM arguments, memory settings or the Java home, can be configured.
             Please find more information in <xref linkend="sec:gradle_configuration_properties"/>
         </para>
         <para>デーモンの設定に関しては<filename>gradle.properties</filename>に記述できるものもある。
             例えば、jvmの引数に関する記述 - メモリーの設定、java homeの設定など。
-            より詳細はこちらを参照。<xref linkend="sec:gradle_properties_and_system_properties"/>
+            より詳細はこちらを参照。<xref linkend="sec:gradle_configuration_properties"/>
         </para>
     </section>
 

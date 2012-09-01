@@ -13,7 +13,7 @@
   ~ See the License for the specific language governing permissions and
   ~ limitations under the License.
   -->
-<chapter id="artifact_management">
+<chapter id="artifact_management" xml:lang="ja">
     <title>アーティファクトの公開 <phrase role="original">Publishing artifacts</phrase></title>
     <section>
         <title>はじめに<phrase role="original">Introduction</phrase></title>
@@ -92,7 +92,7 @@
             in <xref linkend="sec:repositories"/>) are not automatically used for uploading. In fact, some of those repositories allow only for artifact downloading.
             Here is an example how you can configure the upload task of a configuration:
         </para>
-        <para>先ほど、すべてのコンフィギュレーションにアップロード用のタスクが作成されることを説明しました。しかし、実際にアップロードする前に、どこにアーティファクトを公開するのか、タスクを設定して定義する必要があります。プロジェクトに定義したリポジトリ(<xref linkend="sec:repositories"/>)が、勝手にアップロードに使用されることはありません。実際、それらのリポジトリには、ダウンロードしか許していないものもあるでしょう。次の例は、アップロードタスクの設定方法を示すものです。</para>
+        <para>先ほど、すべてのコンフィギュレーションにアップロード用のタスクが作成されることを説明しました。しかし、実際にアーティファクトをアップロードするには、どこに公開するかを設定する必要があります。プロジェクトに定義したリポジトリ(<xref linkend="sec:repositories"/>)が、勝手にアップロードに使用されることはありません。実際、それらのリポジトリには、ダウンロードしか許していないものもあるでしょう。次の例は、アップロードタスクの設定方法を示すものです。</para>
         <sample id="uploading" dir="userguide/artifacts/uploading" title="アップロードタスクの設定 / Configuration of the upload task">
             <sourcefile file="build.gradle" snippet="uploading"/>
         </sample>
@@ -100,12 +100,17 @@
         As described in <xref linkend="sub:more_about_ivy_resolvers"/>, you can use all the Ivy resolvers suitable
         for the purpose of uploading.
         </para>
-        <para>If an upload repository is defined with multiple patterns, Gradle must choose a pattern to use for uploading each file.
+        <para>この例のように、定義済みのリポジトリを参照することもできますし、新しくリポジトリ定義を作って追加することもできます。<xref linkend="sub:more_about_ivy_resolvers"/>のときと同じように、アップロードでもすべてのIvyリポジトリリゾルバを使うことができます。</para>
+        <para role="original">If an upload repository is defined with multiple patterns, Gradle must choose a pattern to use for uploading each file.
             By default, Gradle will upload to the pattern defined by the <literal>url</literal> parameter, combined with the optional <literal>layout</literal> parameter.
             If no <literal>url</literal> parameter is supplied, then Gradle will use the first defined <literal>artifactPattern</literal> for uploading,
             or the first defined <literal>ivyPattern</literal> for uploading ivy files, if this is set.
         </para>
-        <para>この例のように、定義済みのリポジトリを参照することもできますし、新しくリポジトリ定義を作って追加することもできます。<xref linkend="sub:more_about_ivy_resolvers"/>のときと同じように、アップロードでもすべてのIvyリポジトリリゾルバを使うことができます。</para>
+        <para>
+        アップロード先のリポジトリ定義に複数のレイアウトパターンが含まれている場合、どのパターンに従ってファイルをアップロードするか決定しなければなりません。
+        デフォルトでは、Gradleは<literal>url</literal>パラメーターを参照します。<literal>layout</literal>が定義されていれば、それも併せて使用します。
+        <literal>url</literal>パラメーターが未定義の場合は、定義されている<literal>artifactPattern</literal>のうち最初のものがアップロードに使用され、また、定義されている<literal>ivyPattern</literal>のうち最初のものがivyファイルのアップロードに使用されます。
+        </para>
         <para role="original">Uploading to a Maven repository is described in <xref linkend="uploading_to_maven_repositories"/>.</para>
         <para>Mavenリポジトリへのアップロードについては、<xref linkend="uploading_to_maven_repositories"/>をご参照ください。</para>
     </section>

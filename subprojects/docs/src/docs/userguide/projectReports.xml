@@ -29,9 +29,10 @@
         コマンドラインレポートとは対照的に、レポートプラグインはレポートをファイルに出力します。
         プラグインによって追加されたすべてのレポートタスクに依存する集約タスクもあります。
     </para>
-    <para>
+    <para role="original">
         We plan to add much more to the existing reports and create additional ones in future releases of Gradle.
     </para>
+    <para>Gradleの将来のリリースではもっと多くの情報をレポートに追加する予定です。</para>
 
     <section>
         <title>使用法 <phrase role="original">Usage</phrase></title>

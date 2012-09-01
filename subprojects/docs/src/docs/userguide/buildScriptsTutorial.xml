@@ -17,7 +17,7 @@
     <title>ビルドスクリプトの基本<phrase role="original">Build Script Basics</phrase></title>
     <section><title>プロジェクトとタスク<phrase role="original">Projects and tasks</phrase></title>
     <para role="original">Everything in Gradle sits on top of two basic concepts: <firstterm>projects</firstterm> and <firstterm>tasks</firstterm>.</para>
-    <para>Gradleには二つの基本的な概念、<firstterm>プロジェクト</firstterm>と<firstterm>タスク</firstterm>があり、すべてがその上に成り立っています。</para>
+    <para>Gradleの根本にあるのは、<firstterm>プロジェクト</firstterm>と<firstterm>タスク</firstterm>という二つの基本的な概念です。</para>
     <para role="original">
         Every Gradle build is made up of one or more <firstterm>projects</firstterm>. A project represents
         some component of your software which can be built. What this means exactly depends on what it is that you are
@@ -27,7 +27,7 @@
         production environments. Don't worry if this seems a little vague for now. Gradle's build-by-convention support adds
         a more concrete definition for what a project is.
     </para>
-    <para>Gradleによるビルドは、一つ以上の<firstterm>プロジェクト</firstterm>から構成されています。プロジェクトとは、ソフトウェアを構成するコンポーネントであり、「ビルドできる」なにかを表す概念です。「ビルド」が何を表すのかによって、プロジェクトの定義も変わってきます。たとえば、あるプロジェクトはライブラリjarやWebアプリケーションをビルドするものかもしれません。または、別のプロジェクトによってビルドされたjarを集めて配布用のzipファイルを作成するものかもしれません。別に何か具体的なものをビルドする必要もなく、アプリケーションを本番環境にステージするというプロジェクトもありえます。それでは、プロジェクトとは結局なんなんでしょう。あいまいな印象を受けられたかもしれませんが、心配する必要はありません。Gradleは規約によるビルドをサポートしており、プロジェクトの定義についても明確に規定されています。</para>
+    <para>Gradleによるビルドは、一つ以上の<firstterm>プロジェクト</firstterm>から構成されます。プロジェクトとは、ビルドされるソフトウェアを構成するコンポーネントのことですが、正確な意味は何をビルドするかによって変わります。たとえば、あるプロジェクトはライブラリjarやWebアプリケーションをビルドするものかもしれません。または、別のプロジェクトによってビルドされたjarを集めて配布用のzipファイルを作成するものかもしれません。何か具体的なものを組み立てるのではなく、処理を行うだけというプロジェクトもありえます。アプリケーションを本番環境にステージするというプロジェクトがその一例です。今は少しあいまいな印象を受けられるかもしれませんが、心配する必要はありません。Gradleは規約によるビルドをサポートしており、プロジェクトの定義については明確に規定されています。</para>
     <para role="original">Each project is made up of one or more <firstterm>tasks</firstterm>. A task represents some atomic piece
         of work which a build performs. This might be compiling some classes, creating a JAR, generating javadoc,
         or publishing some archives to a repository.</para>
@@ -45,7 +45,7 @@
             We call this <filename>build.gradle</filename> file a <firstterm>build script</firstterm>, although strictly speaking it is
             a build configuration script, as we will see later. The build script defines a project and its tasks.
         </para>
-        <para>Gradleのビルドは、<command>gradle</command>コマンドで実行します。<command>gradle</command>コマンドはカレントディレクトリの<filename>build.gradle</filename>ファイルを参照してビルドを行います。<footnote><para>この動作はコマンドラインスイッチを使用して変更できます。<xref linkend='gradle_command_line'/>を参照してください。</para></footnote>このファイルは、一般的には<firstterm>ビルドスクリプト</firstterm>と呼ばれるファイルです(後述しますが、正確には「ビルドの設定を行うスクリプト」です)。Gradleのプロジェクトとタスクは、このビルドスクリプトで定義されます。</para>
+        <para>Gradleのビルドは、<command>gradle</command>コマンドで実行します。<command>gradle</command>コマンドはカレントディレクトリの<filename>build.gradle</filename>ファイルを参照してビルドを行います。<footnote><para>この動作はコマンドラインスイッチを使用して変更できます。<xref linkend='gradle_command_line'/>を参照してください。</para></footnote>このファイルは、一般的には<firstterm>ビルドスクリプト</firstterm>と呼ばれます(後述しますが、正確には「ビルドの設定を行うスクリプト」です)。Gradleのプロジェクトとタスクは、このビルドスクリプトで定義されます。</para>
         <para role="original">To try this out, create the following build script named <filename>build.gradle</filename>.
         </para>
         <para>次のようなスクリプトを、<filename>build.gradle</filename>という名前で作成して試してみてください。</para>
