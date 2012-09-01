@@ -20,23 +20,26 @@ import spock.lang.Specification
 import org.gradle.internal.os.OperatingSystem
 import org.gradle.internal.nativeplatform.jna.LibC
 import org.jruby.ext.posix.BaseNativePOSIX
-import spock.lang.Unroll;
+import spock.lang.Unroll
+import org.jruby.ext.posix.FileStat;
 
 class LibcStatTest extends Specification {
 
     OperatingSystem os = Mock();
     LibC libc = Mock()
     BaseNativePOSIX posix = Mock()
+    FilePathEncoder encoder = Mock()
 
     @Unroll
     def "LibCStat on #osname maps to libc #libcMethodName"(){
         given:
         1 * os.isMacOsX() >> (osname == "macosx");
+        1 * posix.allocateStat() >> Mock(FileStat)
         File testFile = new File("a/file/path")
-        FilePermissionHandlerFactory.LibCStat libCStat = new FilePermissionHandlerFactory.LibCStat(libc, os, posix);
+        LibCStat libCStat = new LibCStat(libc, os, posix, encoder);
         
         when:
-        libCStat.stat(testFile)
+        libCStat.getUnixMode(testFile)
 
         then:
         1 * libc."${libcMethodName}"(*_);

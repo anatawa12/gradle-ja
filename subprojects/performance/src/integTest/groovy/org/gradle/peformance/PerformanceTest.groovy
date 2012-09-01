@@ -16,8 +16,6 @@
 
 package org.gradle.peformance
 
-import org.gradle.integtests.fixtures.GradleDistribution
-import org.gradle.integtests.fixtures.ReleasedVersions
 import org.gradle.peformance.fixture.PerformanceTestRunner
 import spock.lang.Specification
 import spock.lang.Unroll
@@ -26,31 +24,96 @@ import spock.lang.Unroll
  * by Szczepan Faber, created at: 2/9/12
  */
 class PerformanceTest extends Specification {
-
-    def current = new GradleDistribution()
-    def previous = new ReleasedVersions(current).last
-
-    @Unroll("Project '#testProject' ran #runs times. Current release is not slower than the previous one.")
-    def "speed"() {
+    @Unroll("Project '#testProject' clean build")
+    def "clean build"() {
         expect:
-        def result = new PerformanceTestRunner(testProject: testProject, runs: runs, warmUpRuns: 1, accuracyMs: accuracyMs).run()
+        def result = new PerformanceTestRunner(testProject: testProject,
+                tasksToRun: ['clean', 'build'],
+                runs: runs,
+                warmUpRuns: 1,
+                accuracyMs: accuracyMs
+        ).run()
         result.assertCurrentReleaseIsNotSlower()
+        result.assertMemoryUsed(0.01)
 
         where:
-        testProject | runs | accuracyMs
-        "small"     | 10   | 500
-        "multi"     | 10   | 1000
+        testProject       | runs | accuracyMs
+        "small"           | 5    | 500
+        "multi"           | 5    | 1000
+        "lotDependencies" | 5    | 1000
     }
 
-    @Unroll("Project '#testProject' with heap size: #heapSize. Current release does not require more memory than the previous one.")
-    def "memory"() {
+    @Unroll("Project '#testProject' up-to-date build")
+    def "build"() {
         expect:
-        def result = new PerformanceTestRunner(testProject: testProject, runs: 1, gradleOpts: [heapSize]).run()
-        result.assertEveryBuildSucceeds()
+        def result = new PerformanceTestRunner(testProject: testProject,
+                tasksToRun: ['build'],
+                runs: runs,
+                warmUpRuns: 1,
+                accuracyMs: accuracyMs
+        ).run()
+        result.assertCurrentReleaseIsNotSlower()
+        result.assertMemoryUsed(0.01)
 
         where:
-        testProject | heapSize
-        "small"     | '-Xmx19m' //fails with 16m
-        "multi"     | '-Xmx66m' //fails with 54m on my box, with 60m on ci
+        testProject       | runs | accuracyMs
+        "small"           | 5    | 500
+        "multi"           | 5    | 1000
+        "lotDependencies" | 5    | 1000
+    }
+
+    @Unroll("Project '#testProject' dependency report")
+    def "dependency report"() {
+        expect:
+        def result = new PerformanceTestRunner(testProject: testProject,
+                tasksToRun: ['dependencyReport'],
+                runs: runs,
+                warmUpRuns: 1,
+                accuracyMs: accuracyMs
+        ).run()
+        result.assertCurrentReleaseIsNotSlower()
+        result.assertMemoryUsed(0.05)
+
+        where:
+        testProject       | runs | accuracyMs
+        "lotDependencies" | 3    | 3000
+    }
+
+    @Unroll("Project '#testProject' eclipse")
+    def "eclipse"() {
+        expect:
+        def result = new PerformanceTestRunner(testProject: testProject,
+                tasksToRun: ['eclipse'],
+                runs: runs,
+                warmUpRuns: 1,
+                accuracyMs: accuracyMs
+        ).run()
+        result.assertCurrentReleaseIsNotSlower()
+        result.assertMemoryUsed(0.01)
+
+        where:
+        testProject       | runs | accuracyMs
+        "small"           | 5    | 500
+        "multi"           | 5    | 1000
+//        "lotDependencies" | 5    | 1000
+    }
+
+    @Unroll("Project '#testProject' idea")
+    def "idea"() {
+        expect:
+        def result = new PerformanceTestRunner(testProject: testProject,
+                tasksToRun: ['idea'],
+                runs: runs,
+                warmUpRuns: 1,
+                accuracyMs: accuracyMs
+        ).run()
+        result.assertCurrentReleaseIsNotSlower()
+        result.assertMemoryUsed(0.01)
+
+        where:
+        testProject       | runs | accuracyMs
+        "small"           | 5    | 500
+        "multi"           | 5    | 1000
+//        "lotDependencies" | 5    | 1000
     }
 }

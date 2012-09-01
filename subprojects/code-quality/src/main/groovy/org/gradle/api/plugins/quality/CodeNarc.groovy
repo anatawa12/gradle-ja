@@ -27,6 +27,8 @@ import org.gradle.internal.reflect.Instantiator
 import org.gradle.logging.ConsoleRenderer
 import org.gradle.util.DeprecationLogger
 
+import javax.inject.Inject
+
 /**
  * Runs CodeNarc against some source files.
  */
@@ -86,17 +88,24 @@ class CodeNarc extends SourceTask implements VerificationTask, Reporting<CodeNar
     }
 
     @Nested
-    private final CodeNarcReportsImpl reports = services.get(Instantiator).newInstance(CodeNarcReportsImpl, this)
+    private final CodeNarcReportsImpl reports
+
+    private final IsolatedAntBuilder antBuilder
 
     /**
      * Whether or not the build should break when the verifications performed by this task fail.
      */
     boolean ignoreFailures
 
+    @Inject
+    CodeNarc(Instantiator instantiator, IsolatedAntBuilder antBuilder) {
+        reports = instantiator.newInstance(CodeNarcReportsImpl, this)
+        this.antBuilder = antBuilder
+    }
+
     @TaskAction
     void run() {
         logging.captureStandardOutput(LogLevel.INFO)
-        def antBuilder = services.get(IsolatedAntBuilder)
         antBuilder.withClasspath(getCodenarcClasspath()).execute {
             ant.taskdef(name: 'codenarc', classname: 'org.codenarc.ant.CodeNarcTask')
             try {

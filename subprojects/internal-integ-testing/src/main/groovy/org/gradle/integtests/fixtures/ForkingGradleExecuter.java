@@ -16,13 +16,11 @@
 
 package org.gradle.integtests.fixtures;
 
-import org.gradle.StartParameter;
 import org.gradle.cli.CommandLineParser;
 import org.gradle.cli.SystemPropertiesCommandLineConverter;
 import org.gradle.internal.Factory;
 import org.gradle.internal.nativeplatform.jna.WindowsHandlesManipulator;
 import org.gradle.internal.os.OperatingSystem;
-import org.gradle.launcher.daemon.configuration.DaemonParameters;
 import org.gradle.launcher.daemon.registry.DaemonRegistry;
 import org.gradle.launcher.daemon.registry.DaemonRegistryServices;
 import org.gradle.process.internal.ExecHandleBuilder;
@@ -55,15 +53,7 @@ public class ForkingGradleExecuter extends AbstractGradleExecuter {
     }
 
     public DaemonRegistry getDaemonRegistry() {
-        File userHome = getUserHomeDir();
-        if (userHome == null) {
-            userHome = StartParameter.DEFAULT_GRADLE_USER_HOME;
-        }
-
-        DaemonParameters parameters = new DaemonParameters();
-        parameters.configureFromGradleUserHome(userHome);
-        parameters.configureFromSystemProperties(getSystemPropertiesFromArgs());
-        return new DaemonRegistryServices(parameters.getBaseDir()).get(DaemonRegistry.class);
+        return new DaemonRegistryServices(getDaemonBaseDir()).get(DaemonRegistry.class);
     }
 
     protected Map<String, String> getSystemPropertiesFromArgs() {
@@ -128,11 +118,15 @@ public class ForkingGradleExecuter extends AbstractGradleExecuter {
 
     @Override
     public GradleHandle doStart() {
-        return new ForkingGradleHandle(getDefaultCharacterEncoding(), new Factory<ExecHandleBuilder>() {
+        return createGradleHandle(getDefaultCharacterEncoding(), new Factory<ExecHandleBuilder>() {
             public ExecHandleBuilder create() {
                 return createExecHandleBuilder();
             }
         }).start();
+    }
+
+    protected ForkingGradleHandle createGradleHandle(String encoding, Factory<ExecHandleBuilder> execHandleFactory) {
+        return new ForkingGradleHandle(encoding, execHandleFactory);
     }
 
     protected ExecutionResult doRun() {

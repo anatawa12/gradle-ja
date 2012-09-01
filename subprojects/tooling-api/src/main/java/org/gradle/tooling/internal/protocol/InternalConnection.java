@@ -18,9 +18,11 @@ package org.gradle.tooling.internal.protocol;
 
 /**
  * by Szczepan Faber, created at: 1/1/12
+ *
+ * @deprecated Use {@link BuildActionRunner} instead.
  */
+@Deprecated
 public interface InternalConnection extends ConnectionVersion4, InternalProtocolInterface {
-
     /**
      * Fetches a snapshot of the model for the project. This method is generic so that we're not locked
      * to building particular model type.
@@ -29,6 +31,8 @@ public interface InternalConnection extends ConnectionVersion4, InternalProtocol
      *
      * @throws UnsupportedOperationException When the given model type is not supported.
      * @throws IllegalStateException When this connection has been stopped.
+     * @deprecated Use {@link BuildActionRunner#run(Class, BuildOperationParametersVersion1)} instead.
      */
+    @Deprecated
     <T> T getTheModel(Class<T> type, BuildOperationParametersVersion1 operationParameters) throws UnsupportedOperationException, IllegalStateException;
 }

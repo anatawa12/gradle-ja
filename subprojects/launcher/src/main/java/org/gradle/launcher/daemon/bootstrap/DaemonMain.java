@@ -27,14 +27,17 @@ import org.gradle.launcher.daemon.context.DaemonContext;
 import org.gradle.launcher.daemon.logging.DaemonMessages;
 import org.gradle.launcher.daemon.server.Daemon;
 import org.gradle.launcher.daemon.server.DaemonServices;
-import org.gradle.launcher.daemon.server.DaemonStoppedException;
 import org.gradle.logging.LoggingManagerInternal;
 import org.gradle.logging.LoggingServiceRegistry;
 import org.gradle.logging.internal.OutputEventRenderer;
 
-import java.io.*;
+import java.io.ByteArrayInputStream;
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.PrintStream;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 /**
  * The entry point for a daemon process.
@@ -112,12 +115,10 @@ public class DaemonMain extends EntryPoint {
         daemonStarted(pid, daemonLog);
 
         try {
-            daemon.awaitIdleTimeout(configuration.getIdleTimeout());
+            daemon.requestStopOnIdleTimeout(configuration.getIdleTimeout(), TimeUnit.MILLISECONDS);
             LOGGER.info("Daemon hit idle timeout (" + configuration.getIdleTimeout() + "ms), stopping...");
+        } finally {
             daemon.stop();
-        } catch (DaemonStoppedException e) {
-            LOGGER.debug("Daemon stopping due to the stop request");
-            listener.onFailure(e);
         }
     }
 
@@ -170,12 +171,10 @@ public class DaemonMain extends EntryPoint {
         return daemon;
     }
 
-    private void redirectOutputsAndInput(OutputStream log) {
+    private void redirectOutputsAndInput(PrintStream printStream) {
         this.originalOut = System.out;
         this.originalErr = System.err;
         //InputStream originalIn = System.in;
-
-        PrintStream printStream = new PrintStream(log, true);
 
         System.setOut(printStream);
         System.setErr(printStream);

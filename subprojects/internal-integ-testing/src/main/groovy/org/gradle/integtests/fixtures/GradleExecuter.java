@@ -60,6 +60,11 @@ public interface GradleExecuter {
     GradleExecuter withArguments(List<String> args);
 
     /**
+     * Adds an additional command-line argument to use when executing the build.
+     */
+    GradleExecuter withArgument(String arg);
+
+    /**
      * Sets the environment variables to use when executing the build. Defaults to the environment of this process.
      */
     GradleExecuter withEnvironmentVars(Map<String, ?> environment);
@@ -102,6 +107,11 @@ public interface GradleExecuter {
      * Sets the stdin to use for the build. Defaults to an empty string.
      */
     GradleExecuter withStdIn(InputStream stdin);
+
+    /**
+     * Specifies that the executer should not set any default jvm args.
+     */
+    GradleExecuter withNoDefaultJvmArgs();
 
     /**
      * Executes the requested build, asserting that the build succeeds. Resets the configuration of this executer.
@@ -148,4 +158,22 @@ public interface GradleExecuter {
      * @return this executer
      */
     GradleExecuter withDefaultCharacterEncoding(String defaultCharacterEncoding);
+
+    /**
+     * Set the number of seconds an idle daemon should live for.
+     *
+     * @param secs
+     *
+     * @return this executer
+     */
+    GradleExecuter withDaemonIdleTimeoutSecs(int secs);
+
+    /**
+     * Set the working space for the daemon and launched daemons
+     *
+     * @param baseDir
+     *
+     * @return this executer
+     */
+    GradleExecuter withDaemonBaseDir(File baseDir);
 }

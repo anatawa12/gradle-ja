@@ -53,6 +53,9 @@ public class DefaultCommandLineConverter extends AbstractCommandLineConverter<St
     private static final String PROJECT_CACHE_DIR = "project-cache-dir";
     private static final String RECOMPILE_SCRIPTS = "recompile-scripts";
 
+    private static final String PARALLEL = "parallel";
+    private static final String PARALLEL_THREADS = "parallel-threads";
+
     private final CommandLineConverter<LoggingConfiguration> loggingConfigurationCommandLineConverter = new LoggingCommandLineConverter();
     private final SystemPropertiesCommandLineConverter systemPropertiesCommandLineConverter = new SystemPropertiesCommandLineConverter();
     private final ProjectPropertiesCommandLineConverter projectPropertiesCommandLineConverter = new ProjectPropertiesCommandLineConverter();
@@ -78,10 +81,12 @@ public class DefaultCommandLineConverter extends AbstractCommandLineConverter<St
         parser.option(RECOMPILE_SCRIPTS).hasDescription("Force build script recompiling.");
         parser.option(EXCLUDE_TASK, "exclude-task").hasArguments().hasDescription("Specify a task to be excluded from execution.");
         parser.option(PROFILE).hasDescription("Profiles build execution time and generates a report in the <build_dir>/reports/profile directory.");
-        parser.option(CONTINUE).hasDescription("Continues task execution after a task failure.").experimental();
+        parser.option(CONTINUE).hasDescription("Continues task execution after a task failure.");
         parser.option(OFFLINE).hasDescription("The build should operate without accessing network resources.");
         parser.option(REFRESH).hasArguments().hasDescription("Refresh the state of resources of the type(s) specified. Currently only 'dependencies' is supported.").deprecated("Use '--refresh-dependencies' instead.");
         parser.option(REFRESH_DEPENDENCIES).hasDescription("Refresh the state of dependencies.");
+        parser.option(PARALLEL).hasDescription("Build projects in parallel. Gradle will attempt to determine the optimal number of executor threads to use.").incubating();
+        parser.option(PARALLEL_THREADS).hasArgument().hasDescription("Build projects in parallel, using the specified number of executor threads.").incubating();
     }
 
     @Override
@@ -178,6 +183,19 @@ public class DefaultCommandLineConverter extends AbstractCommandLineConverter<St
 
         if (options.hasOption(REFRESH_DEPENDENCIES)) {
             startParameter.setRefreshDependencies(true);
+        }
+
+        if (options.hasOption(PARALLEL)) {
+            startParameter.setParallelThreadCount(-1);
+        }
+
+        if (options.hasOption(PARALLEL_THREADS)) {
+            try {
+                int parallelThreads = Integer.parseInt(options.option(PARALLEL_THREADS).getValue());
+                startParameter.setParallelThreadCount(parallelThreads);
+            } catch (NumberFormatException e) {
+                throw new CommandLineArgumentException(String.format("Not a numeric argument for %s", PARALLEL_THREADS));
+            }
         }
 
         return startParameter;

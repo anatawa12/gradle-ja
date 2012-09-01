@@ -66,7 +66,7 @@ class DefaultDaemonConnectorTest extends Specification {
         def daemonNum = daemonCounter++
         DaemonContext context = new DefaultDaemonContext(daemonNum.toString(), javaHome, javaHome, daemonNum, 1000, [])
         def address = createAddress(daemonNum)
-        registry.store(address, context, "password")
+        registry.store(address, context, "password", false)
         registry.markBusy(address)
         return new DaemonStartupInfo(daemonNum.toString(), null);
     }
@@ -75,7 +75,7 @@ class DefaultDaemonConnectorTest extends Specification {
         def daemonNum = daemonCounter++
         DaemonContext context = new DefaultDaemonContext(daemonNum.toString(), javaHome, javaHome, daemonNum, 1000, [])
         def address = createAddress(daemonNum)
-        registry.store(address, context, "password")
+        registry.store(address, context, "password", true)
     }
 
     def theConnector
@@ -109,6 +109,18 @@ class DefaultDaemonConnectorTest extends Specification {
         expect:
         def connection = connector.maybeConnect({it.pid < 12} as ExplainingSpec)
         connection && connection.connection.num < 12
+    }
+
+    def "created connection removes from registry on failure"() {
+        given:
+        startIdleDaemon()
+
+        when:
+        def connection = connector.maybeConnect( { true } as ExplainingSpec)
+        connection.onFailure.run()
+
+        then:
+        registry.remove( _ as Address )
     }
 
     def "maybeConnect() returns null when no daemon matches spec"() {

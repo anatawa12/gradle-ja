@@ -82,7 +82,7 @@
                 <phrase role="original">All tasks which produce the compile classpath. This includes the <literal>jar</literal> task for
                     project dependencies included in the <literal>compile</literal> configuration.</phrase>
                 </td>
-                <td><apilink class="org.gradle.api.tasks.compile.Compile"/></td>
+                <td><apilink class="org.gradle.api.tasks.compile.JavaCompile"/></td>
                 <td>javacを使って製品Javaソースファイルをコンパイルする
                 <phrase role="original">Compiles production Java source files using javac.</phrase></td>
             </tr>
@@ -117,7 +117,7 @@
                     <literal>compile</literal>、そしてテストのコンパイル時クラスパスを作り出すすべてのタスク
                     <phrase role="original"><literal>compile</literal>, plus all tasks which produce the test compile classpath.</phrase>
                 </td>
-                <td><apilink class="org.gradle.api.tasks.compile.Compile"/></td>
+                <td><apilink class="org.gradle.api.tasks.compile.JavaCompile"/></td>
                 <td>javacを使ってテストJavaソースファイルをコンパイルする
                 <phrase role="original">Compiles test Java source files using javac.</phrase></td>
             </tr>
@@ -234,7 +234,7 @@
                     このソースセットのコンパイル時クラスパスを作り出すすべてのタスク
                     <phrase role="original">All tasks which produce the source set's compile classpath.</phrase>
                 </td>
-                <td><apilink class="org.gradle.api.tasks.compile.Compile"/></td>
+                <td><apilink class="org.gradle.api.tasks.compile.JavaCompile"/></td>
                 <td>javacを使って特定のソースセットのJavaソースファイルをコンパイルする
                 <phrase role="original">Compiles the given source set's Java source files using javac.</phrase></td>
             </tr>
@@ -1225,10 +1225,10 @@
 
     <section id='sec:compile'>
         <title>CompileJava<phrase role="original">CompileJava</phrase></title>
-        <para role="original">The Java plugin adds a <apilink class="org.gradle.api.tasks.compile.Compile"/> instance for each
+        <para role="original">The Java plugin adds a <apilink class="org.gradle.api.tasks.compile.JavaCompile"/> instance for each
             source set in the project. Some of the most common configuration options are shown below.
         </para>
-        <para>Javaプラグインは、プロジェクトの各ソースセットに対して一つの<apilink class="org.gradle.api.tasks.compile.Compile"/>インスタンスを追加します。
+        <para>Javaプラグインは、プロジェクトの各ソースセットに対して一つの<apilink class="org.gradle.api.tasks.compile.JavaCompile"/>インスタンスを追加します。
         compileタスクは、実際のコンパイル作業をAntのjavacタスクに委譲します。
         Antのjavacタスクの大部分のプロパティが設定可能です。
         </para>

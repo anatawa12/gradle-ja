@@ -15,20 +15,17 @@
  */
 package org.gradle.integtests.resolve.maven
 
+import org.gradle.integtests.fixture.M2Installation
 import org.gradle.integtests.fixtures.AbstractIntegrationSpec
-import org.gradle.integtests.fixtures.GradleDistributionExecuter
+import org.gradle.integtests.fixtures.MavenModule
 import org.gradle.integtests.fixtures.MavenRepository
 import org.gradle.util.SetSystemProperties
 import org.gradle.util.TestFile
-import org.gradle.integtests.fixture.M2Installation
 import org.junit.Rule
-import spock.lang.IgnoreIf
 
 import static org.hamcrest.Matchers.containsString
 import static org.hamcrest.Matchers.not
-import org.gradle.integtests.fixtures.MavenModule
 
-@IgnoreIf({ GradleDistributionExecuter.systemPropertyExecuter == GradleDistributionExecuter.Executer.daemon})
 class MavenLocalRepoResolveIntegrationTest extends AbstractIntegrationSpec {
 
     @Rule SetSystemProperties sysProp = new SetSystemProperties()
@@ -145,11 +142,10 @@ class MavenLocalRepoResolveIntegrationTest extends AbstractIntegrationSpec {
         def failure = runAndFail('retrieve')
 
         then:
-        failure.assertThatDescription(not(containsString("Build aborted because of an internal error")));
-        failure.assertThatDescription(containsString(String.format("Non-parseable settings %s:", m2.userSettingsFile.absolutePath)));
+        failure.assertThatCause(containsString(String.format("Non-parseable settings %s:", m2.userSettingsFile.absolutePath)));
     }
 
-    public void "mavenLocal is ignored if not ~/.m2 is defined"() {
+    public void "mavenLocal is ignored if no local maven repository exists"() {
         given:
         def anotherRepo = new MavenRepository(file("another-local-repo"))
         def moduleA = anotherRepo.module('group', 'projectA', '1.2')
@@ -179,10 +175,9 @@ class MavenLocalRepoResolveIntegrationTest extends AbstractIntegrationSpec {
     def withM2(M2Installation m2) {
         def args = ["-Duser.home=${m2.userM2Directory.parentFile.absolutePath}".toString()]
         if (m2.globalMavenDirectory?.exists()) {
-            args << "-DM2_HOME=${m2.globalMavenDirectory.absolutePath}".toString()
+            executer.withEnvironmentVars(M2_HOME:m2.globalMavenDirectory.absolutePath)
         }
         executer.withArguments(args)
-        executer.withForkingExecuter()
     }
 
     M2Installation localM2() {

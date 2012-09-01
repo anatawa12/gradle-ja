@@ -13,26 +13,27 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package org.gradle.api.internal.artifacts.repositories;
 
 import org.apache.ivy.core.IvyPatternHelper;
 import org.apache.ivy.core.cache.ArtifactOrigin;
-import org.apache.ivy.core.event.EventManager;
 import org.apache.ivy.core.module.descriptor.Artifact;
 import org.apache.ivy.core.module.descriptor.DefaultArtifact;
 import org.apache.ivy.core.module.descriptor.DependencyDescriptor;
 import org.apache.ivy.core.module.descriptor.ModuleDescriptor;
 import org.apache.ivy.core.module.id.ArtifactRevisionId;
 import org.apache.ivy.core.module.id.ModuleRevisionId;
-import org.apache.ivy.core.report.DownloadReport;
+import org.apache.ivy.core.report.ArtifactDownloadReport;
 import org.apache.ivy.core.resolve.DownloadOptions;
 import org.apache.ivy.core.resolve.ResolveData;
-import org.apache.ivy.plugins.latest.ArtifactInfo;
+import org.apache.ivy.core.search.ModuleEntry;
+import org.apache.ivy.core.search.OrganisationEntry;
+import org.apache.ivy.core.search.RevisionEntry;
 import org.apache.ivy.plugins.repository.Resource;
 import org.apache.ivy.plugins.resolver.BasicResolver;
 import org.apache.ivy.plugins.resolver.util.MDResolvedResource;
 import org.apache.ivy.plugins.resolver.util.ResolvedResource;
-import org.apache.ivy.plugins.resolver.util.ResolverHelper;
 import org.apache.ivy.plugins.resolver.util.ResourceMDParser;
 import org.apache.ivy.plugins.version.VersionMatcher;
 import org.apache.ivy.util.ChecksumHelper;
@@ -49,6 +50,7 @@ import org.gradle.api.internal.externalresource.local.LocallyAvailableResourceFi
 import org.gradle.api.internal.externalresource.metadata.ExternalResourceMetaData;
 import org.gradle.api.internal.file.TemporaryFileProvider;
 import org.gradle.api.internal.file.TmpDirTemporaryFileProvider;
+import org.gradle.api.internal.resource.ResourceNotFoundException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -67,13 +69,16 @@ public class ExternalResourceResolver extends BasicResolver {
     private final ExternalResourceRepository repository;
     private final LocallyAvailableResourceFinder<ArtifactRevisionId> locallyAvailableResourceFinder;
     private final CachedExternalResourceIndex<String> cachedExternalResourceIndex;
+    protected VersionLister versionLister;
 
     public ExternalResourceResolver(String name,
                                     ExternalResourceRepository repository,
+                                    VersionLister versionLister,
                                     LocallyAvailableResourceFinder<ArtifactRevisionId> locallyAvailableResourceFinder,
                                     CachedExternalResourceIndex<String> cachedExternalResourceIndex
     ) {
         setName(name);
+        this.versionLister = versionLister;
         this.repository = repository;
         this.locallyAvailableResourceFinder = locallyAvailableResourceFinder;
         this.cachedExternalResourceIndex = cachedExternalResourceIndex;
@@ -89,10 +94,6 @@ public class ExternalResourceResolver extends BasicResolver {
             mrid = convertM2IdForResourceSearch(mrid);
         }
         return findResourceUsingPatterns(mrid, ivyPatterns, DefaultArtifact.newIvyArtifact(mrid, data.getDate()), getRMDParser(dd, data), data.getDate(), true);
-    }
-
-    protected ResolvedResource findArtifactRef(Artifact artifact, Date date) {
-        throw new UnsupportedOperationException();
     }
 
     @Override
@@ -111,7 +112,8 @@ public class ExternalResourceResolver extends BasicResolver {
 
     @Override
     public boolean exists(Artifact artifact) {
-        return locate(artifact) != null;
+        // This is never used
+        throw new UnsupportedOperationException();
     }
 
     @Override
@@ -169,11 +171,10 @@ public class ExternalResourceResolver extends BasicResolver {
         }
     }
 
-    public ResolvedResource findLatestResource(ModuleRevisionId mrid, String[] versions, ResourceMDParser rmdparser, Date date, String pattern, Artifact artifact, boolean forDownload) throws IOException {
+    public ResolvedResource findLatestResource(ModuleRevisionId mrid, VersionList versions, ResourceMDParser rmdparser, Date date, String pattern, Artifact artifact, boolean forDownload) throws IOException {
         String name = getName();
         VersionMatcher versionMatcher = getSettings().getVersionMatcher();
-
-        List<String> sorted = sortVersionsLatestFirst(versions);
+        List<String> sorted = versions.sortLatestFirst(getLatestStrategy());
         for (String version : sorted) {
             ModuleRevisionId foundMrid = ModuleRevisionId.newInstance(mrid, version);
 
@@ -217,20 +218,6 @@ public class ExternalResourceResolver extends BasicResolver {
         return null;
     }
 
-    public DownloadReport download(Artifact[] artifacts, DownloadOptions options) {
-        EventManager eventManager = getEventManager();
-        try {
-            if (eventManager != null) {
-                repository.addTransferListener(eventManager);
-            }
-            return super.download(artifacts, options);
-        } finally {
-            if (eventManager != null) {
-                repository.removeTransferListener(eventManager);
-            }
-        }
-    }
-
     protected ResolvedResource findResourceUsingPattern(ModuleRevisionId moduleRevisionId, String pattern, Artifact artifact, ResourceMDParser resourceParser, Date date, boolean forDownload) {
         String name = getName();
         VersionMatcher versionMatcher = getSettings().getVersionMatcher();
@@ -262,8 +249,8 @@ public class ExternalResourceResolver extends BasicResolver {
 
     private ResolvedResource findDynamicResourceUsingPattern(ResourceMDParser resourceParser, ModuleRevisionId moduleRevisionId, String pattern, Artifact artifact, Date date, boolean forDownload) throws IOException {
         logAttempt(IvyPatternHelper.substitute(pattern, ModuleRevisionId.newInstance(moduleRevisionId, IvyPatternHelper.getTokenString(IvyPatternHelper.REVISION_KEY)), artifact));
-        String[] versions = listVersions(moduleRevisionId, pattern, artifact);
-        if (versions == null) {
+        VersionList versions = listVersions(moduleRevisionId, pattern, artifact);
+        if (versions.isEmpty()) {
             LOGGER.debug("Unable to list versions for {}: pattern={}", moduleRevisionId, pattern);
             return null;
         } else {
@@ -285,25 +272,62 @@ public class ExternalResourceResolver extends BasicResolver {
         }
     }
 
-    private List<String> sortVersionsLatestFirst(String[] versions) {
-        ArtifactInfo[] artifactInfos = new ArtifactInfo[versions.length];
-        for (int i = 0; i < versions.length; i++) {
-            String version = versions[i];
-            artifactInfos[i] = new VersionArtifactInfo(version);
-        }
-        List<ArtifactInfo> sorted = getLatestStrategy().sort(artifactInfos);
-        Collections.reverse(sorted);
+    @Override
+    public ArtifactDownloadReport download(ArtifactOrigin origin, DownloadOptions options) {
+        // This is never used
+        throw new UnsupportedOperationException();
+    }
 
-        List<String> sortedVersions = new ArrayList<String>();
-        for (ArtifactInfo info : sorted) {
-            sortedVersions.add(info.getRevision());
-        }
-        return sortedVersions;
+    @Override
+    public void reportFailure() {
+        // This is never used
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public void reportFailure(Artifact art) {
+        // This is never used
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public String[] listTokenValues(String token, Map otherTokenValues) {
+        // This is never used
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public Map[] listTokenValues(String[] tokens, Map criteria) {
+        // This is never used
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public OrganisationEntry[] listOrganisations() {
+        // This is never used
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public ModuleEntry[] listModules(OrganisationEntry org) {
+        // This is never used
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public RevisionEntry[] listRevisions(ModuleEntry mod) {
+                // This is never used
+        throw new UnsupportedOperationException();
+    }
+
+    protected ResolvedResource findArtifactRef(Artifact artifact, Date date) {
+        // This is never used
+        throw new UnsupportedOperationException();
     }
 
     protected Resource getResource(String source) throws IOException {
-        ExternalResource resource = repository.getResource(source);
-        return resource == null ? new MissingExternalResource(source) : resource;
+        // This is never used
+        throw new UnsupportedOperationException();
     }
 
     protected Resource getResource(String source, Artifact target, boolean forDownload) throws IOException {
@@ -320,11 +344,13 @@ public class ExternalResourceResolver extends BasicResolver {
         }
     }
 
-    protected String[] listVersions(ModuleRevisionId moduleRevisionId, String pattern, Artifact artifact) {
-        ModuleRevisionId idWithoutRevision = ModuleRevisionId.newInstance(moduleRevisionId, IvyPatternHelper.getTokenString(IvyPatternHelper.REVISION_KEY));
-        String partiallyResolvedPattern = IvyPatternHelper.substitute(pattern, idWithoutRevision, artifact);
-        LOGGER.debug("Listing all in {}", partiallyResolvedPattern);
-        return ResolverHelper.listTokenValues(repository, partiallyResolvedPattern, IvyPatternHelper.REVISION_KEY);
+    protected VersionList listVersions(ModuleRevisionId moduleRevisionId, String pattern, Artifact artifact) throws IOException {
+        try {
+            return versionLister.getVersionList(moduleRevisionId, pattern, artifact);
+        } catch (ResourceNotFoundException e) {
+            LOGGER.debug(String.format("Unable to load version list for %s from %s", moduleRevisionId.getModuleId(), getRepository()));
+            return new DefaultVersionList(Collections.<String>emptyList());
+        }
     }
 
     protected long get(Resource resource, File destination) throws IOException {
@@ -337,7 +363,12 @@ public class ExternalResourceResolver extends BasicResolver {
             throw new IllegalArgumentException("Can only download ExternalResource");
         }
 
-        repository.downloadResource((ExternalResource) resource, destination);
+        ExternalResource externalResource = (ExternalResource) resource;
+        try {
+            externalResource.writeTo(destination);
+        } finally {
+            externalResource.close();
+        }
         return destination.length();
     }
 
@@ -358,7 +389,7 @@ public class ExternalResourceResolver extends BasicResolver {
 
         String destination = getDestination(destinationPattern, artifact, moduleRevisionId);
 
-        put(artifact, src, destination, overwrite);
+        put(src, destination);
         LOGGER.info("Published {} to {}", artifact.getName(), hidePassword(destination));
     }
 
@@ -366,7 +397,7 @@ public class ExternalResourceResolver extends BasicResolver {
         return IvyPatternHelper.substitute(pattern, moduleRevisionId, artifact);
     }
 
-    private void put(Artifact artifact, File src, String destination, boolean overwrite) throws IOException {
+    private void put(File src, String destination) throws IOException {
         // verify the checksum algorithms before uploading artifacts!
         String[] checksums = getChecksumAlgorithms();
         for (String checksum : checksums) {
@@ -375,20 +406,19 @@ public class ExternalResourceResolver extends BasicResolver {
             }
         }
 
-        repository.put(artifact, src, destination, overwrite);
+        repository.put(src, destination);
         for (String checksum : checksums) {
-            putChecksum(artifact, src, destination, overwrite, checksum);
+            putChecksum(src, destination, checksum);
         }
     }
 
-    private void putChecksum(Artifact artifact, File src, String destination, boolean overwrite,
+    private void putChecksum(File src, String destination,
                              String algorithm) throws IOException {
         File csFile = temporaryFileProvider.createTemporaryFile("ivytemp", algorithm);
         try {
             FileUtil.copy(new ByteArrayInputStream(ChecksumHelper.computeAsString(src, algorithm)
                     .getBytes()), csFile, null);
-            repository.put(DefaultArtifact.cloneWithAnotherTypeAndExt(artifact, algorithm,
-                    artifact.getExt() + "." + algorithm), csFile, destination + "." + algorithm, overwrite);
+            repository.put(csFile, destination + "." + algorithm);
         } finally {
             csFile.delete();
         }
@@ -453,19 +483,4 @@ public class ExternalResourceResolver extends BasicResolver {
                 mrid.getQualifiedExtraAttributes());
     }
 
-    private class VersionArtifactInfo implements ArtifactInfo {
-        private final String version;
-
-        private VersionArtifactInfo(String version) {
-            this.version = version;
-        }
-
-        public String getRevision() {
-            return version;
-        }
-
-        public long getLastModified() {
-            return 0;
-        }
-    }
 }

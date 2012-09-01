@@ -15,29 +15,31 @@
  */
 package org.gradle.api.internal.externalresource;
 
+import org.apache.commons.io.IOUtils;
 import org.apache.ivy.plugins.repository.Resource;
-import org.apache.ivy.util.CopyProgressListener;
-import org.apache.ivy.util.FileUtil;
 
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
+import java.io.*;
 
 public abstract class AbstractExternalResource implements ExternalResource {
-    public void writeTo(File destination, CopyProgressListener progress) throws IOException {
+
+    public void writeTo(File destination) throws IOException {
         FileOutputStream output = new FileOutputStream(destination);
         try {
-            InputStream input = openStream();
-            try {
-                FileUtil.copy(input, output, progress);
-            } finally {
-                input.close();
-            }
+            writeTo(output);
         } finally {
             output.close();
         }
     }
+
+    public void writeTo(OutputStream output) throws IOException {
+        InputStream input = openStream();
+        try {
+            IOUtils.copy(input, output);
+        } finally {
+            input.close();
+        }
+    }
+
 
     public Resource clone(String cloneName) {
         throw new UnsupportedOperationException();
@@ -45,5 +47,4 @@ public abstract class AbstractExternalResource implements ExternalResource {
 
     public void close() throws IOException {
     }
-
 }

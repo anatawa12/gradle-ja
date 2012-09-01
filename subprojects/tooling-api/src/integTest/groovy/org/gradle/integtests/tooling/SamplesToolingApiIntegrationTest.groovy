@@ -15,6 +15,7 @@
  */
 package org.gradle.integtests.tooling
 
+import org.gradle.util.TextUtil
 import org.junit.Rule
 import spock.lang.Specification
 import org.gradle.integtests.fixtures.*
@@ -24,65 +25,81 @@ class SamplesToolingApiIntegrationTest extends Specification {
     @Rule public final Sample sample = new Sample()
 
     @UsesSample('toolingApi/eclipse')
-    def canUseToolingApiToDetermineProjectClasspath() {
-        def projectDir = sample.dir
-        Properties props = new Properties()
-        props['toolingApiRepo'] = distribution.libsRepo.toURI().toString()
-        props['gradleDistribution'] = distribution.gradleHomeDir.toString()
-        projectDir.file('gradle.properties').withOutputStream {outstr ->
-            props.store(outstr, 'props')
-        }
-        projectDir.file('settings.gradle').text = '// to stop search upwards'
+    def "can use tooling API to build Eclipse model"() {
+        tweakProject()
 
         when:
-        def result = run(projectDir)
+        def result = run()
 
         then:
         result.output.contains("gradle-tooling-api-")
         result.output.contains("src/main/java")
     }
 
-    @UsesSample('toolingApi/build')
-    def canUseToolingApiToRunABuild() {
-        def projectDir = sample.dir
-        Properties props = new Properties()
-        props['toolingApiRepo'] = distribution.libsRepo.toURI().toString()
-        props['gradleDistribution'] = distribution.gradleHomeDir.toString()
-        projectDir.file('gradle.properties').withOutputStream {outstr ->
-            props.store(outstr, 'props')
-        }
-        projectDir.file('settings.gradle').text = '// to stop search upwards'
+    @UsesSample('toolingApi/runBuild')
+    def "can use tooling API to run tasks"() {
+        tweakProject()
 
         when:
-        def result = run(projectDir)
+        def result = run()
 
         then:
         result.output.contains("Welcome to Gradle")
     }
 
     @UsesSample('toolingApi/idea')
-    def buildsIdeaModel() {
-        def projectDir = sample.dir
-        Properties props = new Properties()
-        props['toolingApiRepo'] = distribution.libsRepo.toURI().toString()
-        props['gradleDistribution'] = distribution.gradleHomeDir.toString()
-        projectDir.file('gradle.properties').withOutputStream {outstr ->
-            props.store(outstr, 'props')
-        }
-        projectDir.file('settings.gradle').text = '// to stop search upwards'
+    def "can use tooling API to build IDEA model"() {
+        tweakProject()
 
         when:
-        run(projectDir)
+        run()
 
         then:
         noExceptionThrown()
     }
 
-    private ExecutionResult run(dir) {
+    @UsesSample('toolingApi/model')
+    def "can use tooling API to build general model"() {
+        tweakProject()
+
+        when:
+        def result = run()
+
+        then:
+        result.output.contains("Project: model")
+        result.output.contains("    build")
+    }
+
+    private void tweakProject() {
+        def projectDir = sample.dir
+
+        // Inject some additional configuration into the sample build script
+        def buildFile = projectDir.file('build.gradle')
+        def buildScript = buildFile.text
+        def index = buildScript.indexOf('repositories {')
+        assert index >= 0
+        buildScript = buildScript.substring(0, index) + """
+repositories {
+    maven { url "${distribution.libsRepo.toURI()}" }
+}
+run {
+    args = ["${TextUtil.escapeString(distribution.gradleHomeDir.absolutePath)}", "${TextUtil.escapeString(distribution.userHomeDir.absolutePath)}"]
+    systemProperty 'org.gradle.daemon.idletimeout', 10000
+    systemProperty 'org.gradle.daemon.registry.base', "${TextUtil.escapeString(projectDir.file("daemon").absolutePath)}"
+}
+""" + buildScript.substring(index)
+
+        buildFile.text = buildScript
+
+        // Add in an empty settings file to avoid searching up
+        projectDir.file('settings.gradle').text = '// to stop search upwards'
+    }
+
+    private ExecutionResult run() {
         try {
-            return new GradleDistributionExecuter(distribution).inDirectory(dir)
-                    .withArguments("-PautomationSystemProperty=org.gradle.daemon.idletimeout=60000")
+            return new GradleDistributionExecuter(distribution).inDirectory(sample.dir)
                     .withTasks('run')
+                    .withDaemonIdleTimeoutSecs(60)
                     .run()
         } catch (Exception e) {
             throw new IntegrationTestHint(e);

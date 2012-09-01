@@ -7,6 +7,7 @@ configurations {
 dependencies {
     junit 'junit:junit:4.10'
     groovy libraries.groovy
+    testFixturesCompile project(':internalIntegTesting')
 }
 
 useTestFixtures()
@@ -22,6 +23,11 @@ task largeSrc(type: ProjectGeneratorTask, description: 'Generates a single proje
 task multi(type: ProjectGeneratorTask, description: 'Generates a multi-project build') {
     projects = 25
     sourceFiles = 100
+}
+
+task parallel(type: ProjectGeneratorTask, description: 'Generates a multi-project build') {
+    projects = 8
+    sourceFiles = 1000
 }
 
 task mixedSize(type: ProjectGeneratorTask) {
@@ -41,7 +47,7 @@ task largeMulti(type: ProjectGeneratorTask, description: 'Generates a large mult
 }
 
 task lotDependencies(type: ProjectGeneratorTask, description: 'Generates a small multi-project build with a large Dependency Graph'){
-    projects = 25
+    projects = 5
     sourceFiles = 100
 
     dependencyGraph {
@@ -58,21 +64,25 @@ generators.all {
 }
 task all(dependsOn: generators)
 
-task prepareSamples(dependsOn: [small, multi])
+task prepareSamples(dependsOn: [small, multi, lotDependencies])
 
-tasks.integTest.dependsOn prepareSamples
-
-task performanceTest(dependsOn: tasks.integTest) {
-    description = "Runs the performance test (note that performanceTest is not a part of 'check' or 'test')"
+integTestTasks.all {
+    if (buildTypes.isActive('performanceTest')) {
+        dependsOn prepareSamples
+    } else {
+        enabled = false
+        dependsOn = []
+    }
 }
 
 tasks.integTest.testLogging.showStandardStreams = true
-
-gradle.taskGraph.whenReady {
-    if (!it.hasTask(':performance:performanceTest')) {
-        project.tasks.withType(Test) {
-            logger.info("Skipping $it because task 'performanceTest' was not requested.")
-            enabled = false
+eclipse {
+    classpath {
+        file.whenMerged { classpath ->
+            //**TODO
+            classpath.entries.removeAll {it.path.contains('src/test/groovy')}
+            classpath.entries.removeAll {it.path.contains('src/testFixtures/groovy')}
+            classpath.entries.removeAll {it.path.contains('src/integTest/groovy')}
         }
     }
 }

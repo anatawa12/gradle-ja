@@ -32,7 +32,7 @@ class OsgiPluginConventionTest extends Specification {
     OsgiPluginConvention osgiPluginConvention = new OsgiPluginConvention(project)
 
     def setup() {
-        new JavaBasePlugin().apply(project)
+        project.plugins.apply(JavaBasePlugin)
     }
 
     def osgiManifestWithNoClosure() {
@@ -68,14 +68,24 @@ class OsgiPluginConventionTest extends Specification {
     @Issue("GRADLE-1670")
     def "computes its defaults lazily"() {
         def manifest = osgiPluginConvention.osgiManifest()
-        project.version = 2.1
+        def i = 0
+        project.version = "${->++i}"
         project.group = "my.group"
         project.archivesBaseName = "myarchive"
 
         expect:
-        manifest.version == "2.1"
+        manifest.version == "1"
+        manifest.version == "2"
         manifest.name == "myarchive"
         manifest.symbolicName == "my.group.myarchive"
+
+        when:
+        project.group = "changed.group"
+        project.archivesBaseName = "changedarchive"
+
+        then:
+        manifest.name == "changedarchive"
+        manifest.symbolicName == "changed.group.changedarchive"
     }
 
     void matchesExpectedConfig(DefaultOsgiManifest osgiManifest) {

@@ -28,10 +28,11 @@ import org.gradle.logging.LoggingManagerInternal;
 import org.gradle.logging.LoggingServiceRegistry;
 import org.gradle.logging.internal.OutputEventRenderer;
 import org.gradle.logging.internal.logback.SimpleLogbackLoggingConfigurer;
+import org.gradle.process.internal.streams.SafeStreams;
 import org.gradle.tooling.internal.build.DefaultBuildEnvironment;
+import org.gradle.tooling.internal.consumer.protocoladapter.ProtocolToModelAdapter;
 import org.gradle.tooling.internal.protocol.*;
-import org.gradle.tooling.internal.provider.input.AdaptedOperationParameters;
-import org.gradle.tooling.internal.provider.input.ProviderOperationParameters;
+import org.gradle.tooling.internal.provider.connection.*;
 import org.gradle.util.GUtil;
 import org.gradle.util.GradleVersion;
 import org.slf4j.Logger;
@@ -40,10 +41,11 @@ import org.slf4j.LoggerFactory;
 import java.io.File;
 import java.util.List;
 
-public class DefaultConnection implements InternalConnection {
+public class DefaultConnection implements InternalConnection, BuildActionRunner, ConfigurableConnection {
     private static final Logger LOGGER = LoggerFactory.getLogger(DefaultConnection.class);
     private final EmbeddedExecuterSupport embeddedExecuterSupport;
     private final SimpleLogbackLoggingConfigurer loggingConfigurer = new SimpleLogbackLoggingConfigurer();
+    private final ProtocolToModelAdapter adapter = new ProtocolToModelAdapter();
 
     public DefaultConnection() {
         LOGGER.debug("Provider implementation created.");
@@ -51,6 +53,11 @@ public class DefaultConnection implements InternalConnection {
         //we can still keep this state:
         embeddedExecuterSupport = new EmbeddedExecuterSupport();
         LOGGER.debug("Embedded executer support created.");
+    }
+
+    public void configure(ConnectionParameters parameters) {
+        ProviderConnectionParameters providerConnectionParameters = new ProtocolToModelAdapter().adapt(ProviderConnectionParameters.class, parameters);
+        configureLogging(providerConnectionParameters.getVerboseLogging());
     }
 
     public void configureLogging(boolean verboseLogging) {
@@ -74,38 +81,56 @@ public class DefaultConnection implements InternalConnection {
     public void stop() {
     }
 
-    public void executeBuild(final BuildParametersVersion1 buildParameters,
-                             BuildOperationParametersVersion1 operationParameters) {
+    @Deprecated
+    public void executeBuild(BuildParametersVersion1 buildParameters, BuildOperationParametersVersion1 operationParameters) {
         logTargetVersion();
-        AdaptedOperationParameters adaptedParams = new AdaptedOperationParameters(operationParameters, buildParameters);
-        run(new ExecuteBuildAction(), adaptedParams);
+        run(Void.class, new AdaptedOperationParameters(operationParameters, buildParameters.getTasks()));
+    }
+
+    @Deprecated
+    public ProjectVersion3 getModel(Class<? extends ProjectVersion3> type, BuildOperationParametersVersion1 parameters) {
+        logTargetVersion();
+        return run(type, new AdaptedOperationParameters(parameters));
+    }
+
+    @Deprecated
+    public <T> T getTheModel(Class<T> type, BuildOperationParametersVersion1 parameters) {
+        logTargetVersion();
+        return run(type, new AdaptedOperationParameters(parameters));
+    }
+
+    public <T> BuildResult<T> run(Class<T> type, BuildParameters buildParameters) throws UnsupportedOperationException, IllegalStateException {
+        logTargetVersion();
+        ProviderOperationParameters providerParameters = adapter.adapt(ProviderOperationParameters.class, buildParameters, BuildLogLevelMixIn.class);
+        T result = run(type, providerParameters);
+        return new ProviderBuildResult<T>(result);
+    }
+
+    private <T> T run(Class<T> type, ProviderOperationParameters providerParameters) {
+        List<String> tasks = providerParameters.getTasks();
+        if (type.equals(Void.class) && tasks == null) {
+            throw new IllegalArgumentException("No model type or tasks specified.");
+        }
+        if (type == InternalBuildEnvironment.class) {
+            //we don't really need to launch the daemon to acquire information needed for BuildEnvironment
+            if (tasks != null) {
+                throw new IllegalArgumentException("Cannot run tasks and fetch the build environment model.");
+            }
+            DaemonParameters daemonParameters = init(providerParameters);
+            DefaultBuildEnvironment out = new DefaultBuildEnvironment(
+                    GradleVersion.current().getVersion(),
+                    daemonParameters.getEffectiveJavaHome(),
+                    daemonParameters.getEffectiveJvmArgs());
+
+            return type.cast(out);
+        }
+
+        DelegatingBuildModelAction<T> action = new DelegatingBuildModelAction<T>(type, tasks != null);
+        return run(action, providerParameters);
     }
 
     private void logTargetVersion() {
         LOGGER.info("Tooling API uses target gradle version:" + " {}.", GradleVersion.current().getVersion());
-    }
-
-    @Deprecated //getTheModel method has much convenient interface, e.g. avoids locking to building only models of a specific type
-    public ProjectVersion3 getModel(Class<? extends ProjectVersion3> type, BuildOperationParametersVersion1 parameters) {
-        return getTheModel(type, parameters);
-    }
-
-    public <T> T getTheModel(Class<T> type, BuildOperationParametersVersion1 parameters) {
-        logTargetVersion();
-        ProviderOperationParameters adaptedParameters = new AdaptedOperationParameters(parameters);
-        if (type == InternalBuildEnvironment.class) {
-
-            //we don't really need to launch gradle to acquire information needed for BuildEnvironment
-            DaemonParameters daemonParameters = init(adaptedParameters);
-            DefaultBuildEnvironment out = new DefaultBuildEnvironment(
-                GradleVersion.current().getVersion(),
-                daemonParameters.getEffectiveJavaHome(),
-                daemonParameters.getEffectiveJvmArgs());
-
-            return type.cast(out);
-        }
-        DelegatingBuildModelAction<T> action = new DelegatingBuildModelAction<T>(type);
-        return run(action, adaptedParameters);
     }
 
     private <T> T run(GradleLauncherAction<T> action, ProviderOperationParameters operationParameters) {
@@ -124,7 +149,7 @@ public class DefaultConnection implements InternalConnection {
         } else {
             loggingServices = LoggingServiceRegistry.newEmbeddableLogging();
             loggingServices.get(OutputEventRenderer.class).configure(operationParameters.getBuildLogLevel());
-            DaemonClientServices clientServices = new DaemonClientServices(loggingServices, daemonParams, operationParameters.getStandardInput());
+            DaemonClientServices clientServices = new DaemonClientServices(loggingServices, daemonParams, operationParameters.getStandardInput(SafeStreams.emptyInput()));
             executer = clientServices.get(DaemonClient.class);
         }
         Factory<LoggingManagerInternal> loggingManagerFactory = loggingServices.getFactory(LoggingManagerInternal.class);
@@ -152,4 +177,5 @@ public class DefaultConnection implements InternalConnection {
         }
         return daemonParams;
     }
+
 }

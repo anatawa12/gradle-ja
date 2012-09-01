@@ -16,68 +16,54 @@
 <chapter id='dependency_management' xmlns:xi="http://www.w3.org/2001/XInclude" xml:lang="ja">
     <title>依存関係の管理 <phrase role="original">Dependency Management</phrase></title>
     <section id='sec:Introduction'>
-        <title>はじめに<phrase role="original">Introduction</phrase></title>
-        <para role="original">This chapter gives an overview of issues related with dependency management and presents how Gradle can be used to overcome them.
-        </para>
-        <para>この章では、依存関係の管理にまつわる様々な課題について概観し、Gradleがそれらをどのように解決しているか解説します。</para>
-        <para role="original">Gradle offers a very good support for dependency management. If you are familiar with Maven or Ivy approach you will be delighted to learn that:
-        </para>
-        <para>
-        Gradleは、依存関係の管理について非常に充実したサポートを提供しています。MavenやIvyでの依存関係管理に明るい方なら、次のことを知って喜ばれることでしょう。
-        </para>
+        <title>Introduction</title>
+        <para>Gradle offers a very good support for dependency management. If you are familiar with Maven or Ivy approach you will be delighted to learn that:
         <itemizedlist>
             <listitem>
-                <para role="original">All the concepts that you already know and like are still there and are fully supported by Gradle. The current dependency management solutions all require to work with XML descriptor files and are usually
-        based on remote repositories for downloading the dependencies. Gradle fully supports this approach.
-                </para>
-                <para>以前から慣れ親しまれている依存関係管理の概念を完全な形でサポートしています。現在使われている依存関係の管理方法はすべて、XML形式のメタデータを使用し、(一般的には)リモートリポジトリから依存関係をダウンロードしてくるものです。この方法を、Gradleでも使用することができます。</para>
-            </listitem>
-            <listitem>
-                <para role="original">Gradle works <emphasis>perfectly</emphasis> with your existent dependency management
+                <para>Gradle fully supports transitive dependency management. Gradle also works <emphasis>perfectly</emphasis> with your existent dependency management
                     infrastructure, be it Maven or Ivy. All the repositories you have set up with your custom POM or
                     ivy files can be used as they are. No changes necessary.
                 </para>
-                <para>Gradleでは、依存関係を管理するために構築された既存のインフラ、すなわちMavenやIvyのリポジトリを<emphasis>完全に</emphasis>サポートしています。独自にカスタムしたPOMや、ivyのメタデータを使ってセットアップされたリポジトリを、そのまま使うことができるのです。何一つ修正する必要はありません。</para>
             </listitem>
             <listitem>
-                <para role="original">Additionally, Gradle offers a simpler approach, which might be better suited for some projects.
+                <para>If you don't use transitive dependency management and your external libraries live just as files in version control or on some shared drive, Gradle provides powerful functionality
+                    to support this.
                 </para>
-                <para>さらに、Gradleはもっと単純な依存関係の解決方法も用意しています。プロジェクトによっては、そちらの管理方法の方が適しているかもしれません。</para>
+            </listitem>
+            <listitem>
+                <para>Gradle provides an additional, optional support for transitive dependency management that is not based on XML descriptor files called Module Dependencies, where you describe
+                    the dependency hierarchy in the build script.
+                </para>
+            </listitem>
+            <listitem>
+                <para>The job of a build system is to support all major patterns for how people deal with dependencies, not to force people in a certain way of doing things. In particular for migration scenarios
+                    it is extremely important that any current approach is supported so that you can use the same input structure in the new evolving Gradle build than in the existing build as long as it
+                    is in production. That enables you to compare the results. Gradle is extremely flexible. So even if your project is using a custom dependency management or say an Eclipse .classpath file as master data for dependency management,
+                    it would be very easy to write a little adaptor plugin to use this data in Gradle. For migration purposes this is a common technique with Gradle. Once you have migrated, it might be a good idea though not to
+                    use a .classpath file for dependency metadata any longer :).
+                </para>
             </listitem>
         </itemizedlist>
+        </para>
     </section>
     <section id='sec:dependency_management_overview'>
-        <title>依存関係管理の概要<phrase role="original">Dependency management overview</phrase></title>
-        <para role="original">We think dependency management is very important for almost any project. Yet the kind of dependency
+        <title>Dependency Management Best Practices.</title>
+        <para>We have an opinion on what are dependency management best practices. As usual, Gradle does not force our opinion onto you, but supports any kind of pattern you want to use. Nonetheless
+            we would like to share our opinion.
+        </para>
+        <para>We think good dependency management is very important for almost any project. Yet the kind of dependency
             management you need depends on the complexity and the environment of your project. Is your project a
             distribution or a library? Is it part of an enterprise environment, where it is integrated into other
-            projects builds or not? But all types of projects share the following requirements:
+            projects builds or not? But all types of projects should follow the rules below:
         </para>
-        <para>依存関係の管理は、ほとんどすべてのプロジェクトにおいて非常に重要な要素になってくると思います。しかし、どんな方法で依存関係を管理するべきかはプロジェクトの複雑さや環境によって変わってきます。そのプロジェクトは配布物でしょうか。それともライブラリでしょうか。また、別プロジェクトと統合してビルドするような、エンタープライズ環境のプロジェクトの一部なのでしょうか、違うのでしょうか。ただ、どんな種類のプロジェクトにしろ以下に挙げた要件は満たしていなければなりません。</para>
-        <itemizedlist>
-            <listitem>
-                <para role="original">The version of the jar must be easy to recognize. Sometimes the version is in the Manifest file of
-                    the jar, often not. And even if, it is rather painful to always look into the Manifest file to learn
-                    about the version. Therefore we think that you should only use jars which have their version as part
-                    of their file name.
-                </para>
-                <para>依存しているjarのバージョンが簡単に分かるようになっていなければなりません。jarのバージョンはマニフェストファイルに書かれていたりいなかったりですが、バージョンを調べるためにわざわざマニフェストファイルを見ないといけないとなると面倒です。ファイル名にバージョンが付加されているjarだけを使うべきだと思います。</para>
-            </listitem>
-            <listitem>
-                <para role="original">It hopes to be clear what are the first level dependencies and what are the transitive ones. There
-                    are different ways to achieve this. We will look at this later.
-                </para>
-                <para>何が直接の依存関係で何が推移的な依存関係なのか、明確に分かるようになっていた方がいいでしょう。そのためにはいくつかの方法が考えられます。後ほど見ていきます。</para>
-            </listitem>
-            <listitem>
-                <para role="original">Conflicting versions of the same jar should be detected and either resolved or cause an exception.
-                </para>
-                <para>同じjarに依存していて、バージョンが競合している場合は、それを検出して解決するか例外を発行しなければなりません。</para>
-            </listitem>
-        </itemizedlist>
         <section id='sub:versioning_the_jar_name'>
-            <title>jarの名前にバージョンを付加する<phrase role="original">Versioning the jar name</phrase></title>
-            <para role="original">Why do we think this is necessary? Without a dependency management as described above, your are likely
+            <title>Versioning the jar name</title>
+            <para>The version of the jar must be easy to recognize. Sometimes the version is in the Manifest file of
+                the jar, often not. And even if, it is rather painful to always look into the Manifest file to learn
+                about the version. Therefore we think that you should only use jars which have their version as part
+                of their file name. If you are using transitive dependency management you are forced to do this in any case.
+            </para>
+            <para>Why do we think this is important? Without a dependency management as described above, your are likely
                 to burn your fingers sooner or later. If it is unclear which version of a jar your are using, this can
                 introduce subtle bugs which are very hard to find. For example there might be a project which uses
                 Hibernate 3.0.4. There are some problems with Hibernate so a developer installs version 3.0.5 of
@@ -89,19 +75,22 @@
             <para>どうしてこんなことをする必要があるのか考えてみましょう。上記のような依存関係管理ができなければ、いつか悲惨なことになりかねません。使っているjarのバージョンがなんなのかよく分からないというのは、見つけづらい難解なバグへの第一歩です。たとえば、プロジェクトでHibernateの3.0.4を使っているとしましょう。Hibernateに関するところで何か問題が起こっているようなので、開発者は自分のマシンにHibernate3.0.5をインストールしました。しかし、これでは問題は解決しませんでした…ここで、彼女がHibernateを3.0.4に戻すのを忘れてしまった場合、どうなるでしょうか。数週間後、インテグレーションサーバーで例外が発生しました。開発者のマシンでは再現しません。jarファイル名にバージョンが含まれていなければ、このデバッグに長時間を費やしてしまう可能性があります。jarファイル名の中のバージョン文字列は、そのプロジェクトをわかりやすいものにし、メンテナンスも容易にしてくれるのです。</para>
         </section>
         <section id='sub:transitive_dependency_management'>
-            <title>推移的な依存関係の管理<phrase role="original">Transitive dependency management</phrase></title>
-            <para role="original">Why is transitive dependency management so important? If you don't know which dependencies are first
-                level dependencies and which ones are transitive you will soon lose control over your build. Even
-                Gradle has already 20+ jars. An enterprise project using Spring, Hibernate, etc. easily ends up with
-                100+ jars. There is no way to memorize where all these jars come from. If you want to get rid of a first
+            <title>Use some form of transitive dependency management</title>
+            <para>When we talk about transitive dependency management, we mean any technique that enables to distinguish
+                between what are the first level dependencies and what are the transitive ones. We will about different techniques for this later on.
+            </para>
+            <para>Why is transitive dependency management so important? If you don't know which dependencies are first
+                level dependencies and which ones are transitive you will soon lose control over your build. Even a non enterprise project
+                Gradle has already 100+ jars. An enterprise project using Spring, Hibernate, etc. easily ends up with
+                many more jars. There is no way to memorize where all these jars come from. If you want to get rid of a first
                 level dependency you can't be sure which other jars you should remove. Because a dependency of a
                 first level dependency might also be a first level dependency itself. Or it might be a transitive
                 dependency of another of your first level dependencies. Many first level dependencies are runtime
                 dependencies and the transitive dependencies are of course all runtime dependencies. So the compiler
                 won't help you much here. The end of the story is, as we have seen very often, no one dares to remove
                 any jar any longer. The project classpath is a complete mess and if a classpath problem arises, hell on
-                earth invites you for a ride. In one of my former projects, I found some ldap related jar in the
-                classpath, whose sheer presence, as I found out after much research, accelerated LDAP access. So
+                earth invites you for a ride. In one of our former projects, we found some ldap related jar in the
+                classpath, whose sheer presence, as we found out after much research, accelerated LDAP access. So
                 removing this jar would not have led to any errors at compile or runtime.
             </para>
             <para>推移的な依存関係が、なぜそんなに重要なのでしょうか。どの依存関係が直接依存しているもので、どの依存関係が推移的に依存しているのか分からなくなれば、ビルドシステムは早晩制御不能になるでしょう。
@@ -109,18 +98,24 @@
                 こうなると、なにか依存関係を破棄したいとなったとき、それに関連してどのjarを削除すればいいのか分からなくなります。削除しようとしているjarは、それ自身プロジェクトから直接使われているjarかもしれません。別の依存関係から推移的に依存されているかもしれません。
                 また、ライブラリは、実行時のみ依存しているという場合も多いものです。もちろん、そこから推移する依存関係も実行時の依存関係になります。つまり、コンパイラは頼りにできないということです。このシナリオの行き着く先を、私たちはたくさん見てきました。もはや誰も、何一つjarを削除できなくなり、プロジェクトのクラスパスは完全にめちゃくちゃになって、そのクラスパスで問題が発生してこの世の地獄という話です。
                 私が以前携わっていたプロジェクトでは、LDAPに関するjarをいくつかクラスパスに追加していました。後ほど調べて分かったのですが、このjarはあるだけでLDAPアクセスを高速化させます。つまり、このjarを取り除いたとしても、コンパイル時にも実行時にもエラーが発生することはなかったでしょう。</para>
-            <para role="original">Gradle offers you different ways to express what are first level and what are transitive dependencies.
+            <para>Gradle offers you different ways to express what are first level and what are transitive dependencies.
                 Gradle allows you for example to store your jars in CVS or SVN without XML descriptor files and still
-                use transitive dependency management. Gradle also validates your dependency hierarchy against the
-                reality of your code by using only the first level dependencies for compiling.
+                use transitive dependency management. Also, not all techniques for transitive dependency management deal with
+                the problem described above equally well.
             </para>
             <para>Gradleでは、何が直接依存していて何が推移的に依存しているのか、様々な方法で定義できます。たとえば、XMLのディスクリプタなしでjarをCVSやSVNに置いたとしても、推移的な依存関係を管理できます。さらに、依存関係の構造を検証し、コンパイルするコードが直接的な依存関係のみ使用しているかどうか、確認することもできます。</para>
         </section>
         <section id='sub:version_conflicts'>
-            <title>バージョン競合<phrase role="original">Version conflicts</phrase></title>
-            <para role="original">In your dependency description you tell Gradle which version of a dependency is needed by another
-                dependency. This frequently leads to conflicts. Different dependencies rely on different versions of
-                another dependency. The JVM unfortunately does not offer yet any easy way, to have different versions of
+            <title>Version conflicts</title>
+            <para>Conflicting versions of the same jar should be detected and either resolved or cause an exception. If you don't use
+                transitive dependency management, version conflicts are undetected and the mostly accidental fragile order of the classpath
+                will determine, what version of a dependency will win. For example adding a dependency with a particular version to a subproject
+                might change that order and then will led to all kind of surprising side effects. You might also want to learn where conflicting
+                versions are used as you might want to consolidate on a particular version of an dependency across your organization. With a good conflict
+                reporting that information can be used to communicate with the teams to solve this.
+            </para>
+            <para>It is common that different dependencies rely on different versions of
+                another dependency which leads to a version conflictm as The JVM unfortunately does not offer yet any easy way, to have different versions of
                 the same jar in the classpath (see <xref linkend='sub:dependency_management_and_java'/>).</para>
             <para>依存関係の記述では、どのバージョンの依存物(ライブラリなど)が必要になるかGradleに設定しますが、その際、競合が発生してしまうことがよくあります。つまり、異なるバージョンの同じライブラリが、同時に要求される場合があります。
                 残念ながら、JVMではクラスパス上にバージョン違いの同じjarを混在させるのは、簡単なことではありません(<xref linkend='sub:dependency_management_and_java'/>参照)。</para>
@@ -137,6 +132,8 @@
                     <emphasis>Fail</emphasis> - バージョンが競合したら強制的に失敗させる。
                     これは、競合を手作業で制御、管理しているときに便利です。
                     この戦略は、<code>1.0-milestone-6</code>で導入されました。競合を解決する戦略の管理については、<apilink class='org.gradle.api.artifacts.ResolutionStrategy'/>を参照してください。
+                    </listitem>
+                    <listitem>We are working on making conflict resolution fully customizable.
                     </listitem>
                 </itemizedlist>
                 <phrase role="original">Gradle provides means to resolve version conflicts:</phrase>
@@ -216,22 +213,13 @@
                 are Maven and Ivy. Maven is a complete build system whereas Ivy focuses solely on dependency management.
             </para>
             <para>Javaでは、伝統的に、ライブラリとバージョンの取り扱いをまったくサポートしてきませんでした。<literal>foo-1.0.jar</literal>が<literal>bar-2.0.jar</literal>に依存していると明確に宣言できるような、標準的な方法がないのです。そのため、様々なソリューションがプロプライエタリに開発されてきました。もっとも有名なものがMavenとIvyです。Ivyが依存関係の管理にのみフォーカスしているのに対し、Mavenはビルドシステム全体を取り扱います。</para>
-            <para role="original">Both approaches rely on descriptor XML files, which contains information about the dependencies of a
+            <para>Both approaches rely on descriptor XML files, which contains information about the dependencies of a
                 particular jar. Both also use repositories where the actual jars are placed together with their
                 descriptor files. And both offer resolution for conflicting jar versions in one form or the other. Yet
                 we think the differences of both approaches are significant
-                in terms of flexibility and maintainability. Beside this, Ivy fully supports the Maven dependency
-                handling. So with Ivy you have access to both worlds. We like Ivy very much. Gradle uses it under the
-                hood for its dependency management. Ivy is most often used via Ant and XML descriptors. But it also has
-                an API. We integrate deeply with Ivy via its API. This enables us to build new concepts on top
-                of Ivy which Ivy does not offer itself.
-            </para>
-            <para>どちらも、jarの依存関係を記述したXMLのメタデータを使用します。そのメタデータと実際のjarファイルをリポジトリに保管する点も同じです。また、どちらも、jarファイルのバージョンが競合すれば、それを解決するための手段をなにかしら提供しています。IvyとMavenの違いは、私たちが考えるに、柔軟性やメンテナンス性です。加えて、IvyはMavenの管理する依存関係を完全にサポートしています。Ivyを使用すれば、IvyとMaven、両方の領域を取り扱うことができるのです。私たちはIvyが大好きで、Gradleも依存関係を管理するために内部でIvyを使用しています。Ivyは、一般的にはAntとXMLのメタデータから使用されますが、APIも用意されています。Gradleは、そのAPIを通してIvyを深いレベルで統合しているのです。このことで、Ivyそれ自体では提供していないような新しい概念を構築することができました。</para>
-            <para role="original">Right now there is a lot of movement in the field of dependency handling. There is OSGi and there is
-                JSR-294, Improved Modularity Support in the JavaTM Programming Language.
-                OSGi is available already, JSR-294 is supposed to be shipped with Java 7. These technologies
-                deal, amongst many other things, also with a painful problem which is neither solved by Maven nor by Ivy. This is enabling different
-                versions of the same jar to be used at runtime.
+                in terms of flexibility and maintainability. Originally Gradle did use Ivy under the
+                hood for its dependency management. This has been replaced with a native Gradle dependency resolution engine. This resolution engine
+                supports both pom and ivy descriptor files.
             </para>
             <para>
                 現在では、依存関係管理の分野には多くの活動があります。OSGiやJSR-294(JavaTMプログラミング言語におけるモジュール化サポートの改善)です。
@@ -407,7 +395,7 @@
                     downloads a jar with the name of the module. But sometimes, even if the repository contains module descriptors,  you want to download only the artifact jar, without
                     the dependencies.
                     <footnote>
-                        <para role="original">Gradle supports partial multiproject builds (see<xref linkend='multi_project_builds'/>).
+                        <para>Gradle supports partial multiproject builds (see <xref linkend='multi_project_builds'/>).
                         </para>
                     </footnote>
                     And sometimes you want to download a zip from a repository, that does not have module descriptors.
@@ -670,6 +658,19 @@
                 With the help of the Project report plugin (see <xref linkend="project_reports_plugin"/>) such a report can be created by your build.
             </para>
             <para>コマンドラインから依存関係のレポートを生成できます(<xref linkend="para:commandline_dependency_report"/>参照)。また、プロジェクトレポートプラグイン(<xref linkend="project_reports_plugin"/>)を使えば、そのようなレポートを自分のビルドで生成させることもできます。</para>
+            <para>
+                Since Gradle 1.2 there is also a new programmatic API to access the resolved dependency information.
+                The dependency reports (see the previous paragraph) are using this API behind the hood.
+                The API lets you to walk the resolved dependency graph and provides information about the dependencies.
+                With the coming releases the API will grow to provide more information about the resolution result.
+                For more information about the API please refer to the javadocs on
+                <apilink class="org.gradle.api.artifacts.ResolvedConfiguration" method="getResolutionResult"/>.
+                Potential usages of the <apilink class="org.gradle.api.artifacts.result.ResolutionResult"/> API:
+                <itemizedlist>
+                    <listitem>Creation of advanced dependency reports tailored to your use case.</listitem>
+                    <listitem>Enabling the build logic to make decisions based on the content of the dependency graph.</listitem>
+                </itemizedlist>
+            </para>
         </section>
     </section>
     <section id='sec:working_with_dependencies'>
@@ -906,6 +907,12 @@
                 <sample id="ivyRepository" dir="userguide/artifacts/defineRepository" title="Ivyリポジトリとカスタムパターン / Ivy repository with custom patterns">
                     <sourcefile file="build.gradle" snippet="ivy-repo-with-custom-pattern"/>
                 </sample>
+                <para>
+                    Each <literal>ivyPattern</literal> or <literal>artifactPattern</literal> specified for a repository adds an <emphasis>
+                    additional</emphasis> pattern, on top of any url/layout based patterns defined.
+                    Values supplied as <literal>ivyPattern</literal> or <literal>artifactPattern</literal> should be fully qualified URLs as they are not resolved
+                    relative to the <literal>url</literal> parameter for the repository. Any unqualified patterns will be resolved as a file path, relative to the project base directory.
+                </para>
             </section>
             <section>
                 <title>パスワードで保護されたIvyリポジトリへのアクセス<phrase role="original">Accessing password protected Ivy repositories</phrase></title>
@@ -1003,49 +1010,38 @@ someroot/[artifact]-[revision].[ext]
         <title>依存関係解決の仕組み <phrase role="original">How dependency resolution works</phrase></title>
         <para role="original">Gradle takes your dependency declarations and repository definitions and attempts to download all of your dependencies by a process called <emphasis>dependency resolution</emphasis>.
         Below is a brief outline of how this process works.</para>
-        <para>Gradleは、あなたが定義した依存関係の宣言とリポジトリ定義を使い、<emphasis>依存関係解決</emphasis>と呼ばれる処理によって依存関係を全てダウンロードしようと試みます。以下に、その処理がどのように進むか、概要を記載しました。</para>
-        <itemizedlist>
-            <listitem>
-                <para role="original">
-                    Given a required dependency, Gradle first attempts to resolve the <emphasis>module</emphasis> for that dependency. Each repository is inspected in order, searching
-                    first for a <emphasis>module descriptor</emphasis> file (pom or ivy file) that indicates the presence of that module. If no module descriptor is found,
-                    Gradle will search for the presence of the primary <emphasis>module artifact</emphasis> file indicating that the module exists in the repository.
-                </para>
-                <para>
-                    必要な依存関係が指示されると、Gradleはまず、リポジトリを順に検査して、その依存関係の<emphasis>モジュール</emphasis>を解決しようとします。
-                    <emphasis>モジュールディスクリプタ</emphasis>ファイル(pomまたはivyファイル)を探して、リポジトリにモジュールがあるかどうか確認しますが、ディスクリプタファイルが見つからない場合は、デフォルトの<emphasis>モジュールアーティファクト</emphasis>ファイルがあるかどうかでモジュールの有無を判断します。
-                </para>
-                <itemizedlist>
-                    <listitem>
-                        <para role="original">If the dependency is declared as a dynamic version (like <literal>1.+</literal>), Gradle will resolve this to the newest available static version (like <literal>1.2</literal>)
-                            in the repository. For maven repositories, this is done using the <literal>maven-metadata.xml</literal> file, while for ivy repositories this is done by directory listing.</para>
-                        <para>もし、依存関係が動的バージョン(<literal>1.+</literal>のような)で指定されていれば、Gradleは動的バージョンを、リポジトリ内の最新の静的バージョン(<literal>1.2</literal>など)に解決します。この処理は、Mavenリポジトリに対しては<literal>maven-metadata.xml</literal>ファイルを使って行われ、ivyリポジトリの場合はディレクトリの一覧で実行されます。</para>
-                    </listitem>
-                    <listitem>
-                        <para role="original">If the module descriptor is a <literal>pom</literal> file that has a parent pom declared, Gradle will recursively attempt to resolve each of the parent modules for the pom.</para>
-                        <para>モジュールディスクリプタが、親pomの宣言を含むpomファイルだった場合、Gradleはpomの親モジュールを再帰的に解決しようとします。</para>
-                    </listitem>
-                </itemizedlist>
-            </listitem>
-            <listitem>
-                <para><phrase role="original">Once each repository has been inspected for the module, Gradle will choose the 'best' one to use. This is done using the following criteria:</phrase>
-                    全てのリポジトリでモジュールの調査が終わると、Gradleはそれらのリポジトリの中から、使うのに"最も良い"リポジトリを選択します。何が最良かの基準は、以下の通りです。
+            <itemizedlist>
+                <listitem>
+                    <para>
+                        Given a required dependency, Gradle first attempts to resolve the <emphasis>module</emphasis> for that dependency. Each repository is inspected in order, searching
+                        first for a <emphasis>module descriptor</emphasis> file (pom or ivy file) that indicates the presence of that module. If no module descriptor is found,
+                        Gradle will search for the presence of the primary <emphasis>module artifact</emphasis> file indicating that the module exists in the repository.
+                    </para>
                     <itemizedlist>
-                        <listitem><phrase role="original">For a dynamic version, a 'higher' static version is preferred over a 'lower' version.</phrase> 動的バージョンに関しては、なるべく新しい静的バージョンが使用できるリポジトリが好ましい</listitem>
-                        <listitem><phrase role="original">Modules declared by a module descriptor file (ivy or pom file) are preferred over modules that have an artifact file only.</phrase> モジュールディスクリプタ(ivyやpomファイル)で宣言されているモジュールは、アーティファクトファイルしかないモジュールよりも好ましい</listitem>
-                        <listitem><phrase role="original">Modules from earlier repositories are preferred over modules in later repositories.</phrase> 早く見に行ったリポジトリのほうが、後のリポジトリよりも優先される</listitem>
+                        <listitem>
+                            <para>If the dependency is declared as a dynamic version (like <literal>1.+</literal>), Gradle will resolve this to the newest available static version (like <literal>1.2</literal>)
+                                in the repository. For maven repositories, this is done using the <literal>maven-metadata.xml</literal> file, while for ivy repositories this is done by directory listing.</para>
+                        </listitem>
+                        <listitem>
+                            <para>If the module descriptor is a <literal>pom</literal> file that has a parent pom declared, Gradle will recursively attempt to resolve each of the parent modules for the pom.</para>
+                        </listitem>
                     </itemizedlist>
-                </para>
-                <para role="original">When the dependency is declared by a static version and a module descriptor file is found in a repository, there is no need to continue searching later
-                repositories and the remainder of the process is short-circuited.</para>
-                <para>依存関係が、静的バージョンとリポジトリのモジュールディスクリプタで宣言されていれば、後続のリポジトリを探索する必要は無く、残りの処理も短縮できます。
-                </para>
-            </listitem>
-            <listitem>
-                <para role="original">All of the artifacts for the module are then requested from the <emphasis>same repository</emphasis> that was chosen in the process above.</para>
-                <para>モジュール内の全アーティファクトが、上記処理で選択されたのと<emphasis>同じリポジトリ</emphasis>から取得されます。</para>
-            </listitem>
-        </itemizedlist>
+                </listitem>
+                <listitem>
+                    <para>Once each repository has been inspected for the module, Gradle will choose the 'best' one to use. This is done using the following criteria:
+                        <itemizedlist>
+                            <listitem>For a dynamic version, a 'higher' static version is preferred over a 'lower' version.</listitem>
+                            <listitem>Modules declared by a module descriptor file (ivy or pom file) are preferred over modules that have an artifact file only.</listitem>
+                            <listitem>Modules from earlier repositories are preferred over modules in later repositories.</listitem>
+                        </itemizedlist>
+                    </para>
+                    <para>When the dependency is declared by a static version and a module descriptor file is found in a repository, there is no need to continue searching later
+                    repositories and the remainder of the process is short-circuited.</para>
+                </listitem>
+                <listitem>
+                    <para>All of the artifacts for the module are then requested from the <emphasis>same repository</emphasis> that was chosen in the process above.</para>
+                </listitem>
+            </itemizedlist>
     </section>
     <section id='sec:dependency_cache'>
         <title>依存関係のキャッシュ <phrase role="original">The dependency cache</phrase></title>

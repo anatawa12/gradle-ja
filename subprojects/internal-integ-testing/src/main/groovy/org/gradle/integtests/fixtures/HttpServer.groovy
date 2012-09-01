@@ -15,20 +15,22 @@
  */
 package org.gradle.integtests.fixtures
 
+import org.gradle.util.AvailablePortFinder
 import org.gradle.util.hash.HashUtil
+import org.hamcrest.Matcher
 import org.junit.rules.ExternalResource
+import org.mortbay.jetty.*
+import org.mortbay.jetty.bio.SocketConnector
 import org.mortbay.jetty.handler.AbstractHandler
 import org.mortbay.jetty.handler.HandlerCollection
+import org.mortbay.jetty.security.*
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 
-import java.security.Principal
-import java.util.zip.GZIPOutputStream
 import javax.servlet.http.HttpServletRequest
 import javax.servlet.http.HttpServletResponse
-
-import org.mortbay.jetty.*
-import org.mortbay.jetty.security.*
+import java.security.Principal
+import java.util.zip.GZIPOutputStream
 
 class HttpServer extends ExternalResource {
 
@@ -38,9 +40,13 @@ class HttpServer extends ExternalResource {
     private final HandlerCollection collection = new HandlerCollection()
     private TestUserRealm realm
     private SecurityHandler securityHandler
+    private Connector connector
+    private SslSocketConnector sslConnector
     AuthScheme authenticationScheme = AuthScheme.BASIC
+
     private Throwable failure
     private final List<Expection> expections = []
+    private Matcher expectedUserAgent = null
 
     enum AuthScheme {
         BASIC(new BasicAuthHandler()), DIGEST(new DigestAuthHandler())
@@ -95,6 +101,10 @@ class HttpServer extends ExternalResource {
     }
 
     void start() {
+        int port = AvailablePortFinder.createPrivate().nextAvailable
+        connector = new SocketConnector()
+        connector.port = port
+        server.addConnector(connector)
         server.start()
     }
 
@@ -110,6 +120,26 @@ class HttpServer extends ExternalResource {
         }
     }
 
+    void enableSsl(String keyStore, String keyPassword, String trustStore = null, String trustPassword = null) {
+        sslConnector = new SslSocketConnector()
+        sslConnector.keystore = keyStore
+        sslConnector.keyPassword = keyPassword
+        if (trustStore) {
+            sslConnector.needClientAuth = true
+            sslConnector.truststore = trustStore
+            sslConnector.trustPassword = trustPassword
+        }
+        server.addConnector(sslConnector)
+    }
+
+    int getSslPort() {
+        sslConnector.localPort
+    }
+
+    void expectUserAgent(UserAgentMatcher userAgent) {
+        this.expectedUserAgent = userAgent;
+    }
+
     void resetExpectations() {
         try {
             if (failure != null) {
@@ -120,6 +150,7 @@ class HttpServer extends ExternalResource {
             }
         } finally {
             failure = null
+            expectedUserAgent = null
             expections.clear()
             collection.setHandlers()
         }
@@ -133,14 +164,21 @@ class HttpServer extends ExternalResource {
     /**
      * Adds a given file at the given URL. The source file can be either a file or a directory.
      */
-    void allowGet(String path, File srcFile) {
+    void allowGetOrHead(String path, File srcFile) {
         allow(path, true, ['GET', 'HEAD'], fileHandler(path, srcFile))
+    }
+
+    /**
+     * Adds a given file at the given URL. The source file can be either a file or a directory.
+     */
+    void allowHead(String path, File srcFile) {
+        allow(path, true, ['HEAD'], fileHandler(path, srcFile))
     }
 
     /**
      * Adds a given file at the given URL with the given credentials. The source file can be either a file or a directory.
      */
-    void allowGet(String path, String username, String password, File srcFile) {
+    void allowGetOrHead(String path, String username, String password, File srcFile) {
         allow(path, true, ['GET', 'HEAD'], withAuthentication(path, username, password, fileHandler(path, srcFile)))
     }
 
@@ -151,6 +189,13 @@ class HttpServer extends ExternalResource {
             }
 
             void handle(HttpServletRequest request, HttpServletResponse response) {
+                if (HttpServer.this.expectedUserAgent != null) {
+                    String receivedUserAgent = request.getHeader("User-Agent")
+                    if (!expectedUserAgent.matches(receivedUserAgent)) {
+                        response.sendError(412, String.format("Precondition Failed: Expected User-Agent: '%s' but was '%s'", expectedUserAgent, receivedUserAgent));
+                        return;
+                    }
+                }
                 def file
                 if (request.pathInfo == path) {
                     file = srcFile
@@ -215,6 +260,13 @@ class HttpServer extends ExternalResource {
      */
     void expectHead(String path, File srcFile, Long lastModified = null, Long contentLength = null) {
         expect(path, false, ['HEAD'], fileHandler(path, srcFile, lastModified, contentLength))
+    }
+
+    /**
+     * Allows one HEAD request for the given URL with http authentication.
+     */
+    void expectHead(String path, String username, String password, File srcFile, Long lastModified = null, Long contentLength = null) {
+        expect(path, false, ['HEAD'], withAuthentication(path, username, password, fileHandler(path, srcFile)))
     }
 
     /**
@@ -304,6 +356,22 @@ class HttpServer extends ExternalResource {
         })
     }
 
+    /**
+     * Allows one GET request for the given URL, returning an apache-compatible directory listing with the given File names.
+     */
+    void expectGetDirectoryListing(String path, String username, String password, File directory) {
+        expect(path, false, ['GET'], withAuthentication(path, username, password, new Action() {
+            String getDisplayName() {
+                return "return listing of directory $directory.name"
+            }
+
+            void handle(HttpServletRequest request, HttpServletResponse response) {
+                sendDirectoryListing(response, directory)
+            }
+        }));
+    }
+
+
     private sendFile(HttpServletResponse response, File file, Long lastModified, Long contentLength) {
         if (sendLastModified) {
             response.setDateHeader(HttpHeaders.LAST_MODIFIED, lastModified ?: file.lastModified())
@@ -341,7 +409,7 @@ class HttpServer extends ExternalResource {
         }
 
         response.setContentLength(directoryListing.length())
-        response.setContentType("text/plain")
+        response.setContentType("text/html")
         response.outputStream.bytes = directoryListing.bytes
     }
 
@@ -355,6 +423,13 @@ class HttpServer extends ExternalResource {
             }
 
             void handle(HttpServletRequest request, HttpServletResponse response) {
+                if (HttpServer.this.expectedUserAgent != null) {
+                    String receivedUserAgent = request.getHeader("User-Agent")
+                    if (!expectedUserAgent.matches(receivedUserAgent)) {
+                        response.sendError(412, String.format("Precondition Failed: Expected User-Agent: '%s' but was '%s'", expectedUserAgent, receivedUserAgent))
+                        return;
+                    }
+                }
                 destFile.bytes = request.inputStream.bytes
                 response.setStatus(statusCode)
             }
@@ -371,6 +446,7 @@ class HttpServer extends ExternalResource {
             }
 
             void handle(HttpServletRequest request, HttpServletResponse response) {
+
                 if (request.remoteUser != username) {
                     response.sendError(500, "unexpected username '${request.remoteUser}'")
                     return
@@ -384,7 +460,7 @@ class HttpServer extends ExternalResource {
      * Allows PUT requests with the given credentials.
      */
     void allowPut(String path, String username, String password) {
-        allow(path, false, ['PUT'], withAuthentication(path, username, password, new Action(){
+        allow(path, false, ['PUT'], withAuthentication(path, username, password, new Action() {
             String getDisplayName() {
                 return "return 500"
             }
@@ -465,15 +541,7 @@ class HttpServer extends ExternalResource {
     }
 
     int getPort() {
-        def port = server.connectors[0].localPort
-        if (port < 0) {
-            throw new RuntimeException("""No port available for HTTP server. Still starting perhaps?
-connector: ${server.connectors[0]}
-connector state: ${server.connectors[0].dump()}
-server state: ${server.dump()}
-""")
-        }
-        return port
+        return server.connectors[0].localPort
     }
 
     interface Expection {

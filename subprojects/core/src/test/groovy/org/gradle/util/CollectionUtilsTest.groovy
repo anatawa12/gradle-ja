@@ -16,8 +16,11 @@
 package org.gradle.util
 
 import org.gradle.api.Transformer
+import org.gradle.api.specs.Spec
 import org.gradle.api.specs.Specs
 import spock.lang.Specification
+import spock.lang.Unroll
+
 import static org.gradle.util.CollectionUtils.*
 
 class CollectionUtilsTest extends Specification {
@@ -57,6 +60,13 @@ class CollectionUtilsTest extends Specification {
         filter(4, 5, 6) == [4] as Set
     }
 
+    def "map filtering"() {
+        expect:
+        def filtered = filter(a: 1, b: 2, c: 3, spec { it.value < 2 })
+        filtered.size() == 1
+        filtered.a == 1
+    }
+
     def toStringList() {
         def list = [42, "string"]
 
@@ -78,7 +88,7 @@ class CollectionUtilsTest extends Specification {
 
     def "list stringize"() {
         expect:
-        stringize([1,2,3]) == ["1", "2", "3"]
+        stringize([1, 2, 3]) == ["1", "2", "3"]
         stringize([]) == []
     }
 
@@ -87,5 +97,69 @@ class CollectionUtilsTest extends Specification {
         stringize(["c", "b", "a"], new TreeSet<String>()) == ["a", "b", "c"] as Set
     }
 
+    def "replacing"() {
+        given:
+        def l = [1, 2, 3]
 
+        expect:
+        replace l, spec { it == 2 }, transformer { 2 * 2 }
+        l == [1, 4, 3]
+
+        replace l, spec { it > 1 }, transformer { 0 }
+        l == [1, 0, 0]
+
+        !replace(l, spec { false }, transformer { it })
+    }
+
+    @Unroll
+    "diffing sets"() {
+        given:
+        def leftSet = left as Set
+        def rightSet = right as Set
+        def leftOnlySet = leftOnly as Set
+        def rightOnlySet = rightOnly as Set
+
+        when:
+        def diff = diffSetsBy(leftSet, rightSet, transformer { it + 10 })
+
+        then:
+        diff.leftOnly == leftOnlySet
+        diff.common.size() == common.size()
+        if (common) {
+            common.each { inCommon ->
+                diff.common.find { it.left == inCommon && it.right == inCommon }
+            }
+        }
+        diff.rightOnly == rightOnlySet
+
+        where:
+        left      | right     | leftOnly  | rightOnly | common
+        [1, 2, 3] | [2, 3, 4] | [1]       | [4]       | [2, 3]
+        []        | []        | []        | []        | []
+        [1, 2, 3] | []        | [1, 2, 3] | []        | []
+        []        | [1, 2, 3] | []        | [1, 2, 3] | []
+        [1, 2, 3] | [1, 2, 3] | []        | []        | [1, 2, 3]
+    }
+
+    def "collect as map"() {
+        expect:
+        collectMap([1, 2, 3], transformer { it * 10 }) == [10: 1, 20: 2, 30: 3]
+        collectMap([], transformer { it * 10 }) == [:]
+    }
+
+    def "every"() {
+        expect:
+        every([1, 2, 3], spec { it < 4 })
+        !every([1, 2, 4], spec { it < 4 })
+        !every([1], spec { it instanceof String })
+        every([], spec { false })
+    }
+
+    Spec<?> spec(Closure c) {
+        Specs.convertClosureToSpec(c)
+    }
+
+    Transformer<?, ?> transformer(Closure c) {
+        c as Transformer
+    }
 }

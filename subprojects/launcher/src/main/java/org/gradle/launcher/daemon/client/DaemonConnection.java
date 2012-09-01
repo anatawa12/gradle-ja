@@ -15,42 +15,69 @@
  */
 package org.gradle.launcher.daemon.client;
 
+import org.gradle.api.GradleException;
+import org.gradle.api.Nullable;
+import org.gradle.api.logging.Logger;
+import org.gradle.api.logging.Logging;
 import org.gradle.launcher.daemon.diagnostics.DaemonDiagnostics;
 import org.gradle.messaging.remote.internal.Connection;
 
 /**
  * A simple wrapper for the connection to a daemon plus its password.
  */
-public class DaemonConnection {
+public class DaemonConnection implements Connection<Object> {
+    //TODO SF rename - clashes with a different name
 
+    final Connection<Object> connection;
     private final String uid;
-    private final Connection<Object> connection;
-    private final String password;
     private DaemonDiagnostics diagnostics;
+    final Runnable onFailure;
+    private final static Logger LOG = Logging.getLogger(DaemonConnection.class);
 
-    public DaemonConnection(String uid, Connection<Object> connection, String password, DaemonDiagnostics diagnostics) {
-        this.uid = uid;
+    public DaemonConnection(Connection<Object> connection, String uid, DaemonDiagnostics diagnostics, Runnable onFailure) {
         this.connection = connection;
-        this.password = password;
+        this.uid = uid;
         this.diagnostics = diagnostics;
+        this.onFailure = onFailure;
+    }
+
+    /**
+     * @return diagnostics. Can be null - it means we don't have process diagnostics.
+     */
+    @Nullable
+    public DaemonDiagnostics getDaemonDiagnostics() {
+        return diagnostics;
+    }
+
+    public void requestStop() {
+        connection.requestStop();
     }
 
     public String getUid() {
         return uid;
     }
 
-    public Connection<Object> getConnection() {
-        return this.connection;
+    public void dispatch(Object message) {
+        try {
+            connection.dispatch(message);
+        } catch (Exception e) {
+            LOG.debug("Problem dispatching message to the daemon. Performing 'on failure' operation...");
+            onFailure.run();
+            throw new GradleException("Unable to dispatch the message to the daemon.", e);
+        }
     }
 
-    public String getPassword() {
-        return this.password;
+    public Object receive() {
+        try {
+            return connection.receive();
+        } catch (Exception e) {
+            LOG.debug("Problem receiving message to the daemon. Performing 'on failure' operation...");
+            onFailure.run();
+            throw new GradleException("Unable to receive a message from the daemon.", e);
+        }
     }
 
-    /**
-     * @return diagnostics. Can be null - it means we don't have process diagnostics.
-     */
-    public DaemonDiagnostics getDaemonDiagnostics() {
-        return diagnostics;
+    public void stop() {
+        connection.stop();
     }
 }

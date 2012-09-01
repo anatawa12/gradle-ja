@@ -20,7 +20,7 @@ import org.gradle.api.Project;
 import org.gradle.api.internal.GradleInternal;
 import org.gradle.plugins.ide.idea.IdeaPlugin;
 import org.gradle.plugins.ide.idea.model.*;
-import org.gradle.tooling.internal.gradle.DefaultExternalGradleModule;
+import org.gradle.tooling.internal.gradle.DefaultGradleModuleVersion;
 import org.gradle.tooling.internal.idea.*;
 import org.gradle.tooling.internal.protocol.InternalIdeaProject;
 import org.gradle.tooling.internal.protocol.ProjectVersion3;
@@ -92,8 +92,8 @@ public class IdeaModelBuilder implements BuildsModel {
                         .setScope(new DefaultIdeaDependencyScope(d.getScope()))
                         .setExported(d.getExported());
 
-                if (d.getId() != null) {
-                    defaultDependency.setExternalGradleModule(new DefaultExternalGradleModule(d.getId()));
+                if (d.getModuleVersion() != null) {
+                    defaultDependency.setGradleModuleVersion(new DefaultGradleModuleVersion(d.getModuleVersion()));
                 }
                 dependencies.add(defaultDependency);
             } else if (dependency instanceof ModuleDependency) {

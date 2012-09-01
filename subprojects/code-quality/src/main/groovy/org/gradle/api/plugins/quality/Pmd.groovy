@@ -24,6 +24,8 @@ import org.gradle.api.tasks.*
 import org.gradle.logging.ConsoleRenderer
 import org.gradle.api.GradleException
 
+import javax.inject.Inject
+
 /**
  * Runs a set of static code analysis rules on Java source code files and
  * generates a report of problems found.
@@ -57,6 +59,8 @@ class Pmd extends SourceTask implements VerificationTask, Reporting<PmdReports> 
     @Nested
     private final PmdReportsImpl reports = services.get(Instantiator).newInstance(PmdReportsImpl, this)
 
+    private final IsolatedAntBuilder antBuilder
+
     /**
      * Whether or not to allow the build to continue if there are warnings.
      *
@@ -64,9 +68,14 @@ class Pmd extends SourceTask implements VerificationTask, Reporting<PmdReports> 
      */
     boolean ignoreFailures
 
+    @Inject
+    Pmd(Instantiator instantiator, IsolatedAntBuilder antBuilder) {
+        reports = instantiator.newInstance(PmdReportsImpl, this)
+        this.antBuilder = antBuilder
+    }
+
     @TaskAction
     void run() {
-        def antBuilder = services.get(IsolatedAntBuilder)
         antBuilder.withClasspath(getPmdClasspath()).execute {
             ant.taskdef(name: 'pmd', classname: 'net.sourceforge.pmd.ant.PMDTask')
             ant.pmd(failOnRuleViolation: false, failuresPropertyName: "pmdFailureCount") {

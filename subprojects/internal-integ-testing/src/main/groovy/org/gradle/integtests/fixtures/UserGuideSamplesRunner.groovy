@@ -20,29 +20,33 @@ import com.google.common.collect.ListMultimap
 import groovy.io.PlatformLineWriter
 import junit.framework.AssertionFailedError
 import org.apache.tools.ant.taskdefs.Delete
-import org.gradle.util.AntUtil
 import org.gradle.internal.SystemProperties
+import org.gradle.util.AntUtil
 import org.junit.Assert
 import org.junit.runner.Description
 import org.junit.runner.Runner
 import org.junit.runner.notification.Failure
 import org.junit.runner.notification.RunNotifier
+
 import java.util.regex.Pattern
+import org.gradle.util.TextUtil
 
 class UserGuideSamplesRunner extends Runner {
     private static final String NL = SystemProperties.lineSeparator
 
     Class<?> testClass
     Description description
-    Map<Description, SampleRun> samples;
+    Map<Description, SampleRun> samples
     GradleDistribution dist = new GradleDistribution()
     GradleDistributionExecuter executer = new GradleDistributionExecuter(dist)
-    Pattern dirFilter = null 
+    Pattern dirFilter = null
+    List excludes
 
     def UserGuideSamplesRunner(Class<?> testClass) {
         this.testClass = testClass
         this.description = Description.createSuiteDescription(testClass)
         this.dirFilter = getDirFilterPattern()
+        this.excludes = getExcludes()
         samples = new LinkedHashMap()
         for (sample in getScriptsForSamples(dist.userGuideInfoDir)) {
             if (shouldInclude(sample)) {
@@ -61,11 +65,23 @@ class UserGuideSamplesRunner extends Runner {
         filter ? Pattern.compile(filter) : null
     }
 
+    def getExcludes() {
+        List excludes = []
+        String excludesString = System.properties["org.gradle.userguide.samples.exclude"] ?: "";
+        excludesString.split(',').each {
+            excludes.add it
+        }
+        return excludes
+    }
+
     Description getDescription() {
         return description
     }
 
     private boolean shouldInclude(SampleRun run) {
+        if (excludes.contains(run.id)) {
+            return false
+        }
         dirFilter ? run.subDir ==~ dirFilter : true
     }
 
@@ -106,8 +122,9 @@ class UserGuideSamplesRunner extends Runner {
             ExecutionResult result = run.expectFailure ? executer.runWithFailure() : executer.run()
             if (run.outputFile) {
                 String expectedResult = replaceWithPlatformNewLines(dist.userGuideOutputDir.file(run.outputFile).text)
+                expectedResult = replaceWithRealSamplesDir(expectedResult)
                 try {
-                    compareStrings(expectedResult, result.output, run.ignoreExtraLines)
+                    result.assertOutputEquals(expectedResult, run.ignoreExtraLines)
                 } catch (AssertionFailedError e) {
                     println 'Expected Result:'
                     println expectedResult
@@ -135,70 +152,15 @@ class UserGuideSamplesRunner extends Runner {
         }
     }
 
-    private def compareStrings(String expected, String actual, boolean ignoreExtraLines) {
-        List actualLines = normaliseOutput(actual.readLines())
-        List expectedLines = expected.readLines()
-        int pos = 0
-        for (; pos < actualLines.size() && pos < expectedLines.size(); pos++) {
-            String expectedLine = expectedLines[pos]
-            String actualLine = actualLines[pos]
-            boolean matches = compare(expectedLine, actualLine)
-            if (!matches) {
-                if (expectedLine.contains(actualLine)) {
-                    Assert.fail("Missing text at line ${pos + 1}.${NL}Expected: ${expectedLine}${NL}Actual: ${actualLine}${NL}---${NL}Actual output:${NL}$actual${NL}---")
-                }
-                if (actualLine.contains(expectedLine)) {
-                    Assert.fail("Extra text at line ${pos + 1}.${NL}Expected: ${expectedLine}${NL}Actual: ${actualLine}${NL}---${NL}Actual output:${NL}$actual${NL}---")
-                }
-                Assert.fail("Unexpected value at line ${pos + 1}.${NL}Expected: ${expectedLine}${NL}Actual: ${actualLine}${NL}---${NL}Actual output:${NL}$actual${NL}---")
-            }
-        }
-        if (pos == actualLines.size() && pos < expectedLines.size()) {
-            Assert.fail("Lines missing from actual result, starting at line ${pos + 1}.${NL}Expected: ${expectedLines[pos]}${NL}Actual output:${NL}$actual${NL}---")
-        }
-        if (!ignoreExtraLines && pos < actualLines.size() && pos == expectedLines.size()) {
-            Assert.fail("Extra lines in actual result, starting at line ${pos + 1}.${NL}Actual: ${actualLines[pos]}${NL}Actual output:${NL}$actual${NL}---")
-        }
-    }
-
-    static String replaceWithPlatformNewLines(String text) {
+    private String replaceWithPlatformNewLines(String text) {
         StringWriter stringWriter = new StringWriter()
         new PlatformLineWriter(stringWriter).withWriter { it.write(text) }
         stringWriter.toString()
     }
 
-    List<String> normaliseOutput(List<String> lines) {
-        if (lines.empty) {
-            return lines;
-        }
-        List<String> result = new ArrayList<String>()
-        for (String line : lines) {
-            if (line.matches('Download .+')) {
-                // ignore
-            } else {
-                result << line
-            }
-        }
-        return result
-    }
-
-    boolean compare(String expected, String actual) {
-        if (actual == expected) {
-            return true
-        }
-
-        if (expected == 'Total time: 1 secs') {
-            return actual.matches('Total time: .+ secs')
-        }
-        
-        // Normalise default object toString() values
-        actual = actual.replaceAll('(\\w+(\\.\\w+)*)@\\p{XDigit}+', '$1@12345')
-        // Normalise $samplesDir
-        actual = actual.replaceAll(java.util.regex.Pattern.quote(dist.samplesDir.absolutePath), '/home/user/gradle/samples')
-        // Normalise file separators
-        actual = actual.replaceAll(java.util.regex.Pattern.quote(File.separator), '/')
-
-        return actual == expected
+    private String replaceWithRealSamplesDir(String text) {
+        def normalisedSamplesDir = TextUtil.normaliseFileSeparators(dist.samplesDir.absolutePath)
+        return text.replaceAll(Pattern.quote('/home/user/gradle/samples'), normalisedSamplesDir)
     }
 
     static Collection<SampleRun> getScriptsForSamples(File userguideInfoDir) {

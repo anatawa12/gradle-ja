@@ -212,14 +212,14 @@
     <section id="sec:specifying_multiple_files">
         <title>入力ファイルセットを指定する <phrase role="original">Specifying a set of input files</phrase></title>
         <para role="original">Many objects in Gradle have properties which accept a set of input files. For example, the
-            <apilink class="org.gradle.api.tasks.compile.Compile"/> task has a <literal>source</literal> property,
+            <apilink class="org.gradle.api.tasks.compile.JavaCompile"/> task has a <literal>source</literal> property,
             which defines the source files to compile. You can set the value of this property using any of the types
             supported by the <link linkend="sec:file_collections">files()</link> method, which we have seen in above.
             This means you can set the property using, for example, a <classname>File</classname>, <classname>String</classname>,
             collection, <classname>FileCollection</classname> or even a closure.
             Here are some examples:
         </para>
-        <para>多くのGradleオブジェクトが入力ファイルセットを格納できるプロパティを持っています。例えば、<apilink class="org.gradle.api.tasks.compile.Compile"/>タスクには<literal>source</literal>プロパティがあり、コンパイルするべきソースファイルの集合をそこに定義します。
+        <para>多くのGradleオブジェクトが入力ファイルセットを格納できるプロパティを持っています。例えば、<apilink class="org.gradle.api.tasks.compile.JavaCompile"/>タスクには<literal>source</literal>プロパティがあり、コンパイルするべきソースファイルの集合をそこに定義します。
             このプロパティの値には、<literal>files()</literal>でサポートされている、上記の全ての型が使用可能です。
             つまり、<classname>File</classname>、<literal>String</literal>、コレクション、<classname>FileCollection</classname>、クロージャでさえセット可能ということです。次の例を見てください。
         </para>

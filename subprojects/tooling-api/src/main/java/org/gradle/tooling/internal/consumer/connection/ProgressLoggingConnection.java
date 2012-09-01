@@ -25,7 +25,6 @@ import org.gradle.tooling.internal.consumer.LoggingProvider;
 import org.gradle.tooling.internal.consumer.parameters.ConsumerOperationParameters;
 import org.gradle.tooling.internal.consumer.versioning.VersionDetails;
 import org.gradle.tooling.internal.protocol.BuildOperationParametersVersion1;
-import org.gradle.tooling.internal.protocol.BuildParametersVersion1;
 import org.gradle.tooling.internal.protocol.ProgressListenerVersion1;
 
 /**
@@ -52,19 +51,10 @@ public class ProgressLoggingConnection implements ConsumerConnection {
         return connection.getVersionDetails();
     }
 
-    public void executeBuild(final BuildParametersVersion1 buildParameters, final ConsumerOperationParameters operationParameters) {
-        run("Execute build", operationParameters, new BuildAction<Void>() {
-            public Void run(ConsumerConnection connection) {
-                connection.executeBuild(buildParameters, operationParameters);
-                return null;
-            }
-        });
-    }
-
-    public <T> T getModel(final Class<T> type, final ConsumerOperationParameters operationParameters) {
-        return run("Load projects", operationParameters, new BuildAction<T>() {
+    public <T> T run(final Class<T> type, final ConsumerOperationParameters operationParameters) {
+        return run("Build", operationParameters, new BuildAction<T>() {
             public T run(ConsumerConnection connection) {
-                return connection.getModel(type, operationParameters);
+                return connection.run(type, operationParameters);
             }
         });
     }

@@ -20,13 +20,20 @@ import org.apache.ivy.core.module.id.ModuleId;
 import org.apache.ivy.core.module.id.ModuleRevisionId;
 import org.apache.ivy.core.resolve.IvyNode;
 import org.apache.ivy.core.resolve.ResolveData;
+import org.gradle.api.artifacts.ModuleVersionSelector;
 import org.gradle.api.artifacts.ResolveException;
 import org.gradle.api.artifacts.ResolvedArtifact;
+import org.gradle.api.artifacts.result.ModuleSelectionReason;
+import org.gradle.api.internal.artifacts.DefaultModuleVersionIdentifier;
+import org.gradle.api.internal.artifacts.DefaultModuleVersionSelector;
 import org.gradle.api.internal.artifacts.DefaultResolvedDependency;
 import org.gradle.api.internal.artifacts.ResolvedConfigurationIdentifier;
 import org.gradle.api.internal.artifacts.configurations.ConfigurationInternal;
 import org.gradle.api.internal.artifacts.ivyservice.*;
 import org.gradle.api.internal.artifacts.ivyservice.moduleconverter.dependencies.EnhancedDependencyDescriptor;
+import org.gradle.api.internal.artifacts.ivyservice.resolveengine.result.InternalDependencyResult;
+import org.gradle.api.internal.artifacts.ivyservice.resolveengine.result.ModuleVersionSelection;
+import org.gradle.api.internal.artifacts.ivyservice.resolveengine.result.ResolvedConfigurationListener;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -46,14 +53,14 @@ public class DependencyGraphBuilder {
         this.conflictResolver = new ForcedModuleConflictResolver(conflictResolver);
     }
 
-    public DefaultLenientConfiguration resolve(ConfigurationInternal configuration, ResolveData resolveData) throws ResolveException {
+    public DefaultLenientConfiguration resolve(ConfigurationInternal configuration, ResolveData resolveData, ResolvedConfigurationListener listener) throws ResolveException {
         ModuleDescriptor moduleDescriptor = moduleDescriptorConverter.convert(configuration.getAll(), configuration.getModule());
 
         ResolveState resolveState = new ResolveState(moduleDescriptor, configuration.getName(), dependencyResolver, resolveData);
         traverseGraph(resolveState);
 
         DefaultLenientConfiguration result = new DefaultLenientConfiguration(configuration, resolveState.root.getResult());
-        assembleResult(resolveState, result);
+        assembleResult(resolveState, result, listener);
 
         return result;
     }
@@ -134,13 +141,30 @@ public class DependencyGraphBuilder {
     /**
      * Populates the result from the graph traversal state.
      */
-    private void assembleResult(ResolveState resolveState, ResolvedConfigurationBuilder result) {
+    private void assembleResult(ResolveState resolveState, ResolvedConfigurationBuilder result, ResolvedConfigurationListener listener) {
         FailureState failureState = new FailureState(resolveState.root);
+        ResolvedConfigurationIdentifier root = resolveState.root.toId();
+        listener.start(root);
+
         for (ConfigurationNode resolvedConfiguration : resolveState.getConfigurationNodes()) {
             resolvedConfiguration.attachToParents(resolvedArtifactFactory, result);
             resolvedConfiguration.collectFailures(failureState);
+
+            notifyListener(listener, resolvedConfiguration);
         }
         failureState.attachFailures(result);
+    }
+
+    private void notifyListener(ResolvedConfigurationListener listener, ConfigurationNode resolvedConfiguration) {
+        ResolvedConfigurationIdentifier id = resolvedConfiguration.toId();
+        Set<InternalDependencyResult> dependencies = new LinkedHashSet<InternalDependencyResult>();
+
+        for (DependencyEdge edge : resolvedConfiguration.outgoingEdges) {
+            InternalDependencyResult d = new InternalDependencyResult(edge.toSelector(), edge.getSelectedModule(), edge.getFailure());
+            dependencies.add(d);
+        }
+
+        listener.resolvedConfiguration(id, dependencies);
     }
 
     private static class FailureState {
@@ -371,10 +395,37 @@ public class DependencyGraphBuilder {
             return selector.intersect(selectorSpec);
         }
 
+        public boolean isFailed() {
+            return selector != null && selector.failure != null;
+        }
+
+        public ModuleVersionResolveException getFailure() {
+            return selector.failure;
+        }
+
         public void collectFailures(FailureState failureState) {
-            if (selector != null && selector.failure != null) {
-                failureState.addUnresolvedDependency(this, selector.descriptor.getDependencyRevisionId(), selector.failure);
+            if (isFailed()) {
+                failureState.addUnresolvedDependency(this, selector.descriptor.getDependencyRevisionId(), getFailure());
             }
+        }
+
+        public ModuleVersionSelector toSelector() {
+            return new DefaultModuleVersionSelector(
+                    dependencyDescriptor.getDependencyRevisionId().getOrganisation(),
+                    dependencyDescriptor.getDependencyRevisionId().getName(),
+                    dependencyDescriptor.getDependencyRevisionId().getRevision());
+        }
+
+        public ModuleVersionSelection getSelectedModule() {
+            if (targetModuleRevision == null) {
+                //this situation is detected by DependencyGraphBuilderTest which uses mocks
+                //it suppose to mean that the dependency is unresolved.
+                return null;
+            }
+            return new ModuleVersionSelection(new DefaultModuleVersionIdentifier(
+                    targetModuleRevision.id.getOrganisation(),
+                    targetModuleRevision.id.getName(),
+                    targetModuleRevision.getRevision()), targetModuleRevision.selectionReason);
         }
     }
 
@@ -550,6 +601,7 @@ public class DependencyGraphBuilder {
         ModuleDescriptor descriptor;
         ModuleState state = ModuleState.New;
         ModuleVersionSelectorResolveState resolver;
+        ModuleSelectionReason selectionReason = ModuleSelectionReason.regular;
 
         private DefaultModuleRevisionResolveState(ModuleResolveState module, ModuleRevisionId id, ResolveState resolveState) {
             this.module = module;
@@ -811,6 +863,14 @@ public class DependencyGraphBuilder {
                 incomingEdges.clear();
             }
         }
+
+        private ResolvedConfigurationIdentifier toId() {
+            return new ResolvedConfigurationIdentifier(
+                    moduleRevision.id.getOrganisation(),
+                    moduleRevision.id.getName(),
+                    moduleRevision.id.getRevision(),
+                    configurationName);
+        }
     }
 
     private static class ModuleVersionSelectorResolveState {
@@ -854,6 +914,11 @@ public class DependencyGraphBuilder {
 
             targetModuleRevision = resolveState.getRevision(idResolveResult.getId());
             targetModuleRevision.addResolver(this);
+
+            if (idResolveResult instanceof ForcedModuleVersionIdResolveResult) {
+                targetModuleRevision.selectionReason = ModuleSelectionReason.forced;
+            }
+
             return targetModuleRevision;
         }
 
@@ -890,11 +955,15 @@ public class DependencyGraphBuilder {
             for (ConfigurationNode configuration : root.configurations) {
                 for (DependencyEdge outgoingEdge : configuration.outgoingEdges) {
                     if (outgoingEdge.dependencyDescriptor.isForce() && candidates.contains(outgoingEdge.targetModuleRevision)) {
+                        outgoingEdge.targetModuleRevision.selectionReason = ModuleSelectionReason.forced;
                         return outgoingEdge.targetModuleRevision;
                     }
                 }
             }
-            return (DefaultModuleRevisionResolveState) resolver.select(candidates, root);
+            //TODO SF unit test
+            DefaultModuleRevisionResolveState out = (DefaultModuleRevisionResolveState) resolver.select(candidates, root);
+            out.selectionReason = ModuleSelectionReason.conflictResolution;
+            return out;
         }
     }
 }

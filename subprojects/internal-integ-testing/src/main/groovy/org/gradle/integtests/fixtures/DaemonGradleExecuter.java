@@ -16,25 +16,21 @@
 package org.gradle.integtests.fixtures;
 
 import org.apache.commons.collections.CollectionUtils;
+import org.gradle.api.JavaVersion;
 
-import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 
 import static java.util.Arrays.asList;
 
-public class 
-        DaemonGradleExecuter extends ForkingGradleExecuter {
-    private static final String DAEMON_REGISTRY_SYS_PROP = "org.gradle.integtest.daemon.registry";
-    private final GradleDistribution distribution;
-    private final File daemonBaseDir;
+public class DaemonGradleExecuter extends ForkingGradleExecuter {
     private final boolean allowExtraLogging;
+    private final boolean noDefaultJvmArgs;
 
-    public DaemonGradleExecuter(GradleDistribution distribution, File daemonBaseDir, boolean allowExtraLogging) {
+    public DaemonGradleExecuter(GradleDistribution distribution, boolean allowExtraLogging, boolean noDefaultJvmArgs) {
         super(distribution.getGradleHomeDir());
-        this.distribution = distribution;
-        this.daemonBaseDir = daemonBaseDir;
         this.allowExtraLogging = allowExtraLogging;
+        this.noDefaultJvmArgs = noDefaultJvmArgs;
     }
 
     @Override
@@ -45,23 +41,7 @@ public class
         args.add("--daemon");
 
         args.addAll(originalArgs);
-
-        String daemonRegistryBase = getDaemonRegistryBase();
-        if (daemonRegistryBase != null) {
-            args.add("-Dorg.gradle.daemon.registry.base=" + daemonRegistryBase);
-            configureJvmArgs(args, daemonRegistryBase);
-        } else {
-            configureJvmArgs(args, distribution.getUserHomeDir().getAbsolutePath());
-        }
-
-        if (!args.toString().contains("-Dorg.gradle.daemon.idletimeout=")) {
-            //isolated daemons/daemon with custom base dir cannot be connected again
-            //so they should have shorter timeout
-            boolean preferShortTimeout = distribution.isUsingIsolatedDaemons() || daemonBaseDir != null;
-            int timeout = preferShortTimeout? 20000 : 5 * 60 * 1000;
-            args.add("-Dorg.gradle.daemon.idletimeout=" + timeout);
-        }
-
+        configureJvmArgs(args);
         configureDefaultLogging(args);
 
         return args;
@@ -71,32 +51,20 @@ public class
         if(!allowExtraLogging) {
             return;
         }
-        List logOptions = asList("-i", "--info", "-d", "--debug", "-q", "--quite");
+        List logOptions = asList("-i", "--info", "-d", "--debug", "-q", "--quiet");
         boolean alreadyConfigured = CollectionUtils.containsAny(args, logOptions);
         if (!alreadyConfigured) {
             args.add("-i");
         }
     }
 
-    private void configureJvmArgs(List<String> args, String registryBase) {
-        // TODO - clean this up. It's a workaround to provide some way for the client of this executer to
-        // specify that no jvm args should be provided
-        if(!args.remove("-Dorg.gradle.jvmargs=")){
-            args.add(0, "-Dorg.gradle.jvmargs=-ea -XX:MaxPermSize=256m"
-                    + " -XX:+HeapDumpOnOutOfMemoryError");
+    private void configureJvmArgs(List<String> args) {
+        if(!noDefaultJvmArgs) {
+            String jvmArgs  = "-Dorg.gradle.jvmargs=-ea -XX:MaxPermSize=256m -XX:+HeapDumpOnOutOfMemoryError";
+            if (JavaVersion.current().isJava5()) {
+                jvmArgs = String.format("%s -XX:+CMSPermGenSweepingEnabled -Dcom.sun.management.jmxremote", jvmArgs);
+            }
+            args.add(0, jvmArgs);
         }
-    }
-
-    String getDaemonRegistryBase() {
-        if (daemonBaseDir != null) {
-            return daemonBaseDir.getAbsolutePath();
-        }
-
-        String customDaemonRegistryDir = System.getProperty(DAEMON_REGISTRY_SYS_PROP);
-        if (customDaemonRegistryDir != null && !distribution.isUsingIsolatedDaemons()) {
-            return customDaemonRegistryDir;
-        }
-
-        return null;
     }
 }

@@ -16,6 +16,7 @@
 
 package org.gradle.api.internal.artifacts;
 
+import org.gradle.api.artifacts.ModuleVersionIdentifier;
 import org.gradle.api.artifacts.ModuleVersionSelector;
 
 /**
@@ -95,5 +96,13 @@ public class DefaultModuleVersionSelector implements ModuleVersionSelector {
         result = 31 * result + (name != null ? name.hashCode() : 0);
         result = 31 * result + (version != null ? version.hashCode() : 0);
         return result;
+    }
+
+    public static ModuleVersionSelector newSelector(ModuleVersionIdentifier id) {
+        return new DefaultModuleVersionSelector(id.getGroup(), id.getName(), id.getVersion());
+    }
+
+    public static ModuleVersionSelector newSelector(String group, String name, String version) {
+        return new DefaultModuleVersionSelector(group, name, version);
     }
 }

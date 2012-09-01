@@ -4,16 +4,16 @@ allprojects {
 	apply plugin: "idea"
 }
 
-configure(groovyProjects()) {
-    idea {
-        module {
-            scopes.RUNTIME.plus.add(configurations.detachedConfiguration(new DefaultSelfResolvingDependency(files { sourceSets.main.resources.srcDirs })))
-            scopes.TEST.plus.add(configurations.detachedConfiguration(new DefaultSelfResolvingDependency(files { sourceSets*.resources*.srcDirs })))
+subprojects {
+    plugins.withType(JavaPlugin) {
+        idea {
+            module {
+                scopes.RUNTIME.plus.add(configurations.detachedConfiguration(new DefaultSelfResolvingDependency(files { sourceSets.main.resources.srcDirs })))
+                scopes.TEST.plus.add(configurations.detachedConfiguration(new DefaultSelfResolvingDependency(files { sourceSets*.resources*.srcDirs })))
+            }
         }
     }
 }
-
-evaluationDependsOn(':docs')
 
 idea {
     module {
@@ -28,7 +28,6 @@ idea {
         languageLevel = '1.5'
 
         ipr {
-
             withXml { provider ->
                 // Exclude resource directories from compilation and add them back in as classpath resources
                 def node = provider.asNode()
@@ -38,7 +37,7 @@ idea {
                     compilerConfig.remove(exclude)
                 }
                 exclude = compilerConfig.appendNode('excludeFromCompile')
-                Collection resourceFolder = groovyProjects().collect { project -> project.sourceSets*.resources*.srcDirs }.flatten()
+                Collection resourceFolder = groovyProjects.collect { project -> project.sourceSets*.resources*.srcDirs }.flatten()
                 resourceFolder.each {
                     if (it.exists()) {
                         exclude.appendNode('directory', [url: "file://\$PROJECT_DIR\$/${rootProject.relativePath(it)}", includeSubdirectories: true])
@@ -55,12 +54,12 @@ idea {
                         }
                     }
                 }
-                Collection sourceDirs = groovyProjects().collect { project -> project.sourceSets*.allSource*.srcDirs }.flatten()
+                Collection sourceDirs = groovyProjects.collect { project -> project.sourceSets*.allSource*.srcDirs }.flatten()
                 sourceDirs.each { sourceFolder ->
-                    if (!Jvm.current().isJava7()) {
+                    if (!javaVersion.java7) {
                         excludeSource("jdk7", sourceFolder)
                     }
-                    if (!Jvm.current().isJava6Compatible()) {
+                    if (!javaVersion.java6Compatible) {
                         excludeSource("jdk6", sourceFolder)
                     }
                 }
@@ -72,6 +71,10 @@ idea {
                 // Set gradle home
                 def gradleSettings = node.appendNode('component', [name: 'GradleSettings'])
                 gradleSettings.appendNode('option', [name: 'SDK_HOME', value: gradle.gradleHomeDir.absolutePath])
+
+                // set compiler heap space
+                def javacSettings = node.appendNode('component', [name: 'JavacSettings'])
+                javacSettings.appendNode('option', [name: 'MAXIMUM_HEAP_SIZE', value: "256"])
 
                 // license header
                 def copyrightManager = node.component.find { it.'@name' == 'CopyrightManager' }
@@ -207,7 +210,7 @@ idea {
 
         Node vmParameters = runConfig.option.find { it.'@name' == 'VM_PARAMETERS' }
 
-        vmParameters.'@value' = "\"-DintegTest.samplesdir=${project(":docs").samplesDir.absolutePath}\" \"-DintegTest.gradleHomeDir=${intTestImage.destinationDir}\" -ea -Dorg.gradle.integtest.executer=embedded -XX:MaxPermSize=256m -Xmx512m"
+        vmParameters.'@value' = "\"-DintegTest.gradleHomeDir=${intTestImage.destinationDir}\" -ea -Dorg.gradle.integtest.executer=embedded -XX:MaxPermSize=256m -Xmx512m"
 
         // Add an application configuration
         runManagerConfig.'@selected' = 'Application.Gradle'

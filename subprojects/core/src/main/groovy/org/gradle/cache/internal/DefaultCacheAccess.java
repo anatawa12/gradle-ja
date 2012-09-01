@@ -16,13 +16,13 @@
 package org.gradle.cache.internal;
 
 import net.jcip.annotations.ThreadSafe;
-import org.gradle.internal.Factory;
 import org.gradle.cache.CacheAccess;
 import org.gradle.cache.DefaultSerializer;
 import org.gradle.cache.PersistentIndexedCache;
-import org.gradle.messaging.serialize.Serializer;
 import org.gradle.cache.internal.btree.BTreePersistentIndexedCache;
+import org.gradle.internal.Factory;
 import org.gradle.internal.UncheckedException;
+import org.gradle.messaging.serialize.Serializer;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -47,8 +47,15 @@ public class DefaultCacheAccess implements CacheAccess {
     private Thread owner;
     private FileLockManager.LockMode lockMode;
     private FileLock fileLock;
+    // TODO:DAZ This can probably be part of the per-thread operation stack
     private boolean started;
-    private final List<String> operationStack = new ArrayList<String>();
+    private final ThreadLocal<CacheOperationStack> operationStack = new ThreadLocal<CacheOperationStack>() {
+        @Override
+        protected CacheOperationStack initialValue() {
+            return new CacheOperationStack();
+        }
+    };
+
 
     public DefaultCacheAccess(String cacheDisplayName, File lockFile, FileLockManager lockManager) {
         this.cacheDiplayName = cacheDisplayName;
@@ -85,7 +92,7 @@ public class DefaultCacheAccess implements CacheAccess {
             for (MultiProcessSafePersistentIndexedCache<?, ?> cache : caches) {
                 cache.close();
             }
-            operationStack.clear();
+            operationStack.remove();
             started = false;
             lockMode = null;
             owner = null;
@@ -130,7 +137,7 @@ public class DefaultCacheAccess implements CacheAccess {
                 }
             }
         } finally {
-            unlockCache();
+            unlockCache(operationDisplayName);
         }
     }
 
@@ -145,17 +152,17 @@ public class DefaultCacheAccess implements CacheAccess {
                 }
             }
             owner = Thread.currentThread();
-            operationStack.add(0, operationDisplayName);
+            operationStack.get().pushCacheAction(operationDisplayName);
         } finally {
             lock.unlock();
         }
     }
 
-    private void unlockCache() {
+    private void unlockCache(String operationDisplayName) {
         lock.lock();
         try {
-            operationStack.remove(0);
-            if (operationStack.isEmpty()) {
+            operationStack.get().popCacheAction(operationDisplayName);
+            if (!operationStack.get().isInCacheAction()) {
                 owner = null;
                 condition.signalAll();
             }
@@ -165,22 +172,29 @@ public class DefaultCacheAccess implements CacheAccess {
     }
 
     public <T> T longRunningOperation(String operationDisplayName, Factory<? extends T> action) {
-        startLongRunningOperation();
-        try {
-            boolean wasEnded = onEndWork();
+        if (operationStack.get().isInLongRunningOperation()) {
+            operationStack.get().pushLongRunningOperation(operationDisplayName);
             try {
                 return action.create();
             } finally {
-                if (wasEnded) {
-                    onStartWork();
-                }
+                operationStack.get().popLongRunningOperation(operationDisplayName);
             }
+        }
+
+        checkThreadIsOwner();
+        boolean wasEnded = onEndWork();
+        parkOwner(operationDisplayName);
+        try {
+            return action.create();
         } finally {
-            endLongRunningOperation();
+            restoreOwner(operationDisplayName);
+            if (wasEnded) {
+                onStartWork();
+            }
         }
     }
 
-    private void startLongRunningOperation() {
+    private void checkThreadIsOwner() {
         lock.lock();
         try {
             if (owner != Thread.currentThread()) {
@@ -191,7 +205,36 @@ public class DefaultCacheAccess implements CacheAccess {
         }
     }
 
-    private void endLongRunningOperation() {
+    private void parkOwner(String operationDisplayName) {
+        lock.lock();
+        try {
+            if (owner != Thread.currentThread()) {
+                throw new IllegalStateException(String.format("Cannot start long running operation, as the %s has not been locked.", cacheDiplayName));
+            }
+            owner = null;
+            condition.signalAll();
+
+            operationStack.get().pushLongRunningOperation(operationDisplayName);
+        } finally {
+            lock.unlock();
+        }
+    }
+
+    private void restoreOwner(String description) {
+        lock.lock();
+        try {
+            while (owner != null) {
+                try {
+                    condition.await();
+                } catch (InterruptedException e) {
+                    throw UncheckedException.throwAsUncheckedException(e);
+                }
+            }
+            owner = Thread.currentThread();
+            operationStack.get().popLongRunningOperation(description);
+        } finally {
+            lock.unlock();
+        }
     }
 
     public void longRunningOperation(String operationDisplayName, final Runnable action) {
@@ -218,7 +261,7 @@ public class DefaultCacheAccess implements CacheAccess {
         try {
             caches.add(indexedCache);
             if (started) {
-                indexedCache.onStartWork(operationStack.get(0));
+                indexedCache.onStartWork(operationStack.get().getDescription());
             }
         } finally {
             lock.unlock();
@@ -237,7 +280,7 @@ public class DefaultCacheAccess implements CacheAccess {
 
         started = true;
         for (MultiProcessSafePersistentIndexedCache<?, ?> cache : caches) {
-            cache.onStartWork(operationStack.get(0));
+            cache.onStartWork(operationStack.get().getDescription());
         }
         return true;
     }
@@ -271,7 +314,7 @@ public class DefaultCacheAccess implements CacheAccess {
             lock.unlock();
         }
         if (fileLock == null) {
-            fileLock = lockManager.lock(lockFile, Exclusive, cacheDiplayName, operationStack.get(0));
+            fileLock = lockManager.lock(lockFile, Exclusive, cacheDiplayName, operationStack.get().getDescription());
         }
         return fileLock;
     }
@@ -290,4 +333,61 @@ public class DefaultCacheAccess implements CacheAccess {
         }
     }
 
+    private class CacheOperationStack {
+        private final List<CacheOperation> operations = new ArrayList<CacheOperation>();
+
+        public String getDescription() {
+            checkNotEmpty();
+            return operations.get(0).description;
+        }
+
+        public boolean isInLongRunningOperation() {
+            return !operations.isEmpty() && operations.get(0).longRunningOperation;
+        }
+
+        public void pushLongRunningOperation(String description) {
+            operations.add(0, new CacheOperation(description, true));
+        }
+
+        public void popLongRunningOperation(String description) {
+            pop(description, true);
+        }
+
+        public boolean isInCacheAction() {
+            return !operations.isEmpty() && !operations.get(0).longRunningOperation;
+        }
+
+        public void pushCacheAction(String description) {
+            operations.add(0, new CacheOperation(description, false));
+        }
+
+        public void popCacheAction(String description) {
+            pop(description, false);
+        }
+
+        private CacheOperation pop(String description, boolean longRunningOperation) {
+            checkNotEmpty();
+            CacheOperation operation = operations.remove(0);
+            if (operation.description.equals(description) && operation.longRunningOperation == longRunningOperation) {
+                return operation;
+            }
+            throw new IllegalStateException();
+        }
+
+        private void checkNotEmpty() {
+            if (operations.isEmpty()) {
+                throw new IllegalStateException();
+            }
+        }
+    }
+
+    private class CacheOperation {
+        final String description;
+        final boolean longRunningOperation;
+
+        private CacheOperation(String description, boolean longRunningOperation) {
+            this.description = description;
+            this.longRunningOperation = longRunningOperation;
+        }
+    }
 }

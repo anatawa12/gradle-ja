@@ -15,10 +15,11 @@
  */
 package org.gradle.integtests.fixtures
 
-import java.text.SimpleDateFormat
-
+import groovy.xml.MarkupBuilder
 import org.gradle.util.TestFile
 import org.gradle.util.hash.HashUtil
+
+import java.text.SimpleDateFormat
 
 /**
  * A fixture for dealing with Maven repositories.
@@ -62,13 +63,15 @@ class MavenModule {
         this.version = version
     }
 
-    MavenModule dependsOn(String dependencyArtifactId) {
-        dependsOn(groupId, dependencyArtifactId, '1.0')
+    MavenModule dependsOn(String ... dependencyArtifactIds) {
+        for (String id : dependencyArtifactIds) {
+            dependsOn(groupId, id, '1.0')
+        }
         return this
     }
 
     MavenModule dependsOn(String group, String artifactId, String version, String type = null) {
-        this.dependencies << [groupId: group, artifactId: artifactId, version: version, type:  type]
+        this.dependencies << [groupId: group, artifactId: artifactId, version: version, type: type]
         return this
     }
 
@@ -153,40 +156,6 @@ class MavenModule {
         return publish()
     }
 
-    /*
-    * publishes a maven-metadata.xml to the root of the artifact (in repo/group/projecta/maven-metadata.xml instead of
-    * repo/group/projecta/1.0/maven-metadata.xml
-    * */
-    MavenModule publishWithRootMavenMetaData() {
-        def rootMavenMetaData = getRootMetaDataFile().createFile();
-        publish(rootMavenMetaData){
-            rootMavenMetaData.withWriter {writer ->
-                def builder = new groovy.xml.MarkupBuilder(writer)
-                builder.metadata {
-                    groupId(groupId)
-                    artifactId(artifactId)
-                    version(version)
-                    versioning{
-                        if (uniqueSnapshots && version.endsWith("-SNAPSHOT")){
-                            snapshot{
-                                timestamp(timestampFormat.format(publishTimestamp))
-                                buildNumber(publishCount)
-                                lastUpdated(updateFormat.format(publishTimestamp))
-                            }
-                        }else{
-                            versions{
-                                version(version)
-                            }
-                        }
-                    }
-                }
-
-            }
-        }
-        return publish()
-    }
-
-
     String getPublishArtifactVersion() {
         if (uniqueSnapshots && version.endsWith("-SNAPSHOT")) {
             return "${version.replaceFirst('-SNAPSHOT$', '')}-${timestampFormat.format(publishTimestamp)}-${publishCount}"
@@ -203,7 +172,9 @@ class MavenModule {
      */
     MavenModule publish() {
         moduleDir.createDir()
+        def rootMavenMetaData = getRootMetaDataFile()
 
+        updateRootMavenMetaData(rootMavenMetaData)
         if (uniqueSnapshots && version.endsWith("-SNAPSHOT")) {
             def metaDataFile = moduleDir.file('maven-metadata.xml')
             publish(metaDataFile) {
@@ -241,18 +212,26 @@ class MavenModule {
                 pomFile << "\n$parentPomSection\n"
             }
 
+            if (!dependencies.empty) {
+                pomFile << """
+  <dependencies>"""
+            }
+
             dependencies.each { dependency ->
                 def typeAttribute = dependency['type'] == null ? "" : "<type>$dependency.type</type>"
                 pomFile << """
-  <dependencies>
     <dependency>
       <groupId>$dependency.groupId</groupId>
       <artifactId>$dependency.artifactId</artifactId>
       <version>$dependency.version</version>
       $typeAttribute
-    </dependency>
+    </dependency>"""
+            }
+
+            if (!dependencies.empty) {
+                pomFile << """
   </dependencies>"""
-        }
+            }
 
             pomFile << "\n</project>"
         }
@@ -262,6 +241,36 @@ class MavenModule {
         }
         publishArtifact([:])
         return this
+    }
+
+    private void updateRootMavenMetaData(TestFile rootMavenMetaData) {
+        def allVersions = rootMavenMetaData.exists() ? new XmlParser().parseText(rootMavenMetaData.text).versioning.versions.version*.value().flatten() : []
+        allVersions << version;
+        publish(rootMavenMetaData) {
+            rootMavenMetaData.withWriter {writer ->
+                def builder = new MarkupBuilder(writer)
+                builder.metadata {
+                    groupId(groupId)
+                    artifactId(artifactId)
+                    version(allVersions.max())
+                    versioning {
+                        if (uniqueSnapshots && version.endsWith("-SNAPSHOT")) {
+                            snapshot {
+                                timestamp(timestampFormat.format(publishTimestamp))
+                                buildNumber(publishCount)
+                                lastUpdated(updateFormat.format(publishTimestamp))
+                            }
+                        } else {
+                            versions {
+                                allVersions.each{currVersion ->
+                                    version(currVersion)
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
     }
 
     private File publishArtifact(Map<String, ?> artifact) {
@@ -321,6 +330,10 @@ class MavenModule {
         server.expectHead(pomPath(prefix), pomFile)
     }
 
+    public allowPomHead(HttpServer server, prefix = null) {
+        server.allowHead(pomPath(prefix), pomFile)
+    }
+
     public expectPomGet(HttpServer server, prefix = null) {
         server.expectGet(pomPath(prefix), pomFile)
     }
@@ -331,6 +344,10 @@ class MavenModule {
 
     public expectPomSha1Get(HttpServer server, prefix = null) {
         server.expectGet(pomSha1Path(prefix), sha1File(pomFile))
+    }
+
+    public allowPomSha1GetOrHead(HttpServer server, prefix = null) {
+        server.allowGetOrHead(pomSha1Path(prefix), sha1File(pomFile))
     }
 
     public pomSha1Path(prefix = null) {
@@ -345,12 +362,20 @@ class MavenModule {
         server.expectGet(artifactPath(prefix), pomFile)
     }
 
+    public allowArtifactHead(HttpServer httpServer, prefix = null) {
+        httpServer.allowHead(artifactPath(prefix), artifactFile)
+    }
+
     public artifactPath(prefix = null) {
         path(prefix, artifactFile.name)
     }
 
     public expectArtifactSha1Get(HttpServer server, prefix = null) {
         server.expectGet(artifactSha1Path(prefix), sha1File(artifactFile))
+    }
+
+    public allowArtifactSha1GetOrHead(HttpServer server, prefix = null) {
+        server.allowGetOrHead(artifactSha1Path(prefix), sha1File(artifactFile))
     }
 
     public artifactSha1Path(prefix = null) {

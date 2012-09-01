@@ -1,4 +1,4 @@
-<!--
+﻿<!--
   ~ Copyright 2009 the original author or authors.
   ~
   ~ Licensed under the Apache License, Version 2.0 (the "License");
@@ -16,15 +16,6 @@
 <chapter id="project_reports_plugin" xmlns:xi="http://www.w3.org/2001/XInclude" xml:lang="ja">
     <title>プロジェクトレポートプラグイン<phrase role="original">The Project Report Plugin</phrase></title>
 
-    <note>
-        <para role="original">The Project report plugin is currently a work in progress, and at this stage doesn't do particularly
-            much. We plan to add much more to these reports in future releases of Gradle.
-        </para>
-        <para>プロジェクトレポートプラグインは現在開発中であり、現段階ではそれほど多くの機能が実装されているわけではありません。
-            Gradleの将来のリリースではもっと多くの情報をレポートに追加する予定です。
-        </para>
-    </note>
-
     <para role="original">The Project report plugin adds some tasks to your project which generate reports containing useful
         information about your build. Those tasks generate exactly the same content as the command line reports triggered
         by <userinput>gradle tasks</userinput>, <userinput>gradle dependencies</userinput> and
@@ -37,6 +28,9 @@
         (<xref linkend="sec:obtaining_information_about_your_build"/>を参照)。
         コマンドラインレポートとは対照的に、レポートプラグインはレポートをファイルに出力します。
         プラグインによって追加されたすべてのレポートタスクに依存する集約タスクもあります。
+    </para>
+    <para>
+        We plan to add much more to the existing reports and create additional ones in future releases of Gradle.
     </para>
 
     <section>

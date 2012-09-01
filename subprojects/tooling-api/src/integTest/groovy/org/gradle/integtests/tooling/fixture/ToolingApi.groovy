@@ -15,7 +15,6 @@
  */
 package org.gradle.integtests.tooling.fixture
 
-import java.util.concurrent.TimeUnit
 import org.gradle.integtests.fixtures.BasicGradleDistribution
 import org.gradle.integtests.fixtures.GradleDistribution
 import org.gradle.integtests.fixtures.GradleDistributionExecuter
@@ -26,17 +25,18 @@ import org.gradle.tooling.UnsupportedVersionException
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 
+import java.util.concurrent.TimeUnit
+
 class ToolingApi {
     private static final Logger LOGGER = LoggerFactory.getLogger(ToolingApi)
 
-    private File projectDir
     private BasicGradleDistribution dist
     private Closure getProjectDir
     private File userHomeDir
 
     private final List<Closure> connectorConfigurers = []
     boolean isEmbedded
-    boolean verboseLogging = true
+    boolean verboseLogging = LOGGER.debugEnabled
 
     ToolingApi(GradleDistribution dist) {
         this(dist, dist.userHomeDir, { dist.testDir }, GradleDistributionExecuter.systemPropertyExecuter == GradleDistributionExecuter.Executer.embedded)
@@ -66,13 +66,12 @@ class ToolingApi {
         }
     }
 
-    public Throwable maybeFailWithConnection(Closure cl) {
+    public void maybeFailWithConnection(Closure cl) {
         GradleConnector connector = connector()
         try {
             withConnectionRaw(connector, cl)
-            return null
         } catch (Throwable e) {
-            return e
+            throw e
         }
     }
 

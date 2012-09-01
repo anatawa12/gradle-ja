@@ -1,11 +1,8 @@
-<chapter id='build_announcements_plugin' xml:lang="ja">
+﻿<chapter id='build_announcements_plugin' xml:lang="ja">
     <title>ビルド通知プラグイン<phrase role="original">The Build Announcements Plugin</phrase></title>
     <note>
-        <para role="original">
-            The build announcements is experimental and should not be considered stable.
-        </para>
         <para>
-            ビルド通知プラグインは実験的なもので、安定した状態ではありません。
+            The build announcements is incubating and should not be considered stable.
         </para>
     </note>
     <para role="original">The build announcements plugin uses the <link linkend="announce_plugin">announce</link> plugin to send local announcements on important events in the build.</para>

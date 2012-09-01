@@ -20,7 +20,16 @@ import groovy.lang.Closure;
 import java.net.URI;
 
 /**
- * An artifact repository which uses an Ivy format to store artifacts and meta-data.
+ * <p>An artifact repository which uses an Ivy format to store artifacts and meta-data</p>
+ *
+ * <p>When used to resolve metadata and artifact files, all available patterns will be searched.</p>
+ *
+ * <p>When used to upload metadata and artifact files, only a single, primary pattern will be used:
+ * <ol>
+ *     <li>If a URL is specified via {@link #setUrl} then that URL will be used for upload, combined with the applied {@link #layout(String)}.</li>
+ *     <li>If no URL has been specified but additional patterns have been added via {@link #artifactPattern} or {@link #ivyPattern}, then the first defined pattern will be used.</li>
+ * </ol>
+ * </p>
  */
 public interface IvyArtifactRepository extends ArtifactRepository, AuthenticationSupported {
 
@@ -48,14 +57,25 @@ public interface IvyArtifactRepository extends ArtifactRepository, Authenticatio
     void setUrl(Object url);
 
     /**
-     * Adds an Ivy artifact pattern to use to locate artifacts in this repository. This pattern will be in addition to any layout-based patterns added via {@link #setUrl}.
+     * Adds an independent pattern that will be used to locate artifact files in this repository. This pattern will be used to locate ivy files as well, unless a specific
+     * ivy pattern is supplied via {@link #ivyPattern(String)}.
+     *
+     * If this pattern is not a fully-qualified URL, it will be interpreted as a file relative to the project directory.
+     * It is not interpreted relative the the URL specified in {@link #setUrl(Object)}.
+     *
+     * Patterns added in this way will be in addition to any layout-based patterns added via {@link #setUrl}.
      *
      * @param pattern The artifact pattern.
      */
     void artifactPattern(String pattern);
 
     /**
-     * Adds an Ivy pattern to use to locate ivy files in this repository. This pattern will be in addition to any layout-based patterns added via {@link #setUrl}.
+     * Adds an independent pattern that will be used to locate ivy files in this repository.
+     *
+     * If this pattern is not a fully-qualified URL, it will be interpreted as a file relative to the project directory.
+     * It is not interpreted relative the the URL specified in {@link #setUrl(Object)}.
+     *
+     * Patterns added in this way will be in addition to any layout-based patterns added via {@link #setUrl}.
      *
      * @param pattern The ivy pattern.
      */

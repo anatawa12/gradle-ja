@@ -1,21 +1,25 @@
+import java.lang.management.ManagementFactory
+import java.math.RoundingMode
+
 /*
- * Copyright 2010 the original author or authors.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *      http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+* Copyright 2010 the original author or authors.
+*
+* Licensed under the Apache License, Version 2.0 (the "License");
+* you may not use this file except in compliance with the License.
+* You may obtain a copy of the License at
+*
+*      http://www.apache.org/licenses/LICENSE-2.0
+*
+* Unless required by applicable law or agreed to in writing, software
+* distributed under the License is distributed on an "AS IS" BASIS,
+* WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+* See the License for the specific language governing permissions and
+* limitations under the License.
+*/
 <% if (subprojects.empty ) { %>
 apply plugin: 'java'
 apply plugin: 'eclipse'
+apply plugin: 'idea'
 
 repositories {
 <% if (repository) { %>
@@ -31,7 +35,7 @@ dependencies {
     compile "commons-httpclient:commons-httpclient:3.0"
     compile "commons-codec:commons-codec:1.2"
     compile "org.slf4j:jcl-over-slf4j:1.6.6"
-    compile "org.codehaus.groovy:groovy:1.8.6"
+    compile "org.codehaus.groovy:groovy:1.8.7"
     compile "commons-codec:commons-codec:1.2"
     testCompile 'junit:junit:4.8.2'
     runtime 'com.googlecode:reflectasm:1.01'
@@ -49,8 +53,37 @@ test {
 <% if (groovyProject) { %>
 apply plugin: 'groovy'
 dependencies {
-    groovy 'org.codehaus.groovy:groovy:1.8.6'
+    groovy 'org.codehaus.groovy:groovy:1.8.7'
 }
 <% } %>
 
+task dependencyReport(type: DependencyReportTask) {
+    outputFile = new File(buildDir, "dependencies.txt")
+}
+
 <% } %>
+
+if (project == rootProject) {
+    gradle.buildFinished {
+        def heap = ManagementFactory.memoryMXBean.heapMemoryUsage
+        def nonHeap = ManagementFactory.memoryMXBean.nonHeapMemoryUsage
+        println "BEFORE GC"
+        println "heap: \${format(heap.used)} (initial \${format(heap.init)}, commited \${format(heap.committed)}, max \${format(heap.max)}"
+        println "nonHeap: \${format(nonHeap.used)} (initial \${format(nonHeap.init)}, commited \${format(nonHeap.committed)}, max \${format(nonHeap.max)}"
+
+        ManagementFactory.memoryMXBean.gc()
+        heap = ManagementFactory.memoryMXBean.heapMemoryUsage
+        nonHeap = ManagementFactory.memoryMXBean.nonHeapMemoryUsage
+        println "AFTER GC"
+        println "heap: \${format(heap.used)} (initial \${format(heap.init)}, commited \${format(heap.committed)}, max \${format(heap.max)}"
+        println "nonHeap: \${format(nonHeap.used)} (initial \${format(nonHeap.init)}, commited \${format(nonHeap.committed)}, max \${format(nonHeap.max)}"
+        buildDir.mkdirs()
+        new File(buildDir, "totalMemoryUsed.txt").text = heap.used
+    }
+}
+
+def format(def value) {
+    value = value / (1024 * 1024)
+    value = value.setScale(4, RoundingMode.DOWN)
+    return "\${value}MB"
+}

@@ -49,7 +49,7 @@ task retrieve(type: Sync) {
         def userHome = file('user-home')
 
         when:
-        server.allowGet('/org', file('repo/org'))
+        server.allowGetOrHead('/org', file('repo/org'))
 
         and:
         version previous withUserHomeDir userHome withTasks 'retrieve' withArguments '-i' run()
@@ -60,10 +60,10 @@ task retrieve(type: Sync) {
 
         when:
         server.resetExpectations()
-        projectB.expectPomHead(server)
-        server.expectGet("/org/name/projectB/1.0/projectB-1.0.pom.sha1", projectB.sha1File(projectB.pomFile))
-        projectB.expectArtifactHead(server)
-        server.expectGet("/org/name/projectB/1.0/projectB-1.0.jar.sha1", projectB.sha1File(projectB.artifactFile))
+        projectB.allowPomHead(server)
+        projectB.allowPomSha1GetOrHead(server)
+        projectB.allowArtifactHead(server)
+        projectB.allowArtifactSha1GetOrHead(server)
 
         and:
         version current withUserHomeDir userHome withTasks 'retrieve' withArguments '-i' run()
@@ -96,7 +96,7 @@ task retrieve(type: Sync) {
         def userHome = file('user-home')
 
         when:
-        server.allowGet('/org', file('repo/org'))
+        server.allowGetOrHead('/org', file('repo/org'))
 
         and:
         version previous withUserHomeDir userHome withTasks 'retrieve' withArguments '-i' run()
@@ -107,8 +107,8 @@ task retrieve(type: Sync) {
 
         when:
         server.resetExpectations()
-        projectB.expectPomHead(server)
-        projectB.expectArtifactHead(server)
+        projectB.allowPomHead(server)
+        projectB.allowArtifactHead(server)
 
         and:
         version current withUserHomeDir userHome withTasks 'retrieve' withArguments '-i' run()

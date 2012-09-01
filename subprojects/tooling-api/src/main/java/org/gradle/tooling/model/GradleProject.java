@@ -16,6 +16,8 @@
 
 package org.gradle.tooling.model;
 
+import org.gradle.api.Nullable;
+
 /**
  * Gradle project.
  *
@@ -41,16 +43,17 @@ public interface GradleProject extends HierarchicalElement, BuildableElement {
     DomainObjectSet<? extends GradleProject> getChildren();
 
     /**
-     * Returns gradle path
+     * Returns Gradle path.
      *
      * @return The path.
      */
     String getPath();
 
     /**
-     * searches all descendants (children, grand children, etc.), including self, by given path.
+     * Searches all descendants (children, grand children, etc.), including self, by given path.
      *
-     * @return gradle project with matching path or null if not found
+     * @return Gradle project with matching path or {@code null} if not found.
      */
+    @Nullable
     GradleProject findByPath(String path);
 }

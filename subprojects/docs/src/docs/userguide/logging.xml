@@ -1,4 +1,4 @@
-<!--
+﻿<!--
   ~ Copyright 2009 the original author or authors.
   ~
   ~ Licensed under the Apache License, Version 2.0 (the "License");
@@ -76,23 +76,22 @@
             </tr>
             <tr>
                 <td>
-                    <literal>-q</literal>
+                    <literal>-q</literal> or <literal>--quiet</literal>
                 </td>
                 <td>QUIET以上<phrase role="original">QUIET and higher</phrase></td>
             </tr>
             <tr>
                 <td>
-                    <literal>-i</literal>
+                    <literal>-i</literal> or <literal>--info</literal>
                 </td>
                 <td>INFO以上<phrase role="original">INFO and higher</phrase></td>
             </tr>
             <tr>
                 <td>
-                    <literal>-d</literal>
+                    <literal>-d</literal> or <literal>--debug</literal>
                 </td>
                 <td>DEBUG以上(要するに全部)<phrase role="original">DEBUG and higher (that is, all log messages)</phrase></td>
             </tr>
-
         </table>
         <table id='stacktraces'>
             <title>スタックトレースに関するコマンドラインオプション<phrase role="original">Stacktrace command-line options</phrase></title>
@@ -105,13 +104,13 @@
             <tr>
                 <td>スタックトレースオプション未指定<phrase role="original">No stacktrace options</phrase></td>
                 <td>ビルドエラー(コンパイルエラーとか)のスタックトレースはコンソールに表示されず、内部からの例外のみスタックトレースが表示される。ただし、ログレベルオプションで<literal>-d</literal>が指定されている場合、切り詰められたスタックトレースが常に表示される。<phrase role="original">No stacktraces are printed to the console in case of a build error (e.g. a compile error). Only in
-                    case of internal exceptions will stacktraces be printed. If the loglevel option <literal>-d</literal>
+                    case of internal exceptions will stacktraces be printed. If the <literal>DEBUG</literal> log level
                     is chosen, truncated stacktraces are always printed.</phrase>
                 </td>
             </tr>
             <tr>
                 <td>
-                    <literal>-s</literal>
+                    <literal>-s</literal> or <literal>--stacktrace</literal>
                 </td>
                 <td>切り詰められたスタックトレースが表示される。Groovyのフルスタックトレースはあまりにうるさい(動的言語としての呼び出しメカニズムが色々出力され、<emphasis>自分の</emphasis>コードのどこがダメなのか有用な情報がでてこない)ので、こちらの切り詰め済みスタックトレースを推奨します。<phrase role="original">Truncated stacktraces are printed. We recommend this over full stacktraces. Groovy full stacktraces
                     are extremely verbose (Due to the underlying dynamic invocation mechanisms. Yet they usually do not
@@ -120,7 +119,7 @@
             </tr>
             <tr>
                 <td>
-                    <literal>-S</literal>
+                    <literal>-S</literal> or <literal>--full-stacktrace</literal>
                 </td>
                 <td>フルスタックトレースを表示する。<phrase role="original">The full stacktraces are printed out.</phrase></td>
             </tr>
