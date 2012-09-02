@@ -13,9 +13,9 @@
   ~ See the License for the specific language governing permissions and
   ~ limitations under the License.
   -->
-<chapter id='plugins'>
+<chapter id='plugins' xml:lang="ja">
     <title>Gradleのプラグインについて <phrase role="original">Gradle Plugins</phrase></title>
-    <para>
+    <para role="original">
         Gradle at its core intentionally provides little useful functionality for real world automation. All of the useful
         features, such as the ability to compile Java code for example, are added by <emphasis>plugins</emphasis>.
         Plugins add new tasks (e.g. <apilink class='org.gradle.api.tasks.compile.JavaCompile'/>), domain objects (e.g.
@@ -23,135 +23,184 @@
         <literal>src/main/java</literal>) as well as extending core objects and objects from other plugins.
     </para>
     <para>
+        Gradleのコア部分には、実際に役に立つような機能は含まれていません。これは意図的なもので、Javaのコードをコンパイルしたりといった便利な機能は、全て<emphasis>プラグイン</emphasis>により追加されます。
+        プラグインは、コア部分のオブジェクトや他のプラグインのオブジェクトを拡張するだけでなく、新しいタスク(<apilink class='org.gradle.api.tasks.compile.JavaCompile'/>など)やドメインオブジェクト(<apilink class="org.gradle.api.tasks.SourceSet"/>など)、規約(Javaのコードは<literal>src/main/java</literal>に置く)、などをGradleに追加します。
+    </para>
+    <para role="original">
         In this chapter we will discuss how to use plugins and the terminology and concepts surrounding plugins.
     </para>
+    <para>この章では、プラグインを使う方法、プラグインまわりの用語や概念について議論します。</para>
     <section id='sec:using_plugins'>
-        <title>Applying plugins</title>
-        <para>
+        <title>プラグインの適用 <phrase role="original">Applying plugins</phrase></title>
+        <para role="original">
             Plugins are said to be <emphasis>applied</emphasis>, which is done via the <apilink class="org.gradle.api.Project" method="apply(java.util.Map)" /> method.
         </para>
-        <sample id="useJavaPlugin" dir="java/quickstart" title="Applying a plugin">
+        <para>プラグインの、いわゆる<emphasis>適用</emphasis>は、<apilink class="org.gradle.api.Project" method="apply(java.util.Map)" />メソッドで行います。</para>
+        <sample id="useJavaPlugin" dir="java/quickstart" title="プラグインの適用 / Applying a plugin">
             <sourcefile file="build.gradle" snippet="use-plugin"/>
         </sample>
-        <para>
+        <para role="original">
             Plugins advertise a short name for themselves. In the above case, we are using the short name ‘<literal>java</literal>’ to apply
             the <apilink class="org.gradle.api.plugins.JavaPlugin" />.
         </para>
-        <para>
+        <para>プラグインは、自分自身を示す短縮名を保持、公開しています。上の例では、短縮名'<literal>java</literal>'を使って<apilink class="org.gradle.api.plugins.JavaPlugin" />を適用しています。</para>
+        <para role="original">
             We could also have used the following syntax:
         </para>
-        <sample id="pluginIntro" dir="userguide/tutorial/pluginIntro" title="Applying a plugin by type">
+        <para>以下は短縮名を使わなかった場合の例です。</para>
+        <sample id="pluginIntro" dir="userguide/tutorial/pluginIntro" title="型でプラグインを適用する / Applying a plugin by type">
             <sourcefile file="build.gradle" snippet="apply-by-type"/>
         </sample>
-        <para>
+        <para role="original">
             Thanks to Gradle's default imports (see <xref linkend='ide_support'/>) you could also write:
         </para>
-        <sample id="pluginIntro" dir="userguide/tutorial/pluginIntro" title="Applying a plugin by type">
+        <para>Gradleにはデフォルトインポート(<xref linkend='ide_support'/>参照)があるので、次のように書けます。</para>
+        <sample id="pluginIntro" dir="userguide/tutorial/pluginIntro" title="型でプラグインを適用する / Applying a plugin by type">
             <sourcefile file="build.gradle" snippet="apply-by-type-with-import"/>
         </sample>
-        <para>
+        <para role="original">
             The application of plugins is <emphasis>idempotent</emphasis>. That is, a plugin can be applied multiple times. If the plugin
             has previously been applied, any further applications will have no effect.
         </para>
-        <para>
+        <para>プラグインの適用は<emphasis>べき等</emphasis>です。つまり、何度でも適用することができますし、既に適用していた場合、再度適用しても影響はありません。</para>
+        <para role="original">
             A plugin is simply any class that implements the <apilink class="org.gradle.api.Plugin"/> interface. Gradle provides
             the core plugins as part of its distribution so simply applying the plugin as above is all you need to do.
             For 3rd party plugins however, you need to make the plugins available to the build classpath. For more information
             on how to do this, see <xref linkend="sec:external_dependencies" />.
         </para>
         <para>
+        プラグインの実体は、<apilink class="org.gradle.api.Plugin"/>インターフェースを実装した普通のクラスです。
+        コアプラグインについては、Gradleは配布物に同梱しているので、上記の例で見てきたとおりにするだけで使うことができます。
+        しかし、サードパーティ製のプラグインを使うには、そのプラグインをビルドクラスパスに通しておかなくてはいけません。
+        やり方については、<xref linkend="sec:external_dependencies" />を参照してください。
+        </para>
+        <para role="original">
             For more on writing your own plugins, see <xref linkend="custom_plugins" />.
         </para>
+        <para>また、プラグインの作り方は<xref linkend="custom_plugins" />に詳しく記載されています。</para>
     </section>
     <section>
-        <title>What plugins do</title>
-        <para>
+        <title>プラグインがすること <phrase role="original">What plugins do</phrase></title>
+        <para role="original">
             Applying a plugin to the project allows the plugin to extend the project's capabilities. It can do things
             such as:
         </para>
+        <para>プラグインを適用することで、そのプロジェクトの機能を拡張することができます。例えば、</para>
         <itemizedlist>
-            <listitem>Add tasks to the project (e.g. compile, test)</listitem>
-            <listitem>Pre-configure added tasks with useful defaults.</listitem>
-            <listitem>Add dependency configurations to the project (see <xref linkend="configurations"/>).</listitem>
-            <listitem>Add new properties and methods to existing type via extensions.</listitem>
+            <listitem><phrase role="original">Add tasks to the project (e.g. compile, test)</phrase> プロジェクトにタスクを追加する(compileやtestなど)。</listitem>
+            <listitem><phrase role="original">Pre-configure added tasks with useful defaults.</phrase> タスクに、便利なデフォルト値を事前に設定しておく。</listitem>
+            <listitem><phrase role="original">Add dependency configurations to the project (see <xref linkend="configurations"/>).</phrase> 依存関係のコンフィギュレーションをプロジェクトに追加する(<xref linkend="configurations"/>参照)。</listitem>
+            <listitem><phrase role="original">Add new properties and methods to existing type via extensions.</phrase> 既存の型に新しいプロパティやメソッドを追加する。</listitem>
         </itemizedlist>
-        <para>
+        <para role="original">
             Let's check this out:
         </para>
-        <sample id="pluginIntro" dir="userguide/tutorial/pluginIntro" title="Tasks added by a plugin">
+        <para>次の例を見てください。</para>
+        <sample id="pluginIntro" dir="userguide/tutorial/pluginIntro" title="プラグインにより追加されたタスク / Tasks added by a plugin">
             <sourcefile file="build.gradle" snippet="apply-by-id"/>
             <output args="-q show"/>
         </sample>
-        <para>
+        <para role="original">
             The Java plugin has added a <literal>compileJava</literal> task and a <literal>processResources</literal> task
             to the project and configured the <literal>destinationDir</literal> property of both of these tasks.
         </para>
+        <para>Javaプラグインは、<literal>compileJava</literal>タスクと<literal>processResource</literal>タスクをプロジェクトに追加し、それぞれのタスクに<literal>destinationDir</literal>プロパティを設定しています。</para>
     </section>
     <section id='sub:more_about_convention_objects'>
-        <title>Conventions</title>
-        <para>
+        <title>規約 <phrase role="original">Conventions</phrase></title>
+        <para role="original">
             Plugins can pre-configure the project in smart ways to support convention-over-configuration. Gradle
             provides mechanisms and sophisticated support and it's a key ingredient in powerful-yet-concise build scripts.
         </para>
         <para>
+        プラグインは、CoC(設定より規約)をというスマートな方法をサポートするため、プロジェクトを事前に設定しておくことができます。
+        Gradleにはこのメカニズムと洗練されたサポートがあり、パワフルかつ簡潔なビルドスクリプトを記述するためのカギになっています。
+        </para>
+        <para role="original">
             We saw in the example above that the Java plugins adds a task named <literal>compileJava</literal> that has
             a property named <literal>destinationDir</literal> (that configures where the compiled Java source should be placed).
             The Java plugin defaults this property to point to <literal>build/classes/main</literal> in the project directory.
             This is an example of convention-over-configuration via a <emphasis>reasonable default</emphasis>.
         </para>
         <para>
+            先ほどの例、Javaプラグインが<literal>compileJava</literal>タスクを追加し、そこに<literal>destinationDir</literal>プロパティ(コンパイルしたソースが出力される場所)を追加したコードを思い出してください。
+            Javaプラグインは、デフォルトでこのプロパティが、プロジェクトディレクトリの<literal>build/classes/main</literal>を指すよう設定します。これは、合理的なデフォルト値を設定するCoCの一例です。
+        </para>
+        <para role="original">
             We can change this property simply by giving it a new value.
         </para>
-        <sample id="pluginConfig" dir="userguide/tutorial/pluginConfig" title="Changing plugin defaults">
+        <para>このプロパティは、新しい値を設定するだけで簡単に変更できます。</para>
+        <sample id="pluginConfig" dir="userguide/tutorial/pluginConfig" title="プラグインのデフォルトを変更する / Changing plugin defaults">
             <sourcefile file="build.gradle"/>
             <output args="-q show"/>
         </sample>
-        <para>
+        <para role="original">
             However, the <literal>compileJava</literal> task is likely to not be the only task that needs to know where
             the class files are. 
         </para>
-        <para>
+        <para>ただ、クラスファイルの出力場所が関係するタスクは、おそらく<literal>compileJava</literal>タスクだけではないでしょう。</para>
+        <para role="original">
             The Java plugin adds the concept of <emphasis>source sets</emphasis> (see <apilink class="org.gradle.api.tasks.SourceSet" />)
             to describe the aspects of a set of source, one aspect being where the class files should be written to when it is compiled.
             The Java plugin maps the <literal>destinationDir</literal> property of the <literal>compileJava</literal> task to this aspect of the source set.
         </para>
         <para>
+            Javaプラグインは、プロジェクトに<emphasis>ソースセット</emphasis>という概念を追加します(<apilink class="org.gradle.api.tasks.SourceSet" />参照)。
+            ソースセットは、ソースコード一式を示す概念であり、それらがコンパイルされた際にクラスファイルが書き出される場所を示す概念でもあります。
+            Javaプラグインは、<literal>compileJava</literal>タスクの<literal>destinationDir</literal>プロパティを、ソースセットが示す出力場所にマップしているのです。
+        </para>
+        <para role="original">
             We can change where the class files are written via the source set.
         </para>
-        <sample id="pluginConvention" dir="userguide/tutorial/pluginConvention" title="Plugin convention object">
+        <para>クラスファイルの書き出される場所を、ソースセットで変更することができます。</para>
+        <sample id="pluginConvention" dir="userguide/tutorial/pluginConvention" title="プラグインの規約オブジェクト / Plugin convention object">
             <sourcefile file="build.gradle"/>
             <output args="-q show"/>
         </sample>
-        <para>
+        <para role="original">
             In the above example, we applied the Java plugin which, among other things, did the following:
         </para>
+        <para>この例で、Javaプラグインは以下のようなことを含む様々な処理を行っています。</para>
         <itemizedlist>
-            <listitem>Added a new domain object type: <apilink class="org.gradle.api.tasks.SourceSet" /></listitem>
-            <listitem>Configured a <literal>main</literal> source set with default (i.e. conventional) values for properties</listitem>
-            <listitem>Configured supporting tasks to use these properties to perform work</listitem>
+            <listitem><phrase role="original">Added a new domain object type: <apilink class="org.gradle.api.tasks.SourceSet" /></phrase> 新しいドメインオブジェクト、<apilink class="org.gradle.api.tasks.SourceSet" />を追加。</listitem>
+            <listitem><phrase role="original">Configured a <literal>main</literal> source set with default (i.e. conventional) values for properties</phrase> <literal>main</literal>ソースセットに、デフォルト値(つまり規約)を設定。</listitem>
+            <listitem><phrase role="original">Configured supporting tasks to use these properties to perform work</phrase> タスクがこれらのプロパティを使って動作するように設定。</listitem>
         </itemizedlist>
-        <para>
+        <para role="original">
             All of this happened during the <literal>apply plugin: "java"</literal> step. In the example above we <emphasis>changed</emphasis>
             the desired location of the class files after this conventional configuration had been performed. Notice by the output with the example
             that the value for <literal>compileJava.destinationDir</literal> also changed to reflect the configuration change.
         </para>
         <para>
+        この全てが、<literal>apply plugin: "java"</literal>のステップで行われています。例では、規定の設定が行われた後、クラスファイルの場所を<emphasis>変更</emphasis>しました。
+        <literal>compileJava.destinationDir</literal>の値が、設定の変更を反映して変わっていることに注目してください。
+        </para>
+        <para role="original">
             Consider the case where another task is to consume the classes files. If this task is configured to use the value from
             <literal>sourceSets.main.output.classesDir</literal>, then changing it in this location will update both the
             <literal>compileJava</literal> task and this other consumer task whenever it is changed.
         </para>
-        <para>
+        <para>別のタスクが、クラスファイルを使用するケースを考えてください。そのタスクが、クラスファイルの場所を<literal>sourceSets.main.output.classesDir</literal>を参照して取得するようになっていれば、ソースセットを変更するだけで<literal>compileJava</literal>とそのタスク、両方の設定が更新されます。</para>
+        <para role="original">
             This ability to configure properties of objects to reflect the value of another object's task at all times (i.e. even when it changes) is
             known as “<emphasis>convention mapping</emphasis>”. It allows Gradle to provide conciseness through convention-over-configuration and
             sensible defaults yet not require complete reconfiguration if a conventional default needs to be changed. Without this, in the above example
             we would have had to reconfigure every object that needs to work with the class files.
         </para>
+        <para>
+        他のタスクの設定値をいつでも(つまり、変更されたときでさえ)反映するよう、オブジェクトのプロパティを設定できるこの方法は、<emphasis>規約マッピング</emphasis>として知られています。
+        この方法により、GradleはCoCと合理的なデフォルト値による簡潔さを達成しています。また、規定のデフォルト値を変更する場合も一部のオブジェクトを設定するだけでよくなっています。
+        もしこの方法を採用していなければ、クラスファイルの設定をするのに全てのオブジェクトを変更してまわらなければならなかったところです。
+        </para>
     </section>
     <section>
-        <title>More on plugins</title>
-        <para>
+        <title>プラグインをさらに詳しく知るには <phrase role="original">More on plugins</phrase></title>
+        <para role="original">
             This chapter aims to serve as an introduction to plugins and Gradle and the role they play. For more information on the inner workings
             of plugins, see <xref linkend="custom_plugins" />.
         </para>
+        この章は、プラグインと、プラグインがGradleで果たしている役割について簡単に紹介するためのものです。
+        プラグインの内部動作について、さらに詳しく知るには、<xref linkend="custom_plugins" />を参照してください。
     </section>
 </chapter>
