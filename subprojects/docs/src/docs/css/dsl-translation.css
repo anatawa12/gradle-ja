@@ -1,3 +1,9 @@
+body {
+    font-family: 'ヒラギノ角ゴ Pro W3','Hiragino Kaku Gothic Pro','メイリオ',Meiryo,'ＭＳ Ｐゴシック',sans-serif;
+}
+h1 {
+    font-family: "IPAexMincho", "IPAex明朝", "IPA P明朝", "IPAPMincho", "ヒラギノ明朝 Pro W6", "Hiragino Mincho Pro", "HGS明朝E", "ＭＳ Ｐ明朝", serif;
+}
 .original {
     display: none;
     color: white;
