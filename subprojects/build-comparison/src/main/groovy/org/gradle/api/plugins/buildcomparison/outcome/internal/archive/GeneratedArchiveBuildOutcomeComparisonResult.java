@@ -23,7 +23,6 @@ import org.gradle.api.plugins.buildcomparison.outcome.internal.archive.entry.Arc
 import org.gradle.api.specs.Spec;
 import org.gradle.util.CollectionUtils;
 
-import java.io.File;
 import java.util.SortedSet;
 
 public class GeneratedArchiveBuildOutcomeComparisonResult extends BuildOutcomeComparisonResultSupport<GeneratedArchiveBuildOutcome> {
@@ -40,10 +39,10 @@ public class GeneratedArchiveBuildOutcomeComparisonResult extends BuildOutcomeCo
     }
 
     public ComparisonResultType getComparisonResultType() {
-        File fromFile = getCompared().getFrom().getArchiveFile();
-        File toFile = getCompared().getTo().getArchiveFile();
+        boolean sourceFileExists = getCompared().getSource().getArchiveFile() != null;
+        boolean targetFileExists = getCompared().getTarget().getArchiveFile() != null;
 
-        if (fromFile.exists() && toFile.exists()) {
+        if (sourceFileExists && targetFileExists) {
             if (CollectionUtils.every(getEntryComparisons(), new Spec<ArchiveEntryComparison>() {
                 public boolean isSatisfiedBy(ArchiveEntryComparison element) {
                     return element.getComparisonResultType() == ComparisonResultType.EQUAL;
@@ -53,12 +52,12 @@ public class GeneratedArchiveBuildOutcomeComparisonResult extends BuildOutcomeCo
             } else {
                 return ComparisonResultType.UNEQUAL;
             }
-        } else if (!fromFile.exists() && !toFile.exists()) {
+        } else if (!sourceFileExists && !targetFileExists) {
             return ComparisonResultType.NON_EXISTENT;
-        } else if (!toFile.exists()) {
-            return ComparisonResultType.FROM_ONLY;
+        } else if (!targetFileExists) {
+            return ComparisonResultType.SOURCE_ONLY;
         } else {
-            return ComparisonResultType.TO_ONLY;
+            return ComparisonResultType.TARGET_ONLY;
         }
     }
 

@@ -18,6 +18,7 @@ package org.gradle.launcher.daemon
 
 import org.gradle.launcher.daemon.logging.DaemonMessages
 import org.gradle.tests.fixtures.ConcurrentTestUtil
+import org.gradle.util.TextUtil
 /**
  * by Szczepan Faber, created at: 1/20/12
  */
@@ -32,7 +33,7 @@ Thread.sleep(60000)
 
         when:
         def build = executer.start()
-        ConcurrentTestUtil.poll { assert projectDir.file('marker.txt').file }
+        ConcurrentTestUtil.poll(20) { assert projectDir.file('marker.txt').file }
 
         def stopExecutions = []
         5.times { idx ->
@@ -55,15 +56,14 @@ Thread.sleep(60000)
         def out = executer.withArguments("--stop").run().output
 
         then:
-        out == '''Stopping daemon(s).
+        out == TextUtil.toPlatformLineSeparators('''Stopping daemon(s).
 Gradle daemon stopped.
-'''
+''')
 
         when:
         out = executer.withArguments("--stop").run().output
 
         then:
-        out == '''No Gradle daemons are running.
-'''
+        out.contains DaemonMessages.NO_DAEMONS_RUNNING
     }
 }

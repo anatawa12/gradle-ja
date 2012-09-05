@@ -25,7 +25,7 @@ import org.gradle.launcher.daemon.protocol.*
 
 class DaemonClientTest extends ConcurrentSpecification {
     final DaemonConnector connector = Mock()
-    final DaemonConnection connection = Mock()
+    final DaemonClientConnection connection = Mock()
     final OutputEventListener outputEventListener = Mock()
     final DaemonCompatibilitySpec compatibilitySpec = Mock()
     final IdGenerator<?> idGenerator = {12} as IdGenerator
@@ -54,7 +54,7 @@ class DaemonClientTest extends ConcurrentSpecification {
     }
 
     def "stops all compatible daemons"() {
-        DaemonConnection connection2 = Mock()
+        DaemonClientConnection connection2 = Mock()
 
         when:
         client.stop()
@@ -98,8 +98,6 @@ class DaemonClientTest extends ConcurrentSpecification {
     }
 
     def rethrowsFailureToExecuteAction() {
-        GradleLauncherAction<String> action = Mock()
-        BuildActionParameters parameters = Mock()
         RuntimeException failure = new RuntimeException()
 
         when:

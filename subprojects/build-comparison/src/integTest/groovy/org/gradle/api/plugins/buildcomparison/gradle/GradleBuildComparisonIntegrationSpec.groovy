@@ -21,6 +21,7 @@ import org.gradle.integtests.fixtures.WellBehavedPluginTest
 import org.gradle.util.TestFile
 import org.jsoup.Jsoup
 import org.jsoup.nodes.Document
+import org.jsoup.nodes.Element
 import org.junit.Rule
 
 class GradleBuildComparisonIntegrationSpec extends WellBehavedPluginTest {
@@ -60,15 +61,15 @@ class GradleBuildComparisonIntegrationSpec extends WellBehavedPluginTest {
         def html = html()
 
         // Name of outcome
-        html.select("h3").text() == "Task: “:jar”"
+        html.select("h3").text() == ":jar"
 
         // Entry comparisons
         def rows = html.select("table")[2].select("tr").tail().collectEntries { [it.select("td")[0].text(), it.select("td")[1].text()] }
         rows.size() == 4
-        rows["org/gradle/ChangedClass.class"] == "entry in the Source Build is 409 bytes - in the Target Build it is 486 bytes (+77)"
+        rows["org/gradle/ChangedClass.class"] == "entry in the source build is 409 bytes - in the target build it is 486 bytes (+77)"
         rows["org/gradle/DifferentCrcClass.class"] == "entries are of identical size but have different content"
-        rows["org/gradle/SourceBuildOnlyClass.class"] == "Only exists in Source Build"
-        rows["org/gradle/TargetBuildOnlyClass.class"] == "Only exists in Target Build"
+        rows["org/gradle/SourceBuildOnlyClass.class"] == "entry does not exist in target build archive"
+        rows["org/gradle/TargetBuildOnlyClass.class"] == "entry does not exist in source build archive"
 
         and:
         storedFile("source").exists()
@@ -203,11 +204,104 @@ class GradleBuildComparisonIntegrationSpec extends WellBehavedPluginTest {
         failure.assertHasCause("Builds must be executed with Gradle 1.0 or newer (source: ${distribution.version}, target: 1.0-rc-1)")
     }
 
+    def "can handle artifact not existing on source side"() {
+        when:
+        buildFile << """
+            apply plugin: "java"
+            compareGradleBuilds {
+                sourceBuild.arguments = ["-PnoJar"]
+            }
+
+            if (project.hasProperty("noJar")) {
+                jar.enabled = false
+            }
+        """
+
+        then:
+        fails "compareGradleBuilds"
+
+        and:
+        comparisonResultMsg(html(), ":jar") == "The archive was only produced by the target build."
+    }
+
+    def "can handle artifact not existing on target side"() {
+        when:
+        buildFile << """
+            apply plugin: "java"
+            compareGradleBuilds {
+                targetBuild.arguments = ["-PnoJar"]
+            }
+
+            if (project.hasProperty("noJar")) {
+                jar.enabled = false
+            }
+        """
+
+        then:
+        fails "compareGradleBuilds"
+
+        and:
+        comparisonResultMsg(html(), ":jar") == "The archive was only produced by the source build."
+    }
+
+    def "can handle uncompared outcomes"() {
+        when:
+        buildFile << """
+            apply plugin: "java"
+            compareGradleBuilds {
+                sourceBuild.arguments = ["-PdoJavadoc"]
+                targetBuild.arguments = ["-PdoSource"]
+
+            }
+
+            if (project.hasProperty("doSource")) {
+                task sourceJar(type: Jar) {
+                    from sourceSets.main.allJava
+                    classifier "source"
+                }
+                artifacts {
+                    archives sourceJar
+                }
+            }
+
+            if (project.hasProperty("doJavadoc")) {
+                task javadocJar(type: Jar) {
+                    from tasks.javadoc
+                    classifier "javadoc"
+                }
+                artifacts {
+                    archives javadocJar
+                }
+            }
+        """
+
+        and:
+        file("src/main/java/Thing.java") << "public class Thing {}"
+
+        then:
+        fails "compareGradleBuilds"
+
+        def html = html()
+        html.select("h2").find { it.text() == "Uncompared source outcomes" }
+        html.select("h2").find { it.text() == "Uncompared target outcomes" }
+
+        html.select(".build-outcome.source h3").text() == ":javadocJar"
+        html.select(".build-outcome.target h3").text() == ":sourceJar"
+    }
+
     Document html(path = "build/reports/compareGradleBuilds/index.html") {
         Jsoup.parse(file(path), "utf8")
     }
 
     TestFile storedFile(String path, String base = "build/reports/compareGradleBuilds/files") {
         file("$base/$path")
+    }
+
+    String comparisonResultMsg(Document html, String id) {
+        outcomeComparison(html, id).select(".comparison-result-msg").text()
+    }
+
+    Element outcomeComparison(Document html, String id) {
+        html.select("div.build-outcome-comparison").find { it.id() == id }
     }
 }
