@@ -164,10 +164,10 @@
             </section>
             <section id='ssub:filtering_by_properties'>
                 <title>プロパティによるフィルタリング<phrase role="original">Filtering by properties</phrase></title>
-                <para>Using the project name for filtering is one option. Using extra project properties is another.
+                <para role="original">Using the project name for filtering is one option. Using extra project properties is another.
                     (See <xref linkend='sec:extra_properties'/> for more information on extra properties.)
                 </para>
-                <para>フィルタリングに使用できるのはプロジェクト名だけではありません。プロジェクトの動的なプロパティもフィルタリングに使用できます。</para>
+                <para>フィルタリングには、プロジェクト名だけでなく拡張プロパティを使うこともできます。(拡張プロパティの詳細については、<xref linkend='sec:extra_properties'/>を参照してください。)</para>
                 <sample id="multiprojectTropicalWithProperties" dir="userguide/multiproject/tropicalWithProperties/water" includeLocation="true" title="プロジェクトに振る舞いを追加する(プロパティによるフィルタリング) / Adding custom behaviour to some projects (filtered by project properties)">
                     <layout>
                         build.gradle
@@ -364,9 +364,13 @@
                 <para><literal>consumer</literal>プロジェクトは<literal>producer</literal>プロジェクトの実行に依存することを宣言しました。プロジェクト間の実行依存の宣言はGradleの構文糖衣で、実際にはタスク間の実行依存を作成しています。タスクの絶対パスを使って、プロジェクト間にまたがるタスクの実行依存関係を手で定義することもできます。</para>
             </section>
             <section id='ssub:the_nature_of_cross_project_task_dependencies'>
-                <title>The nature of cross project task dependencies</title>
-                <para>Of course, task dependencies across different projects are not limited to tasks with the same name.
+                <title>プロジェクトをまたぐタスク間依存関係の性質 <phrase role="original">The nature of cross project task dependencies</phrase></title>
+                <para role="original">Of course, task dependencies across different projects are not limited to tasks with the same name.
                     Let's change the naming of our tasks and execute the build.
+                </para>
+                <para>
+                    もちろん、同じ名前のタスク間でしかプロジェクトをまたぐ依存関係は結べない、ということはありません。
+                    タスクの名前を変えて実行してみたのが、以下の例です。
                 </para>
                 <sample id="multiprojectMessagesTaskDependencies" dir="userguide/multiproject/dependencies/messagesTaskDependencies/messages" title="プロジェクトにまたがるタスク間の依存関係 / Cross project task dependencies">
                     <sourcefile file="consumer/build.gradle"/>
@@ -429,11 +433,12 @@
                 difference is that always all projects are configured, even when you start the build from a subproject.
                 The default configuration order is top down, which is usually what is needed.
             </para>
-            <para>評価順序の依存関係は、実行時の依存関係と大きく異なる点がいくつかあります。まず、実行の依存関係は最終的には常にタスク間の依存関係になりますが、評価順序の依存関係はプロジェクト間の依存関係です。さらに、サブプロジェクトをビルドしたとしても、常にマルチプロジェクトのプロジェクトすべてが評価されるという違いもあります。デフォルトでは、ルートプロジェクトからトップダウンでサブプロジェクトに向かって評価されていきます。普通はその順序で評価する必要があるからです。</para>
-            <para>
+            <para>評価順序の依存関係と実行時の依存関係では、大きく異なる点があります。まず、実行の依存関係は最終的には常にタスク間の依存関係になりますが、評価順序の依存関係はプロジェクト間の依存関係です。さらに、サブプロジェクトを始点にビルドを開始した場合でも、そのマルチプロジェクトに含まれる全てのプロジェクトが評価されるという違いもあります。デフォルトでは、ルートプロジェクトからトップダウンでサブプロジェクトに向かって評価されていきます。普通はその順序で評価する必要があるからです。</para>
+            <para role="original">
                 To change the the default configuration order to be bottom up, That means that a project configuration
                 depends on the configuration of its child projects, the <literal>evaluationDependsOnChildren()</literal> method can be used.
             </para>
+            <para>このデフォルトを変更してボトムアップで評価されるようにするには、つまり、あるプロジェクトの設定値が、子プロジェクトの設定値に依存している場合は、<literal>evaluationDependsOnChildren()</literal>メソッドを使ってください。</para>
             <para role="original">On the same nesting level the configuration order depends on the alphanumeric position. The most
                 common use case is to have multi-project builds that share a common lifecycle (e.g. all projects use the
                 Java plugin). If you declare with
@@ -608,26 +613,46 @@
         </section>
     </section>
     <section id="sec:decoupled_projects">
-        <title>Decoupled Projects</title>
-        <para>Gradle allows any project to access any other project during both the configuration and execution phases. While this provides a great deal of power
+        <title>分離されたプロジェクト <phrase role="original">Decoupled Projects</phrase></title>
+        <para role="original">Gradle allows any project to access any other project during both the configuration and execution phases. While this provides a great deal of power
             and flexibility to the build author, it also limits the flexibility that Gradle has when building those projects. For instance, this tight <emphasis>coupling</emphasis> of projects
             effectively prevents Gradle from building multiple projects in parallel, or from substituting a pre-built artifact in place of a project dependency.
         </para>
-        <para>Two projects are said to be <emphasis>decoupled</emphasis> if they do not directly access each other's project model. Decoupled projects may only interact in terms of
+        <para>
+            Gradleでは、評価フェーズでも実行フェーズでも、あらゆるプロジェクト間でお互いにアクセスすることができるようになっています。
+            これはビルドの作成者にとっては非常に強力で柔軟性のある仕様ですが、ビルド時にはGradleの方の柔軟性が制限されることになります。
+            例を挙げると、強固に結合されたプロジェクトは、Gradleに平行ビルドさせることができませんし、依存プロジェクトの代わりにビルド済みのアーティファクトを使用することもできません。
+        </para>
+        <para role="original">Two projects are said to be <emphasis>decoupled</emphasis> if they do not directly access each other's project model. Decoupled projects may only interact in terms of
             declared dependencies: project dependencies (<xref linkend='sub:project_dependencies'/>) and/or task dependencies (<xref linkend='sec:task_dependencies'/>).
             Any other form of project interaction (ie. by modifying another project object or by reading a value from another project object) causes the projects to
             be coupled.
         </para>
         <para>
+            お互いのプロジェクト・モデルにアクセスしない二つのプロジェクトは、<emphasis>分離された</emphasis>プロジェクトと呼ばれます。
+            分離されたプロジェクトでは、お互いのやりとりに依存関係宣言のみを使用します。つまり、プロジェクト依存(<xref linkend='sub:project_dependencies'/>)やタスク依存(<xref linkend='sec:task_dependencies'/>)です。
+            その他のあらゆるアクセス、例えば他プロジェクトのオブジェクトを変更したり、設定値を読み込んだりといった処理は、全てプロジェクトを<emphasis>結合</emphasis>させます。
+        </para>
+        <para role="original">
             A very common way for projects to be coupled is by using configuration injection (<xref linkend='sec:cross_project_configuration'/>). It may not be immediately apparent, but using key
             Gradle features like the <literal>allprojects</literal> and <literal>subprojects</literal> keywords automatically cause your projects to be coupled. This is
             because these keywords are used in a <literal>build.gradle</literal> file, which defines a project. Often this is a "root project" that does nothing more than
             define common configuration, but as far as Gradle is concerned this root project is still a fully-fledged project, and by using <literal>allprojects</literal>
             that project is effectively coupled to all other projects.
         </para>
-        <para>This means that using any form of shared build script logic or configuration injection (<literal>allprojects</literal>, <literal>subprojects</literal>, etc)
+        <para>
+        プロジェクトが結合されるもっとも一般的な状況は、設定のインジェクション(<xref linkend='sec:cross_project_configuration'/>)です。
+        これは直ぐには分かりにくいかもしれませんが、<literal>allprojects</literal>や<literal>subprojects</literal>キーワードのような、Gradleの特定の機能を使うと、プロジェクトは自動的に結合されます。
+        これらのキーワードは、<literal>build.gradle</literal>ファイルで別のプロジェクトを定義するのに使われるからです。
+        共通設定の定義しかしていないルートプロジェクトもよくありますが、Gradleがルートプロジェクトを、完全な普通のプロジェクトと判断し、さらに<literal>allprojects</literal>を使用している限り、プロジェクトは他の全てのプロジェクトと結合されます。
+        </para>
+        <para role="original">This means that using any form of shared build script logic or configuration injection (<literal>allprojects</literal>, <literal>subprojects</literal>, etc)
             will cause your projects to be coupled. As we extend the concept of project decoupling and provide features that take advantage of decoupled projects,
             we will also introduce new features to help you to solve common use cases (like configuration injection) without causing your projects to be coupled.
+        </para>
+        <para>
+        つまり、どんな形であれ、ビルドスクリプトのロジック共有、および設定のインジェクション(<literal>allprojects</literal>や<literal>subprojects</literal>など)は、プロジェクトを結合させるということです。
+        私たちは、この分離されたプロジェクトという概念を拡張し、有効活用するような機能を追加する予定です。それにより、設定インジェクションなどの機能を、プロジェクトを結合することなく実現できます。
         </para>
     </section>
     <section id="sec:multiproject_build_and_test">
@@ -637,7 +662,7 @@
             you may often want to do all of these tasks across a range of projects.  The <literal>buildNeeded</literal>
             and <literal>buildDependents</literal> tasks can help with this.
         </para>
-        <para>Javaプラグインの<literal>build</literal>タスクは、コンパイル、テストして、(CodeQualityプラグインを使っていれば)コードスタイルのチェックも行うという、シングルプロジェクトの典型的なユースケースを想定したものです。一方、マルチプロジェクトの場合はこれらのタスクをプロジェクトを横断して実行したいこともあるでしょう。<literal>buildNeeded</literal>と<literal>buildDependents</literal>はこの用途を助けてくれるものです。</para>
+        <para>Javaプラグインの<literal>build</literal>タスクは、シングルプロジェクトをコンパイル、テスト、さらに(CodeQualityプラグインを使っていれば)コードスタイルのチェックも行うという、典型的なビルド処理を実行します。さらに、マルチプロジェクトを構成している場合は、これらのタスクをプロジェクトを横断して実行したい場面もあるでしょう。<literal>buildNeeded</literal>と<literal>buildDependents</literal>はこの用途を助けてくれるものです。</para>
         <para role="original">Let's use the project structure shown in <xref linkend='javadependencies_2'/>.  In this
             example :services:personservice depends on both :api and :shared.  The :api project also depends on
             :shared.
@@ -648,7 +673,7 @@
             jars, but only perform code quality and unit tests on the project you have changed.
             The <literal>build</literal> task does this.
         </para>
-        <para>:apiプロジェクトをシングルプロジェクトだと仮定しましょう。:apiに変更を加えましたが、cleanからすべてのリビルドはしていない状況です。この場合、プロジェクトに必要なjarはビルドして作成しなければなりませんが、コードクォリティやユニットテストは変更したプロジェクトでのみ実行したいわけです。なので、ビルドで実行されるタスクは次のようになります。</para>
+        <para>シングルプロジェクトの:apiプロジェクトで作業しているとします。:apiに変更を加えましたが、クリーン以降、まだプロジェクト全体のビルドはしていません。jarが必要になってビルドするというとき、コード品質のチェックやユニットテストは自分が変更したプロジェクトでのみ実行したいところです。<literal>build</literal>タスクは、まさにこの処理を行います。</para>
         <sample id="multitestingBuild" dir="userguide/multiproject/dependencies/java" title="シングルプロジェクトのビルドとテスト / Build and Test Single Project">
             <output args=":api:build"/>
         </sample>
@@ -670,7 +695,7 @@
             but test them as well. The <literal>buildNeeded</literal> task also tests all the projects from the
             project lib dependencies of the testRuntime configuration.
         </para>
-        <para>いま、ちょうど最新のソースをバージョン管理システムから持ってきたとしましょう。:apiが依存しているプロジェクトに変更が含まれているかもしれません。このとき、依存先のすべてのプロジェクトをビルドするだけでなく、テストもしたいという場合もあるでしょう。<literal>buildNeeded</literal>タスクは、指定したプロジェクトだけでなく、そのプロジェクトのtestRuntime依存関係に設定されているプロジェクトをすべてテストします。</para>
+        <para>今、ちょうど最新のソースをバージョン管理システムから持ってきたとしましょう。:apiが依存しているプロジェクトが変更されていました。このとき、依存先の全プロジェクトについて、ビルドだけでなくテストもしたいと考えるかもしれません。<literal>buildNeeded</literal>タスクは、指定したプロジェクトだけでなく、そのプロジェクトのtestRuntime依存関係に設定されているプロジェクトをすべてテストします。</para>
         <sample id="multitestingBuildNeeded" dir="userguide/multiproject/dependencies/java" title="依存プロジェクトのビルドとテスト / Build and Test Depended On Projects">
             <output args=":api:buildNeeded"/>
         </sample>
@@ -680,15 +705,15 @@
             The <literal>buildDependents</literal> task also tests all the projects that have a project lib dependency
             (in the testRuntime configuration) on the specified project.
         </para>
-        <para>:apiプロジェクトが、別のプロジェクトから使用されている場合を考えてみます。:apiプロジェクトをリファクタリングしたとき、:apiプロジェクトだけテストしても十分とはいえないでしょう。:apiプロジェクトに依存しているすべてのプロジェクトをテストする必要があります。<literal>buildDependents</literal>タスクは、指定したプロジェクトだけでなく、そのプロジェクトにtestRuntimeのプロジェクト依存関係を持っているすべてのプロジェクトをテストします。</para>
+        <para>さらに、:apiプロジェクトをリファクタリングする場合のことを考えてみます。:apiプロジェクトは他のプロジェクトから使用されているので、このプロジェクトだけテストしても十分とは言えません。:apiプロジェクトに依存しているすべてのプロジェクトをテストする必要があります。<literal>buildDependents</literal>タスクは、指定したプロジェクトだけでなく、そのプロジェクトにtestRuntimeのプロジェクト依存関係を持っているすべてのプロジェクトをテストします。</para>
         <sample id="multitestingBuildDependents" dir="userguide/multiproject/dependencies/java" title="依存されているプロジェクトのビルドとテスト / Build and Test Dependent Projects">
             <output args=":api:buildDependents"/>
         </sample>
-        <para>Finally, you may want to build and test everything in all projects. Any task you run in the root project folder
+        <para role="original">Finally, you may want to build and test everything in all projects. Any task you run in the root project folder
         will cause that same named task to be run on all the children. So you can just run
         <literal>gradle build</literal> to build and test all projects.
         </para>
-        <para>最後に、すべてのプロジェクトを完全に再ビルド、テストしたいと思うことがあるかもしれません。この例のように、ルートプロジェクトに<literal>dependsOnChildren()</literal>宣言がある場合、ルートプロジェクトでタスクを実行すれば子プロジェクトすべてでそのタスクと同名のタスクが実行されます。なので、ただ<command>gradle build</command>と実行すれば大丈夫です。すべてのプロジェクトがビルドされテストされます。</para>
+        <para>最後に、すべてのプロジェクトをビルド、テストしたいと思うことがあるかもしれません。ルートプロジェクトのフォルダーでタスクを実行すれば、全ての子プロジェクトでそのタスクと同名のタスクが実行されます。なので、ただ<command>gradle build</command>と実行すれば大丈夫です。すべてのプロジェクトがビルドされテストされます。</para>
     </section>
     <section id='sec:property_and_method_inheritance'>
         <title>プロパティとメソッドの継承<phrase role="original">Property and method inheritance</phrase></title>
@@ -706,7 +731,7 @@
             that it is offered by other tools and we want to have the check mark in a feature comparison :). And we like
             to offer our users a choice.
         </para>
-        <para>どうみても継承機能を敬遠しているのに、なんでそんなのを実装したのか不思議に思われるかもしれません。一つの理由は、継承機能が別のビルドツールで提供されているからです。比較表を作ったときにチェックマークが抜けてるとかアレですし。また、ユーザーには選択肢を用意したかったというのもあります。</para>
+        <para>どうみても継承機能を敬遠しているのに、なんでそんなのを実装したのか不思議に思われるかもしれません。一つの理由は、継承機能が別のビルドツールで提供されているからです。比較表にチェックマークを付けたかったのです(^^)。また、ユーザーには選択肢を用意したかったというのもあります。</para>
     </section>
     <section>
         <title>まとめ<phrase role="original">Summary</phrase></title>
@@ -728,12 +753,12 @@
             have already a lot of flexibility. But when you enter steep territory Gradle does not become an obstacle and
             usually accompanies and carries you to the top of the mountain.
         </para>
-        <para>この章を書くのは非常に疲れました。読むのも疲れるでしょう。最後にひとつだけ、Gradleでマルチプロジェクトを扱うのは決して難しいことではありません。覚えておく必要があるのは、次の六つだけです。allproject、subprojects、dependsOn、childrenDependOnMe、dependsOnChildren、そしてプロジェクト依存関係です。
+        <para>この章を書くのは非常に疲れました。読むのも疲れるでしょう。最後にひとつだけ、Gradleでマルチプロジェクトを扱うのは決して難しいことではありません。覚えておく必要があるのは次の5つだけです。<literal>allproject</literal>、<literal>subprojects</literal>、<literal>evaluationDependsOn</literal>、<literal>evaluationDependsOnChildren</literal>、そしてプロジェクト依存関係です。
             <footnote>
                 <para>
                     <ulink url='http://ja.wikipedia.org/wiki/%E3%82%B8%E3%83%A7%E3%83%BC%E3%82%B8%E3%83%BB%E3%83%9F%E3%83%A9%E3%83%BC#.E3.83.9E.E3.82.B8.E3.82.AB.E3.83.AB.E3.83.8A.E3.83.B3.E3.83.90.E3.83.BC'>マジカルナンバー7±2</ulink>に収まるナイスな量です
                 </para>
             </footnote>
-この六つ、そしてGradleが設定フェーズと実行フェーズを別個に取り扱うのだということを覚えておけば、あとは多くの場合融通がききます。あなたが急勾配の険しい問題に取り組むときも、Gradleが障害になることもなく、逆にあなたを見晴らしのいい山の上に連れて行ってくれるはずです。</para>
+この5つ、そしてGradleが設定フェーズと実行フェーズを別個に取り扱うのだということを覚えておけば、あとは多くの場合融通がききます。もし何らかの困難な問題に突き当たったとしても、Gradleが障害になることもなく、逆にあなたを見晴らしのいい山の上に連れて行ってくれるはずです。</para>
     </section>
 </chapter>
