@@ -1,4 +1,4 @@
-﻿<!--
+<!--
   ~ Copyright 2010 the original author or authors.
   ~
   ~ Licensed under the Apache License, Version 2.0 (the "License");
@@ -58,6 +58,9 @@
         <xsl:param name="content">
             <xsl:apply-templates select="$target" mode="object.title.markup"/>
         </xsl:param>
+        <xsl:param name="title">
+            <xsl:apply-templates select="$target" mode="object.title.markup.textonly"/>
+        </xsl:param>
         <a>
             <xsl:attribute name="href">
                 <xsl:call-template name="href.target">
@@ -65,7 +68,7 @@
                 </xsl:call-template>
             </xsl:attribute>
             <xsl:attribute name="title">
-                <xsl:apply-templates select="$target" mode="object.title.markup.textonly"/>
+                <xsl:value-of select="$title"/>
             </xsl:attribute>
             <xsl:value-of select="$content"/>
         </a>

@@ -119,15 +119,17 @@
     </xsl:template>
 
     <xsl:template match="section" mode="sidebar.link">
+        <xsl:variable name="displayValue">
+            <xsl:choose>
+                <xsl:when test="titleabbrev"><xsl:value-of select="titleabbrev"/></xsl:when>
+                <xsl:otherwise><xsl:value-of select="normalize-space(title/text())"/></xsl:otherwise>
+            </xsl:choose>
+        </xsl:variable>
         <li>
             <xsl:call-template name="customXref">
                 <xsl:with-param name="target" select="."/>
-                <xsl:with-param name="content">
-                    <xsl:choose>
-                        <xsl:when test="titleabbrev"><xsl:value-of select="titleabbrev"/></xsl:when>
-                        <xsl:otherwise><xsl:value-of select="title"/></xsl:otherwise>
-                    </xsl:choose>
-                </xsl:with-param>
+                <xsl:with-param name="content" select="$displayValue" />
+                <xsl:with-param name="title" select="$displayValue" />
             </xsl:call-template>
         </li>
         <xsl:if test="section[table]">
