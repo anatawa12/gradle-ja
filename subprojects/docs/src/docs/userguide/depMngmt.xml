@@ -686,7 +686,7 @@
                 The API lets you to walk the resolved dependency graph and provides information about the dependencies.
                 With the coming releases the API will grow to provide more information about the resolution result.
                 For more information about the API please refer to the javadocs on
-                <apilink class="org.gradle.api.artifacts.ResolvedConfiguration" method="getResolutionResult"/>.
+                <apilink class="org.gradle.api.artifacts.ResolvableDependencies" method="getResolutionResult"/>.
                 Potential usages of the <apilink class="org.gradle.api.artifacts.result.ResolutionResult"/> API:
                 </phrase>
                 また、Gradle 1.2からは、解決した依存情報にアクセスできる新しいプログラミングAPIが用意されています。依存関係のレポート生成も水面下でこのAPIを使っています。

@@ -387,4 +387,92 @@ rootProject.name = 'root'
 \\--- org:leaf4:2.0 (*)
 """))
     }
+
+    def "previously evicted nodes should contain correct target version"() {
+        given:
+        def repo = new IvyRepository(file("repo"))
+
+        /*
+        a1->b1
+        a2->b2->a1
+
+        resolution process:
+
+        1. stop resolution, resolve conflict a1 vs a2
+        2. select a2, restart resolution
+        3. stop, resolve b1 vs b2
+        4. select b2, restart
+        5. resolve b2 dependencies, a1 has been evicted previously but it should show correctly on the report
+           ('dependencies' report pre 1.2 would not show the a1 dependency leaf for this scenario)
+        */
+
+        repo.module("org", "b", '1.0').publish()
+        repo.module("org", "a", '1.0').dependsOn("org", "b", '1.0').publish()
+        repo.module("org", "b", '2.0').dependsOn("org", "a", "1.0").publish()
+        repo.module("org", "a", '2.0').dependsOn("org", "b", '2.0').publish()
+
+        file("build.gradle") << """
+            apply plugin: 'dependency-reporting'
+            repositories {
+                ivy { url "${repo.uri}" }
+            }
+
+            configurations {
+                conf
+            }
+            dependencies {
+                conf 'org:a:1.0', 'org:a:2.0'
+            }
+        """
+
+        when:
+        run ":dependencies"
+
+        then:
+        output.contains(toPlatformLineSeparators("""
++--- org:a:1.0 -> 2.0
+|    \\--- org:b:2.0
+|         \\--- org:a:1.0 -> 2.0 (*)
+\\--- org:a:2.0 (*)
+"""))
+    }
+
+    def "tells if there are no dependencies"() {
+        given:
+        buildFile << "configurations { foo }"
+
+        when:
+        run "dependencies"
+
+        then:
+        output.contains "No dependencies"
+    }
+
+    def "tells if there are no configurations"() {
+        when:
+        run "dependencies"
+
+        then:
+        output.contains "No configurations"
+    }
+
+    def "dependencies report does not run for subprojects by default"() {
+        given:
+        file("settings.gradle") << "include 'a'"
+
+        file("build.gradle") << """
+        project(":a") {
+          configurations { foo }
+          dependencies {
+            foo "i.dont.exist:foo:1.0"
+          }
+        }
+"""
+        when:
+        run "dependencies"
+
+        then:
+        noExceptionThrown()
+        //note that 'a' project dependencies are not being resolved
+    }
 }

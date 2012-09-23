@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 
-
 package org.gradle.api.tasks.diagnostics
 
 import org.gradle.integtests.fixtures.AbstractIntegrationSpec
@@ -30,7 +29,47 @@ class DependencyInsightReportTaskIntegrationTest extends AbstractIntegrationSpec
         distribution.requireOwnUserHomeDir()
     }
 
-    def "basic dependency graph with conflicting versions"() {
+    def "shows basic single tree with repeated dependency"() {
+        given:
+        repo.module("org", "leaf1").publish()
+        repo.module("org", "leaf2").publish()
+
+        repo.module("org", "middle").dependsOn("leaf1", "leaf2").publish()
+
+        repo.module("org", "top").dependsOn("middle", "leaf2").publish()
+
+        file("build.gradle") << """
+            repositories {
+                maven { url "${repo.uri}" }
+            }
+            configurations {
+                conf
+            }
+            dependencies {
+                conf 'org:top:1.0'
+            }
+            task insight(type: DependencyInsightReportTask) {
+                includes = { it.requested.name == 'leaf2' }
+                configuration = configurations.conf
+            }
+        """
+
+        when:
+        run "insight"
+
+        then:
+        output.contains(toPlatformLineSeparators("""
+org:leaf2:1.0
++--- org:top:1.0
+|    \\--- conf
+\\--- org:middle:1.0
+     \\--- org:top:1.0 (*)
+
+(*) - dependencies omitted (listed previously)
+"""))
+    }
+
+    def "basic dependency insight with conflicting versions"() {
         given:
         repo.module("org", "leaf1").publish()
         repo.module("org", "leaf2").publish()
@@ -51,6 +90,8 @@ class DependencyInsightReportTaskIntegrationTest extends AbstractIntegrationSpec
         repo.module("org", "toplevel4").dependsOn("middle3").publish()
 
         file("build.gradle") << """
+            apply plugin: DependencyReportingPlugin
+
             repositories {
                 maven { url "${repo.uri}" }
             }
@@ -61,20 +102,12 @@ class DependencyInsightReportTaskIntegrationTest extends AbstractIntegrationSpec
             dependencies {
                 conf 'org:toplevel:1.0', 'org:toplevel2:1.0', 'org:toplevel3:1.0', 'org:toplevel4:1.0'
             }
-
-            task insight(type: DependencyInsightReportTask) {
-                configuration = configurations.conf
-                includes = { ResolvedDependencyResult dep ->
-                    dep.requested.name == 'leaf2'
-                }
-            }
         """
 
         when:
-        run "insight"
+        run "dependencyInsight", "--includes", "leaf2", "--configuration", "conf"
 
         then:
-        1 == 1
         output.contains(toPlatformLineSeparators("""
 org:leaf2:2.5 (conflict resolution)
 \\--- org:toplevel3:1.0
@@ -94,7 +127,7 @@ org:leaf2:1.5 -> 2.5
 """))
     }
 
-    def "with forced version"() {
+    def "shows forced version"() {
         given:
         repo.module("org", "leaf", 1.0).publish()
         repo.module("org", "leaf", 2.0).publish()
@@ -260,9 +293,124 @@ org:leaf:2.0 -> 1.0
 """))
     }
 
-    //TODO SF more coverage
-    // some of those tests should be units
-    // - no matching dependencies
-    // - configuration / dependency not configured
-    // - unresolved dependencies
+    def "shows decent failure when inputs missing"() {
+        given:
+        file("build.gradle") << """
+            task insight(type: DependencyInsightReportTask) {
+                includes = { it.requested.name == 'leaf2' }
+            }
+        """
+
+        when:
+        def failure = runAndFail("insight")
+
+        then:
+        failure.assertHasCause("Dependency insight report cannot be generated because the input configuration was not specified.")
+    }
+
+    def "informs that there are no dependencies"() {
+        given:
+        file("build.gradle") << """
+            configurations {
+                conf
+            }
+            task insight(type: DependencyInsightReportTask) {
+                includes = { it.requested.name == 'whatever' }
+                configuration = configurations.conf
+            }
+        """
+
+        when:
+        run "insight"
+
+        then:
+        output.contains("No resolved dependencies found")
+    }
+
+    def "informs that nothing matches the input dependency"() {
+        given:
+        repo.module("org", "top").publish()
+
+        file("build.gradle") << """
+            repositories {
+                maven { url "${repo.uri}" }
+            }
+            configurations {
+                conf
+            }
+            dependencies {
+                conf 'org:top:1.0'
+            }
+            task insight(type: DependencyInsightReportTask) {
+                includes = { it.requested.name == 'foo.unknown' }
+                configuration = configurations.conf
+            }
+        """
+
+        when:
+        run "insight"
+
+        then:
+        output.contains("No resolved dependencies matching given input were found")
+    }
+
+    def "deals with unresolved dependencies"() {
+        given:
+        repo.module("org", "top").dependsOn("middle").publish()
+
+        file("build.gradle") << """
+            repositories {
+                maven { url "${repo.uri}" }
+            }
+            configurations {
+                conf
+            }
+            dependencies {
+                conf 'org:top:1.0'
+            }
+            task insight(type: DependencyInsightReportTask) {
+                includes = { it.requested.name == 'middle' }
+                configuration = configurations.conf
+            }
+        """
+
+        when:
+        run "insight"
+
+        then:
+        output.contains("No resolved dependencies matching given input were found")
+    }
+
+    def "deals with dependency cycles"() {
+        given:
+        repo.module("org", "leaf1").dependsOn("leaf2").publish()
+        repo.module("org", "leaf2").dependsOn("leaf1").publish()
+
+        file("build.gradle") << """
+            repositories {
+                maven { url "${repo.uri}" }
+            }
+            configurations {
+                conf
+            }
+            dependencies {
+                conf 'org:leaf1:1.0'
+            }
+            task insight(type: DependencyInsightReportTask) {
+                includes = { it.requested.name == 'leaf2' }
+                configuration = configurations.conf
+            }
+        """
+
+        when:
+        run "insight"
+
+        then:
+        output.contains(toPlatformLineSeparators("""
+org:leaf2:1.0
+\\--- org:leaf1:1.0
+     +--- conf
+     \\--- org:leaf2:1.0 (*)
+"""))
+    }
 }

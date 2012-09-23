@@ -19,9 +19,12 @@ package org.gradle.launcher.daemon
 import org.gradle.integtests.fixtures.HttpServer
 import org.gradle.launcher.daemon.logging.DaemonMessages
 import org.gradle.launcher.daemon.testing.DaemonLogsAnalyzer
-import org.gradle.tests.fixtures.ConcurrentTestUtil
 import org.gradle.util.Requires
 import org.gradle.util.TestPrecondition
+import org.junit.Rule
+import spock.lang.Issue
+
+import static org.gradle.tests.fixtures.ConcurrentTestUtil.poll
 
 /**
  * by Szczepan Faber, created at: 1/20/12
@@ -32,30 +35,28 @@ import org.gradle.util.TestPrecondition
 // so it's not a big deal it does not run everywhere.
 class DaemonInitialCommunicationFailureIntegrationSpec extends DaemonIntegrationSpec {
 
+    @Rule HttpServer server = new HttpServer()
+
     def cleanup() {
         stopDaemonsNow()
     }
 
+    @Issue("GRADLE-2444")
     def "behaves if the registry contains connectable port without daemon on the other end"() {
         when:
         buildSucceeds()
 
         then:
         //there should be one idle daemon
-        def daemon = new DaemonLogsAnalyzer(distribution.daemonBaseDir).idleDaemon
+        def daemon = new DaemonLogsAnalyzer(distribution.daemonBaseDir).daemon
 
         when:
         daemon.kill()
 
-        then:
-        stopDaemonsNow()
-        output.contains DaemonMessages.NO_DAEMONS_RUNNING
-        //because we killed it earlier
-
-        when:
+        and:
         //starting some service on the daemon port
-        ConcurrentTestUtil.poll {
-            new HttpServer().start(daemon.port)
+        poll {
+            server.start(daemon.port)
         }
 
         then:
@@ -74,17 +75,18 @@ class DaemonInitialCommunicationFailureIntegrationSpec extends DaemonIntegration
         !output.contains(DaemonMessages.REMOVING_DAEMON_ADDRESS_ON_FAILURE)
     }
 
+    @Issue("GRADLE-2444")
     def "stop() behaves if the registry contains connectable port without daemon on the other end"() {
         when:
         buildSucceeds()
 
         then:
-        def daemon = new DaemonLogsAnalyzer(distribution.daemonBaseDir).idleDaemon
+        def daemon = new DaemonLogsAnalyzer(distribution.daemonBaseDir).daemon
 
         when:
         daemon.kill()
-        ConcurrentTestUtil.poll {
-            new HttpServer().start(daemon.port)
+        poll {
+            server.start(daemon.port)
         }
 
         then:
@@ -100,5 +102,23 @@ class DaemonInitialCommunicationFailureIntegrationSpec extends DaemonIntegration
         then:
         !output.contains(DaemonMessages.REMOVING_DAEMON_ADDRESS_ON_FAILURE)
         output.contains(DaemonMessages.NO_DAEMONS_RUNNING)
+    }
+
+    @Issue("GRADLE-2464")
+    def "when nothing responds to the address found in the registry we remove the address"() {
+        when:
+        buildSucceeds()
+
+        then:
+        def daemon = new DaemonLogsAnalyzer(distribution.daemonBaseDir).daemon
+
+        when:
+        daemon.kill()
+
+        then:
+        buildSucceeds()
+
+        and:
+        output.contains DaemonMessages.REMOVING_DAEMON_ADDRESS_ON_FAILURE
     }
 }

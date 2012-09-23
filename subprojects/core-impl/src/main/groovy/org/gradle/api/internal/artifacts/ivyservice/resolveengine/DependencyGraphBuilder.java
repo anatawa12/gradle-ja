@@ -23,7 +23,7 @@ import org.apache.ivy.core.resolve.ResolveData;
 import org.gradle.api.artifacts.ModuleVersionSelector;
 import org.gradle.api.artifacts.ResolveException;
 import org.gradle.api.artifacts.ResolvedArtifact;
-import org.gradle.api.artifacts.result.ModuleSelectionReason;
+import org.gradle.api.artifacts.result.ModuleVersionSelectionReason;
 import org.gradle.api.internal.artifacts.DefaultModuleVersionIdentifier;
 import org.gradle.api.internal.artifacts.DefaultModuleVersionSelector;
 import org.gradle.api.internal.artifacts.DefaultResolvedDependency;
@@ -417,15 +417,16 @@ public class DependencyGraphBuilder {
         }
 
         public ModuleVersionSelection getSelectedModule() {
-            if (targetModuleRevision == null) {
+            DefaultModuleRevisionResolveState selected = selector.module.selected;
+            if (selected == null) {
                 //this situation is detected by DependencyGraphBuilderTest which uses mocks
                 //it suppose to mean that the dependency is unresolved.
                 return null;
             }
             return new ModuleVersionSelection(new DefaultModuleVersionIdentifier(
-                    targetModuleRevision.id.getOrganisation(),
-                    targetModuleRevision.id.getName(),
-                    targetModuleRevision.getRevision()), targetModuleRevision.selectionReason);
+                    selected.id.getOrganisation(),
+                    selected.id.getName(),
+                    selected.getRevision()), selected.selectionReason);
         }
     }
 
@@ -601,7 +602,7 @@ public class DependencyGraphBuilder {
         ModuleDescriptor descriptor;
         ModuleState state = ModuleState.New;
         ModuleVersionSelectorResolveState resolver;
-        ModuleSelectionReason selectionReason = ModuleSelectionReason.regular;
+        ModuleVersionSelectionReason selectionReason = ModuleVersionSelectionReason.requested;
 
         private DefaultModuleRevisionResolveState(ModuleResolveState module, ModuleRevisionId id, ResolveState resolveState) {
             this.module = module;
@@ -900,6 +901,10 @@ public class DependencyGraphBuilder {
          */
         public DefaultModuleRevisionResolveState resolveModuleRevisionId() {
             if (targetModuleRevision != null) {
+                //(SF) this might not be quite right
+                //this.targetModuleRevision might have been evicted in an earlier pass of conflict resolution
+                //and the module.selected has the actual target module.
+                //I'm not sure how big deal is it.
                 return targetModuleRevision;
             }
             if (failure != null) {
@@ -917,7 +922,7 @@ public class DependencyGraphBuilder {
 
             //TODO SF put this info on th idResolveResult
             if (idResolveResult instanceof ForcedModuleVersionIdResolveResult) {
-                targetModuleRevision.selectionReason = ModuleSelectionReason.forced;
+                targetModuleRevision.selectionReason = ModuleVersionSelectionReason.forced;
             }
 
             return targetModuleRevision;
@@ -956,14 +961,14 @@ public class DependencyGraphBuilder {
             for (ConfigurationNode configuration : root.configurations) {
                 for (DependencyEdge outgoingEdge : configuration.outgoingEdges) {
                     if (outgoingEdge.dependencyDescriptor.isForce() && candidates.contains(outgoingEdge.targetModuleRevision)) {
-                        outgoingEdge.targetModuleRevision.selectionReason = ModuleSelectionReason.forced;
+                        outgoingEdge.targetModuleRevision.selectionReason = ModuleVersionSelectionReason.forced;
                         return outgoingEdge.targetModuleRevision;
                     }
                 }
             }
             //TODO SF unit test
             DefaultModuleRevisionResolveState out = (DefaultModuleRevisionResolveState) resolver.select(candidates, root);
-            out.selectionReason = ModuleSelectionReason.conflictResolution;
+            out.selectionReason = ModuleVersionSelectionReason.conflictResolution;
             return out;
         }
     }

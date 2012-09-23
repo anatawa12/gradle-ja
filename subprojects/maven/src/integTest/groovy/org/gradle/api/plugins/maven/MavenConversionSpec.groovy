@@ -17,15 +17,14 @@
 package org.gradle.api.plugins.maven
 
 import org.gradle.integtests.fixtures.AbstractIntegrationSpec
-import org.gradle.integtests.fixtures.Maven3Availability
 import org.gradle.integtests.fixtures.TestResources
 import org.junit.Rule
-import spock.lang.IgnoreIf
+
+import static org.gradle.util.TextUtil.toPlatformLineSeparators
 
 /**
  * by Szczepan Faber, created at: 9/4/12
  */
-@IgnoreIf({ !Maven3Availability.AVAILABLE })
 class MavenConversionSpec extends AbstractIntegrationSpec {
 
     @Rule public final TestResources resources = new TestResources()
@@ -40,8 +39,26 @@ class MavenConversionSpec extends AbstractIntegrationSpec {
         then:
         file("settings.gradle").exists()
 
-        and: //can run gradle build
-        run 'clean', 'build'
+        when:
+        run '-i', 'clean', 'build'
+
+        then: //smoke test the build artifacts
+        file("webinar-api/build/libs/webinar-api-1.0-SNAPSHOT.jar").exists()
+        file("webinar-impl/build/libs/webinar-impl-1.0-SNAPSHOT.jar").exists()
+        file("webinar-war/build/libs/webinar-war-1.0-SNAPSHOT.war").exists()
+        file('webinar-impl/build/reports/tests/index.html').exists()
+        file('webinar-impl/build/test-results').list().find { it.contains('WebinarTest') }
+
+        when:
+        run 'projects'
+
+        then:
+        output.contains(toPlatformLineSeparators("""
+Root project 'webinar-parent'
++--- Project ':webinar-api' - Webinar APIs
++--- Project ':webinar-impl' - Webinar implementation
+\\--- Project ':webinar-war' - Webinar web application
+"""))
     }
 
     def "singleModule"() {
@@ -52,9 +69,15 @@ class MavenConversionSpec extends AbstractIntegrationSpec {
         run 'maven2Gradle'
 
         then:
+        noExceptionThrown()
+
+        when:
         //TODO SF this build should fail because the TestNG test is failing
         //however the plugin does not generate testNG for single module project atm (bug)
         //def failure = runAndFail('clean', 'build')  //assert if fails for the right reason
         run 'clean', 'build'
+
+        then:
+        file("build/libs/util-2.5.jar").exists()
     }
 }
