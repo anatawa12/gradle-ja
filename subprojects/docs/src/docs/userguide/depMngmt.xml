@@ -692,7 +692,7 @@
                 また、Gradle 1.2からは、解決した依存情報にアクセスできる新しいプログラミングAPIが用意されています。依存関係のレポート生成も水面下でこのAPIを使っています。
                 このAPIで、解決した依存関係グラフを走査し、その情報を調査することができます。
                 また、近いうちにこのAPIはさらに拡張され、依存関係の解決結果について、より多くの情報を取得できるようになる予定です。
-                詳しくは、<apilink class="org.gradle.api.artifacts.ResolvedConfiguration" method="getResolutionResult"/>のjavadocを参照してください。
+                詳しくは、<apilink class="org.gradle.api.artifacts.ResolvableDependencies" method="getResolutionResult"/>のjavadocを参照してください。
                 考えられる<apilink class="org.gradle.api.artifacts.result.ResolutionResult"/>の使用例としては、
                 <itemizedlist>
                     <listitem><phrase role="original">Creation of advanced dependency reports tailored to your use case.</phrase> 個々のユースケースに最適化した、高度な依存関係レポートの作成</listitem>
