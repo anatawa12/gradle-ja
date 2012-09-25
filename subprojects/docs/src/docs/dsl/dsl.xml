@@ -31,10 +31,15 @@
         <para role="original">There are a few basic concepts that you should understand, which will help you write Gradle scripts.</para>
         <para>あなたが理解すべきなのは少々の基本構想で、それらはあなたがGradleスクリプトを記述する際に助けになるでしょう。</para>
 
-        <para>First, Gradle scripts are <firstterm>configuration scripts</firstterm>. As the script executes, it
+        <para role="original">First, Gradle scripts are <firstterm>configuration scripts</firstterm>. As the script executes, it
             configures an object of a particular type. For example, as a build script executes, it configures an
             object of type <apilink class="org.gradle.api.Project"/>. This object is called the <firstterm>delegate object</firstterm>
             of the script. The following table shows the delegate for each type of Gradle script.
+        </para>
+	<para>最初に、Gradleスクリプトは<firstterm>設定スクリプト</firstterm>です。スクリプトを実行すると、特有の型のオブジェクトを形成します。
+	    例えば、ビルドスクリプトを実行すると、<apilink class="org.gradle.api.Project"/>型のオブジェクトを形成します。
+	    このオブジェクトはスクリプトの<firstterm>代表オブジェクト(deligateオブジェクト)</firstterm>
+            と呼ばれています。下記の表でGradleスクリプトの各代表型を示します。
         </para>
 
         <table>
