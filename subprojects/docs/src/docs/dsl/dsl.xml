@@ -47,7 +47,7 @@
             <thead>
                 <tr>
 		    <td>スクリプトの型<phrase role="original">Type of script</phrase></td>
-		    <td>インスタンスの代表に指名する<phrase role="original">Delegates to instance of</phrase></td>
+		    <td>インスタンスへの代表型<phrase role="original">Delegates to instance of</phrase></td>
                 </tr>
             </thead>
             <tr>
@@ -70,10 +70,10 @@
             </tr>
         </table>
 
-        <para>The properties and methods of the delegate object are available for you to use in the script.</para>
+	<para role="original">The properties and methods of the delegate object are available for you to use in the script.</para>
         <para>代表オブジェクトのプロパティやメソッドは、あなたがスクリプトの中で使用することができます。</para>
 
-        <para>Second, each Gradle script implements the <apilink class="org.gradle.api.Script"/> interface. This
+	<para role="original">Second, each Gradle script implements the <apilink class="org.gradle.api.Script"/> interface. This
             interface defines a number of properties and methods which you can use in the script.
         </para>
         <para>２番めに、各Gradleスクリプトは<apilink class="org.gradle.api.Script"/> interface. This
