@@ -43,11 +43,11 @@
         </para>
 
         <table>
-	    <title>スクリプトの代表<phrase role="original">Script delegates</phrase></title>
+	    <title>スクリプトの代表達<phrase role="original">Script delegates</phrase></title>
             <thead>
                 <tr>
 		    <td>スクリプトの型<phrase role="original">Type of script</phrase></td>
-		    <td>インスタンスへの代表型<phrase role="original">Delegates to instance of</phrase></td>
+		    <td>代表するインスタンス<phrase role="original">Delegates to instance of</phrase></td>
                 </tr>
             </thead>
             <tr>
