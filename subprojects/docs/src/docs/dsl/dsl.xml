@@ -39,31 +39,31 @@
 	<para>最初に、Gradleスクリプトは<firstterm>設定スクリプト</firstterm>です。スクリプトを実行すると、特有の型のオブジェクトを形成します。
 	    例えば、ビルドスクリプトを実行すると、<apilink class="org.gradle.api.Project"/>型のオブジェクトを形成します。
 	    このオブジェクトはスクリプトの<firstterm>代表オブジェクト(deligateオブジェクト)</firstterm>
-            と呼ばれています。下記の表でGradleスクリプトの各代表型を示します。
+            と呼ばれています。下記の表でGradleスクリプトの各型の代表を示します。
         </para>
 
         <table>
-            <title>Script delegates</title>
+	    <title>スクリプトの代表<phrase role="original">Script delegates</phrase></title>
             <thead>
                 <tr>
-                    <td>Type of script</td>
-                    <td>Delegates to instance of</td>
+		    <td>スクリプトの型<phrase role="original">Type of script</phrase></td>
+		    <td>インスタンスの代表に指名する<phrase role="original">Delegates to instance of</phrase></td>
                 </tr>
             </thead>
             <tr>
-                <td>Build script</td>
+		<td>ビルドスクリプト<phrase role="original">Build script</phrase></td>
                 <td>
                     <apilink class="org.gradle.api.Project"/>
                 </td>
             </tr>
             <tr>
-                <td>Init script</td>
+		<td>初期化スクリプト<phrase role="original">Init script</phrase></td>
                 <td>
                     <apilink class="org.gradle.api.invocation.Gradle"/>
                 </td>
             </tr>
             <tr>
-                <td>Settings script</td>
+		<td>設定スクリプト<phrase role="original">Settings script</phrase></td>
                 <td>
                     <apilink class="org.gradle.api.initialization.Settings"/>
                 </td>
@@ -71,8 +71,12 @@
         </table>
 
         <para>The properties and methods of the delegate object are available for you to use in the script.</para>
+        <para>代表オブジェクトのプロパティやメソッドは、あなたがスクリプトの中で使用することができます。</para>
 
         <para>Second, each Gradle script implements the <apilink class="org.gradle.api.Script"/> interface. This
+            interface defines a number of properties and methods which you can use in the script.
+        </para>
+        <para>２番めに、各Gradleスクリプトは<apilink class="org.gradle.api.Script"/> interface. This
             interface defines a number of properties and methods which you can use in the script.
         </para>
     </section>
