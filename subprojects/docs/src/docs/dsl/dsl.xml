@@ -76,8 +76,7 @@
 	<para role="original">Second, each Gradle script implements the <apilink class="org.gradle.api.Script"/> interface. This
             interface defines a number of properties and methods which you can use in the script.
         </para>
-        <para>２番めに、各Gradleスクリプトは<apilink class="org.gradle.api.Script"/> interface. This
-            interface defines a number of properties and methods which you can use in the script.
+        <para>２番めに、各Gradleスクリプトは<apilink class="org.gradle.api.Script"/>インターフェイスを継承しています。このインターフェイスはあなたがスクリプト内で使用できる多くのプロパティやメソッドを定義しています。
         </para>
     </section>
 
@@ -93,13 +92,18 @@
       -->
 
     <section>
-        <title>Build script structure</title>
-        <para>A build script is made up of zero or more statements and script blocks. Statements can include method calls,
+	<title>ビルドスクリプトの構造<phrase role="original">Build script structure</phrase></title>
+        <para role="original">A build script is made up of zero or more statements and script blocks. Statements can include method calls,
             property assignments, and local variable definitions. A script block is a method call which takes a closure
             as a parameter. The closure is treated as a <firstterm>configuration closure</firstterm> which configures
             some delegate object as it executes. The top level script blocks are listed below.</para>
+	<para>ビルドスクリプトはゼロかそれ以上のステートメントやスクリプトブロックでできています。
+	    記述にはメソッドの呼び出しや、プロパティの定義や、ローカル変数の宣言を含むことができます。
+	    スクリプトブロックはクロージャを引数にとるメソッドの呼び出しです。
+	    クロージャは、クロージャ実行時に代表オブジェクトを構成する設定クロージャとして扱われます。
+	    上位のスクリプトブロックを以下にリストします。</para>
         <table>
-            <title>Build script blocks</title>
+	    <title>ビルドスクリプトのブロック<phrase role="original">Build script blocks</phrase></title>
             <tr>
                 <td>allprojects</td>
             </tr>
@@ -125,14 +129,18 @@
                 <td>subprojects</td>
             </tr>
         </table>
-        <para>A build script is also a Groovy script, and so can contain those elements allowed in a Groovy script,
+        <para role="original">A build script is also a Groovy script, and so can contain those elements allowed in a Groovy script,
             such as method definitions and class definitions.
+        </para>
+	<para>
+	     ビルドスクリプトもまたGroovyスクリプトですので、メソッドの定義やクラスの定義等々、Groovyスクリプトに許されているそれらの要素を含むことができます。
         </para>
     </section>
 
     <section>
-        <title>Core types</title>
-        <para>Listed below are some of the central types which are used in Gradle scripts:</para>
+	<title>核となる型<phrase role="original">Core types</phrase></title>
+        <para role="original">Listed below are some of the central types which are used in Gradle scripts:</para>
+	<para>以下にリストするのはGradleスクリプトで使用される主要な型です。</para>
         <table>
             <title>Core types</title>
             <tr>
