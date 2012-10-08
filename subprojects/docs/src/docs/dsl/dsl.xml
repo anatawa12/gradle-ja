@@ -376,8 +376,8 @@
 
     <section>
 	<title>Eclipse/IDEAタスク型<phrase role="original">Eclipse/IDEA task types</phrase></title>
-        <para>Tasks contributed by IDE plugins. To configure IDE plugins please use IDE model types.</para>
-	<para>タスク達はIDEプラグインによって貢献する。IDEプラグインを設定する事は使用するIDEモデルの型を喜ばせる。</para>
+        <para role="original">Tasks contributed by IDE plugins. To configure IDE plugins please use IDE model types.</para>
+	<para>タスク達はIDEプラグインによって貢献します。IDEプラグインを設定する事は使用するIDEモデル型を喜ばせるでしょう。</para>
         <table>
             <title>Eclipse/IDEA task types</title>
             <tr>
