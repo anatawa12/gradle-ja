@@ -1,20 +1,20 @@
 <section>
     <section>
-        <title>Properties</title>
+	<title>プロパティ<phrase role="original">Properties</phrase></title>
         <table>
             <thead>
                 <tr>
-                    <td>Name</td>
+		    <td>名前<phrase role="original">Name</phrase></td>
                 </tr>
             </thead>
         </table>
     </section>
     <section>
-        <title>Methods</title>
+	<title>メソッド<phrase role="original">Methods</phrase></title>
         <table>
             <thead>
                 <tr>
-                    <td>Name</td>
+		    <td>名前<phrase role="original">Name</phrase></td>
                 </tr>
             </thead>
         </table>
