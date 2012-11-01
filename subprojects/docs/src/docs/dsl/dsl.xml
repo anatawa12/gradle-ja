@@ -31,52 +31,44 @@
         <para role="original">There are a few basic concepts that you should understand, which will help you write Gradle scripts.</para>
         <para>あなたが理解すべきなのは少々の基本構想で、それらはあなたがGradleスクリプトを記述する際に助けになるでしょう。</para>
 
-        <para role="original">First, Gradle scripts are <firstterm>configuration scripts</firstterm>. As the script executes, it
+        <para>First, Gradle scripts are <firstterm>configuration scripts</firstterm>. As the script executes, it
             configures an object of a particular type. For example, as a build script executes, it configures an
             object of type <apilink class="org.gradle.api.Project"/>. This object is called the <firstterm>delegate object</firstterm>
             of the script. The following table shows the delegate for each type of Gradle script.
         </para>
-	<para>最初に、Gradleスクリプトは<firstterm>設定スクリプト</firstterm>です。スクリプトを実行すると、特有の型のオブジェクトを形成します。
-	    例えば、ビルドスクリプトを実行すると、<apilink class="org.gradle.api.Project"/>型のオブジェクトを形成します。
-	    このオブジェクトはスクリプトの<firstterm>代表オブジェクト(deligateオブジェクト)</firstterm>
-            と呼ばれています。下記の表でGradleスクリプトの各型の代表を示します。
-        </para>
 
         <table>
-	    <title>スクリプトの代表達<phrase role="original">Script delegates</phrase></title>
+            <title>Script delegates</title>
             <thead>
                 <tr>
-		    <td>スクリプトの型<phrase role="original">Type of script</phrase></td>
-		    <td>代表するインスタンス<phrase role="original">Delegates to instance of</phrase></td>
+                    <td>Type of script</td>
+                    <td>Delegates to instance of</td>
                 </tr>
             </thead>
             <tr>
-		<td>ビルドスクリプト<phrase role="original">Build script</phrase></td>
+                <td>Build script</td>
                 <td>
                     <apilink class="org.gradle.api.Project"/>
                 </td>
             </tr>
             <tr>
-		<td>初期化スクリプト<phrase role="original">Init script</phrase></td>
+                <td>Init script</td>
                 <td>
                     <apilink class="org.gradle.api.invocation.Gradle"/>
                 </td>
             </tr>
             <tr>
-		<td>設定スクリプト<phrase role="original">Settings script</phrase></td>
+                <td>Settings script</td>
                 <td>
                     <apilink class="org.gradle.api.initialization.Settings"/>
                 </td>
             </tr>
         </table>
 
-	<para role="original">The properties and methods of the delegate object are available for you to use in the script.</para>
-        <para>代表オブジェクトのプロパティやメソッドは、あなたがスクリプトの中で使用することができます。</para>
+        <para>The properties and methods of the delegate object are available for you to use in the script.</para>
 
-	<para role="original">Second, each Gradle script implements the <apilink class="org.gradle.api.Script"/> interface. This
+        <para>Second, each Gradle script implements the <apilink class="org.gradle.api.Script"/> interface. This
             interface defines a number of properties and methods which you can use in the script.
-        </para>
-        <para>２番めに、各Gradleスクリプトは<apilink class="org.gradle.api.Script"/>インターフェイスを継承しています。このインターフェイスはあなたがスクリプト内で使用できる多くのプロパティやメソッドを定義しています。
         </para>
     </section>
 
@@ -92,18 +84,13 @@
       -->
 
     <section>
-	<title>ビルドスクリプトの構造<phrase role="original">Build script structure</phrase></title>
-        <para role="original">A build script is made up of zero or more statements and script blocks. Statements can include method calls,
+        <title>Build script structure</title>
+        <para>A build script is made up of zero or more statements and script blocks. Statements can include method calls,
             property assignments, and local variable definitions. A script block is a method call which takes a closure
             as a parameter. The closure is treated as a <firstterm>configuration closure</firstterm> which configures
             some delegate object as it executes. The top level script blocks are listed below.</para>
-	<para>ビルドスクリプトはゼロかそれ以上のステートメントやスクリプトブロックでできています。
-	    記述にはメソッドの呼び出しや、プロパティの定義や、ローカル変数の宣言を含むことができます。
-	    スクリプトブロックはクロージャを引数にとるメソッドの呼び出しです。
-	    クロージャは、クロージャ実行時に代表オブジェクトを構成する設定クロージャとして扱われます。
-	    上位のスクリプトブロックを以下にリストします。</para>
         <table>
-	    <title>ビルドスクリプトのブロック<phrase role="original">Build script blocks</phrase></title>
+            <title>Build script blocks</title>
             <tr>
                 <td>allprojects</td>
             </tr>
@@ -129,18 +116,14 @@
                 <td>subprojects</td>
             </tr>
         </table>
-        <para role="original">A build script is also a Groovy script, and so can contain those elements allowed in a Groovy script,
+        <para>A build script is also a Groovy script, and so can contain those elements allowed in a Groovy script,
             such as method definitions and class definitions.
-        </para>
-	<para>
-	     ビルドスクリプトもまたGroovyスクリプトですので、メソッドの定義やクラスの定義等々、Groovyスクリプトに許されているそれらの要素を含むことができます。
         </para>
     </section>
 
     <section>
-	<title>核となる型<phrase role="original">Core types</phrase></title>
-        <para role="original">Listed below are some of the central types which are used in Gradle scripts:</para>
-	<para>以下にリストするのはGradleスクリプトで使用される主要な型です。</para>
+        <title>Core types</title>
+        <para>Listed below are some of the central types which are used in Gradle scripts:</para>
         <table>
             <title>Core types</title>
             <tr>
@@ -183,11 +166,10 @@
     </section>
 
     <section>
-	<title>コンテナ型<phrase role="original">Container types</phrase></title>
-        <para role="original">Container types that handle various declarative elements (e.g. dependencies, configurations, artifacts, etc.):</para>
-        <para>コンテナ型は様々な宣言要素を取り扱います。（例えば他プログラムへの依存性,設定,生成物など）</para>
+        <title>Container types</title>
+        <para>Container types that handle various declarative elements (e.g. dependencies, configurations, artifacts, etc.):</para>
         <table>
-	    <title>コンテナ型<phrase role="original">Container types</phrase></title>
+            <title>Container types</title>
             <tr>
                 <td>org.gradle.api.artifacts.ConfigurationContainer</td>
             </tr>
@@ -201,11 +183,10 @@
     </section>
 
     <section>
-	<title>タスク型<phrase role="original">Task types</phrase></title>
-        <para role="original">Listed below are the various task types which are available for use in your build script:</para>
-        <para>下記にリストするのは、あなたのビルドスクリプトで使用できる様々なタスク型です。</para>
+        <title>Task types</title>
+        <para>Listed below are the various task types which are available for use in your build script:</para>
         <table>
-	    <title>タスク型<phrase role="original">Task types</phrase></title>
+            <title>Task types</title>
             <tr>
                 <td>org.gradle.api.plugins.antlr.AntlrTask</td>
             </tr>
@@ -327,11 +308,10 @@
     </section>
 
     <section>
-	<title>Eclipse/IDEAモデル型<phrase role="original">Eclipse/IDEA model types</phrase></title>
-        <para role="original">Used to configure Eclipse or IDEA plugins</para>
-        <para>EclipseもしくはIDEAを設定するプラグインを使用する</para>
+        <title>Eclipse/IDEA model types</title>
+        <para>Used to configure Eclipse or IDEA plugins</para>
         <table>
-	    <title>Eclipse/IDEAモデルの型<phrase role="original">Eclipse/IDEA model types</phrase></title>
+            <title>Eclipse/IDEA model types</title>
             <tr>
                 <td>org.gradle.plugins.ide.eclipse.model.EclipseModel</td>
             </tr>
@@ -375,11 +355,10 @@
     </section>
 
     <section>
-	<title>Eclipse/IDEAタスク型<phrase role="original">Eclipse/IDEA task types</phrase></title>
-        <para role="original">Tasks contributed by IDE plugins. To configure IDE plugins please use IDE model types.</para>
-	<para>タスク達はIDEプラグインによって貢献します。IDEプラグインを設定する事は使用するIDEモデル型を喜ばせるでしょう。</para>
+        <title>Eclipse/IDEA task types</title>
+        <para>Tasks contributed by IDE plugins. To configure IDE plugins please use IDE model types.</para>
         <table>
-	    <title>Eclipse/IDEAタスク型<phrase role="original">Eclipse/IDEA task types</phrase></title>
+            <title>Eclipse/IDEA task types</title>
             <tr>
                 <td>org.gradle.plugins.ide.eclipse.GenerateEclipseProject</td>
             </tr>
@@ -408,15 +387,11 @@
     </section>
 
     <section id="element-annotations">
-	<title>アノテーション要素<phrase role="original">Element annotations</phrase></title>
-	<para role="original">
+        <title>Element annotations</title>
+        <para>
             Elements in the DSL reference can be annotated as <emphasis>deprecated</emphasis> or <emphasis>incubating</emphasis>.
             These annotations refer to the Gradle Feature Lifecycle, which is
             <ulink url="../userguide/feature_lifecycle.html">described in the User Guide</ulink>.
-        </para>
-        <para>
-            DSLリファレンスの中の要素は<emphasis>deprecated</emphasis>もしくは<emphasis>incubating</emphasis>などのアノテーション付きにする事ができます。
-	    これらのアノテーションは<ulink url="../userguide/feature_lifecycle.html">ユーザーガイドに記述された</ulink>様なGradleの未来のライフサイクルを指します。
         </para>
     </section>
 

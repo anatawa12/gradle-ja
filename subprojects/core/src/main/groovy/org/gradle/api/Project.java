@@ -46,16 +46,14 @@ import java.util.Map;
 import java.util.Set;
 
 /**
- * <p>このインターフェースは、ビルドファイル内でGradleとやりとりする際、メインで使用するAPIです。<code>Project</code>から、Gradleの全ての機能にプログラム的にアクセスできます。</p>
  * <p class="original">This interface is the main API you use to interact with Gradle from your build file. From a <code>Project</code>,
  * you have programmatic access to all of Gradle's features.</p>
  *
+ * <p>このインターフェースは、ビルドファイル内でGradleとやりとりする際、メインで使用するAPIです。<code>Project</code>から、Gradleの全ての機能にプログラム的にアクセスできます。</p>
+ *
  * <h3>ライフサイクル <span class="original">Lifecycle</span></h3>
  *
- * <p><code>Project</code>と<code>{@value #DEFAULT_BUILD_FILE}ファイルは、１対１の関係性を持ちます。</code>
- * ビルドの初期化の間中、Gradleはビルドに参加している<code>Project</code>
- * オブジェクトを、以下に示すような組み付けを行います。 as follows:</p>
- * <p role="original">There is a one-to-one relationship between a <code>Project</code> and a <code>{@value #DEFAULT_BUILD_FILE}</code>
+ * <p>There is a one-to-one relationship between a <code>Project</code> and a <code>{@value #DEFAULT_BUILD_FILE}</code>
  * file. During build initialisation, Gradle assembles a <code>Project</code> object for each project which is to
  * participate in the build, as follows:</p>
  *

@@ -1,17 +1,17 @@
 <section>
     <section>
-	<title>プロパティ<phrase role="original">Properties</phrase></title>
+        <title>Properties</title>
         <table>
             <thead>
                 <tr>
-		    <td>名前<phrase role="original">Name</phrase></td>
+                    <td>Name</td>
                 </tr>
             </thead>
             <tr>
-		<td>全てのプロジェクト<phrase role="original">allprojects</phrase></td>
+                <td>allprojects</td>
             </tr>
             <tr>
-		<td>生成物<phrase role="original">artifacts</phrase></td>
+                <td>artifacts</td>
             </tr>
             <tr>
                 <td>ant</td>
@@ -112,11 +112,11 @@
         </table>
     </section>
     <section>
-	<title>メソッド<phrase role="original">Methods</phrase></title>
+        <title>Methods</title>
         <table>
             <thead>
                 <tr>
-		    <td>名前<phrase role="original">Name</phrase></td>
+                    <td>Name</td>
                 </tr>
             </thead>
             <tr>
