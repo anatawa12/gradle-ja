@@ -15,8 +15,11 @@
  */
 package org.gradle.integtests.tooling.fixture
 
-import org.gradle.integtests.fixtures.BasicGradleDistribution
-import org.gradle.integtests.fixtures.GradleDistribution
+import org.gradle.integtests.fixtures.executer.GradleDistribution
+import org.gradle.integtests.fixtures.executer.IntegrationTestBuildContext
+import org.gradle.integtests.fixtures.executer.UnderDevelopmentGradleDistribution
+import org.gradle.test.fixtures.file.TestFile
+import org.gradle.test.fixtures.file.TestNameTestDirectoryProvider
 import org.gradle.tooling.GradleConnector
 import org.gradle.util.GradleVersion
 import org.gradle.util.SetSystemProperties
@@ -26,27 +29,28 @@ import org.junit.runner.RunWith
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import spock.lang.Specification
-import org.gradle.util.TestFile
 
 @RunWith(ToolingApiCompatibilitySuiteRunner)
 abstract class ToolingApiSpecification extends Specification {
     static final Logger LOGGER = LoggerFactory.getLogger(ToolingApiSpecification)
     @Rule public final SetSystemProperties sysProperties = new SetSystemProperties()
-    @Rule public final GradleDistribution dist = new GradleDistribution()
-    final ToolingApi toolingApi = new ToolingApi(dist)
-    private static final ThreadLocal<BasicGradleDistribution> VERSION = new ThreadLocal<BasicGradleDistribution>()
+    @Rule public final TestNameTestDirectoryProvider temporaryFolder = new TestNameTestDirectoryProvider()
+    final GradleDistribution dist = new UnderDevelopmentGradleDistribution()
+    final IntegrationTestBuildContext buildContext = new IntegrationTestBuildContext()
+    final ToolingApi toolingApi = new ToolingApi(dist, temporaryFolder)
+    private static final ThreadLocal<GradleDistribution> VERSION = new ThreadLocal<GradleDistribution>()
 
-    static void selectTargetDist(BasicGradleDistribution version) {
+    static void selectTargetDist(GradleDistribution version) {
         VERSION.set(version)
     }
 
-    static BasicGradleDistribution getTargetDist() {
+    static GradleDistribution getTargetDist() {
         VERSION.get()
     }
 
     void setup() {
         def consumerGradle = GradleVersion.current()
-        def target = GradleVersion.version(VERSION.get().version)
+        def target = GradleVersion.version(VERSION.get().version.version)
         LOGGER.info(" Using Tooling API consumer ${consumerGradle}, provider ${target}")
         boolean accept = accept(consumerGradle, target)
         if (!accept) {
@@ -55,8 +59,7 @@ abstract class ToolingApiSpecification extends Specification {
         this.toolingApi.withConnector {
             if (consumerGradle.version != target.version) {
                 LOGGER.info("Overriding daemon tooling API provider to use installation: " + target);
-                def targetGradle = dist.previousVersion(target.version)
-                it.useInstallation(new File(targetGradle.gradleHomeDir.absolutePath))
+                it.useInstallation(new File(getTargetDist().gradleHomeDir.absolutePath))
                 it.embedded(false)
             }
         }
@@ -86,7 +89,7 @@ abstract class ToolingApiSpecification extends Specification {
     }
 
     TestFile getProjectDir() {
-        dist.testDir
+        temporaryFolder.testDirectory
     }
 
     TestFile getBuildFile() {

@@ -21,7 +21,6 @@ import org.gradle.api.logging.Logger;
 import org.gradle.api.logging.Logging;
 import org.gradle.internal.UncheckedException;
 import org.gradle.launcher.daemon.context.DaemonContext;
-import org.gradle.launcher.daemon.diagnostics.DaemonDiagnostics;
 import org.gradle.launcher.daemon.diagnostics.DaemonStartupInfo;
 import org.gradle.launcher.daemon.logging.DaemonMessages;
 import org.gradle.launcher.daemon.registry.DaemonInfo;
@@ -39,11 +38,11 @@ public class DefaultDaemonConnector implements DaemonConnector {
     private static final Logger LOGGER = Logging.getLogger(DefaultDaemonConnector.class);
     public static final int DEFAULT_CONNECT_TIMEOUT = 30000;
     private final DaemonRegistry daemonRegistry;
-    private final OutgoingConnector<Object> connector;
+    protected final OutgoingConnector connector;
     private final DaemonStarter daemonStarter;
     private long connectTimeout = DefaultDaemonConnector.DEFAULT_CONNECT_TIMEOUT;
 
-    public DefaultDaemonConnector(DaemonRegistry daemonRegistry, OutgoingConnector<Object> connector, DaemonStarter daemonStarter) {
+    public DefaultDaemonConnector(DaemonRegistry daemonRegistry, OutgoingConnector connector, DaemonStarter daemonStarter) {
         this.daemonRegistry = daemonRegistry;
         this.connector = connector;
         this.daemonStarter = daemonStarter;
@@ -84,7 +83,7 @@ public class DefaultDaemonConnector implements DaemonConnector {
             }
 
             try {
-                return connectToDaemon(daemonInfo, null);
+                return connectToDaemon(daemonInfo);
             } catch (ConnectException e) {
                 LOGGER.debug("Cannot connect to the daemon at " + daemonInfo.getAddress() + " due to " + e + ". Trying a different daemon...");
             }
@@ -122,7 +121,7 @@ public class DefaultDaemonConnector implements DaemonConnector {
                                 + "\nIt won't be possible to reconnect to this daemon. Context mismatch: "
                                 + "\n" + constraint.whyUnsatisfied(daemonInfo.getContext()));
                     }
-                    return connectToDaemon(daemonInfo, startupInfo.getDiagnostics());
+                    return connectToDaemon(daemonInfo);
                 } catch (ConnectException e) {
                     throw new GradleException("The forked daemon process died before we could connect.\n" + startupInfo.describe(), e);
                 }
@@ -131,7 +130,7 @@ public class DefaultDaemonConnector implements DaemonConnector {
         return null;
     }
 
-    private DaemonClientConnection connectToDaemon(final DaemonInfo daemonInfo, DaemonDiagnostics diagnostics) throws ConnectException {
+    private DaemonClientConnection connectToDaemon(final DaemonInfo daemonInfo) throws ConnectException {
         Runnable onFailure = new Runnable() {
             public void run() {
                 LOGGER.info(DaemonMessages.REMOVING_DAEMON_ADDRESS_ON_FAILURE + daemonInfo);
@@ -146,11 +145,11 @@ public class DefaultDaemonConnector implements DaemonConnector {
         };
         Connection<Object> connection;
         try {
-            connection = connector.connect(daemonInfo.getAddress());
+            connection = connector.connect(daemonInfo.getAddress(), getClass().getClassLoader());
         } catch (ConnectException e) {
             onFailure.run();
             throw e;
         }
-        return new DaemonClientConnection(connection, daemonInfo.getContext().getUid(), diagnostics, onFailure);
+        return new DaemonClientConnection(connection, daemonInfo.getContext().getUid(), onFailure);
     }
 }

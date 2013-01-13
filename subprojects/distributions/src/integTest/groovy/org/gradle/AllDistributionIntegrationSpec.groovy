@@ -17,15 +17,20 @@
 package org.gradle
 
 import groovy.io.FileType
-import org.gradle.util.TestFile
+import org.gradle.test.fixtures.file.TestFile
 
 import static org.hamcrest.Matchers.containsString
 
 class AllDistributionIntegrationSpec extends DistributionIntegrationSpec {
 
+    @Override
+    String getDistributionLabel() {
+        "all"
+    }
+
     def allZipContents() {
         given:
-        TestFile contentsDir = unpackDistribution("all")
+        TestFile contentsDir = unpackDistribution()
 
         expect:
         checkMinimalContents(contentsDir)

@@ -68,9 +68,8 @@ public class TextUtil {
     }
 
     /**
-     * <p>Escapes the toString() representation of {@code obj} for use in a literal string.</p>
-     *
-     * <p>This is useful for interpolating variables into script strings, as well as in other situations.</p>
+     * Escapes the toString() representation of {@code obj} for use in a literal string.
+     * This is useful for interpolating variables into script strings, as well as in other situations.
      */
     public static String escapeString(Object obj) {
         return obj == null ? null : StringEscapeUtils.escapeJava(obj.toString());

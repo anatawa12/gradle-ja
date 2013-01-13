@@ -19,19 +19,13 @@ package org.gradle.api.artifacts.result;
 import org.gradle.api.Incubating;
 
 /**
- * Resolved dependency result is an edge in the resolved dependency graph.
- * Provides information about the requested module version and the selected module version.
- * Requested differs from selected due to number of factors,
- * for example conflict resolution, forcing particular version or when dynamic versions are used.
- * For information about those terms please refer to the user guide.
+ * A dependency that was resolved successfully.
  */
 @Incubating
 public interface ResolvedDependencyResult extends DependencyResult {
-
     /**
-     * Returns the selected module version.
-     *
-     * @return selected module version
+     * Returns the selected module version. This may not necessarily be the same as the requested module version. For example, a dynamic version
+     * may have been requested, or the version may have been substituted due to conflict resolution, or by being forced, or for some other reason.
      */
     ResolvedModuleVersionResult getSelected();
 }

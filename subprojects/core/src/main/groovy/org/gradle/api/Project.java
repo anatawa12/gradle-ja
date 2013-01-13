@@ -22,11 +22,13 @@ import org.gradle.api.artifacts.ConfigurationContainer;
 import org.gradle.api.artifacts.dsl.ArtifactHandler;
 import org.gradle.api.artifacts.dsl.DependencyHandler;
 import org.gradle.api.artifacts.dsl.RepositoryHandler;
+import org.gradle.api.component.SoftwareComponentContainer;
 import org.gradle.api.file.ConfigurableFileCollection;
 import org.gradle.api.file.ConfigurableFileTree;
 import org.gradle.api.file.CopySpec;
 import org.gradle.api.file.FileTree;
 import org.gradle.api.initialization.dsl.ScriptHandler;
+import org.gradle.api.internal.HasInternalProtocol;
 import org.gradle.api.invocation.Gradle;
 import org.gradle.api.logging.Logger;
 import org.gradle.api.logging.LoggingManager;
@@ -195,6 +197,7 @@ import java.util.Set;
  *
  * @author Hans Dockter
  */
+@HasInternalProtocol
 public interface Project extends Comparable<Project>, ExtensionAware {
     /**
      * The default project build file name.
@@ -1473,4 +1476,12 @@ public interface Project extends Comparable<Project>, ExtensionAware {
      * @return Returned instance contains various resource-specific utility methods.
      */
     ResourceHandler getResources();
+
+    /**
+     * Returns the software components produced by this project.
+     *
+     * @return The components for this project.
+     */
+    @Incubating
+    SoftwareComponentContainer getComponents();
 }

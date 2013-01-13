@@ -17,12 +17,11 @@
 package org.gradle.api.internal.artifacts.ivyservice.resolveengine.result;
 
 import org.gradle.api.artifacts.ModuleVersionIdentifier;
+import org.gradle.api.artifacts.result.DependencyResult;
 import org.gradle.api.artifacts.result.ModuleVersionSelectionReason;
-import org.gradle.api.internal.artifacts.ResolvedConfigurationIdentifier;
+import org.gradle.api.artifacts.result.ResolvedDependencyResult;
 import org.gradle.api.internal.artifacts.result.DefaultResolutionResult;
-import org.gradle.api.internal.artifacts.result.DefaultResolvedDependencyResult;
 import org.gradle.api.internal.artifacts.result.DefaultResolvedModuleVersionResult;
-import org.gradle.api.internal.artifacts.result.DefaultUnresolvedDependencyResult;
 
 import java.util.Collection;
 import java.util.LinkedHashMap;
@@ -38,35 +37,40 @@ public class ResolutionResultBuilder implements ResolvedConfigurationListener {
     private Map<ModuleVersionIdentifier, DefaultResolvedModuleVersionResult> modules
             = new LinkedHashMap<ModuleVersionIdentifier, DefaultResolvedModuleVersionResult>();
 
-    //TODO SF/AM Use ModuleVersionIdentifier instead of ResolvedConfigurationIdentifier, then we can get rid of the EmptyDependencyGraph
-    //and create an empty using: new ResolutionResultBuilder().start(DefaultModuleVersionIdentifier.newId(module)).getResult()
-    public void start(ResolvedConfigurationIdentifier root) {
-        rootModule = getModule(root.getId(), ModuleVersionSelectionReason.requested);
-    }
+    CachingDependencyResultFactory dependencyResultFactory = new CachingDependencyResultFactory();
 
-    public void resolvedConfiguration(ResolvedConfigurationIdentifier id, Collection<InternalDependencyResult> dependencies) {
-        DefaultResolvedModuleVersionResult from = getModule(id.getId(), ModuleVersionSelectionReason.requested);
-
-        for (InternalDependencyResult d : dependencies) {
-            if (d.getFailure() != null) {
-                from.addDependency(new DefaultUnresolvedDependencyResult(d.getRequested(), d.getFailure(), from));
-            } else {
-                DefaultResolvedModuleVersionResult selected = getModule(d.getSelected().getId(), d.getSelected().getSelectionReason());
-                DefaultResolvedDependencyResult dependency = new DefaultResolvedDependencyResult(d.getRequested(), selected, from);
-                from.addDependency(dependency);
-                selected.addDependent(dependency);
-            }
-        }
-    }
-
-    private DefaultResolvedModuleVersionResult getModule(ModuleVersionIdentifier id, ModuleVersionSelectionReason selectionReason) {
-        if (!modules.containsKey(id)) {
-            modules.put(id, new DefaultResolvedModuleVersionResult(id, selectionReason));
-        }
-        return modules.get(id);
+    public ResolutionResultBuilder start(ModuleVersionIdentifier root) {
+        rootModule = createOrGet(root, VersionSelectionReasons.ROOT);
+        return this;
     }
 
     public DefaultResolutionResult getResult() {
         return new DefaultResolutionResult(rootModule);
+    }
+
+    public void resolvedModuleVersion(ModuleVersionSelection moduleVersion) {
+        createOrGet(moduleVersion.getSelectedId(), moduleVersion.getSelectionReason());
+    }
+
+    public void resolvedConfiguration(ModuleVersionIdentifier id, Collection<? extends InternalDependencyResult> dependencies) {
+        for (InternalDependencyResult d : dependencies) {
+            DefaultResolvedModuleVersionResult from = modules.get(id);
+            DependencyResult dependency;
+            if (d.getFailure() != null) {
+                dependency = dependencyResultFactory.createUnresolvedDependency(d.getRequested(), from, d.getReason(), d.getFailure());
+            } else {
+                DefaultResolvedModuleVersionResult selected = modules.get(d.getSelected().getSelectedId());
+                dependency = dependencyResultFactory.createResolvedDependency(d.getRequested(), from, selected);
+                selected.addDependent((ResolvedDependencyResult) dependency);
+            }
+            from.addDependency(dependency);
+        }
+    }
+
+    private DefaultResolvedModuleVersionResult createOrGet(ModuleVersionIdentifier id, ModuleVersionSelectionReason selectionReason) {
+        if (!modules.containsKey(id)) {
+            modules.put(id, new DefaultResolvedModuleVersionResult(id, selectionReason));
+        }
+        return modules.get(id);
     }
 }

@@ -18,72 +18,29 @@ package org.gradle.api.internal.artifacts.result;
 
 import org.gradle.api.artifacts.ModuleVersionSelector;
 import org.gradle.api.artifacts.result.ResolvedDependencyResult;
+import org.gradle.api.artifacts.result.ResolvedModuleVersionResult;
 
 /**
  * by Szczepan Faber, created at: 7/26/12
  */
-public class DefaultResolvedDependencyResult implements ResolvedDependencyResult {
+public class DefaultResolvedDependencyResult extends AbstractDependencyResult implements ResolvedDependencyResult {
+    private final ResolvedModuleVersionResult selected;
 
-    private final ModuleVersionSelector requested;
-    private final DefaultResolvedModuleVersionResult selected;
-    private final DefaultResolvedModuleVersionResult from;
-
-    public DefaultResolvedDependencyResult(ModuleVersionSelector requested, DefaultResolvedModuleVersionResult selected, DefaultResolvedModuleVersionResult from) {
-        assert requested != null;
-        assert selected != null;
-        assert from != null;
-
-        this.from = from;
-        this.requested = requested;
+    public DefaultResolvedDependencyResult(ModuleVersionSelector requested, ResolvedModuleVersionResult selected, ResolvedModuleVersionResult from) {
+        super(requested, from);
         this.selected = selected;
     }
 
-    public ModuleVersionSelector getRequested() {
-        return requested;
-    }
-
-    public DefaultResolvedModuleVersionResult getSelected() {
+    public ResolvedModuleVersionResult getSelected() {
         return selected;
     }
 
     @Override
     public String toString() {
-        return ResolvedDependencyResultPrinter.print(this);
-    }
-
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) {
-            return true;
+        if (getRequested().matchesStrictly(getSelected().getId())) {
+            return getRequested().toString();
+        } else {
+            return String.format("%s -> %s", getRequested(), getSelected().getId());
         }
-        if (!(o instanceof DefaultResolvedDependencyResult)) {
-            return false;
-        }
-
-        DefaultResolvedDependencyResult that = (DefaultResolvedDependencyResult) o;
-
-        if (!from.equals(that.from)) {
-            return false;
-        }
-        if (!requested.equals(that.requested)) {
-            return false;
-        }
-        if (!selected.equals(that.selected)) {
-            return false;
-        }
-
-        return true;
-    }
-
-    @Override
-    public int hashCode() {
-        int result = requested.hashCode();
-        result = 31 * result + selected.hashCode();
-        result = 31 * result + from.hashCode();
-        return result;
-    }
-
-    public DefaultResolvedModuleVersionResult getFrom() {
-        return from;
     }
 }

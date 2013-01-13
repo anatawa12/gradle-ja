@@ -16,6 +16,9 @@
 
 package org.gradle.api.artifacts;
 
+import org.gradle.api.Action;
+import org.gradle.api.Incubating;
+
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
@@ -25,6 +28,8 @@ import java.util.concurrent.TimeUnit;
  * <p>
  * Examples:
  * <pre autoTested=''>
+ * apply plugin: 'java' //so that there are some configurations
+ *
  * configurations.all {
  *   resolutionStrategy {
  *     // fail eagerly on version conflict (includes transitive dependencies)
@@ -37,8 +42,16 @@ import java.util.concurrent.TimeUnit;
  *     //  *replace existing forced modules with new ones:
  *     forcedModules = ['asm:asm-all:3.3.1']
  *
+ *     // add a dependency resolve rule
+ *     eachDependency { DependencyResolveDetails details ->
+ *       //specifying a fixed version for all libraries with 'org.gradle' group
+ *       if (details.requested.group == 'org.gradle') {
+ *           details.useVersion'1.4'
+ *       }
+ *     }
+ *
  *     // cache dynamic versions for 10 minutes
- *     cacheDynamicVersionsFor 10, 'minutes'
+ *     cacheDynamicVersionsFor 10*60, 'seconds'
  *     // don't cache changing modules at all
  *     cacheChangingModulesFor 0, 'seconds'
  *   }
@@ -56,6 +69,8 @@ public interface ResolutionStrategy {
      * The check includes both first level and transitive dependencies. See example below:
      *
      * <pre autoTested=''>
+     * apply plugin: 'java' //so that there are some configurations
+     *
      * configurations.all {
      *   resolutionStrategy.failOnVersionConflict()
      * }
@@ -78,6 +93,8 @@ public interface ResolutionStrategy {
      * </ul>
      * Example:
      * <pre autoTested=''>
+     * apply plugin: 'java' //so that there are some configurations
+     *
      * configurations.all {
      *   resolutionStrategy.force 'asm:asm-all:3.3.1', 'commons-io:commons-io:1.4'
      * }
@@ -97,6 +114,8 @@ public interface ResolutionStrategy {
      * <p>
      * Example:
      * <pre autoTested=''>
+     * apply plugin: 'java' //so that there are some configurations
+     *
      * configurations.all {
      *   resolutionStrategy.forcedModules = ['asm:asm-all:3.3.1', 'commons-io:commons-io:1.4']
      * }
@@ -115,6 +134,37 @@ public interface ResolutionStrategy {
      * @since 1.0-milestone-7
      */
     Set<ModuleVersionSelector> getForcedModules();
+
+    /**
+     * Adds a dependency resolve rule that is triggered for every dependency (including transitive)
+     * when the configuration is being resolved. The action receives an instance of {@link DependencyResolveDetails}
+     * that can be used to find out what dependency is being resolved and to influence the resolution process.
+     * Example:
+     * <pre autoTested=''>
+     * apply plugin: 'java' //so that there are some configurations
+     *
+     * configurations.all {
+     *   resolutionStrategy {
+     *     eachDependency { DependencyResolveDetails details ->
+     *       //specifying a fixed version for all libraries with 'org.gradle' group
+     *       if (details.requested.group == 'org.gradle') {
+     *         details.useVersion '1.4'
+     *       }
+     *     }
+     *     eachDependency {
+     *       //multiple actions can be specified
+     *     }
+     *   }
+     * }
+     * </pre>
+     *
+     * The rules are evaluated in order they are declared. Rules are evaluated after forced modules are applied (see {@link #force(Object...)}
+     *
+     * @return this
+     * @since 1.4
+     */
+    @Incubating
+    ResolutionStrategy eachDependency(Action<? super DependencyResolveDetails> rule);
 
     /**
      * Sets the length of time that dynamic versions will be cached, with units expressed as a String.

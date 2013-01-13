@@ -1,4 +1,4 @@
-
+﻿
 /*
  * Copyright 2010 the original author or authors.
  *
@@ -20,7 +20,9 @@ import org.gradle.build.docs.AssembleSamplesDocTask
 import org.gradle.build.docs.Docbook2Xhtml
 import org.gradle.build.docs.dsl.docbook.AssembleDslDocTask
 import org.gradle.build.docs.dsl.source.ExtractDslMetaDataTask
-import org.gradle.internal.os.OperatingSystem
+import org.gradle.build.docs.releasenotes.*
+import org.gradle.build.docs.releasenotes.checks.*
+import org.apache.tools.ant.filters.ReplaceTokens
 
 apply plugin: 'base'
 apply plugin: 'pegdown'
@@ -28,7 +30,8 @@ apply plugin: 'jsoup'
 apply plugin: 'javascript-base'
 
 repositories {
-    add javaScript.googleApisRepository
+    javaScript.googleApis()
+//    add javaScript.googleApisRepository
 
     ivy {
         name "Google Fonts"
@@ -54,7 +57,7 @@ configurations {
 }
 
 dependencies {
-    userGuideTask 'xalan:xalan:2.7.1', 'xerces:xercesImpl:2.9.1'
+    userGuideTask 'xalan:xalan:2.7.1', libraries.xerces
     userGuideTask module('org.xhtmlrenderer:xhtmlrenderer:8.3-atlassian') {
         dependency 'itext:itext:2.0.8@jar'
     }
@@ -141,7 +144,7 @@ task configureCss << {
 
     ext.tokens = images + fonts
     css.inputs.property 'tokens', tokens
-    css.filter org.apache.tools.ant.filters.ReplaceTokens, tokens: tokens
+    css.filter ReplaceTokens, tokens: tokens
 }
 
 task css(type: Sync, dependsOn: configureCss) {
@@ -197,7 +200,7 @@ task samplesDocs(type: Docbook2Xhtml) {
     stylesheetName = 'standaloneHtml.xsl'
 }
 
-task dslMetaData(type: ExtractDslMetaDataTask) {  //TODO SF: parseSourceCode
+task dslMetaData(type: ExtractDslMetaDataTask) {
     source { groovydoc.source }
     destFile = new File(docbookSrc, 'dsl-meta-data.bin')
 }
@@ -413,7 +416,6 @@ task decorateReleaseNotes(type: Jsoup) {
     apply from: "release-notes-transform.gradle"
 }
 
-import org.apache.tools.ant.filters.*
 task releaseNotes(type: Copy) {
     group = "release notes"
     ext.fileName = "release-notes.html"
@@ -421,7 +423,7 @@ task releaseNotes(type: Copy) {
     from decorateReleaseNotes, {
         rename ".+", "release-notes.html"
         doFirst {
-            owner.filter(ReplaceTokens, tokens: [version: project.version.toString()])
+            owner.filter(ReplaceTokens, tokens: [version: project.version.toString(), versionBase: rootProject.versionBase])
         }
     }
 }
@@ -431,6 +433,22 @@ task viewReleaseNotes(dependsOn: releaseNotes) {
     doLast {
         Class.forName("java.awt.Desktop").newInstance().browse(new File(releaseNotes.destinationDir, releaseNotes.fileName).toURI())
     }
+}
+
+task checkReleaseNotes(type: CheckReleaseNotes, dependsOn: releaseNotes) {
+    group = "release notes"
+    sourceFile = releaseNotesMarkdown.source.singleFile
+    renderedFile = file("${project.releaseNotes.destinationDir}/${project.releaseNotes.fileName}")
+    checks(
+            new MaxLineLengthReleaseNoteCheck(220),
+            new CssContentReleaseNotesCheck("h2#fixed-issues", 1, "needed as the placeholder for fixed issues automation"),
+            new NoDuplicateIdsReleaseNotesCheck(),
+            new NoBrokenInternalLinksReleaseNotesCheck()
+    )
+}
+
+task check {
+    dependsOn checkReleaseNotes
 }
 
 task docs {

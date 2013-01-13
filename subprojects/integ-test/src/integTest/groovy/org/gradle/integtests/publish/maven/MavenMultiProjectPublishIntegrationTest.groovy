@@ -17,11 +17,9 @@
 package org.gradle.integtests.publish.maven
 
 import org.gradle.integtests.fixtures.AbstractIntegrationSpec
-import org.gradle.integtests.fixtures.MavenRepository
 import spock.lang.Issue
 
 class MavenMultiProjectPublishIntegrationTest extends AbstractIntegrationSpec {
-    def mavenRepo = new MavenRepository(file("maven-repo"))
     def mavenModule = mavenRepo.module("org.gradle.test", "project1", "1.9")
 
     def "project dependency correctly reflected in POM if publication coordinates are unchanged"() {
@@ -37,7 +35,7 @@ project(":project1") {
         run ":project1:uploadArchives"
 
         then:
-        def pom = mavenModule.pom
+        def pom = mavenModule.parsedPom
         pom.scopes.compile.assertDependsOn("org.gradle.test", "project2", "1.9")
     }
 
@@ -59,7 +57,7 @@ project(":project2") {
         run ":project1:uploadArchives"
 
         then:
-        def pom = mavenModule.pom
+        def pom = mavenModule.parsedPom
         pom.scopes.compile.assertDependsOn("org.gradle.test", "changed", "1.9")
     }
 
@@ -85,7 +83,7 @@ project(":project2") {
         run ":project1:uploadArchives"
 
         then:
-        def pom = mavenModule.pom
+        def pom = mavenModule.parsedPom
         pom.scopes.compile.assertDependsOn("org.gradle.test", "changed", "1.9")
     }
 
@@ -112,7 +110,7 @@ project(":project2") {
         run ":project1:uploadArchives"
 
         then:
-        def pom = mavenModule.pom
+        def pom = mavenModule.parsedPom
         pom.scopes.compile.assertDependsOn("org.gradle.test", "project2", "1.9")
     }
 

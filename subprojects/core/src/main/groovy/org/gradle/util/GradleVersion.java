@@ -174,19 +174,17 @@ public class GradleVersion implements Comparable<GradleVersion> {
         return versionPart;
     }
 
-    private boolean isNonSymbolicNumber() {
-        return versionPart.equals("0.0");
+    public int getMajor() {
+        if (isValid()) {
+            return Integer.valueOf(versionPart.split("\\.", 2)[0], 10);
+        } else {
+            return -1;
+        }
     }
 
     public int compareTo(GradleVersion gradleVersion) {
         assertCanQueryParts();
         gradleVersion.assertCanQueryParts();
-
-        if (isNonSymbolicNumber() && !gradleVersion.isNonSymbolicNumber()) {
-            return 1;
-        } else if (!isNonSymbolicNumber() && gradleVersion.isNonSymbolicNumber()) {
-            return -1;
-        }
 
         String[] majorVersionParts = versionPart.split("\\.");
         String[] otherMajorVersionParts = gradleVersion.versionPart.split("\\.");

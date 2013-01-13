@@ -23,6 +23,7 @@ import org.gradle.api.Task;
 import org.gradle.api.artifacts.Configuration;
 import org.gradle.api.artifacts.ConfigurationContainer;
 import org.gradle.api.artifacts.Dependency;
+import org.gradle.api.internal.java.JavaLibrary;
 import org.gradle.api.file.FileCollection;
 import org.gradle.api.internal.artifacts.publish.ArchivePublishArtifact;
 import org.gradle.api.internal.plugins.DefaultArtifactPublicationSet;
@@ -68,6 +69,7 @@ public class JavaPlugin implements Plugin<Project> {
 
         configureSourceSets(javaConvention);
         configureConfigurations(project);
+        configureComponent(project);
 
         configureJavaDoc(javaConvention);
         configureTest(project, javaConvention);
@@ -98,7 +100,6 @@ public class JavaPlugin implements Plugin<Project> {
     }
 
     private void configureArchives(final Project project, final JavaPluginConvention pluginConvention) {
-        project.getTasks().getByName(JavaBasePlugin.CHECK_TASK_NAME).dependsOn(TEST_TASK_NAME);
         Jar jar = project.getTasks().add(JAR_TASK_NAME, Jar.class);
         jar.getManifest().from(pluginConvention.getManifest());
         jar.setDescription("Assembles a jar archive containing the main classes.");
@@ -123,7 +124,7 @@ public class JavaPlugin implements Plugin<Project> {
 
     private void configureTest(final Project project, final JavaPluginConvention pluginConvention) {
         project.getTasks().withType(Test.class, new Action<Test>() {
-            public void execute(Test test) {
+            public void execute(final Test test) {
                 test.getConventionMapping().map("testClassesDir", new Callable<Object>() {
                     public Object call() throws Exception {
                         return pluginConvention.getSourceSets().getByName(SourceSet.TEST_SOURCE_SET_NAME).getOutput().getClassesDir();
@@ -143,6 +144,7 @@ public class JavaPlugin implements Plugin<Project> {
             }
         });
         Test test = project.getTasks().add(TEST_TASK_NAME, Test.class);
+        project.getTasks().getByName(JavaBasePlugin.CHECK_TASK_NAME).dependsOn(test);
         test.setDescription("Runs the unit tests.");
         test.setGroup(JavaBasePlugin.VERIFICATION_GROUP);
     }
@@ -158,6 +160,11 @@ public class JavaPlugin implements Plugin<Project> {
         configurations.getByName(TEST_RUNTIME_CONFIGURATION_NAME).extendsFrom(runtimeConfiguration, compileTestsConfiguration);
 
         configurations.getByName(Dependency.DEFAULT_CONFIGURATION).extendsFrom(runtimeConfiguration);
+    }
+
+
+    private void configureComponent(Project project) {
+        project.getComponents().add(new JavaLibrary(project.getConfigurations().getByName(RUNTIME_CONFIGURATION_NAME)));
     }
 
     /**

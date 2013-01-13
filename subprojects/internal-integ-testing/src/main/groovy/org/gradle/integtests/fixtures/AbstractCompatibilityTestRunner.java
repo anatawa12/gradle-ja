@@ -15,8 +15,13 @@
  */
 package org.gradle.integtests.fixtures;
 
+import org.gradle.integtests.fixtures.executer.GradleDistribution;
+import org.gradle.integtests.fixtures.executer.UnderDevelopmentGradleDistribution;
+import org.gradle.integtests.fixtures.versions.ReleasedVersionDistributions;
 import org.gradle.internal.jvm.Jvm;
 import org.gradle.internal.os.OperatingSystem;
+import org.gradle.test.fixtures.file.TestDirectoryProvider;
+import org.gradle.test.fixtures.file.TestNameTestDirectoryProvider;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -25,8 +30,10 @@ import java.util.List;
  * A base class for those test runners which execute a test multiple times against a set of Gradle versions.
  */
 public abstract class AbstractCompatibilityTestRunner extends AbstractMultiTestRunner {
-    protected final GradleDistribution current = new GradleDistribution();
-    protected final List<BasicGradleDistribution> previous;
+
+    private final TestDirectoryProvider testDirectoryProvider = new TestNameTestDirectoryProvider();
+    protected final GradleDistribution current = new UnderDevelopmentGradleDistribution();
+    protected final List<GradleDistribution> previous;
 
     protected AbstractCompatibilityTestRunner(Class<?> target) {
         this(target, null);
@@ -36,16 +43,16 @@ public abstract class AbstractCompatibilityTestRunner extends AbstractMultiTestR
         super(target);
         validateTestName(target);
 
-        previous = new ArrayList<BasicGradleDistribution>();
+        previous = new ArrayList<GradleDistribution>();
         if (versionStr == null) {
             versionStr = System.getProperty("org.gradle.integtest.versions", "latest");
         }
-        ReleasedVersions previousVersions = new ReleasedVersions(current);
+        ReleasedVersionDistributions previousVersions = new ReleasedVersionDistributions();
         if (!versionStr.equals("all")) {
-            previous.add(previousVersions.getLast());
+            previous.add(previousVersions.getMostRecentFinalRelease());
         } else {
-            List<BasicGradleDistribution> all = previousVersions.getAll();
-            for (BasicGradleDistribution previous : all) {
+            List<GradleDistribution> all = previousVersions.getAll();
+            for (GradleDistribution previous : all) {
                 if (!previous.worksWith(Jvm.current())) {
                     add(new IgnoredVersion(previous, "does not work with current JVM"));
                     continue;
@@ -73,15 +80,15 @@ public abstract class AbstractCompatibilityTestRunner extends AbstractMultiTestR
         }
     }
 
-    public List<BasicGradleDistribution> getPrevious() {
+    public List<GradleDistribution> getPrevious() {
         return previous;
     }
 
     private static class IgnoredVersion extends Execution {
-        private final BasicGradleDistribution distribution;
+        private final GradleDistribution distribution;
         private final String why;
 
-        private IgnoredVersion(BasicGradleDistribution distribution, String why) {
+        private IgnoredVersion(GradleDistribution distribution, String why) {
             this.distribution = distribution;
             this.why = why;
         }

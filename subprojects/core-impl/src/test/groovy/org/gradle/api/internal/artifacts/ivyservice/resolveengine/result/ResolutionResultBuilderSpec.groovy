@@ -16,16 +16,14 @@
 
 package org.gradle.api.internal.artifacts.ivyservice.resolveengine.result
 
-import org.gradle.api.artifacts.result.ModuleVersionSelectionReason
-import org.gradle.api.artifacts.result.ResolvedDependencyResult
-import org.gradle.api.artifacts.result.ResolvedModuleVersionResult
-import org.gradle.api.internal.artifacts.ResolvedConfigurationIdentifier
+import org.gradle.api.artifacts.ModuleVersionIdentifier
+import org.gradle.api.artifacts.ModuleVersionSelector
 import spock.lang.Specification
+import org.gradle.api.artifacts.result.*
 
-import static ModuleVersionSelectionReason.conflictResolution
-import static ModuleVersionSelectionReason.forced
 import static org.gradle.api.internal.artifacts.DefaultModuleVersionIdentifier.newId
 import static org.gradle.api.internal.artifacts.DefaultModuleVersionSelector.newSelector
+import org.gradle.api.internal.artifacts.ivyservice.ModuleVersionResolveException
 
 /**
  * by Szczepan Faber, created at: 8/27/12
@@ -105,7 +103,7 @@ class ResolutionResultBuilderSpec extends Specification {
     def "includes selection reason"() {
         given:
         builder.start(confId("a"))
-        resolvedConf("a", [dep("b", null, "b", forced), dep("c", null, "c", conflictResolution), dep("d", new RuntimeException("Boo!"))])
+        resolvedConf("a", [dep("b", null, "b", VersionSelectionReasons.FORCED), dep("c", null, "c", VersionSelectionReasons.CONFLICT_RESOLUTION), dep("d", new RuntimeException("Boo!"))])
         resolvedConf("b", [])
         resolvedConf("c", [])
         resolvedConf("d", [])
@@ -117,8 +115,8 @@ class ResolutionResultBuilderSpec extends Specification {
         def b = deps.find { it.selected.id.name == 'b' }
         def c = deps.find { it.selected.id.name == 'c' }
 
-        b.selected.selectionReason == forced
-        c.selected.selectionReason == conflictResolution
+        b.selected.selectionReason.forced
+        c.selected.selectionReason.conflictResolution
     }
 
     def "links dependents correctly"() {
@@ -151,12 +149,13 @@ class ResolutionResultBuilderSpec extends Specification {
         dependencies.iterator().next()
     }
 
-    def "accumulates dependencies"() {
+    def "accumulates and avoids duplicate dependencies"() {
         given:
         builder.start(confId("root"))
         resolvedConf("root", [dep("mid1")])
 
         resolvedConf("mid1", [dep("leaf1")])
+        resolvedConf("mid1", [dep("leaf1")]) //dupe
         resolvedConf("mid1", [dep("leaf2")])
 
         resolvedConf("leaf1", [])
@@ -173,7 +172,25 @@ class ResolutionResultBuilderSpec extends Specification {
 """
     }
 
-    def "builds graph without unresolved deps"() {
+    def "accumulates and avoids duplicate unresolved dependencies"() {
+        given:
+        builder.start(confId("root"))
+        resolvedConf("root", [dep("mid1")])
+
+        resolvedConf("mid1", [dep("leaf1", new RuntimeException("foo!"))])
+        resolvedConf("mid1", [dep("leaf1", new RuntimeException("bar!"))]) //dupe
+        resolvedConf("mid1", [dep("leaf2", new RuntimeException("baz!"))])
+
+        when:
+        def result = builder.getResult()
+
+        then:
+        def mid1 = first(result.root.dependencies)
+        mid1.selected.dependencies.size() == 2
+        mid1.selected.dependencies*.requested.name == ['leaf1', 'leaf2']
+    }
+
+    def "graph includes unresolved deps"() {
         given:
         builder.start(confId("a"))
         resolvedConf("a", [dep("b"), dep("c"), dep("U", new RuntimeException("unresolved!"))])
@@ -187,39 +204,65 @@ class ResolutionResultBuilderSpec extends Specification {
         print(result.root) == """x:a:1
   x:b:1 [a]
   x:c:1 [a]
+  x:U:1 -> x:U:1 - Could not resolve x:U:1.
 """
     }
 
     private void resolvedConf(String module, List<InternalDependencyResult> deps) {
+        def moduleVersion = new DummyModuleVersionSelection(selectedId: newId("x", module, "1"), selectionReason: VersionSelectionReasons.REQUESTED)
+        builder.resolvedModuleVersion(moduleVersion)
+        deps.each {
+            if (it.selected) {
+                builder.resolvedModuleVersion(it.selected)
+            }
+        }
         builder.resolvedConfiguration(confId(module), deps)
     }
 
-    private InternalDependencyResult dep(String requested, Exception failure = null, String selected = requested, ModuleVersionSelectionReason selectionReason = ModuleVersionSelectionReason.requested) {
-        def selection = failure != null ? null : new ModuleVersionSelection(newId("x", selected, "1"), selectionReason)
-        new InternalDependencyResult(newSelector("x", requested, "1"), selection, failure)
+    private InternalDependencyResult dep(String requested, Exception failure = null, String selected = requested, ModuleVersionSelectionReason selectionReason = VersionSelectionReasons.REQUESTED) {
+        def selection = new DummyModuleVersionSelection(selectedId: newId("x", selected, "1"), selectionReason: selectionReason)
+        def selector = newSelector("x", requested, "1")
+        failure = failure == null ? null : new ModuleVersionResolveException(selector, failure)
+        new DummyInternalDependencyResult(requested: selector, selected: selection, failure: failure)
     }
 
-    private ResolvedConfigurationIdentifier confId(String module, String configuration='conf') {
-        new ResolvedConfigurationIdentifier("x", module, "1", configuration)
+    private ModuleVersionIdentifier confId(String module) {
+        newId("x", module, "1")
     }
 
     String print(ResolvedModuleVersionResult root) {
         StringBuilder sb = new StringBuilder();
         sb.append(root).append("\n");
-        for (ResolvedDependencyResult d : root.getDependencies()) {
+        for (DependencyResult d : root.getDependencies()) {
             print(d, sb, new HashSet(), "  ");
         }
 
         sb.toString();
     }
 
-    void print(ResolvedDependencyResult dep, StringBuilder sb, Set visited, String indent) {
+    void print(DependencyResult dep, StringBuilder sb, Set visited, String indent) {
+        if (dep instanceof UnresolvedDependencyResult) {
+            sb.append(indent + dep + "\n");
+            return
+        }
         if (!visited.add(dep.getSelected())) {
-            return;
+            return
         }
         sb.append(indent + dep + " [" + dep.selected.dependents*.from.id.name.join(",") + "]\n");
         for (ResolvedDependencyResult d : dep.getSelected().getDependencies()) {
             print(d, sb, visited, "  " + indent);
         }
+    }
+
+    class DummyModuleVersionSelection implements ModuleVersionSelection {
+        ModuleVersionIdentifier selectedId
+        ModuleVersionSelectionReason selectionReason
+    }
+
+    class DummyInternalDependencyResult implements InternalDependencyResult {
+        ModuleVersionSelector requested
+        ModuleVersionSelection selected
+        ModuleVersionResolveException failure
+        ModuleVersionSelectionReason reason
     }
 }

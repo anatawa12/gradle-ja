@@ -18,7 +18,7 @@ package org.gradle.launcher
 
 import org.gradle.integtests.fixtures.AbstractIntegrationSpec
 import org.gradle.integtests.fixtures.AvailableJavaHomes
-import org.gradle.integtests.fixtures.GradleDistributionExecuter
+import org.gradle.integtests.fixtures.executer.GradleContextualExecuter
 import org.gradle.internal.jvm.Jvm
 import org.gradle.internal.nativeplatform.filesystem.FileSystems
 import org.gradle.util.Requires
@@ -29,21 +29,21 @@ import spock.lang.IgnoreIf
 /**
  * by Szczepan Faber, created at: 1/20/12
  */
-@IgnoreIf( { !GradleDistributionExecuter.getSystemPropertyExecuter().forks })
+@IgnoreIf( { GradleContextualExecuter.embedded })
 class GradleConfigurabilityIntegrationSpec extends AbstractIntegrationSpec {
 
     def setup() {
-        distribution.requireIsolatedDaemons()
+        executer.requireIsolatedDaemons()
     }
 
     def buildSucceeds(String script) {
-        distribution.file('build.gradle') << script
+        file('build.gradle') << script
         executer.withArguments("--info").withNoDefaultJvmArgs().run()
     }
 
     def "honours jvm args specified in gradle.properties"() {
         given:
-        distribution.file("gradle.properties") << "org.gradle.jvmargs=-Dsome-prop=some-value -Xmx16m"
+        file("gradle.properties") << "org.gradle.jvmargs=-Dsome-prop=some-value -Xmx16m"
 
         expect:
         buildSucceeds """
@@ -56,14 +56,15 @@ assert java.lang.management.ManagementFactory.runtimeMXBean.inputArguments.conta
     def "connects to the daemon if java home is a symlink"() {
         given:
         def javaHome = Jvm.current().javaHome
-        def javaLink = distribution.testFile("javaLink")
+        def javaLink = file("javaLink")
         FileSystems.default.createSymbolicLink(javaLink, javaHome)
+        file("tmp").deleteDir().createDir()
 
         String linkPath = TextUtil.escapeString(javaLink.absolutePath)
-        distribution.file("gradle.properties") << "org.gradle.java.home=$linkPath"
+        file("gradle.properties") << "org.gradle.java.home=$linkPath"
 
         when:
-        buildSucceeds "println 'Hello!'"
+        buildSucceeds "println 'java home =' + System.getProperty('java.home')"
 
         then:
         javaLink != javaHome
@@ -76,7 +77,7 @@ assert java.lang.management.ManagementFactory.runtimeMXBean.inputArguments.conta
     //TODO SF add coverage for reconnecting to those daemons.
     def "honours jvm sys property that contain a space in gradle.properties"() {
         given:
-        distribution.file("gradle.properties") << 'org.gradle.jvmargs=-Dsome-prop="i have space"'
+        file("gradle.properties") << 'org.gradle.jvmargs=-Dsome-prop="i have space"'
 
         expect:
         buildSucceeds """
@@ -86,7 +87,7 @@ assert System.getProperty('some-prop').toString() == 'i have space'
 
     def "honours jvm option that contain a space in gradle.properties"() {
         given:
-        distribution.file("gradle.properties") << 'org.gradle.jvmargs=-XX:HeapDumpPath="/tmp/with space" -Dsome-prop="and some more stress..."'
+        file("gradle.properties") << 'org.gradle.jvmargs=-XX:HeapDumpPath="/tmp/with space" -Dsome-prop="and some more stress..."'
 
         expect:
         buildSucceeds """
@@ -100,7 +101,7 @@ assert inputArgs.find { it.contains('-XX:HeapDumpPath=') }
         given:
         File javaHome = AvailableJavaHomes.bestAlternative
         String javaPath = TextUtil.escapeString(javaHome.canonicalPath)
-        distribution.file("gradle.properties") << "org.gradle.java.home=$javaPath"
+        file("gradle.properties") << "org.gradle.java.home=$javaPath"
 
         expect:
         buildSucceeds "assert System.getProperty('java.home').startsWith('$javaPath')"

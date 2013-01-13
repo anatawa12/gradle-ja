@@ -19,6 +19,7 @@
 package org.gradle.api.plugins.maven.internal
 
 import org.gradle.mvn3.org.apache.maven.project.MavenProject
+import org.gradle.util.GFileUtils
 
 /**
  * This script obtains  the effective pom of the current project, reads its dependencies
@@ -43,7 +44,7 @@ class Maven2Gradle {
       this.mavenProjects = mavenProjects
   }
 
-  def convert(String[] args) {
+  def convert() {
     workingDir = new File('.').canonicalFile
     println "Working path:" + workingDir.absolutePath + "\n"
 
@@ -210,7 +211,7 @@ ${globalExclusions(this.effectivePom)}
     def enforcerPlugin = plugin('maven-enforcer-plugin', project)
     def enforceGoal = pluginGoal('enforce', enforcerPlugin)
     if (enforceGoal) {
-      exclusions += 'configurations.allObjects {\n'
+      exclusions += 'configurations.all {\n'
       enforceGoal.configuration.rules.bannedDependencies.excludes.childNodes().each {
         def tokens = it.text().tokenize(':')
         exclusions += "it.exclude group: '${tokens[0]}'"
@@ -413,7 +414,7 @@ artifacts.archives packageSources"""
     def jarPlugin = plugin('maven-jar-plugin', project)
     pluginGoal('test-jar', jarPlugin) ? """
 task packageTests(type: Jar) {
-  from sourceSets.test.classes
+  from sourceSets.test.output
   classifier = 'tests'
 }
 artifacts.archives packageTests
@@ -475,7 +476,7 @@ artifacts.archives packageTests
     if (projects) {
       modulePoms.each { project ->
         def fqn = fqn(project, projects)
-        artifactIdToDir[fqn] = workingDir.toURI().relativize(projectDir(project).toURI()).path
+        artifactIdToDir[fqn] = GFileUtils.relativePath(workingDir, projectDir(project))
         modules.append("'${fqn}', ")
       }
       def strLength = modules.length()

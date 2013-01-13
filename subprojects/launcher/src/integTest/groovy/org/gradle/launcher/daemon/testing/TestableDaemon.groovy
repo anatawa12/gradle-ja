@@ -19,6 +19,7 @@ package org.gradle.launcher.daemon.testing
 import org.gradle.internal.os.OperatingSystem
 import org.gradle.launcher.daemon.context.DaemonContext
 import org.gradle.launcher.daemon.logging.DaemonMessages
+import org.gradle.launcher.daemon.registry.DaemonRegistry
 import org.gradle.process.internal.ExecHandleBuilder
 
 import java.util.regex.Matcher
@@ -26,23 +27,32 @@ import java.util.regex.Pattern
 
 class TestableDaemon {
 
-    DaemonContext context
-    String logContent
+    final DaemonContext context
+    final String logContent
+    private final DaemonRegistry registry
 
-    TestableDaemon(File daemonLog) {
+    TestableDaemon(File daemonLog, DaemonRegistry registry) {
         this.logContent = daemonLog.text
         this.context = DaemonContextParser.parseFrom(logContent)
+        this.registry = registry
+    }
+
+    void waitUntilIdle() {
+        def expiry = System.currentTimeMillis() + 20000
+        while (expiry > System.currentTimeMillis()) {
+            if (registry.idle.find { it.context.pid == context.pid } != null) {
+                return
+            }
+            Thread.sleep(200)
+        }
+        throw new AssertionError("Timeout waiting for daemon with pid ${context.pid} to become idle.")
     }
 
     void kill() {
-        if (!OperatingSystem.current().unix) {
-            throw new RuntimeException("This implementation can only kill processes on Unix platform.");
-        }
-
         println "Killing daemon with pid: $context.pid"
         def output = new ByteArrayOutputStream()
         def e = new ExecHandleBuilder()
-                .commandLine("kill", "-9", context.pid)
+                .commandLine(killArgs(context.pid))
                 .redirectErrorStream()
                 .setStandardOutput(output)
                 .workingDir(new File(".").absoluteFile) //does not matter
@@ -52,7 +62,23 @@ class TestableDaemon {
         result.rethrowFailure()
     }
 
-    enum State { busy, idle }
+    private static Object[] killArgs(Long pid) {
+        if (pid == null) {
+            throw new RuntimeException("Unable to force kill the daemon because provided pid is null!")
+        }
+        if (OperatingSystem.current().isUnix()) {
+            return ["kill", "-9", pid]
+        } else if (OperatingSystem.current().isWindows()) {
+            return ["taskkill.exe", "/F", "/T", "/PID", pid]
+        }
+        else {
+            throw new RuntimeException("This implementation does not know how to forcefully kill the daemon on os: " + OperatingSystem.current())
+        }
+    }
+
+    enum State {
+        busy, idle
+    }
 
     boolean isIdle() {
         getStates()[-1] == State.idle
@@ -79,7 +105,7 @@ class TestableDaemon {
                 Pattern.MULTILINE + Pattern.DOTALL);
 
         Matcher matcher = pattern.matcher(logContent);
-        assert matcher.matches() : "Unable to find daemon address in the daemon log. Daemon: $context"
+        assert matcher.matches(): "Unable to find daemon address in the daemon log. Daemon: $context"
 
         try {
             return Integer.parseInt(matcher.group(1))

@@ -128,6 +128,9 @@
             <tr>
                 <td>subprojects</td>
             </tr>
+            <tr>
+                <td>publishing</td>
+            </tr>
         </table>
         <para role="original">A build script is also a Groovy script, and so can contain those elements allowed in a Groovy script,
             such as method definitions and class definitions.
@@ -179,6 +182,21 @@
             <tr>
                 <td>org.gradle.api.plugins.ExtraPropertiesExtension</td>
             </tr>
+            <tr>
+                <td>org.gradle.api.publish.PublishingExtension</td>
+            </tr>
+            <tr>
+                <td>org.gradle.api.publish.ivy.IvyPublication</td>
+            </tr>
+            <tr>
+                <td>org.gradle.api.publish.ivy.IvyModuleDescriptor</td>
+            </tr>
+            <tr>
+                <td>org.gradle.api.publish.maven.MavenPublication</td>
+            </tr>
+            <tr>
+                <td>org.gradle.api.publish.maven.MavenPom</td>
+            </tr>
         </table>
     </section>
 
@@ -201,7 +219,32 @@
     </section>
 
     <section>
-	<title>タスク型<phrase role="original">Task types</phrase></title>
+        <title>Help Task types</title>
+        <para>Below are the task types that are available for every Gradle project.
+            Those task types can also be declared and configured directly in the build script.
+        </para>
+        <table>
+            <title>Help Task types</title>
+            <tr>
+                <td>org.gradle.api.tasks.diagnostics.TaskReportTask</td>
+            </tr>
+            <tr>
+                <td>org.gradle.api.tasks.diagnostics.ProjectReportTask</td>
+            </tr>
+            <tr>
+                <td>org.gradle.api.tasks.diagnostics.DependencyReportTask</td>
+            </tr>
+            <tr>
+                <td>org.gradle.api.tasks.diagnostics.DependencyInsightReportTask</td>
+            </tr>
+            <tr>
+                <td>org.gradle.api.tasks.diagnostics.PropertyReportTask</td>
+            </tr>
+        </table>
+    </section>
+
+    <section>
+	    <title>タスク型<phrase role="original">Task types</phrase></title>
         <para role="original">Listed below are the various task types which are available for use in your build script:</para>
         <para>下記にリストするのは、あなたのビルドスクリプトで使用できる様々なタスク型です。</para>
         <table>
@@ -214,6 +257,9 @@
             </tr>
             <tr>
                 <td>org.gradle.api.plugins.quality.CodeNarc</td>
+            </tr>
+            <tr>
+                <td>org.gradle.api.plugins.buildcomparison.gradle.CompareGradleBuilds</td>
             </tr>
             <tr>
                 <td>org.gradle.api.tasks.compile.Compile</td>
@@ -231,9 +277,6 @@
                 <td>org.gradle.api.tasks.Directory</td>
             </tr>
             <tr>
-                <td>org.gradle.api.tasks.diagnostics.DependencyReportTask</td>
-            </tr>
-            <tr>
                 <td>org.gradle.plugins.ear.Ear</td>
             </tr>
             <tr>
@@ -241,6 +284,9 @@
             </tr>
             <tr>
                 <td>org.gradle.api.plugins.quality.FindBugs</td>
+            </tr>
+            <tr>
+                <td>org.gradle.api.publish.ivy.tasks.GenerateIvyDescriptor</td>
             </tr>
             <tr>
                 <td>org.gradle.api.tasks.GradleBuild</td>
@@ -279,10 +325,10 @@
                 <td>org.gradle.api.plugins.quality.Pmd</td>
             </tr>
             <tr>
-                <td>org.gradle.api.tasks.diagnostics.PropertyReportTask</td>
+                <td>org.gradle.api.publish.ivy.tasks.PublishToIvyRepository</td>
             </tr>
             <tr>
-                <td>org.gradle.api.tasks.diagnostics.ProjectReportTask</td>
+                <td>org.gradle.api.publish.maven.tasks.PublishToMavenRepository</td>
             </tr>
             <tr>
                 <td>org.gradle.api.tasks.scala.ScalaCompile</td>
@@ -303,9 +349,6 @@
                 <td>org.gradle.api.tasks.bundling.Tar</td>
             </tr>
             <tr>
-                <td>org.gradle.api.tasks.diagnostics.TaskReportTask</td>
-            </tr>
-            <tr>
                 <td>org.gradle.api.tasks.testing.Test</td>
             </tr>
             <tr>
@@ -319,9 +362,6 @@
             </tr>
             <tr>
                 <td>org.gradle.api.tasks.bundling.Zip</td>
-            </tr>
-            <tr>
-                <td>org.gradle.api.plugins.buildcomparison.gradle.CompareGradleBuilds</td>
             </tr>
         </table>
     </section>
@@ -405,19 +445,6 @@
                 <td>org.gradle.plugins.ide.idea.GenerateIdeaWorkspace</td>
             </tr>
         </table>
-    </section>
-
-    <section id="element-annotations">
-	<title>アノテーション要素<phrase role="original">Element annotations</phrase></title>
-	<para role="original">
-            Elements in the DSL reference can be annotated as <emphasis>deprecated</emphasis> or <emphasis>incubating</emphasis>.
-            These annotations refer to the Gradle Feature Lifecycle, which is
-            <ulink url="../userguide/feature_lifecycle.html">described in the User Guide</ulink>.
-        </para>
-        <para>
-            DSLリファレンスの中の要素は<emphasis>deprecated</emphasis>もしくは<emphasis>incubating</emphasis>などのアノテーション付きにする事ができます。
-	    これらのアノテーションは<ulink url="../userguide/feature_lifecycle.html">ユーザーガイドに記述された</ulink>様なGradleの未来のライフサイクルを指します。
-        </para>
     </section>
 
 </book>

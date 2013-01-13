@@ -311,7 +311,7 @@ public class JavaBasePlugin implements Plugin<Project> {
         return value;
     }
 
-    private void configureTestDefaults(Test test, Project project, final JavaPluginConvention convention) {
+    private void configureTestDefaults(final Test test, Project project, final JavaPluginConvention convention) {
         test.getConventionMapping().map("testResultsDir", new Callable<Object>() {
             public Object call() throws Exception {
                 return convention.getTestResultsDir();

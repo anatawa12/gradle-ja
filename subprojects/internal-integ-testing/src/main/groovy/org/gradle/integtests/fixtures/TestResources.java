@@ -16,9 +16,10 @@
 
 package org.gradle.integtests.fixtures;
 
+import org.gradle.test.fixtures.file.TestDirectoryProvider;
+import org.gradle.test.fixtures.file.TestDirectoryProviderFinder;
+import org.gradle.test.fixtures.file.TestFile;
 import org.gradle.util.Resources;
-import org.gradle.util.TemporaryFolder;
-import org.gradle.util.TestFile;
 import org.junit.rules.MethodRule;
 import org.junit.runners.model.FrameworkMethod;
 import org.junit.runners.model.Statement;
@@ -36,7 +37,7 @@ import java.util.Collection;
  */
 public class TestResources implements MethodRule {
     private final Logger logger = LoggerFactory.getLogger(TestResources.class);
-    private TemporaryFolder temporaryFolder;
+    private TestDirectoryProvider testWorkDirProvider;
     private final Collection<String> extraResources;
     private final Resources resources = new Resources();
 
@@ -50,12 +51,12 @@ public class TestResources implements MethodRule {
     }
 
     public TestFile getDir() {
-        return temporaryFolder.getDir();
+        return testWorkDirProvider.getTestDirectory();
     }
 
     public Statement apply(Statement base, final FrameworkMethod method, Object target) {
         final Statement statement = resources.apply(base, method, target);
-        temporaryFolder = findTempDir(target);
+        testWorkDirProvider = new TestDirectoryProviderFinder().findFor(target);
         return new Statement() {
             @Override
             public void evaluate() throws Throwable {
@@ -68,20 +69,6 @@ public class TestResources implements MethodRule {
                 statement.evaluate();
             }
         };
-    }
-
-    private TemporaryFolder findTempDir(Object target) {
-        GradleDistribution dist = RuleHelper.findField(target, GradleDistribution.class);
-        if (dist != null) {
-            return dist.getTemporaryFolder();
-        }
-        TemporaryFolder folder = RuleHelper.findField(target, TemporaryFolder.class);
-        if (folder != null) {
-            return folder;
-        }
-        throw new RuntimeException(String.format(
-                "Could not find a GradleDistribution or TemporaryFolder field for test class %s.",
-                target.getClass().getSimpleName()));
     }
 
     /**

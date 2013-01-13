@@ -20,8 +20,37 @@ import org.gradle.api.Incubating;
 
 /**
  * Answers the question why given module version was selected during the dependency resolution
+ *
+ * @since 1.3
  */
 @Incubating
-public enum ModuleVersionSelectionReason {
-    forced, conflictResolution, requested
+public interface ModuleVersionSelectionReason {
+
+    /**
+     * Informs whether the module was forced.
+     * Users can force modules via {@link org.gradle.api.artifacts.ResolutionStrategy}
+     * or when declaring dependencies (see {@link org.gradle.api.artifacts.dsl.DependencyHandler}).
+     */
+    boolean isForced();
+
+    /**
+     * Informs whether the module was selected by conflict resolution.
+     * For more information about Gradle's conflict resolution please refer to the user
+     * guide. {@link org.gradle.api.artifacts.ResolutionStrategy} contains information
+     * about conflict resolution and includes means to configure it.
+     */
+    boolean isConflictResolution();
+
+    /**
+     * Informs whether the module was selected by the dependency resolve rule.
+     * Users can configure dependency resolve rules via {@link org.gradle.api.artifacts.ResolutionStrategy#eachDependency(org.gradle.api.Action)}
+     *
+     * @since 1.4
+     */
+    boolean isSelectedByRule();
+
+    /**
+     * Describes this selection reason.
+     */
+    String getDescription();
 }

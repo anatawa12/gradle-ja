@@ -24,6 +24,7 @@ import org.gradle.api.artifacts.Module;
 import org.gradle.api.artifacts.dsl.ArtifactHandler;
 import org.gradle.api.artifacts.dsl.DependencyHandler;
 import org.gradle.api.artifacts.dsl.RepositoryHandler;
+import org.gradle.api.component.SoftwareComponentContainer;
 import org.gradle.api.file.ConfigurableFileCollection;
 import org.gradle.api.file.ConfigurableFileTree;
 import org.gradle.api.file.CopySpec;
@@ -52,6 +53,7 @@ import org.gradle.configuration.ScriptPluginFactory;
 import org.gradle.groovy.scripts.ScriptSource;
 import org.gradle.internal.Factory;
 import org.gradle.internal.reflect.Instantiator;
+import org.gradle.listener.ClosureBackedMethodInvocationDispatch;
 import org.gradle.listener.ListenerBroadcast;
 import org.gradle.logging.LoggingManagerInternal;
 import org.gradle.logging.StandardOutputCapture;
@@ -140,6 +142,8 @@ public abstract class AbstractProject implements ProjectInternal, DynamicObjectA
 
     private LoggingManagerInternal loggingManager;
 
+    private SoftwareComponentContainer softwareComponentContainer;
+
     private ExtensibleDynamicObject extensibleDynamicObject;
 
     private String description;
@@ -187,6 +191,7 @@ public abstract class AbstractProject implements ProjectInternal, DynamicObjectA
         scriptClassLoaderProvider = services.get(ScriptClassLoaderProvider.class);
         projectRegistry = services.get(IProjectRegistry.class);
         loggingManager = services.get(LoggingManagerInternal.class);
+        softwareComponentContainer = services.get(SoftwareComponentContainer.class);
 
         extensibleDynamicObject = new ExtensibleDynamicObject(this, services.get(Instantiator.class));
         if (parent != null) {
@@ -364,8 +369,6 @@ public abstract class AbstractProject implements ProjectInternal, DynamicObjectA
         this.configurationContainer = configurationContainer;
     }
 
-
-
     public Convention getConvention() {
         return extensibleDynamicObject.getConvention();
     }
@@ -463,6 +466,12 @@ public abstract class AbstractProject implements ProjectInternal, DynamicObjectA
         projectEvaluator.evaluate(this, state);
         state.rethrowFailure();
         return this;
+    }
+
+    public void ensureEvaluated() {
+        if (this.gradle.getStartParameter().isConfigureOnDemand()) {
+            this.evaluate();
+        }
     }
 
     public TaskContainerInternal getTasks() {
@@ -680,7 +689,7 @@ public abstract class AbstractProject implements ProjectInternal, DynamicObjectA
     }
 
     public ConfigurableFileTree fileTree(Closure closure) {
-        DeprecationLogger.nagUserWith("fileTree(Closure) is a deprecated method. Use fileTree((Object){ baseDir }) to have the closure used as the file tree base directory");
+        DeprecationLogger.nagUserOfDeprecated("fileTree(Closure)", "Use fileTree((Object){ baseDir }) to have the closure used as the file tree base directory");
         return fileOperations.fileTree(closure);
     }
 
@@ -764,11 +773,11 @@ public abstract class AbstractProject implements ProjectInternal, DynamicObjectA
     }
 
     public void beforeEvaluate(Closure closure) {
-        evaluationListener.add("beforeEvaluate", closure);
+        evaluationListener.add(new ClosureBackedMethodInvocationDispatch("beforeEvaluate", closure));
     }
 
     public void afterEvaluate(Closure closure) {
-        evaluationListener.add("afterEvaluate", closure);
+        evaluationListener.add(new ClosureBackedMethodInvocationDispatch("afterEvaluate", closure));
     }
 
     public Logger getLogger() {
@@ -781,6 +790,10 @@ public abstract class AbstractProject implements ProjectInternal, DynamicObjectA
 
     public LoggingManager getLogging() {
         return loggingManager;
+    }
+
+    public SoftwareComponentContainer getComponents() {
+        return softwareComponentContainer;
     }
 
     public Object property(String propertyName) throws MissingPropertyException {

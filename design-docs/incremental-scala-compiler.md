@@ -18,13 +18,13 @@ and some types appear to leak through. Recent versions of the [scala-maven-plugi
 
 # Implementation plan
 
-## Make ScalaCompile task support sbt's incremental compiler
+## Make ScalaCompile task support Zinc's incremental compiler
 
-Figure out whether to integrate directly with sbt or go via Zinc. In both cases, we will integrate via a compiler API, and no external process will be involved.
+Integrate via Zinc's compiler API.
 
 ### User visible changes
 
-New switch to enable the incremental compiler: ScalaCompileOptions.useIncrementalCompiler = true|false.
+New option to switch between Ant and Zinc compiler, similar to what we have for Java and Groovy: ScalaCompileOptions.useAnt = true|false.
 
 ### Sad day cases
 
@@ -97,3 +97,16 @@ or does it also apply to sbt's incremental compiler?
 
 The incremental compiler stores some metadata on disk. When incremental compilation is flipped on and off on successive compilations, can this lead to
 incorrect compilation results, or does it, in the worst case, lead to more files being recompiled than necessary?
+
+# Potential next steps
+
+Gradle 1.3 integrates Zinc and makes it work with Gradle's compiler daemon. Potential next steps for improving our Scala support are:
+
+ * Make the (existing but unannounced) `scalaConsole` task usable by solving Gradle's issues with reading from and writing to the console.
+   At the very least, this would mean to have a way to disable the Gradle status line (which currently gets interspersed with REPL output). Going
+   further, we should make the REPL history (arrow up/down) work.
+
+ * Make the compiler daemon outlive a single build so that the Scala compiler can be cached across builds. This will further improve performance.
+
+ * Investigate whether popular Scala testing frameworks (ScalaTest, Specs2) work well when run via their JUnit runners, or whether it's desirable to
+   add special support for them.

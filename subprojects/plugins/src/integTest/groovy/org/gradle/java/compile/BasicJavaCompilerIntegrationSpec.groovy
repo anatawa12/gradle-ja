@@ -18,6 +18,7 @@
 package org.gradle.java.compile
 
 import org.gradle.integtests.fixtures.AbstractIntegrationSpec
+import org.gradle.integtests.fixtures.ClassFile
 
 abstract class BasicJavaCompilerIntegrationSpec extends AbstractIntegrationSpec {
     def setup() {
@@ -195,7 +196,7 @@ class Main {
 
     def badCode() {
         file("src/main/java/compile/test/Person.java") << '''
-        package compile.fork;
+        package compile.test;
 
         public class Person {
             String name;

@@ -22,10 +22,12 @@ import org.apache.ivy.core.settings.IvySettings;
 import org.apache.ivy.plugins.resolver.DependencyResolver;
 import org.gradle.api.artifacts.Configuration;
 import org.gradle.api.artifacts.Module;
-import org.gradle.api.internal.artifacts.configurations.*;
+import org.gradle.api.internal.artifacts.configurations.ConfigurationInternal;
+import org.gradle.api.internal.artifacts.configurations.Configurations;
+import org.gradle.api.internal.artifacts.configurations.DependencyMetaDataProvider;
+import org.gradle.api.internal.artifacts.ivyservice.resolutionstrategy.DefaultResolutionStrategy;
 import org.gradle.util.JUnit4GroovyMockery;
 import org.gradle.util.WrapUtil;
-import static org.hamcrest.Matchers.equalTo;
 import org.jmock.Expectations;
 import org.jmock.integration.junit4.JMock;
 import org.jmock.integration.junit4.JUnit4Mockery;
@@ -38,6 +40,8 @@ import java.text.ParseException;
 import java.util.List;
 import java.util.Set;
 
+import static org.hamcrest.Matchers.equalTo;
+
 /**
  * @author Hans Dockter
  */
@@ -48,12 +52,13 @@ public class IvyBackedArtifactPublisherTest {
     private ModuleDescriptor publishModuleDescriptorDummy = context.mock(ModuleDescriptor.class);
     private ModuleDescriptor fileModuleDescriptorMock = context.mock(ModuleDescriptor.class);
     private DependencyMetaDataProvider dependencyMetaDataProviderMock = context.mock(DependencyMetaDataProvider.class);
-    private ResolverProvider resolverProvider = context.mock(ResolverProvider.class);
     private IvyFactory ivyFactoryStub = context.mock(IvyFactory.class);
     private SettingsConverter settingsConverterStub = context.mock(SettingsConverter.class);
     private IvyDependencyPublisher ivyDependencyPublisherMock = context.mock(IvyDependencyPublisher.class);
     private ModuleDescriptorConverter publishModuleDescriptorConverter = context.mock(ModuleDescriptorConverter.class, "publishConverter");
     private ModuleDescriptorConverter fileModuleDescriptorConverter = context.mock(ModuleDescriptorConverter.class, "fileConverter");
+    private IvyModuleDescriptorWriter ivyModuleDescriptorWriterMock = context.mock(IvyModuleDescriptorWriter.class);
+    final List<DependencyResolver> publishResolversDummy = createPublishResolversDummy();
 
     @Test
     public void testPublish() throws IOException, ParseException {
@@ -62,7 +67,6 @@ public class IvyBackedArtifactPublisherTest {
         final ConfigurationInternal configuration = context.mock(ConfigurationInternal.class);
         final Set<Configuration> configurations = createConfiguration();
         final File someDescriptorDestination = new File("somePath");
-        final List<DependencyResolver> publishResolversDummy = createPublishResolversDummy();
         final Module moduleDummy = context.mock(Module.class, "moduleForResolve");
         final IvyBackedArtifactPublisher ivyService = createIvyService();
 
@@ -75,23 +79,20 @@ public class IvyBackedArtifactPublisherTest {
             will(returnValue(configurations));
             allowing(configuration).getModule();
             will(returnValue(moduleDummy));
-            allowing(resolverProvider).getResolvers();
-            will(returnValue(publishResolversDummy));
             allowing(configuration).getResolutionStrategy();
             will(returnValue(new DefaultResolutionStrategy()));
-            one(fileModuleDescriptorMock).toIvyFile(someDescriptorDestination);
             one(ivyDependencyPublisherMock).publish(expectedConfigurations,
                     publishResolversDummy, publishModuleDescriptorDummy, someDescriptorDestination, ivyEventManagerDummy);
+            allowing(ivyModuleDescriptorWriterMock).write(fileModuleDescriptorMock, someDescriptorDestination, null);
         }});
 
-        ivyService.publish(configuration, someDescriptorDestination);
+        ivyService.publish(publishResolversDummy, configuration.getModule(), configuration.getHierarchy(), someDescriptorDestination);
     }
 
     private IvyBackedArtifactPublisher createIvyService() {
-        return new IvyBackedArtifactPublisher(resolverProvider,
+        return new IvyBackedArtifactPublisher(
                 settingsConverterStub,
                 publishModuleDescriptorConverter,
-                fileModuleDescriptorConverter,
                 ivyFactoryStub,
                 ivyDependencyPublisherMock);
     }
@@ -142,6 +143,7 @@ public class IvyBackedArtifactPublisherTest {
             allowing(fileModuleDescriptorConverter).convert(with(equalTo(configurations)),
                     with(equalTo(moduleDummy)));
             will(returnValue(fileModuleDescriptorMock));
+
         }});
     }
 

@@ -15,57 +15,66 @@
  */
 package org.gradle.util
 
-import org.gradle.api.internal.AsmBackedClassGenerator
-import org.gradle.api.internal.project.taskfactory.ITaskFactory
-import org.gradle.api.internal.project.taskfactory.AnnotationProcessingTaskFactory
-import org.gradle.api.internal.project.taskfactory.TaskFactory
-import org.gradle.api.Task
-import org.gradle.api.internal.project.ProjectInternal
-import org.gradle.api.internal.project.DefaultProject
-import org.gradle.internal.reflect.DirectInstantiator
-import org.gradle.testfixtures.ProjectBuilder
+import org.apache.ivy.core.module.descriptor.Configuration
+import org.apache.ivy.core.module.descriptor.DefaultDependencyDescriptor
 import org.apache.ivy.core.module.descriptor.DefaultExcludeRule
+import org.apache.ivy.core.module.descriptor.DefaultModuleDescriptor
 import org.apache.ivy.core.module.id.ArtifactId
 import org.apache.ivy.core.module.id.ModuleId
-import org.apache.ivy.plugins.matcher.PatternMatcher
-import org.apache.ivy.plugins.matcher.ExactPatternMatcher
-import org.apache.ivy.core.module.descriptor.DefaultDependencyDescriptor
 import org.apache.ivy.core.module.id.ModuleRevisionId
-import org.apache.ivy.core.module.descriptor.DefaultModuleDescriptor
-import org.apache.ivy.core.module.descriptor.Configuration
+import org.apache.ivy.plugins.matcher.ExactPatternMatcher
+import org.apache.ivy.plugins.matcher.PatternMatcher
+import org.codehaus.groovy.control.CompilerConfiguration
 import org.gradle.BuildResult
+import org.gradle.api.Task
 import org.gradle.api.artifacts.ModuleDependency
 import org.gradle.api.internal.artifacts.dependencies.DefaultExternalModuleDependency
 import org.gradle.api.internal.artifacts.publish.DefaultPublishArtifact
-import org.gradle.groovy.scripts.ScriptSource
-import org.codehaus.groovy.control.CompilerConfiguration
-import org.gradle.groovy.scripts.Script
-import java.rmi.server.UID
+import org.gradle.api.internal.project.DefaultProject
+import org.gradle.api.internal.project.ProjectInternal
+import org.gradle.api.internal.project.taskfactory.ITaskFactory
 import org.gradle.groovy.scripts.DefaultScript
+import org.gradle.groovy.scripts.Script
+import org.gradle.groovy.scripts.ScriptSource
+import org.gradle.test.fixtures.file.TestNameTestDirectoryProvider
+import org.gradle.testfixtures.ProjectBuilder
+
+import java.rmi.server.UID
 
 /**
  * @author Hans Dockter
  */
 class HelperUtil {
-
      public static final Closure TEST_CLOSURE = {}
-     private static final AsmBackedClassGenerator CLASS_GENERATOR = new AsmBackedClassGenerator()
-     private static final ITaskFactory TASK_FACTORY = new AnnotationProcessingTaskFactory(new TaskFactory(CLASS_GENERATOR))
 
      static <T extends Task> T createTask(Class<T> type) {
          return createTask(type, createRootProject())
      }
 
-     static <T extends Task> T createTask(Class<T> type, ProjectInternal project) {
+     static <T extends Task> T createTask(Class<T> type, Map taskFields) {
+         def task = createTask(type, createRootProject())
+         hackInTaskProperties(type, task, taskFields)
+         return task
+     }
+
+    private static void hackInTaskProperties(Class type, Task task, Map args) {
+        args.each { k, v ->
+            def field = type.getDeclaredField(k)
+            field.setAccessible(true)
+            field.set(task, v)
+        }
+    }
+
+    static <T extends Task> T createTask(Class<T> type, ProjectInternal project) {
          return createTask(type, project, 'name')
      }
 
      static <T extends Task> T createTask(Class<T> type, ProjectInternal project, String name) {
-         return TASK_FACTORY.createChild(project, new DirectInstantiator()).createTask([name: name, type: type])
+         return project.services.get(ITaskFactory).createTask([name: name, type: type])
      }
 
      static DefaultProject createRootProject() {
-         createRootProject(TemporaryFolder.newInstance().dir)
+         createRootProject(TestNameTestDirectoryProvider.newInstance().testDirectory)
      }
 
      static DefaultProject createRootProject(File rootDir) {

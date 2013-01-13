@@ -20,19 +20,20 @@ import org.gradle.launcher.daemon.client.DaemonDisappearedException
 import org.gradle.launcher.daemon.logging.DaemonMessages
 import org.gradle.util.TextUtil
 import spock.lang.Timeout
-import static org.gradle.tests.fixtures.ConcurrentTestUtil.poll
+
+import static org.gradle.test.fixtures.ConcurrentTestUtil.poll
 
 /**
  * by Szczepan Faber, created at: 1/20/12
  */
 class DaemonFeedbackIntegrationSpec extends DaemonIntegrationSpec {
     def setup() {
-        distribution.requireIsolatedDaemons()
+        executer.requireIsolatedDaemons()
     }
 
     def "daemon keeps logging to the file even if the build is started"() {
         given:
-        distribution.file("build.gradle") << """
+        file("build.gradle") << """
 task sleep << {
     println 'taking a nap...'
     Thread.sleep(10000)
@@ -45,7 +46,7 @@ task sleep << {
 
         then:
         poll(60) {
-            assert readLog(distribution.daemonBaseDir).contains("taking a nap...")
+            assert readLog(executer.daemonBaseDir).contains("taking a nap...")
         }
 
         when:
@@ -54,7 +55,7 @@ task sleep << {
         then:
         sleeper.waitForFailure()
 
-        def log = readLog(distribution.daemonBaseDir)
+        def log = readLog(executer.daemonBaseDir)
         assert log.contains(DaemonMessages.REMOVING_PRESENCE_DUE_TO_STOP)
         assert log.contains(DaemonMessages.DAEMON_VM_SHUTTING_DOWN)
     }
@@ -72,7 +73,7 @@ task sleep << {
 
     @Timeout(25)
     def "promptly shows decent message when awkward java home used"() {
-        def dummyJdk = distribution.file("dummyJdk").createDir()
+        def dummyJdk = file("dummyJdk").createDir()
         assert dummyJdk.isDirectory()
         def jdkPath = TextUtil.escapeString(dummyJdk.canonicalPath)
         
@@ -87,13 +88,13 @@ task sleep << {
 
     def "daemon log contains all necessary logging"() {
         given:
-        distribution.file("build.gradle") << "println 'Hello build!'"
+        file("build.gradle") << "println 'Hello build!'"
 
         when:
         executer.withArguments("-i").run()
 
         then:
-        def log = readLog(distribution.daemonBaseDir)
+        def log = readLog(executer.daemonBaseDir)
 
         //output before started relying logs via connection
         log.count(DaemonMessages.PROCESS_STARTED) == 1
@@ -106,7 +107,7 @@ task sleep << {
         executer.withArguments("-i").run()
 
         then:
-        def aLog = readLog(distribution.daemonBaseDir)
+        def aLog = readLog(executer.daemonBaseDir)
 
         aLog.count(DaemonMessages.PROCESS_STARTED) == 1
         aLog.count(DaemonMessages.STARTED_RELAYING_LOGS) == 2
@@ -115,19 +116,19 @@ task sleep << {
 
     def "background daemon infrastructure logs with DEBUG"() {
         given:
-        distribution.file("build.gradle") << "task foo << { println 'hey!' }"
+        file("build.gradle") << "task foo << { println 'hey!' }"
 
         when: "runing build with --info"
         executer.withArguments("-i").withTasks('foo').run()
 
         then:
-        def log = readLog(distribution.daemonBaseDir)
+        def log = readLog(executer.daemonBaseDir)
         log.findAll(DaemonMessages.STARTED_EXECUTING_COMMAND).size() == 1
 
         poll(60) {
             //in theory the client could have received result and complete
             // but the daemon has not yet finished processing hence polling
-            def daemonLog = readLog(distribution.daemonBaseDir)
+            def daemonLog = readLog(executer.daemonBaseDir)
             daemonLog.findAll(DaemonMessages.FINISHED_EXECUTING_COMMAND).size() == 1
             daemonLog.findAll(DaemonMessages.FINISHED_BUILD).size() == 1
         }
@@ -136,13 +137,13 @@ task sleep << {
         executer.withArguments("-i").withTasks('foo').run()
 
         then:
-        def aLog = readLog(distribution.daemonBaseDir)
+        def aLog = readLog(executer.daemonBaseDir)
         aLog.findAll(DaemonMessages.STARTED_EXECUTING_COMMAND).size() == 2
     }
 
     def "daemon log honors log levels for logging"() {
         given:
-        distribution.file("build.gradle") << """
+        file("build.gradle") << """
             println 'println me!'
 
             logger.debug('debug me!')
@@ -157,7 +158,7 @@ task sleep << {
         executer.withArguments("-q").run()
 
         then:
-        def log = readLog(distribution.daemonBaseDir)
+        def log = readLog(executer.daemonBaseDir)
 
         //daemon logs to file eagerly regardless of the build log level
         log.count(DaemonMessages.STARTED_RELAYING_LOGS) == 1
@@ -173,7 +174,7 @@ task sleep << {
 
     def "disappearing daemon makes client log useful information"() {
         given:
-        distribution.file("build.gradle") << "System.exit(0)"
+        file("build.gradle") << "System.exit(0)"
 
         when:
         def failure = executer.withArguments("-q").runWithFailure()
@@ -185,7 +186,7 @@ task sleep << {
 
     def "foreground daemon log honors log levels for logging"() {
         given:
-        distribution.file("build.gradle") << """
+        file("build.gradle") << """
             logger.debug('debug me!')
             logger.info('info me!')
         """
@@ -200,7 +201,7 @@ task sleep << {
         def infoBuild = executer.withArguments("-i", "-Dorg.gradle.jvmargs=-ea").run()
 
         then:
-        getLogs(distribution.daemonBaseDir).size() == 0 //we should connect to the foreground daemon so no log was created
+        getLogs(executer.daemonBaseDir).size() == 0 //we should connect to the foreground daemon so no log was created
 
         daemon.standardOutput.count(DaemonMessages.ABOUT_TO_START_RELAYING_LOGS) == 0
         daemon.standardOutput.count("info me!") == 1

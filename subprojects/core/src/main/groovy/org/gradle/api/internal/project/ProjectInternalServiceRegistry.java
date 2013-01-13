@@ -21,17 +21,19 @@ import org.gradle.api.artifacts.Module;
 import org.gradle.api.artifacts.dsl.ArtifactHandler;
 import org.gradle.api.artifacts.dsl.DependencyHandler;
 import org.gradle.api.artifacts.dsl.RepositoryHandler;
+import org.gradle.api.component.SoftwareComponentContainer;
 import org.gradle.api.internal.ClassGenerator;
 import org.gradle.api.internal.ClassGeneratorBackedInstantiator;
 import org.gradle.api.internal.DependencyInjectingInstantiator;
 import org.gradle.api.internal.TaskInternal;
 import org.gradle.api.internal.artifacts.ArtifactPublicationServices;
-import org.gradle.api.internal.artifacts.DefaultModule;
 import org.gradle.api.internal.artifacts.DependencyManagementServices;
 import org.gradle.api.internal.artifacts.DependencyResolutionServices;
+import org.gradle.api.internal.artifacts.ProjectBackedModule;
 import org.gradle.api.internal.artifacts.configurations.ConfigurationContainerInternal;
 import org.gradle.api.internal.artifacts.configurations.DependencyMetaDataProvider;
 import org.gradle.api.internal.artifacts.dsl.dependencies.ProjectFinder;
+import org.gradle.api.internal.component.DefaultSoftwareComponentContainer;
 import org.gradle.api.internal.file.*;
 import org.gradle.api.internal.initialization.DefaultScriptHandlerFactory;
 import org.gradle.api.internal.initialization.ScriptClassLoaderProvider;
@@ -104,8 +106,8 @@ public class ProjectInternalServiceRegistry extends DefaultServiceRegistry imple
         return new DefaultTaskContainerFactory(get(Instantiator.class), get(ITaskFactory.class), project);
     }
 
-    protected Factory<ArtifactPublicationServices> createRepositoryHandlerFactory() {
-        return get(DependencyResolutionServices.class).getPublishServicesFactory();
+    protected ArtifactPublicationServices createArtifactPublicationServices() {
+        return get(DependencyResolutionServices.class).createArtifactPublicationServices();
     }
 
     protected RepositoryHandler createRepositoryHandler() {
@@ -114,6 +116,11 @@ public class ProjectInternalServiceRegistry extends DefaultServiceRegistry imple
 
     protected ConfigurationContainerInternal createConfigurationContainer() {
         return get(DependencyResolutionServices.class).getConfigurationContainer();
+    }
+
+    protected SoftwareComponentContainer createSoftwareComponentContainer() {
+        Instantiator instantiator = get(Instantiator.class);
+        return instantiator.newInstance(DefaultSoftwareComponentContainer.class, instantiator);
     }
 
     protected DependencyResolutionServices createDependencyResolutionServices() {
@@ -156,9 +163,8 @@ public class ProjectInternalServiceRegistry extends DefaultServiceRegistry imple
 
     protected DependencyMetaDataProvider createDependencyMetaDataProvider() {
         return new DependencyMetaDataProvider() {
-
             public Module getModule() {
-                return new DefaultModule(project.getGroup().toString(), project.getName(), project.getVersion().toString(), project.getStatus().toString());
+                return new ProjectBackedModule(project);
             }
         };
     }

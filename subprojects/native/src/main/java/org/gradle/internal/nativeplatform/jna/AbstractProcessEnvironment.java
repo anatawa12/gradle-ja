@@ -15,12 +15,14 @@
  */
 package org.gradle.internal.nativeplatform.jna;
 
+import com.google.common.collect.Lists;
+import com.google.common.collect.Sets;
 import org.gradle.internal.nativeplatform.NativeIntegrationException;
 import org.gradle.internal.nativeplatform.ProcessEnvironment;
 import org.gradle.internal.nativeplatform.ReflectiveEnvironment;
 
 import java.io.File;
-import java.util.LinkedList;
+import java.util.List;
 import java.util.Map;
 
 public abstract class AbstractProcessEnvironment implements ProcessEnvironment {
@@ -28,13 +30,13 @@ public abstract class AbstractProcessEnvironment implements ProcessEnvironment {
     private final ReflectiveEnvironment reflectiveEnvironment = new ReflectiveEnvironment();
 
     public boolean maybeSetEnvironment(Map<String, String> source) {
-        Map<String, String> currentEnv = System.getenv();
-        Iterable<String> names = new LinkedList<String>(currentEnv.keySet());
-        for (String name : names) {
-            removeEnvironmentVariable(name);
+        // need to take copy to prevent ConcurrentModificationException
+        List<String> keysToRemove = Lists.newArrayList(Sets.difference(System.getenv().keySet(), source.keySet()));
+        for (String key : keysToRemove) {
+            removeEnvironmentVariable(key);
         }
-        for (String key : source.keySet()) {
-            setEnvironmentVariable(key, source.get(key));
+        for (Map.Entry<String, String> entry : source.entrySet()) {
+            setEnvironmentVariable(entry.getKey(), entry.getValue());
         }
         return true;
     }

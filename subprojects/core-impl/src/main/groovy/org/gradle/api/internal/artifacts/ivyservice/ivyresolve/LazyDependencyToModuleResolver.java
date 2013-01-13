@@ -22,7 +22,11 @@ import org.apache.ivy.core.module.descriptor.ModuleDescriptor;
 import org.apache.ivy.core.module.id.ModuleId;
 import org.apache.ivy.core.module.id.ModuleRevisionId;
 import org.apache.ivy.plugins.version.VersionMatcher;
+import org.gradle.api.artifacts.ModuleVersionIdentifier;
+import org.gradle.api.artifacts.result.ModuleVersionSelectionReason;
+import org.gradle.api.internal.artifacts.DefaultModuleVersionIdentifier;
 import org.gradle.api.internal.artifacts.ivyservice.*;
+import org.gradle.api.internal.artifacts.ivyservice.resolveengine.result.VersionSelectionReasons;
 
 /**
  * A {@link org.gradle.api.internal.artifacts.ivyservice.DependencyToModuleVersionIdResolver} implementation which returns lazy resolvers that don't actually retrieve module descriptors until
@@ -53,51 +57,26 @@ public class LazyDependencyToModuleResolver implements DependencyToModuleVersion
             this.resolver = resolver;
         }
 
-        public ArtifactResolveResult resolve(Artifact artifact) throws ArtifactResolveException {
-            ArtifactResolveResult result;
+        public void resolve(Artifact artifact, BuildableArtifactResolveResult result) {
             try {
-                result = resolver.resolve(artifact);
+                resolver.resolve(artifact, result);
             } catch (Throwable t) {
-                return new BrokenArtifactResolveResult(new ArtifactResolveException(artifact, t));
+                result.failed(new ArtifactResolveException(artifact, t));
             }
-            return result;
-        }
-    }
-
-    private static class DefaultModuleVersionResolveResult implements ModuleVersionResolveResult {
-        private final ModuleVersionResolveResult resolver;
-
-        private DefaultModuleVersionResolveResult(ModuleVersionResolveResult result) {
-            this.resolver = result;
-        }
-
-        public ModuleVersionResolveException getFailure() {
-            return null;
-        }
-
-        public ModuleRevisionId getId() throws ModuleVersionResolveException {
-            return resolver.getId();
-        }
-
-        public ModuleDescriptor getDescriptor() throws ModuleVersionResolveException {
-            return resolver.getDescriptor();
-        }
-
-        public ArtifactResolver getArtifactResolver() throws ModuleVersionResolveException {
-            return new ErrorHandlingArtifactResolver(resolver.getArtifactResolver());
         }
     }
 
     private class StaticVersionResolveResult implements ModuleVersionIdResolveResult {
         private final DependencyDescriptor dependencyDescriptor;
-        private ModuleVersionResolveResult resolveResult;
+        private BuildableModuleVersionResolveResult resolveResult;
 
         public StaticVersionResolveResult(DependencyDescriptor dependencyDescriptor) {
             this.dependencyDescriptor = dependencyDescriptor;
         }
 
-        public ModuleRevisionId getId() throws ModuleVersionResolveException {
-            return dependencyDescriptor.getDependencyRevisionId();
+        public ModuleVersionIdentifier getId() throws ModuleVersionResolveException {
+            final ModuleRevisionId dependencyRevisionId = dependencyDescriptor.getDependencyRevisionId();
+            return new DefaultModuleVersionIdentifier(dependencyRevisionId.getOrganisation(), dependencyRevisionId.getName(), dependencyRevisionId.getRevision());
         }
 
         public ModuleVersionResolveException getFailure() {
@@ -106,11 +85,10 @@ public class LazyDependencyToModuleResolver implements DependencyToModuleVersion
 
         public ModuleVersionResolveResult resolve() {
             if (resolveResult == null) {
-                ModuleVersionResolveException failure = null;
-                ModuleVersionResolveResult resolveResult = null;
+                resolveResult = new DefaultBuildableModuleVersionResolveResult();
                 try {
                     try {
-                        resolveResult = dependencyResolver.resolve(dependencyDescriptor);
+                        dependencyResolver.resolve(dependencyDescriptor, resolveResult);
                     } catch (Throwable t) {
                         throw new ModuleVersionResolveException(dependencyDescriptor.getDependencyRevisionId(), t);
                     }
@@ -121,18 +99,17 @@ public class LazyDependencyToModuleResolver implements DependencyToModuleVersion
                         throw resolveResult.getFailure();
                     }
                     checkDescriptor(resolveResult.getDescriptor());
+                    resolveResult.setArtifactResolver(new ErrorHandlingArtifactResolver(resolveResult.getArtifactResolver()));
                 } catch (ModuleVersionResolveException e) {
-                    failure = e;
-                }
-
-                if (failure != null) {
-                    this.resolveResult = new BrokenModuleVersionResolveResult(failure);
-                } else {
-                    this.resolveResult = new DefaultModuleVersionResolveResult(resolveResult);
+                    resolveResult.failed(e);
                 }
             }
 
             return resolveResult;
+        }
+
+        public ModuleVersionSelectionReason getSelectionReason() {
+            return VersionSelectionReasons.REQUESTED;
         }
 
         private void checkDescriptor(ModuleDescriptor descriptor) {
@@ -143,8 +120,7 @@ public class LazyDependencyToModuleResolver implements DependencyToModuleVersion
             for (Configuration configuration : descriptor.getConfigurations()) {
                 for (String parent : configuration.getExtends()) {
                     if (descriptor.getConfiguration(parent) == null) {
-                        throw new ModuleVersionResolveException(String.format("Configuration '%s' extends unknown configuration '%s' in module descriptor for group:%s, module:%s, version:%s.",
-                                configuration.getName(), parent, id.getOrganisation(), id.getName(), id.getRevision()));
+                        throw new ModuleVersionResolveException(id, String.format("Configuration '%s' extends unknown configuration '%s' in module descriptor for %%s.", configuration.getName(), parent));
                     }
                 }
             }
@@ -160,7 +136,7 @@ public class LazyDependencyToModuleResolver implements DependencyToModuleVersion
         }
 
         protected void onUnexpectedModuleRevisionId(ModuleDescriptor descriptor) {
-            throw new ModuleVersionResolveException(String.format("Received unexpected module descriptor %s for dependency %s.", descriptor.getModuleRevisionId(), dependencyDescriptor.getDependencyRevisionId()));
+            throw new ModuleVersionResolveException(dependencyDescriptor.getDependencyRevisionId(), String.format("Received unexpected module descriptor %s for dependency %%s.", descriptor.getModuleRevisionId()));
         }
     }
 
@@ -175,13 +151,13 @@ public class LazyDependencyToModuleResolver implements DependencyToModuleVersion
         }
 
         @Override
-        public ModuleRevisionId getId() throws ModuleVersionResolveException {
+        public ModuleVersionIdentifier getId() throws ModuleVersionResolveException {
             return resolve().getId();
         }
 
         @Override
         protected ModuleVersionNotFoundException notFound(ModuleRevisionId id) {
-            return new ModuleVersionNotFoundException(String.format("Could not find any version that matches group:%s, module:%s, version:%s.", id.getOrganisation(), id.getName(), id.getRevision()));
+            return new ModuleVersionNotFoundException(id, "Could not find any version that matches %s.");
         }
 
         @Override

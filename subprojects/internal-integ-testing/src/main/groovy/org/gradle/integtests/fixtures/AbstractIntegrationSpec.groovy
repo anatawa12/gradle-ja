@@ -1,5 +1,5 @@
 /*
- * Copyright 2011 the original author or authors.
+ * Copyright 2012 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,13 @@
  */
 package org.gradle.integtests.fixtures
 
-import org.gradle.util.TestFile
+import org.gradle.api.Action
+import org.gradle.integtests.fixtures.executer.*
+import org.gradle.test.fixtures.file.TestDirectoryProvider
+import org.gradle.test.fixtures.file.TestFile
+import org.gradle.test.fixtures.file.TestNameTestDirectoryProvider
+import org.gradle.test.fixtures.ivy.IvyFileRepository
+import org.gradle.test.fixtures.maven.MavenFileRepository
 import org.junit.Rule
 import spock.lang.Specification
 
@@ -24,28 +30,34 @@ import spock.lang.Specification
  * 
  * Plan is to bring features over as needed.
  */
-class AbstractIntegrationSpec extends Specification {
-    
-    @Rule final GradleDistribution distribution = new GradleDistribution()
-    @Rule final GradleDistributionExecuter executer = new GradleDistributionExecuter()
+class AbstractIntegrationSpec extends Specification implements TestDirectoryProvider {
+
+    @Rule final TestNameTestDirectoryProvider temporaryFolder = new TestNameTestDirectoryProvider()
+
+    GradleDistribution distribution = new UnderDevelopmentGradleDistribution()
+    GradleExecuter executer = new GradleContextualExecuter(distribution, temporaryFolder)
 
     ExecutionResult result
     ExecutionFailure failure
+    private MavenFileRepository mavenRepo
+    private IvyFileRepository ivyRepo
+
+    private List<Closure> executerActions = []
 
     protected TestFile getBuildFile() {
-        testDir.file('build.gradle')
+        testDirectory.file('build.gradle')
     }
 
     protected TestFile getSettingsFile() {
-        testDir.file('settings.gradle')
+        testDirectory.file('settings.gradle')
     }
 
-    protected TestFile getTestDir() {
-        distribution.getTestDir();
+    TestFile getTestDirectory() {
+        temporaryFolder.testDirectory
     }
 
     protected TestFile file(Object... path) {
-        getTestDir().file(path);
+        getTestDirectory().file(path);
     }
 
     protected GradleExecuter sample(Sample sample) {
@@ -64,9 +76,9 @@ class AbstractIntegrationSpec extends Specification {
         executer.usingProjectDirectory(file(path))
     }
 
-    protected GradleDistribution requireOwnUserHomeDir() {
-        distribution.requireOwnUserHomeDir()
-        distribution
+    protected GradleExecuter requireOwnGradleUserHomeDir() {
+        executer.requireOwnGradleUserHomeDir()
+        executer
     }
 
     /**
@@ -85,7 +97,12 @@ class AbstractIntegrationSpec extends Specification {
     }
 
     protected ExecutionResult succeeds(String... tasks) {
+        supplyExecuterActions()
         result = executer.withTasks(*tasks).run()
+    }
+
+    void supplyExecuterActions() {
+        executerActions.each { it(executer) }
     }
 
     protected ExecutionFailure runAndFail(String... tasks) {
@@ -93,6 +110,7 @@ class AbstractIntegrationSpec extends Specification {
     }
     
     protected ExecutionFailure fails(String... tasks) {
+        supplyExecuterActions()
         failure = executer.withTasks(*tasks).runWithFailure()
         result = failure
     }
@@ -135,11 +153,50 @@ class AbstractIntegrationSpec extends Specification {
     }
 
     ArtifactBuilder artifactBuilder() {
-        def executer = new InProcessGradleExecuter()
-        executer.withUserHomeDir(distribution.getUserHomeDir())
-        return new GradleBackedArtifactBuilder(executer, getTestDir().file("artifacts"))
+        def executer = distribution.executer(temporaryFolder)
+        executer.withGradleUserHomeDir(this.executer.getGradleUserHomeDir())
+        return new GradleBackedArtifactBuilder(executer, getTestDirectory().file("artifacts"))
     }
 
+    public MavenFileRepository maven(TestFile repo) {
+        return new MavenFileRepository(repo)
+    }
+
+    public MavenFileRepository maven(Object repo) {
+        return new MavenFileRepository(file(repo))
+    }
+
+    public MavenFileRepository getMavenRepo() {
+        if (mavenRepo == null) {
+            mavenRepo = new MavenFileRepository(file("maven-repo"))
+        }
+        return mavenRepo
+    }
+
+    public IvyFileRepository ivy(TestFile repo) {
+        return new IvyFileRepository(repo)
+    }
+
+    public IvyFileRepository ivy(Object repo) {
+        return new IvyFileRepository(file(repo))
+    }
+
+    public IvyFileRepository getIvyRepo() {
+        if (ivyRepo == null) {
+            ivyRepo = new IvyFileRepository(file("ivy-repo"))
+        }
+        return ivyRepo
+    }
+
+    public GradleExecuter using(Action<GradleExecuter> action) {
+        action.execute(executer)
+        executer
+    }
+
+    public GradleExecuter alwaysUsing(Closure executerAction) {
+        executerActions.add(executerAction)
+        executer
+    }
 
     def createZip(String name, Closure cl) {
         TestFile zipRoot = file("${name}.root")

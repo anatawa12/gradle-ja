@@ -16,16 +16,17 @@
 
 package org.gradle.plugins.ide.idea
 
-import java.util.regex.Pattern
 import org.custommonkey.xmlunit.Diff
 import org.custommonkey.xmlunit.ElementNameAndAttributeQualifier
 import org.custommonkey.xmlunit.XMLAssert
 import org.gradle.integtests.fixtures.TestResources
 import org.gradle.internal.os.OperatingSystem
 import org.gradle.plugins.ide.AbstractIdeIntegrationTest
-import org.gradle.util.TestFile
+import org.gradle.test.fixtures.file.TestFile
 import org.junit.Rule
 import org.junit.Test
+
+import java.util.regex.Pattern
 
 class IdeaIntegrationTest extends AbstractIdeIntegrationTest {
     @Rule
@@ -80,7 +81,7 @@ apply plugin: 'idea'
 
     @Test
     void worksWithNonStandardLayout() {
-        executer.inDirectory(testDir.file('root')).withTasks('idea').run()
+        executer.inDirectory(testDirectory.file('root')).withTasks('idea').run()
 
         assertHasExpectedContents('root/root.ipr')
         assertHasExpectedContents('root/root.iml')
@@ -335,12 +336,12 @@ apply plugin: "idea"
     }
 
     private void assertHasExpectedContents(String path) {
-        TestFile file = testDir.file(path).assertIsFile()
-        TestFile expectedFile = testDir.file("expectedFiles/${path}.xml").assertIsFile()
+        TestFile file = testDirectory.file(path).assertIsFile()
+        TestFile expectedFile = testDirectory.file("expectedFiles/${path}.xml").assertIsFile()
 
         def expectedXml = expectedFile.text
 
-        def homeDir = distribution.userHomeDir.absolutePath.replace(File.separator, '/')
+        def homeDir = executer.gradleUserHomeDir.absolutePath.replace(File.separator, '/')
         def pattern = Pattern.compile(Pattern.quote(homeDir) + "/caches/artifacts-\\d+/filestore/([^/]+/[^/]+/[^/]+/[^/]+)/[a-z0-9]+/")
         def actualXml = file.text.replaceAll(pattern, '@CACHE_DIR@/$1/@SHA1@/')
 

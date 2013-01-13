@@ -7,6 +7,9 @@
     <plugin id="groovy" description="Groovy Plugin">
         <extends targetClass="org.gradle.api.tasks.SourceSet" mixinClass="org.gradle.api.tasks.GroovySourceSet"/>
     </plugin>
+    <plugin id="publishing" description="Publishing Plugin">
+        <extends targetClass="org.gradle.api.Project" id="publishing" extensionClass="org.gradle.api.publish.PublishingExtension"/>
+    </plugin>
     <plugin id="scala" description="Scala Plugin">
         <extends targetClass="org.gradle.api.tasks.SourceSet" mixinClass="org.gradle.api.tasks.ScalaSourceSet"/>
     </plugin>
@@ -41,6 +44,9 @@
     </plugin>
     <plugin id="application" description="Application Plugin">
         <extends targetClass="org.gradle.api.Project" mixinClass="org.gradle.api.plugins.ApplicationPluginConvention"/>
+    </plugin>
+    <plugin id="java-library-distribution" description="Java Library Distribution Plugin">
+        <extends targetClass="org.gradle.api.Project" id="distribution" extensionClass="org.gradle.api.plugins.DistributionExtension"/>
     </plugin>
     <plugin id="signing" description="Signing Plugin">
         <extends targetClass="org.gradle.api.Project" id="signing" extensionClass="org.gradle.plugins.signing.SigningExtension"/>

@@ -25,9 +25,11 @@ archivesBaseName = 'gradle'
 extensions.buildTypes = new BuildTypes(project)
 
 buildTypes {
+    sanityCheck "classes", "doc:checkstyleApi", "codeQuality", "docs:check"
+
     // The minimum to be run before check-in
-    preCommitBuild "doc:checkstyleApi", "codeQuality", "classes", "test", noDistTests: true
-    quickCheck "doc:checkstyleApi", "codeQuality", "classes", "test", noDistTests: true
+    preCommitBuild "doc:checkstyleApi", "docs:check", "codeQuality", "classes", "test", noDistTests: true
+    quickCheck "doc:checkstyleApi", "docs:check", "codeQuality", "classes", "test", noDistTests: true
 
     // A full (in-process) test
     developerBuild "check"
@@ -47,6 +49,9 @@ buildTypes {
     // Run the performance tests
     performanceTest "performance:integTest", useIncomingDistributions: true
 
+    // Run the performance tests
+    localPerformanceTest "performance:integTest"
+
     // Used for cross version tests on CI
     crossVersionTest "forkingIntegTest", crossVersionTestsOnly: "", testAllVersions: "", noDistTests: true, useIncomingDistributions: true
 
@@ -54,7 +59,7 @@ buildTypes {
     packageBuild "verifyIsProductionBuildEnvironment", "clean", "buildDists", "distributions:integTest"
 
     // Used to build production distros and smoke test them
-    promotionBuild "verifyIsProductionBuildEnvironment", "clean", "buildDists", "distributions:integTest", "uploadArchives"
+    promotionBuild "verifyIsProductionBuildEnvironment", "clean", "docs:check", "buildDists", "distributions:integTest", "uploadArchives"
 }
 
 ext {
@@ -81,7 +86,8 @@ ext {
     publishedProjects = [project(':core'), project(':toolingApi'), project(':wrapper'), project(':baseServices'), project(':messaging')]
     pluginProjects = [
         'plugins', 'codeQuality', 'jetty', 'antlr', 'wrapper', 'osgi', 'maven',
-        'ide', 'announce', 'scala', 'sonar', 'signing', 'cpp', 'ear', 'javascript', 'buildComparison'
+        'ide', 'announce', 'scala', 'sonar', 'signing', 'cpp', 'ear', 'javascript', 'buildComparison',
+        'diagnostics', 'reporting', 'publish', 'ivy'
     ].collect {
         project(it)
     }
@@ -94,6 +100,7 @@ apply from: "gradle/dependencies.gradle"
 apply from: "gradle/wrapper.gradle"
 apply from: "gradle/idea.gradle"
 apply from: "gradle/eclipse.gradle"
+apply from: "gradle/classycle.gradle"
 apply from: "gradle/noDependencyResolutionDuringConfiguration.gradle"
 
 allprojects {
@@ -101,7 +108,6 @@ allprojects {
 
     repositories {
         maven { url 'http://repo.gradle.org/gradle/libs' }
-        maven { url 'http://oss.sonatype.org/content/repositories/snapshots/'} // temporary repo for spock snapshots
     }
 }
 
@@ -141,6 +147,7 @@ configurations {
 
 dependencies {
     runtime project(':launcher')
+    runtime project(':wrapper')
     plugins pluginProjects
     plugins project(':coreImpl')
 }

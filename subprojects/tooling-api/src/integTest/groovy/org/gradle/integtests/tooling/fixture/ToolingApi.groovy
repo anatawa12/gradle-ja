@@ -15,10 +15,11 @@
  */
 package org.gradle.integtests.tooling.fixture
 
-import org.gradle.integtests.fixtures.BasicGradleDistribution
-import org.gradle.integtests.fixtures.GradleDistribution
-import org.gradle.integtests.fixtures.GradleDistributionExecuter
 import org.gradle.integtests.fixtures.IntegrationTestHint
+import org.gradle.integtests.fixtures.executer.GradleContextualExecuter
+import org.gradle.integtests.fixtures.executer.GradleDistribution
+import org.gradle.integtests.fixtures.executer.IntegrationTestBuildContext
+import org.gradle.test.fixtures.file.TestDirectoryProvider
 import org.gradle.tooling.GradleConnector
 import org.gradle.tooling.ProjectConnection
 import org.gradle.tooling.UnsupportedVersionException
@@ -30,22 +31,22 @@ import java.util.concurrent.TimeUnit
 class ToolingApi {
     private static final Logger LOGGER = LoggerFactory.getLogger(ToolingApi)
 
-    private BasicGradleDistribution dist
-    private Closure getProjectDir
+    private GradleDistribution dist
+    private TestDirectoryProvider testWorkDirProvider
     private File userHomeDir
 
     private final List<Closure> connectorConfigurers = []
     boolean isEmbedded
     boolean verboseLogging = LOGGER.debugEnabled
 
-    ToolingApi(GradleDistribution dist) {
-        this(dist, dist.userHomeDir, { dist.testDir }, GradleDistributionExecuter.systemPropertyExecuter == GradleDistributionExecuter.Executer.embedded)
+    ToolingApi(GradleDistribution dist, TestDirectoryProvider testWorkDirProvider) {
+        this(dist, new IntegrationTestBuildContext().gradleUserHomeDir, testWorkDirProvider, GradleContextualExecuter.embedded)
     }
 
-    ToolingApi(BasicGradleDistribution dist, File userHomeDir, Closure getProjectDir, boolean isEmbedded) {
+    ToolingApi(GradleDistribution dist, File userHomeDir, TestDirectoryProvider testWorkDirProvider, boolean isEmbedded) {
         this.dist = dist
         this.userHomeDir = userHomeDir
-        this.getProjectDir = getProjectDir
+        this.testWorkDirProvider = testWorkDirProvider
         this.isEmbedded = isEmbedded
     }
 
@@ -87,7 +88,7 @@ class ToolingApi {
     GradleConnector connector() {
         GradleConnector connector = GradleConnector.newConnector()
         connector.useGradleUserHomeDir(userHomeDir)
-        connector.forProjectDirectory(getProjectDir().absoluteFile)
+        connector.forProjectDirectory(testWorkDirProvider.testDirectory)
         connector.searchUpwards(false)
         connector.daemonMaxIdleTime(60, TimeUnit.SECONDS)
         if (connector.metaClass.hasProperty(connector, 'verboseLogging')) {

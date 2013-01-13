@@ -59,8 +59,7 @@
             <phrase role="original">Adds Groovy configuration to <filename>.project</filename> file.</phrase></td>
         </tr>
         <tr>
-            <td><link linkend="scala_plugin">Scala</link></td><td>Scala のサポートを <filename>.project</filename> ファイルに追加します。
-            <phrase role="original">Adds Scala support to <filename>.project</filename> file.</phrase></td>
+            <td><link linkend="scala_plugin">Scala</link></td><td>Adds Scala support to <filename>.project</filename> and <filename>.classpath</filename> files.</td>
         </tr>
         <tr>
             <td><link linkend="war_plugin">War</link></td><td>WEBアプリケーションのサポートを <filename>.project</filename> ファイルに追加します。

@@ -15,23 +15,22 @@
  */
 package org.gradle.testing.testng
 
+import org.gradle.integtests.fixtures.*
 import org.junit.Rule
 import org.junit.Test
-import org.gradle.integtests.fixtures.*
 
 /**
  * @author Tom Eyckmans
  */
-public class SampleTestNGIntegrationTest {
-    @Rule public final GradleDistribution dist = new GradleDistribution()
-    @Rule public final GradleDistributionExecuter executer = new GradleDistributionExecuter()
+public class SampleTestNGIntegrationTest extends AbstractIntegrationTest {
+
     @Rule public final Sample sample = new Sample()
 
     @Test @UsesSample('testng/suitexmlbuilder')
     public void suiteXmlBuilder() {
         executer.inDirectory(sample.dir).withTasks('clean', 'test').run()
 
-        def result = new TestNGExecutionResult(sample.dir)
+        def result = new DefaultTestExecutionResult(sample.dir)
         result.assertTestClassesExecuted('org.gradle.testng.UserImplTest')
         result.testClass('org.gradle.testng.UserImplTest').assertTestsExecuted('testOkFirstName')
         result.testClass('org.gradle.testng.UserImplTest').assertTestPassed('testOkFirstName')
@@ -41,7 +40,7 @@ public class SampleTestNGIntegrationTest {
     public void javaJdk14Passing() {
         executer.inDirectory(sample.dir).withTasks('clean', 'test').run()
 
-        def result = new TestNGExecutionResult(sample.dir)
+        def result = new DefaultTestExecutionResult(sample.dir)
         result.assertTestClassesExecuted('org.gradle.OkTest')
         result.testClass('org.gradle.OkTest').assertTestPassed('passingTest')
     }

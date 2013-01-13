@@ -18,36 +18,21 @@ package org.gradle.api.internal.artifacts.ivyservice.resolveengine.result;
 
 import org.gradle.api.Nullable;
 import org.gradle.api.artifacts.ModuleVersionSelector;
+import org.gradle.api.artifacts.result.ModuleVersionSelectionReason;
+import org.gradle.api.internal.artifacts.ivyservice.ModuleVersionResolveException;
 
 /**
  * by Szczepan Faber, created at: 8/24/12
  */
-public class InternalDependencyResult {
+public interface InternalDependencyResult {
 
-    //TODO SF/AM change to an interface and make the DependencyEdge implement it.
-
-    private final ModuleVersionSelector requested;
-    private final Exception failure;
-    private final ModuleVersionSelection selected;
-
-    public InternalDependencyResult(ModuleVersionSelector requested, ModuleVersionSelection selected, Exception failure) {
-        assert requested != null;
-        this.requested = requested;
-        this.selected = selected;
-        this.failure = failure;
-    }
-
-    public ModuleVersionSelector getRequested() {
-        return requested;
-    }
+    ModuleVersionSelector getRequested();
 
     @Nullable
-    public Exception getFailure() {
-        return failure;
-    }
+    ModuleVersionResolveException getFailure();
 
     @Nullable
-    public ModuleVersionSelection getSelected() {
-        return selected;
-    }
+    ModuleVersionSelection getSelected();
+
+    ModuleVersionSelectionReason getReason();
 }

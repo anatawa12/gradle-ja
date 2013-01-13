@@ -21,10 +21,9 @@ import org.gradle.api.GradleException;
 import org.gradle.api.file.EmptyFileVisitor;
 import org.gradle.api.file.FileVisitDetails;
 import org.gradle.api.internal.file.IdentityFileResolver;
-import org.gradle.api.internal.file.collections.DirectoryFileTree;
+import org.gradle.api.internal.file.collections.MinimalFileTree;
+import org.gradle.api.internal.file.collections.SingleIncludePatternFileTree;
 import org.gradle.api.internal.file.copy.DeleteActionImpl;
-import org.gradle.api.tasks.util.PatternFilterable;
-import org.gradle.api.tasks.util.PatternSet;
 import org.gradle.util.GFileUtils;
 
 import java.io.File;
@@ -61,7 +60,7 @@ public class PathKeyFileStore implements FileStore<String>, FileStoreSearcher<St
         this.baseDir = baseDir;
     }
 
-    public File getBaseDir() {
+    protected File getBaseDir() {
         return baseDir;
     }
 
@@ -120,18 +119,21 @@ public class PathKeyFileStore implements FileStore<String>, FileStoreSearcher<St
     }
 
     protected FileStoreEntry doAdd(File destination, String failureDescription, Action<File> action) {
-        File inProgressMarkerFile = null;
         try {
             GFileUtils.parentMkdirs(destination);
-            inProgressMarkerFile = getInProgressMarkerFile(destination);
+            File inProgressMarkerFile = getInProgressMarkerFile(destination);
             GFileUtils.touch(inProgressMarkerFile);
-            deleteAction.delete(destination);
-            action.execute(destination);
-        } catch (Exception exception) {
-            deleteAction.delete(destination);
-            throw new GradleException(failureDescription, exception);
-        } finally {
-            deleteAction.delete(inProgressMarkerFile);
+            try {
+                deleteAction.delete(destination);
+                action.execute(destination);
+            } catch (Throwable t) {
+                deleteAction.delete(destination);
+                throw t;
+            } finally {
+                deleteAction.delete(inProgressMarkerFile);
+            }
+        } catch (Throwable t) {
+            throw new GradleException(failureDescription, t);
         }
         return entryAt(destination);
     }
@@ -168,11 +170,8 @@ public class PathKeyFileStore implements FileStore<String>, FileStoreSearcher<St
         return getInProgressMarkerFile(file).exists();
     }
 
-    private DirectoryFileTree findFiles(String pattern) {
-        DirectoryFileTree fileTree = new DirectoryFileTree(baseDir);
-        PatternFilterable patternSet = new PatternSet();
-        patternSet.include(pattern);
-        return fileTree.filter(patternSet);
+    private MinimalFileTree findFiles(String pattern) {
+        return new SingleIncludePatternFileTree(baseDir, pattern);
     }
 
     protected FileStoreEntry entryAt(File file) {

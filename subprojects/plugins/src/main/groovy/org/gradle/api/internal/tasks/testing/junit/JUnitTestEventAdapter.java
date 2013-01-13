@@ -22,8 +22,11 @@ import org.gradle.internal.TimeProvider;
 import org.gradle.internal.concurrent.ThreadSafe;
 import org.gradle.internal.id.IdGenerator;
 import org.junit.runner.Description;
+import org.junit.runner.Request;
+import org.junit.runner.Runner;
 import org.junit.runner.notification.Failure;
 import org.junit.runner.notification.RunListener;
+import org.slf4j.LoggerFactory;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -77,12 +80,34 @@ public class JUnitTestEventAdapter extends RunListener {
     @Override
     public void testIgnored(Description description) throws Exception {
         if (methodName(description) == null) {
-            // An @Ignored class, ignore the event. We don't get testIgnored events for each method, which would be kind of nice
+            // An @Ignored class, ignore the event. We don't get testIgnored events for each method, so we have
+            // generate them on our own
+            processIgnoredClass(description);
             return;
         }
+
         TestDescriptorInternal testInternal = descriptor(idGenerator.generateId(), description);
         resultProcessor.started(testInternal, startEvent());
         resultProcessor.completed(testInternal.getId(), new TestCompleteEvent(timeProvider.getCurrentTime(), TestResult.ResultType.SKIPPED));
+    }
+
+    private void processIgnoredClass(Description description) throws Exception {
+        String className = className(description);
+        final AllExceptIgnoredTestRunnerBuilder allExceptIgnoredTestRunnerBuilder = new AllExceptIgnoredTestRunnerBuilder();
+        try {
+            final Class<?> testClass = description.getClass().getClassLoader().loadClass(className);
+            Runner runner = allExceptIgnoredTestRunnerBuilder.runnerForClass(testClass);
+            if (runner == null) {
+                //fall back to default runner
+                runner = Request.aClass(testClass).getRunner();
+            }
+            final Description runnerDescription = runner.getDescription();
+            for (Description childrenDescription : runnerDescription.getChildren()) {
+                testIgnored(childrenDescription);
+            }
+        } catch (Throwable throwable) {
+            LoggerFactory.getLogger(getClass()).warn("Unable to process IgnoredClass", throwable);
+        }
     }
 
     @Override
@@ -133,7 +158,7 @@ public class JUnitTestEventAdapter extends RunListener {
     }
 
     private Matcher methodStringMatcher(Description description) {
-        return Pattern.compile("(.*)\\((.*)\\)").matcher(description.toString());
+        return Pattern.compile("(.*)\\((.*)\\)", Pattern.DOTALL).matcher(description.toString());
     }
 
 }

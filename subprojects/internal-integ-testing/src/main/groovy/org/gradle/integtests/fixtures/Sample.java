@@ -16,7 +16,10 @@
 
 package org.gradle.integtests.fixtures;
 
-import org.gradle.util.TestFile;
+import org.gradle.integtests.fixtures.executer.IntegrationTestBuildContext;
+import org.gradle.test.fixtures.file.TestDirectoryProvider;
+import org.gradle.test.fixtures.file.TestDirectoryProviderFinder;
+import org.gradle.test.fixtures.file.TestFile;
 import org.junit.rules.MethodRule;
 import org.junit.runners.model.FrameworkMethod;
 import org.junit.runners.model.Statement;
@@ -31,7 +34,7 @@ import org.slf4j.LoggerFactory;
 public class Sample implements MethodRule {
     private final Logger logger = LoggerFactory.getLogger(Sample.class);
     private final String defaultSampleName;
-    private GradleDistribution dist;
+
     private TestFile sampleDir;
 
     public Sample(String defaultSampleName) {
@@ -43,15 +46,16 @@ public class Sample implements MethodRule {
     }
 
     public Statement apply(final Statement base, FrameworkMethod method, Object target) {
-        dist = RuleHelper.getField(target, GradleDistribution.class);
+        final TestDirectoryProvider testDirectoryProvider = new TestDirectoryProviderFinder().findFor(target);
+
         final String sampleName = getSampleName(method);
-        sampleDir = sampleName == null ? null : dist.getTestDir().file(sampleName);
+        sampleDir = sampleName == null ? null : testDirectoryProvider.getTestDirectory().file(sampleName);
 
         return new Statement() {
             @Override
             public void evaluate() throws Throwable {
                 if (sampleName != null) {
-                    TestFile srcDir = dist.getSamplesDir().file(sampleName).assertIsDir();
+                    TestFile srcDir = new IntegrationTestBuildContext().getSamplesDir().file(sampleName).assertIsDir();
                     logger.debug("Copying sample '{}' to test directory.", sampleName);
                     srcDir.copyTo(sampleDir);
                 } else {

@@ -20,13 +20,14 @@ dependencies {
     compile libraries.nekohtml
     runtime libraries.xbean //maven3 classes dependency
 
-    testCompile libraries.junit
-
     compile fileTree("$buildDir/libs/jarjar") {
         builtBy 'jarJarMaven3'
     }
 
     mvn3Input libraries.maven3
+
+    //this dependency is necessary to run IvySFtpResolverIntegrationTest on ibm jdk
+    integTestRuntime "org.bouncycastle:bcprov-jdk15:1.46@jar"
 }
 
 task jarJarMaven3(type: JarJar) {
@@ -42,6 +43,8 @@ task jarJarMaven3(type: JarJar) {
 
     avoidConflictingPlexusComponents(it)
 }
+
+classpathManifest.dependsOn jarJarMaven3 //see GRADLE-2521
 
 //adding explicit task dependencies due to http://issues.gradle.org/browse/GRADLE-2481
 def allJarJars = tasks.withType(JarJar)

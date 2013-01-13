@@ -1,70 +1,63 @@
 ## New and noteworthy
 
-Here are the new features introduced in Gradle 1.3.
+Here are the new features introduced in this Gradle release.
+
+<!--
+### Example new and noteworthy
+-->
 
 ## Promoted features
 
-Promoted features are features that were incubating in previous versions of Gradle but are now supported and subject to our backwards compatibility policy.
+Promoted features are features that were incubating in previous versions of Gradle but are now supported and subject to backwards compatibility.
+See the User guide section on the “[Feature Lifecycle](userguide/feature_lifecycle.html)” for more information.
 
-## Fixed Issues
+The following are the features that have been promoted in this Gradle release.
 
-The list of issues fixed between 1.2 and 1.3 can be found [here](http://issues.gradle.org/sr/jira.issueviews:searchrequest-printable/temp/SearchRequest.html?jqlQuery=fixVersion+in+%28%221.3-rc-1%22%29+ORDER+BY+priority&tempMax=1000).
+<!--
+### Example promoted
+-->
+
+## Fixed issues
 
 ## Incubating features
 
-We will typically introduce new features as _incubating_ at first, giving you a chance to test them out.
-Typically the implementation quality of the new features is already good but the API might still change with the next release based on the feedback we receive.
-For some very challenging engineering problems like the Gradle Daemon or parallel builds, it is impossible to get the implementation quality right from the beginning.
-So we need you here also as beta testers.
-We will iterate on the new feature based on your feedback, eventually releasing it as stable and production-ready.
-Those of you who use new features before that point gain the competitive advantage of early access to new functionality in exchange for helping refine it over time.
-To learn more read our [forum posting on our release approach](http://forums.gradle.org/gradle/topics/the_gradle_release_approach).
+Incubating features are intended to be used, but not yet guaranteed to be backwards compatible.
+By giving early access to new features, real world feedback can be incorporated into their design.
+See the User guide section on the “[Feature Lifecycle](userguide/feature_lifecycle.html)” for more information.
 
-### Resolution result API
+The following are the new incubating features or changes to existing incubating features in this Gradle release.
 
-* (in progress)
-* The entry point to the ResolutionResult API has changed, you can get access to the instance of the ResolutionResult from the ResolvableDependencies.
+### Configuration on demand
 
-## Upgrading from Gradle 1.2
+* respects 'external' task dependencies
 
-Please let us know if you encounter any issues during the upgrade to Gradle 1.3, that are not listed below.
+## Deprecations
 
-### Deprecations
+Features that have become superseded or irrelevant due to the natural evolution of Gradle become *deprecated*, and scheduled to be removed
+in the next major Gradle version (Gradle 2.0). See the User guide section on the “[Feature Lifecycle](userguide/feature_lifecycle.html)” for more information.
 
-#### Ant-task based Java compiler integration
+The following are the newly deprecated items in this Gradle release. If you have concerns about a deprecation, please raise it via the [Gradle Forums](http://forums.gradle.org).
 
-Gradle currently supports two different Java compiler integrations: A native Gradle integration that uses the compiler APIs directly, and an Ant-task
-based implementation that uses the `<javac>` Ant task. The native Gradle integration has been the default since Gradle 1.0-milestone-9.
+<!--
+### Example deprecation
+-->
 
-The Ant-task based integration has now been deprecated and will be removed in Gradle 2.0. As a result, the following properties of `CompileOptions` are also
-deprecated and will be removed in Gradle 2.0:
+## Potential breaking changes
 
-* `useAnt`
-* `optimize`
-* `includeJavaRuntime`
+<!--
+### Example breaking change
+-->
 
-#### Ant-task based Groovy compiler integration
+## External contributions
 
-Gradle currently supports two different Groovy compiler integrations: A native Gradle integration that uses the compiler APIs directly, and an Ant-task
-based implementation that uses the `<groovyc>` Ant task. The native Gradle integration has been the default since Gradle 1.0.
+We would like to thank the following community members for making contributions to this release of Gradle.
 
-The Ant-task based integration has now been deprecated and will be removed in Gradle 2.0. As a result, the following properties of `GroovyCompileOptions` are also
-deprecated and will be removed in Gradle 2.0:
+<!--
+* Some Person - fixed some issue (GRADLE-1234)
+-->
 
-* `useAnt`
-* `stacktrace`
-* `includeJavaRuntime`
+We love getting contributions from the Gradle community. For information on contributing, please see [gradle.org/contribute](http://gradle.org/contribute).
 
-### Potential breaking changes
+## Known issues
 
-#### Incubating C++ `Compile` task type removed
-
-This was replaced by `CppCompile` in Gradle 1.2. You should use the replacement class instead.
-
-#### Incubating `GppCompileSpec` properties removed
-
-The deprecated `task` property was removed from `GppCompileSpec`.
-
-#### Removed GraphvizReportRenderer (private API)
-
-This type was an early contribution. It is unlikely anyone uses it because it does not work and it is an undocumented private type.
+Known issues are problems that were discovered post release that are directly related to changes made in this release.

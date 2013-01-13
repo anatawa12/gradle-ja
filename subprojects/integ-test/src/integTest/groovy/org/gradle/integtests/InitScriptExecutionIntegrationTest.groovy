@@ -16,17 +16,17 @@
 package org.gradle.integtests
 
 import org.gradle.integtests.fixtures.AbstractIntegrationSpec
-import org.gradle.integtests.fixtures.ArtifactBuilder
-import org.gradle.integtests.fixtures.ExecutionResult
-import org.gradle.util.TestFile
+import org.gradle.integtests.fixtures.executer.ArtifactBuilder
+import org.gradle.integtests.fixtures.executer.ExecutionResult
+import org.gradle.test.fixtures.file.TestFile
 
 class InitScriptExecutionIntegrationTest extends AbstractIntegrationSpec {
     def "executes init.gradle from user home dir"() {
         given:
-        distribution.requireOwnUserHomeDir()
+        executer.requireOwnGradleUserHomeDir()
         
         and:
-        distribution.userHomeDir.file('init.gradle') << 'println "greetings from user home"'
+        gradleUserHomeDir.file('init.gradle') << 'println "greetings from user home"'
 
         when:
         run()
@@ -35,14 +35,18 @@ class InitScriptExecutionIntegrationTest extends AbstractIntegrationSpec {
         output.contains("greetings from user home")
     }
 
+    protected TestFile getGradleUserHomeDir() {
+        new TestFile(executer.gradleUserHomeDir)
+    }
+
     def "executes init scripts from init.d directory in user home dir in alphabetical order"() {
         given:
-        distribution.requireOwnUserHomeDir()
+        executer.requireOwnGradleUserHomeDir()
 
         and:
-        distribution.userHomeDir.file('init.d/a.gradle') << 'println "init #a#"'
-        distribution.userHomeDir.file('init.d/b.gradle') << 'println "init #b#"'
-        distribution.userHomeDir.file('init.d/c.gradle') << 'println "init #c#"'
+        gradleUserHomeDir.file('init.d/a.gradle') << 'println "init #a#"'
+        gradleUserHomeDir.file('init.d/b.gradle') << 'println "init #b#"'
+        gradleUserHomeDir.file('init.d/c.gradle') << 'println "init #c#"'
 
         when:
         run()

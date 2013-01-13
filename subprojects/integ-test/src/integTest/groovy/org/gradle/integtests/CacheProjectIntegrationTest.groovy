@@ -20,10 +20,10 @@ import org.gradle.api.internal.artifacts.ivyservice.DefaultCacheLockingManager
 import org.gradle.groovy.scripts.ScriptSource
 import org.gradle.groovy.scripts.UriScriptSource
 import org.gradle.integtests.fixtures.AbstractIntegrationTest
-import org.gradle.integtests.fixtures.HttpServer
-import org.gradle.integtests.fixtures.MavenRepository
+import org.gradle.test.fixtures.file.TestFile
+import org.gradle.test.fixtures.maven.MavenRepository
+import org.gradle.test.fixtures.server.http.HttpServer
 import org.gradle.util.GradleVersion
-import org.gradle.util.TestFile
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
@@ -50,12 +50,12 @@ public class CacheProjectIntegrationTest extends AbstractIntegrationTest {
     @Before
     public void setUp() {
         // Use own home dir so we don't blast the shared one when we run with -C rebuild
-        distribution.requireOwnUserHomeDir()
+        executer.requireOwnGradleUserHomeDir()
 
         String version = GradleVersion.current().version
-        projectDir = distribution.getTestDir().file("project")
+        projectDir = file("project")
         projectDir.mkdirs()
-        userHomeDir = distribution.getUserHomeDir()
+        userHomeDir = new TestFile(executer.gradleUserHomeDir)
         buildFile = projectDir.file('build.gradle')
         ScriptSource source = new UriScriptSource("build file", buildFile)
         propertiesFile = userHomeDir.file("caches/$version/scripts/$source.className/ProjectScript/no_buildscript/cache.properties")

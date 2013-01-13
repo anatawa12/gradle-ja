@@ -22,7 +22,7 @@ import spock.lang.Issue
 class DaemonSystemPropertiesIntegrationTest extends DaemonIntegrationSpec {
     def "standard and sun. client JVM system properties are not carried over to daemon JVM"() {
         given:
-        distribution.file("build.gradle") << """
+        file("build.gradle") << """
 task verify << {
     assert System.getProperty("java.vendor") != "hollywood"
     assert System.getProperty("java.vendor") != null
@@ -31,19 +31,19 @@ task verify << {
         """
 
         expect:
-        executer.withEnvironmentVars(GRADLE_OPTS: "-Djava.vendor=hollywood -Dsun.sunny=california").withTasks("verify").run()
+        executer.withGradleOpts("-Djava.vendor=hollywood", "-Dsun.sunny=california").withTasks("verify").run()
     }
 
     def "other client JVM system properties are carried over to daemon JVM"() {
         given:
-        distribution.file("build.gradle") << """
+        file("build.gradle") << """
 task verify << {
     assert System.getProperty("foo.bar") == "baz"
 }
         """
 
         expect:
-        executer.withEnvironmentVars(GRADLE_OPTS: "-Dfoo.bar=baz").withTasks("verify").run()
+        executer.withGradleOpts("-Dfoo.bar=baz").withTasks("verify").run()
 
     }
 }

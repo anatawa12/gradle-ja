@@ -16,23 +16,20 @@
 
 package org.gradle.launcher.daemon
 
-import org.gradle.integtests.fixtures.HttpServer
+import org.gradle.integtests.fixtures.KillProcessAvailability
 import org.gradle.launcher.daemon.logging.DaemonMessages
 import org.gradle.launcher.daemon.testing.DaemonLogsAnalyzer
-import org.gradle.util.Requires
-import org.gradle.util.TestPrecondition
+import org.gradle.test.fixtures.server.http.HttpServer
 import org.junit.Rule
+import spock.lang.IgnoreIf
 import spock.lang.Issue
 
-import static org.gradle.tests.fixtures.ConcurrentTestUtil.poll
+import static org.gradle.test.fixtures.ConcurrentTestUtil.poll
 
 /**
  * by Szczepan Faber, created at: 1/20/12
  */
-@Requires(TestPrecondition.UNIX)
-//because we can only forcefully kill daemons on Unix atm.
-//The implementation is not OS specific, only the test is
-// so it's not a big deal it does not run everywhere.
+@IgnoreIf({ !KillProcessAvailability.CAN_KILL })
 class DaemonInitialCommunicationFailureIntegrationSpec extends DaemonIntegrationSpec {
 
     @Rule HttpServer server = new HttpServer()
@@ -48,9 +45,12 @@ class DaemonInitialCommunicationFailureIntegrationSpec extends DaemonIntegration
 
         then:
         //there should be one idle daemon
-        def daemon = new DaemonLogsAnalyzer(distribution.daemonBaseDir).daemon
+        def daemon = new DaemonLogsAnalyzer(executer.daemonBaseDir).daemon
 
         when:
+        // Wait until the daemon has finished updating the registry. Killing it halfway through the registry update will leave the registry corrupted,
+        // and the client will just throw the registry away and replace it with an empty one
+        daemon.waitUntilIdle()
         daemon.kill()
 
         and:
@@ -81,9 +81,10 @@ class DaemonInitialCommunicationFailureIntegrationSpec extends DaemonIntegration
         buildSucceeds()
 
         then:
-        def daemon = new DaemonLogsAnalyzer(distribution.daemonBaseDir).daemon
+        def daemon = new DaemonLogsAnalyzer(executer.daemonBaseDir).daemon
 
         when:
+        daemon.waitUntilIdle()
         daemon.kill()
         poll {
             server.start(daemon.port)
@@ -110,15 +111,18 @@ class DaemonInitialCommunicationFailureIntegrationSpec extends DaemonIntegration
         buildSucceeds()
 
         then:
-        def daemon = new DaemonLogsAnalyzer(distribution.daemonBaseDir).daemon
+        def daemon = new DaemonLogsAnalyzer(executer.daemonBaseDir).daemon
 
         when:
+        daemon.waitUntilIdle()
         daemon.kill()
 
         then:
         buildSucceeds()
 
         and:
-        output.contains DaemonMessages.REMOVING_DAEMON_ADDRESS_ON_FAILURE
+        def analyzer = new DaemonLogsAnalyzer(executer.daemonBaseDir)
+        analyzer.daemons.size() == 2        //2 daemon participated
+        analyzer.registry.all.size() == 1   //only one address in the registry
     }
 }

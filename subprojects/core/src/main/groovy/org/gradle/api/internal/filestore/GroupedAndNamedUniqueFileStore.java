@@ -17,23 +17,23 @@ package org.gradle.api.internal.filestore;
 
 import org.gradle.api.Action;
 import org.gradle.api.Transformer;
+import org.gradle.api.internal.file.TemporaryFileProvider;
 import org.gradle.util.hash.HashUtil;
 
 import java.io.File;
-import java.util.Random;
 import java.util.Set;
 
 public class GroupedAndNamedUniqueFileStore<K> implements FileStore<K>, FileStoreSearcher<K> {
 
-    private final Random generator = new Random(System.currentTimeMillis());
-
     private PathKeyFileStore delegate;
+    private final TemporaryFileProvider temporaryFileProvider;
     private final Transformer<String, K> grouper;
     private final Transformer<String, K> namer;
 
 
-    public GroupedAndNamedUniqueFileStore(PathKeyFileStore delegate, Transformer<String, K> grouper, Transformer<String, K> namer) {
+    public GroupedAndNamedUniqueFileStore(PathKeyFileStore delegate, TemporaryFileProvider temporaryFileProvider, Transformer<String, K> grouper, Transformer<String, K> namer) {
         this.delegate = delegate;
+        this.temporaryFileProvider = temporaryFileProvider;
         this.grouper = grouper;
         this.namer = namer;
     }
@@ -62,9 +62,7 @@ public class GroupedAndNamedUniqueFileStore<K> implements FileStore<K>, FileStor
     }
 
     public File getTempFile() {
-        long tempLong = generator.nextLong();
-        tempLong = tempLong < 0 ? -tempLong : tempLong;
-        return new File(delegate.getBaseDir(), "temp/" + tempLong);
+        return temporaryFileProvider.createTemporaryFile("filestore", "bin");
     }
 
     public void moveFilestore(File destination) {
@@ -77,7 +75,6 @@ public class GroupedAndNamedUniqueFileStore<K> implements FileStore<K>, FileStor
         final File tempFile = getTempFile();
         addAction.execute(tempFile);
         final String groupedAndNamedKey = toPath(key, getChecksum(tempFile));
-        final FileStoreEntry fileStoreEntry = delegate.move(groupedAndNamedKey, tempFile);
-        return fileStoreEntry;
+        return delegate.move(groupedAndNamedKey, tempFile);
     }
 }

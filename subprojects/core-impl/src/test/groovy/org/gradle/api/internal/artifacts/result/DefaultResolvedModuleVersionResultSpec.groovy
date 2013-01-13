@@ -16,12 +16,9 @@
 
 package org.gradle.api.internal.artifacts.result
 
-import org.gradle.api.artifacts.result.ModuleVersionSelectionReason
 import spock.lang.Specification
 
-import static org.gradle.api.internal.artifacts.DefaultModuleVersionIdentifier.newId
-import static org.gradle.api.internal.artifacts.DefaultModuleVersionSelector.newSelector
-import static org.gradle.util.Matchers.strictlyEqual
+import static org.gradle.api.internal.artifacts.result.ResolutionResultDataBuilder.*
 
 /**
  * Created: 10/08/2012
@@ -29,94 +26,42 @@ import static org.gradle.util.Matchers.strictlyEqual
  */
 class DefaultResolvedModuleVersionResultSpec extends Specification {
 
-    def "equals"() {
-        def module = newModule("group", "module", "version")
-        def same = newModule("group", "module", "version")
-
-        def differentGroup = newModule("other", "module", "version")
-        def differentModule = newModule("group", "other", "version")
-        def differentVersion = newModule("group", "module", "other")
-        def differentReason = newModule("group", "module", "version", ModuleVersionSelectionReason.conflictResolution)
-
-        expect:
-        module strictlyEqual(same)
-        module strictlyEqual(differentReason)
-
-        module != differentGroup
-        module != differentModule
-        module != differentVersion
-    }
-
-    def "equals does not consider dependencies and dependents"() {
-        def result = newModule("group", "module", "version")
-        def differentDeps = newModule("group", "module", "version")
-                .addDependency(newDependency())
-        def differentDependents = newModule("group", "module", "version")
-                .addDependent(newDependency())
-
-        expect:
-        result == differentDeps
-        result == differentDependents
-    }
-
-    def "equals and hashcode do not recurse forever"() {
-        given: "simple dependency A->B"
-        def depA = newDependency("a", "A", "1")
-        def moduleA = depA.selected
-
-        def depB = newDependency("a", "B", "1")
-        def moduleB = depB.selected
-
-        when:
-        moduleA.addDependency(depB)
-        moduleB.addDependent(depA)
-
-        then:
-        moduleA.hashCode()
-        !moduleA.equals(moduleB)
-    }
-
-    def "mutating dependencies is harmless"() {
+    def "mutating dependencies or dependents is harmless"() {
         given:
         def module = newModule("a", "c", "1")
-        def dependency = newDependency("a", "x", "1")
+        def dependency  = newDependency("a", "x", "1")
+        def dependent   = newDependency("a", "x2", "1")
 
         when:
         module.addDependency(dependency)
+        module.addDependent(dependent)
 
         then:
         module.dependencies == [dependency] as Set
+        module.dependents   == [dependent] as Set
 
         when:
         module.dependencies << newDependency("a", "y", "1")
-
         then:
-        module.dependencies == [dependency] as Set
+        thrown(UnsupportedOperationException)
+
+        when:
+        module.dependents <<   newDependency("a", "y2", "1")
+        then:
+        thrown(UnsupportedOperationException)
     }
 
-    def "excludes unresolved dependencies"() {
+    def "includes unresolved dependencies"() {
         given:
         def module = newModule()
         def dependency = newDependency()
-        def unresolved = newUnresolved()
+        def unresolved = newUnresolvedDependency()
 
         when:
         module.addDependency(dependency)
         module.addDependency(unresolved)
 
         then:
-        module.dependencies == [dependency] as Set
-    }
-
-    def newDependency(String group='a', String module='a', String version='1') {
-        new DefaultResolvedDependencyResult(newSelector(group, module, version), newModule(group, module, version), newModule())
-    }
-
-    def newUnresolved(String group='x', String module='x', String version='1') {
-        new DefaultUnresolvedDependencyResult(newSelector(group, module, version), new RuntimeException("boo!"), newModule())
-    }
-
-    def newModule(String group='a', String module='a', String version='1', ModuleVersionSelectionReason selectionReason = ModuleVersionSelectionReason.requested) {
-        new DefaultResolvedModuleVersionResult(newId(group, module, version), selectionReason)
+        module.dependencies == [dependency, unresolved] as Set
     }
 }

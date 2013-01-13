@@ -63,7 +63,7 @@ task determineCommitId {
 
                     standardOutput = baos
                 }
-                if (execResult == 0) {
+                if (execResult.exitValue == 0) {
                     new String(baos.toByteArray(), "utf8").trim()
                 } else {
                     // Read commit id directly from filesystem
@@ -109,6 +109,9 @@ task createBuildReceipt(dependsOn: determineCommitId) {
         def data = [
                 commitId:  determineCommitId.commitId,
                 versionNumber: version,
+                versionBase: versionBase,
+                isSnapshot: isSnapshot,
+                rcNumber: rcNumber == null ? "" : rcNumber,
                 buildTimestamp: buildTimestamp,
                 username: System.properties["user.name"],
                 hostname: hostName,

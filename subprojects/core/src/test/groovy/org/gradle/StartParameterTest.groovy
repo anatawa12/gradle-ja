@@ -17,10 +17,11 @@
 package org.gradle
 
 import org.gradle.api.logging.LogLevel
+import org.gradle.test.fixtures.file.TestNameTestDirectoryProvider
 import org.gradle.util.SetSystemProperties
-import org.gradle.util.TemporaryFolder
 import org.junit.Rule
 import org.junit.Test
+
 import static org.gradle.util.Matchers.*
 import static org.hamcrest.Matchers.*
 import static org.junit.Assert.*
@@ -30,7 +31,7 @@ import static org.junit.Assert.*
  */
 class StartParameterTest {
     @Rule
-    public TemporaryFolder tmpDir = new TemporaryFolder();
+    public TestNameTestDirectoryProvider tmpDir = new TestNameTestDirectoryProvider();
     @Rule
     public SetSystemProperties systemProperties = new SetSystemProperties()
 
@@ -228,5 +229,30 @@ class StartParameterTest {
         assert p(b: "2") == [a: "1", b: "2"]
         assert p(a: "2", b: "3") == [a: "2", b: "3"]
         assert p() == [a: "1"]
+    }
+
+    @Test
+    public void testGetAllInitScripts() {
+        def gradleUserHomeDir = tmpDir.testDirectory.createDir("gradleUserHomeDie")
+        def gradleHomeDir = tmpDir.testDirectory.createDir("gradleHomeDir")
+        StartParameter parameter = new StartParameter()
+
+        parameter.gradleUserHomeDir = gradleUserHomeDir
+        parameter.gradleHomeDir = gradleHomeDir
+
+        assert parameter.allInitScripts.empty
+
+        def userMainInit = gradleUserHomeDir.createFile("init.gradle")
+        assert parameter.allInitScripts == [userMainInit]
+
+        def userInit1 = gradleUserHomeDir.createFile("init.d/1.gradle")
+        def userInit2 = gradleUserHomeDir.createFile("init.d/2.gradle")
+
+        assert parameter.allInitScripts == [userMainInit, userInit1, userInit2]
+
+        def distroInit1 = gradleHomeDir.createFile("init.d/1.gradle")
+        def distroInit2 = gradleHomeDir.createFile("init.d/2.gradle")
+
+        assert parameter.allInitScripts == [userMainInit, userInit1, userInit2, distroInit1, distroInit2]
     }
 }

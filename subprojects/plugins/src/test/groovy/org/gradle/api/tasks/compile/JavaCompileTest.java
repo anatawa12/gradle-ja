@@ -17,11 +17,12 @@
 package org.gradle.api.tasks.compile;
 
 import org.gradle.api.internal.ConventionTask;
-import org.gradle.api.internal.tasks.compile.*;
+import org.gradle.api.internal.tasks.compile.Compiler;
+import org.gradle.api.internal.tasks.compile.JavaCompileSpec;
 import org.gradle.api.tasks.WorkResult;
 import org.gradle.util.GFileUtils;
 import org.gradle.util.JUnit4GroovyMockery;
-import org.hamcrest.core.IsNull;
+import org.hamcrest.Matchers;
 import org.jmock.Expectations;
 import org.jmock.Mockery;
 import org.junit.Before;
@@ -32,7 +33,6 @@ import java.io.File;
 
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
-import org.gradle.api.internal.tasks.compile.Compiler;
 
 /**
  * @author Hans Dockter
@@ -45,8 +45,8 @@ public class JavaCompileTest extends AbstractCompileTest {
 
     private Mockery context = new JUnit4GroovyMockery();
 
-    @Before public void setUp()  {
-        super.setUp();
+    @Before
+    public void setUp()  {
         compile = createTask(JavaCompile.class);
         compilerMock = context.mock(Compiler.class);
         compile.setJavaCompiler(compilerMock);
@@ -63,7 +63,7 @@ public class JavaCompileTest extends AbstractCompileTest {
         context.checking(new Expectations() {{
             WorkResult result = context.mock(WorkResult.class);
 
-            one(compilerMock).execute(with(IsNull.<JavaCompileSpec>notNullValue()));
+            one(compilerMock).execute((JavaCompileSpec) with(Matchers.notNullValue()));
             will(returnValue(result));
             allowing(result).getDidWork();
             will(returnValue(numFilesCompiled > 0));

@@ -17,65 +17,39 @@
 package org.gradle.api.internal.artifacts.result;
 
 import org.gradle.api.artifacts.ModuleVersionSelector;
+import org.gradle.api.artifacts.result.ModuleVersionSelectionReason;
+import org.gradle.api.artifacts.result.ResolvedModuleVersionResult;
 import org.gradle.api.artifacts.result.UnresolvedDependencyResult;
+import org.gradle.api.internal.artifacts.ivyservice.ModuleVersionResolveException;
 
 /**
  * by Szczepan Faber, created at: 7/26/12
  */
-public class DefaultUnresolvedDependencyResult implements UnresolvedDependencyResult {
+public class DefaultUnresolvedDependencyResult extends AbstractDependencyResult implements UnresolvedDependencyResult {
+    private final ModuleVersionSelectionReason reason;
+    private final ModuleVersionResolveException failure;
 
-    private final ModuleVersionSelector requested;
-    private final Exception failure;
-    private final DefaultResolvedModuleVersionResult from;
-
-    public DefaultUnresolvedDependencyResult(ModuleVersionSelector requested, Exception failure, DefaultResolvedModuleVersionResult from) {
-        assert requested != null;
-        assert failure != null;
-        assert from != null;
-
-        this.from = from;
+    public DefaultUnresolvedDependencyResult(ModuleVersionSelector requested, ModuleVersionSelectionReason reason,
+                                             ResolvedModuleVersionResult from, ModuleVersionResolveException failure) {
+        super(requested, from);
+        this.reason = reason;
         this.failure = failure;
-        this.requested = requested;
     }
 
-    public ModuleVersionSelector getRequested() {
-        return requested;
+    public ModuleVersionResolveException getFailure() {
+        return failure;
     }
 
-    public DefaultResolvedModuleVersionResult getFrom() {
-        return from;
+    public ModuleVersionSelector getAttempted() {
+        return failure.getSelector();
+    }
+
+    public ModuleVersionSelectionReason getAttemptedReason() {
+        return reason;
     }
 
     @Override
     public String toString() {
-        return requested.getGroup() + ":" + requested.getName() + ":" + requested.getVersion() + " - " + failure.getMessage();
-    }
-
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) {
-            return true;
-        }
-        if (!(o instanceof DefaultUnresolvedDependencyResult)) {
-            return false;
-        }
-
-        DefaultUnresolvedDependencyResult that = (DefaultUnresolvedDependencyResult) o;
-
-        if (!from.equals(that.from)) {
-            return false;
-        }
-        if (!requested.equals(that.requested)) {
-            return false;
-        }
-
-        return true;
-    }
-
-    @Override
-    public int hashCode() {
-        int result = requested.hashCode();
-        result = 31 * result + from.hashCode();
-        return result;
+        return String.format("%s -> %s - %s", getRequested(), getAttempted(), failure.getMessage());
     }
 }

@@ -27,17 +27,12 @@ import org.gradle.util.JUnit4GroovyMockery;
 import org.hamcrest.core.IsNull;
 import org.jmock.Expectations;
 import org.jmock.integration.junit4.JUnit4Mockery;
-import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
 import java.io.File;
-import java.util.Collections;
-import java.util.LinkedHashSet;
-import java.util.List;
 
-import static org.gradle.util.WrapUtil.toList;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
@@ -46,7 +41,6 @@ import static org.junit.Assert.assertTrue;
  */
 @RunWith(org.jmock.integration.junit4.JMock.class)
 public class GroovyCompileTest extends AbstractCompileTest {
-    static final List<File> TEST_GROOVY_CLASSPATH = toList(new File("groovy.jar"));
 
     private GroovyCompile testObj;
 
@@ -60,7 +54,6 @@ public class GroovyCompileTest extends AbstractCompileTest {
 
     @Before
     public void setUp() {
-        super.setUp();
         testObj = createTask(GroovyCompile.class);
         groovyCompilerMock = context.mock(Compiler.class);
         testObj.setCompiler(groovyCompilerMock);
@@ -73,11 +66,11 @@ public class GroovyCompileTest extends AbstractCompileTest {
     }
 
     public void testExecute(final int numFilesCompiled) {
-        setUpMocksAndAttributes(testObj, TEST_GROOVY_CLASSPATH);
+        setUpMocksAndAttributes(testObj, false);
         context.checking(new Expectations(){{
             WorkResult result = context.mock(WorkResult.class);
 
-            one(groovyCompilerMock).execute(with(IsNull.<GroovyJavaJointCompileSpec>notNullValue()));
+            one(groovyCompilerMock).execute((GroovyJavaJointCompileSpec) with(IsNull.notNullValue()));
             will(returnValue(result));
             allowing(result).getDidWork();
             will(returnValue(numFilesCompiled > 0));
@@ -98,24 +91,19 @@ public class GroovyCompileTest extends AbstractCompileTest {
         assertFalse(testObj.getDidWork());
     }
 
-    @Test
-    public void testExecuteWithEmptyGroovyClasspath() {
-        setUpMocksAndAttributes(testObj, Collections.<File>emptyList());
-        try {
-            testObj.compile();
-        } catch (InvalidUserDataException e) {
-            return;
-        }
-        Assert.fail();
+    @Test(expected = InvalidUserDataException.class)
+    public void testMoansIfGroovyClasspathIsEmpty() {
+        setUpMocksAndAttributes(testObj, true);
+        testObj.compile();
     }
 
-    void setUpMocksAndAttributes(GroovyCompile compile, final List<File> groovyClasspath) {
+    void setUpMocksAndAttributes(GroovyCompile compile, final boolean groovyClasspathEmpty) {
         super.setUpMocksAndAttributes(compile);
 
         final FileCollection groovyClasspathCollection = context.mock(FileCollection.class);
         context.checking(new Expectations(){{
-            allowing(groovyClasspathCollection).getFiles();
-            will(returnValue(new LinkedHashSet<File>(groovyClasspath)));
+            allowing(groovyClasspathCollection).isEmpty();
+            will(returnValue(groovyClasspathEmpty));
         }});
 
         compile.setGroovyClasspath(groovyClasspathCollection);

@@ -47,8 +47,10 @@
             <varlistentry>
                 <term>設定<phrase role="original">Configuration</phrase></term>
                 <listitem>
-                    <para role="original">The build scripts of <emphasis>all</emphasis> projects which are part of the build are
-                        executed. This configures the project objects.
+                    <para>During this phase the project objects are configured.
+                        The build scripts of <emphasis>all</emphasis> projects which are part of the build are
+                        executed. Gradle 1.4 introduces an incubating opt-in feature called 'configuration on demand'.
+                        In this mode, Gradle configures only relevant projects (see <xref linkend="sec:configuration_on_demand"/>).
                     </para>
                     <para>ビルドに参加している<emphasis>すべて</emphasis>のプロジェクトのビルドスクリプトを実行します。初期化フェーズで生成したProjectインスタンスは、このフェーズでビルドスクリプトの記述通りに設定されるのです。</para>
                 </listitem>

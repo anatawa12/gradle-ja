@@ -17,11 +17,10 @@
 package org.gradle.launcher.daemon.registry
 
 import org.gradle.internal.nativeplatform.ProcessEnvironment
-import org.gradle.internal.nativeplatform.services.NativeServices
 import org.gradle.launcher.daemon.context.DaemonContext
 import org.gradle.launcher.daemon.context.DaemonContextBuilder
 import org.gradle.messaging.remote.Address
-import org.gradle.util.TemporaryFolder
+import org.gradle.test.fixtures.file.TestNameTestDirectoryProvider
 import org.junit.Rule
 import spock.lang.Specification
 
@@ -30,7 +29,7 @@ import static org.gradle.cache.internal.DefaultFileLockManagerTestHelper.unlockU
 
 class PersistentDaemonRegistryTest extends Specification {
 
-    @Rule TemporaryFolder tmp
+    @Rule TestNameTestDirectoryProvider tmp
     
     int addressCounter = 0
     def lockManager = createDefaultFileLockManager()
@@ -70,9 +69,21 @@ class PersistentDaemonRegistryTest extends Specification {
         and: //it is safe to remove it again
         registry.remove(address)
     }
+
+    def "safely removes if registry empty"() {
+        given:
+        def registry = new PersistentDaemonRegistry(tmp.file("registry"), lockManager)
+        def address = address()
+
+        when:
+        registry.remove(address)
+
+        then:
+        registry.all.empty
+    }
     
     DaemonContext daemonContext() {
-        new DaemonContextBuilder(new NativeServices().get(ProcessEnvironment)).with {
+        new DaemonContextBuilder([maybeGetPid: {null}] as ProcessEnvironment).with {
             daemonRegistryDir = tmp.createDir("daemons")
             create()
         }

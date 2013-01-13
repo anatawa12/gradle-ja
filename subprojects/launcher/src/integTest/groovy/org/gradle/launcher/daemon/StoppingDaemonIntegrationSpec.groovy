@@ -17,7 +17,7 @@
 package org.gradle.launcher.daemon
 
 import org.gradle.launcher.daemon.logging.DaemonMessages
-import org.gradle.tests.fixtures.ConcurrentTestUtil
+import org.gradle.test.fixtures.ConcurrentTestUtil
 import org.gradle.util.TextUtil
 /**
  * by Szczepan Faber, created at: 1/20/12
@@ -25,15 +25,14 @@ import org.gradle.util.TextUtil
 class StoppingDaemonIntegrationSpec extends DaemonIntegrationSpec {
     def "can handle multiple concurrent stop requests"() {
         given:
-        def projectDir = distribution.testDir
-        projectDir.file('build.gradle') << '''
+        file('build.gradle') << '''
 file('marker.txt') << 'waiting'
 Thread.sleep(60000)
 '''
 
         when:
         def build = executer.start()
-        ConcurrentTestUtil.poll(20) { assert projectDir.file('marker.txt').file }
+        ConcurrentTestUtil.poll(20) { assert file('marker.txt').file }
 
         def stopExecutions = []
         5.times { idx ->

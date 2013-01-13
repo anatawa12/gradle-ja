@@ -31,6 +31,7 @@ import org.gradle.api.internal.project.ProjectInternal;
 import org.gradle.api.internal.project.ServiceRegistryFactory;
 import org.gradle.api.invocation.Gradle;
 import org.gradle.execution.TaskGraphExecuter;
+import org.gradle.listener.ClosureBackedMethodInvocationDispatch;
 import org.gradle.listener.ListenerBroadcast;
 import org.gradle.listener.ListenerManager;
 import org.gradle.util.GradleVersion;
@@ -146,7 +147,7 @@ public class DefaultGradleTest {
     public void broadcastsBeforeProjectEvaluateEventsToClosures() {
         final Closure closure = HelperUtil.TEST_CLOSURE;
         context.checking(new Expectations() {{
-            one(projectEvaluationListenerBroadcast).add("beforeEvaluate", closure);
+            one(projectEvaluationListenerBroadcast).add(new ClosureBackedMethodInvocationDispatch("beforeEvaluate", closure));
         }});
 
         gradle.beforeProject(closure);
@@ -156,7 +157,7 @@ public class DefaultGradleTest {
     public void broadcastsAfterProjectEvaluateEventsToClosures() {
         final Closure closure = HelperUtil.TEST_CLOSURE;
         context.checking(new Expectations() {{
-            one(projectEvaluationListenerBroadcast).add("afterEvaluate", closure);
+            one(projectEvaluationListenerBroadcast).add(new ClosureBackedMethodInvocationDispatch("afterEvaluate", closure));
         }});
 
         gradle.afterProject(closure);

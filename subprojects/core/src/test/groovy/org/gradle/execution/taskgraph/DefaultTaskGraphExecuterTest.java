@@ -16,6 +16,7 @@
 
 package org.gradle.execution.taskgraph;
 
+import groovy.lang.Closure;
 import org.gradle.api.CircularReferenceException;
 import org.gradle.api.Task;
 import org.gradle.api.execution.TaskExecutionGraphListener;
@@ -375,7 +376,8 @@ public class DefaultTaskGraphExecuterTest {
         final Task a = task("a");
         final Task b = task("b");
 
-        taskExecuter.beforeTask(toClosure(runnable));
+        final Closure closure = toClosure(runnable);
+        taskExecuter.beforeTask(closure);
 
         taskExecuter.addTasks(toList(a, b));
 

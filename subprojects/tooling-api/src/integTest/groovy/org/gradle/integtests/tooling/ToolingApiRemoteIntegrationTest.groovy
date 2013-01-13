@@ -17,19 +17,19 @@
 package org.gradle.integtests.tooling
 
 import org.gradle.integtests.fixtures.AbstractIntegrationSpec
-import org.gradle.integtests.fixtures.HttpServer
 import org.gradle.integtests.tooling.fixture.ToolingApi
+import org.gradle.test.fixtures.server.http.HttpServer
 import org.gradle.tooling.BuildLauncher
 import org.gradle.util.GradleVersion
 import org.junit.Rule
 
-import static org.gradle.integtests.fixtures.UserAgentMatcher.matchesNameAndVersion
+import static org.gradle.test.matchers.UserAgentMatcher.matchesNameAndVersion
 import static org.hamcrest.Matchers.containsString
 import static org.junit.Assert.assertThat
 
 class ToolingApiRemoteIntegrationTest extends AbstractIntegrationSpec {
     @Rule HttpServer server = new HttpServer()
-    final ToolingApi toolingApi = new ToolingApi(distribution, distribution.userHomeDir, { getTestDir() }, false)
+    final ToolingApi toolingApi = new ToolingApi(distribution, executer.gradleUserHomeDir, temporaryFolder, false)
 
     void setup() {
         server.start()
@@ -38,7 +38,7 @@ class ToolingApiRemoteIntegrationTest extends AbstractIntegrationSpec {
     }
 
     public void "downloads distribution with valid useragent information"() {
-        assert distribution.binDistribution.exists(): "bin distribution must exist to run this test, you need to run the :binZip task"
+        assert distribution.binDistribution.exists() : "bin distribution must exist to run this test, you need to run the :binZip task"
         expect:
         server.allowGetOrHead("/dist", distribution.binDistribution)
         server.expectUserAgent(matchesNameAndVersion("Gradle Tooling API", GradleVersion.current().getVersion()))

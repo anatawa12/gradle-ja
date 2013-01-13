@@ -17,9 +17,8 @@ package org.gradle.api.internal.artifacts.ivyservice.ivyresolve;
 
 import org.apache.ivy.core.module.descriptor.Artifact;
 import org.apache.ivy.core.module.descriptor.DependencyDescriptor;
+import org.gradle.api.internal.artifacts.ivyservice.BuildableArtifactResolveResult;
 import org.gradle.api.internal.artifacts.ivyservice.CacheLockingManager;
-import org.gradle.api.internal.artifacts.ivyservice.ModuleVersionResolveException;
-import org.gradle.internal.Factory;
 
 /**
  * A wrapper around a {@link ModuleVersionRepository} that handles locking/unlocking the cache.
@@ -45,18 +44,18 @@ public class CacheLockingModuleVersionRepository implements ModuleVersionReposit
         return repository.isLocal();
     }
 
-    public ModuleVersionDescriptor getDependency(final DependencyDescriptor dd) throws ModuleVersionResolveException {
-        return cacheLockingManager.longRunningOperation(String.format("Resolve %s using repository %s", dd, getId()), new Factory<ModuleVersionDescriptor>() {
-            public ModuleVersionDescriptor create() {
-                return repository.getDependency(dd);
+    public void getDependency(final DependencyDescriptor dependencyDescriptor, final BuildableModuleVersionDescriptor result) {
+        cacheLockingManager.longRunningOperation(String.format("Resolve %s using repository %s", dependencyDescriptor, getId()), new Runnable() {
+            public void run() {
+                repository.getDependency(dependencyDescriptor, result);
             }
         });
     }
 
-    public DownloadedArtifact download(final Artifact artifact) throws ArtifactResolveException {
-        return cacheLockingManager.longRunningOperation(String.format("Download %s using repository %s", artifact, getId()), new Factory<DownloadedArtifact>() {
-            public DownloadedArtifact create() {
-                return repository.download(artifact);
+    public void resolve(final Artifact artifact, final BuildableArtifactResolveResult result, final ModuleSource moduleSource) {
+        cacheLockingManager.longRunningOperation(String.format("Download %s using repository %s", artifact, getId()), new Runnable() {
+            public void run() {
+                repository.resolve(artifact, result, moduleSource);
             }
         });
     }

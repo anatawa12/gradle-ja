@@ -20,23 +20,23 @@ import org.gradle.api.Incubating;
 import org.gradle.api.artifacts.ModuleVersionSelector;
 
 /**
- * Represents the dependency result. An edge in the dependency graph. See also {@link ResolutionResult}.
+ * An edge in the dependency graph. Provides information about the origin of the dependency and the requested module version.
+ *
+ * @see ResolutionResult
  */
 @Incubating
 public interface DependencyResult {
-
     /**
      * Returns the requested module version.
      *
-     * @return requested module version
+     * @return the requested module version
      */
     ModuleVersionSelector getRequested();
 
     /**
-     * Returns the resolved dependent module version result that
-     * lists this dependency result as a dependency.
+     * Returns the origin of the dependency.
      *
-     * @return dependent resolved module version result
+     * @return the origin of the dependency
      */
     ResolvedModuleVersionResult getFrom();
 }

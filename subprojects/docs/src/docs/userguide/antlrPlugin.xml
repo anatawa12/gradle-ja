@@ -1,4 +1,4 @@
-<!--
+﻿<!--
   ~ Copyright 2010 the original author or authors.
   ~
   ~ Licensed under the Apache License, Version 2.0 (the "License");
@@ -14,28 +14,28 @@
   ~ limitations under the License.
   -->
 
-<chapter id="antlr_plugin"  xml:lang="ja">
-    <title>Antlrプラグイン <phrase role="original">The Antlr Plugin</phrase></title>
+<chapter id="antlr_plugin" xml:lang="ja">
+    <title>ANTLRプラグイン <phrase role="original">The ANTLR Plugin</phrase></title>
 
-    <para role="original">The Antlr plugin extends the Java plugin to add support for generating parsers using <ulink url="http://www.antlr.org/">Antlr</ulink>.</para>
-    <para>AntlrプラグインはJavaプラグインを拡張して、<ulink url="http://www.antlr.org/">Antlr</ulink>を利用したパーサーの生成に対するサポートを追加します。</para>
+    <para role="original">The ANTLR plugin extends the Java plugin to add support for generating parsers using <ulink url="http://www.antlr.org/">ANTLR</ulink>.</para>
+    <para>ANTLRプラグインはJavaプラグインを拡張して、<ulink url="http://www.antlr.org/">ANTLR</ulink>を利用したパーサーの生成に対するサポートを追加します。</para>
 
     <section>
         <title>使用方法 <phrase role="original">Usage</phrase></title>
-        <para role="original">To use the Antlr plugin, include in your build script:</para>
-        <para>Antlrプラグインを使うには、ビルドスクリプトに以下を含めます:</para>
-        <sample id="useAntlrPlugin" dir="antlr" title="Antlrプラグインの利用 / Using the Antlr plugin">
+        <para role="original">To use the ANTLR plugin, include in your build script:</para>
+        <para>ANTLRプラグインを使うには、ビルドスクリプトに以下を含めます:</para>
+        <sample id="useAntlrPlugin" dir="antlr" title="ANTLRプラグインの利用 / Using the ANTLR plugin">
             <sourcefile file="build.gradle" snippet="use-plugin"/>
         </sample>
     </section>
 
     <section>
         <title>タスク <phrase role="original">Tasks</phrase></title>
-        <para role="original">The Antlr plugin adds a number of tasks to your project, as shown below.</para>
-        <para>Antlrプラグインは以下に示すいくつかのタスクをプロジェクトに追加します。</para>
+        <para role="original">The ANTLR plugin adds a number of tasks to your project, as shown below.</para>
+        <para>ANTLRプラグインは以下に示すいくつかのタスクをプロジェクトに追加します。</para>
 
         <table>
-            <title>Antlr plugin - タスク <phrase role="original">Antlr plugin - tasks</phrase></title>
+            <title>ANTLR plugin - タスク <phrase role="original">ANTLR plugin - tasks</phrase></title>
             <thead>
                 <tr>
                     <td>タスク名 <phrase role="original">Task name</phrase></td>
@@ -50,8 +50,8 @@
                 </td>
                 <td>-</td>
                 <td><apilink class="org.gradle.api.plugins.antlr.AntlrTask"/></td>
-                <td>すべてのプロダクションAntlrグラマーに対するソースファイルを生成。
-                  <phrase role="original">Generates the source files for all production Antlr grammars.</phrase></td>
+                <td>すべてのプロダクションANTLRグラマーに対するソースファイルを生成。
+                  <phrase role="original">Generates the source files for all production ANTLR grammars.</phrase></td>
             </tr>
             <tr>
                 <td>
@@ -59,8 +59,8 @@
                 </td>
                 <td>-</td>
                 <td><apilink class="org.gradle.api.plugins.antlr.AntlrTask"/></td>
-                <td>すべてのテストAntlrグラマーに対するソースファイルを生成。
-                  <phrase role="original">Generates the source files for all test Antlr grammars.</phrase></td>
+                <td>すべてのテストANTLRグラマーに対するソースファイルを生成。
+                  <phrase role="original">Generates the source files for all test ANTLR grammars.</phrase></td>
             </tr>
             <tr>
                 <td>
@@ -68,14 +68,14 @@
                 </td>
                 <td>-</td>
                 <td><apilink class="org.gradle.api.plugins.antlr.AntlrTask"/></td>
-                <td>指定されたソースセットですべてのAntlrグラマーに対するソースファイルを生成。
-                  <phrase role="original">Generates the source files for all Antlr grammars for the given source set.</phrase></td>
+                <td>指定されたソースセットですべてのANTLRグラマーに対するソースファイルを生成。
+                  <phrase role="original">Generates the source files for all ANTLR grammars for the given source set.</phrase></td>
             </tr>
         </table>
-        <para role="original">The Antlr plugin adds the following dependencies to tasks added by the Java plugin.</para>
-        <para>AntlrプラグインはJavaプラグインによって追加されたタスクに以下の依存関係を追加します。</para>
+        <para role="original">The ANTLR plugin adds the following dependencies to tasks added by the Java plugin.</para>
+        <para>ANTLRプラグインはJavaプラグインによって追加されたタスクに以下の依存関係を追加します。</para>
         <table>
-            <title>Antlr plugin - 追加のタスク依存関係 <phrase role="original">Antlr plugin - additional task dependencies</phrase></title>
+            <title>ANTLR plugin - 追加のタスク依存関係 <phrase role="original">ANTLR plugin - additional task dependencies</phrase></title>
             <thead>
                 <td>タスク名 <phrase role="original">Task name</phrase></td>
                 <td>依存先 <phrase role="original">Depends on</phrase></td>
@@ -98,7 +98,7 @@
     <section>
         <title>プロジェクトレイアウト <phrase role="original">Project layout</phrase></title>
         <table>
-            <title>Antlrプラグイン - プロジェクトレイアウト <phrase role="original">Antlr plugin - project layout</phrase></title>
+            <title>ANTLRプラグイン - プロジェクトレイアウト <phrase role="original">ANTLR plugin - project layout</phrase></title>
             <thead>
                 <tr>
                     <td>ディレクトリ <phrase role="original">Directory</phrase></td>
@@ -109,46 +109,46 @@
                 <td>
                     <filename>src/main/antlr</filename>
                 </td>
-                <td>プロダクションAntlrグラマーファイル <phrase role="original">Production Antlr grammar files.</phrase></td>
+                <td>プロダクションANTLRグラマーファイル <phrase role="original">Production ANTLR grammar files.</phrase></td>
             </tr>
             <tr>
                 <td>
                     <filename>src/test/antlr</filename>
                 </td>
-                <td>テストAntlrグラマーファイル <phrase role="original">Test Antlr grammar files.</phrase></td>
+                <td>テストANTLRグラマーファイル <phrase role="original">Test ANTLR grammar files.</phrase></td>
             </tr>
             <tr>
                 <td>
                     <filename>src/<replaceable>sourceSet</replaceable>/antlr</filename>
                 </td>
-                <td>指定されたソースセットに対するAntlrグラマーファイル <phrase role="original">Antlr grammar files for the given source set.</phrase></td>
+                <td>指定されたソースセットに対するANTLRグラマーファイル <phrase role="original">ANTLR grammar files for the given source set.</phrase></td>
             </tr>
         </table>
     </section>
 
     <section>
         <title>依存関係管理 <phrase role="original">Dependency management</phrase></title>
-        <para role="original">The Antlr plugin adds an <literal>antlr</literal> dependency configuration. You use this to declare the
-            version of Antlr you wish to use.</para>
-        <para>Antlrプラグインは依存性コンフィグレーション<literal>antlr</literal>を追加します。
-            これは利用したいAntlrのバージョンを宣言するのに使えます。</para>
-        <sample id="declareAntlrVersion" dir="antlr" title="Antlrバージョン宣言 / Declare Antlr version">
+        <para role="original">The ANTLR plugin adds an <literal>antlr</literal> dependency configuration. You use this to declare the
+            ANTLR dependency that you wish to use.</para>
+        <para>ANTLRプラグインは依存性コンフィグレーション<literal>antlr</literal>を追加します。
+            これは利用したいANTLRのバージョンを宣言するのに使えます。</para>
+        <sample id="declareAntlrVersion" dir="antlr" title="ANTLRバージョン宣言 / Declare ANTLR version">
             <sourcefile file="build.gradle" snippet="declare-dependency"/>
         </sample>
     </section>
 
     <section>
         <title>規約プロパティ <phrase role="original">Convention properties</phrase></title>
-        <para role="original">The Antlr plugin does not add any convention properties.</para>
-        <para>Antlrプラグインはいかなる規約プロパティも追加しません。</para>
+        <para role="original">The ANTLR plugin does not add any convention properties.</para>
+        <para>ANTLRプラグインはいかなる規約プロパティも追加しません。</para>
     </section>
 
     <section>
         <title>ソースセットプロパティ <phrase role="original">Source set properties</phrase></title>
-        <para role="original">The Antlr plugin adds the following properties to each source set in the project.</para>
-        <para>Antlrプラグインはプロジェクトのソースセット毎に以下のプロパティを追加します。</para>
+        <para role="original">The ANTLR plugin adds the following properties to each source set in the project.</para>
+        <para>ANTLRプラグインはプロジェクトのソースセット毎に以下のプロパティを追加します。</para>
         <table>
-            <title>Antlrプラグイン - ソースセットプロパティ <phrase role="original">Antlr plugin - source set properties</phrase></title>
+            <title>ANTLRプラグイン - ソースセットプロパティ <phrase role="original">ANTLR plugin - source set properties</phrase></title>
             <thead>
                 <tr>
                     <td>プロパティ名 <phrase role="original">Property name</phrase></td>
@@ -168,9 +168,9 @@
                     Not null
                 </td>
                 <td>
-                    このソースセットのAntlrグラマーファイル。
-                    Antlrソースディレクトリにあるすべての <filename>.g</filename> を含み、それ以外のタイプのファイルをすべて除外。
-                    <phrase role="original">The Antlr grammar files of this source set. Contains all <filename>.g</filename> found in the Antlr
+                    このソースセットのANTLRグラマーファイル。
+                    ANTLRソースディレクトリにあるすべての <filename>.g</filename> を含み、それ以外のタイプのファイルをすべて除外。
+                    <phrase role="original">The ANTLR grammar files of this source set. Contains all <filename>.g</filename> found in the ANTLR
                     source directories, and excludes all other types of files.</phrase>
                 </td>
             </tr>
@@ -186,8 +186,8 @@
                     <literal>[<replaceable>projectDir</replaceable>/src/<replaceable>name</replaceable>/antlr]</literal>
                 </td>
                 <td>
-                    このソースセットのAntlrグラマーファイルを含むソースディレクトリ。
-                    <phrase role="original">The source directories containing the Antlr grammar files of this source set.</phrase>
+                    このソースセットのANTLRグラマーファイルを含むソースディレクトリ。
+                    <phrase role="original">The source directories containing the ANTLR grammar files of this source set.</phrase>
                 </td>
             </tr>
         </table>

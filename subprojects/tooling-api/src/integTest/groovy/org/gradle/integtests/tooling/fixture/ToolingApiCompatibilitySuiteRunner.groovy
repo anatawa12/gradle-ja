@@ -17,7 +17,7 @@ package org.gradle.integtests.tooling.fixture
 
 import org.gradle.integtests.fixtures.AbstractCompatibilityTestRunner
 import org.gradle.integtests.fixtures.AbstractMultiTestRunner
-import org.gradle.integtests.fixtures.BasicGradleDistribution
+import org.gradle.integtests.fixtures.executer.GradleDistribution
 import org.gradle.internal.os.OperatingSystem
 import org.gradle.util.*
 
@@ -47,34 +47,34 @@ class ToolingApiCompatibilitySuiteRunner extends AbstractCompatibilityTestRunner
     protected void createExecutions() {
         ToolingApiDistributionResolver resolver = new ToolingApiDistributionResolver().withDefaultRepository()
 
-        add(new Permutation(resolver.resolve(current.version), current))
+        add(new Permutation(resolver.resolve(current.version.version), current))
         previous.each {
             if (it.toolingApiSupported) {
-                add(new Permutation(resolver.resolve(current.version), it))
-                add(new Permutation(resolver.resolve(it.version), current))
+                add(new Permutation(resolver.resolve(current.version.version), it))
+                add(new Permutation(resolver.resolve(it.version.version), current))
             }
         }
     }
 
     private class Permutation extends AbstractMultiTestRunner.Execution {
         final ToolingApiDistribution toolingApi
-        final BasicGradleDistribution gradle
+        final GradleDistribution gradle
 
-        Permutation(ToolingApiDistribution toolingApi, BasicGradleDistribution gradle) {
+        Permutation(ToolingApiDistribution toolingApi, GradleDistribution gradle) {
             this.toolingApi = toolingApi
             this.gradle = gradle
         }
 
         @Override
         protected String getDisplayName() {
-            return "${displayName(toolingApi)} -> ${displayName(gradle)}"
+            return "${displayName(GradleVersion.version(toolingApi.version))} -> ${displayName(gradle.version)}"
         }
 
-        private String displayName(dist) {
-            if (dist.version == GradleVersion.current().version) {
+        private String displayName(GradleVersion version) {
+            if (version == GradleVersion.current()) {
                 return "current"
             }
-            return dist.version
+            return version.version
         }
 
         @Override
@@ -94,11 +94,11 @@ class ToolingApiCompatibilitySuiteRunner extends AbstractCompatibilityTestRunner
                 return false
             }
             MinTargetGradleVersion minTargetGradleVersion = target.getAnnotation(MinTargetGradleVersion)
-            if (minTargetGradleVersion && GradleVersion.version(gradle.version) < extractVersion(minTargetGradleVersion)) {
+            if (minTargetGradleVersion && gradle.version < extractVersion(minTargetGradleVersion)) {
                 return false
             }
             MaxTargetGradleVersion maxTargetGradleVersion = target.getAnnotation(MaxTargetGradleVersion)
-            if (maxTargetGradleVersion && GradleVersion.version(gradle.version) > extractVersion(maxTargetGradleVersion)) {
+            if (maxTargetGradleVersion && gradle.version > extractVersion(maxTargetGradleVersion)) {
                 return false
             }
 
@@ -146,10 +146,9 @@ class ToolingApiCompatibilitySuiteRunner extends AbstractCompatibilityTestRunner
             sharedClassLoader.allowPackage('org.codehaus.groovy')
             sharedClassLoader.allowPackage('spock')
             sharedClassLoader.allowPackage('org.spockframework')
-            sharedClassLoader.allowClass(TestFile)
             sharedClassLoader.allowClass(SetSystemProperties)
             sharedClassLoader.allowPackage('org.gradle.integtests.fixtures')
-            sharedClassLoader.allowPackage('org.gradle.tests.fixtures')
+            sharedClassLoader.allowPackage('org.gradle.test.fixtures')
             sharedClassLoader.allowClass(OperatingSystem)
             sharedClassLoader.allowClass(Requires)
             sharedClassLoader.allowClass(TestPrecondition)

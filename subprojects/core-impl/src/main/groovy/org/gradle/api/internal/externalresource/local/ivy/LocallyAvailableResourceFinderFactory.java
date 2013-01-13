@@ -19,6 +19,9 @@ import org.apache.ivy.core.module.id.ArtifactRevisionId;
 import org.gradle.api.internal.artifacts.ivyservice.ArtifactCacheMetaData;
 import org.gradle.api.internal.artifacts.mvnsettings.CannotLocateLocalMavenRepositoryException;
 import org.gradle.api.internal.artifacts.mvnsettings.LocalMavenRepositoryLocator;
+import org.gradle.api.internal.artifacts.repositories.resolver.IvyResourcePattern;
+import org.gradle.api.internal.artifacts.repositories.resolver.M2ResourcePattern;
+import org.gradle.api.internal.artifacts.repositories.resolver.ResourcePattern;
 import org.gradle.api.internal.externalresource.local.*;
 import org.gradle.api.internal.filestore.FileStoreSearcher;
 import org.gradle.internal.Factory;
@@ -52,6 +55,9 @@ public class LocallyAvailableResourceFinderFactory implements Factory<LocallyAva
         // The current filestore
         finders.add(new LocallyAvailableResourceFinderSearchableFileStoreAdapter<ArtifactRevisionId>(fileStore));
 
+        // 1.3
+        addForPattern(finders, "artifacts-15", "filestore/[organisation]/[module](/[branch])/[revision]/[type]/*/[artifact]-[revision](-[classifier])(.[ext])");
+
         // 1.1, 1.2
         addForPattern(finders, "artifacts-14", "filestore/[organisation]/[module](/[branch])/[revision]/[type]/*/[artifact]-[revision](-[classifier])(.[ext])");
 
@@ -71,12 +77,11 @@ public class LocallyAvailableResourceFinderFactory implements Factory<LocallyAva
         // Milestone 3
         addForPattern(finders, "../cache", "[organisation]/[module](/[branch])/[type]s/[artifact]-[revision](-[classifier])(.[ext])");
 
-
         // Maven local
         try {
             File localMavenRepository = localMavenRepositoryLocator.getLocalMavenRepository();
             if (localMavenRepository.exists()) {
-                addForPattern(finders, localMavenRepository, "[organisation-path]/[module]/[revision]/[artifact]-[revision](-[classifier])(.[ext])");
+                addForPattern(finders, localMavenRepository, new M2ResourcePattern("[organisation]/[module]/[revision]/[artifact]-[revision](-[classifier])(.[ext])"));
             }
         } catch (CannotLocateLocalMavenRepositoryException ex) {
             finders.add(new NoMavenLocalRepositoryResourceFinder(ex));
@@ -85,10 +90,10 @@ public class LocallyAvailableResourceFinderFactory implements Factory<LocallyAva
     }
 
     private void addForPattern(List<LocallyAvailableResourceFinder<ArtifactRevisionId>> finders, String path, String pattern) {
-        addForPattern(finders, new File(rootCachesDirectory, path), pattern);
+        addForPattern(finders, new File(rootCachesDirectory, path), new IvyResourcePattern(pattern));
     }
 
-    private void addForPattern(List<LocallyAvailableResourceFinder<ArtifactRevisionId>> finders, File baseDir, String pattern) {
+    private void addForPattern(List<LocallyAvailableResourceFinder<ArtifactRevisionId>> finders, File baseDir, ResourcePattern pattern) {
         if (baseDir.exists()) {
             finders.add(new PatternBasedLocallyAvailableResourceFinder(baseDir, pattern));
         }

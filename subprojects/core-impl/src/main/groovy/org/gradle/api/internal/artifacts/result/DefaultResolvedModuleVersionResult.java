@@ -21,23 +21,23 @@ import org.gradle.api.artifacts.result.DependencyResult;
 import org.gradle.api.artifacts.result.ModuleVersionSelectionReason;
 import org.gradle.api.artifacts.result.ResolvedDependencyResult;
 import org.gradle.api.artifacts.result.ResolvedModuleVersionResult;
-import org.gradle.api.specs.Spec;
-import org.gradle.util.CollectionUtils;
+import org.gradle.api.internal.artifacts.ivyservice.resolveengine.result.VersionSelectionReasons;
 
+import java.util.Collections;
 import java.util.LinkedHashSet;
 import java.util.Set;
 
 /**
-* by Szczepan Faber, created at: 8/10/12
-*/
+ * by Szczepan Faber, created at: 8/10/12
+ */
 public class DefaultResolvedModuleVersionResult implements ResolvedModuleVersionResult {
     private final ModuleVersionIdentifier id;
     private final Set<DependencyResult> dependencies = new LinkedHashSet<DependencyResult>();
-    private final Set<DefaultResolvedDependencyResult> dependents = new LinkedHashSet<DefaultResolvedDependencyResult>();
+    private final Set<ResolvedDependencyResult> dependents = new LinkedHashSet<ResolvedDependencyResult>();
     private final ModuleVersionSelectionReason selectionReason;
 
     public DefaultResolvedModuleVersionResult(ModuleVersionIdentifier id) {
-        this(id, ModuleVersionSelectionReason.requested);
+        this(id, VersionSelectionReasons.REQUESTED);
     }
 
     public DefaultResolvedModuleVersionResult(ModuleVersionIdentifier id, ModuleVersionSelectionReason selectionReason) {
@@ -52,16 +52,12 @@ public class DefaultResolvedModuleVersionResult implements ResolvedModuleVersion
         return id;
     }
 
-    public Set<ResolvedDependencyResult> getDependencies() {
-        return CollectionUtils.filter((Set) dependencies, new LinkedHashSet<ResolvedDependencyResult>(), new Spec<DependencyResult>() {
-            public boolean isSatisfiedBy(DependencyResult element) {
-                return element instanceof ResolvedDependencyResult;
-            }
-        });
+    public Set<DependencyResult> getDependencies() {
+        return Collections.unmodifiableSet(dependencies);
     }
 
-    public Set<DefaultResolvedDependencyResult> getDependents() {
-        return dependents;
+    public Set<ResolvedDependencyResult> getDependents() {
+        return Collections.unmodifiableSet(dependents);
     }
 
     public DefaultResolvedModuleVersionResult addDependency(DependencyResult dependency) {
@@ -69,38 +65,17 @@ public class DefaultResolvedModuleVersionResult implements ResolvedModuleVersion
         return this;
     }
 
-    public DefaultResolvedModuleVersionResult addDependent(DefaultResolvedDependencyResult dependent) {
+    public DefaultResolvedModuleVersionResult addDependent(ResolvedDependencyResult dependent) {
         this.dependents.add(dependent);
         return this;
     }
 
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) {
-            return true;
-        }
-        if (!(o instanceof ResolvedModuleVersionResult)) {
-            return false;
-        }
-
-        ResolvedModuleVersionResult that = (ResolvedModuleVersionResult) o;
-
-        return id.equals(that.getId());
-    }
-
-    //TODO SF find out if we can get rid of equals/hashcode on this and the dependency type.
-
-    @Override
-    public int hashCode() {
-        return id.hashCode();
+    public ModuleVersionSelectionReason getSelectionReason() {
+        return selectionReason;
     }
 
     @Override
     public String toString() {
         return id.getGroup() + ":" + id.getName() + ":" + id.getVersion();
-    }
-
-    public ModuleVersionSelectionReason getSelectionReason() {
-        return selectionReason;
     }
 }

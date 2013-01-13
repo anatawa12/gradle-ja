@@ -85,13 +85,12 @@ public class DefaultIvyDependencyPublisher implements IvyDependencyPublisher {
 
             boolean successfullyPublished = false;
             try {
-                boolean overwrite = true;
-                resolver.beginPublishTransaction(moduleDescriptor.getModuleRevisionId(), overwrite);
+                resolver.beginPublishTransaction(moduleDescriptor.getModuleRevisionId(), true);
                 // for each declared published artifact in this descriptor, do:
                 for (Map.Entry<Artifact, File> entry : artifactsFiles.entrySet()) {
                     Artifact artifact = entry.getKey();
                     File artifactFile = entry.getValue();
-                    publish(artifact, artifactFile, resolver, overwrite);
+                    publish(artifact, artifactFile, resolver, true);
                 }
                 resolver.commitPublishTransaction();
                 successfullyPublished = true;
@@ -120,9 +119,8 @@ public class DefaultIvyDependencyPublisher implements IvyDependencyPublisher {
                 if (isSigningArtifact(artifact)) {
                     return;
                 }
-                String message = String.format("Attempted to publish an artifact that does not exist. File '%s' for artifact %s does not exist.\n"
-                        + "Relying on this behaviour is deprecated: in a future release of Gradle this build will fail.", artifactFile, artifact.getModuleRevisionId());
-                DeprecationLogger.nagUserWith(message);
+                String message = String.format("Attempted to publish an artifact '%s' that does not exist '%s'", artifact.getModuleRevisionId(), artifactFile);
+                DeprecationLogger.nagUserOfDeprecatedBehaviour(message);
             }
         }
 
