@@ -62,7 +62,7 @@
             <td><link linkend="scala_plugin">Scala</link></td><td>Adds Scala support to <filename>.project</filename> and <filename>.classpath</filename> files.</td>
         </tr>
         <tr>
-            <td><link linkend="war_plugin">War</link></td><td>WEBアプリケーションのサポートを <filename>.project</filename> ファイルに追加します。
+            <td><link linkend="war_plugin">War</link></td><td>WEBアプリケーションのサポートを<filename>.project</filename>ファイルと<filename>.classpath</filename>ファイルに追加します。
             <literal>eclipse-wtp</literal> プラグインを適用している場合のみ WTP 設定ファイルを生成します。
             <phrase role="original">Adds web application support to <filename>.project</filename> file.
             Generates WTP settings files only if <literal>eclipse-wtp</literal> plugin was applied.</phrase></td>

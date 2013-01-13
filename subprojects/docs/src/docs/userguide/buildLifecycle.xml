@@ -52,8 +52,7 @@
                         executed. Gradle 1.4 introduces an incubating opt-in feature called 'configuration on demand'.
                         In this mode, Gradle configures only relevant projects (see <xref linkend="sec:configuration_on_demand"/>).
                     </para>
-                    <para>プロジェクトのオブジェクトが設定されるフェーズです。
-                        そのために、ビルドに参加している<emphasis>すべて</emphasis>のプロジェクトのビルドスクリプトが実行されます。
+                    <para>プロジェクトのオブジェクトが設定されるフェーズです。ビルドに参加している<emphasis>すべて</emphasis>のプロジェクトのビルドスクリプトが実行されます。
                         Gradle1.4では、試験的に「オンデマンド設定」という機能を選択できます。
                         オンデマンド設定モードでは、Gradleは全てのプロジェクトではなく、ビルドに関係するプロジェクトのみを設定します。
                     </para>
