@@ -121,7 +121,8 @@
                     <literal>jar</literal>, <literal>startScripts</literal>
                 </td>
                 <td><apilink class="org.gradle.api.tasks.bundling.Tar"/></td>
-                <td>Creates a full distribution TAR archive including runtime libraries and OS specific scripts.</td>
+                <td>実行ライブラリとOS依存スクリプトを含んだ完全なディストリビューションTARアーカイブを生成します。
+                    <phrase role="original">Creates a full distribution TAR archive including runtime libraries and OS specific scripts.</phrase></td>
             </tr>
         </table>
     </section>

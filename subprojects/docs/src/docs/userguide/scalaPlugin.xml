@@ -193,6 +193,7 @@
             If Scala is only used for test code, the <literal>scala-library</literal> dependency should be added to the <literal>testCompile</literal>
             (but not the <literal>compile</literal>)
             configuration:
+        </para>
         <sample id="declareScalaTestDependency" dir="userguide/scala/scalaDependency" title="Declaring a Scala dependency for test code">
             <sourcefile file="build.gradle" snippet="scala-test-dependency"/>
         </sample>

@@ -190,20 +190,26 @@
             </sample>
         </section>
         <section id="sec:dependency_insight">
-            <title>Getting the insight into a particular dependency</title>
-            <para id="para:commandline_dependency_insight_report">Running <userinput>gradle dependencyInsight</userinput>
+            <title>個別の依存関係に対する解析情報を取得する <phrase role="original">Getting the insight into a particular dependency</phrase></title>
+            <para id="para:commandline_dependency_insight_report" role="original">Running <userinput>gradle dependencyInsight</userinput>
                 gives you an insight into a particular dependency (or dependencies) that match specified input.
                 Below is an example of this report:
             </para>
-            <sample id="dependencyInsightReport" dir="userguide/tutorial/projectReports" title="Getting the insight into a particular dependency">
+            <para><userinput>gradle dependencyInsight</userinput>を実行すると、個別の、または複数の依存関係を指定して、それぞれに対する解析情報を取得することができます。以下がそのレポートの例です。
+            </para>
+            <sample id="dependencyInsightReport" dir="userguide/tutorial/projectReports" title="個別の依存関係に対する解析情報を取得する / Getting the insight into a particular dependency">
                 <output args="-q webapp:dependencyInsight --dependency groovy --configuration compile"/>
             </sample>
-            <para>
+            <para role="original">
                 This task is extremely useful for investigating the dependency resolution,
                 finding out where certain dependencies are coming from and why certain versions are selected.
                 For more information please see <apilink class="org.gradle.api.tasks.diagnostics.DependencyInsightReportTask"/>.
             </para>
             <para>
+                dependencyInsightは、依存関係がどのように解決されているか調査するときにとても便利なタスクです。ある依存関係がどこから来て、なぜそのバージョンが選択されているのか調べることができます。
+                詳細については、<apilink class="org.gradle.api.tasks.diagnostics.DependencyInsightReportTask"/>を参照してください。
+            </para>
+            <para role="original">
                 The built-in dependencyInsight task is a part of the 'Help' tasks group.
                 The task needs to configured with the dependency and the configuration.
                 The report looks for the dependencies that match the specified dependency spec in the specified configuration.
@@ -211,6 +217,15 @@
                 You should specify the dependency you are interested in via the command line '--dependency' option.
                 If you don't like the defaults you may select the configuration via '--configuration' option.
                 For more information see <apilink class="org.gradle.api.tasks.diagnostics.DependencyInsightReportTask"/>.
+            </para>
+            <para>
+                組み込みのdependencyInsightタスクは、Helpグループに属しています。
+                このタスクは、依存関係およびコンフィグレーションを指定しないと使用できません。
+                レポートが出力される際は、指定されたコンフィグレーションの指定された依存関係を探しに行きます。
+                Java関連のプラグインが適用されていれば、dependencyInsightタスクは既にcompileコンフィグレーションに対して設定されています。一般的に言って、よく調べたくなる依存関係はこのコンフィグレーションに属しているからです。
+                また、調査対象の依存関係を「--dependency」オプションで指定しなければなりません。
+                さらに、デフォルトのコンフィグレーションが気に入らないときは「--configuration」オプションで明示的にコンフィグレーションを指定します。
+                詳しくは<apilink class="org.gradle.api.tasks.diagnostics.DependencyInsightReportTask"/>を参照してください。
             </para>
         </section>
         <section id="sec:listing_properties">

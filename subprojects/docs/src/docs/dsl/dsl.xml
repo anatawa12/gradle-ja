@@ -27,7 +27,7 @@
     </section>
 
     <section>
-	<title>いくつかの基本<phrase role="original">Some basics</phrase></title>
+        <title>いくつかの基本<phrase role="original">Some basics</phrase></title>
         <para role="original">There are a few basic concepts that you should understand, which will help you write Gradle scripts.</para>
         <para>あなたが理解すべきなのは少々の基本構想で、それらはあなたがGradleスクリプトを記述する際に助けになるでしょう。</para>
 
@@ -219,9 +219,12 @@
     </section>
 
     <section>
-        <title>Help Task types</title>
-        <para>Below are the task types that are available for every Gradle project.
+        <title>補助タスク型 <phrase role="original">Help Task types</phrase></title>
+        <para role="original">Below are the task types that are available for every Gradle project.
             Those task types can also be declared and configured directly in the build script.
+        </para>
+        <para>以下の型は、すべてのGradleプロジェクトで使用できるタスク型です。
+            これらのタスク型は、ビルドスクリプトで直接宣言したり設定したりすることもできます。
         </para>
         <table>
             <title>Help Task types</title>
