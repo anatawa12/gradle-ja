@@ -13,7 +13,7 @@
   ~ See the License for the specific language governing permissions and
   ~ limitations under the License.
   -->
-<chapter id='gradle_daemon' xml:lang="ja">　
+<chapter id='gradle_daemon' xml:lang="ja">
     <title>Gradleデーモン <phrase role="original">The Gradle Daemon</phrase></title>
 
     <section id='enter_the_daemon'>
