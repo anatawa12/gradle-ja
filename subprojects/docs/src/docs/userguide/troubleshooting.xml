@@ -13,45 +13,65 @@
   ~ See the License for the specific language governing permissions and
   ~ limitations under the License.
   -->
-<chapter id='troubleshooting'>
-    <title>Troubleshooting</title>
+<chapter id='troubleshooting' xml:lang="ja">
+    <title>トラブルシューティング <phrase role="original">Troubleshooting</phrase></title>
     <note>
-        <para>
+        <para role="original">
             This chapter is currently a work in progress.
         </para>
+        <para>この章は現在執筆途中です。</para>
     </note>
-    <para>
+    <para role="original">
         When using Gradle (or any software package), you can run into problems. You may not understand
         how to use a particular feature, or you may encounter a defect. Or, you may have a general question
         about Gradle.
     </para>
     <para>
+        Gradleを使っていると（他のソフトウェアでも同じですが）、問題に突き当たる可能性が常にあります。
+        ある機能をどうやって使えばいいのか分からなかったり、バグに遭遇したりといった場合もありますし、FAQに頭を抱えているかもしれません。
+    </para>
+    <para role="original">
         This chapter gives some advice for troubleshooting problems and explains how to get help with your problems.
     </para>
+    <para>この章ではトラブルシューティングのためのアドバイスや、突き当たった問題に対して手助けを求める方法について記載します。</para>
     
     <section>
-        <title>Working through problems</title>
-        <para>
+        <title>トラブルに対処する <phrase role="original">Working through problems</phrase></title>
+        <para role="original">
             If you are encountering problems, one of the first things to try is using the very latest release of Gradle. New versions of Gradle are
             released frequently with bug fixes and new features. The problem you are having may have been fixed in a new release.
         </para>
-        <para>
+        <para>何かトラブルが起こったとき、まず試すことができるのは、最新版のGradleを使ってみることです。Gradleの新バージョンはバグフィックスや新機能追加のため頻繁にリリースされています。その問題は、新しいバージョンでは修正されているかもしれません。</para>
+        <para role="original">
             If you are using the Gradle Daemon, try temporarily disabling the daemon (you can pass the command line switch <literal>--no-daemon</literal>).
             More information about troubleshooting daemon is located in <xref linkend="gradle_daemon"/>.
         </para>
+        <para>
+            Gradleデーモンを使っているなら、一時的にデーモンを停止してみてください（<literal>--no--daemon</literal>オプションをつけて実行）。
+            デーモン使用時のトラブルシューティングについて、詳しくは<xref linkend="gradle_daemon"/>を参照してください。
+        </para>
     </section>
     <section>
-        <title>Getting help</title>
-        <para>
+        <title>ヘルプを求めるには <phrase role="original">Getting help</phrase></title>
+        <para role="original">
             The place to go for help with Gradle is <ulink url="http://forums.gradle.org">http://forums.gradle.org</ulink>.
             The Gradle Forums is the place where you can report problems and ask questions to the Gradle 
             developers and other community members.
         </para>
         <para>
+            Gradleに関して手助けを求めたいときは、<ulink url="http://forums.gradle.org">http://forums.gradle.org</ulink>に行ってみましょう。
+            Gradleフォーラムでは、Gradleのデベロッパーやコミュニティメンバーに問題を報告したり、質問したりすることができます。
+        </para>
+        <para role="original">
             If something's not working for you, posting a question or problem report to the forums is the fastest way 
             to get help. It's also the place to post improvement suggestions or new ideas. The development team 
             frequently posts news items and announces releases via the forum, making it a great way to stay up to 
             date with the latest Gradle developments.
+        </para>
+        <para>
+            何か問題が発生したら、フォーラムに質問や報告を投げるのが最も早く手助けを得られる方法です。
+            フォーラムでは、改善のための提案や新しいアイデアを投稿することもできます。
+            また、Gradleの開発チームが頻繁にニュースやリリースのアナウンスを投稿していますので、Gradle開発の最前線に触れるという意味でもフォーラムはとても便利です。
         </para>
     </section>
 </chapter>
