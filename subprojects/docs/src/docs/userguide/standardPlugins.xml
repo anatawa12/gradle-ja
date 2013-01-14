@@ -15,19 +15,21 @@
   -->
 <chapter id="standard_plugins" xml:lang="ja">
     <title>標準Gradleプラグイン<phrase role="original">Standard Gradle plugins</phrase></title>
-    <para>There are a number of plugins included in the Gradle distribution. These are listed below.
+    <para role="original">There are a number of plugins included in the Gradle distribution. These are listed below.
     </para>
+    <para>Gradleの配布物にはいくつかのプラグインが同梱されています。以下にその一覧を掲載します。</para>
     <section>
         <title>言語プラグイン<phrase role="original">Language plugins</phrase></title>
-        <para>These plugins add support for various languages which can be compiled and executed in the JVM.</para>
+        <para role="original">These plugins add support for various languages which can be compiled and executed in the JVM.</para>
+        <para>これらのプラグインは、Gradleに様々な言語サポートを追加するものです。コンパイルやJVM上でのプログラム実行などを行います。</para>
         <table>
-            <title>Language plugins</title>
+            <title>言語プラグイン<phrase role="original">Language plugins</phrase></title>
             <thead>
                 <tr>
-                    <td>Plugin Id</td>
-                    <td>Automatically applies</td>
-                    <td>Works with</td>
-                    <td>Description</td>
+                    <td><phrase role="original">Plugin Id</phrase> プラグインID</td>
+                    <td><phrase role="original">Automatically applies</phrase> 自動適用</td>
+                    <td><phrase role="original">Works with</phrase> 協調して動作</td>
+                    <td><phrase role="original">Description</phrase> 説明</td>
                 </tr>
             </thead>
             <tr>
@@ -41,9 +43,10 @@
                 </td>
                 <td>-</td>
                 <td>
-                    <para>Adds Java compilation, testing and bundling capabilities to a project. It serves
+                    <para role="original">Adds Java compilation, testing and bundling capabilities to a project. It serves
                         as the basis for many of the other Gradle plugins. See also <xref linkend="tutorial_java_projects"/>.
                     </para>
+                    <para>Javaのコンパイル、テスト、バンドル機能をプロジェクトに追加します。また、このプラグインは、他の様々なプラグインのベース機能として使用されています。<xref linkend="tutorial_java_projects"/>も参照してください。</para>
                 </td>
             </tr>
             <tr>
@@ -57,8 +60,9 @@
                 </td>
                 <td>-</td>
                 <td>
-                    <para>Adds support for building Groovy projects. See also <xref linkend="tutorial_groovy_projects"/>.
+                    <para role="original">Adds support for building Groovy projects. See also <xref linkend="tutorial_groovy_projects"/>.
                     </para>
+                    <para>Groovyプロジェクトのビルド機能を追加します。<xref linkend="tutorial_groovy_projects"/>も参照してください。</para>
                 </td>
             </tr>
             <tr>
@@ -72,7 +76,8 @@
                 </td>
                 <td>-</td>
                 <td>
-                    <para>Adds support for building Scala projects.</para>
+                    <para role="original">Adds support for building Scala projects.</para>
+                    <para>Scalaプロジェクトのビルド機能を追加します。</para>
                 </td>
             </tr>
             <tr>
@@ -88,21 +93,23 @@
                 <td>
                     <para>Adds support for generating parsers using <ulink url="http://www.antlr.org/">Antlr</ulink>.
                     </para>
+                    <para><ulink url="http://www.antlr.org/">ANTLR</ulink>を使ったパーサーの生成をサポートします。</para>
                 </td>
             </tr>
         </table>
     </section>
     <section>
-        <title>Incubating language plugins</title>
-        <para>These plugins add support for various languages:</para>
+        <title>試験的な言語プラグイン <phrase role="original">Incubating language plugins</phrase></title>
+        <para role="original">These plugins add support for various languages:</para>
+        <para>これらのプラグインは、以下のような様々な言語のサポートを追加します。</para>
         <table>
-            <title>Language plugins</title>
+            <title>言語プラグイン <phrase role="original">Language plugins</phrase></title>
             <thead>
                 <tr>
-                    <td>Plugin Id</td>
-                    <td>Automatically applies</td>
-                    <td>Works with</td>
-                    <td>Description</td>
+                    <td><phrase role="original">Plugin Id</phrase> プラグインID</td>
+                    <td><phrase role="original">Automatically applies</phrase> 自動適用</td>
+                    <td><phrase role="original">Works with</phrase> 協調して動作</td>
+                    <td><phrase role="original">Description</phrase> 説明</td>
                 </tr>
             </thead>
             <tr>
@@ -114,7 +121,8 @@
                 <td>-</td>
                 <td>-</td>
                 <td>
-                    <para>Adds C++ source compilation capabilities to a project.</para>
+                    <para role="original">Adds C++ source compilation capabilities to a project.</para>
+                    <para>C++ソースのコンパイル機能をプロジェクトに追加します。</para>
                 </td>
             </tr>
             <tr>
@@ -128,7 +136,8 @@
                 </td>
                 <td>-</td>
                 <td>
-                    <para>Adds C++ executable compilation and linking capabilities to a project.</para>
+                    <para role="original">Adds C++ executable compilation and linking capabilities to a project.</para>
+                    <para>C++の実行可能プログラムをコンパイル、リンクする機能をプロジェクトに追加します。</para>
                 </td>
             </tr>
             <tr>
@@ -142,22 +151,24 @@
                 </td>
                 <td>-</td>
                 <td>
-                    <para>Adds C++ library compilation and linking capabilities to a project.</para>
+                    <para role="original">Adds C++ library compilation and linking capabilities to a project.</para>
+                    <para>C++ライブラリをコンパイル、リンクする機能をプロジェクトに追加します。</para>
                 </td>
             </tr>
         </table>
     </section>
     <section>
         <title>統合プラグイン<phrase role="original">Integration plugins</phrase></title>
-        <para>These plugins provide some integration with various build and runtime technologies.</para>
+        <para role="original">These plugins provide some integration with various build and runtime technologies.</para>
+        <para>これらのプラグインは、様々なビルド機能や実行方法をプロジェクトに統合して使用できるようにします。</para>
         <table>
-            <title>Integration plugins</title>
+            <title>統合プラグイン<phrase role="original">Integration plugins</phrase></title>
             <thead>
                 <tr>
-                    <td>Plugin Id</td>
-                    <td>Automatically applies</td>
-                    <td>Works with</td>
-                    <td>Description</td>
+                    <td><phrase role="original">Plugin Id</phrase> プラグインID</td>
+                    <td><phrase role="original">Automatically applies</phrase> 自動適用</td>
+                    <td><phrase role="original">Works with</phrase> 協調して動作</td>
+                    <td><phrase role="original">Description</phrase> 説明</td>
                 </tr>
             </thead>
             <tr>
@@ -169,7 +180,8 @@
                 <td>-</td>
                 <td>-</td>
                 <td>
-                    <para>Publish messages to your favourite platforms, such as Twitter or Growl.</para>
+                    <para role="original">Publish messages to your favourite platforms, such as Twitter or Growl.</para>
+                    <para>TwitterやGrowlなど、任意のプラットフォーム上にメッセージを流します。</para>
                 </td>
             </tr>
             <tr>
@@ -183,8 +195,9 @@
                 </td>
                 <td>-</td>
                 <td>
-                    <para>Adds tasks for running and bundling a Java project as a command-line application.
+                    <para role="original">Adds tasks for running and bundling a Java project as a command-line application.
                     </para>
+                    <para>プロジェクトをコマンドラインアプリケーションとしてビルド、実行するためのタスクを追加します。</para>
                 </td>
             </tr>
             <tr>
@@ -196,7 +209,8 @@
                 <td>announce</td>
                 <td>-</td>
                 <td>
-                    <para>Sends local announcements to your desktop about interesting events in the build lifecycle.</para>
+                    <para role="original">Sends local announcements to your desktop about interesting events in the build lifecycle.</para>
+                    <para>ビルドライフサイクル中に特定のイベントが発生した際、任意でデスクトップ上にメッセージを送信します。</para>
                 </td>
             </tr>
             <tr>
@@ -210,7 +224,8 @@
                     <literal>java</literal>
                 </td>
                 <td>
-                    <para>Adds support for building J2EE applications.</para>
+                    <para role="original">Adds support for building J2EE applications.</para>
+                    <para>J2EEアプリケーションのビルド機能を追加します。</para>
                 </td>
             </tr>
             <tr>
@@ -224,8 +239,9 @@
                 </td>
                 <td>-</td>
                 <td>
-                    <para>Deploys your web application to a Jetty web container embedded in the build. See also <xref linkend="web_project_tutorial"/>.
+                    <para role="original">Deploys your web application to a Jetty web container embedded in the build. See also <xref linkend="web_project_tutorial"/>.
                     </para>
+                    <para>組み込みのJettyウェブコンテナに、アプリケーションをデプロイできるようにします。<xref linkend="web_project_tutorial"/>も参照してください。</para>
                 </td>
             </tr>
             <tr>
@@ -239,7 +255,8 @@
                     <literal>war</literal>
                 </td>
                 <td>
-                    <para>Adds support for publishing artifacts to Maven repositories.</para>
+                    <para role="original">Adds support for publishing artifacts to Maven repositories.</para>
+                    <para>Mavenリポジトリにアーティファクトを公開できるようにします。</para>
                 </td>
             </tr>
             <tr>
@@ -255,7 +272,8 @@
                     <literal>java</literal>
                 </td>
                 <td>
-                    <para>Adds support for building OSGi bundles.</para>
+                    <para role="original">Adds support for building OSGi bundles.</para>
+                    <para>OSGiバンドルのビルドをサポートします。</para>
                 </td>
             </tr>
             <tr>
@@ -269,23 +287,25 @@
                 </td>
                 <td>-</td>
                 <td>
-                    <para>Adds support for assembling web application WAR files. See also <xref linkend="web_project_tutorial"/>.
+                    <para role="original">Adds support for assembling web application WAR files. See also <xref linkend="web_project_tutorial"/>.
                     </para>
+                    <para>ウェブアプリケーションのWARファイルをビルドできるようにします。See also <xref linkend="web_project_tutorial"/>も参照してください。</para>
                 </td>
             </tr>
         </table>
     </section>
     <section>
-        <title>Incubating integration plugins</title>
-        <para>These plugins provide some integration with various build and runtime technologies.</para>
+        <title>試験的な統合プラグイン <phrase role="original">Incubating integration plugins</phrase></title>
+        <para role="original">These plugins provide some integration with various build and runtime technologies.</para>
+        <para>これらのプラグインは、様々なビルド機能や実行方法をプロジェクトに統合して使用できるようにします。</para>
         <table>
-            <title>Incubating integration plugins</title>
+            <title>試験的な統合プラグイン <phrase role="original">Incubating integration plugins</phrase></title>
             <thead>
                 <tr>
-                    <td>Plugin Id</td>
-                    <td>Automatically applies</td>
-                    <td>Works with</td>
-                    <td>Description</td>
+                    <td><phrase role="original">Plugin Id</phrase> プラグインID</td>
+                    <td><phrase role="original">Automatically applies</phrase> 自動適用</td>
+                    <td><phrase role="original">Works with</phrase> 協調して動作</td>
+                    <td><phrase role="original">Description</phrase> 説明</td>
                 </tr>
             </thead>
             <tr>
@@ -297,8 +317,9 @@
                 <td>-</td>
                 <td>-</td>
                 <td>
-                    <para>Adds support for publishing artifacts to Ivy repositories.
+                    <para role="original">Adds support for publishing artifacts to Ivy repositories.
                     </para>
+                    <para>アーティファクトをIvyリポジトリに公開できるようにします。</para>
                 </td>
             </tr>
             <tr>
@@ -310,8 +331,9 @@
                 <td>-</td>
                 <td>-</td>
                 <td>
-                    <para>Adds support for converting an existing Maven build into a Gradle project.
+                    <para role="original">Adds support for converting an existing Maven build into a Gradle project.
                     </para>
+                    <para>MavenプロジェクトからGradleプロジェクトへの変換をサポートします。</para>
                 </td>
             </tr>
             <tr>
@@ -323,23 +345,25 @@
                 <td><literal>java</literal></td>
                 <td>-</td>
                 <td>
-                    <para>Adds support for building a ZIP distribution for a Java library.
+                    <para role="original">Adds support for building a ZIP distribution for a Java library.
                     </para>
+                    <para>JavaライブラリをZIPの配布物としてビルドできるようにします。</para>
                 </td>
             </tr>
         </table>
     </section>
     <section>
         <title>ソフトウェア開発プラグイン<phrase role="original">Software development plugins</phrase></title>
-        <para>These plugins provide help with your software development process.</para>
+        <para role="original">These plugins provide help with your software development process.</para>
+        <para>これらのプラグインは、ソフトウェアの開発プロセスを手助けするものです。</para>
         <table>
-            <title>Software development plugins</title>
+            <title>ソフトウェア開発プラグイン<phrase role="original">Software development plugins</phrase></title>
             <thead>
                 <tr>
-                    <td>Plugin Id</td>
-                    <td>Automatically applies</td>
-                    <td>Works with</td>
-                    <td>Description</td>
+                    <td><phrase role="original">Plugin Id</phrase> プラグインID</td>
+                    <td><phrase role="original">Automatically applies</phrase> 自動適用</td>
+                    <td><phrase role="original">Works with</phrase> 協調して動作</td>
+                    <td><phrase role="original">Description</phrase> 説明</td>
                 </tr>
             </thead>
             <tr>
@@ -353,10 +377,11 @@
                 </td>
                 <td>-</td>
                 <td>
-                    <para>Performs quality checks on your project's Java source files using
+                    <para role="original">Performs quality checks on your project's Java source files using
                         <ulink url="http://checkstyle.sourceforge.net/index.html">Checkstyle</ulink>
                         and generates reports from these checks.
                     </para>
+                    <para><ulink url="http://checkstyle.sourceforge.net/index.html">Checkstyle</ulink>を使ってJavaソースコードの品質をチェックし、レポートを生成します。</para>
                 </td>
             </tr>
             <tr>
@@ -370,10 +395,11 @@
                 </td>
                 <td>-</td>
                 <td>
-                    <para>Performs quality checks on your project's Groovy source files using
+                    <para role="original">Performs quality checks on your project's Groovy source files using
                         <ulink url="http://codenarc.sourceforge.net/index.html">CodeNarc</ulink>
                         and generates reports from these checks.
                     </para>
+                    <para><ulink url="http://codenarc.sourceforge.net/index.html">CodeNarc</ulink>を使ってGroovyソースコードの品質をチェックし、レポートを生成します。</para>
                 </td>
             </tr>
             <tr>
@@ -387,9 +413,10 @@
                     <literal>scala</literal>
                 </td>
                 <td>
-                    <para>Generates files that are used by <ulink url="http://eclipse.org">Eclipse IDE</ulink>, thus making
+                    <para role="original">Generates files that are used by <ulink url="http://eclipse.org">Eclipse IDE</ulink>, thus making
                         it possible to import the project into Eclipse. See also <xref linkend="tutorial_java_projects"/>.
                     </para>
+                    <para><ulink url="http://eclipse.org">Eclipse IDE</ulink>が使用するファイルを生成し、プロジェクトをEclipseにインポートできるようにします。<xref linkend="tutorial_java_projects"/>も参照してください。</para>
                 </td>
             </tr>
             <tr>
@@ -403,9 +430,13 @@
                     <literal>war</literal>
                 </td>
                 <td>
-                    <para>Does the same as the eclipse plugin plus generates eclipse WTP (Web Tools Platform) configuration files.
+                    <para role="original">Does the same as the eclipse plugin plus generates eclipse WTP (Web Tools Platform) configuration files.
                         After importing to eclipse your war/ear projects should be configured to work with WTP.
                         See also<xref linkend="tutorial_java_projects"/>.
+                    </para>
+                    <para>
+                        eclipseプラグインが生成するファイルに加え、eclipse WTP (Web Tools Platform)の設定ファイルも生成します。
+                        eclipseにインポートすれば、war/earプロジェクトがWTPで認識されるよう設定されているはずです。<xref linkend="tutorial_java_projects"/>も参照してください。
                     </para>
                 </td>
             </tr>
@@ -420,10 +451,11 @@
                 </td>
                 <td>-</td>
                 <td>
-                    <para>Performs quality checks on your project's Java source files using
+                    <para role="original">Performs quality checks on your project's Java source files using
                         <ulink url="http://findbugs.sourceforge.net">FindBugs</ulink>
                         and generates reports from these checks.
                     </para>
+                    <para><ulink url="http://findbugs.sourceforge.net">FindBugs</ulink>を使ってプロジェクトに含まれるJavaソースコードの品質をチェックし、レポートを生成します。</para>
                 </td>
             </tr>
             <tr>
@@ -437,9 +469,10 @@
                     <literal>java</literal>
                 </td>
                 <td>
-                    <para>Generates files that are used by <ulink url="http://www.jetbrains.com/idea/index.html">Intellij IDEA IDE</ulink>,
+                    <para role="original">Generates files that are used by <ulink url="http://www.jetbrains.com/idea/index.html">Intellij IDEA IDE</ulink>,
                         thus making it possible to import the project into IDEA.
                     </para>
+                    <para><ulink url="http://www.jetbrains.com/idea/index.html">Intellij IDEA IDE</ulink>が使用するファイルを生成し、プロジェクトをIDEAにインポートできるようにします。</para>
                 </td>
             </tr>
             <tr>
@@ -453,10 +486,11 @@
                 </td>
                 <td>-</td>
                 <td>
-                    <para>Performs quality checks on your project's source files using
+                    <para role="original">Performs quality checks on your project's source files using
                         <ulink url="http://clarkware.com/software/JDepend.html">JDepend</ulink>
                         and generates reports from these checks.
                     </para>
+                    <para><ulink url="http://clarkware.com/software/JDepend.html">JDepend</ulink>を使ってソースコードの品質をチェックし、レポートを生成します。</para>
                 </td>
             </tr>
             <tr>
@@ -470,10 +504,11 @@
                 </td>
                 <td>-</td>
                 <td>
-                    <para>Performs quality checks on your project's Java source files using
+                    <para role="original">Performs quality checks on your project's Java source files using
                         <ulink url="http://pmd.sourceforge.net">PMD</ulink>
                         and generates reports from these checks.
                     </para>
+                    <para><ulink url="http://pmd.sourceforge.net">PMD</ulink>を使ってJavaソースコードの品質をチェックし、レポートを生成します。</para>
                 </td>
             </tr>
             <tr>
@@ -487,8 +522,9 @@
                 </td>
                 <td>-</td>
                 <td>
-                    <para>Generates reports containing useful information about your Gradle build.
+                    <para role="original">Generates reports containing useful information about your Gradle build.
                     </para>
+                    <para>Gradleビルドに関する有用な情報が載ったレポートを生成します。</para>
                 </td>
             </tr>
             <tr>
@@ -500,8 +536,9 @@
                 <td>base</td>
                 <td>-</td>
                 <td>
-                    <para>Adds the ability to digitally sign built files and artifacts.
+                    <para role="original">Adds the ability to digitally sign built files and artifacts.
                     </para>
+                    <para>ビルドしたファイルとアーティファクトにデジタル署名を行う機能を追加します。</para>
                 </td>
             </tr>
             <tr>
@@ -513,45 +550,53 @@
                 <td>-</td>
                 <td>-</td>
                 <td>
-                    <para>Provides integration with the
+                    <para role="original">Provides integration with the
                         <ulink url="http://www.sonarsource.org">Sonar</ulink>
                         code quality platform.
                     </para>
+                    <para><ulink url="http://www.sonarsource.org">Sonar</ulink>コード品質プラットフォームとプロジェクトを統合します。</para>
                 </td>
             </tr>
         </table>
     </section>
     <section>
-        <title>ベースプラグイン<phrase role="original">Base plugins</phrase></title>
-        <para>These plugins form the basic building blocks which the other plugins are assembled from. They are
+        <title>ベースプラグイン <phrase role="original">Base plugins</phrase></title>
+        <para role="original">These plugins form the basic building blocks which the other plugins are assembled from. They are
             available for you to use in your build files, and are listed here for completeness. However, be aware that
             they are not yet considered part of Gradle's public API. As such, these plugins are not documented in the
             user guide. You might refer to their API documentation to learn more about them.
         </para>
+        <para>
+            これらのプラグインは、他のプラグインを組み立てるための基本的なビルド用の部品を構成します。また、ビルドスクリプト内で自分で使うこともできます。ここにその完全な一覧を掲載しました。
+            しかし、これらのプラグインはまだGradleの正式な公開APIとはなっていないことに注意してください。そのため、ユーザーガイドでは解説されていません。詳細について調べたい際は、APIドキュメントが参考になるかもしれません。
+        </para>
         <table>
-            <title>Base plugins</title>
+            <title>ベースプラグイン <phrase role="original">Base plugins</phrase></title>
             <thead>
                 <tr>
-                    <td>Plugin Id</td>
-                    <td>Description</td>
+                    <td><phrase role="original">Plugin Id</phrase> プラグインID</td>
+                    <td><phrase role="original">Description</phrase> 説明</td>
                 </tr>
             </thead>
             <tr>
                 <td>base</td>
                 <td>
-                    <para>Adds the standard lifecycle tasks and configures reasonable defaults for the archive tasks:
+                    <para><phrase role="original">Adds the standard lifecycle tasks and configures reasonable defaults for the archive tasks:</phrase>
+                        一般的なライフサイクルを構成するタスクを追加し、アーカイブタスクにリーズナブルなデフォルト値を設定します。
                         <itemizedlist>
-                            <listitem>adds build
+                            <listitem><phrase role="original">adds build
                                 <replaceable>ConfigurationName</replaceable>
                                 tasks.
-                                Those tasks assemble the artifacts belonging to the specified configuration.
+                                Those tasks assemble the artifacts belonging to the specified configuration.</phrase>
+                                build<replaceable>ConfigurationName</replaceable>タスクを追加します。これらのタスクは、特定のコンフィグレーションに属するアーティファクトを作成します。
                             </listitem>
-                            <listitem>adds upload
+                            <listitem><phrase role="original">adds upload
                                 <replaceable>ConfigurationName</replaceable>
                                 tasks.
-                                Those tasks assemble and upload the artifacts belonging to the specified configuration.
+                                Those tasks assemble and upload the artifacts belonging to the specified configuration. </phrase>
+                                upload<replaceable>ConfigurationName</replaceable>タスクを追加します。これらのタスクは、特定のコンフィグレーション属するアーティファクトを作成し、アップロードします。
                             </listitem>
-                            <listitem>configures reasonable default values for all archive tasks (e.g. tasks that inherit from
+                            <listitem><phrase role="original">configures reasonable default values for all archive tasks (e.g. tasks that inherit from
                                 <apilink class="org.gradle.api.tasks.bundling.AbstractArchiveTask"/>).
                                 For example, the archive tasks are tasks of types: <apilink class="org.gradle.api.tasks.bundling.Jar"/>,
                                 <apilink class="org.gradle.api.tasks.bundling.Tar"/>, <apilink class="org.gradle.api.tasks.bundling.Zip"/>.
@@ -561,7 +606,11 @@
                                 <literal>version</literal>
                                 properties of the archive tasks are preconfigured with defaults.
                                 This is extremely useful because it drives consistency across projects;
-                                the consistency regarding naming conventions of archives and their location after the build completed.
+                                the consistency regarding naming conventions of archives and their location after the build completed.</phrase>
+                                全てのアーカイブタスク（<apilink class="org.gradle.api.tasks.bundling.AbstractArchiveTask"/>を継承したタスク）に適切なデフォルト値を設定します。
+                                例えば、<apilink class="org.gradle.api.tasks.bundling.Jar"/>タイプや<apilink class="org.gradle.api.tasks.bundling.Tar"/>タイプ、<apilink class="org.gradle.api.tasks.bundling.Zip"/>タイプのタスクがアーカイブタスクです。
+                                これらのタスクに、<literal>destinationDir</literal>や<literal>baseName</literal>、<literal>version</literal>プロパティを前もって設定します。
+                                これにより、アーカイブの命名規約やビルド後の配置場所に一貫性が生まれるため、とても便利です。
                             </listitem>
                         </itemizedlist>
                     </para>
@@ -570,33 +619,38 @@
             <tr>
                 <td>java-base</td>
                 <td>
-                    <para>Adds the source sets concept to the project. Does not add any particular source sets.</para>
+                    <para role="original">Adds the source sets concept to the project. Does not add any particular source sets.</para>
+                    <para>プロジェクトにソースセットの概念を導入します。実際のソースセットは追加されません。</para>
                 </td>
             </tr>
             <tr>
                 <td>groovy-base</td>
                 <td>
-                    <para>Adds the Groovy source sets concept to the project.</para>
+                    <para role="original">Adds the Groovy source sets concept to the project.</para>
+                    <para>プロジェクトにGroovyソースセットの概念を導入します。</para>
                 </td>
             </tr>
             <tr>
                 <td>scala-base</td>
                 <td>
-                    <para>Adds the Scala source sets concept to the project.</para>
+                    <para role="original">Adds the Scala source sets concept to the project.</para>
+                    <para>プロジェクトにScalaソースセットの概念を導入します。</para>
                 </td>
             </tr>
             <tr>
                 <td>reporting-base</td>
                 <td>
-                    <para>Adds some shared convention properties to the project, relating to report generation.</para>
+                    <para role="original">Adds some shared convention properties to the project, relating to report generation.</para>
+                    <para>レポート生成に関するいくつかの一般的な規約プロパティをプロジェクトに追加します。</para>
                 </td>
             </tr>
         </table>
     </section>
     <section>
         <title>サードパーティプラグイン<phrase role="original">Third party plugins</phrase></title>
-        <para>You can find a list of external plugins on the
+        <para role="original">You can find a list of external plugins on the
             <ulink url="http://wiki.gradle.org/display/GRADLE/Plugins">wiki</ulink>.
         </para>
+        <para>サードパーティ製のプラグインは<ulink url="http://wiki.gradle.org/display/GRADLE/Plugins">wiki</ulink>で見つけることができます。</para>
     </section>
 </chapter>
