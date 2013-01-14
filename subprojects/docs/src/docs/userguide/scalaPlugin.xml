@@ -16,15 +16,16 @@
 <chapter id="scala_plugin" xmlns:xi="http://www.w3.org/2001/XInclude" xml:lang="ja">
     <title>Scalaプラグイン <phrase role="original">The Scala Plugin</phrase></title>
 
-    <para>The Scala plugin extends the Java plugin to add support for Scala projects. It can deal with
+    <para role="original">The Scala plugin extends the Java plugin to add support for Scala projects. It can deal with
         Scala code, mixed Scala and Java code, and even pure Java code (although we don't necessarily recommend to use it for the latter).
         The plugin supports <emphasis>joint compilation</emphasis>, which allows to freely mix and match Scala and Java code,
         with dependencies in both directions. For example, a Scala class can extend a Java class that in turn extends a Scala class.
         This makes it possible to use the best language for the job, and to rewrite any class in the other language if needed.
     </para>
-    <para>
-    Scalaプラグインは、Javaプラグインを拡張し、Scalaプロジェクトのサポートを追加したものです。Scalaプロジェクトと、Scala/Java混合プロジェクトを扱うことができます。
-    Scalaプラグインは、JavaソースとScalaソースのジョイントコンパイルをサポートしています。ですから、Javaクラスを呼び出すScalaクラスをプロジェクトに含められますし、その逆も可能です。
+    <para>Scalaプラグインは、Javaプラグインを拡張し、Scalaプロジェクトのサポートを追加したものです。
+        ScalaコードとScala/Javaの混合コードをサポートするほか、Javaコードのみのプロジェクトを取り扱うこともできます（Javaコードだけのプロジェクトにこのプラグインを使うことはあまり推奨しませんが）。
+        また、JavaとScalaのジョイントコンパイルをサポートしており、ScalaコードとJavaコードを自由に混ぜ合わせたり、お互いに統合させることができます。
+        例えば、ScalaのクラスはJavaのクラスを継承できますし、更にそのJavaクラスがScalaクラスを継承していても問題ありません。時々に応じて最適な言語を選択でき、必要なときにはいつでもクラスを別言語で書き直すことができます。
     </para>
 
     <section>
@@ -127,6 +128,10 @@
             None of these directories need to exist or have anything in them; the Scala plugin will simply compile
             whatever it finds.
         </para>
+        <para>Scalaプラグインは次のようなプロジェクトレイアウトを想定しています。
+            すべてのScalaソースディレクトリにはScala<emphasis>だけでなく</emphasis>Javaコードも含めることができますが、JavaソースディレクトリにはJavaコードしか含めることができません。
+            また、これらのどのディレクトリも、存在しなかったり、何も含んでいなくてもかまいません。Scalaプラグインは、単純に見つけたディレクトリをコンパイルするだけです。
+        </para>
         <table id='scalalayout'>
             <title>Scalaプラグイン <phrase role="original">Scala plugin - project layout</phrase></title>
             <thead>
@@ -161,7 +166,8 @@
 
         <section>
             <title>プロジェクトレイアウトの変更 <phrase role="original">Changing the project layout</phrase></title>
-            <para>Just like the Java plugin, the Scala plugin allows to configure custom locations for Scala production and test sources.</para>
+            <para role="original">Just like the Java plugin, the Scala plugin allows to configure custom locations for Scala production and test sources.</para>
+            <para>Javaプラグインと同じように、Scalaプラグインも製品コードやテストコードの場所を変更することができます。</para>
             <sample id="customScalaSourceLayout" dir="scala/customizedLayout" title="Scalaソースレイアウトのカスタマイズ / Custom Scala source layout">
                 <sourcefile file="build.gradle" snippet="custom-source-locations"/>
             </sample>
@@ -170,37 +176,51 @@
     </section>
 
     <section>
-        <title>Dependency management</title>
-        <para>
+        <title>依存関係の管理 <phrase role="original">Dependency management</phrase></title>
+        <para role="original">
             Scala projects need to add a <literal>scala-library</literal> dependency to the appropriate configuration(s). This dependency will then
             be used as a compile and runtime dependency for the project's Scala code. It will also be used to infer a <literal>scala-compiler</literal>
             dependency for executing the Scala compiler and Scaladoc tool.
-            <footnote>
+            <footnote><para role="original">
                 More precisely, if a <literal>ScalaCompile</literal> or <literal>ScalaDoc</literal> task's <literal>scalaClasspath</literal> is empty,
                 and the project has at least one repository declared, the plugin searches the task's <literal>classpath</literal> for a
                 <literal>scala-library</literal> artifact, and adds a corresponding <literal>scala-compiler</literal> repository dependency to the
                 task's <literal>scalaClasspath</literal>.
-            </footnote>
+            </para></footnote>
         </para>
         <para>
+            Scalaプロジェクトでは、<literal>scala-library</literal>への依存関係を適切なコンフィグレーションに追加しなければなりません。
+            この依存関係は、Scalaコードをコンパイルしたり実行したりする際に使用されます。
+            また、ScalaコンパイラおよびScaladocツールを含む<literal>scala-compiler</literal>への依存関係を推測するのにも用いられます。
+            <footnote><para>
+                正確に言えば、<literal>ScalaCompile</literal>タスクや<literal>Scaladoc</literal>タスクの<literal>scalaClasspath</literal>が未設定だった場合に、そしてプロジェクトに少なくとも一つのリポジトリ定義があれば、プラグインがタスクの<literal>classpath</literal>から<literal>scala-library</literal>アーティファクトを探し、そして対応する<literal>scala-compiler</literal>への外部依存関係をscalaClasspathに追加するのです。
+            </para></footnote>
+        </para>
+        <para role="original">
             If Scala is used for production code, the <literal>scala-library</literal> dependency should be added to the
             <literal>compile</literal> configuration:
         </para>
-        <sample id="declareScalaDependency" dir="scala/quickstart" title="Declaring a Scala dependency for production code">
+        <para>もしScalaが製品コードで使われている場合は、<literal>scala-library</literal>への依存関係は<literal>compile</literal>コンフィグレーションに追加してください。</para>
+        <sample id="declareScalaDependency" dir="scala/quickstart" title="製品コードに使うScalaへの依存関係の宣言 / Declaring a Scala dependency for production code">
             <sourcefile file="build.gradle" snippet="scala-dependency"/>
         </sample>
-        <para>
+        <para role="original">
             If Scala is only used for test code, the <literal>scala-library</literal> dependency should be added to the <literal>testCompile</literal>
             (but not the <literal>compile</literal>)
             configuration:
         </para>
-        <sample id="declareScalaTestDependency" dir="userguide/scala/scalaDependency" title="Declaring a Scala dependency for test code">
+        <para>もしScalaがテストコードのみで使われている場合は、<literal>scala-library</literal>への依存関係は（<literal>compile</literal>でなく）<literal>testCompile</literal>コンフィグレーションに追加してください。</para>
+        <sample id="declareScalaTestDependency" dir="userguide/scala/scalaDependency" title="テストコードに使うScalaへの依存関係の宣言 / Declaring a Scala dependency for test code">
             <sourcefile file="build.gradle" snippet="scala-test-dependency"/>
         </sample>
-        <para>
+        <para role="original">
             In earlier Gradle versions, it was necessary to add a <literal>scala-compiler</literal> dependency to the <literal>scalaTools</literal>
             configuration. Although typically no longer necessary (because the compiler dependency is inferred), this is still supported for
             backwards compatibility.
+        </para>
+        <para>
+            以前は、<literal>scala-compiler</literal>への依存関係を<literal>scalaTools</literal>コンフィグレーションに追加する必要がありました。
+            この作業はもう（依存するScalaコンパイラは自動で推測されるため）一般的には必要ありませんが、後方互換性のためまだサポートされています。
         </para>
     </section>
 
@@ -332,58 +352,81 @@
     </section>
 
     <section>
-        <title>Compiling in external process</title>
-        <para>
+        <title>別プロセスでコンパイルする <phrase role="original">Compiling in external process</phrase></title>
+        <para role="original">
             When <literal>scalaCompileOptions.fork</literal> is set to <literal>true</literal>, compilation will take place
             in an external process. The details of forking depend on which compiler is used. The Ant based compiler
             (<literal>scalaCompileOptions.useAnt = true</literal>) will fork a new process for every <literal>ScalaCompile</literal> task,
             and does not fork by default. The Zinc based compiler (<literal>scalaCompileOptions.useAnt = false</literal>) will leverage
             the Gradle compiler daemon, and does so by default.
         </para>
-        <para>Memory settings for the external process default to the JVM's defaults. To adjust memory settings,
-            configure <literal>scalaCompileOptions.forkOptions</literal> as needed:
-            <sample id="zinc" dir="scala/zinc" title="Adjusting memory settings">
+        <para>
+            <literal>scalaCompileOptions.fork</literal>オプションがtrueにセットされていると、コンパイル処理は外部プロセスで実行されます。
+            フォーク処理の詳細はどのコンパイラを使用するかにより異なり、Antベースのコンパイラを使用する場合は（<literal>scalaCompileOptions.useAnt = true</literal>）、<literal>ScalaCompile</literal>タスクが実行される度に新しいプロセスがフォークされます。また、デフォルトではフォークされません。
+            Zincベースのコンパイラを使う場合（<literal>scalaCompileOptions.useAnt = false</literal>）、Gradleのコンパイラデーモンを使用してコンパイルされます。Antベースのコンパイラと異なり、こちらがデフォルトの処理です。
+        </para>
+        <para><phrase role="original">Memory settings for the external process default to the JVM's defaults. To adjust memory settings,
+            configure <literal>scalaCompileOptions.forkOptions</literal> as needed:</phrase>
+            外部プロセスのメモリ設定は、デフォルトではJVMのデフォルト値が使用されます。メモリ設定を調整するには、<literal>scalaCompileOptions.forkOptions</literal>を必要に応じて設定してください。
+            <sample id="zinc" dir="scala/zinc" title="メモリ設定の調整 / Adjusting memory settings">
                 <sourcefile file="build.gradle" snippet="adjust-memory"/>
             </sample>
         </para>
     </section>
 
     <section>
-        <title>Incremental compilation</title>
-        <para>
+        <title>インクリメンタルコンパイル <phrase role="original">Incremental compilation</phrase></title>
+        <para role="original">
             By compiling only classes whose source code has changed since the previous compilation, and classes affected by these changes,
             incremental compilation can significantly reduce Scala compilation time. It is particularly effective when frequently compiling
             small code increments, as is often done at development time.
         </para>
-
         <para>
-            The Scala plugin now supports incremental compilation by integrating with <ulink url="https://github.com/typesafehub/zinc">Zinc</ulink>,
+            前回コンパイルしたときからの変更差分、およびそれにより影響を受けるクラスのみを再コンパイルすることで、Scalaのコンパイル時間を大幅に減らすことができます。
+            これは、コードを小さく変更して頻繁にコンパイルするようなとき、開発中にはしばしばそういうことがありますが、そのような場面では特に有用です。
+        </para>
+        <para>
+            <phrase role="original">The Scala plugin now supports incremental compilation by integrating with <ulink url="https://github.com/typesafehub/zinc">Zinc</ulink>,
             a standalone version of <ulink url="https://github.com/harrah/xsbt">sbt</ulink>'s incremental Scala compiler. To switch the
             <literal>ScalaCompile</literal> task from the default Ant based compiler to the new Zinc based compiler, set
-            <literal>scalaCompileOptions.useAnt</literal> to <literal>false</literal>:
-            <sample id="zinc" dir="scala/zinc" title="Activating the Zinc based compiler">
+            <literal>scalaCompileOptions.useAnt</literal> to <literal>false</literal>:</phrase>
+            Scalaプラグインは、<ulink url="https://github.com/typesafehub/zinc">Zinc</ulink>という、<ulink url="https://github.com/harrah/xsbt">sbt</ulink>のインクリメンタルScalaコンパイラのスタンドアローン版を統合することでインクリメンタルコンパイルをサポートしています。
+            <sample id="zinc" dir="scala/zinc" title="Zincベースのコンパイラを有効にする / Activating the Zinc based compiler">
                 <sourcefile file="build.gradle" snippet="use-zinc"/>
             </sample>
         </para>
 
-        <para>
+        <para role="original">
             Except where noted in the<ulink url="http://gradle.org/docs/current/dsl/org.gradle.api.tasks.scala.ScalaCompile.html">API documentation</ulink>,
             the Zinc based compiler supports exactly the same configuration options as the Ant based compiler. Note, however, that the Zinc compiler requires
             Java 6 or higher to run. This means that Gradle itself has to be run with Java 6 or higher.
         </para>
-
         <para>
+            <ulink url="http://gradle.monochromeroad.com/docs/dsl/org.gradle.api.tasks.scala.ScalaCompile.html">APIドキュメント</ulink>に記載されている部分を除き、ZincベースのコンパイラはAntベースのコンパイラと全く同じ設定オプションをサポートします。
+            ただ、ZincコンパイラはJava6以上のバージョンを必要とするので注意してください。これは、Gradle自身もJava6以上で動かさなくてはならないことを意味します。
+        </para>
+
+        <para role="original">
             The Scala plugin adds a configuration named <literal>zinc</literal> to resolve the Zinc library and its dependencies. To override the
             Zinc version that Gradle uses by default, add an explicit Zinc dependency (for example <literal>zinc "com.typesafe.zinc:zinc:0.1.4"</literal>).
             Regardless of which Zinc version is used, Zinc will always use the Scala compiler found on the <literal>scalaTools</literal> configuration.
         </para>
-
         <para>
+            Scalaプラグインは、zincという名前のコンフィグレーションを追加し、Zincライブラリとその依存関係を解決するために使用します。
+            Gradleがデフォルトで使用するZincのバージョンをオーバーライドするには、Zincへの依存関係（例えば、<literal>zinc "com.typesafe.zinc:zinc:0.1.4"</literal>）を明示的に指定してください。
+            どのバージョンのZincが使用されているかにかかわらず、Zincは常にscalaToolsコンフィグレーションに含まれるScalaコンパイラを使用します。
+        </para>
+
+        <para role="original">
             Just like Gradle's Ant based compiler, the Zinc based compiler supports joint compilation of Java and Scala code. By default, all Java and Scala code
             under <literal>src/main/scala</literal> will participate in joint compilation. With the Zinc based compiler, even Java code will be compiled incrementally.
         </para>
-
         <para>
+            Antベースのコンパイラ同様、ZincベースのコンパイラもJavaとScalaのジョイントコンパイルをサポートします。
+            デフォルトでは、<literal>src/main/scala</literal>にある全てのJavaとScalaのコードがジョイントコンパイルに使用されます。Zincベースのコンパイラは、たとえJavaコードでもインクリメンタルにコンパイルできます。
+        </para>
+
+        <para role="original">
             Incremental compilation requires dependency analysis of the source code. The results of this analysis are stored in the file designated
             by <literal>scalaCompileOptions.incrementalOptions.analysisFile</literal> (which has a sensible default). In a multi-project build, analysis
             files are passed on to downstream <literal>ScalaCompile</literal> tasks to enable incremental compilation across project boundaries. For
@@ -393,15 +436,26 @@
             Note that if <literal>publishedCode</literal> is not set correctly, downstream tasks may not recompile code affected by upstream changes,
             leading to incorrect compilation results.
         </para>
-
         <para>
+            インクリメンタルコンパイルを行うには、ソースコードを解析する必要があります。解析結果は、<literal>scalaCompileOptions.incrementalOptions.analysisFile</literal>（適切なデフォルト値が設定されています）で指定されたファイルに保存されます。
+            マルチプロジェクトの場合、この解析ファイルは下流の<literal>ScalaCompile</literal>タスクに渡されるので、プロジェクトをまたいでのインクリメンタルコンパイルが可能です。
+            Scalaプラグインにより追加された<literal>ScalaCompile</literal>タスクはデフォルトでそのように動作するので、追加の設定は必要ありません。
+            その他の<literal>ScalaCompile</literal>タスクでこの動作を有効にするには、<literal>scalaCompileOptions.incrementalOptions.publishedCode</literal>が適切なクラスフォルダやJarアーカイブを指すように設定し、下流のタスクのコンパイルクラスパスにコードを渡す必要があります。
+            <literal>publishedCode</literal>が正しく設定されていない場合、上流のソースが変更されても下流のタスクの再コンパイルが適切に動かず、コンパイル結果も正しくなりませんので注意してください。
+        </para>
+
+        <para role="original">
             Due to the overhead of dependency analysis, a clean compilation or a compilation after a larger code change may take longer than with the Ant based compiler.
             For CI builds and release builds, we currently recommend to use the Ant based compiler.
         </para>
-
         <para>
+            解析処理に伴うオーバーヘッドにより、クリーンコンパイルや大規模な変更を行った後のコンパイルは、Antベースのコンパイラより長い時間を要するかもしれません。インテグレーションサーバーでのビルドやリリースビルドの際は、今のところAntベースのコンパイラを推奨します。
+        </para>
+
+        <para role="original">
             Note that Zinc's Nailgun based daemon mode is not supported. Instead, we plan to enhance Gradle's own compiler daemon to stay alive across Gradle
             invocations, reusing the same Scala compiler. This is expected to yield another significant speedup for Scala compilation.
         </para>
+        <para>ZincのNailgunベースのデーモンモードには対応していません。代わりに、Gradle自身のコンパイラデーモンを拡張し、Gradle実行間で同じScalaコンパイラを再利用できるようにする予定です。デーモンモードにより、Scalaコンパイルが更にスピードアップすることが期待されます。</para>
     </section>
 </chapter>
