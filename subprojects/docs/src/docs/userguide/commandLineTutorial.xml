@@ -69,15 +69,27 @@
     </section>
 
     <section id="sec:continue_build_on_failure">
-        <title>Continuing the build when a failure occurs</title>
-        <para>By default, Gradle will abort execution and fail the build as soon as any task fails. This allows the build to complete sooner, but hides other failures
+        <title>エラー発生時にビルドを継続する <phrase role="original">Continuing the build when a failure occurs</phrase></title>
+        <para role="original">By default, Gradle will abort execution and fail the build as soon as any task fails. This allows the build to complete sooner, but hides other failures
             that would have occurred. In order to discover as many failures as possible in a single build execution, you can use the <literal>--continue</literal> option.
         </para>
-        <para>When executed with <literal>--continue</literal>, Gradle will execute <emphasis>every</emphasis> task to be executed where all of the dependencies for that task completed without failure,
+        <para>
+            デフォルトでは、タスクが失敗するとすぐにGradleは実行を中止してビルドを失敗させます。これはビルドの完了は早くなりますが、発生するかもしれない他のエラーを隠してしまうかもしれません。
+            一回のビルド実行でできるだけ多くのエラーを発見するには、<literal>--continue</literal>オプションを使用します。
+        </para>
+        <para role="original">When executed with <literal>--continue</literal>, Gradle will execute <emphasis>every</emphasis> task to be executed where all of the dependencies for that task completed without failure,
             instead of stopping as soon as the first failure is encountered. Each of the encountered failures will be reported at the end of the build.
         </para>
-        <para>If a task fails, any subsequent tasks that were depending on it will not be executed, as it is not safe to do so. For example, tests will not
+        <para>
+            <literal>--continue</literal>オプションをつけてビルドすると、エラー発生時に即ビルドが停止されるのではなく、失敗せずに完了したタスクに依存するタスクは<emphasis>全て</emphasis>実行されるようになります。
+            また、ビルド中に発生したエラーはビルド終了時に全てレポートされます。
+        </para>
+        <para role="original">If a task fails, any subsequent tasks that were depending on it will not be executed, as it is not safe to do so. For example, tests will not
             run if there is a compilation failure in the code under test; because the test task will depend on the compilation task (either directly or indirectly).
+        </para>
+        <para>
+            タスクが失敗した場合、依存関係上の後続タスクは安全に実行できないため行われません。
+            例えば、テストの際、コードのコンパイルでエラーが発生するとテストは実施されません。テストタスクはコンパイルタスクに直接的、間接的に依存しているからです。
         </para>
     </section>
 
