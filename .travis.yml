@@ -1,5 +1,5 @@
+env: LANG="ja_JP.UTF-8"
 language: groovy
-jdk:
-  - oraclejdk7
-  - openjdk7
-  - openjdk6
+jdk: oraclejdk7
+scripts: ./gradlew :docs:docs
+
