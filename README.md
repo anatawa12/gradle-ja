@@ -1,89 +1,90 @@
 <img src="http://gradle.org/img/gradle_logo.gif" />
 
-Gradle is build automation *evolved*. Gradle can automate the building, testing, publishing, deployment and more of software packages or other types of projects such as generated static websites, generated documentation or indeed anything else.
+Gradleは、ビルド作業を*高い水準で*自動化するツールです。Gradleを使えば、ソフトウェアパッケージだけでなく静的なウェブサイトなど、様々なプロジェクトのビルド、テスト、公開、デプロイ、ドキュメントの生成やその他、あらゆる作業を自動化することができます。
 
-For more information about Gradle, please visit http://gradle.org.
+詳細な情報については http://gradle.org を参照してください。
 
-## Downloading
+## ダウンロード
 
-You can download released versions and nightly build artifacts from http://gradle.org/downloads.
+リリースバージョンおよびナイトリービルド版が http://gradle.org/downloads からダウンロードできます。
 
-## Building
+## ビルド
 
-Naturally, Gradle builds itself with Gradle. Gradle provides an innovative [wrapper](http://gradle.org/docs/current/userguide/gradle_wrapper.html) that allows you to work with a Gradle build without having to manually install Gradle. The wrapper is a batch script on Windows and a shell script on other operating systems.
+当然ですが、GradleはGradleによってビルドされています。Gradleは[ラッパー](http://gradle.org/docs/current/userguide/gradle_wrapper.html)という先進的な機能を備えているので、手でGradleをインストールしなくてもGradleを使って作業することができます。ラッパーはWindowsではバッチスクリプトとして、その他のOSではシェルスクリプトとして提供されます。
 
-You should use the wrapper to build the gradle project. Generally, you should use the wrapper for any wrapper-enabled project because it guarantees building with the Gradle version that the build was intended to use.
+このプロジェクトは、そのラッパーを使ってビルドするべきです。一般的に言っても、ラッパーが同梱されているGradleプロジェクトはラッパーを使ってビルドしてください。それにより、プロジェクトが想定する正しいバージョンのGradleでビルドできます。
 
-To build the entire Gradle project, you should run the following in the root of the checkout.
+Gradleプロジェクト全体をビルドするには、チェックアウトしたディレクトリのルートで次のコマンドを実行してください。
 
     ./gradlew build
 
-This will compile all the code, generate all the documentation and run all the tests. It can take up to an hour on a fast machine because we have thousands of tests, including integration tests that exercise virtually every Gradle feature. Among the things we test are: compatibility across versions, validity of samples and Javadoc snippets, daemon process capabilities, etc.
+これで、全てのコードがコンパイルされ、全ドキュメントが生成され、テストも全て実施されます。これには、速いマシンでも一時間程度掛かるかもしれません。Gradleの全ての機能を仮想的に実行する結合テストを含む、数千ものテストが実行されるためです。テスト項目には、バージョン間の互換性チェック、サンプルやJavadoc内のスニペットが正しいかどうかの確認、デーモンプロセスの機能確認などが含まれています。
 
-### Installing from source
+### ソースからインストールする
 
-To create an install from the source tree you can run either of the following:
+ソースツリーからインストールするには、以下のいずれかのコマンドを実行してください。
 
     ./gradlew install -Pgradle_installPath=/usr/local/gradle-source-build
 
-This will create a minimal installation; just what's needed to run Gradle (i.e. no docs). Note that the `-Pgradle_installPath` denotes where to install to. 
+これは、最小構成のインストールを行うコマンドです。Gradleを実行するのに必要なものだけがインストールされます（ドキュメントなどは含まれない）。`-Pgradle_installPath`でインストール先を指定しています。
 
-You can then build a Gradle built project with this installation:
+インストールが完了すれば、以下のようにしてビルドを実行できます。
 
-    /usr/local/gradle-source-build/bin/gradle «some task»
+    /usr/local/gradle-source-build/bin/gradle ≪some task≫
 
-To create a full installation (includes docs)…
+ドキュメントなどを含むフルインストールを行うには次のコマンドを実行します。
 
     ./gradlew installAll -Pgradle_installPath=/usr/local/gradle-source-build
 
-### Working with subprojects
+### サブプロジェクトで作業する
 
-The Gradle build uses Gradle's ability to customise the logical structure of a multiproject build. All of the build's subprojects are in the `subprojects/` directory and are mapped to top level children in [settings.gradle](https://github.com/gradle/gradle/blob/master/settings.gradle).
+本プロジェクトは、Gradleの機能を利用してマルチプロジェクトの論理的な構造をカスタマイズしています。物理的にはビルド上のサブプロジェクトは全て`subprojects/`サブディレクトリに配置されていますが、ビルド実行時には[settings.gradle](https://github.com/gradle/gradle/blob/master/settings.gradle)の設定によりトップレベルの子プロジェクトとして扱われます。
 
-This means that to build just the `core` subproject (that lives in `subprojects/core`) you would run:
+このため、例えば`core`サブプロジェクトは`subprojects/core`にありますが、次のようにしてビルドできます。
 
     ./gradlew core:build
 
-Or to build the docs:
+docプロジェクトの場合はこうです。
 
     ./gradlew docs:build
 
-And so on.
+その他のサブプロジェクトについても同様です。
 
-## Contributing
+## プロジェクトへの参加
 
-If you're looking to contribute to Gradle or provide a patch/pull request, you can find info on how to get in touch with the developers at http://gradle.org/development.
+Gradleプロジェクトに協力したい、またパッチやプルリクエストを送りたいといった際は、http://gradle.org/development を参照してください。開発者に連絡を取る方法について知ることができます。
 
-### Contributing Code
+### コードへのコントリビューション
 
-This is a complicated topic and the Gradle development team are happy to help anybody get started working with the Gradle code base, so don't hesitate to get in touch with the developers if you need help working with the finer points of the build.
+ビルドというのはとても複雑なトピックなので、どなたであってもGradleのコードベースで作業を始めるならGradleの開発チームは喜んでサポートします。
+ビルド時に困った点を修正したいといった場合は、細かいことでも遠慮なく開発チームまでご連絡ください。
 
-If you are simply wanting to fix something or adding a small minor feature, it is usually good enough to simply make your change to the code and then run the `check` task for that subproject. So if the patch was to the `launcher` package for example, you can run:
+単に何かを修正したいときや小さな機能を追加したいといった場合は、修正を加えたサブプロジェクトで`check`タスクを走らせれば、品質的にはたいてい十分です。たとえば、そのパッチが`launcher'に対するものであれば、次のようにタスクを実行します。
 
     ./gradlew launcher:check
 
-To run all of the tests and code quality checks for that module.
+これで、そのモジュールに対するテストとコード品質のチェックが実施されます。
 
-### Contributing Documentation
+### ドキュメントへのコントリビューション
 
-Please see the readme in the [docs subproject](https://github.com/gradle/gradle/tree/master/subprojects/docs).
+[docs subproject](https://github.com/gradle/gradle/tree/master/subprojects/docs)のREADMEを参照してください。
 
-## Opening in your IDE
+## IDEで開く
 
 ### IntelliJ IDEA
 
-To open the Gradle project in IDEA, simply run the following task from the root:
+プロジェクトのルートディレクトリで次のコマンドを実行するだけで、IDEAで開くことができるようになります。
 
     ./gradlew idea
 
-This will generate appropriate IDEA metadata so that the project can be opened from within IDEA.
+このコマンドは、IDEAがプロジェクトを認識できるように適切なIDEAメタデータを生成します。
 
 ### Eclipse
 
-The Gradle project is not currently buildable in Eclipse. This is something that will be rectified in the future.
+このプロジェクトは、現在Eclipseではビルドできません。将来できるようになったときはこの節を参考にしてください。
 
-You can try running:
+次のコマンドを実行します。
 
     ./gradlew eclipse
 
-This command generates Eclipse metadata that allows importing the project into Eclipse. However, you will have to do some manual fixes to the project's setup to make it work.
+このコマンドはEclipseのメタデータを生成し、Eclipseプロジェクトとしてインポートできるようにします。しかし、ちゃんと動くようにするには、さらに手でいくつかのセットアップ作業が必要になるはずです。
