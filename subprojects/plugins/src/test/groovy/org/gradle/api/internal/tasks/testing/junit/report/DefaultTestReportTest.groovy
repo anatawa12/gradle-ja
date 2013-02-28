@@ -15,56 +15,35 @@
  */
 package org.gradle.api.internal.tasks.testing.junit.report
 
-import org.cyberneko.html.parsers.SAXParser
+import org.gradle.api.Action
 import org.gradle.api.internal.tasks.testing.junit.result.TestClassResult
 import org.gradle.api.internal.tasks.testing.junit.result.TestMethodResult
 import org.gradle.api.internal.tasks.testing.junit.result.TestResultsProvider
 import org.gradle.api.internal.tasks.testing.logging.SimpleTestResult
-import org.gradle.api.tasks.testing.Test
 import org.gradle.api.tasks.testing.TestOutputEvent
 import org.gradle.api.tasks.testing.TestResult
 import org.gradle.test.fixtures.file.TestFile
 import org.gradle.test.fixtures.file.TestNameTestDirectoryProvider
 import org.gradle.util.ConfigureUtil
+import org.jsoup.Jsoup
+import org.jsoup.nodes.Document
 import org.junit.Rule
 import spock.lang.Specification
 
 class DefaultTestReportTest extends Specification {
     @Rule
     public final TestNameTestDirectoryProvider tmpDir = new TestNameTestDirectoryProvider()
-    final Test task = Mock();
-    final DefaultTestReport report = new DefaultTestReport(task)
+    final DefaultTestReport report = new DefaultTestReport()
     final TestFile reportDir = tmpDir.file('report')
     final TestFile indexFile = reportDir.file('index.html')
     final TestResultsProvider testResultProvider = Mock()
 
-    def setup() {
-        _ * task.isTestReport() >> true
-        _ * task.getTestReportDir() >> reportDir
-    }
-
-    def skipsReportGenerationWhenDisabledInTestTask() {
-        given:
-        Test testTask = Mock()
-        def reporter = Spy(DefaultTestReport.class, constructorArgs: [testTask])
-        when:
-        1 * testTask.isTestReport() >> false
-        and:
-        reporter.generateReport()
-
-        then:
-        0 * task.getTestResultsDir()
-        0 * task.getTestReportDir()
-        0 * reporter.loadModel()
-        0 * reporter.loadModel()
-        0 * reporter.generateFiles()
-    }
-
     def generatesReportWhenThereAreNoTestResults() {
         given:
         emptyResultSet()
+
         when:
-        report.generateReport(testResultProvider)
+        report.generateReport(testResultProvider, reportDir)
 
         then:
         def index = results(indexFile)
@@ -107,7 +86,7 @@ class DefaultTestReportTest extends Specification {
         }
 
         when:
-        report.generateReport(testTestResults)
+        report.generateReport(testTestResults, reportDir)
 
         then:
         def index = results(indexFile)
@@ -168,7 +147,7 @@ class DefaultTestReportTest extends Specification {
             }
         }
         when:
-        report.generateReport(testTestResults)
+        report.generateReport(testTestResults, reportDir)
 
         then:
         def index = results(indexFile)
@@ -198,12 +177,12 @@ class DefaultTestReportTest extends Specification {
         def testTestResults = buildResults {
             testClassResult("org.gradle.Test") {
                 testcase("test1") {
-                    result.resultType = TestResult.ResultType.SKIPPED
+                    resultType = TestResult.ResultType.SKIPPED
                 }
             }
         }
         when:
-        report.generateReport(testTestResults)
+        report.generateReport(testTestResults, reportDir)
 
         then:
         def index = results(indexFile)
@@ -234,7 +213,7 @@ class DefaultTestReportTest extends Specification {
             }
         }
         when:
-        report.generateReport(testTestResults)
+        report.generateReport(testTestResults, reportDir)
 
         then:
         def index = results(indexFile)
@@ -258,7 +237,7 @@ class DefaultTestReportTest extends Specification {
             }
         }
         when:
-        report.generateReport(testTestResults)
+        report.generateReport(testTestResults, reportDir)
 
         then:
         def testClassFile = results(reportDir.file('org.gradle.Test.html'))
@@ -280,7 +259,7 @@ class DefaultTestReportTest extends Specification {
             }
         }
         when:
-        report.generateReport(testTestResults)
+        report.generateReport(testTestResults, reportDir)
 
         then:
         def testClassFile = results(reportDir.file('org.gradle.Test.html'))
@@ -294,7 +273,7 @@ class DefaultTestReportTest extends Specification {
     }
 
     def emptyResultSet() {
-        _ * testResultProvider.results >> [:]
+        _ * testResultProvider.visitClasses(_)
     }
 }
 
@@ -302,7 +281,7 @@ class TestResultsBuilder implements TestResultsProvider {
     def testClasses = [:]
 
     void testClassResult(String className, Closure configClosure) {
-        BuildableTestClassResult testSuite = new BuildableTestClassResult(System.currentTimeMillis())
+        BuildableTestClassResult testSuite = new BuildableTestClassResult(className, System.currentTimeMillis())
         ConfigureUtil.configure(configClosure, testSuite)
 
         testClasses[className] = testSuite
@@ -316,17 +295,26 @@ class TestResultsBuilder implements TestResultsProvider {
         }
     }
 
-    Map<String, TestClassResult> getResults() {
-        return testClasses
+    void visitClasses(Action<? super TestClassResult> visitor) {
+        testClasses.values().each {
+            visitor.execute(it)
+        }
+    }
+
+    boolean hasOutput(String className, TestOutputEvent.Destination destination) {
+        if (destination == TestOutputEvent.Destination.StdOut) {
+            return testClasses[className].stdout != null && testClasses[className].stdout.length() != 0
+        } else if (destination == TestOutputEvent.Destination.StdErr) {
+            return testClasses[className].stderr != null && testClasses[className].stderr.length() != 0
+        }
     }
 
     private static class BuildableTestClassResult extends TestClassResult {
-
         String stderr;
         String stdout;
 
-        BuildableTestClassResult(long startTime) {
-            super(startTime)
+        BuildableTestClassResult(String className, long startTime) {
+            super(className, startTime)
         }
 
         TestMethodResult testcase(String name) {
@@ -343,8 +331,9 @@ class TestResultsBuilder implements TestResultsProvider {
     }
 
     private static class BuildableTestMethodResult extends TestMethodResult {
-        String name
         long duration
+        List<Throwable> exceptions = []
+        TestResult.ResultType resultType = TestResult.ResultType.SUCCESS
 
         BuildableTestMethodResult(String name, TestResult result) {
             super(name, result)
@@ -352,7 +341,7 @@ class TestResultsBuilder implements TestResultsProvider {
         }
 
         void failure(String message, String text) {
-            result.exceptions.add(new ResultException(message, text));
+            exceptions.add(new ResultException(message, text));
         }
     }
 
@@ -372,83 +361,78 @@ class TestResultsBuilder implements TestResultsProvider {
         public void printStackTrace(PrintWriter s) {
             s.print(text);
         }
-
-
     }
 }
 
 class TestResultsFixture {
-    final TestFile file
-    Node content
+    Document content
 
     TestResultsFixture(TestFile file) {
-        this.file = file
         file.assertIsFile()
-        def text = file.getText('utf-8').readLines()
-        def withoutDocType = text.subList(1, text.size()).join('\n')
-        content = new XmlParser(new SAXParser()).parseText(withoutDocType)
+        content = Jsoup.parse(file, null)
     }
 
     void assertHasTests(int tests) {
-        Node testDiv = content.depthFirst().find { it.'@id' == 'tests' }
+        def testDiv = content.select("div#tests")
         assert testDiv != null
-        Node counter = testDiv.DIV.find { it.'@class' == 'counter' }
+        def counter = testDiv.select("div.counter")
         assert counter != null
         assert counter.text() == tests as String
     }
 
     void assertHasFailures(int tests) {
-        Node testDiv = content.depthFirst().find { it.'@id' == 'failures' }
+        def testDiv = content.select("div#failures")
         assert testDiv != null
-        Node counter = testDiv.DIV.find { it.'@class' == 'counter' }
+        def counter = testDiv.select("div.counter")
         assert counter != null
         assert counter.text() == tests as String
     }
 
     void assertHasDuration(String duration) {
-        Node testDiv = content.depthFirst().find { it.'@id' == 'duration' }
+        def testDiv = content.select("div#duration")
         assert testDiv != null
-        Node counter = testDiv.DIV.find { it.'@class' == 'counter' }
+        def counter = testDiv.select("div.counter")
         assert counter != null
-        assert counter.text() == duration
+        assert counter.text() == duration as String
+
     }
 
     void assertHasNoDuration() {
-        Node testDiv = content.depthFirst().find { it.'@id' == 'duration' }
+        def testDiv = content.select("div#duration")
         assert testDiv != null
-        Node counter = testDiv.DIV.find { it.'@class' == 'counter' }
+        def counter = testDiv.select("div.counter")
         assert counter != null
-        assert counter.text() == '-'
+        assert counter.text() == "-"
     }
 
     void assertHasSuccessRate(int rate) {
-        Node testDiv = content.depthFirst().find { it.'@id' == 'successRate' }
+        def testDiv = content.select("div#successRate")
         assert testDiv != null
-        Node counter = testDiv.DIV.find { it.'@class' == 'percent' }
+        def counter = testDiv.select("div.percent")
         assert counter != null
         assert counter.text() == "${rate}%"
     }
 
     void assertHasNoSuccessRate() {
-        Node testDiv = content.depthFirst().find { it.'@id' == 'successRate' }
+        def testDiv = content.select("div#successRate")
         assert testDiv != null
-        Node counter = testDiv.DIV.find { it.'@class' == 'percent' }
+        def counter = testDiv.select("div.percent")
         assert counter != null
-        assert counter.text() == '-'
+        assert counter.text() == "-"
     }
 
     void assertHasNoNavLinks() {
-        assert findTab('Packages') == null
+        assert findTab('Packages').isEmpty()
     }
 
     void assertHasLinkTo(String target, String display = target) {
-        assert content.depthFirst().find { it.name() == 'A' && it.'@href' == "${target}.html" && it.text() == display }
+        assert content.select("a[href=${target}.html]").find{it.text() == display}
     }
 
     void assertHasFailedTest(String className, String testName) {
         def tab = findTab('Failed tests')
         assert tab != null
-        assert tab.depthFirst().find { it.name() == 'A' && it.'@href' == "${className}.html#${testName}" && it.text() == testName }
+        assert tab.select("a[href=${className}.html#$testName]").find{it.text() == testName}
     }
 
     void assertHasTest(String testName) {
@@ -457,39 +441,37 @@ class TestResultsFixture {
 
     void assertTestIgnored(String testName) {
         def row = findTestDetails(testName)
-        assert row.TD[2].text() == 'ignored'
+        assert row.select("tr > td:eq(2)").text() == 'ignored'
     }
 
     void assertHasFailure(String testName, String stackTrace) {
         def detailsRow = findTestDetails(testName)
-        assert detailsRow.TD[2].text() == 'failed'
-
+        assert detailsRow.select("tr > td:eq(2)").text() == 'failed'
         def tab = findTab('Failed tests')
-        assert tab != null
-        def pre = tab.depthFirst().findAll { it.name() == 'PRE' }
-        assert pre.find { it.text() == stackTrace.trim() }
+        assert tab != null && !tab.isEmpty()
+        assert tab.select("pre").find {it.text() == stackTrace.trim() }
     }
 
     private def findTestDetails(String testName) {
         def tab = findTab('Tests')
-        def anchor = tab.depthFirst().find { it.name() == 'TD' && it.text() == testName }
+        def anchor = tab.select("TD").find {it.text() == testName}
         return anchor?.parent()
     }
 
     void assertHasStandardOutput(String stdout) {
         def tab = findTab('Standard output')
         assert tab != null
-        assert tab.SPAN[0].PRE[0].text() == stdout.trim()
+        assert tab.select("SPAN > PRE").find{it.text() == stdout.trim() }
     }
 
     void assertHasStandardError(String stderr) {
         def tab = findTab('Standard error')
         assert tab != null
-        assert tab.SPAN[0].PRE[0].text() == stderr.trim()
+        assert tab.select("SPAN > PRE").find{it.text() == stderr.trim() }
     }
 
     private def findTab(String title) {
-        def tab = content.depthFirst().find { it.name() == 'DIV' && it.'@class' == 'tab' && it.H2[0].text() == title }
+        def tab = content.select("div.tab:has(h2:contains($title))")
         return tab
     }
 }

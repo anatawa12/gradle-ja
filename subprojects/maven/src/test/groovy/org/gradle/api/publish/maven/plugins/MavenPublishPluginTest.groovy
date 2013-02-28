@@ -16,15 +16,13 @@
 
 package org.gradle.api.publish.maven.plugins
 import org.gradle.api.artifacts.ArtifactRepositoryContainer
-import org.gradle.api.artifacts.PublishArtifact
 import org.gradle.api.artifacts.PublishArtifactSet
 import org.gradle.api.file.FileCollection
 import org.gradle.api.internal.artifacts.DependencyResolutionServices
 import org.gradle.api.internal.component.SoftwareComponentInternal
 import org.gradle.api.publish.PublishingExtension
 import org.gradle.api.publish.maven.MavenPublication
-import org.gradle.api.publish.maven.internal.DefaultMavenPublication
-import org.gradle.api.publish.maven.internal.MavenNormalizedPublication
+import org.gradle.api.publish.maven.internal.publication.DefaultMavenPublication
 import org.gradle.api.publish.maven.tasks.PublishToMavenLocal
 import org.gradle.api.publish.maven.tasks.PublishToMavenRepository
 import org.gradle.util.HelperUtil
@@ -34,8 +32,8 @@ class MavenPublishPluginTest extends Specification {
 
     def project = HelperUtil.createRootProject()
     PublishingExtension publishing
-    FileCollection componentArtifacts = Mock()
-    SoftwareComponentInternal component = Stub()
+    def componentArtifacts = Mock(FileCollection)
+    def component = Stub(SoftwareComponentInternal)
 
     def setup() {
         project.plugins.apply(MavenPublishPlugin)
@@ -50,7 +48,7 @@ class MavenPublishPluginTest extends Specification {
         component.artifacts >> artifactSet
     }
 
-    def "no publication without component"() {
+    def "no publication by default"() {
         expect:
         publishing.publications.empty
     }
@@ -72,28 +70,7 @@ class MavenPublishPluginTest extends Specification {
         then:
         project.tasks["publishTestPublicationToMavenRepository"] != null
         project.tasks["publishTestPublicationToMavenLocal"] != null
-    }
-
-    def "publication has artifacts from component"() {
-        given:
-        PublishArtifactSet artifactSet = Mock()
-        PublishArtifact artifact = Stub() {
-            getFile() >> Mock(File)
-        }
-
-        when:
-        publishing.publications.add("test", MavenPublication) {
-            from component
-        }
-        MavenNormalizedPublication pub = publishing.publications.test.asNormalisedPublication();
-
-        then:
-        pub.artifacts.size() == 1
-        pub.artifacts.iterator().next().file == artifact.getFile()
-
-        and:
-        component.artifacts >> artifactSet
-        artifactSet.iterator() >> [artifact].iterator()
+        project.tasks["generatePomFileForTestPublication"] != null
     }
 
     def "task is created for publishing to mavenLocal"() {
@@ -162,15 +139,16 @@ class MavenPublishPluginTest extends Specification {
         return allTasks
     }
 
-    def "publication identity is live wrt project properties"() {
+    def "publication identity is a snapshot of project properties"() {
         when:
-        publishing.publications.add("test", MavenPublication)
-
         project.group = "group"
         project.version = "version"
 
+        and:
+        publishing.publications.add("test", MavenPublication)
+
         then:
-        with(publishing.publications.test.asNormalisedPublication()) {
+        with(publishing.publications.test.mavenProjectIdentity) {
             groupId == "group"
             version == "version"
         }
@@ -180,9 +158,9 @@ class MavenPublishPluginTest extends Specification {
         project.version = "changed-version"
 
         then:
-        with(publishing.publications.test.asNormalisedPublication()) {
-            groupId == "changed-group"
-            version == "changed-version"
+        with(publishing.publications.test.mavenProjectIdentity) {
+            groupId == "group"
+            version == "version"
         }
     }
 
@@ -191,13 +169,13 @@ class MavenPublishPluginTest extends Specification {
         publishing.publications.add("test", MavenPublication)
 
         then:
-        publishing.publications.test.pomDir == new File(project.buildDir, "publications/test")
+        project.tasks["generatePomFileForTestPublication"].destination == new File(project.buildDir, "publications/test/pom-default.xml")
 
         when:
         def newBuildDir = project.file("changed")
         project.buildDir = newBuildDir
 
         then:
-        publishing.publications.test.pomDir == new File(newBuildDir, "publications/test")
+        project.tasks["generatePomFileForTestPublication"].destination == new File(newBuildDir, "publications/test/pom-default.xml")
     }
 }

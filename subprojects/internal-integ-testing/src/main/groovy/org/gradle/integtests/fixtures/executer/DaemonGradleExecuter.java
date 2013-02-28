@@ -53,7 +53,7 @@ public class DaemonGradleExecuter extends ForkingGradleExecuter {
     }
 
     @Override
-    public List<String> getGradleOpts() {
+    protected List<String> getGradleOpts() {
         if (isNoDefaultJvmArgs()) {
             return super.getGradleOpts();
         } else {
@@ -75,7 +75,7 @@ public class DaemonGradleExecuter extends ForkingGradleExecuter {
             }));
 
             List<String> gradleOpts = new ArrayList<String>(super.getGradleOpts());
-            gradleOpts.add(String.format("-Dorg.gradle.jvmArgs=%s", quotedArgs));
+            gradleOpts.add("-Dorg.gradle.jvmArgs=" +  quotedArgs);
             return gradleOpts;
         }
     }

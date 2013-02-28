@@ -33,7 +33,6 @@ Improve TestNG test execution/reporting
 
 - Change the Test `testReport` default value to `true`.
 - Change the Test `testNGOptions.useDefaultListeners` default value to `false`.
-- Deprecate the `TestNGOptions.useDefaultListeners` property.
 - Extract a shared `TestReporter` implementation out of `TestNGTestFramework` and `JUnitTestFramework` and remove `TestFramework.report()`.
 - Update the documentation and release notes accordingly.
 
@@ -66,16 +65,6 @@ Use the same mechanism as TestNG for XML result generation
 
 - No partial XML results available when process crashes (see first story for more)
 
-## Story: Aggregate HTML test report can be generated using internal class
-
-- Rename `DefaultTestReport`.
-- Restore `DefaultTestReport` from the revision released for Gradle 1.3.
-- Refactor to share as much implementation as practical, while keeping the public API of `DefaultTestReport` backwards compatible with 1.3.
-
-### Test coverage
-
-- A basic integration test to smoke test that it generates something without blowing up.
-
 ## Story: HTML test report generation is efficient
 
 HTML report is generated from the binary format, not from XML results
@@ -84,12 +73,33 @@ HTML report is generated from the binary format, not from XML results
 - Spike using [jatl](http://code.google.com/p/jatl/) to generate the report instead of using the DOM.
 - Change the report rendering so that it copies the test output directly from `TestResultsProvider` to file, rather than loading it into heap.
 
+## Bug GRADLE-2649: Test report shows implementation class for tests run via `@RunWith(Suite.class)`
+
+- Change `DecoratingTestDescriptor.getClassName()` to return the delegate's class name.
+- Change `TestReportDataCollector.onOutput()` to create a class test result object when the test descriptor has a class name associated with it, and
+  there are no results for the test class.
+
+### Coverage
+
+- A JUnit 4 suite `SomeSuite` includes 2 test classes `Class1` and `Class2`, and has @BeforeClass and @AfterClass methods that generate logging.
+    - The XML results should include an XML file for `SomeSuite` containing its logging, an XML file for `Class1` containing its tests and their
+      logging, and an XML file for `Class2` containing its tests and their logging.
+    - The HTML report should include the same information.
+- A JUnit 3 suite `SomeSuite` includes 2 test classes, wrapped in a `TestSetup` decorator that generates logging during setup and teardown. The suite includes
+  2 test classes `Class1` and `Class2`.
+    - The XML results and HTML report should include the same information as the previous test case.
+- Multiple JUnit suites that include the same test class `SomeClass`.
+    - The XML results should include an XML file for `SomeClass` that includes each test method multiple times, one for each time it was executed.
+    - The HTML report should include the same information.
+
+## Story: HTML test report shows runtime grouping of tests into suites
+
+- Add the tree of test execution to the test report
+
 ## Story: Aggregate HTML test report can be generated
 
 - Change test task to persist test results in internal format.
 - Add test report task.
-- Deprecate internal test report class `DefaultTestReport` and log deprecation message when used. Log message should mention that the class will be
-  removed in the next minor release of Gradle.
 
 ## Story: HTML test report shows output per test
 
@@ -127,4 +137,6 @@ We could possibly fix it by starting redirecting the output at suite start in th
 
 # Other issues
 
+- Test report aggregates multiple test results with the same class name from separate test task executions.
+- Allow XML results to be disabled.
 - Provide some way to generate only the old TestNG reports, so that both test report and test XML generation can be disabled.

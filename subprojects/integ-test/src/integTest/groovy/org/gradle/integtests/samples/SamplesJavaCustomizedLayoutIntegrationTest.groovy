@@ -17,7 +17,7 @@
 package org.gradle.integtests.samples
 
 import org.gradle.integtests.fixtures.AbstractIntegrationTest
-import org.gradle.integtests.fixtures.DefaultTestExecutionResult
+import org.gradle.integtests.fixtures.JUnitXmlTestExecutionResult
 import org.gradle.integtests.fixtures.Sample
 import org.gradle.test.fixtures.file.TestFile
 import org.junit.Rule
@@ -29,7 +29,7 @@ import org.junit.Test
 
 class SamplesJavaCustomizedLayoutIntegrationTest extends AbstractIntegrationTest {
 
-    @Rule public final Sample sample = new Sample('java/customizedLayout')
+    @Rule public final Sample sample = new Sample(testDirectoryProvider, 'java/customizedLayout')
 
     @Test
     public void canBuildAndUploadJar() {
@@ -39,7 +39,7 @@ class SamplesJavaCustomizedLayoutIntegrationTest extends AbstractIntegrationTest
         executer.inDirectory(javaprojectDir).withTasks('clean', 'build', 'uploadArchives').run()
 
         // Check tests have run
-        DefaultTestExecutionResult result = new DefaultTestExecutionResult(javaprojectDir)
+        JUnitXmlTestExecutionResult result = new JUnitXmlTestExecutionResult(javaprojectDir)
         result.assertTestClassesExecuted('org.gradle.PersonTest')
 
         // Check jar exists

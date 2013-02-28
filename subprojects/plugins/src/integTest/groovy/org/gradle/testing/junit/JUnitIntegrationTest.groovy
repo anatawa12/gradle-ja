@@ -17,6 +17,7 @@ package org.gradle.testing.junit
 
 import org.gradle.integtests.fixtures.AbstractIntegrationTest
 import org.gradle.integtests.fixtures.DefaultTestExecutionResult
+import org.gradle.integtests.fixtures.JUnitXmlTestExecutionResult
 import org.gradle.integtests.fixtures.TestResources
 import org.gradle.integtests.fixtures.executer.ExecutionResult
 import org.gradle.test.fixtures.file.TestFile
@@ -31,11 +32,11 @@ import static org.junit.Assert.assertThat
 
 public class JUnitIntegrationTest extends AbstractIntegrationTest {
     @Rule
-    public final TestResources resources = new TestResources()
+    public final TestResources resources = new TestResources(testDirectoryProvider)
 
     @Before
     public void before() {
-        executer.allowExtraLogging = false
+        executer.noExtraLogging()
     }
 
     @Test
@@ -72,20 +73,28 @@ public class JUnitIntegrationTest extends AbstractIntegrationTest {
 
     @Test
     public void suitesOutputIsVisible() {
-        executer.withTasks('test').withArguments('-i').run();
-
+        executer.withTasks('test').run();
         DefaultTestExecutionResult result = new DefaultTestExecutionResult(testDirectory)
-        result.assertTestClassesExecuted('org.gradle.ASuite')
+        result.assertTestClassesExecuted('org.gradle.ASuite', 'org.gradle.OkTest', 'org.gradle.OtherTest')
         result.testClass('org.gradle.ASuite').assertStdout(containsString('suite class loaded'))
-        result.testClass('org.gradle.ASuite').assertStderr(containsString('This is test stderr'))
-        result.testClass('org.gradle.ASuite').assertStdout(containsString('sys out from another test method'))
-        result.testClass('org.gradle.ASuite').assertStderr(containsString('sys err from another test method'))
-        result.testClass('org.gradle.ASuite').assertStdout(containsString('This is other stdout'))
         result.testClass('org.gradle.ASuite').assertStdout(containsString('before suite class out'))
         result.testClass('org.gradle.ASuite').assertStdout(containsString('non-asci char: ż'))
         result.testClass('org.gradle.ASuite').assertStderr(containsString('before suite class err'))
         result.testClass('org.gradle.ASuite').assertStdout(containsString('after suite class out'))
         result.testClass('org.gradle.ASuite').assertStderr(containsString('after suite class err'))
+        result.testClass('org.gradle.OkTest').assertStderr(containsString('This is test stderr'))
+        result.testClass('org.gradle.OkTest').assertStdout(containsString('sys out from another test method'))
+        result.testClass('org.gradle.OkTest').assertStderr(containsString('sys err from another test method'))
+        result.testClass('org.gradle.OtherTest').assertStdout(containsString('This is other stdout'))
+    }
+
+    @Test
+    public void testClassesCanBeSharedByMultipleSuites() {
+        executer.withTasks('test').run();
+        DefaultTestExecutionResult result = new DefaultTestExecutionResult(testDirectory)
+        result.assertTestClassesExecuted('org.gradle.SomeTest')
+        result.testClass("org.gradle.SomeTest").assertTestCount(2, 0, 0)
+        result.testClass("org.gradle.SomeTest").assertTestsExecuted("ok", "ok")
     }
 
     @Test
@@ -101,10 +110,10 @@ public class JUnitIntegrationTest extends AbstractIntegrationTest {
                 .assertTestsExecuted('testRenamesItself')
                 .assertTestPassed('testRenamesItself')
         result.testClass('org.gradle.Junit4Test')
-                .assertTestCount(2, 0, 0)
+                .assertTestCount(3, 0, 0)
                 .assertTestsExecuted('ok')
                 .assertTestPassed('ok')
-                .assertTestsSkipped('broken')
+                .assertTestsSkipped('broken', 'assumptionFailed')
         result.testClass('org.gradle.IgnoredTest').assertTestCount(1, 0, 0).assertTestsSkipped("testIgnored")
         result.testClass('org.gradle.CustomIgnoredTest').assertTestCount(3, 0, 0).assertTestsSkipped("first test run", "second test run", "third test run")
     }
@@ -408,7 +417,7 @@ public class JUnitIntegrationTest extends AbstractIntegrationTest {
     public void canHaveMultipleTestTaskInstances() {
         executer.withTasks('check').run()
 
-        def result = new DefaultTestExecutionResult(testDirectory)
+        def result = new JUnitXmlTestExecutionResult(testDirectory)
         result.assertTestClassesExecuted('org.gradle.Test1', 'org.gradle.Test2')
         result.testClass('org.gradle.Test1').assertTestPassed('ok')
         result.testClass('org.gradle.Test2').assertTestPassed('ok')
@@ -440,5 +449,22 @@ public class JUnitIntegrationTest extends AbstractIntegrationTest {
         testClass.assertStderr(containsText("thread 0 err"))
         testClass.assertStderr(containsText("thread 1 err"))
         testClass.assertStderr(containsText("thread 2 err"))
+    }
+
+    @Test
+    public void supportsJunit3Suites() {
+        executer.withTasks('test').run();
+        DefaultTestExecutionResult result = new DefaultTestExecutionResult(testDirectory)
+
+        result.assertTestClassesExecuted('org.gradle.SomeTest1', 'org.gradle.SomeTest2', 'org.gradle.SomeSuite')
+        result.testClass("org.gradle.SomeTest1").assertTestCount(1, 0, 0)
+        result.testClass("org.gradle.SomeTest1").assertTestsExecuted("testOk1")
+        result.testClass("org.gradle.SomeTest2").assertTestCount(1, 0, 0)
+        result.testClass("org.gradle.SomeTest2").assertTestsExecuted("testOk2")
+        result.testClass("org.gradle.SomeSuite").assertTestCount(0, 0, 0)
+        result.testClass("org.gradle.SomeSuite").assertStdout(containsString("stdout in TestSetup#setup"))
+        result.testClass("org.gradle.SomeSuite").assertStdout(containsString("stdout in TestSetup#teardown"))
+        result.testClass("org.gradle.SomeSuite").assertStderr(containsString("stderr in TestSetup#setup"))
+        result.testClass("org.gradle.SomeSuite").assertStderr(containsString("stderr in TestSetup#teardown"))
     }
 }

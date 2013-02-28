@@ -27,6 +27,7 @@ import org.gradle.api.internal.DynamicObject;
 import org.gradle.api.internal.NamedDomainObjectContainerConfigureDelegate;
 import org.gradle.api.internal.project.ProjectInternal;
 import org.gradle.api.internal.project.taskfactory.ITaskFactory;
+import org.gradle.initialization.ProjectAccessListener;
 import org.gradle.internal.reflect.Instantiator;
 import org.gradle.util.ConfigureUtil;
 import org.gradle.util.DeprecationLogger;
@@ -38,10 +39,12 @@ import java.util.Map;
 
 public class DefaultTaskContainer extends DefaultTaskCollection<Task> implements TaskContainerInternal {
     private final ITaskFactory taskFactory;
+    private final ProjectAccessListener projectAccessListener;
 
-    public DefaultTaskContainer(ProjectInternal project, Instantiator instantiator, ITaskFactory taskFactory) {
+    public DefaultTaskContainer(ProjectInternal project, Instantiator instantiator, ITaskFactory taskFactory, ProjectAccessListener projectAccessListener) {
         super(Task.class, instantiator, project);
         this.taskFactory = taskFactory;
+        this.projectAccessListener = projectAccessListener;
     }
 
     public Task add(Map<String, ?> options) {
@@ -80,6 +83,14 @@ public class DefaultTaskContainer extends DefaultTaskCollection<Task> implements
         return add(name);
     }
 
+    public Task maybeCreate(String name) {
+        Task task = findByName(name);
+        if (task != null) {
+            return task;
+        }
+        return create(name);
+    }
+
     public Task add(String name) {
         return add(GUtil.map(Task.TASK_NAME, name));
     }
@@ -113,7 +124,8 @@ public class DefaultTaskContainer extends DefaultTaskCollection<Task> implements
         if (project == null) {
             return null;
         }
-        project.ensureEvaluated();
+        projectAccessListener.beforeRequestingTaskByPath(project);
+
         return project.getTasks().findByName(StringUtils.substringAfterLast(path, Project.PATH_SEPARATOR));
     }
 

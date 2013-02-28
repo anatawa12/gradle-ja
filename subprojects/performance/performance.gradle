@@ -58,13 +58,19 @@ task withVerboseJUnit(type: ProjectGeneratorTask) {
     subProjectTemplates << 'with-verbose-junit'
 }
 
-task multiGroovy(type: ProjectGeneratorTask, description: 'Generates a multi-project groovy build') {
+task multiGroovy(type: ProjectGeneratorTask, description: 'Generates a multi-project Groovy build') {
     projects = 25
     groovyProject = true
 }
 
 task multiScala(type: ProjectGeneratorTask, description: 'Generates a multi-project Scala build') {
     projects = 25
+    scalaProject = true
+}
+
+task multiGroovyScala(type: ProjectGeneratorTask, description: 'Generates a multi-project Groovy & Scala build') {
+    projects = 25
+    groovyProject = true
     scalaProject = true
 }
 
@@ -143,8 +149,7 @@ integTestTasks.all {
     if (buildTypes.isActive('performanceTest') || buildTypes.isActive('localPerformanceTest')) {
         dependsOn prepareSamples
     } else {
-        enabled = false
-        dependsOn = []
+        gradle.startParameter.excludedTaskNames << it.path
     }
     maxParallelForks = 1
 }

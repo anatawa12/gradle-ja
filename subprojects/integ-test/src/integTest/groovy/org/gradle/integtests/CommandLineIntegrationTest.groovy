@@ -31,12 +31,12 @@ import org.junit.Test
 
 public class CommandLineIntegrationTest extends AbstractIntegrationTest {
 
-    @Rule public final TestResources resources = new TestResources()
+    @Rule public final TestResources resources = new TestResources(testDirectoryProvider)
     @Rule public final PreconditionVerifier verifier = new PreconditionVerifier()
 
     @Before
     void setup() {
-        executer.requireGradleHome(true)
+        executer.requireGradleHome()
     }
 
     @Test
@@ -131,7 +131,7 @@ public class CommandLineIntegrationTest extends AbstractIntegrationTest {
     @Test
     public void canSpecifySystemPropertiesUsingGradleOptsEnvironmentVariable() {
         // the actual testing is done in the build script.
-        executer.withTasks("checkSystemProperty").withGradleOpts('-DcustomProp1=custom-value', "-DcustomProp2=custom value").run();
+        executer.withTasks("checkSystemProperty").withEnvironmentVars("GRADLE_OPTS": '-DcustomProp1=custom-value "-DcustomProp2=custom value"').run();
     }
 
     @Test

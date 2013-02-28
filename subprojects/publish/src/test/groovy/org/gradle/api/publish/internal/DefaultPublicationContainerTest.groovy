@@ -15,9 +15,10 @@
  */
 
 package org.gradle.api.publish.internal
+import org.gradle.api.InvalidUserDataException
+import org.gradle.api.UnknownDomainObjectException
 import org.gradle.api.internal.ThreadGlobalInstantiator
 import org.gradle.api.publish.Publication
-import org.gradle.api.publish.UnknownPublicationException
 import org.gradle.internal.reflect.Instantiator
 import spock.lang.Specification
 
@@ -26,7 +27,7 @@ class DefaultPublicationContainerTest extends Specification {
     Instantiator instantiator = ThreadGlobalInstantiator.getOrCreate()
     GroovyPublicationContainer container = instantiator.newInstance(GroovyPublicationContainer, instantiator)
 
-    def "right exception is thrown on unknown access"() {
+    def "exception is thrown on unknown access"() {
         given:
         container.add(publication("foo"))
 
@@ -37,8 +38,8 @@ class DefaultPublicationContainerTest extends Specification {
         container.getByName("notHere")
 
         then:
-        def e = thrown(UnknownPublicationException)
-        e.message == "Publication with name 'notHere' not found"
+        def e = thrown(UnknownDomainObjectException)
+        e.message == "Publication with name 'notHere' not found."
     }
 
     def "can add and configure publication with API"() {
@@ -93,6 +94,28 @@ class DefaultPublicationContainerTest extends Specification {
         and:
         container.getByName("test") == testPub
         testPub.value == 2
+    }
+
+    def "cannot add multiple publications with same name"() {
+        given:
+        PublicationFactory factory = Mock()
+        container.registerFactory(TestPublication, factory)
+
+        when:
+        container.publication_name(TestPublication)
+
+        then:
+        1 * factory.create("publication_name") >> publication("test")
+
+        when:
+        container.publication_name(TestPublication)
+
+        then:
+        1 * factory.create("publication_name") >> publication("test")
+
+        and:
+        def t = thrown InvalidUserDataException
+        t.message == "Publication with name 'test' added multiple times"
     }
 
     TestPublication publication(String name) {

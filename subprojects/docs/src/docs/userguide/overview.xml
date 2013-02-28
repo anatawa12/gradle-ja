@@ -1,4 +1,4 @@
-<!--
+﻿<!--
   ~ Copyright 2009 the original author or authors.
   ~
   ~ Licensed under the Apache License, Version 2.0 (the "License");
@@ -109,8 +109,8 @@
                 <listitem>
                     <para role="original">Different teams prefer different ways to manage their external dependencies.
                         Gradle provides convenient support for any strategy. From transitive dependency 
-                        management with remote maven and ivy repositories to jars or dirs on the local file system.</para>
-                    <para>外部ライブラリの解決には、チームごとにさまざまな方法があるものです。リモートのmavenやivyのリポジトリを使った推移的な依存関係の管理から、ローカルファイルシステム上のjarやディレクトリまで、どのような方法をとるにせよGradleはそれらを強力にサポートします。</para>
+                        management with remote Maven and Ivy repositories to jars or dirs on the local file system.</para>
+                    <para>外部ライブラリの解決には、チームごとにさまざまな方法があるものです。リモートのMavenやIvyのリポジトリを使った推移的な依存関係の管理から、ローカルファイルシステム上のjarやディレクトリまで、どのような方法をとるにせよGradleはそれらを強力にサポートします。</para>
                 </listitem>
             </varlistentry>
             <varlistentry>
@@ -122,9 +122,9 @@
                         Gradle tasks in your build.xml. The same integration is provided for properties, paths, etc ...</para>
                     <para>Gradleでは、Antのタスクはファーストクラス・オブジェクトです。さらにおもしろいことに、Antのプロジェクトもまたファーストクラス・オブジェクトなのです。Gradleでは、Antプロジェクトをインポートして、実行時にAntのターゲットをGradleネイティブのタスクへ変換できます。もちろんインポートしたタスクへの依存関係を定義できますし、拡張もできます。それどころか、build.xmlの中でGradleのタスクへの依存関係を宣言することさえ可能です。プロパティやパス、その他諸々についても同じレベルで統合されています。</para>
                     <para role="original">Gradle fully supports your existing Maven or Ivy repository infrastructure for publishing and retrieving
-                        dependencies. Gradle also provides a converter for turning a Maven pom.xml into a Gradle script.
+                        dependencies. Gradle also provides a converter for turning a Maven <filename>pom.xml</filename> into a Gradle script.
                         Runtime imports of Maven projects will come soon.</para>
-                    <para>Gradleは、既存のMaven/Ivyリポジトリのインフラ、依存関係の定義や解決といった機能を完全にサポートしています。さらに、Mavenのpom.xmlをGradleのスクリプトに変換するコンバーターも用意されています。実行時にその変換を行う機能も近いうちに提供される予定です。</para>
+                    <para>Gradleは、既存のMaven/Ivyリポジトリのインフラ、依存関係の定義や解決といった機能を完全にサポートしています。さらに、Mavenの<filename>pom.xml</filename>をGradleのスクリプトに変換するコンバーターも用意されています。実行時にその変換を行う機能も近いうちに提供される予定です。</para>
                 </listitem>
             </varlistentry>
             <varlistentry>

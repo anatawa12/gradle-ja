@@ -90,6 +90,13 @@ class FindBugs extends SourceTask implements VerificationTask, Reporting<FindBug
     String reportLevel
 
     /**
+     * The maximum heap size for the forked findbugs process (ex: '1g').
+     */
+    @Input
+    @Optional
+    String maxHeapSize
+
+    /**
      * The bug detectors which should be run. The bug detectors are specified by their class names,
      * without any package qualification. By default, all detectors which are not disabled by default are run.
      */
@@ -185,6 +192,7 @@ class FindBugs extends SourceTask implements VerificationTask, Reporting<FindBug
             .withDebugging(logger.isDebugEnabled())
             .withEffort(getEffort())
             .withReportLevel(getReportLevel())
+            .withMaxHeapSize(getMaxHeapSize())
             .withVisitors(getVisitors())
             .withOmitVisitors(getOmitVisitors())
             .withExcludeFilter(getExcludeFilter())

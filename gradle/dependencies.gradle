@@ -89,9 +89,10 @@ libraries += [
         xmlunit: 'xmlunit:xmlunit:1.3',
         nekohtml: 'net.sourceforge.nekohtml:nekohtml:1.9.14',
         xbean: 'org.apache.xbean:xbean-reflect:3.4@jar', //required by maven3 classes
-        nativePlatform: 'net.rubygrapefruit:native-platform:0.2',
+        nativePlatform: 'net.rubygrapefruit:native-platform:0.3-rc-2',
         xerces: "xerces:xercesImpl:2.9.1",
-        objenesis: 'org.objenesis:objenesis:1.2@jar'
+        objenesis: 'org.objenesis:objenesis:1.2@jar',
+        jsoup:'org.jsoup:jsoup:1.6.3'
 ]
 
 libraries.maven3 = dependencies.module("org.apache.maven:maven-core:3.0.4") {

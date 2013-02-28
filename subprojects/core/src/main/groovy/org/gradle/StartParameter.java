@@ -73,7 +73,8 @@ public class StartParameter extends LoggingConfiguration implements Serializable
     private boolean refreshDependencies;
     private boolean recompileScripts;
     private int parallelThreadCount;
-
+    private boolean configureOnDemand;
+    private boolean parallelThreadCountConfigured;
 
     /**
      * Sets the project's cache location. Set to null to use the default location.
@@ -115,35 +116,25 @@ public class StartParameter extends LoggingConfiguration implements Serializable
      * @return the new parameters.
      */
     public StartParameter newInstance() {
-        StartParameter startParameter = new StartParameter();
-        startParameter.buildFile = buildFile;
-        startParameter.projectDir = projectDir;
-        startParameter.settingsFile = settingsFile;
-        startParameter.useEmptySettings = useEmptySettings;
-        startParameter.taskNames = taskNames;
-        startParameter.buildProjectDependencies = buildProjectDependencies;
-        startParameter.currentDir = currentDir;
-        startParameter.searchUpwards = searchUpwards;
-        startParameter.projectProperties = projectProperties;
-        startParameter.systemPropertiesArgs = systemPropertiesArgs;
-        startParameter.gradleUserHomeDir = gradleUserHomeDir;
-        startParameter.gradleHomeDir = gradleHomeDir;
-        startParameter.cacheUsage = cacheUsage;
-        startParameter.initScripts = new ArrayList<File>(initScripts);
-        startParameter.setLogLevel(getLogLevel());
-        startParameter.setColorOutput(isColorOutput());
-        startParameter.setShowStacktrace(getShowStacktrace());
-        startParameter.dryRun = dryRun;
-        startParameter.rerunTasks = rerunTasks;
-        startParameter.recompileScripts = recompileScripts;
-        startParameter.profile = profile;
-        startParameter.projectCacheDir = projectCacheDir;
-        startParameter.continueOnFailure = continueOnFailure;
-        startParameter.offline = offline;
-        startParameter.refreshDependencies = refreshDependencies;
-        startParameter.parallelThreadCount = parallelThreadCount;
+        StartParameter p = newBuild();
 
-        return startParameter;
+        p.buildFile = buildFile;
+        p.projectDir = projectDir;
+        p.settingsFile = settingsFile;
+        p.useEmptySettings = useEmptySettings;
+        p.taskNames = new ArrayList<String>(taskNames);
+        p.excludedTaskNames = new HashSet<String>(excludedTaskNames);
+        p.buildProjectDependencies = buildProjectDependencies;
+        p.currentDir = currentDir;
+        p.searchUpwards = searchUpwards;
+        p.projectProperties = new HashMap<String, String>(projectProperties);
+        p.systemPropertiesArgs = new HashMap<String, String>(systemPropertiesArgs);
+        p.gradleHomeDir = gradleHomeDir;
+        p.initScripts = new ArrayList<File>(initScripts);
+        p.dryRun = dryRun;
+        p.projectCacheDir = projectCacheDir;
+
+        return p;
     }
 
     /**
@@ -153,20 +144,23 @@ public class StartParameter extends LoggingConfiguration implements Serializable
      * @return The new parameters.
      */
     public StartParameter newBuild() {
-        StartParameter startParameter = new StartParameter();
-        startParameter.gradleUserHomeDir = gradleUserHomeDir;
-        startParameter.cacheUsage = cacheUsage;
-        startParameter.setLogLevel(getLogLevel());
-        startParameter.setColorOutput(isColorOutput());
-        startParameter.setShowStacktrace(getShowStacktrace());
-        startParameter.profile = profile;
-        startParameter.continueOnFailure = continueOnFailure;
-        startParameter.offline = offline;
-        startParameter.rerunTasks = rerunTasks;
-        startParameter.recompileScripts = recompileScripts;
-        startParameter.refreshDependencies = refreshDependencies;
-        startParameter.parallelThreadCount = parallelThreadCount;
-        return startParameter;
+        StartParameter p = new StartParameter();
+
+        p.gradleUserHomeDir = gradleUserHomeDir;
+        p.cacheUsage = cacheUsage;
+        p.setLogLevel(getLogLevel());
+        p.setColorOutput(isColorOutput());
+        p.setShowStacktrace(getShowStacktrace());
+        p.profile = profile;
+        p.continueOnFailure = continueOnFailure;
+        p.offline = offline;
+        p.rerunTasks = rerunTasks;
+        p.recompileScripts = recompileScripts;
+        p.refreshDependencies = refreshDependencies;
+        p.parallelThreadCount = parallelThreadCount;
+        p.configureOnDemand = configureOnDemand;
+
+        return p;
     }
 
     public boolean equals(Object obj) {
@@ -285,13 +279,13 @@ public class StartParameter extends LoggingConfiguration implements Serializable
     /**
      * Sets the directory to use to select the default project, and to search for the settings file. Set to null to use the default current directory.
      *
-     * @param currentDir The directory. Should not be null.
+     * @param currentDir The directory. Set to null to use the default.
      */
     public void setCurrentDir(File currentDir) {
         if (currentDir != null) {
             this.currentDir = GFileUtils.canonicalise(currentDir);
         } else {
-            this.currentDir = GFileUtils.canonicalise(new File(System.getProperty("user.dir")));
+            this.currentDir = GFileUtils.canonicalise(SystemProperties.getCurrentDir());
         }
     }
 
@@ -320,7 +314,7 @@ public class StartParameter extends LoggingConfiguration implements Serializable
     }
 
     /**
-     * Returns a newly constructed map that is the JVM system properties merged with the system property args. <p> System property args take precedency overy JVM system properties.
+     * Returns a newly constructed map that is the JVM system properties merged with the system property args. <p> System property args take precedence over JVM system properties.
      *
      * @return The merged system properties
      */
@@ -473,6 +467,7 @@ public class StartParameter extends LoggingConfiguration implements Serializable
      *
      * @return All init scripts, including explicit init scripts and implicit init scripts.
      */
+    @Incubating
     public List<File> getAllInitScripts() {
         CompositeInitScriptFinder initScriptFinder = new CompositeInitScriptFinder(
                 new UserHomeInitScriptFinder(getGradleUserHomeDir()), new DistributionInitScriptFinder(gradleHomeDir)
@@ -631,6 +626,7 @@ public class StartParameter extends LoggingConfiguration implements Serializable
      * @see #getParallelThreadCount()
      */
     public void setParallelThreadCount(int parallelThreadCount) {
+        this.parallelThreadCountConfigured = true;
         this.parallelThreadCount = parallelThreadCount;
     }
 
@@ -639,8 +635,15 @@ public class StartParameter extends LoggingConfiguration implements Serializable
      */
     @Incubating
     public boolean isConfigureOnDemand() {
-        //TODO SF this needs to be handled same way as other properties, like 'org.gradle.daemon'
-        return "true".equals(System.getProperty("org.gradle.configuration.ondemand"));
+        return configureOnDemand;
+    }
+
+    @Incubating
+    public boolean isParallelThreadCountConfigured() {
+        //This is not beautiful. As the number of gradle properties grows we may something like:
+        //1. Make StartParameter an interface
+        //2. StartParameter (StartParameterInternal) needs to inform if certain property was configured or not
+        return parallelThreadCountConfigured;
     }
 
     @Override
@@ -664,6 +667,8 @@ public class StartParameter extends LoggingConfiguration implements Serializable
                 + ", recompileScripts=" + recompileScripts
                 + ", offline=" + offline
                 + ", refreshDependencies=" + refreshDependencies
+                + ", parallelThreadCount=" + parallelThreadCount
+                + ", configureOnDemand=" + configureOnDemand
                 + '}';
     }
 
@@ -672,5 +677,10 @@ public class StartParameter extends LoggingConfiguration implements Serializable
      */
     void setGradleHomeDir(File gradleHomeDir) {
         this.gradleHomeDir = gradleHomeDir;
+    }
+
+    @Incubating
+    public void setConfigureOnDemand(boolean configureOnDemand) {
+        this.configureOnDemand = configureOnDemand;
     }
 }

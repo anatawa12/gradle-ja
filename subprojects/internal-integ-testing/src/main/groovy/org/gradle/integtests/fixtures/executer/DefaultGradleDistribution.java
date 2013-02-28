@@ -101,7 +101,7 @@ public class DefaultGradleDistribution implements GradleDistribution {
     }
 
     public int getArtifactCacheLayoutVersion() {
-        if (isSameOrNewer("1.4")) {
+        if (isSameOrNewer("1.4-rc-1")) {
             return 23;
         } else if (isSameOrNewer("1.3")) {
             return 15;
@@ -132,6 +132,10 @@ public class DefaultGradleDistribution implements GradleDistribution {
         return isSameOrNewer("1.0-milestone-5");
     }
 
+    public boolean isFullySupportsIvyRepository() {
+        return isSameOrNewer("1.0-milestone-7");
+    }
+
     protected boolean isSameOrNewer(String otherVersion) {
         return isVersion(otherVersion) || version.compareTo(GradleVersion.version(otherVersion)) > 0;
     }
@@ -140,8 +144,9 @@ public class DefaultGradleDistribution implements GradleDistribution {
         return isVersion(otherVersion) || version.compareTo(GradleVersion.version(otherVersion)) <= 0;
     }
 
-    protected boolean isVersion(String otherVersion) {
-        return version.compareTo(GradleVersion.version(otherVersion)) == 0 || (version.isSnapshot() && version.getVersionBase().equals(otherVersion));
+    protected boolean isVersion(String otherVersionString) {
+        GradleVersion otherVersion = GradleVersion.version(otherVersionString);
+        return version.compareTo(otherVersion) == 0 || (version.isSnapshot() && version.getVersionBase().equals(otherVersion.getVersionBase()));
     }
 
 }

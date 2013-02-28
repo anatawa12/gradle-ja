@@ -15,14 +15,14 @@
  */
 package org.gradle.api.plugins.quality
 
+import org.gradle.api.GradleException
 import org.gradle.api.file.FileCollection
-import org.gradle.internal.reflect.Instantiator
 import org.gradle.api.internal.project.IsolatedAntBuilder
 import org.gradle.api.plugins.quality.internal.PmdReportsImpl
 import org.gradle.api.reporting.Reporting
 import org.gradle.api.tasks.*
+import org.gradle.internal.reflect.Instantiator
 import org.gradle.logging.ConsoleRenderer
-import org.gradle.api.GradleException
 
 import javax.inject.Inject
 
@@ -48,6 +48,12 @@ class Pmd extends SourceTask implements VerificationTask, Reporting<PmdReports> 
     List<String> ruleSets
 
     /**
+     * The target jdk to use with pmd
+     */
+    @Input
+    TargetJdk targetJdk
+
+    /**
      * The custom rule set files to be used. See the <a href="http://pmd.sourceforge.net/howtomakearuleset.html">official documentation</a> for
      * how to author a rule set file.
      *
@@ -68,34 +74,42 @@ class Pmd extends SourceTask implements VerificationTask, Reporting<PmdReports> 
      */
     boolean ignoreFailures
 
-    @Inject
-    Pmd(Instantiator instantiator, IsolatedAntBuilder antBuilder) {
+    @Inject Pmd(Instantiator instantiator, IsolatedAntBuilder antBuilder) {
         reports = instantiator.newInstance(PmdReportsImpl, this)
         this.antBuilder = antBuilder
     }
 
     @TaskAction
     void run() {
+        boolean oldBranch = getPmdClasspath().find {
+            it.name ==~ /pmd-([1-4]\.[0-9\.]+)\.jar/
+        }
+        def antPmdArgs = [failOnRuleViolation: false, failuresPropertyName: "pmdFailureCount"]
+        if (oldBranch){
+            antPmdArgs["targetjdk"] = getTargetJdk().getName()
+        }
         antBuilder.withClasspath(getPmdClasspath()).execute {
             ant.taskdef(name: 'pmd', classname: 'net.sourceforge.pmd.ant.PMDTask')
-            ant.pmd(failOnRuleViolation: false, failuresPropertyName: "pmdFailureCount") {
-                getSource().addToAntBuilder(ant, 'fileset', FileCollection.AntType.FileSet)
-                getRuleSets().each {
-                    ruleset(it)
-                }
-                getRuleSetFiles().each {
-                    ruleset(it)
-                }
+                ant.pmd(antPmdArgs) {
+                    getSource().addToAntBuilder(ant, 'fileset', FileCollection.AntType.FileSet)
+                    if (getRuleSets().isEmpty()) {
+                        setRuleSets([oldBranch ? "basic" : "java-basic"])
+                    }
+                    getRuleSets().each {
+                        ruleset(it)
+                    }
+                    getRuleSetFiles().each {
+                        ruleset(it)
+                    }
 
-                if (reports.html.enabled) {
-                    assert reports.html.destination.parentFile.exists()
-                    formatter(type: 'betterhtml', toFile: reports.html.destination)
+                    if (reports.html.enabled) {
+                        assert reports.html.destination.parentFile.exists()
+                        formatter(type: oldBranch ? "betterhtml" : "html", toFile: reports.html.destination)
+                    }
+                    if (reports.xml.enabled) {
+                        formatter(type: 'xml', toFile: reports.xml.destination)
+                    }
                 }
-                if (reports.xml.enabled) {
-                    formatter(type: 'xml', toFile: reports.xml.destination)
-                }
-            }
-
             def failureCount = ant.project.properties["pmdFailureCount"]
             if (failureCount) {
                 def message = "$failureCount PMD rule violations were found."

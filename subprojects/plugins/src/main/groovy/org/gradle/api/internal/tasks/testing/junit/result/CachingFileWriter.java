@@ -25,7 +25,7 @@ import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
-import static org.gradle.internal.CompositeStoppable.closeable;
+import static org.gradle.internal.CompositeStoppable.stoppable;
 
 /**
  * by Szczepan Faber, created at: 11/19/12
@@ -35,10 +35,10 @@ public class CachingFileWriter {
     private final static Logger LOG = Logging.getLogger(CachingFileWriter.class);
 
     final LinkedHashMap<File, Writer> openFiles = new LinkedHashMap<File, Writer>();
-    private final int openFilesCount;
+    private final int maxOpenFiles;
 
-    public CachingFileWriter(int openFilesCount) {
-        this.openFilesCount = openFilesCount;
+    public CachingFileWriter(int maxOpenFiles) {
+        this.maxOpenFiles = maxOpenFiles;
     }
 
     public void write(File file, String text) {
@@ -50,7 +50,7 @@ public class CachingFileWriter {
                 } else {
                     out = new OutputStreamWriter(new BufferedOutputStream(new FileOutputStream(file, true)), "UTF-8");
                     openFiles.put(file, out);
-                    if (openFiles.size() > openFilesCount) {
+                    if (openFiles.size() > maxOpenFiles) {
                         //remove first
                         Iterator<Map.Entry<File, Writer>> iterator = openFiles.entrySet().iterator();
                         close(iterator.next().getValue(), file.toString());
@@ -82,7 +82,7 @@ public class CachingFileWriter {
 
     private void cleanUpQuietly() {
         try {
-            closeable(openFiles.values()).stop();
+            stoppable(openFiles.values()).stop();
         } catch (Exception e) {
             LOG.debug("Problems closing files", e);
         } finally {

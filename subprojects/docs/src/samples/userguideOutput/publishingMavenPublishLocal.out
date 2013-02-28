@@ -1,8 +1,9 @@
+:generatePomFileForMavenJavaPublication
 :compileJava
 :processResources UP-TO-DATE
 :classes
 :jar
-:publishMavenPublicationToMavenLocal
+:publishMavenJavaPublicationToMavenLocal
 :publishToMavenLocal
 
 BUILD SUCCESSFUL

@@ -17,6 +17,8 @@ package org.gradle.test.fixtures.ivy
 
 import org.apache.ivy.core.IvyPatternHelper
 import org.apache.ivy.core.module.id.ModuleRevisionId
+import org.gradle.api.Action
+import org.gradle.api.internal.xml.XmlTransformer
 import org.gradle.test.fixtures.file.TestFile
 import org.gradle.util.hash.HashUtil
 
@@ -33,6 +35,7 @@ class IvyFileModule extends AbstractIvyModule {
     String status = "integration"
     boolean noMetaData
     int publishCount = 1
+    XmlTransformer transformer = new XmlTransformer()
 
     IvyFileModule(String ivyPattern, String artifactPattern, TestFile moduleDir, String organisation, String module, String revision) {
         this.ivyPattern = ivyPattern
@@ -46,18 +49,33 @@ class IvyFileModule extends AbstractIvyModule {
         configurations['default'] = [extendsFrom: ['runtime'], transitive: true]
     }
 
+    IvyFileModule configuration(String name, List extendsFrom = []) {
+        configurations[name] = [extendsFrom: extendsFrom, transitive: true]
+        return this
+    }
+
+    IvyFileModule withXml(Closure action) {
+        transformer.addAction(action);
+        return this
+    }
+
     /**
      * Adds an additional artifact to this module.
      * @param options Can specify any of name, type or classifier
      * @return this
      */
     IvyFileModule artifact(Map<String, ?> options) {
-        artifacts << [name: options.name ?: module, type: options.type ?: 'jar', classifier: options.classifier ?: null]
+        artifacts << [name: options.name ?: module, type: options.type ?: 'jar', classifier: options.classifier ?: null, conf: options.conf ?: '*']
         return this
     }
 
     IvyFileModule dependsOn(String organisation, String module, String revision) {
-        dependencies << [organisation: organisation, module: module, revision: revision]
+        dependsOn([organisation: organisation, module: module, revision: revision])
+        return this
+    }
+
+    IvyFileModule dependsOn(Map<String, String> attributes) {
+        dependencies << attributes
         return this
     }
 
@@ -124,7 +142,9 @@ class IvyFileModule extends AbstractIvyModule {
         }
 
         publish(ivyFile) {
-            ivyFile.text = """<?xml version="1.0" encoding="UTF-8"?>
+            transformer.transform(ivyFile, new Action<Writer>() {
+                void execute(Writer ivyFileWriter) {
+                    ivyFileWriter << """<?xml version="1.0" encoding="UTF-8"?>
 <ivy-module version="1.0" xmlns:m="http://ant.apache.org/ivy/maven">
     <!-- ${publishCount} -->
 	<info organisation="${organisation}"
@@ -134,34 +154,38 @@ class IvyFileModule extends AbstractIvyModule {
 	/>
 	<configurations>"""
             configurations.each { name, config ->
-                ivyFile << "<conf name='$name' visibility='public'"
+                ivyFileWriter << "<conf name='$name' visibility='public'"
                 if (config.extendsFrom) {
-                    ivyFile << " extends='${config.extendsFrom.join(',')}'"
+                    ivyFileWriter << " extends='${config.extendsFrom.join(',')}'"
                 }
                 if (!config.transitive) {
-                    ivyFile << " transitive='false'"
+                    ivyFileWriter << " transitive='false'"
                 }
-                ivyFile << "/>"
+                ivyFileWriter << "/>"
             }
-            ivyFile << """</configurations>
+            ivyFileWriter << """</configurations>
 	<publications>
 """
             artifacts.each { artifact ->
-                ivyFile << """<artifact name="${artifact.name}" type="${artifact.type}" ext="${artifact.type}" conf="*" m:classifier="${artifact.classifier ?: ''}"/>
+                ivyFileWriter << """<artifact name="${artifact.name}" type="${artifact.type}" ext="${artifact.type}" conf="${artifact.conf}" m:classifier="${artifact.classifier ?: ''}"/>
 """
             }
-            ivyFile << """
+            ivyFileWriter << """
 	</publications>
 	<dependencies>
 """
             dependencies.each { dep ->
-                ivyFile << """<dependency org="${dep.organisation}" name="${dep.module}" rev="${dep.revision}"/>
+                def confAttribute = dep.conf == null ? "" : """ conf="${dep.conf}" """
+                def revConstraint = dep.revConstraint == null ? "" : """ revConstraint="${dep.revConstraint}" """
+                ivyFileWriter << """<dependency org="${dep.organisation}" name="${dep.module}" rev="${dep.revision}" ${confAttribute} ${revConstraint}/>
 """
             }
-            ivyFile << """
+            ivyFileWriter << """
     </dependencies>
 </ivy-module>
         """
+                }
+            })
         }
         return this
     }
@@ -200,4 +224,32 @@ class IvyFileModule extends AbstractIvyModule {
         return HashUtil.createHash(file, algorithm).asHexString()
     }
 
+    void assertNotPublished() {
+        ivyFile.assertDoesNotExist()
+    }
+
+    void assertPublished() {
+        assert ivyFile.assertExists()
+        assert ivy.organisation == organisation
+        assert ivy.module == module
+        assert ivy.revision == revision
+    }
+
+    void assertPublishedAsJavaModule() {
+        assertPublished()
+        assertArtifactsPublished("${module}-${revision}.jar", "ivy-${revision}.xml")
+        ivy.expectArtifact(module, "jar").hasAttributes("jar", "jar", ["runtime"], null)
+    }
+
+    void assertPublishedAsWebModule() {
+        assertPublished()
+        assertArtifactsPublished("${module}-${revision}.war", "ivy-${revision}.xml")
+        ivy.expectArtifact(module, "war").hasAttributes("war", "war", ["master"])
+    }
+
+    void assertPublishedAsEarModule() {
+        assertPublished()
+        assertArtifactsPublished("${module}-${revision}.ear", "ivy-${revision}.xml")
+        ivy.expectArtifact(module, "ear").hasAttributes("ear", "ear", ["master"])
+    }
 }

@@ -16,30 +16,33 @@
 
 package org.gradle.api.internal.tasks.testing.junit.result;
 
-import org.gradle.api.UncheckedIOException;
+import org.gradle.api.Action;
 import org.gradle.api.tasks.testing.*;
 
-import java.io.*;
+import java.io.File;
+import java.io.Writer;
 import java.util.HashMap;
 import java.util.Map;
 
 /**
+ * Assembles test results. Keeps a copy of the results in memory to provide them later and spools test output to file.
+ *
  * by Szczepan Faber, created at: 11/13/12
  */
 public class TestReportDataCollector implements TestListener, TestOutputListener, TestResultsProvider {
-
     private final Map<String, TestClassResult> results = new HashMap<String, TestClassResult>();
+    private final TestResultSerializer resultSerializer;
     private final File resultsDir;
-    CachingFileWriter cachingFileWriter = new CachingFileWriter(10); //TODO SF calculate based on parallel forks
+    private final TestOutputSerializer outputSerializer;
 
     public TestReportDataCollector(File resultsDir) {
+        this(resultsDir, new TestOutputSerializer(resultsDir), new TestResultSerializer());
+    }
+
+    TestReportDataCollector(File resultsDir, TestOutputSerializer outputSerializer, TestResultSerializer resultSerializer) {
         this.resultsDir = resultsDir;
-        if (!resultsDir.isDirectory()) {
-            throw new IllegalArgumentException("Directory [" + resultsDir + "] for binary test results does not exist or it is not a valid folder.");
-        }
-        if (resultsDir.list().length > 0) {
-            throw new IllegalArgumentException("Directory [" + resultsDir + "] for binary test results must be empty!");
-        }
+        this.outputSerializer = outputSerializer;
+        this.resultSerializer = resultSerializer;
     }
 
     public void beforeSuite(TestDescriptor suite) {
@@ -47,8 +50,13 @@ public class TestReportDataCollector implements TestListener, TestOutputListener
 
     public void afterSuite(TestDescriptor suite, TestResult result) {
         if (suite.getParent() == null) {
-            cachingFileWriter.closeAll();
+            outputSerializer.finishOutputs();
+            writeResults();
         }
+    }
+
+    private void writeResults() {
+        resultSerializer.write(results.values(), resultsDir);
     }
 
     public void beforeTest(TestDescriptor testDescriptor) {
@@ -60,7 +68,7 @@ public class TestReportDataCollector implements TestListener, TestOutputListener
             TestMethodResult methodResult = new TestMethodResult(testDescriptor.getName(), result);
             TestClassResult classResult = results.get(className);
             if (classResult == null) {
-                classResult = new TestClassResult(result.getStartTime());
+                classResult = new TestClassResult(className, result.getStartTime());
                 results.put(className, classResult);
             }
             classResult.add(methodResult);
@@ -74,46 +82,25 @@ public class TestReportDataCollector implements TestListener, TestOutputListener
             //we don't have a place for such output in any of the reports so skipping.
             return;
         }
-        cachingFileWriter.write(outputsFile(className, outputEvent.getDestination()), outputEvent.getMessage());
+        TestClassResult classResult = results.get(className);
+        if (classResult == null) {
+            classResult = new TestClassResult(className, 0);
+            results.put(className, classResult);
+        }
+        outputSerializer.onOutput(className, outputEvent.getDestination(), outputEvent.getMessage());
     }
 
-    private File outputsFile(String className, TestOutputEvent.Destination destination) {
-        return destination == TestOutputEvent.Destination.StdOut ? standardOutputFile(className) : standardErrorFile(className);
+    public void visitClasses(Action<? super TestClassResult> visitor) {
+        for (TestClassResult classResult : results.values()) {
+            visitor.execute(classResult);
+        }
     }
 
-    private File standardErrorFile(String className) {
-        return new File(resultsDir, className + ".stderr");
-    }
-
-    private File standardOutputFile(String className) {
-        return new File(resultsDir, className + ".stdout");
-    }
-
-    public Map<String, TestClassResult> getResults() {
-        return results;
+    public boolean hasOutput(String className, TestOutputEvent.Destination destination) {
+        return outputSerializer.hasOutput(className, destination);
     }
 
     public void writeOutputs(String className, TestOutputEvent.Destination destination, Writer writer) {
-        final File file = outputsFile(className, destination);
-        if (!file.exists()) {
-            return;
-        }
-        try {
-            Reader reader = new InputStreamReader(new BufferedInputStream(new FileInputStream(file)), "UTF-8");
-            try {
-                char[] buffer = new char[2048];
-                while (true) {
-                    int read = reader.read(buffer);
-                    if (read < 0) {
-                        return;
-                    }
-                    writer.write(buffer, 0, read);
-                }
-            } finally {
-                reader.close();
-            }
-        } catch (IOException e) {
-            throw new UncheckedIOException(e);
-        }
+        outputSerializer.writeOutputs(className, destination, writer);
     }
 }

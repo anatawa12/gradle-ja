@@ -15,20 +15,18 @@
  */
 package org.gradle.integtests.resolve.maven
 
-import org.gradle.integtests.fixtures.AbstractIntegrationSpec
-import org.gradle.test.fixtures.maven.M2Installation
+import org.gradle.integtests.fixtures.AbstractDependencyResolutionTest
 import org.gradle.test.fixtures.maven.MavenModule
 import org.gradle.util.SetSystemProperties
 import org.junit.Rule
 
 import static org.hamcrest.Matchers.containsString
 
-class MavenLocalRepoResolveIntegrationTest extends AbstractIntegrationSpec {
+class MavenLocalRepoResolveIntegrationTest extends AbstractDependencyResolutionTest {
 
     @Rule SetSystemProperties sysProp = new SetSystemProperties()
-    M2Installation m2Installation;
 
-    public void setup() {
+    def setup() {
         requireOwnGradleUserHomeDir()
         buildFile << """
                 repositories {
@@ -44,11 +42,10 @@ class MavenLocalRepoResolveIntegrationTest extends AbstractIntegrationSpec {
                     into 'build'
                 }"""
 
-        m2Installation = new M2Installation(testDirectory)
         using m2Installation
     }
 
-    public void "can resolve artifacts from local m2 when user settings.xml does not exist"() {
+    def "can resolve artifacts from local m2 when user settings.xml does not exist"() {
         given:
         def moduleA = m2Installation.mavenRepo().module('group', 'projectA', '1.2').publish()
 
@@ -60,7 +57,7 @@ class MavenLocalRepoResolveIntegrationTest extends AbstractIntegrationSpec {
 
     }
 
-    public void "can resolve artifacts from local m2 with custom local repository defined in user settings.xml"() {
+    def "can resolve artifacts from local m2 with custom local repository defined in user settings.xml"() {
         given:
         def artifactRepo = maven("artifactrepo")
         m2Installation.generateUserSettingsFile(artifactRepo)
@@ -73,7 +70,7 @@ class MavenLocalRepoResolveIntegrationTest extends AbstractIntegrationSpec {
         hasArtifact(moduleA)
     }
 
-    public void "can resolve artifacts from local m2 with custom local repository defined in global settings.xml"() {
+    def "can resolve artifacts from local m2 with custom local repository defined in global settings.xml"() {
         given:
         def artifactRepo = maven("artifactrepo")
         m2Installation.generateGlobalSettingsFile(artifactRepo)
@@ -86,7 +83,7 @@ class MavenLocalRepoResolveIntegrationTest extends AbstractIntegrationSpec {
         hasArtifact(moduleA)
     }
 
-    public void "local repository in user settings take precedence over the local repository global settings"() {
+    def "local repository in user settings take precedence over the local repository global settings"() {
         given:
         def globalRepo = maven("globalArtifactRepo")
         def userRepo = maven("userArtifactRepo")
@@ -101,7 +98,7 @@ class MavenLocalRepoResolveIntegrationTest extends AbstractIntegrationSpec {
         hasArtifact(moduleA)
     }
 
-    public void "fail with meaningful error message if settings.xml is invalid"() {
+    def "fail with meaningful error message if settings.xml is invalid"() {
         given:
         m2Installation.userSettingsFile << "invalid content"
 
@@ -112,7 +109,7 @@ class MavenLocalRepoResolveIntegrationTest extends AbstractIntegrationSpec {
         failure.assertThatCause(containsString(String.format("Non-parseable settings %s:", m2Installation.userSettingsFile.absolutePath)));
     }
 
-    public void "mavenLocal is ignored if no local maven repository exists"() {
+    def "mavenLocal is ignored if no local maven repository exists"() {
         given:
         def anotherRepo = maven("another-local-repo")
         def moduleA = anotherRepo.module('group', 'projectA', '1.2').publishWithChangedContent()

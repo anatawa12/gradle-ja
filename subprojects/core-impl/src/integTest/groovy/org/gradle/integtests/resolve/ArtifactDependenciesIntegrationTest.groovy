@@ -25,11 +25,10 @@ import org.junit.Test
 import spock.lang.Issue
 
 import static org.hamcrest.Matchers.containsString
-import static org.hamcrest.Matchers.startsWith
 
 class ArtifactDependenciesIntegrationTest extends AbstractIntegrationTest {
     @Rule
-    public final TestResources testResources = new TestResources()
+    public final TestResources testResources = new TestResources(testDirectoryProvider)
 
     @Before
     public void setup() {
@@ -609,11 +608,14 @@ task test << {
     public void reportsUnknownDependencyError() {
         File buildFile = testFile("projectWithUnknownDependency.gradle");
         ExecutionFailure failure = usingBuildFile(buildFile).runWithFailure();
-        failure.assertHasFileName("Build file '" + buildFile.getPath() + "'");
-        failure.assertHasDescription("Execution failed for task ':listJars'");
-        failure.assertThatCause(startsWith("Could not resolve all dependencies for configuration ':compile'"));
-        failure.assertThatCause(containsString("Could not find test:unknownProjectA:1.2."));
-        failure.assertThatCause(containsString("Could not find test:unknownProjectB:2.1.5."));
+
+        failure
+                .assertHasFileName("Build file '" + buildFile.getPath() + "'")
+                .assertHasDescription("Execution failed for task ':listJars'");
+
+        failure.assertResolutionFailure(':compile')
+                .assertHasCause("Could not find test:unknownProjectA:1.2.")
+                .assertHasCause("Could not find test:unknownProjectB:2.1.5.")
     }
 
     @Test

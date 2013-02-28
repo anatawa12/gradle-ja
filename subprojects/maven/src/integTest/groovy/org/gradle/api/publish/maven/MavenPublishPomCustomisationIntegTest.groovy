@@ -17,9 +17,11 @@
 
 
 package org.gradle.api.publish.maven
+
 import org.gradle.integtests.fixtures.AbstractIntegrationSpec
 import org.gradle.util.SetSystemProperties
 import org.junit.Rule
+
 /**
  * Tests maven POM customisation
  */
@@ -28,11 +30,11 @@ class MavenPublishPomCustomisationIntegTest extends AbstractIntegrationSpec {
 
     def "can customise pom xml"() {
         given:
-        settingsFile << "rootProject.name = 'root'"
+        settingsFile << "rootProject.name = 'customisePom'"
         buildFile << """
             apply plugin: 'maven-publish'
 
-            group = 'group'
+            group = 'org.gradle.test'
             version = '1.0'
 
             publishing {
@@ -42,9 +44,6 @@ class MavenPublishPomCustomisationIntegTest extends AbstractIntegrationSpec {
                 publications {
                     mavenCustom(MavenPublication) {
                         pom.withXml {
-                            asNode().groupId[0].value = "changed-group"
-                            asNode().artifactId[0].value = "changed-artifact"
-                            asNode().version[0].value = "changed-version"
                             asNode().appendNode('description', "custom-description")
 
                             def dependency = asNode().appendNode('dependencies').appendNode('dependency')
@@ -61,51 +60,52 @@ class MavenPublishPomCustomisationIntegTest extends AbstractIntegrationSpec {
         succeeds 'publish'
 
         then:
-        def module = mavenRepo.module('changed-group', 'changed-artifact', 'changed-version')
+        def module = mavenRepo.module('org.gradle.test', 'customisePom', '1.0')
         module.assertPublished()
         module.parsedPom.description == 'custom-description'
-        module.parsedPom.scopes.runtime.assertDependsOn("junit", "junit", "4.11")
+        module.parsedPom.scopes.runtime.assertDependsOn("junit:junit:4.11")
     }
 
-    def "pom can contain non-ascii characters"() {
-        // Group and Artifact are restricted to [A-Za-z0-9_\\-.]+ by org.apache.maven.project.validation.DefaultModelValidator
-        def groupId = 'group'
-        def artifactId = 'artifact'
-
-        // Try version & description with non-ascii characters
-        def version = 'version-₦ガき∆'
-        def description = 'description-ç√∫'
-
+    def "can generate pom file without publishing"() {
         given:
-        settingsFile << "rootProject.name = '${artifactId}'"
+        settingsFile << "rootProject.name = 'generatePom'"
         buildFile << """
             apply plugin: 'maven-publish'
-            apply plugin: 'java'
 
-            group = '${groupId}'
-            version = '${version}'
+            group = 'org.gradle.test'
+            version = '1.0'
 
             publishing {
                 repositories {
                     maven { url "${mavenRepo.uri}" }
                 }
                 publications {
-                    maven(MavenPublication) {
-                        from components.java
+                    emptyMaven(MavenPublication) {
                         pom.withXml {
-                            asNode().appendNode('description', "${description}")
+                            asNode().appendNode('description', "Test for pom generation")
                         }
                     }
                 }
+                generatePomFileForEmptyMavenPublication {
+                    destination = 'build/generated-pom.xml'
+                }
             }
         """
+
         when:
-        succeeds 'publish'
+        run "generatePomFileForEmptyMavenPublication"
 
         then:
-        def module = mavenRepo.module(groupId, artifactId, version)
-        module.assertPublishedAsJavaModule()
-        module.parsedPom.description == description
+        def mavenModule = mavenRepo.module("org.gradle.test", "generatePom", "1.0")
+        mavenModule.assertNotPublished()
+
+        and:
+        file('build/generated-pom.xml').assertIsFile()
+        def pom = new org.gradle.test.fixtures.maven.MavenPom(file('build/generated-pom.xml'))
+        pom.groupId == "org.gradle.test"
+        pom.artifactId == "generatePom"
+        pom.version == "1.0"
+        pom.description == "Test for pom generation"
     }
 
     def "has reasonable error message when withXml fails"() {
@@ -135,8 +135,40 @@ class MavenPublishPomCustomisationIntegTest extends AbstractIntegrationSpec {
         fails 'publish'
 
         then:
-        failure.assertHasDescription("Execution failed for task ':publishMavenPublicationToMavenRepository'")
+        failure.assertHasDescription("Execution failed for task ':generatePomFileForMavenPublication'")
         failure.assertHasCause("Could not apply withXml() to generated POM")
         failure.assertHasCause("No such property: foo for class: groovy.util.Node")
+    }
+
+    def "has reasonable error message when withXml produces invalid POM file"() {
+        given:
+        settingsFile << "rootProject.name = 'root'"
+        buildFile << """
+            apply plugin: 'maven-publish'
+            apply plugin: 'java'
+
+            group = 'group'
+            version = '1.0'
+
+            publishing {
+                repositories {
+                    maven { url "${mavenRepo.uri}" }
+                }
+                publications {
+                    maven(MavenPublication) {
+                        pom.withXml {
+                            asNode().appendNode('invalid-node', "This is not a valid node for a Maven POM")
+                        }
+                    }
+                }
+            }
+        """
+        when:
+        fails 'publish'
+
+        then:
+        failure.assertHasDescription("Execution failed for task ':publishMavenPublicationToMavenRepository'")
+        failure.assertHasCause("Failed to publish publication 'maven' to repository 'maven'")
+        failure.assertHasCause("Invalid publication 'maven': POM file is invalid. Check any modifications you have made to the POM file.")
     }
 }

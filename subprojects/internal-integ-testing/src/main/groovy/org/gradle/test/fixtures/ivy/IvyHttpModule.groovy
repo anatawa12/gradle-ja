@@ -55,6 +55,11 @@ class IvyHttpModule extends AbstractIvyModule {
         return this
     }
 
+    IvyHttpModule dependsOn(Map<String, String> attributes) {
+        backingModule.dependsOn(attributes)
+        return this
+    }
+
     IvyHttpModule artifact(Map<String, ?> options) {
         backingModule.artifact(options)
         return this

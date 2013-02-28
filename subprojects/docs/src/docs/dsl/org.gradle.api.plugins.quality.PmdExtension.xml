@@ -18,11 +18,15 @@
             </tr>
             <tr>
                 <td>ruleSets</td>
-                <td><literal>["basic"]</literal></td>
+                <td><literal>[]</literal></td>
             </tr>
             <tr>
                 <td>ruleSetFiles</td>
                 <td><literal>[]</literal></td>
+            </tr>
+            <tr>
+                <td>targetJdk</td>
+                <td><literal>project.sourceCompatibility</literal></td>
             </tr>
         </table>
     </section>

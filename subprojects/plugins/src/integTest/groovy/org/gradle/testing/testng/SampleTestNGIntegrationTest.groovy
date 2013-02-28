@@ -24,28 +24,28 @@ import org.junit.Test
  */
 public class SampleTestNGIntegrationTest extends AbstractIntegrationTest {
 
-    @Rule public final Sample sample = new Sample()
+    @Rule public final Sample sample = new Sample(testDirectoryProvider)
 
-    @Test @UsesSample('testng/suitexmlbuilder')
+    @Test @UsesSample('testing/testng/suitexmlbuilder')
     public void suiteXmlBuilder() {
         executer.inDirectory(sample.dir).withTasks('clean', 'test').run()
 
-        def result = new DefaultTestExecutionResult(sample.dir)
+        def result = new JUnitXmlTestExecutionResult(sample.dir)
         result.assertTestClassesExecuted('org.gradle.testng.UserImplTest')
         result.testClass('org.gradle.testng.UserImplTest').assertTestsExecuted('testOkFirstName')
         result.testClass('org.gradle.testng.UserImplTest').assertTestPassed('testOkFirstName')
     }
 
-    @Test @UsesSample('testng/java-jdk14-passing')
+    @Test @UsesSample('testing/testng/java-jdk14-passing')
     public void javaJdk14Passing() {
         executer.inDirectory(sample.dir).withTasks('clean', 'test').run()
 
-        def result = new DefaultTestExecutionResult(sample.dir)
+        def result = new JUnitXmlTestExecutionResult(sample.dir)
         result.assertTestClassesExecuted('org.gradle.OkTest')
         result.testClass('org.gradle.OkTest').assertTestPassed('passingTest')
     }
     
-    @Test @UsesSample('testng/java-jdk15-passing')
+    @Test @UsesSample('testing/testng/java-jdk15-passing')
     public void javaJdk15Passing() {
         executer.inDirectory(sample.dir).withTasks('clean', 'test').run()
 

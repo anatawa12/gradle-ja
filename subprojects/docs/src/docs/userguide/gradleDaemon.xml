@@ -78,16 +78,13 @@
         <para><phrase role="original">In future the daemon will offer more features:</phrase>
             今後は下記の機能が追加される予定です。
             <itemizedlist>
-                <listitem><phrase role="original">Snappy up-to-date checks: use native file system change notifications (eg via jdk7 nio.2)
-                    to preemptively perform up-to-date analysis.</phrase> イケてる更新チェック : ファイルシステムの変更通知(jdk7 nio.2)を利用して
-                    事前に更新されたファイルの差分分析を実行する</listitem>
-                <listitem><phrase role="original">Even faster builds: preemptively evaluate projects, so that the model is ready
-                    when the user next invokes Gradle.</phrase> より高速なビルド : 事前にプロジェクトを評価して、次にユーザーがGradleを起動する前には
-                    モデルが準備されている状態にする</listitem>
-                <listitem><phrase role="original">Did we mention faster builds? The daemon can potentially preemptively download dependencies
-                    or check for new versions of snapshot dependencies.</phrase> より高速なビルドについて言ったっけ？デーモンは能力としては事前に依存ライブラリーをダウンロードして
-                    新バージョンの依存ファイルのスナップショットがないか確認する</listitem>
-                <listitem><phrase role="original">Utilize a pool of reusable processes available for compilation and testing.
+                <listitem>Snappy up-to-date checks: use native file system change notifications (e.g. via jdk7 nio.2)
+                    to preemptively perform up-to-date analysis.</listitem>
+                <listitem>Even faster builds: preemptively evaluate projects, so that the model is ready
+                    when the user next invokes Gradle.</listitem>
+                <listitem>Did we mention faster builds? The daemon can potentially preemptively download dependencies
+                    or check for new versions of snapshot dependencies.</listitem>
+                <listitem>Utilize a pool of reusable processes available for compilation and testing.
                     For example, both the Groovy and Scala compilers have a large startup cost.
                     The build daemon could maintain a process with Groovy and/or Scala already loaded.</phrase>
                     コンパイルプロセスとテストプロセスの再利用化を促進する。

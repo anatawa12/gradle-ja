@@ -16,8 +16,7 @@
 
 package org.gradle.performance
 
-import org.gradle.performance.fixture.PerformanceTestRunner
-import spock.lang.Specification
+import org.gradle.performance.fixture.AbstractPerformanceTest
 import spock.lang.Unroll
 
 import static org.gradle.performance.fixture.DataAmount.kbytes
@@ -26,22 +25,23 @@ import static org.gradle.performance.fixture.Duration.millis
 /**
  * by Szczepan Faber, created at: 2/9/12
  */
-class DependencyReportPerformanceTest extends Specification {
+class DependencyReportPerformanceTest extends AbstractPerformanceTest {
     @Unroll("Project '#testProject' dependency report")
     def "dependency report"() {
-        expect:
-        def result = new PerformanceTestRunner(testProject: testProject,
-                tasksToRun: ['dependencyReport'],
-                runs: 5,
-                warmUpRuns: 1,
-                targetVersions: ['1.0', '1.1', '1.2', 'last'],
-                maxExecutionTimeRegression: maxExecutionTimeRegression,
-                maxMemoryRegression: maxMemoryRegression
-        ).run()
+        given:
+        runner.testProject = testProject
+        runner.tasksToRun = ['dependencyReport']
+        runner.maxExecutionTimeRegression = maxExecutionTimeRegression
+        runner.maxMemoryRegression = maxMemoryRegression
+
+        when:
+        def result = runner.run()
+
+        then:
         result.assertCurrentVersionHasNotRegressed()
 
         where:
         testProject       | maxExecutionTimeRegression | maxMemoryRegression
-        "lotDependencies" | [millis(7000), millis(1000), millis(1000), millis(1000)] | [kbytes(6000), kbytes(3000), kbytes(3000), kbytes(3000)]
+        "lotDependencies" | millis(7000)               | kbytes(3000)
     }
 }

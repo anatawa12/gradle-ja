@@ -19,9 +19,7 @@ package org.gradle.initialization;
 import org.gradle.*;
 import org.gradle.api.internal.ExceptionAnalyser;
 import org.gradle.api.internal.GradleInternal;
-import org.gradle.internal.reflect.Instantiator;
 import org.gradle.api.internal.project.GlobalServicesRegistry;
-import org.gradle.internal.service.ServiceRegistry;
 import org.gradle.api.internal.project.TopLevelBuildServiceRegistry;
 import org.gradle.api.logging.Logging;
 import org.gradle.api.logging.StandardOutputListener;
@@ -30,6 +28,8 @@ import org.gradle.cli.CommandLineConverter;
 import org.gradle.configuration.BuildConfigurer;
 import org.gradle.execution.BuildExecuter;
 import org.gradle.initialization.layout.BuildLayoutFactory;
+import org.gradle.internal.reflect.Instantiator;
+import org.gradle.internal.service.ServiceRegistry;
 import org.gradle.invocation.DefaultGradle;
 import org.gradle.listener.ListenerManager;
 import org.gradle.logging.LoggingManagerInternal;
@@ -100,7 +100,7 @@ public class DefaultGradleLauncherFactory implements GradleLauncherFactory {
     }
 
     private DefaultGradleLauncher doNewInstance(StartParameter startParameter, BuildRequestMetaData requestMetaData) {
-        TopLevelBuildServiceRegistry serviceRegistry = new TopLevelBuildServiceRegistry(sharedServices, startParameter);
+        final TopLevelBuildServiceRegistry serviceRegistry = new TopLevelBuildServiceRegistry(sharedServices, startParameter);
         serviceRegistry.add(BuildRequestMetaData.class, requestMetaData);
         serviceRegistry.add(BuildClientMetaData.class, requestMetaData.getClient());
         ListenerManager listenerManager = serviceRegistry.get(ListenerManager.class);
@@ -162,4 +162,5 @@ public class DefaultGradleLauncherFactory implements GradleLauncherFactory {
             services.close();
         }
     }
+
 }

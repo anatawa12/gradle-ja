@@ -310,6 +310,19 @@
             </thead>
             <tr>
                 <td>
+                    <link linkend="javaLibraryDistribution_plugin">
+                        <literal>java-library-distribution</literal>
+                    </link>
+                </td>
+                <td><literal>java</literal></td>
+                <td>-</td>
+                <td>
+                    <para>Adds support for building a ZIP distribution for a Java library.
+                    </para>
+                </td>
+            </tr>
+            <tr>
+                <td>
                     <link linkend="publishing_ivy">
                         <literal>ivy-publish</literal>
                     </link>
@@ -317,7 +330,20 @@
                 <td>-</td>
                 <td>-</td>
                 <td>
-                    <para role="original">Adds support for publishing artifacts to Ivy repositories.
+                    <para>This plugin provides a new DSL to support publishing artifacts to Ivy repositories, which improves on the existing DSL.
+                    </para>
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    <link linkend="publishing_maven">
+                        <literal>maven-publish</literal>
+                    </link>
+                </td>
+                <td>-</td>
+                <td><literal>java</literal>, <literal>war</literal></td>
+                <td>
+                    <para>This plugin provides a new DSL to support publishing artifacts to Maven repositories, which improves on the existing DSL.
                     </para>
                     <para>アーティファクトをIvyリポジトリに公開できるようにします。</para>
                 </td>
@@ -338,14 +364,14 @@
             </tr>
             <tr>
                 <td>
-                    <link linkend="javaLibraryDistribution_plugin">
-                        <literal>java-library-distribution</literal>
+                    <link linkend="buildDashboard_plugin">
+                        <literal>build-dashboard</literal>
                     </link>
                 </td>
-                <td><literal>java</literal></td>
+                <td>reporting-base</td>
                 <td>-</td>
                 <td>
-                    <para role="original">Adds support for building a ZIP distribution for a Java library.
+                    <para>Generates build dashboard report.
                     </para>
                     <para>JavaライブラリをZIPの配布物としてビルドできるようにします。</para>
                 </td>
@@ -432,7 +458,7 @@
                 <td>
                     <para role="original">Does the same as the eclipse plugin plus generates eclipse WTP (Web Tools Platform) configuration files.
                         After importing to eclipse your war/ear projects should be configured to work with WTP.
-                        See also<xref linkend="tutorial_java_projects"/>.
+                        See also <xref linkend="tutorial_java_projects"/>.
                     </para>
                     <para>
                         eclipseプラグインが生成するファイルに加え、eclipse WTP (Web Tools Platform)の設定ファイルも生成します。
@@ -552,7 +578,37 @@
                 <td>
                     <para role="original">Provides integration with the
                         <ulink url="http://www.sonarsource.org">Sonar</ulink>
-                        code quality platform.
+                        code quality platform. Superceeded by the <link linkend='sonar_runner_plugin'><literal>sonar-runner</literal></link> plugin.
+                    </para>
+                </td>
+            </tr>
+        </table>
+    </section>
+    <section>
+        <title>Incubating software development plugins</title>
+        <para>These plugins provide help with your software development process.</para>
+        <table>
+            <title>Software development plugins</title>
+            <thead>
+                <tr>
+                    <td>Plugin Id</td>
+                    <td>Automatically applies</td>
+                    <td>Works with</td>
+                    <td>Description</td>
+                </tr>
+            </thead>
+            <tr>
+                <td>
+                    <link linkend='sonar_runner_plugin'>
+                        <literal>sonar-runner</literal>
+                    </link>
+                </td>
+                <td>-</td>
+                <td>-</td>
+                <td>
+                    <para>Provides integration with the
+                        <ulink url="http://www.sonarsource.org">Sonar</ulink>
+                        code quality platform. Superceeds the <link linkend='sonar_plugin'><literal>sonar</literal></link> plugin.
                     </para>
                     <para><ulink url="http://www.sonarsource.org">Sonar</ulink>コード品質プラットフォームとプロジェクトを統合します。</para>
                 </td>

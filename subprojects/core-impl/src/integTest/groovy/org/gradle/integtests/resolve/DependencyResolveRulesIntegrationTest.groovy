@@ -19,6 +19,8 @@ package org.gradle.integtests.resolve
 
 import org.gradle.integtests.fixtures.AbstractIntegrationSpec
 
+import static org.gradle.util.TextUtil.toPlatformLineSeparators
+
 /**
  * @author Szczepan Faber, @date 03.03.11
  */
@@ -351,7 +353,7 @@ class DependencyResolveRulesIntegrationTest extends AbstractIntegrationSpec {
                 assert a.selectionReason.conflictResolution
                 assert a.selectionReason.selectedByRule
                 assert !a.selectionReason.forced
-                assert a.selectionReason.description == 'conflict resolution by rule'
+                assert a.selectionReason.description == 'selected by rule and conflict resolution'
 	        }
 """
 
@@ -485,7 +487,10 @@ class DependencyResolveRulesIntegrationTest extends AbstractIntegrationSpec {
 	        task check << {
                 def deps = configurations.conf.incoming.resolutionResult.allDependencies as List
                 assert deps.size() == 1
-                assert deps[0].failure
+                assert deps[0].attempted.group == 'org.utils'
+                assert deps[0].attempted.name == 'api'
+                assert deps[0].attempted.version == '1.123.15'
+                assert deps[0].attemptedReason.selectedByRule
                 assert deps[0].failure.message.contains('1.123.15')
                 assert deps[0].requested.version == '1.3'
 	        }
@@ -495,8 +500,7 @@ class DependencyResolveRulesIntegrationTest extends AbstractIntegrationSpec {
         def failure = runAndFail("check", "resolveConf")
 
         then:
-        failure.dependencyResolutionFailure
-            .assertFailedConfiguration(":conf")
+        failure.assertResolutionFailure(":conf")
             .assertHasCause("Could not find org.utils:api:1.123.15")
     }
 
@@ -578,11 +582,175 @@ class DependencyResolveRulesIntegrationTest extends AbstractIntegrationSpec {
         def failure = runAndFail("resolveConf")
 
         then:
-        failure.dependencyResolutionFailure
-                .assertFailedConfiguration(":conf")
+        failure.assertResolutionFailure(":conf")
                 .assertHasCause("Could not resolve org.utils:impl:1.3.")
                 .assertHasCause("Unhappy :(")
                 .assertFailedDependencyRequiredBy(":root:1.0")
+    }
+
+    void "can substitute module name and resolve conflict"()
+    {
+        mavenRepo.module("org.utils", "a",  '1.2').publish()
+        mavenRepo.module("org.utils", "b",  '2.0').publish()
+        mavenRepo.module("org.utils", "b",  '2.1').publish()
+
+        buildFile << """
+            $common
+
+            dependencies {
+                conf 'org.utils:a:1.2', 'org.utils:b:2.0'
+            }
+
+            configurations.conf.resolutionStrategy.eachDependency {
+                if (it.requested.name == 'a') {
+                    it.useTarget(it.requested.group + ':b:2.1')
+                }
+	        }
+
+	        task check << {
+                def modules = configurations.conf.incoming.resolutionResult.allModuleVersions as List
+                assert !modules.find { it.id.name == 'a' }
+                def b = modules.find { it.id.name == 'b' }
+                assert b.id.version == '2.1'
+                assert b.selectionReason.conflictResolution
+                assert b.selectionReason.selectedByRule
+                assert !b.selectionReason.forced
+                assert b.selectionReason.description == 'selected by rule and conflict resolution'
+	        }
+"""
+
+        when:
+        run("check", "dependencies")
+
+        then:
+        output.contains(toPlatformLineSeparators("""conf
++--- org.utils:a:1.2 -> org.utils:b:2.1
+\\--- org.utils:b:2.0 -> 2.1"""))
+    }
+
+    def "can substitute module group"()
+    {
+        mavenRepo.module("org", "a", "1.0").publish()
+        mavenRepo.module("org", "b").dependsOn("org", "a", "2.0").publish()
+        mavenRepo.module("org", "a", "2.0").dependsOn("org", "c", "1.0").publish()
+        mavenRepo.module("org", "c").publish()
+        //a1
+        //b->a2->c
+
+        buildFile << """
+            $common
+
+            dependencies {
+                conf 'org:a:1.0', 'foo:b:1.0'
+            }
+
+            configurations.conf.resolutionStrategy.eachDependency {
+                if (it.requested.group == 'foo') {
+                    it.useTarget('org:' + it.requested.name + ':' + it.requested.version)
+                }
+	        }
+"""
+
+        when:
+        run("dependencies")
+
+        then:
+        output.contains(toPlatformLineSeparators("""
++--- org:a:1.0 -> 2.0
+|    \\--- org:c:1.0
+\\--- foo:b:1.0 -> org:b:1.0
+     \\--- org:a:2.0 (*)"""))
+    }
+
+    def "can substitute module group, name and version"()
+    {
+        mavenRepo.module("org", "a", "1.0").publish()
+        mavenRepo.module("org", "b").dependsOn("org", "a", "2.0").publish()
+        mavenRepo.module("org", "a", "2.0").dependsOn("org", "c", "1.0").publish()
+        mavenRepo.module("org", "c").publish()
+        //a1
+        //b->a2->c
+
+        buildFile << """
+            $common
+
+            dependencies {
+                conf 'org:a:1.0', 'foo:bar:baz'
+            }
+
+            configurations.conf.resolutionStrategy.eachDependency {
+                if (it.requested.group == 'foo') {
+                    it.useTarget group: 'org', name: 'b', version: '1.0'
+                }
+	        }
+"""
+
+        when:
+        run("dependencies")
+
+        then:
+        output.contains(toPlatformLineSeparators("""
++--- org:a:1.0 -> 2.0
+|    \\--- org:c:1.0
+\\--- foo:bar:baz -> org:b:1.0
+     \\--- org:a:2.0 (*)"""))
+    }
+
+    def "provides decent feedback when target module incorrectly specified"()
+    {
+        buildFile << """
+            $common
+
+            dependencies {
+                conf 'org:a:1.0', 'foo:bar:baz'
+            }
+
+            configurations.conf.resolutionStrategy.eachDependency {
+                it.useTarget "foobar"
+	        }
+"""
+
+        when:
+        runAndFail("dependencies")
+
+        then:
+        failure.assertResolutionFailure(":conf").assertHasCause("Invalid format: 'foobar'")
+    }
+
+    def "module selected by conflict resolution can be selected again in a another pass of conflict resolution"()
+    {
+        mavenRepo.module("org", "a", "1.0").publish()
+        mavenRepo.module("org", "a", "2.0").dependsOn("org", "b", "2.5").publish()
+        mavenRepo.module("org", "b", "3.0").publish()
+        mavenRepo.module("org", "b", "4.0").publish()
+
+        /*
+        I agree this dependency set is awkward but it is the simplest reproducible scenario
+        a:1.0
+        a:2.0 -> b:2.5
+        b:3.0
+        b:4.0
+
+        the conflict resolution of b:
+        1st pass: b:3 vs b:4(wins)
+        2nd pass: b:2.5 vs b:4(wins *again*)
+        */
+
+        buildFile << """
+            $common
+
+            dependencies {
+                conf 'org:b:3.0', 'org:b:4.0', 'org:a:1.0', 'org:a:2.0'
+            }
+
+            task check << {
+                def modules = configurations.conf.incoming.resolutionResult.allModuleVersions as List
+                assert modules.find { it.id.name == 'b' && it.id.version == '4.0' && it.selectionReason.conflictResolution }
+            }
+"""
+
+        expect:
+        run("check")
     }
 
     String getCommon() {

@@ -38,15 +38,15 @@ class SonarSmokeIntegrationTest extends AbstractIntegrationSpec {
     TestNameTestDirectoryProvider tempDir = new TestNameTestDirectoryProvider()
 
     @Rule
-    TestResources testResources
+    TestResources testResources = new TestResources(temporaryFolder)
 
     int databasePort
 
     def setup() {
         def classpath = ClasspathUtil.getClasspath(getClass().classLoader).collect() { new File(it.toURI()) }
-        def warFile = classpath.find { it.name == "sonar-test-server-3.2.war" }
+        def warFile = classpath.find { it.name == "sonar-server-3.2-3.2.war" }
         assert warFile
-        def zipFile = classpath.find { it.name == "sonar-test-server-home-dir-3.2.zip" }
+        def zipFile = classpath.find { it.name == "sonar-test-server-home-dir-3.2-3.2.zip" }
         assert zipFile
 
         def sonarHome = tempDir.createDir("sonar-home")
@@ -75,10 +75,10 @@ sonar.embeddedDatabase.port=$databasePort
         // also the Sonar dependencies with "provided" scope. Hence, the Sonar dependencies get loaded by
         // the wrong class loader.
         when:
-        executer.requireGradleHome(true)
+        executer.requireGradleHome()
                 .withArgument("-PserverUrl=http://localhost:${webServer.connectors[0].localPort}")
                 .withArgument("-PdatabaseUrl=jdbc:h2:tcp://localhost:$databasePort/mem:sonartest")
-                .withTasks("sonarAnalyze").run()
+                .withTasks("build", "sonarAnalyze").run()
 
         then:
         noExceptionThrown()

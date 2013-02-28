@@ -61,15 +61,6 @@
         <para>Gradleバイナリのソースコード。これは参照専用のものです。Gradleをビルドするには、ソースを別途ダウンロードするかリポジトリからチェックアウトする必要があります。詳しくは<ulink url="website:development">Gradleのウェブサイト</ulink>を参照してください。</para> 
     </listitem>
 </itemizedlist>
-
-<note>
-    <title>Un*xユーザーへ<phrase role="original">For Un*x users</phrase></title>
-
-<para role="original">You need a GNU compatible tool to unzip Gradle, if you want the file permissions to be properly set. We mention this as
-some zip front ends for Mac OS X don't restore the file permissions properly.
-</para>
-<para>ファイルパーミッションを正しく復元したい場合は、GNU互換のunzipを使用してください。Mac OS Xのzipフロントエンドには、パーミッションを正しく復元しないものがあるようです。</para>
-</note>
 </section>
 
 <section>

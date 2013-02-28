@@ -1,12 +1,22 @@
-apply plugin: "java"
 apply plugin:  "sonar"
+
+subprojects {
+    apply plugin: "java"
+
+    repositories {
+        mavenCentral()
+    }
+
+    dependencies {
+        testCompile "junit:junit:4.11"
+    }
+}
 
 sonar {
     server {
         url serverUrl
     }
     database {
-        //url = "jdbc:h2:tcp://localhost:9092/sonar"
         url databaseUrl
         driverClassName = "org.h2.Driver"
     }

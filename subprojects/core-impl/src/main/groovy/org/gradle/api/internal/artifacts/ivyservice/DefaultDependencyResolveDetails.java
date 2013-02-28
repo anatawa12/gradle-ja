@@ -19,6 +19,7 @@ package org.gradle.api.internal.artifacts.ivyservice;
 import org.gradle.api.artifacts.ModuleVersionSelector;
 import org.gradle.api.artifacts.result.ModuleVersionSelectionReason;
 import org.gradle.api.internal.artifacts.DependencyResolveDetailsInternal;
+import org.gradle.api.internal.artifacts.dsl.ModuleVersionSelectorParsers;
 import org.gradle.api.internal.artifacts.ivyservice.resolveengine.result.VersionSelectionReasons;
 
 import static org.gradle.api.internal.artifacts.DefaultModuleVersionSelector.newSelector;
@@ -53,6 +54,11 @@ public class DefaultDependencyResolveDetails implements DependencyResolveDetails
             target = newSelector(target.getGroup(), target.getName(), version);
         }
         this.selectionReason = selectionReason;
+    }
+
+    public void useTarget(Object notation) {
+        this.target = ModuleVersionSelectorParsers.parser().parseNotation(notation);
+        this.selectionReason = VersionSelectionReasons.SELECTED_BY_RULE;
     }
 
     public ModuleVersionSelectionReason getSelectionReason() {

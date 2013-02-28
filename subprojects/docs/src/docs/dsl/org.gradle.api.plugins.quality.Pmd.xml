@@ -14,7 +14,7 @@
             </tr>
             <tr>
                 <td>ruleSets</td>
-                <td><literal>project.pmd.ruleSets</literal></td>
+                <td><literal>["basic"] or ["java-basic"]</literal> depending on the PMD version used</td>
             </tr>
             <tr>
                 <td>ruleSetFiles</td>
@@ -23,6 +23,10 @@
             <tr>
                 <td>ignoreFailures</td>
                 <td><literal>project.pmd.ignoreFailures</literal></td>
+            </tr>
+            <tr>
+                <td>targetJdk</td>
+                <td><literal>project.pmd.targetJdk</literal></td>
             </tr>
             <tr>
                 <td>source</td>

@@ -16,7 +16,6 @@
 
 package org.gradle.performance.fixture
 
-import org.gradle.api.logging.Logging
 import org.gradle.integtests.fixtures.executer.GradleDistribution
 import org.gradle.integtests.fixtures.executer.GradleExecuter
 import org.gradle.integtests.fixtures.executer.IntegrationTestBuildContext
@@ -25,9 +24,6 @@ import org.gradle.integtests.fixtures.versions.ReleasedVersionDistributions
 import org.gradle.test.fixtures.file.TestNameTestDirectoryProvider
 
 public class PerformanceTestRunner {
-
-    private final static LOGGER = Logging.getLogger(PerformanceTestRunner.class)
-
     def testDirectoryProvider = new TestNameTestDirectoryProvider()
     def current = new UnderDevelopmentGradleDistribution()
     def buildContext = new IntegrationTestBuildContext()
@@ -38,26 +34,26 @@ public class PerformanceTestRunner {
 
     List<String> tasksToRun = []
     DataCollector dataCollector = new MemoryInfoCollector(outputFileName: "build/totalMemoryUsed.txt")
+    DataReporter  reporter = new TextFileDataReporter()
     List<String> args = []
 
-    List<String> targetVersions = ['last']
-    List<Amount<Duration>> maxExecutionTimeRegression = [Duration.millis(0)]
-    List<Amount<DataAmount>> maxMemoryRegression = [DataAmount.bytes(0)]
+    List<String> targetVersions = []
+    Amount<Duration> maxExecutionTimeRegression = Duration.millis(0)
+    Amount<DataAmount> maxMemoryRegression = DataAmount.bytes(0)
 
     PerformanceResults results
 
     PerformanceResults run() {
-        assert targetVersions.size() == maxExecutionTimeRegression.size()
-        assert targetVersions.size() == maxMemoryRegression.size()
+        assert !targetVersions.empty
 
+        def mostRecentFinalRelease = new ReleasedVersionDistributions().mostRecentFinalRelease.version.version
+        def allVersions = targetVersions.collect { (it == 'last') ? mostRecentFinalRelease : it }.unique()
         def baselineVersions = []
-        targetVersions.eachWithIndex { it, idx ->
-            def mostRecentFinalRelease = new ReleasedVersionDistributions().mostRecentFinalRelease.version.version
-            def ver = (it == 'last') ? mostRecentFinalRelease : it
-            baselineVersions << new BaselineVersion(version: ver,
-                    maxExecutionTimeRegression: maxExecutionTimeRegression[idx],
-                    maxMemoryRegression: maxMemoryRegression[idx],
-                    results: new MeasuredOperationList(name: "Gradle $ver")
+        allVersions.each { it ->
+            baselineVersions << new BaselineVersion(version: it,
+                    maxExecutionTimeRegression: maxExecutionTimeRegression,
+                    maxMemoryRegression: maxMemoryRegression,
+                    results: new MeasuredOperationList(name: "Gradle $it")
             )
         }
 
@@ -75,6 +71,7 @@ public class PerformanceTestRunner {
             println "Executing test run #${it + 1}"
             runOnce()
         }
+        reporter.report(results)
         results
     }
 
@@ -100,7 +97,7 @@ public class PerformanceTestRunner {
 
     GradleExecuter executer(GradleDistribution dist, File projectDir) {
         dist.executer(testDirectoryProvider).
-                requireGradleHome(true).
+                requireGradleHome().
                 withDeprecationChecksDisabled().
                 withStackTraceChecksDisabled().
                 withArguments('-u').

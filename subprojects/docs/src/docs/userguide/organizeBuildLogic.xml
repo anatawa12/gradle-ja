@@ -230,7 +230,7 @@
         <sample id="buildLogic" dir="userguide/organizeBuildLogic" title="Ant optional dependencies">
             <sourcefile file="build.gradle"/>
         </sample>
-        <para role="original">This is also nice example for the usage of client modules. The pom.xml in maven central for the
+        <para role="original">This is also nice example for the usage of client modules. The <filename>pom.xml</filename> in maven central for the
         ant-commons-net task does not provide the right information for this use case.</para>
         <para>これはクライアントモジュールのいい使用例でもあります。mavenのセントラルリポジトリにあるant-commons-netタスクのpom.xmlは、このユースケースのための正しい情報を提供していません。</para>
     </section>

@@ -19,6 +19,7 @@ import groovy.lang.Closure;
 import org.gradle.api.Action;
 import org.gradle.launcher.daemon.registry.DaemonRegistry;
 import org.gradle.test.fixtures.file.TestDirectoryProvider;
+import org.gradle.test.fixtures.file.TestFile;
 
 import java.io.File;
 import java.io.InputStream;
@@ -203,24 +204,67 @@ public interface GradleExecuter {
      */
     void beforeExecute(Closure action);
 
+    /**
+     * Adds an action to be called immediately after execution
+     */
+    void afterExecute(Action<? super GradleExecuter> action);
+
+    /**
+     * Adds an action to be called immediately after execution
+     */
+    void afterExecute(Closure action);
+
+    /**
+     * The directory that the executer will use for any test specific storage.
+     *
+     * May or may not be the same directory as the build to be run.
+     */
     TestDirectoryProvider getTestDirectoryProvider();
 
+    /**
+     * Disables asserting that the execution did not trigger any deprecation warnings.
+     */
     GradleExecuter withDeprecationChecksDisabled();
 
+    /**
+     * Disables asserting that no unexpected stacktraces are present in the output.
+     */
     GradleExecuter withStackTraceChecksDisabled();
 
-    GradleExecuter setAllowExtraLogging(boolean allowExtraLogging);
+    /**
+     * An executer may decide to implicitly bump the logging level, unless this is called.
+     */
+    GradleExecuter noExtraLogging();
 
-    boolean isRequireGradleHome();
+    /**
+     * Requires that there is a gradle home for the execution, which in process execution does not.
+     */
+    GradleExecuter requireGradleHome();
 
-    GradleExecuter requireGradleHome(boolean requireGradleHome);
-
+    /**
+     * Configures that any daemons launched by or during the execution are unique to the test.
+     *
+     * This value is persistent across executions in the same test.
+     */
     GradleExecuter requireIsolatedDaemons();
 
+    /**
+     * Configures a unique gradle user home dir for the test.
+     *
+     * The gradle user home dir used will be underneath the {@link #getTestDirectoryProvider()} directory.
+     *
+     * This value is persistent across executions in the same test.
+     */
     GradleExecuter requireOwnGradleUserHomeDir();
 
-    File getGradleUserHomeDir();
+    /**
+     * The Gradle user home dir that will be used for executions.
+     */
+    TestFile getGradleUserHomeDir();
 
+    /**
+     * The distribution used to execute.
+     */
     GradleDistribution getDistribution();
 
     /**

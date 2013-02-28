@@ -14,19 +14,21 @@
  * limitations under the License.
  */
 
-
 package org.gradle.api
 
 import org.gradle.integtests.fixtures.AbstractIntegrationSpec
+import org.gradle.integtests.fixtures.executer.ProjectLifecycleFixture
+import org.junit.Rule
 
 /**
  * by Szczepan Faber, created at: 11/21/12
  */
 class ConfigurationOnDemandIntegrationTest extends AbstractIntegrationSpec {
 
+    @Rule ProjectLifecycleFixture fixture = new ProjectLifecycleFixture(executer, temporaryFolder)
+
     def setup() {
-        file("gradle.properties") << "systemProp.org.gradle.configuration.ondemand=true"
-        alwaysUsing { it.withArgument('-i') }
+        file("gradle.properties") << "org.gradle.configureondemand=true"
     }
 
     def "works with single-module project"() {
@@ -34,7 +36,8 @@ class ConfigurationOnDemandIntegrationTest extends AbstractIntegrationSpec {
         when:
         run("foo")
         then:
-        result.assertProjectsEvaluated(":")
+        fixture.assertProjectsConfigured(":")
+        assert output.contains("Configuration on demand is an incubating feature")
     }
 
     def "evaluates only project referenced in the task list"() {
@@ -45,7 +48,16 @@ class ConfigurationOnDemandIntegrationTest extends AbstractIntegrationSpec {
         run(":foo", ":util:impl:foo")
 
         then:
-        result.assertProjectsEvaluated(":", ":util:impl")
+        fixture.assertProjectsConfigured(":", ":util:impl")
+        assert output.contains("Configuration on demand is an incubating feature")
+    }
+
+    def "does not show configuration on demand message in a regular mode"() {
+        file("gradle.properties").text = "org.gradle.configureondemand=false"
+        when:
+        run()
+        then:
+        assert !output.contains("Configuration on demand is an incubating feature")
     }
 
     def "follows java project dependencies"() {
@@ -72,19 +84,26 @@ class ConfigurationOnDemandIntegrationTest extends AbstractIntegrationSpec {
         run(":api:build")
 
         then:
-        result.assertProjectsEvaluated(":", ":api")
+        fixture.assertProjectsConfigured(":", ":api")
+
+        when:
+        inDirectory("impl")
+        run(":api:build")
+
+        then:
+        fixture.assertProjectsConfigured(":", ":api")
 
         when:
         run(":impl:build")
 
         then:
-        result.assertProjectsEvaluated(":", ":impl", ":api")
+        fixture.assertProjectsConfigured(":", ":impl", ":api")
 
         when:
         run(":util:build")
 
         then:
-        result.assertProjectsEvaluated(":", ":util", ":impl", ":api")
+        fixture.assertProjectsConfigured(":", ":util", ":impl", ":api")
     }
 
     def "follows project dependencies when ran in subproject"() {
@@ -102,7 +121,7 @@ class ConfigurationOnDemandIntegrationTest extends AbstractIntegrationSpec {
         run("build")
 
         then:
-        result.assertProjectsEvaluated(':', ':impl', ':api')
+        fixture.assertProjectsConfigured(':', ':impl', ':api')
     }
 
     def "name matching execution from root evaluates all projects"() {
@@ -113,13 +132,13 @@ class ConfigurationOnDemandIntegrationTest extends AbstractIntegrationSpec {
         run("foo")
 
         then:
-        result.assertProjectsEvaluated(":", ":api", ":impl")
+        fixture.assertProjectsConfigured(":", ":api", ":impl")
 
         when:
         run(":foo")
 
         then:
-        result.assertProjectsEvaluated(":")
+        fixture.assertProjectsConfigured(":")
     }
 
     def "name matching execution from subproject evaluates only the subproject recursively"() {
@@ -131,7 +150,7 @@ class ConfigurationOnDemandIntegrationTest extends AbstractIntegrationSpec {
         run("foo")
 
         then:
-        result.assertProjectsEvaluated(":", ":impl", ":impl:one", ":impl:two", ":impl:two:abc")
+        fixture.assertProjectsConfigured(":", ":impl", ":impl:one", ":impl:two", ":impl:two:abc")
     }
 
     def "may run implicit tasks from root"() {
@@ -141,7 +160,7 @@ class ConfigurationOnDemandIntegrationTest extends AbstractIntegrationSpec {
         run(":tasks")
 
         then:
-        result.assertProjectsEvaluated(":")
+        fixture.assertProjectsConfigured(":")
     }
 
     def "may run implicit tasks for subproject"() {
@@ -151,7 +170,7 @@ class ConfigurationOnDemandIntegrationTest extends AbstractIntegrationSpec {
         run(":api:tasks")
 
         then:
-        result.assertProjectsEvaluated(":", ":api")
+        fixture.assertProjectsConfigured(":", ":api")
     }
 
     def "respects default tasks"() {
@@ -166,7 +185,7 @@ class ConfigurationOnDemandIntegrationTest extends AbstractIntegrationSpec {
         run()
 
         then:
-        result.assertProjectsEvaluated(":", ":api")
+        fixture.assertProjectsConfigured(":", ":api")
         result.assertTasksExecuted(':api:foo')
     }
 
@@ -180,27 +199,33 @@ class ConfigurationOnDemandIntegrationTest extends AbstractIntegrationSpec {
         run("api:tasks")
 
         then:
-        result.assertProjectsEvaluated(":", ":api", ":impl")
+        fixture.assertProjectsConfigured(":", ":impl", ":api")
     }
 
     def "respects buildProjectDependencies setting"() {
         settingsFile << "include 'api', 'impl', 'other'"
-        file("build.gradle") << "allprojects { apply plugin: 'java' }"
         file("impl/build.gradle") << """
+            apply plugin: 'java'
             dependencies { compile project(":api") }
         """
+        file("api/build.gradle") << "apply plugin: 'java'"
 
         when:
         run("impl:build")
 
         then:
-        result.assertProjectsEvaluated(":", ":impl", ":api")
+        fixture.assertProjectsConfigured(":", ":impl", ":api")
 
         when:
-        run("impl:build", "--no-rebuild")
+        run("impl:build", "--no-rebuild") // impl -> api
 
         then:
-        result.assertProjectsEvaluated(":", ":impl")
+        //api tasks are not executed
+        !result.executedTasks.find { it.startsWith ":api" }
+        //but the api project is still configured
+        //ideally, the ':api' project is not configured in the configure on demand mode
+        //but this is complicated to implement so lets leave it for now
+        fixture.assertProjectsConfigured(":", ":impl", ":api")
     }
 
     def "respects external task dependencies"() {
@@ -214,7 +239,27 @@ class ConfigurationOnDemandIntegrationTest extends AbstractIntegrationSpec {
         run("impl:bar")
 
         then:
-        result.assertProjectsEvaluated(":", ":impl", ":api")
+        fixture.assertProjectsConfigured(":", ":impl", ":api")
         result.assertTasksExecuted(":api:foo", ":impl:bar")
+    }
+
+    def "supports buildSrc"() {
+        file("buildSrc/src/main/java/FooTask.java") << """
+            import org.gradle.api.DefaultTask;
+            import org.gradle.api.tasks.TaskAction;
+
+            public class FooTask extends DefaultTask {
+                @TaskAction public void logStuff(){
+                    System.out.println(String.format("Horray!!! '%s' executed.", getName()));
+                }
+            }
+        """
+
+        buildFile << "task foo(type: FooTask)"
+
+        when:
+        run("foo")
+        then:
+        output.contains "Horray!!!"
     }
 }

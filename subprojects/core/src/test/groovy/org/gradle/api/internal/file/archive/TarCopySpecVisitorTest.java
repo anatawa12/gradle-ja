@@ -20,10 +20,11 @@ import org.gradle.api.GradleException;
 import org.gradle.api.file.FileVisitDetails;
 import org.gradle.api.file.RelativePath;
 import org.gradle.api.internal.file.FileResource;
+import org.gradle.api.internal.file.archive.compression.ArchiveOutputStreamFactory;
 import org.gradle.api.internal.file.archive.compression.Bzip2Archiver;
-import org.gradle.api.internal.file.archive.compression.Compressor;
 import org.gradle.api.internal.file.archive.compression.GzipArchiver;
 import org.gradle.api.internal.file.archive.compression.SimpleCompressor;
+import org.gradle.api.internal.file.copy.ArchiveCopyAction;
 import org.gradle.api.internal.file.copy.ReadableCopySpec;
 import org.gradle.test.fixtures.file.TestFile;
 import org.gradle.test.fixtures.file.TestNameTestDirectoryProvider;
@@ -51,7 +52,7 @@ public class TarCopySpecVisitorTest {
     @Rule
     public final TestNameTestDirectoryProvider tmpDir = new TestNameTestDirectoryProvider();
     private final JUnit4Mockery context = new JUnit4Mockery();
-    private final TarCopyAction copyAction = context.mock(TarCopyAction.class);
+    private final ArchiveCopyAction copyAction = context.mock(ArchiveCopyAction.class);
     private final ReadableCopySpec copySpec = context.mock(ReadableCopySpec.class);
     private final TarCopySpecVisitor visitor = new TarCopySpecVisitor();
 
@@ -131,7 +132,7 @@ public class TarCopySpecVisitorTest {
         }
     }
 
-    private TestFile initializeTarFile(final TestFile tarFile, final Compressor compressor) {
+    private TestFile initializeTarFile(final TestFile tarFile, final ArchiveOutputStreamFactory compressor) {
         context.checking(new Expectations() {{
             allowing(copyAction).getArchivePath();
             will(returnValue(tarFile));

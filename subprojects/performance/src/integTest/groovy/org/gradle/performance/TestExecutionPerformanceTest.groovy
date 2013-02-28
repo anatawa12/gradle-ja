@@ -16,8 +16,7 @@
 
 package org.gradle.performance
 
-import org.gradle.performance.fixture.PerformanceTestRunner
-import spock.lang.Specification
+import org.gradle.performance.fixture.AbstractPerformanceTest
 import spock.lang.Unroll
 
 import static org.gradle.performance.fixture.DataAmount.kbytes
@@ -26,28 +25,27 @@ import static org.gradle.performance.fixture.Duration.millis
 /**
  * by Szczepan Faber, created at: 2/9/12
  */
-class TestExecutionPerformanceTest extends Specification {
+class TestExecutionPerformanceTest extends AbstractPerformanceTest {
     @Unroll("Project '#testProject'")
     def "test execution"() {
+        given:
+        runner.testProject = testProject
+        runner.tasksToRun = ['cleanTest', 'test']
+        runner.args = ['-q']
+        runner.maxExecutionTimeRegression = maxExecutionTimeRegression
+        runner.maxMemoryRegression = kbytes(3000)
+
         when:
-        def result = new PerformanceTestRunner(testProject: testProject,
-                tasksToRun: ['cleanTest', 'test'],
-                runs: 4,
-                args: ['-q'],
-                warmUpRuns: 1,
-                targetVersions: ['1.0', '1.2', 'last'],
-                maxExecutionTimeRegression: maxExecutionTimeRegression,
-                maxMemoryRegression: [kbytes(500), kbytes(3000), kbytes(3000)]
-        ).run()
+        def result = runner.run()
 
         then:
         result.assertCurrentVersionHasNotRegressed()
 
         where:
         testProject         | maxExecutionTimeRegression
-        "withTestNG"        | [millis(1000), millis(1000), millis(500)]
-        "withJUnit"         | [millis(500), millis(500), millis(500)]
-        "withVerboseTestNG" | [millis(500), millis(500), millis(500)]
-        "withVerboseJUnit"  | [millis(500), millis(500), millis(500)]
+        "withTestNG"        | millis(1000)
+        "withJUnit"         | millis(500)
+        "withVerboseTestNG" | millis(500)
+        "withVerboseJUnit"  | millis(500)
     }
 }

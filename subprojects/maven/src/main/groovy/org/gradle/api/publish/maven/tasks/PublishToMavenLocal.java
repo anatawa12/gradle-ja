@@ -19,10 +19,8 @@ package org.gradle.api.publish.maven.tasks;
 import org.gradle.api.Incubating;
 import org.gradle.api.artifacts.ArtifactRepositoryContainer;
 import org.gradle.api.artifacts.repositories.MavenArtifactRepository;
-import org.gradle.api.internal.artifacts.ArtifactPublicationServices;
 import org.gradle.api.internal.artifacts.BaseRepositoryFactory;
 import org.gradle.api.internal.artifacts.DependencyResolutionServices;
-import org.gradle.api.internal.file.FileResolver;
 import org.gradle.internal.Factory;
 import org.gradle.logging.LoggingManagerInternal;
 
@@ -38,9 +36,8 @@ public class PublishToMavenLocal extends PublishToMavenRepository {
     private final BaseRepositoryFactory baseRepositoryFactory;
 
     @Inject
-    public PublishToMavenLocal(ArtifactPublicationServices publicationServices, Factory<LoggingManagerInternal> loggingManagerFactory,
-                               FileResolver fileResolver, DependencyResolutionServices dependencyResolutionServices) {
-        super(publicationServices, loggingManagerFactory, fileResolver);
+    public PublishToMavenLocal(Factory<LoggingManagerInternal> loggingManagerFactory, DependencyResolutionServices dependencyResolutionServices) {
+        super(loggingManagerFactory);
         this.baseRepositoryFactory = dependencyResolutionServices.getBaseRepositoryFactory();
     }
 

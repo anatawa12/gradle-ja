@@ -25,6 +25,7 @@ import org.gradle.cli.ParsedCommandLine;
 import org.gradle.configuration.GradleLauncherMetaData;
 import org.gradle.initialization.DefaultCommandLineConverter;
 import org.gradle.initialization.DefaultGradleLauncherFactory;
+import org.gradle.internal.SystemProperties;
 import org.gradle.internal.service.ServiceRegistry;
 import org.gradle.launcher.bootstrap.ExecutionListener;
 import org.gradle.launcher.daemon.bootstrap.ForegroundDaemonMain;
@@ -35,13 +36,12 @@ import org.gradle.launcher.daemon.client.StopDaemonClientServices;
 import org.gradle.launcher.daemon.configuration.CurrentProcess;
 import org.gradle.launcher.daemon.configuration.DaemonParameters;
 import org.gradle.launcher.daemon.configuration.ForegroundDaemonConfiguration;
+import org.gradle.launcher.daemon.configuration.GradlePropertiesConfigurer;
 import org.gradle.launcher.exec.BuildActionParameters;
 import org.gradle.launcher.exec.GradleLauncherActionExecuter;
 import org.gradle.launcher.exec.InProcessGradleLauncherActionExecuter;
 
-import java.io.File;
 import java.lang.management.ManagementFactory;
-import java.util.Map;
 
 class BuildActionsFactory implements CommandLineAction {
     private static final String FOREGROUND = "foreground";
@@ -50,15 +50,17 @@ class BuildActionsFactory implements CommandLineAction {
     private static final String STOP = "stop";
     private final ServiceRegistry loggingServices;
     private final CommandLineConverter<StartParameter> startParameterConverter;
+    private final GradlePropertiesConfigurer propertiesConfigurer;
 
     BuildActionsFactory(ServiceRegistry loggingServices) {
-        this.loggingServices = loggingServices;
-        this.startParameterConverter = new DefaultCommandLineConverter();
+        this(loggingServices, new DefaultCommandLineConverter(), new GradlePropertiesConfigurer());
     }
 
-    BuildActionsFactory(ServiceRegistry loggingServices, CommandLineConverter<StartParameter> commandLineConverter) {
+    BuildActionsFactory(ServiceRegistry loggingServices, CommandLineConverter<StartParameter> commandLineConverter,
+                        GradlePropertiesConfigurer propertiesConfigurer) {
         this.loggingServices = loggingServices;
         this.startParameterConverter = commandLineConverter;
+        this.propertiesConfigurer = propertiesConfigurer;
     }
 
     public void configureCommandLineParser(CommandLineParser parser) {
@@ -73,7 +75,7 @@ class BuildActionsFactory implements CommandLineAction {
     public Action<? super ExecutionListener> createAction(CommandLineParser parser, ParsedCommandLine commandLine) {
         StartParameter startParameter = new StartParameter();
         startParameterConverter.convert(commandLine, startParameter);
-        DaemonParameters daemonParameters = constructDaemonParameters(startParameter);
+        DaemonParameters daemonParameters = propertiesConfigurer.configureParameters(startParameter);
         if (commandLine.hasOption(STOP)) {
             return stopAllDaemons(daemonParameters, loggingServices);
         }
@@ -89,15 +91,6 @@ class BuildActionsFactory implements CommandLineAction {
             return runBuildInProcess(startParameter, daemonParameters, loggingServices);
         }
         return runBuildInSingleUseDaemon(startParameter, daemonParameters, loggingServices);
-    }
-
-    private DaemonParameters constructDaemonParameters(StartParameter startParameter) {
-        Map<String, String> mergedSystemProperties = startParameter.getMergedSystemProperties();
-        DaemonParameters daemonParameters = new DaemonParameters();
-        daemonParameters.configureFromBuildDir(startParameter.getCurrentDir(), startParameter.isSearchUpwards());
-        daemonParameters.configureFromGradleUserHome(startParameter.getGradleUserHomeDir());
-        daemonParameters.configureFromSystemProperties(mergedSystemProperties);
-        return daemonParameters;
     }
 
     private Action<? super ExecutionListener> stopAllDaemons(DaemonParameters daemonParameters, ServiceRegistry loggingServices) {
@@ -148,15 +141,11 @@ class BuildActionsFactory implements CommandLineAction {
 
     private Action<? super ExecutionListener> daemonBuildAction(StartParameter startParameter, DaemonParameters daemonParameters, GradleLauncherActionExecuter<BuildActionParameters> executer) {
         return Actions.toAction(
-                new RunBuildAction(executer, startParameter, getWorkingDir(), clientMetaData(), getBuildStartTime(), daemonParameters.getEffectiveSystemProperties(), System.getenv()));
+                new RunBuildAction(executer, startParameter, SystemProperties.getCurrentDir(), clientMetaData(), getBuildStartTime(), daemonParameters.getEffectiveSystemProperties(), System.getenv()));
     }
 
     private long getBuildStartTime() {
         return ManagementFactory.getRuntimeMXBean().getStartTime();
-    }
-
-    private File getWorkingDir() {
-        return new File(System.getProperty("user.dir"));
     }
 
     private GradleLauncherMetaData clientMetaData() {

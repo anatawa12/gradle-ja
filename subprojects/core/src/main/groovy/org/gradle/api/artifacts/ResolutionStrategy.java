@@ -48,6 +48,10 @@ import java.util.concurrent.TimeUnit;
  *       if (details.requested.group == 'org.gradle') {
  *           details.useVersion'1.4'
  *       }
+ *       //changing 'groovy-all' into 'groovy':
+ *       if (details.requested.name == 'groovy-all') {
+ *          details.useTarget group: details.requested.group, name: 'groovy', version: details.requested.version
+ *       }
  *     }
  *
  *     // cache dynamic versions for 10 minutes
@@ -100,11 +104,11 @@ public interface ResolutionStrategy {
      * }
      * </pre>
      *
-     * @param forcedModuleNotations typically group:name:version notations to append
+     * @param moduleVersionSelectorNotations typically group:name:version notations to append
      * @return this ResolutionStrategy instance
      * @since 1.0-milestone-7
      */
-    ResolutionStrategy force(Object... forcedModuleNotations);
+    ResolutionStrategy force(Object... moduleVersionSelectorNotations);
 
     /**
      * Allows forcing certain versions of dependencies, including transitive dependencies.
@@ -121,11 +125,11 @@ public interface ResolutionStrategy {
      * }
      * </pre>
      *
-     * @param forcedModuleNotations typically group:name:version notations to set
+     * @param moduleVersionSelectorNotations typically group:name:version notations to set
      * @return this ResolutionStrategy instance
      * @since 1.0-milestone-7
      */
-    ResolutionStrategy setForcedModules(Object... forcedModuleNotations);
+    ResolutionStrategy setForcedModules(Object... moduleVersionSelectorNotations);
 
     /**
      * Returns currently configured forced modules. For more information on forcing versions see {@link #force(Object...)}
@@ -151,8 +155,12 @@ public interface ResolutionStrategy {
      *         details.useVersion '1.4'
      *       }
      *     }
-     *     eachDependency {
+     *     eachDependency { details ->
      *       //multiple actions can be specified
+     *       if (details.requested.name == 'groovy-all') {
+     *          //changing the name:
+     *          details.useTarget group: details.requested.group, name: 'groovy', version: details.requested.version
+     *       }
      *     }
      *   }
      * }

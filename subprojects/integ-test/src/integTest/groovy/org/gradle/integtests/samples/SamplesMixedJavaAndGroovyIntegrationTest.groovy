@@ -17,7 +17,7 @@
 package org.gradle.integtests.samples
 
 import org.gradle.integtests.fixtures.AbstractIntegrationTest
-import org.gradle.integtests.fixtures.DefaultTestExecutionResult
+import org.gradle.integtests.fixtures.JUnitXmlTestExecutionResult
 import org.gradle.integtests.fixtures.Sample
 import org.gradle.test.fixtures.file.TestFile
 import org.junit.Rule
@@ -27,7 +27,7 @@ import static org.hamcrest.Matchers.containsString
 
 class SamplesMixedJavaAndGroovyIntegrationTest extends AbstractIntegrationTest {
 
-    @Rule public final Sample sample = new Sample('groovy/mixedJavaAndGroovy')
+    @Rule public final Sample sample = new Sample(testDirectoryProvider, 'groovy/mixedJavaAndGroovy')
 
     @Test
     public void canBuildJar() {
@@ -35,7 +35,7 @@ class SamplesMixedJavaAndGroovyIntegrationTest extends AbstractIntegrationTest {
         executer.inDirectory(projectDir).withTasks('clean', 'build').run()
 
         // Check tests have run
-        DefaultTestExecutionResult result = new DefaultTestExecutionResult(projectDir)
+        JUnitXmlTestExecutionResult result = new JUnitXmlTestExecutionResult(projectDir)
         result.assertTestClassesExecuted('org.gradle.PersonTest')
 
         // Check contents of jar

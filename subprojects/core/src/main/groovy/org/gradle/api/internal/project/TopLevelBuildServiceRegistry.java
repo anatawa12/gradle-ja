@@ -219,10 +219,11 @@ public class TopLevelBuildServiceRegistry extends DefaultServiceRegistry impleme
     }
 
     protected BuildConfigurer createBuildConfigurer() {
-        return new DefaultBuildConfigurer(
-                new ProjectEvaluationConfigurer(),
-                new ProjectDependencies2TaskResolver(),
-                new ImplicitTasksConfigurer());
+        return new DefaultBuildConfigurer();
+    }
+
+    protected ProjectAccessListener createProjectAccessListener() {
+        return new DefaultProjectAccessListener();
     }
 
     protected ProfileEventAdapter createProfileEventAdapter() {

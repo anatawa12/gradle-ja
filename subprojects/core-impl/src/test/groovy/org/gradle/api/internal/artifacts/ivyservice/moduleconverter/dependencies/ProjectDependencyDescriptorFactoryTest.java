@@ -18,7 +18,6 @@ package org.gradle.api.internal.artifacts.ivyservice.moduleconverter.dependencie
 import org.apache.ivy.core.module.id.ModuleRevisionId;
 import org.gradle.api.artifacts.ExternalModuleDependency;
 import org.gradle.api.artifacts.ProjectDependency;
-import org.gradle.api.internal.artifacts.ProjectDependenciesBuildInstruction;
 import org.gradle.api.internal.artifacts.dependencies.DefaultProjectDependency;
 import org.gradle.api.internal.project.AbstractProject;
 import org.gradle.util.HelperUtil;
@@ -31,11 +30,12 @@ import static org.junit.Assert.*;
 /**
  * @author Hans Dockter
  */
+//TODO SF spockify
 public class ProjectDependencyDescriptorFactoryTest extends AbstractDependencyDescriptorFactoryInternalTest {
     private JUnit4Mockery context = new JUnit4Mockery();
 
-    private ProjectDependencyDescriptorFactory projectDependencyDescriptorFactory =
-            new ProjectDependencyDescriptorFactory(excludeRuleConverterStub);
+    private ProjectIvyDependencyDescriptorFactory projectDependencyDescriptorFactory =
+            new ProjectIvyDependencyDescriptorFactory(excludeRuleConverterStub);
 
     @Test
     public void canConvert() {
@@ -47,8 +47,7 @@ public class ProjectDependencyDescriptorFactoryTest extends AbstractDependencyDe
     public void testCreateFromProjectDependency() {
         ProjectDependency projectDependency = createProjectDependency(TEST_DEP_CONF);
         setUpDependency(projectDependency);
-        projectDependencyDescriptorFactory.addDependencyDescriptor(TEST_CONF, moduleDescriptor, projectDependency);
-        ProjectDependencyDescriptor dependencyDescriptor = (ProjectDependencyDescriptor) moduleDescriptor.getDependencies()[0];
+        ProjectDependencyDescriptor dependencyDescriptor = (ProjectDependencyDescriptor) projectDependencyDescriptorFactory.createDependencyDescriptor(TEST_CONF, projectDependency, moduleDescriptor);
 
         assertDependencyDescriptorHasCommonFixtureValues(dependencyDescriptor);
         assertFalse(dependencyDescriptor.isChanging());
@@ -61,6 +60,6 @@ public class ProjectDependencyDescriptorFactoryTest extends AbstractDependencyDe
         AbstractProject dependencyProject = HelperUtil.createRootProject();
         dependencyProject.setGroup("someGroup");
         dependencyProject.setVersion("someVersion");
-        return new DefaultProjectDependency(dependencyProject, dependencyConfiguration, new ProjectDependenciesBuildInstruction(true));
+        return new DefaultProjectDependency(dependencyProject, dependencyConfiguration, null, true);
     }
 }

@@ -25,11 +25,11 @@ import org.junit.Rule
 // can make assumptions about order in which test methods of TestNGTest get executed
 // because the methods are chained with 'methodDependsOn'
 class TestNGLoggingIntegrationTest extends AbstractIntegrationSpec {
-    @Rule TestResources resources
+    @Rule TestResources resources = new TestResources(temporaryFolder)
     ExecutionResult result
 
     def setup() {
-        executer.setAllowExtraLogging(false).withStackTraceChecksDisabled().withTasks("test")
+        executer.noExtraLogging().withStackTraceChecksDisabled().withTasks("test")
     }
 
     def "defaultLifecycleLogging"() {

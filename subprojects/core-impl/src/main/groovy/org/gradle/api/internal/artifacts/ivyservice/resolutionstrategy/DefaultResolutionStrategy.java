@@ -25,7 +25,9 @@ import org.gradle.api.artifacts.cache.ResolutionRules;
 import org.gradle.api.internal.Actions;
 import org.gradle.api.internal.artifacts.DependencyResolveDetailsInternal;
 import org.gradle.api.internal.artifacts.configurations.ResolutionStrategyInternal;
-import org.gradle.api.internal.artifacts.dsl.ForcedModuleNotationParser;
+import org.gradle.api.internal.artifacts.dsl.ModuleVersionSelectorParsers;
+import org.gradle.api.internal.notations.parsers.NormalizedTimeUnit;
+import org.gradle.api.internal.notations.parsers.TimeUnitsParser;
 
 import java.util.Collection;
 import java.util.LinkedHashSet;
@@ -71,9 +73,8 @@ public class DefaultResolutionStrategy implements ResolutionStrategyInternal {
         return cachePolicy;
     }
 
-    public DefaultResolutionStrategy force(Object... forcedModuleNotations) {
-        assert forcedModuleNotations != null : "forcedModuleNotations cannot be null";
-        Set<ModuleVersionSelector> modules = new ForcedModuleNotationParser().parseNotation(forcedModuleNotations);
+    public DefaultResolutionStrategy force(Object... moduleVersionSelectorNotations) {
+        Set<ModuleVersionSelector> modules = ModuleVersionSelectorParsers.multiParser().parseNotation(moduleVersionSelectorNotations);
         this.forcedModules.addAll(modules);
         return this;
     }
@@ -88,8 +89,8 @@ public class DefaultResolutionStrategy implements ResolutionStrategyInternal {
         return Actions.composite(allRules);
     }
 
-    public DefaultResolutionStrategy setForcedModules(Object ... forcedModuleNotations) {
-        Set<ModuleVersionSelector> forcedModules = new ForcedModuleNotationParser().parseNotation(forcedModuleNotations);
+    public DefaultResolutionStrategy setForcedModules(Object ... moduleVersionSelectorNotations) {
+        Set<ModuleVersionSelector> forcedModules = ModuleVersionSelectorParsers.multiParser().parseNotation(moduleVersionSelectorNotations);
         this.forcedModules = forcedModules;
         return this;
     }
@@ -99,8 +100,8 @@ public class DefaultResolutionStrategy implements ResolutionStrategyInternal {
     }
 
     public void cacheDynamicVersionsFor(int value, String units) {
-        TimeUnit timeUnit = TimeUnit.valueOf(units.toUpperCase());
-        cacheDynamicVersionsFor(value, timeUnit);
+        NormalizedTimeUnit timeUnit = new TimeUnitsParser().parseNotation(units, value);
+        cacheDynamicVersionsFor(timeUnit.getValue(), timeUnit.getTimeUnit());
     }
 
     public void cacheDynamicVersionsFor(int value, TimeUnit units) {
@@ -108,8 +109,8 @@ public class DefaultResolutionStrategy implements ResolutionStrategyInternal {
     }
 
     public void cacheChangingModulesFor(int value, String units) {
-        TimeUnit timeUnit = TimeUnit.valueOf(units.toUpperCase());
-        cacheChangingModulesFor(value, timeUnit);
+        NormalizedTimeUnit timeUnit = new TimeUnitsParser().parseNotation(units, value);
+        cacheChangingModulesFor(timeUnit.getValue(), timeUnit.getTimeUnit());
     }
 
     public void cacheChangingModulesFor(int value, TimeUnit units) {

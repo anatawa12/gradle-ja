@@ -20,37 +20,41 @@ import org.gradle.api.artifacts.ResolvableDependencies;
 import org.gradle.logging.ProgressLogger;
 import org.gradle.logging.ProgressLoggerFactory;
 
+import java.util.LinkedList;
+
 // TODO:DAZ Think about a better way to do thread-safety here, maybe
 public class DependencyResolutionLogger implements DependencyResolutionListener {
+    private final ThreadLocal<LinkedList<ProgressLogger>> progressLoggers = new ThreadLocal<LinkedList<ProgressLogger>>() {
+        protected LinkedList<ProgressLogger> initialValue() {
+            return new LinkedList<ProgressLogger>();
+        }
+    };
     private final ProgressLoggerFactory loggerFactory;
-    private final ThreadLocal<ProgressLogger> progressLogger = new ThreadLocal<ProgressLogger>();
 
     public DependencyResolutionLogger(ProgressLoggerFactory loggerFactory) {
         this.loggerFactory = loggerFactory;
     }
 
+    //TODO SF add concurrent unit test coverage
     public void beforeResolve(ResolvableDependencies dependencies) {
-        checkLogger(false);
+        LinkedList<ProgressLogger> loggers = progressLoggers.get();
+        progressLoggers.set(loggers);
         ProgressLogger logger = loggerFactory.newOperation(DependencyResolutionLogger.class);
         logger.setDescription(String.format("Resolve %s", dependencies));
         logger.setShortDescription(String.format("Resolving %s", dependencies));
         logger.started();
-        progressLogger.set(logger);
+        loggers.add(logger);
     }
 
     public void afterResolve(ResolvableDependencies dependencies) {
-        checkLogger(true);
-        progressLogger.get().completed();
-        progressLogger.remove();
-    }
-
-    private void checkLogger(boolean shouldExist) {
-        ProgressLogger logger = progressLogger.get();
-        if (shouldExist && logger == null) {
-            throw new IllegalStateException("Logging operation not started");
+        LinkedList<ProgressLogger> loggers = progressLoggers.get();
+        if (loggers.isEmpty()) {
+            throw new IllegalStateException("Logging operation was not started or it has already completed.");
         }
-        if (!shouldExist && logger != null) {
-            throw new IllegalStateException("Logging operation already in progress");
+        ProgressLogger logger = loggers.removeLast();
+        logger.completed();
+        if (loggers.isEmpty()) {
+            progressLoggers.remove();
         }
     }
 }
