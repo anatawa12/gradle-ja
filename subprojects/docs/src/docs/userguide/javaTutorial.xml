@@ -82,7 +82,7 @@
             files are created under the <filename>build</filename> directory, with the JAR file ending up in the
             <filename>build/libs</filename> directory.
         </para>
-        <para>Gradleは、製品のソースコードが<filename>src/main/java</filename>に、テストのソースコードが<filename>src/test/java</filename>にあることを想定しています。さらに、<filename>src/main/resource</filename>の下にあるファイルはすべてリソースとしてJARに入れられ、また<filename>src/test/resource</filename>にあるファイルはテスト実行時に使われるクラスパスに入れられます。すべての出力ファイルは<filename>build</filename>ディレクトリの下に作られ、最終的に<filename>build/libs</filename>ディレクトリにJARファイルが作られます。
+        <para>Gradleは、製品のソースコードが<filename>src/main/java</filename>に、テストのソースコードが<filename>src/test/java</filename>にあることを想定しています。さらに、<filename>src/main/resources</filename>の下にあるファイルはすべてリソースとしてJARに入れられ、また<filename>src/test/resources</filename>にあるファイルはテスト実行時に使われるクラスパスに入れられます。すべての出力ファイルは<filename>build</filename>ディレクトリの下に作られ、最終的に<filename>build/libs</filename>ディレクトリにJARファイルが作られます。
         </para>
 
         <section>
