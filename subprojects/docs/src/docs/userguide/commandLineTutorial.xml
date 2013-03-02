@@ -200,11 +200,15 @@
             <sample id="dependencyListReport" dir="userguide/tutorial/projectReports" title="依存関係の情報を取得する / Obtaining information about dependencies">
                 <output args="-q dependencies api:dependencies webapp:dependencies"/>
             </sample>
-            <para>
+            <para role="original">
                 Since a dependency report can get large, it can be useful to restrict the report to a particular configuration.
                 This is achieved with the optional <userinput>--configuration</userinput> parameter:
             </para>
-            <sample id="dependencyListReportFiltered" dir="userguide/tutorial/projectReports" title="Filtering dependency report by configuration">
+            <para>
+            依存関係のレポートは巨大になることもあるので、レポート内容を特定のコンフィギュレーションのみに限定できれば便利です。
+            これは、オプションの<userinput>--configuration</userinput>を指定することで実現できます。
+            </para>
+            <sample id="dependencyListReportFiltered" dir="userguide/tutorial/projectReports" title="依存関係のレポートをコンフィギュレーションでフィルタする / Filtering dependency report by configuration">
                 <output args="-q api:dependencies --configuration testCompile"/>
             </sample>
         </section>

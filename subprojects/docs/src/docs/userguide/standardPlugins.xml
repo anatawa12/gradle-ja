@@ -317,8 +317,8 @@
                 <td><literal>java</literal></td>
                 <td>-</td>
                 <td>
-                    <para>Adds support for building a ZIP distribution for a Java library.
-                    </para>
+                    <para role="original">Adds support for building a ZIP distribution for a Java library.</para>
+                    <para>JavaライブラリをZIPの配布物としてビルドできるようにします。</para>
                 </td>
             </tr>
             <tr>
@@ -330,8 +330,9 @@
                 <td>-</td>
                 <td>-</td>
                 <td>
-                    <para>This plugin provides a new DSL to support publishing artifacts to Ivy repositories, which improves on the existing DSL.
+                    <para role="original">This plugin provides a new DSL to support publishing artifacts to Ivy repositories, which improves on the existing DSL.
                     </para>
+                    <para>Ivyリポジトリへアーティファクトを公開できるようにします。DSLが既存のものから新しく改善されています。</para>
                 </td>
             </tr>
             <tr>
@@ -343,9 +344,9 @@
                 <td>-</td>
                 <td><literal>java</literal>, <literal>war</literal></td>
                 <td>
-                    <para>This plugin provides a new DSL to support publishing artifacts to Maven repositories, which improves on the existing DSL.
+                    <para role="original">This plugin provides a new DSL to support publishing artifacts to Maven repositories, which improves on the existing DSL.
                     </para>
-                    <para>アーティファクトをIvyリポジトリに公開できるようにします。</para>
+                    <para>Mavenリポジトリへアーティファクトを公開できるようにします。DSLが既存のものから新しく改善されています。</para>
                 </td>
             </tr>
             <tr>
@@ -371,9 +372,9 @@
                 <td>reporting-base</td>
                 <td>-</td>
                 <td>
-                    <para>Generates build dashboard report.
+                    <para role="original">Generates build dashboard report.
                     </para>
-                    <para>JavaライブラリをZIPの配布物としてビルドできるようにします。</para>
+                    <para>ビルドのダッシュボードを生成します。</para>
                 </td>
             </tr>
         </table>
@@ -381,7 +382,7 @@
     <section>
         <title>ソフトウェア開発プラグイン<phrase role="original">Software development plugins</phrase></title>
         <para role="original">These plugins provide help with your software development process.</para>
-        <para>これらのプラグインは、ソフトウェアの開発プロセスを手助けするものです。</para>
+        <para>これらのプラグインは、ソフトウェアの開発プロセスを支援します。</para>
         <table>
             <title>ソフトウェア開発プラグイン<phrase role="original">Software development plugins</phrase></title>
             <thead>
@@ -580,21 +581,23 @@
                         <ulink url="http://www.sonarsource.org">Sonar</ulink>
                         code quality platform. Superceeded by the <link linkend='sonar_runner_plugin'><literal>sonar-runner</literal></link> plugin.
                     </para>
+                    <para><ulink url="http://www.sonarsource.org">Sonar</ulink>コード品質プラットフォームとの連携機能を提供します。今は後継として<link linkend='sonar_runner_plugin'><literal>sonar-runner</literal></link>プラグインが作成されています。</para>
                 </td>
             </tr>
         </table>
     </section>
     <section>
-        <title>Incubating software development plugins</title>
-        <para>These plugins provide help with your software development process.</para>
+        <title>試験的なソフトウェア開発プラグイン <phrase role="original">Incubating software development plugins</phrase></title>
+        <para role="original">These plugins provide help with your software development process.</para>
+        <para>これらのプラグインは、ソフトウェアの開発プロセスを支援します。</para>
         <table>
-            <title>Software development plugins</title>
+            <title>ソフトウェア開発プラグイン <phrase role="original">Software development plugins</phrase></title>
             <thead>
                 <tr>
-                    <td>Plugin Id</td>
-                    <td>Automatically applies</td>
-                    <td>Works with</td>
-                    <td>Description</td>
+                    <td><phrase role="original">Plugin Id</phrase> プラグインID</td>
+                    <td><phrase role="original">Automatically applies</phrase> 自動適用</td>
+                    <td><phrase role="original">Works with</phrase> 協調して動作</td>
+                    <td><phrase role="original">Description</phrase> 説明</td>
                 </tr>
             </thead>
             <tr>
@@ -606,11 +609,11 @@
                 <td>-</td>
                 <td>-</td>
                 <td>
-                    <para>Provides integration with the
+                    <para role="original">Provides integration with the
                         <ulink url="http://www.sonarsource.org">Sonar</ulink>
                         code quality platform. Superceeds the <link linkend='sonar_plugin'><literal>sonar</literal></link> plugin.
                     </para>
-                    <para><ulink url="http://www.sonarsource.org">Sonar</ulink>コード品質プラットフォームとプロジェクトを統合します。</para>
+                    <para><ulink url="http://www.sonarsource.org">Sonar</ulink>コード品質プラットフォームとの連携機能を提供します。<link linkend='sonar_plugin'><literal>sonar</literal></link>プラグインの後継プラグインです。</para>
                 </td>
             </tr>
         </table>

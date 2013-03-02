@@ -25,8 +25,11 @@
         <para role="original">
             You can read about the new publishing plugins in <xref linkend="publishing_ivy"/> and <xref linkend="publishing_maven"/>.
         </para>
-        <para>
+        <para role="original">
             You can read about the new publishing plugins in <xref linkend="publishing_ivy"/> and <xref linkend="publishing_maven"/>. Please try them out and give us feedback.
+        </para>
+        <para>
+            新しい公開プラグインについては、<xref linkend="publishing_ivy"/>および<xref linkend="publishing_maven"/>に詳しく記載されています。ぜひ試用してみてください。何かあればフィードバックしてもらえると幸いです。
         </para>
     </note>
     <section>

@@ -1301,12 +1301,11 @@
         </para>
 
         <section>
-            <title>Test execution</title>
-            <para>Tests are executed in a separate JVM, isolated from the main build process. The <apilink class="org.gradle.api.tasks.testing.Test"/> task's
+            <title>テストの実行 <phrase role="original">Test execution</phrase></title>
+            <para role="original">Tests are executed in a separate JVM, isolated from the main build process. The <apilink class="org.gradle.api.tasks.testing.Test"/> task's
                 API allows you some control over how this happens.
             </para>
-            <para>テストは隔離された別のJVMで実行されます。
-            <apilink class="org.gradle.api.tasks.testing.Test"/>タスクのAPIを使って、テストの実行を制御できます。
+            <para>テストの実行は別のJVMで行われ、メインのビルドプロセスからは分離されます。<apilink class="org.gradle.api.tasks.testing.Test"/>タスクのAPIを使って、テストの実行を制御できます。
             </para>
             <para role="original">There are a number of properties which control how the test process is launched. This includes
                 things such as system properties, JVM arguments, and the Java executable to use. The task also provides a
@@ -1485,6 +1484,7 @@
                 上記のテストクラス検出を使いたくないときは、<literal>scanForTestClasses</literal>をfalseに設定することで、これを無効にすることができます。
                 この場合、testタスクがテストクラスを探すときにはincludes / excludesだけが使われます。
                 <literal>scanForTestClasses</literal>が無効になっていて、かつincludesやexcludesパターンが指定されていないときは、デフォルトとしてincludesには<literal>"**/*Tests.class", "**/*Test.class"</literal>、そしてexcludesには<literal>"**/Abstract*.class"</literal>が使われます。
+            </para>
         </section>
 
         <section id="test_reporting">

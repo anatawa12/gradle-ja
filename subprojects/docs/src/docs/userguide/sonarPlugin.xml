@@ -17,23 +17,25 @@
     <title>Sonarプラグイン<phrase role="original">The Sonar Plugin</phrase></title>
 
     <note>
-        <para>
+        <para role="original">
             You may wish to use the new <link linkend="sonar_runner_plugin">Sonar Runner Plugin</link> instead of this plugin.
             In particular, only the Sonar Runner plugin supports Sonar 3.4 and higher.
         </para>
+        <para>
+        このプラグインの代わりに、新しくできた<link linend="sonar_runner_plugin">Sonnar Runner</link>を使いたくなる場面もあるかもしれません。
+        特に、Sonar3.4以上をサポートしているのはSonar Runnerプラグインだけです。
+        </para>
     </note>
 
-    <para>The Sonar plugin provides integration with <ulink url="http://www.sonarsource.org">Sonar</ulink>,
+    <para role="original">The Sonar plugin provides integration with <ulink url="http://www.sonarsource.org">Sonar</ulink>,
         a web-based platform for monitoring code quality. The plugin adds a <literal>sonarAnalyze</literal> task
         that analyzes the project to which the plugin is applied, as well as its subprojects. The results are stored in
         the Sonar database. The plugin is based on the <ulink url="http://docs.codehaus.org/display/SONAR/Analyzing+with+Sonar+Runner">Sonar Runner</ulink>
         and requires Sonar 2.11 or higher.
     </para>
-    <para>Sonarプラグインは、コード品質モニタリングのためのWebベースのプラットフォームである
-        <ulink url="http://www.sonarsource.org">Sonar</ulink>との統合機能を提供します。
-        プラグインは、適用されたプロジェクトとサブプロジェクトを解析する<literal>sonarAnalyze</literal>タスクを追加します。
-        結果はSonarデータベースに格納されます。
-        プラグインはSonar 2.9以上を必要とします。
+    <para>Sonarプラグインは、コード品質モニタリングのためのWebベースのプラットフォームである<ulink url="http://www.sonarsource.org">Sonar</ulink>との統合機能を提供します。
+        プラグインにより追加される<literal>sonarAnalyze</literal>タスクは、プラグインが適用されたプロジェクト、およびそのサブプロジェクトを解析することができます。結果はSonarデータベースに格納されます。
+        このプラグインはベースに<ulink url="http://docs.codehaus.org/display/SONAR/Analyzing+with+Sonar+Runner">Sonar Runner</ulink>が使われていて、Sonar 2.11以上を必要とします。
     </para>
 
     <para role="original">
@@ -58,7 +60,7 @@
         <sample id="quickstart" dir="sonar/quickstart" title="Sonarプラグインの適用 / Applying the Sonar plugin">
             <sourcefile file="build.gradle" snippet="apply-plugin"/>
         </sample>
-        <para>Unless Sonar is run locally and with default settings, it is necessary to configure
+        <para role="original">Unless Sonar is run locally and with default settings, it is necessary to configure
             connection settings for the Sonar server and database.</para>
         <para>Sonarがデフォルト設定でローカル実行されるのでなければ、Sonarサーバーとデータベースへの接続設定も必要になります。
         </para>
@@ -66,10 +68,11 @@
         <sample id="quickstart" dir="sonar/quickstart" title="Sonar接続設定のコンフィグレーション / Configuring Sonar connection settings">
             <sourcefile file="build.gradle" snippet="connection-settings"/>
         </sample>
-        <para>
+        <para role="original">
             Alternatively, some or all connection settings can be set from the command line (see <xref linkend="sec:sonar_command_line_parameters" />).
         </para>
-        <para>Project settings determine how the project is going to be analyzed. The default configuration
+        代わりに、いくつかの、または全ての接続設定をコマンドラインで設定することもできます(<xref linkend="sec:sonar_command_line_parameters" />参照)。
+        <para role="original">Project settings determine how the project is going to be analyzed. The default configuration
             works well for analyzing standard Java projects and can be customized in many ways.</para>
         <para>プロジェクト設定によって、プロジェクトをどのように解析するのかが決まります。
             標準的なJavaプロジェクトに対してはデフォルト設定で事が足りますが、さまざまな方法でカスタマイズも可能です。
@@ -103,9 +106,8 @@
             analyzing each project separately.
         </para>
         <para>Sonarプラグインはプロジェクト階層全体を一度に解析する機能をもちます。
-            これはSonarのWebインターフェースに集約されたメトリクスを含む階層ビューを生成し、
-            サブプロジェクトへのドリルダウン機能を提供します。
-            個別のプロジェクトごとに解析を行うよりも高速で、out-of-memory問題の発生が抑えられます。
+            集約されたメトリクスとサブプロジェクトへのドリルダウン機能を含む階層ビューをSonarのWebインターフェースに生成でき、
+            個別のプロジェクトごとに解析を行うよりも高速でもあります。
         </para>
 
         <para role="original">
@@ -195,24 +197,27 @@
     </section>
 
     <section>
-        <title>Analyzing languages other than Java</title>
-        <para>
+        <title>Java言語以外の解析 <phrase role="original">Analyzing languages other than Java</phrase></title>
+        <para role="original">
             To analyze code written in a language other than Java, install the corresponding
             <ulink url="http://www.sonarsource.com/products/plugins/languages/">Sonar plugin</ulink>, and set
             <literal>sonar.project.language</literal> accordingly:
         </para>
-        <sample id="advanced" dir="sonar/advanced" title="Analyzing languages other than Java">
+        <para>Java以外の言語で書かれたコードを解析するには、対応する<ulink url="http://www.sonarsource.com/products/plugins/languages/">Sonarプラグイン</ulink>をインストールして、次のように<literal>sonar.project.language</literal>を設定してください。</para>
+        <sample id="advanced" dir="sonar/advanced" title="Java言語以外の解析 / Analyzing languages other than Java">
             <sourcefile file="build.gradle" snippet="languages" />
         </sample>
-        <para>
+        <para role="original">
             As of Sonar 3.4, only one language per project can be analyzed. You can, however, set a different language for each project in a
             multi-project build.
         </para>
+        <para>Sonarでは、バージョン3.4現在、一プロジェクトにつき一つの言語の解析しかできません。しかし、マルチプロジェクトで、それぞれのプロジェクトに異なる言語を設定することはできます。</para>
     </section>
 
     <section>
-        <title>Setting Custom Sonar Properties</title>
-        <para>
+        <title>カスタムSonarプロパティの設定 <phrase role="original">Setting Custom Sonar Properties</phrase></title>
+
+        <para role="original">
             Eventually, most configuration is passed to the Sonar code analyzer in the form of key-value pairs known as Sonar properties.
             The <apilink class="org.gradle.api.plugins.sonar.model.SonarProperty"/> annotations in the API documentation show how properties
             of the plugin's object model get mapped to the corresponding Sonar properties. The Sonar plugin offers hooks to post-process Sonar
@@ -247,54 +252,67 @@
             Note that for most of these properties, the Sonar plugin's object model has an equivalent property, and it isn't necessary to use a <code>withGlobalProperties</code>
             or <code>withProjectProperties</code> hook. For configuring a third-party Sonar plugin, consult the plugin's documentation.
         </para>
+        <para>使用できるSonarプロパティは<ulink url="http://docs.codehaus.org/display/SONAR/Analysis+Parameters">Sonarのドキュメント</ulink>で調べることができます。
+            ただし、これらのプロパティのほとんどはプラグインのオブジェクトモデルに対応するプロパティがあり、<code>withGlobalProperties</code>や<code>withProjectProperties</code>フックを使って設定する必要はありません。
+            サードパーティのSonarプラグインに対しては、それらのドキュメントを参照してください。
+        </para>
     </section>
 
     <section id="sec:sonar_command_line_parameters">
-        <title>Configuring Sonar Settings from the Command Line</title>
-        <para>
+        <title>コマンドラインでSonarの設定を行う <phrase role="original">Configuring Sonar Settings from the Command Line</phrase></title>
+        <para role="original">
             The following properties can alternatively be set from the command line, as task parameters of the <literal>sonarAnalyze</literal> task.
             A task parameter will override any corresponding value set in the build script.
         </para>
-        <ul>
-            <li>
-                <literal>server.url</literal>
-            </li>
-            <li>
-                <literal>database.url</literal>
-            </li>
-            <li>
-                <literal>database.driverClassName</literal>
-            </li>
-            <li>
-                <literal>database.username</literal>
-            </li>
-            <li>
-                <literal>database.password</literal>
-            </li>
-            <li>
-                <literal>showSql</literal>
-            </li>
-            <li>
-                <literal>showSqlResults</literal>
-            </li>
-            <li>
-                <literal>verbose</literal>
-            </li>
-            <li>
-                <literal>forceAnalysis</literal>
-            </li>
-        </ul>
         <para>
+        次に示すプロパティは、<literal>sonarAnalyze</literal>タスクのパラメーターとしてコマンドラインからでも設定できます。
+        タスクパラメーターは、ビルドスクリプト内の対応する値を全て上書きします。
+        </para>
+        <itemizedlist>
+            <listitem>
+                <literal>server.url</literal>
+            </listitem>
+            <listitem>
+                <literal>database.url</literal>
+            </listitem>
+            <listitem>
+                <literal>database.driverClassName</literal>
+            </listitem>
+            <listitem>
+                <literal>database.username</literal>
+            </listitem>
+            <listitem>
+                <literal>database.password</literal>
+            </listitem>
+            <listitem>
+                <literal>showSql</literal>
+            </listitem>
+            <listitem>
+                <literal>showSqlResults</literal>
+            </listitem>
+            <listitem>
+                <literal>verbose</literal>
+            </listitem>
+            <listitem>
+                <literal>forceAnalysis</literal>
+            </listitem>
+        </itemizedlist>
+        <para role="original">
             Here is a complete example:
         </para>
-        <code>
-            gradle sonarAnalyze --server.url=http://sonar.mycompany.com --database.password=myPassword --verbose
-        </code>
-        <para>If you need to set other properties from the command line, you can use system properties to do so:</para>
-        <sample id="advanced" dir="sonar/advanced" title="Implementing custom command line properties">
+        <para>以下に使用例を示します。</para>
+        <para>
+            <code>
+                gradle sonarAnalyze --server.url=http://sonar.mycompany.com --database.password=myPassword --verbose
+            </code>
+        </para>
+        <para role="original">If you need to set other properties from the command line, you can use system properties to do so:</para>
+        <para>他の値をコマンドラインから設定する必要がある場合は、システムプロパティが使用できます。</para>
+        <sample id="advanced" dir="sonar/advanced" title="カスタムのコマンドラインプロパティを実装する / Implementing custom command line properties">
             <sourcefile file="build.gradle" snippet="custom-command-line-properties"/>
         </sample>
-        <para>However, keep in mind that it is usually best to keep configuration in the build script and under source control.</para>
+        <para role="original">However, keep in mind that it is usually best to keep configuration in the build script and under source control.</para>
+        <para>ただ、たいていの場合は設定値をビルドスクリプトに格納し、ソースコード管理システムで管理するのが一番良い方法だということは頭に留めておいてください。</para>
     </section>
 
     <section>

@@ -137,7 +137,8 @@
             <varlistentry>
                 <term><classname>TaskOutputs</classname></term>
                 <listitem>
-                    <para>The output files of the TaskOutputs are included in the file collection.</para>
+                    <para role="original">The output files of the TaskOutputs are included in the file collection.</para>
+                    <para>TaskOutputsの出力ファイルがファイルコレクションに追加される。</para>
                 </listitem>
             </varlistentry>
         </variablelist>

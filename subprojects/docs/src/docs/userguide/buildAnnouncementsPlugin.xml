@@ -5,11 +5,11 @@
             The build announcements is incubating and should not be considered stable.
         </para>
         <para>
-            ビルド通知プラグインはまだ未成熟なプラグインです。安定した状態ではありません (<xref linkend="sec:incubating_state"/>を参照してください)。
+            ビルド通知プラグインはまだ試験的なプラグインです。安定した状態ではありません (<xref linkend="sec:incubating_state"/>を参照してください)。
         </para>
     </note>
     <para role="original">The build announcements plugin uses the <link linkend="announce_plugin">announce</link> plugin to send local announcements on important events in the build.</para>
-    <para>ビルド通知プラグインは、ビルドにおける重要なイベントのローカル通知を送るために<link linkend="announce_plugin">通知</link>プラグインを使います。</para>
+    <para>ビルド通知プラグインは、<link linkend="announce_plugin">通知</link>プラグインを使って、ビルドで重要なイベントが発生したときにローカル上で通知します。</para>
     <section>
         <title>使用方法<phrase role="original">Usage</phrase></title>
         <para role="original">To use the build announcements plugin, include in your build script:</para>

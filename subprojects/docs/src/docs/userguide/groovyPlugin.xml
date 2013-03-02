@@ -269,7 +269,7 @@
             during compilation.
         </para>
         <para>
-            注意: <literal>groovy-all</literal>でなく<literal>groovy</literal>アーティファクトを使っている場合、groovyClasspathの自動設定はプロジェクトがリポジトリを定義し、そのリポジトリにgroovyアーティファクトが、依存関係をリストしたディスクリプタ（<literal>pom.xml</literal>や<literal>ivy.xml</literal>）とともに置かれているときのみ正しく動作します。そうでない場合、アーティファクトのみが<literal>groovyClasspath</literal>に追加されることになるので、おそらくコンパイル時に<literal>NoClassDefFoundError</literal>が発生することになるでしょう。
+            注意: <literal>groovy-all</literal>でなく<literal>groovy</literal>アーティファクトを使っている場合、groovyClasspathの自動設定はプロジェクトがリポジトリを定義し、そのリポジトリにgroovyアーティファクトが、依存関係をリストしたディスクリプタ（<filename>pom.xml</filename>や<filename>ivy.xml</filename>）とともに置かれているときのみ正しく動作します。そうでない場合、アーティファクトのみが<literal>groovyClasspath</literal>に追加されることになるので、おそらくコンパイル時に<literal>NoClassDefFoundError</literal>が発生することになるでしょう。
         </para>
     </section>
     <section>

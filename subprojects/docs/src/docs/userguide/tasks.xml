@@ -265,12 +265,12 @@
     </section>
 
     <section>
-        <title>UP-TO-DATEなタスクをスキップする<phrase role="original">Skipping tasks that are up-to-date</phrase></title>
+        <title>更新されていないタスクをスキップする<phrase role="original">Skipping tasks that are up-to-date</phrase></title>
         <para role="original">If you are using one of the tasks that come with Gradle, such as a task added by the Java plugin,
             you might have noticed that Gradle will skip tasks that are up-to-date. This behaviour is also available
             for your tasks, not just for built-in tasks.
         </para>
-        <para>JavaプラグインのようなGradleが提供しているタスクを使ったとき、Gradleがup-to-date(最新状態)のタスクをスキップすることに気づかれたかもしれません。この動作は、ビルドインのタスクだけでなく、任意のタスクに組み込むことができます。</para>
+        <para>JavaプラグインのようなGradleが提供しているタスクを使ったとき、Gradleが未更新(UP-TO-DATE)のタスクをスキップすることに気づかれたかもしれません。この動作は、ビルドインのタスクだけでなく、任意のタスクに組み込むことができます。</para>
         <section id="sec:task_inputs_outputs">
             <title>タスクの入力物と出力物を宣言する<phrase role="original">Declaring a task's inputs and outputs</phrase></title>
             <para role="original">

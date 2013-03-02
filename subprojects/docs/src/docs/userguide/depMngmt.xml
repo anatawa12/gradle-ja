@@ -13,92 +13,120 @@
   ~ See the License for the specific language governing permissions and
   ~ limitations under the License.
   -->
-<chapter id='dependency_management'>
-    <title>Dependency Management</title>
+<chapter id='dependency_management' xml:lang="ja">
+    <title>依存関係の管理 <phrase role="original">Dependency Management</phrase></title>
     <section id='sec:Introduction'>
-        <title>Introduction</title>
-        <para>Dependency management is a critical feature of every build, and Gradle has placed an emphasis on offering first-class dependency management that is both easy-to-understand and
+        <title>はじめに <phrase role="original">Introduction</phrase></title>
+        <para role="original">Dependency management is a critical feature of every build, and Gradle has placed an emphasis on offering first-class dependency management that is both easy-to-understand and
             compatible with a wide variety of approaches. If you are familiar with the approach used by either Maven or Ivy you will be delighted to learn that Gradle is fully compatible with both
             approaches in addition to being flexible enough to support fully-customised approaches.
         </para>
-
-        <para>Here are the major highlights of Gradle's support for dependency management:</para>
+        依存関係の管理は、あらゆるビルドで決定的に重要になる機能であり、Gradleでも分かりやすさ、および従来の様々な管理方法との互換性を備える最上級の管理機能を提供することを重視してきました。
+        MavenやIvyを使った管理方法に慣れ親しんできた方であれば、十分なカスタマイズ性を実現する柔軟さだけでなく、Maven、Ivy双方と完全に互換性を保っていることを知って喜ばれることでしょう。
+        <para role="original">Here are the major highlights of Gradle's support for dependency management:</para>
+        <para>Gradleの依存関係管理機能で特筆すべき点は、</para>
         <itemizedlist>
             <listitem>
-                <para><emphasis>Transitive dependency management</emphasis>: Gradle gives you full control of your project's dependency tree.
+                <para role="original"><emphasis>Transitive dependency management</emphasis>: Gradle gives you full control of your project's dependency tree.
                 </para>
+                <para><emphasis>推移的な依存関係の管理</emphasis>: Gradleは、プロジェクトの依存関係ツリー全体を完全にコントロールできます。</para>
             </listitem>
             <listitem>
-                <para><emphasis>Support for non-managed dependencies</emphasis>: If your dependencies are simply files in version control or a shared drive, Gradle provides powerful functionality
+                <para role="original"><emphasis>Support for non-managed dependencies</emphasis>: If your dependencies are simply files in version control or a shared drive, Gradle provides powerful functionality
                     to support this.
                 </para>
+                <emphasis>管理されない依存関係もサポート</emphasis>: プロジェクトの依存ファイルをバージョン管理システムや共有ドライブに単純に格納したいのであれば、Gradleはそれも強力にサポートします。
             </listitem>
             <listitem>
-                <para><emphasis>Support for custom dependency definitions.</emphasis>: Gradle's Module Dependencies give you the ability to describe the dependency hierarchy in the build script.
+                <para role="original"><emphasis>Support for custom dependency definitions.</emphasis>: Gradle's Module Dependencies give you the ability to describe the dependency hierarchy in the build script.
                 </para>
+                <para><emphasis>依存関係定義のカスタマイズをサポート</emphasis>: Gradleはモジュール依存関係と呼ばれる機能で、依存関係の階層構造をビルドスクリプトで直接上書きできます。</para>
             </listitem>
             <listitem>
-                <para><emphasis>A fully customisable approach to Dependency Resolution</emphasis>: Gradle provides you with the ability to customize resolution rules making dependency substitution
+                <para role="original"><emphasis>A fully customisable approach to Dependency Resolution</emphasis>: Gradle provides you with the ability to customize resolution rules making dependency substitution
                     easy.
                 </para>
+                <para><emphasis>依存関係の解決方法を完全にカスタマイズできる</emphasis>: Gradleは依存関係の解決ルールをカスタマイズできるので、依存関係の置き換えが簡単です。</para>
             </listitem>
             <listitem>
-                <para><emphasis>Full Compatibility with Maven and Ivy</emphasis>: If you have defined dependencies in a Maven POM or an Ivy file, Gradle provide seamless integration with a range of
+                <para role="original"><emphasis>Full Compatibility with Maven and Ivy</emphasis>: If you have defined dependencies in a Maven POM or an Ivy file, Gradle provide seamless integration with a range of
                     popular build tools.
                 </para>
+                <para><emphasis>Maven、Ivyと完全に互換性がある</emphasis>: 既にMavenのPOMやIvyファイルで依存関係を定義していれば、Gradleはそれらのポピュラーなビルドツールとシームレスに連携できます。</para>
             </listitem>
             <listitem>
-                <para><emphasis>Integration with existing dependency management infrastructure</emphasis>: Gradle is compatible with both Maven and Ivy repositories. If you use Archiva, Nexus, or
+                <para role="original"><emphasis>Integration with existing dependency management infrastructure</emphasis>: Gradle is compatible with both Maven and Ivy repositories. If you use Archiva, Nexus, or
                     Artifactory, Gradle is 100% compatible with all repository formats.
                 </para>
+                <para><emphasis>既存の依存関係管理に関するインフラとの連携</emphasis>: Gradleは、Maven、Ivyどちらの形式のリポジトリとも互換性があります。ArchivaやNexus、Artifactoryを使っているのであれば、Gradleはそれらのリポジトリ形式と100％の互換性を持っています。</para>
             </listitem>
         </itemizedlist>
 
-        <para>
+        <para role="original">
             With hundreds of thousands of interdependent open source components each with a range of versions and incompatibilities, dependency management has a habit of causing problems as builds
             grow in complexity. When a build's dependency tree becomes unwieldy, your build tool shouldn't force you to adopt a single, inflexible approach to dependency management. A proper build
             system has to be designed to be flexible, and Gradle can handle any situation.
         </para>
-
+        <para>無数のOSSコンポーネントが互いに依存し合っており、バージョンや互換性の有無も様々なので、ビルドが複雑さを増すにつれ、依存関係管理が問題を引き起こすことが増えてきます。ビルドの依存関係が扱いにくくなってきたとき、ビルドツールというものはユーザーを一つの、柔軟性のない管理方法に縛り付けるべきではありません。正しいビルドシステムは、柔軟な管理方法に対応できるようになっていなければならず、Gradleもどんなシチュエーションにも対応することができるようになっています。</para>
         <section id='sub:dependency_management_and_migrations'>
-            <title>Flexible dependency management for migrations</title>
-            <para>
+            <title>移行のための柔軟な依存関係管理 <phrase role="original">Flexible dependency management for migrations</phrase></title>
+            <para role="original">
                 Dependency management can be particularly challenging during a migration from one build system to another. If you are migrating from a tool like Ant or Maven to Gradle, you may be
                 faced with some difficult situations. For example, one common pattern is an Ant project with version-less jar files stored in the filesystem. Other build systems require a wholesale
                 replacement of this approach before migrating. With Gradle, you can adapt your new build to any existing source of dependencies or dependency metadata. This makes incremental migration
                 to Gradle much easier than the alternative. On most large projects, build migrations and any change to development process is incremental because most organizations can't afford to
                 stop everything and migrate to a build tool's idea of dependency management.
             </para>
+            <para>
+            依存関係の管理は、あるビルドシステムから別のビルドシステムへ移行する際、特に問題になることが多いようです。
+            AntやMavenからGradleへ移行する際にも、難しい場面に遭遇することがあるかもしれません。例えば、バージョンが付いていないjarファイルがファイルシステムに格納されているAntプロジェクトの場合、従来のビルドシステムでは移行する前にこのアプローチを完全に置き換えなければならない場合があります。
+            Gradleでは、新しいビルドが、既存のどんな依存関係取得元、メタデータにも対応できます。これにより、段階的に移行することが他のビルドシステムに比べて容易になっているのです。ほとんどの大規模プロジェクトでは、ビルドの移行とあらゆる開発プロセスの移行は段階的に行われます。なぜなら、ほとんどの組織にはビルドツール固有の依存関係管理の考え方へ移行するために全てを止めている余裕などないからです。
 
-            <para>Even if your project is using a custom dependency management system or something like an Eclipse .classpath file as master data for dependency management, it is very easy to write a
+            </para>
+            <para role="original">Even if your project is using a custom dependency management system or something like an Eclipse .classpath file as master data for dependency management, it is very easy to write a
                 Gradle plugin to use this data in Gradle. For migration purposes this is a common technique with Gradle. (But, once you've migrated, it might be a good idea to move away from a
                 .classpath file and use Gradle's dependency management features directly.)
             </para>
+            <para>プロジェクトが独自の依存関係管理方法を採用していたとしても、例え依存関係のマスターデータにEclipseの.classpathを使っているようなプロジェクトであったとしても、Gradleでそのデータを使うためのプラグインを書くのはとても簡単な作業です。移行のためにこうしたテクニックを使うことは、Gradleではごく普通のことです。(だた、いったん移行した後は、.classpathを使うのは止めてGradleの依存関係管理機能を直接使うのが良い考えだとは思いますが)</para>
         </section>
 
         <section id='sub:dependency_management_and_java'>
-            <title>Dependency management and Java</title>
-            <para>It is ironic that in a language known for its rich library of open source components that Java has no concept of libraries or versions. In Java, there is no standard way to tell the
+            <title>Javaにおける依存関係管理 <phrase role="original">Dependency management and Java</phrase></title>
+            <para role="original">It is ironic that in a language known for its rich library of open source components that Java has no concept of libraries or versions. In Java, there is no standard way to tell the
                 JVM that you are using version 3.0.5 of Hibernate, and there is no standard way to say that
                 <literal>foo-1.0.jar</literal>
                 depends on<literal>bar-2.0.jar</literal>. This has led to external solutions often based on build tools. The most popular ones at the moment are Maven and Ivy. While Maven provides a
                 complete build system, Ivy focuses solely on dependency management.
             </para>
-            <para>Both tools rely on descriptor XML files, which contain information about the dependencies of a particular jar. Both also use repositories where the actual jars are placed together
+            <para>
+            その豊富なオープンソースライブラリで知られるJavaという言語に、ライブラリーやバージョンといった概念が存在しないというのは皮肉なことです。
+            Javaでは、JVMに今使っているものがHibernateのバージョン3.0.5であると伝える標準的な方法はありませんし、<literal>foo-1.0.jar</literal>が<literal>bar-2.0.jar</literal>に依存していると伝える方法も標準では存在しません。
+            このため、これを実現するための様々なソリューションが作られてきました。ビルドツールに同梱されることもよくあります。現在もっとも有名なものがMavenであり、Ivyです。Mavenがビルドシステム全体の機能を備えているのに対し、Ivyは依存関係の管理のみに焦点を当てています。
+            </para>
+            <para role="original">Both tools rely on descriptor XML files, which contain information about the dependencies of a particular jar. Both also use repositories where the actual jars are placed together
                 with their descriptor files, and both offer resolution for conflicting jar versions in one form or the other. Both have emerged as standards for solving dependency conflicts, and while
                 Gradle originally used Ivy under the hood for its dependency management. Gradle has replaced this direct dependency on Ivy with a native Gradle dependency resolution engine which
                 supports a range of approached to dependency resolution including both POM and Ivy descriptor files.
+            </para>
+            <para>
+                どちらのツールも、特定のjarファイルへの依存情報を含んだXMLのディスクリプタファイルに依存しています。また、やはりどちらも実際のjarファイルとそのファイルのディスクリプタを置くためのリポジトリを使用します。さらに、様々な形でjarのバージョン競合を解決する手段を提供している点も同様です。
+                どちらも依存関係を解決するための標準となってきており、Gradleも最初は依存関係管理機能の水面下でIvyを使用していました。
+                Gradleは、今ではIvyに直接依存はしておらず、Gradle独自の依存関係解決エンジンを使用しています。このエンジンは、POMおよびIvyディスクリプタを使った依存関係の解決もサポートしています。
             </para>
         </section>
     </section>
 
     <section id='sec:dependency_management_overview'>
-        <title>Dependency Management Best Practices</title>
-        <para>While Gradle has strong opinions on dependency management, the tool gives you a choice between two
+        <title>依存関係管理のベストプラクティス <phrase role="original">Dependency Management Best Practices</phrase></title>
+        <para role="original">While Gradle has strong opinions on dependency management, the tool gives you a choice between two
             options: follow recommended best practices or support any kind of pattern you can think of. This section
             outlines the Gradle project's recommended best practices for managing dependencies.
         </para>
-        <para>No matter what the language, proper dependency management is important for every project.
+        <para>
+            Gradleは依存関係の管理についてとても強固な指針を持ってはいますが、ユーザーには二つのオプションを提示しています。すなわち、Gradleの推奨するベストプラクティスに従うか、自分の考えたパターン（どんなものでも構いません）をサポートするビルドを書くかです。
+            この節では、Gradle Projectが推奨する依存関係管理のベストプラクティスについて概要を記載します。
+        </para>
+        <para role="original">No matter what the language, proper dependency management is important for every project.
             From a complex enterprise application written in Java depending on hundreds of open source
             libraries to the simplest Clojure application depending on a handful of libraries, approaches to dependency
             management vary widely and can depend on the target technology, the method of application deployment, and the
@@ -106,100 +134,185 @@
             enterprise applications integrated into much larger systems of software and infrastructure. Despite this wide variation of requirements,
             the Gradle project recommends that all projects follow this set of core rules:
         </para>
+        <para>
+            どんな言語でも正しい依存関係管理は全てのプロジェクトで重要になります。
+            Javaで書かれた、数百ものオープンソースライブラリに依存した複雑なエンタープライズプロジェクトから、わずかなライブラリのみを使ったClojureのアプリケーションまで、依存関係管理の方法はとても幅広く、対象となる技術、アプリケーションのデプロイ方法、アプリケーションの性質などに依存します。
+            再利用可能なライブラリとして同梱されるようなプロジェクトは、巨大なソフトウェアやインフラのシステムに組み込まれるエンタープライズアプリケーションとは必要とされるものが違ってくるかもしれません。しかし、要求されることは様々であっても、Gradle Projectでは全てのプロジェクトが以下の指針に従うことを推奨しています。
+        </para>
         <section id='sub:versioning_the_jar_name'>
-            <title>Put the Version in the Filename (Version the jar)</title>
-            <para>The version of a library must be easy to recognize in the filename. While the version of a jar is usually in the Manifest file, it isn't readily apparent when you are inspecting a
+            <title>ファイル名にバージョン番号を含める(jarのバージョニング) <phrase role="original">Put the Version in the Filename (Version the jar)</phrase></title>
+            <para role="original">The version of a library must be easy to recognize in the filename. While the version of a jar is usually in the Manifest file, it isn't readily apparent when you are inspecting a
                 project. If someone asks you to look at a collection of 20 jar files, which would you prefer? A collection of files with names like "commons-beanutils-1.3.jar" or a collection of files
                 with names like "spring.jar"? If dependencies have file names with version numbers it is much easier to quickly identify the versions of your dependencies.
             </para>
-            <para>If versions are unclear you can introduce subtle bugs which are very hard to find. For example there might be a project which uses Hibernate 2.5. Think about a developer who decides
+            <para>
+                ライブラリのバージョンはファイル名で簡単に分かるようになっていなければなりません。jarのバージョンは、たいていの場合マニフェストファイルに記述されていますが、それではプロジェクトを調査しているときに手軽に見ることができません。
+                もし、誰かに20個のjarファイルを調査して欲しいと言われたら、どちらがいいと思いますか？　つまり、"commons-beanutils-1.3.jar"のようなファイル群と、"spring.jar"のような名前のファイル群とどちらを調べるのがやりやすいと思いますか？
+                ファイル名にバージョン番号が付いていれば、プロジェクトが依存しているjarのバージョンを素早く特定するのが断然簡単になります。
+            </para>
+            
+            <para role="original">If versions are unclear you can introduce subtle bugs which are very hard to find. For example there might be a project which uses Hibernate 2.5. Think about a developer who decides
                 to install version 3.0.5 of Hibernate on her machine to fix a critical security bug but forgets to notify others in the team of this change. She may address the security bug
                 successfully, but she also may have introduced subtle bugs into a codebase that was using a now-deprecated feature from Hibernate. Weeks later there is an exception on the integration
                 machine which can't be reproduced on anyone's machine. Multiple developers then spend days on this issue only finally realising that the error would have easy to uncover if they knew
                 that Hibernate had been upgraded from 2.5 to 3.0.5.
             </para>
-            <para>Versions in jar names increase the expressiveness of your project and make them easier to maintain. This practice also reduces the potential for error.
+            <para>
+                バージョンがよく分からない場合、発見するのが激しく難しい微妙なバグが発生する確率が高くなります。
+                例えば、Hibernate2.5を使っているプロジェクトがあるとしましょう。Hibernate3.0.5にアップグレードして、致命的なセキュリティのバグを修正したと想定してください。しかし、彼女はチームメンバーにそのことを知らせるのを忘れてしまいました。彼女はセキュリティのバグを上手く修正したかもしれませんが、同時にコードベースに小さなバグを混入させてしまったかもしれません。最新版のライブラリで非推奨となった機能を使っていた場合などです。
+                数週間後、インテグレーションサーバーで例外が発生します。しかし、他のマシンでは再現しません。多くの開発者がこの問題に何日もかけ、ついに判明することと言えばHibernateが2.5から3.0.2にアップグレードされていたことを知ってさえいれば、もっと簡単に問題を発見できたのにと言うことだけなのです。
             </para>
+            <para role="original">Versions in jar names increase the expressiveness of your project and make them easier to maintain. This practice also reduces the potential for error.
+            </para>
+            <para>jarのファイル名にバージョン付けすることは、プロジェクトの表現性を高め、メンテナンスを簡単にします。また、潜在するエラーを減らすことにも繋がります。</para>
         </section>
         <section id='sub:transitive_dependency_management'>
-            <title>Manage transitive dependencies</title>
-            <para>Transitive dependency management is a technique that enables your project to depend on libraries which, in turn, depend on other libraries. This recursive pattern of transitive
+            <title>推移的な依存関係の管理 <phrase role="original">Manage transitive dependencies</phrase></title>
+            <para role="original">Transitive dependency management is a technique that enables your project to depend on libraries which, in turn, depend on other libraries. This recursive pattern of transitive
                 dependencies results in a tree of dependencies including your project's first-level dependencies, second-level dependencies, and so on. If you don't model your dependencies as a
                 hierarchical tree of first-level and second-level dependencies it is very easy to quickly lose control over an assembled mess of unstructured dependencies. Consider the Gradle project
                 itself, while Gradle only has a few direct, first-level dependencies, when Gradle is compiled it needs more that one hundred dependencies on the classpath. On a far larger scale,
                 Enterprise projects using Spring, Hibernate, and other libraries, alongside hundreds or thousands of internal projects can have very large dependency trees.
             </para>
-            <para>When these large dependency trees need to change, you'll often have to solve some dependency version conflicts. Say one open source library needs one version of a logging library and
+            <para>
+                推移的な依存関係の管理とは、プロジェクトがあるライブラリに依存しているとき、その依存ライブラリがさらに別のライブラリに依存することを可能にする技術のことです。
+                このように推移的な依存関係が再帰的に発生すると、プロジェクトが直接依存する第一層の依存、それが依存する第二層の依存、といったふうに、依存関係のツリー構造が構築されることになります。
+                依存関係をこのように階層的にモデリングしなければ、構造化されていない依存関係が複雑にふくれあがり、簡単に制御を失ってしまうでしょう。
+                Gradle自身のことを考えてみても、Gradleプロジェクト自体は直接、つまり第一層の依存関係はそう多くはありませんが、プロジェクトのコンパイル時には100以上の依存関係をクラスパスに含める必要があります。
+                さらに規模が大きくなれば、例えばSpring、Hibernate、その他のライブラリを使うエンタープライズプロジェクトともなれば、それに伴い数百、数千の依存プロジェクトが非常に大きな依存関係ツリーを構築することになります。
+            </para>
+            <para role="original">When these large dependency trees need to change, you'll often have to solve some dependency version conflicts. Say one open source library needs one version of a logging library and
                 a another uses an alternative version. Gradle and other build tools all have the ability to solve this dependency tree and resolve conflicts, but what differentiates Gradle is the
                 control it gives you over transitive dependencies and conflict resolution.
             </para>
-            <para>While you could try to manage this problem manually, you will quickly find that this approach doesn't scale. If you want to get rid of a first level dependency you really can't be
+            <para>
+                このような巨大な依存関係ツリーを変更する必要が生じた際は、バージョンの競合が生じる可能性が高くなります。
+                あるオープンソースライブラリがあるバージョンのロギングライブラリを必要としているとします。そして、別のライブラリがそのロギングライブラリの別のバージョンを必要としているのです。Gradleやその他のビルドツールは、みんな依存関係ツリーを取得し、バージョン競合を解決する手段を備えています。ただ、Gradleの特徴的なところは、推移的な依存関係やバージョン競合の解決手段に対する制御に関する部分です。
+            </para>
+            <para role="original">While you could try to manage this problem manually, you will quickly find that this approach doesn't scale. If you want to get rid of a first level dependency you really can't be
                 sure which other jars you should remove. A dependency of a first level dependency might also be a first level dependency itself, or it might be a transitive dependency of yet another
                 first level dependency. If you try to manage transitive dependencies yourself, the end of the story is that your build becomes brittle: no one dares to change your dependencies because
                 the risk of breaking the build is too high. The project classpath becomes a complete mess, and, if a classpath problem arises, hell on earth invites you for a ride.
             </para>
-            <note><emphasis>NOTE:</emphasis>In one project, we found a mystery, LDAP related jar in the classpath. No code referenced this jar and there was no connection to the project. No one could
+            <para>
+                これらの問題を、手で何とかしようと頑張ることはできるかもしれませんが、すぐにそうしたアプローチではスケールができないということに気づくでしょう。
+                例えば、第一層、直接の依存関係を取り除きたいとなったとき、関連する他のjarも削除して良いものかどうか、分からなくなってしまいます。
+                削除しようとする依存関係の依存ライブラリだと思っていたjarが、それ自身第一層の依存関係に含まれているかもしれませんし、別の依存関係から参照されている可能性もあります。
+                自分で、手で推移的な依存関係を管理しようとすれば、その筋書きの行き着く先は壊れやすくもろいビルドです。
+                思い切ってそのプロジェクトの依存関係を変更しようなどという人はどこにもいません。ビルドを壊してしまうリスクがあまりに高すぎるからです。
+                プロジェクトのクラスパスは完全にめちゃくちゃになって、もしそのクラスパスで問題が発生するようなことになれば待つのはまさにこの世の地獄です。
+            </para>
+            <note><para role="original"><emphasis>NOTE:</emphasis>In one project, we found a mystery, LDAP related jar in the classpath. No code referenced this jar and there was no connection to the project. No one could
                 figure out what the jar was for, until it was removed from the build and the application suffered massive performance problem whenever it attempted to authenticate to LDAP. This
                 mystery jar was a necessary transitive, fourth-level dependency that was easy to miss because no one had bothered to use managed transitive dependencies.
+                </para>
+                <para><emphasis>ノート:</emphasis>あるプロジェクトで、私たちはミステリーに遭遇しました。クラスパスにあるLDAP関連のjarなのですが、このjarを参照しているコードは何処にもなく、プロジェクトと結びつくようなものは何もありませんでした。jarがビルドから取り除かれ、そしてLDAP認証を試みる度に壮大なパフォーマンス問題に悩まされるようになるまで、誰もこのjarが何のためにあるのか分からなかったのです。
+                    この謎のjarは、推移的な、第四層の依存関係に当たるものでした。推移的な依存関係を管理してやろうという人が誰もいなければ、このようなことは簡単に分からなくなってしまいます。 
+                </para>
             </note>
-            <para>Gradle offers you different ways to express first-level and transitive dependencies. With Gradle you can mix and match approaches; for example, you could store your jars in an SCM
+            <para role="original">Gradle offers you different ways to express first-level and transitive dependencies. With Gradle you can mix and match approaches; for example, you could store your jars in an SCM
                 without XML descriptor files and still use transitive dependency management.
+            </para>
+            <para>
+                Gradleは、直接の依存関係および推移的な依存関係を表現するための手段を複数用意しています。複数のアプローチを混ぜたり、組み合わせて使うことも可能です。例えば、jarを、XMLのディスクリプタなしでソースコード管理システムに直接格納することができますし、その場合でも推移的な依存関係はそのまま管理していくことができます。
             </para>
         </section>
         <section id='sub:version_conflicts'>
-            <title>Resolve version conflicts</title>
-            <para>Conflicting versions of the same jar should be detected and either resolved or cause an exception. If you don't use transitive dependency management, version conflicts are undetected
+            <title>バージョン競合の解決 <phrase role="original">Resolve version conflicts</phrase></title>
+            <para role="original">Conflicting versions of the same jar should be detected and either resolved or cause an exception. If you don't use transitive dependency management, version conflicts are undetected
                 and the often accidental order of the classpath will determine what version of a dependency will win. On a large project with many developers changing dependencies, successful builds
                 will be few and far between as the order of dependencies may directly affect whether a build succeeds or fails (or whether a bug appears or disappears in production).
             </para>
-            <para>If you haven't had to deal with the curse of conflicting versions of jars on a classpath, here's a small example of the fun that awaits you. Consider a large project with 30
+            <para>
+                同じjar間でバージョンの競合が検出された場合、それを解決するか、エラーを発生させなければなりません。ここでもし推移的な依存関係を管理していなければ、バージョン競合は検出できず、クラスパス内で偶然そうなっただけのjarの順序がどのバージョンを優先するか決定することになります。
+                たくさんの開発者が依存関係を変更しているような巨大プロジェクトの場合、依存関係の順序が直接ビルドが成功するかどうか(またはプロダクション環境でバグが発生するかどうか)に影響するような状態では、上手くいくビルドはほとんどなくなってしまうでしょう。
+            </para>
+            <para role="original">If you haven't had to deal with the curse of conflicting versions of jars on a classpath, here's a small example of the fun that awaits you. Consider a large project with 30
                 submodules, adding a dependency with a particular version to a subproject changes the order of a classpath, swapping an old version of Spring 2.4 for a newer version Spring 2.5. While
                 the build may continue to work, developers are starting to notice all sorts of surprising (and surprisingly awful) bugs in production. Worse yet, this unintentional downgrade of Spring
                 introduced several security vulnerabilities into the system which now require a full security audit throughout the organization.
             </para>
-            <para>In short, version conflicts are bad, manage your transitive dependencies to avoid them. You might also want to learn where conflicting versions are used and consolidate on a
+            <para>
+                もしクラスパスのバージョンが競合するという不幸に苦しんだことがないようでしたら、ここで楽しい例を少し紹介しましょう。
+                30のサブモジュールからなる巨大プロジェクトを考えてください。あるサブモジュールに依存関係を追加したら、クラスパスの順序が変わり、Spring2.5が古いバージョンの2.4に置き換わってしまいました。
+                ビルドはまだ正常に動き続けているのに、開発者たちは無数の驚くような、というか驚くくらいひどいバグをプロダクション環境で見つけ始めます。
+                悪いことに、この意図しないSpringのダウングレードはいくつかのセキュリティ的な脆弱性をシステムに招き、組織全体があらゆるセキュリティ監査を受けることになるのです。
+            </para>
+            <para role="original">In short, version conflicts are bad, manage your transitive dependencies to avoid them. You might also want to learn where conflicting versions are used and consolidate on a
                 particular version of a dependency across your organization. With a good conflict reporting tool like Gradle that information can be used to communicate with the entire organization
                 and standardise on a single version.
                 <emphasis>If you think version conflicts don't happen to you, think again.</emphasis>
                 It is very common for different first-level dependencies to rely on a range of different overlapping versions for other dependencies, and the JVM doesn't yet offer an easy way to have
                 different versions of the same jar in the classpath (see<xref linkend='sub:dependency_management_and_java'/>).
             </para>
-            <para>Gradle offers following conflict resolution strategies:</para>
+            <para>
+                要するに、バージョンの競合は悪いことなので、避けるためにも推移的な依存関係を管理しましょうということです。
+                また、競合したバージョンが組織全体で何処で使われているのか調べ、一つのバージョンに統一したいという場合について考えると、Gradleのような競合に関する優秀なレポートを作成できるツールがあれば、組織全体でのコミュニケーション、および一つのバージョンへの標準化などに役立つはずです。
+                <emphasis>もしバージョン競合など自分には起こるわけがないと思っているようでしたら、どうかもう一度考え直してみてください。</emphasis>
+                第一層の依存関係が、更に別のライブラリに依存していて、それが他の依存関係とバージョンが競合しているというのは非常に良くあることです。
+                また、JVMには同じjarの違うバージョンをクラスパスで共存させられるような簡単な方法がありません(<xref linkend='sub:dependency_management_and_java'/>参照)。
+            </para>
+            <para role="original">Gradle offers following conflict resolution strategies:</para>
+            <para>Gradleでは、バージョン競合を解決するための戦略として以下のものを用意しています。</para>
             <itemizedlist>
                 <listitem>
                     <emphasis>Newest</emphasis>
-                    - used by default by Gradle - the newest version of the dependency is used. This has been Gradle's approach since the beginning of the project, and while it isn't appropriate in
-                    every situation, this is why Gradle provides you with various options for resolving conflicts.
+                    <phrase role="original">
+                        - used by default by Gradle - the newest version of the dependency is used. This has been Gradle's approach since the beginning of the project, and while it isn't appropriate in
+                        every situation, this is why Gradle provides you with various options for resolving conflicts.
+                    </phrase>
+                    - Gradleがデフォルトで使用します。最も新しいバージョンの依存関係を使用します。このアプローチは、Gradleがプロジェクト開始時点から備えているもので、どんな場面にも適切とは言えませんが、そのためにGradleは競合解決のための様々なオプションを用意しています。
                 </listitem>
                 <listitem>
                     <emphasis>Fail</emphasis>
-                    - fail eagerly on version conflict.
-                    Useful if you need extra control over dependencies and if you need to manage version conflicts manually. See
-                    <apilink class='org.gradle.api.artifacts.ResolutionStrategy'/>
-                    for reference on managing the conflict resolution strategies.
+                    <phrase role="original">
+                        - fail eagerly on version conflict.
+                        Useful if you need extra control over dependencies and if you need to manage version conflicts manually. See
+                        <apilink class='org.gradle.api.artifacts.ResolutionStrategy'/>
+                        for reference on managing the conflict resolution strategies.
+                    </phrase>
+                    - バージョンが競合した場合、ビルドを失敗させます。
+                    依存関係に独自の制御を行っていて、バージョン競合を自分で管理しなければならない場合に便利です。解決戦略に関するリファレンスは<apilink class='org.gradle.api.artifacts.ResolutionStrategy'/>を参照してください。
                 </listitem>
             </itemizedlist>
-            <para>While the strategies introduced above are usually enough to solve most conflicts, Gradle provides more fine-grained mechanisms to resolve version conflicts:</para>
+            <para role="original">While the strategies introduced above are usually enough to solve most conflicts, Gradle provides more fine-grained mechanisms to resolve version conflicts:</para>
+            <para>上記の戦略で大抵の場合はほとんどの競合を解決できますが、Gradleはさらに微調整を行うためのメカニズムを備えています。</para>
             <itemizedlist>
                 <listitem>
-                    Configuring a first level dependency as<emphasis>forced</emphasis>.
-                    This approach is useful if the dependency in conflict is already a first level dependency.
-                    See examples in
-                    <apilink class='org.gradle.api.artifacts.dsl.DependencyHandler'/>
+                    <phrase role="original">
+                        Configuring a first level dependency as<emphasis>forced</emphasis>.
+                        This approach is useful if the dependency in conflict is already a first level dependency.
+                        See examples in
+                        <apilink class='org.gradle.api.artifacts.dsl.DependencyHandler'/>
+                    </phrase>
+                    プロジェクトが直接依存する第一層の依存関係を<emphasis>forced</emphasis>として強制できます。
+                    これは、競合した依存関係が第一層の依存関係だったときに便利なアプローチです。
+                    例については<apilink class='org.gradle.api.artifacts.dsl.DependencyHandler'/>を参照してください。
                 </listitem>
                 <listitem>
-                    Configuring any dependency (transitive or not) as<emphasis>forced</emphasis>.
-                    This approach is useful if the dependency in conflict is a transitive dependency.
-                    It also can be used to force versions of first level dependencies.
-                    See examples in
-                    <apilink class='org.gradle.api.artifacts.ResolutionStrategy'/>
+                    <phrase role="original">
+                        Configuring any dependency (transitive or not) as<emphasis>forced</emphasis>.
+                        This approach is useful if the dependency in conflict is a transitive dependency.
+                        It also can be used to force versions of first level dependencies.
+                        See examples in
+                        <apilink class='org.gradle.api.artifacts.ResolutionStrategy'/>
+                    </phrase>
+                    依存関係は、第一層のものか推移的なものかにかかわらずとにかく<emphasis>forced</emphasis>として強制することもできます。
+                    これは、推移的な依存関係で競合が発生してしまったときに便利なアプローチです。
+                    また、第一層の依存関係も、前述の方法でなくこちらの方法で強制させることもできます。
+                    例については<apilink class='org.gradle.api.artifacts.ResolutionStrategy'/>を参照してください。
                 </listitem>
                 <listitem>
-                    Dependency resolve rules are an incubating feature introduced in Gradle 1.4 which give you fine-grained control over the version selected for a particular dependency.
+                    <phrase role="original">Dependency resolve rules are an incubating feature introduced in Gradle 1.4 which give you fine-grained control over the version selected for a particular dependency.</phrase>
+                    依存関係解決ルールというGradle1.4で導入された試験的な機能があり、特定の依存関係において選択されるバージョンを細かく調整することができます。
                 </listitem>
             </itemizedlist>
-            <para>To deal with problems due to version conflicts, reports with dependency graphs are also very helpful.
+            <para role="original">To deal with problems due to version conflicts, reports with dependency graphs are also very helpful.
                 Such reports are another feature of dependency management.
+            </para>
+            <para>
+                バージョン競合により発生する様々な問題に対応するときには、依存関係グラフを表示するレポートも非常に有用です。
+                依存関係管理の機能として、Gradleはそのようなレポート機能も備えています。
             </para>
         </section>
         <section id='sub:dynamic_versions_and_changing_modules'>

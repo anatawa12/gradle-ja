@@ -232,7 +232,7 @@
         </sample>
         <para role="original">This is also nice example for the usage of client modules. The <filename>pom.xml</filename> in maven central for the
         ant-commons-net task does not provide the right information for this use case.</para>
-        <para>これはクライアントモジュールのいい使用例でもあります。mavenのセントラルリポジトリにあるant-commons-netタスクのpom.xmlは、このユースケースのための正しい情報を提供していません。</para>
+        <para>これはクライアントモジュールのいい使用例でもあります。mavenのセントラルリポジトリにあるant-commons-netタスクの<filename>pom.xml</filename>は、このユースケースのための正しい情報を提供していません。</para>
     </section>
     <section id='sec:philosophy'>
         <title>まとめ<phrase role="original">Summary</phrase></title>
