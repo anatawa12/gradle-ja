@@ -372,7 +372,7 @@
         </para>
         <para>
             Gradleでは、依存関係はコンフィギュレーションによりグループ化されます。コンフィギュレーションは名前(name)といくつかのプロパティを持っていて、それらを別のコンフィギュレーションから継承することもできます。 
-            Gradleプラグインの多くが、定義済みのコンフィグレーションをプロジェクトに追加します。 たとえば、Javaプラグインは、いくつかのコンフィグレーションをプロジェクトに追加して、必要とされる様々なクラスパスを表現します。詳しくは「<xref linkend='sec:java_plugin_and_dependency_management'/>」をご参照ください。
+            Gradleプラグインの多くが、定義済みのコンフィグレーションをプロジェクトに追加します。 たとえば、Javaプラグインは、いくつかのコンフィグレーションをプロジェクトに追加して、必要とされる様々なクラスパスを表現します。詳しくは<xref linkend='sec:java_plugin_and_dependency_management'/>をご参照ください。
             もちろん、定義済みのものだけでなく、独自のコンフィギュレーションを定義することも可能です。このような独自コンフィギュレーションには様々な使い道があります。身近な例としては、ソフトウェアのビルドやテストには必要ない依存関係を追加する場合(配布物に同梱するオプションのJDBCドライバなど)が考えられます。
         </para>
         <para role="original">
@@ -383,10 +383,8 @@
             <apilink class='org.gradle.api.artifacts.ConfigurationContainer'/>.
         </para>
         <para>
-            プロジェクトのコンフィギュレーションは、<literal>configurations</literal>オブジェクトで管理されます。このオブジェクトにクロージャを渡すと、渡したクロージャはconfigurationsオブジェクトのAPIに対して適用されます。
-            このAPIについて、詳細は<apilink class='org.gradle.api.artifacts.ConfigurationContainer'/>を参照してください。
             プロジェクトのコンフィギュレーションは<literal>configurations</literal>オブジェクトで管理されています。このオブジェクトに渡したクロージャは、configurationsのAPIに対して適用されます。
-            このAPIの詳細については<apilink class='org.gradle.api.artifacts.ConfigurationContainer'/>をご参照ください。
+            APIの詳細については<apilink class='org.gradle.api.artifacts.ConfigurationContainer'/>をご参照ください。
         </para>
         <para role="original">To define a configuration:</para>
         <para>コンフィギュレーションを定義するには、</para>
