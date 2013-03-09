@@ -38,16 +38,16 @@
         </para>
 	<para>最初に、Gradleスクリプトは<firstterm>設定スクリプト</firstterm>です。スクリプトを実行すると、特有の型のオブジェクトを形成します。
 	    例えば、ビルドスクリプトを実行すると、<apilink class="org.gradle.api.Project"/>型のオブジェクトを形成します。
-	    このオブジェクトはスクリプトの<firstterm>代表オブジェクト(deligateオブジェクト)</firstterm>
-            と呼ばれています。下記の表でGradleスクリプトの各型の代表を示します。
+	    このオブジェクトはスクリプトの<firstterm>委譲オブジェクト(deligateオブジェクト)</firstterm>
+            と呼ばれています。下記の表でGradleスクリプトの各型の委譲を示します。
         </para>
 
         <table>
-	    <title>スクリプトの代表達<phrase role="original">Script delegates</phrase></title>
+	    <title>スクリプトの委譲<phrase role="original">Script delegates</phrase></title>
             <thead>
                 <tr>
 		    <td>スクリプトの型<phrase role="original">Type of script</phrase></td>
-		    <td>代表するインスタンス<phrase role="original">Delegates to instance of</phrase></td>
+		    <td>委譲先のインスタンス<phrase role="original">Delegates to instance of</phrase></td>
                 </tr>
             </thead>
             <tr>
@@ -71,7 +71,7 @@
         </table>
 
 	<para role="original">The properties and methods of the delegate object are available for you to use in the script.</para>
-        <para>代表オブジェクトのプロパティやメソッドは、あなたがスクリプトの中で使用することができます。</para>
+        <para>委譲オブジェクトのプロパティやメソッドは、あなたがスクリプトの中で使用することができます。</para>
 
 	<para role="original">Second, each Gradle script implements the <apilink class="org.gradle.api.Script"/> interface. This
             interface defines a number of properties and methods which you can use in the script.
@@ -100,7 +100,7 @@
 	<para>ビルドスクリプトはゼロかそれ以上のステートメントやスクリプトブロックでできています。
 	    記述にはメソッドの呼び出しや、プロパティの定義や、ローカル変数の宣言を含むことができます。
 	    スクリプトブロックはクロージャを引数にとるメソッドの呼び出しです。
-	    クロージャは、クロージャ実行時に代表オブジェクトを構成する設定クロージャとして扱われます。
+	    クロージャは、クロージャ実行時に委譲オブジェクトを構成する設定クロージャとして扱われます。
 	    上位のスクリプトブロックを以下にリストします。</para>
         <table>
 	    <title>ビルドスクリプトのブロック<phrase role="original">Build script blocks</phrase></title>
