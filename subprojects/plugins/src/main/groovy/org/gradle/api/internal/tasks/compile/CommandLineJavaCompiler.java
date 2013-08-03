@@ -17,6 +17,7 @@
 package org.gradle.api.internal.tasks.compile;
 
 import org.gradle.api.internal.file.TemporaryFileProvider;
+import org.gradle.api.internal.tasks.SimpleWorkResult;
 import org.gradle.api.tasks.WorkResult;
 import org.gradle.process.ExecResult;
 import org.gradle.process.internal.ExecHandle;
@@ -25,11 +26,12 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
+import java.io.Serializable;
 
 /**
  * Executes the Java command line compiler specified in {@code JavaCompileSpec.forkOptions.getExecutable()}.
  */
-public class CommandLineJavaCompiler implements Compiler<JavaCompileSpec> {
+public class CommandLineJavaCompiler implements Compiler<JavaCompileSpec>, Serializable {
     private static final Logger LOGGER = LoggerFactory.getLogger(CommandLineJavaCompiler.class);
 
     private final CompileSpecToArguments<JavaCompileSpec> argumentsGenerator;

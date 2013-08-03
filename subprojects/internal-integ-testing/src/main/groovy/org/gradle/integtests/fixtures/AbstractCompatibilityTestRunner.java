@@ -22,8 +22,6 @@ import org.gradle.integtests.fixtures.executer.UnderDevelopmentGradleDistributio
 import org.gradle.integtests.fixtures.versions.ReleasedVersionDistributions;
 import org.gradle.internal.jvm.Jvm;
 import org.gradle.internal.os.OperatingSystem;
-import org.gradle.test.fixtures.file.TestDirectoryProvider;
-import org.gradle.test.fixtures.file.TestNameTestDirectoryProvider;
 import org.gradle.util.CollectionUtils;
 import org.gradle.util.GradleVersion;
 
@@ -40,22 +38,18 @@ import static org.gradle.util.CollectionUtils.*;
 public abstract class AbstractCompatibilityTestRunner extends AbstractMultiTestRunner {
 
     private static final String VERSIONS_SYSPROP_NAME = "org.gradle.integtest.versions";
-    private final TestDirectoryProvider testDirectoryProvider = new TestNameTestDirectoryProvider();
     protected final GradleDistribution current = new UnderDevelopmentGradleDistribution();
     protected final List<GradleDistribution> previous;
 
     protected AbstractCompatibilityTestRunner(Class<?> target) {
-        this(target, null);
+        this(target, System.getProperty(VERSIONS_SYSPROP_NAME, "latest"));
     }
 
-    protected AbstractCompatibilityTestRunner(Class<?> target, String versionStr) {
+    private AbstractCompatibilityTestRunner(Class<?> target, String versionStr) {
         super(target);
         validateTestName(target);
 
         previous = new ArrayList<GradleDistribution>();
-        if (versionStr == null) {
-            versionStr = System.getProperty(VERSIONS_SYSPROP_NAME, "latest");
-        }
         final ReleasedVersionDistributions previousVersions = new ReleasedVersionDistributions();
         if (versionStr.equals("latest")) {
             previous.add(previousVersions.getMostRecentFinalRelease());
@@ -76,11 +70,7 @@ public abstract class AbstractCompatibilityTestRunner extends AbstractMultiTestR
             String[] versions = versionStr.split(",");
             List<GradleVersion> gradleVersions = CollectionUtils.sort(collect(Arrays.asList(versions), new Transformer<GradleVersion, String>() {
                 public GradleVersion transform(String versionString) {
-                    GradleVersion gradleVersion = GradleVersion.version(versionString);
-                    if (!gradleVersion.isValid()) {
-                        throw new RuntimeException("Specified Gradle version '" + versionString + "' is not a valid Gradle version");
-                    }
-                    return gradleVersion;
+                    return GradleVersion.version(versionString);
                 }
             }), Collections.reverseOrder());
 
@@ -126,7 +116,7 @@ public abstract class AbstractCompatibilityTestRunner extends AbstractMultiTestR
         }
 
         @Override
-        protected boolean isEnabled() {
+        protected boolean isTestEnabled(TestDetails testDetails) {
             return false;
         }
 

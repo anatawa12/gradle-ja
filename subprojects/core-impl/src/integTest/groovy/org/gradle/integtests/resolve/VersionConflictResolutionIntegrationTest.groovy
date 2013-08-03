@@ -18,12 +18,10 @@ package org.gradle.integtests.resolve
 import org.gradle.integtests.fixtures.AbstractIntegrationSpec
 import spock.lang.Issue
 
+import static org.gradle.util.TextUtil.toPlatformLineSeparators
 import static org.hamcrest.Matchers.containsString
 
-/**
- * @author Szczepan Faber, @date 03.03.11
- */
-class VersionConflictResolutionIntegrationTest extends AbstractIntegrationSpec {
+public class VersionConflictResolutionIntegrationTest extends AbstractIntegrationSpec {
 
     void "strict conflict resolution should fail due to conflict"() {
         mavenRepo.module("org", "foo", '1.3.3').publish()
@@ -444,7 +442,7 @@ task checkDeps << {
             }
 
         task checkDeps << {
-            assert configurations.conf*.name == ['a-1.0.jar', 'b-1.0.jar', 'target-child-1.0.jar', 'target-1.0.jar', 'in-conflict-2.0.jar', 'b-child-1.0.jar']
+            assert configurations.conf*.name == ['a-1.0.jar', 'b-1.0.jar', 'b-child-1.0.jar', 'target-1.0.jar', 'in-conflict-2.0.jar', 'target-child-1.0.jar']
             def result = configurations.conf.incoming.resolutionResult
             assert result.allModuleVersions.size() == 7
             def a = result.allModuleVersions.find { it.id.name == 'a' }
@@ -458,5 +456,151 @@ task checkDeps << {
 
         expect:
         run("checkDeps")
+    }
+
+    @Issue("GRADLE-2555")
+    void "batched up conflicts with conflicted parent and child"() {
+        /*
+        Dependency tree:
+
+        a->c1
+        b->c2->x1
+        d->x1
+        f->x2
+
+        Everything is resolvable but not x2
+
+        Scenario:
+         - We have batched up conflicts
+         - parent of one conflicted version is also conflicted
+         - conflicted parent is positioned on the conflicts queue after the conflicted child (the order of declaring dependencies matters)
+         - winning parent depends on a child that previously was evicted
+         - finally, the winning child is an unresolved dependency
+        */
+        mavenRepo.module("org", "c", '1.0').publish()
+        mavenRepo.module("org", "x", '1.0').publish()
+        mavenRepo.module("org", "c", '2.0').dependsOn("org", "x", '1.0').publish()
+        mavenRepo.module("org", "a").dependsOn("org", "c", "1.0").publish()
+        mavenRepo.module("org", "b").dependsOn("org", "c", "2.0").publish()
+        mavenRepo.module("org", "d").dependsOn("org", "x", "1.0").publish()
+        mavenRepo.module("org", "f").dependsOn("org", "x", "2.0").publish()
+
+        buildFile << """
+            repositories { maven { url "${mavenRepo.uri}" } }
+            configurations {
+                childFirst
+                parentFirst
+            }
+            dependencies {
+                //conflicted child is resolved first
+                childFirst 'org:d:1.0', 'org:f:1.0', 'org:a:1.0', 'org:b:1.0'
+                //conflicted parent is resolved first
+                parentFirst 'org:a:1.0', 'org:b:1.0', 'org:d:1.0', 'org:f:1.0'
+            }
+        """
+
+        when:
+        run("dependencies")
+
+        then:
+        output.contains(toPlatformLineSeparators("""
+childFirst
++--- org:d:1.0
+|    \\--- org:x:1.0 -> 2.0 FAILED
++--- org:f:1.0
+|    \\--- org:x:2.0 FAILED
++--- org:a:1.0
+|    \\--- org:c:1.0 -> 2.0
+|         \\--- org:x:1.0 -> 2.0 FAILED
+\\--- org:b:1.0
+     \\--- org:c:2.0 (*)
+
+parentFirst
++--- org:a:1.0
+|    \\--- org:c:1.0 -> 2.0
+|         \\--- org:x:1.0 -> 2.0 FAILED
++--- org:b:1.0
+|    \\--- org:c:2.0 (*)
++--- org:d:1.0
+|    \\--- org:x:1.0 -> 2.0 FAILED
+\\--- org:f:1.0
+     \\--- org:x:2.0 FAILED"""))
+    }
+
+    @Issue("GRADLE-2752")
+    void "does not replace root module when earlier version of root module is requested"() {
+        mavenRepo.module("org", "test", "1.2").publish()
+        mavenRepo.module("org", "other", "1.7").dependsOn("org", "test", "1.2").publish()
+
+        settingsFile << "rootProject.name= 'test'"
+
+        buildFile << """
+apply plugin: 'java'
+
+group "org"
+version "1.3"
+
+repositories {
+    maven { url "${mavenRepo.uri}" }
+}
+
+dependencies {
+    compile "org:other:1.7"
+}
+
+task checkDeps(dependsOn: configurations.compile) << {
+    assert configurations.compile*.name == ['other-1.7.jar', 'test-1.3.jar']
+
+    def result = configurations.compile.incoming.resolutionResult
+    assert result.allModuleVersions.size() == 2
+
+    def root = result.root
+    assert root.id.version == '1.3'
+    assert root.selectionReason.description == 'root'
+    assert !root.selectionReason.conflictResolution //current behavior, feels incorrect
+
+    def other = result.allModuleVersions.find { it.id.name == 'other' }
+
+    assert root.dependencies*.selected == [other]
+    assert other.dependencies*.selected == [root]
+}
+"""
+
+        expect:
+        run("checkDeps")
+    }
+
+    @Issue("GRADLE-2738")
+    def "resolution fails when any selector cannot be resolved"() {
+        given:
+        //only 1.5 published:
+        mavenRepo.module("org", "leaf", "1.5").publish()
+
+        mavenRepo.module("org", "c", "1.0").dependsOn("org", "leaf", "2.0+").publish()
+        mavenRepo.module("org", "a", "1.0").dependsOn("org", "leaf", "1.0").publish()
+        mavenRepo.module("org", "b", "1.0").dependsOn("org", "leaf", "[1.5,1.9]").publish()
+
+        settingsFile << "rootProject.name = 'broken'"
+        buildFile << """
+            version = 12
+            repositories {
+                maven { url "${mavenRepo.uri}" }
+            }
+            configurations {
+                conf
+            }
+            dependencies {
+                conf 'org:a:1.0', 'org:b:1.0', 'org:c:1.0'
+            }
+            task resolve << {
+                configurations.conf.files
+            }
+        """
+
+        when:
+        runAndFail "resolve"
+
+        then:
+        failure.assertResolutionFailure(":conf").assertFailedDependencyRequiredBy(":broken:12 > org:c:1.0")
     }
 }

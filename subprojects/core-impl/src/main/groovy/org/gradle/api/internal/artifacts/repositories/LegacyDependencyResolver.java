@@ -29,8 +29,8 @@ import org.apache.ivy.core.resolve.ResolvedModuleRevision;
 import org.apache.ivy.core.search.ModuleEntry;
 import org.apache.ivy.core.search.OrganisationEntry;
 import org.apache.ivy.core.search.RevisionEntry;
-import org.apache.ivy.plugins.latest.LatestStrategy;
 import org.apache.ivy.plugins.namespace.Namespace;
+import org.apache.ivy.plugins.resolver.BasicResolver;
 import org.apache.ivy.plugins.resolver.DependencyResolver;
 import org.apache.ivy.plugins.resolver.ResolverSettings;
 import org.apache.ivy.plugins.resolver.util.ResolvedResource;
@@ -40,6 +40,7 @@ import org.gradle.api.internal.artifacts.repositories.resolver.ExternalResourceR
 import java.io.File;
 import java.io.IOException;
 import java.text.ParseException;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 
@@ -68,7 +69,7 @@ public class LegacyDependencyResolver implements DependencyResolver, ResolutionA
         return resolver.toString();
     }
 
-    public IvyAwareModuleVersionRepository createResolveRepository() {
+    public IvyAwareModuleVersionRepository createResolver() {
         return repository;
     }
 
@@ -230,7 +231,16 @@ public class LegacyDependencyResolver implements DependencyResolver, ResolutionA
      * @param descriptorRule the descriptor rule to use with this resolver.
      */
     public void setDescriptor(String descriptorRule) {
-        resolver.setDescriptor(descriptorRule);
+        if (BasicResolver.DESCRIPTOR_REQUIRED.equals(descriptorRule)) {
+            setAllownomd(false);
+        } else if (BasicResolver.DESCRIPTOR_OPTIONAL.equals(descriptorRule)) {
+            setAllownomd(true);
+        } else {
+            throw new IllegalArgumentException(
+                "unknown descriptor rule '" + descriptorRule
+                + "'. Allowed rules are: "
+                + Arrays.asList(BasicResolver.DESCRIPTOR_REQUIRED, BasicResolver.DESCRIPTOR_OPTIONAL));
+        }
     }
 
     public String[] getChecksumAlgorithms() {
@@ -239,22 +249,6 @@ public class LegacyDependencyResolver implements DependencyResolver, ResolutionA
 
     public void setChecksums(String checksums) {
         resolver.setChecksums(checksums);
-    }
-
-    public LatestStrategy getLatestStrategy() {
-        return resolver.getLatestStrategy();
-    }
-
-    public void setLatestStrategy(LatestStrategy latestStrategy) {
-        resolver.setLatestStrategy(latestStrategy);
-    }
-
-    public void setLatest(String strategyName) {
-        resolver.setLatest(strategyName);
-    }
-
-    public String getLatest() {
-        return resolver.getLatest();
     }
 
     public void setChangingMatcher(String changingMatcherName) {
@@ -274,7 +268,7 @@ public class LegacyDependencyResolver implements DependencyResolver, ResolutionA
     }
 
     public void setCheckmodified(boolean check) {
-        resolver.setCheckmodified(check);
+        throw new UnsupportedOperationException();
     }
 
     public RepositoryCacheManager getRepositoryCacheManager() {

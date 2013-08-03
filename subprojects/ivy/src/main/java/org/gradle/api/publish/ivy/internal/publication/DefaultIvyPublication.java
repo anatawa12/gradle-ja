@@ -19,13 +19,17 @@ package org.gradle.api.publish.ivy.internal.publication;
 import org.gradle.api.Action;
 import org.gradle.api.InvalidUserDataException;
 import org.gradle.api.artifacts.ModuleDependency;
+import org.gradle.api.artifacts.ModuleVersionIdentifier;
+import org.gradle.api.artifacts.ProjectDependency;
 import org.gradle.api.artifacts.PublishArtifact;
 import org.gradle.api.component.SoftwareComponent;
 import org.gradle.api.file.FileCollection;
+import org.gradle.api.internal.artifacts.DefaultModuleVersionIdentifier;
 import org.gradle.api.internal.component.SoftwareComponentInternal;
 import org.gradle.api.internal.component.Usage;
 import org.gradle.api.internal.file.UnionFileCollection;
 import org.gradle.api.internal.notations.api.NotationParser;
+import org.gradle.api.publish.internal.ProjectDependencyPublicationResolver;
 import org.gradle.api.publish.ivy.IvyArtifact;
 import org.gradle.api.publish.ivy.IvyConfigurationContainer;
 import org.gradle.api.publish.ivy.IvyModuleDescriptor;
@@ -98,10 +102,23 @@ public class DefaultIvyPublication implements IvyPublicationInternal {
             for (ModuleDependency dependency : usage.getDependencies()) {
                 // TODO: When we support multiple components or configurable dependencies, we'll need to merge the confs of multiple dependencies with same id.
                 String confMapping = String.format("%s->%s", conf, dependency.getConfiguration());
-                ivyDependencies.add(new DefaultIvyDependency(dependency, confMapping));
+                if (dependency instanceof ProjectDependency) {
+                    addProjectDependency((ProjectDependency) dependency, confMapping);
+                } else {
+                    addModuleDependency(dependency, confMapping);
+                }
             }
         }
     }
+
+    private void addProjectDependency(ProjectDependency dependency, String confMapping) {
+        ModuleVersionIdentifier identifier = new ProjectDependencyPublicationResolver().resolve(dependency);
+        ivyDependencies.add(new DefaultIvyDependency(identifier.getGroup(), identifier.getName(), identifier.getVersion(), confMapping));
+    }
+
+    private void addModuleDependency(ModuleDependency dependency, String confMapping) {
+        ivyDependencies.add(new DefaultIvyDependency(dependency.getGroup(), dependency.getName(), dependency.getVersion(), confMapping, dependency.getArtifacts()));
+     }
 
     public void configurations(Action<? super IvyConfigurationContainer> config) {
         config.execute(configurations);
@@ -130,6 +147,30 @@ public class DefaultIvyPublication implements IvyPublicationInternal {
         return ivyArtifacts;
     }
 
+    public String getOrganisation() {
+        return publicationIdentity.getOrganisation();
+    }
+
+    public void setOrganisation(String organisation) {
+        publicationIdentity.setOrganisation(organisation);
+    }
+
+    public String getModule() {
+        return publicationIdentity.getModule();
+    }
+
+    public void setModule(String module) {
+        publicationIdentity.setModule(module);
+    }
+
+    public String getRevision() {
+        return publicationIdentity.getRevision();
+    }
+
+    public void setRevision(String revision) {
+        publicationIdentity.setRevision(revision);
+    }
+
     public FileCollection getPublishableFiles() {
         return new UnionFileCollection(ivyArtifacts.getFiles(), descriptorFile);
     }
@@ -153,4 +194,7 @@ public class DefaultIvyPublication implements IvyPublicationInternal {
         return descriptorFile.getSingleFile();
     }
 
+    public ModuleVersionIdentifier getCoordinates() {
+        return new DefaultModuleVersionIdentifier(getOrganisation(), getModule(), getRevision());
+    }
 }

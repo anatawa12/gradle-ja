@@ -69,6 +69,9 @@ enum TestPrecondition {
     LINUX({
         OperatingSystem.current().linux
     }),
+    NOT_LINUX({
+        !LINUX.fulfilled
+    }),
     UNIX({
         OperatingSystem.current().unix
     }),
@@ -93,12 +96,19 @@ enum TestPrecondition {
     NOT_JDK7({
         !JDK7.fulfilled
     }),
-    CAN_RESOLVE_UNICODE_POM({
-        // Ivy parsing Maven POM files with unicode characters is broken in JDK1.6 on Linux (& Unknown OS)
-        !(JDK6.fulfilled && (LINUX.fulfilled || UNKNOWN_OS.fulfilled))
-    }),
     JDK7_POSIX({
         JDK7.fulfilled && NOT_WINDOWS.fulfilled
+    }),
+    ONLINE({
+        try {
+            new URL("http://google.com").openConnection().openStream()
+            true
+        } catch (IOException) {
+            false
+        }
+    }),
+    CAN_INSTALL_EXECUTABLE({
+        FILE_PERMISSIONS.fulfilled || WINDOWS.fulfilled
     });
 
     /**

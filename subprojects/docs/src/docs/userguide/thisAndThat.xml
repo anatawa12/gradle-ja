@@ -66,8 +66,7 @@
             </footnote>
             If the environment property follows the pattern
             <literal>ORG_GRADLE_PROJECT_<replaceable>propertyName</replaceable>=somevalue</literal>,
-            <literal>propertyName</literal> is added to your project object. If in the future CI servers support Gradle
-            directly, they might start Gradle via its main method. Therefore we already support the same mechanism for
+            <literal>propertyName</literal> is added to your project object. We also support the same mechanism for
             system properties. The only difference is the pattern, which is
             <literal>org.gradle.project.<replaceable>propertyName</replaceable></literal>.
         </para>
@@ -75,7 +74,7 @@
             <footnote>
                 <para><emphasis>Teamcity</emphasis>や<emphasis>Bamboo</emphasis>といったCIサーバーがこの機能を持っています。</para>
             </footnote>
-            ここで設定する環境変数名にはあるパターンがあり、<literal>ORG_GRADLE_PROJECT_<replaceable>propertyName</replaceable>=somevalue</literal>という環境変数を設定した場合<literal>propertyName</literal>というプロパティがプロジェクトに設定されます。もし将来的にCIサーバーがGradleを直接サポートするようになったときには、CIサーバーはGradleのmainメソッドを呼び出してビルドを開始するかもしれません。そのときのために、Gradleはシステムプロパティを使って同様のメカニズムを実装しています。パターンが<literal>org.gradle.project.<replaceable>propertyName</replaceable></literal>となっていること以外は環境変数の場合と同じです。</para>
+            ここで設定する環境変数名にはあるパターンがあり、<literal>ORG_GRADLE_PROJECT_<replaceable>propertyName</replaceable>=somevalue</literal>という環境変数を設定した場合<literal>propertyName</literal>というプロパティがプロジェクトに設定されます。また、システムプロパティでも同様のメカニズムを実装しています。パターンが<literal>org.gradle.project.<replaceable>propertyName</replaceable></literal>となっていること以外は環境変数の場合と同じです。</para>
         <para role="original">With the <filename>gradle.properties</filename> files you can also set system properties. If a property
             in such a file has the prefix <literal>systemProp.</literal> the property and its value are added to the 
             system properties, without the prefix.

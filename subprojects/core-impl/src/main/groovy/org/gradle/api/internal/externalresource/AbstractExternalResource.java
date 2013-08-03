@@ -16,11 +16,16 @@
 package org.gradle.api.internal.externalresource;
 
 import org.apache.commons.io.IOUtils;
-import org.apache.ivy.plugins.repository.Resource;
+import org.gradle.api.Action;
+import org.gradle.api.Transformer;
 
 import java.io.*;
 
 public abstract class AbstractExternalResource implements ExternalResource {
+    /**
+     * Opens an unbuffered input stream to read the contents of this resource.
+     */
+    protected abstract InputStream openStream() throws IOException;
 
     public void writeTo(File destination) throws IOException {
         FileOutputStream output = new FileOutputStream(destination);
@@ -40,9 +45,22 @@ public abstract class AbstractExternalResource implements ExternalResource {
         }
     }
 
+    public void withContent(Action<? super InputStream> readAction) throws IOException {
+        InputStream input = openStream();
+        try {
+            readAction.execute(input);
+        } finally {
+            input.close();
+        }
+    }
 
-    public Resource clone(String cloneName) {
-        throw new UnsupportedOperationException();
+    public <T> T withContent(Transformer<? extends T, ? super InputStream> readAction) throws IOException {
+        InputStream input = openStream();
+        try {
+            return readAction.transform(input);
+        } finally {
+            input.close();
+        }
     }
 
     public void close() throws IOException {

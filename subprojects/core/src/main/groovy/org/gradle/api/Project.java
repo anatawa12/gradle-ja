@@ -21,6 +21,7 @@ import groovy.lang.MissingPropertyException;
 import org.gradle.api.artifacts.ConfigurationContainer;
 import org.gradle.api.artifacts.dsl.ArtifactHandler;
 import org.gradle.api.artifacts.dsl.DependencyHandler;
+import org.gradle.api.artifacts.dsl.ComponentMetadataHandler;
 import org.gradle.api.artifacts.dsl.RepositoryHandler;
 import org.gradle.api.component.SoftwareComponentContainer;
 import org.gradle.api.file.ConfigurableFileCollection;
@@ -32,10 +33,7 @@ import org.gradle.api.internal.HasInternalProtocol;
 import org.gradle.api.invocation.Gradle;
 import org.gradle.api.logging.Logger;
 import org.gradle.api.logging.LoggingManager;
-import org.gradle.api.plugins.Convention;
-import org.gradle.api.plugins.ExtensionAware;
-import org.gradle.api.plugins.ExtensionContainer;
-import org.gradle.api.plugins.PluginContainer;
+import org.gradle.api.plugins.*;
 import org.gradle.api.resources.ResourceHandler;
 import org.gradle.api.tasks.TaskContainer;
 import org.gradle.api.tasks.WorkResult;
@@ -194,11 +192,9 @@ import java.util.Set;
  * <li>The parent project, recursively up to the root project.</li>
  *
  * </ul>
- *
- * @author Hans Dockter
  */
 @HasInternalProtocol
-public interface Project extends Comparable<Project>, ExtensionAware {
+public interface Project extends Comparable<Project>, ExtensionAware, PluginAware {
     /**
      * The default project build file name.
      */
@@ -977,7 +973,7 @@ public interface Project extends Comparable<Project>, ExtensionAware {
      * &lt;/target&gt;
      * </pre>
      *
-     * Here's how it would look like in gradle. Observe how the ant xml is represented in groovy by the ant builder
+     * Here's how it would look like in gradle. Observe how the ant XML is represented in groovy by the ant builder
      * <pre autoTested=''>
      * task printChecksum {
      *   doLast {
@@ -1330,6 +1326,26 @@ public interface Project extends Comparable<Project>, ExtensionAware {
      * @param configureClosure the closure to use to configure the dependencies.
      */
     void dependencies(Closure configureClosure);
+
+    /**
+     * Returns the component metadata handler for this project. The returned handler can be used for adding rules
+     * that modify the metadata of depended-on software components.
+     *
+     * @return the component metadata handler for this project
+     */
+    @Incubating
+    ComponentMetadataHandler getComponentMetadata();
+
+    /**
+     * Configures module metadata for this project.
+     *
+     * <p>This method executes the given closure against the {@link org.gradle.api.artifacts.dsl.ComponentMetadataHandler} for this project. The {@link
+     * org.gradle.api.artifacts.dsl.ComponentMetadataHandler} is passed to the closure as the closure's delegate.
+     *
+     * @param configureClosure the closure to use to configure module metadata
+     */
+    @Incubating
+    void componentMetadata(Closure configureClosure);
 
     /**
      * Returns the plugins container for this project. The returned container can be used to manage the plugins which

@@ -16,14 +16,12 @@
 
 package org.gradle.testing
 
-import org.gradle.integtests.fixtures.AbstractIntegrationSpec
-import org.gradle.integtests.fixtures.HtmlTestExecutionResult
-import org.gradle.integtests.fixtures.Sample
-import org.gradle.integtests.fixtures.UsesSample
+import org.gradle.integtests.fixtures.*
 import org.junit.Rule
+import spock.lang.Issue
+import spock.lang.Unroll
 
-import static org.hamcrest.Matchers.contains
-import static org.hamcrest.Matchers.equalTo
+import static org.hamcrest.Matchers.*
 
 class TestReportIntegrationTest extends AbstractIntegrationSpec {
     @Rule Sample sample = new Sample(temporaryFolder)
@@ -31,9 +29,7 @@ class TestReportIntegrationTest extends AbstractIntegrationSpec {
     def "report includes results of each invocation"() {
         given:
         buildFile << """
-apply plugin: 'java'
-repositories { mavenCentral() }
-dependencies { testCompile 'junit:junit:4.11' }
+$junitSetup
 test { systemProperty 'LogLessStuff', System.getProperty('LogLessStuff') }
 """
 
@@ -83,4 +79,241 @@ public class LoggingTest {
         htmlReport.testClass("org.gradle.sample.CoreTest").assertTestCount(1, 0, 0).assertTestPassed("ok").assertStdout(contains("hello from CoreTest."))
         htmlReport.testClass("org.gradle.sample.UtilTest").assertTestCount(1, 0, 0).assertTestPassed("ok").assertStdout(contains("hello from UtilTest."))
     }
+
+    @Issue("http://issues.gradle.org//browse/GRADLE-2821")
+    def "test report task can handle test tasks that did not run tests"() {
+        given:
+        buildScript """
+            apply plugin: 'java'
+
+             $junitSetup
+
+            task otherTests(type: Test) {
+                binResultsDir file("bin")
+                testSrcDirs = []
+                testClassesDir = file("blah")
+            }
+
+            task testReport(type: TestReport) {
+                reportOn test, otherTests
+                destinationDir reporting.file("tr")
+            }
+        """
+
+        and:
+        testClass("Thing")
+
+        when:
+        succeeds "testReport"
+
+        then:
+        ":otherTests" in skippedTasks
+        ":test" in nonSkippedTasks
+        new HtmlTestExecutionResult(testDirectory, "tr").assertTestClassesExecuted("Thing")
+    }
+
+    def "test report task is skipped when there are no results"() {
+        given:
+        buildScript """
+            apply plugin: 'java'
+
+            task testReport(type: TestReport) {
+                reportOn test
+                destinationDir reporting.file("tr")
+            }
+        """
+
+        when:
+        succeeds "testReport"
+
+        then:
+        ":test" in skippedTasks
+        ":testReport" in skippedTasks
+    }
+
+    @Unroll
+    "#type report files are considered outputs"() {
+        given:
+        buildScript """
+            $junitSetup
+        """
+
+        and:
+        testClass "SomeTest"
+
+        when:
+        run "test"
+
+        then:
+        ":test" in nonSkippedTasks
+        file(reportsDir).exists()
+
+        when:
+        run "test"
+
+        then:
+        ":test" in skippedTasks
+        file(reportsDir).exists()
+
+        when:
+        file(reportsDir).deleteDir()
+        run "test"
+
+        then:
+        ":test" in nonSkippedTasks
+        file(reportsDir).exists()
+
+        where:
+        type   | reportsDir
+        "xml"  | "build/test-results"
+        "html" | "build/reports/tests"
+    }
+
+    def "results or reports are linked to in error output"() {
+        given:
+        buildScript """
+            $junitSetup
+            test {
+                reports.all { it.enabled = true }
+            }
+        """
+
+        and:
+        failingTestClass "SomeTest"
+
+        when:
+        fails "test"
+
+        then:
+        ":test" in nonSkippedTasks
+        errorOutput.contains("See the report at: ")
+
+        when:
+        buildFile << "\ntest.reports.html.enabled = false\n"
+        fails "test"
+
+        then:
+        ":test" in nonSkippedTasks
+        errorOutput.contains("See the results at: ")
+
+        when:
+        buildFile << "\ntest.reports.junitXml.enabled = false\n"
+        fails "test"
+
+        then:
+        ":test" in nonSkippedTasks
+        errorOutput.contains("There were failing tests")
+        !errorOutput.contains("See the")
+    }
+
+
+    def "output per test case flag invalidates outputs"() {
+        when:
+        buildScript """
+            $junitSetup
+            test.reports.junitXml.outputPerTestCase = false
+        """
+        testClass "SomeTest"
+        succeeds "test"
+
+        then:
+        ":test" in nonSkippedTasks
+
+        when:
+        buildFile << "\ntest.reports.junitXml.outputPerTestCase = true\n"
+        succeeds "test"
+
+        then:
+        ":test" in nonSkippedTasks
+    }
+
+    def "outputs over lifecycle"() {
+        when:
+        buildScript """
+            $junitSetup
+            test.reports.junitXml.outputPerTestCase = true
+        """
+
+        file("src/test/java/OutputLifecycleTest.java") << """
+            import org.junit.*;
+
+            public class OutputLifecycleTest {
+
+                public OutputLifecycleTest() {
+                    System.out.println("constructor out");
+                    System.err.println("constructor err");
+                }
+
+                @BeforeClass
+                public static void beforeClass() {
+                    System.out.println("beforeClass out");
+                    System.err.println("beforeClass err");
+                }
+
+                @Before
+                public void beforeTest() {
+                    System.out.println("beforeTest out");
+                    System.err.println("beforeTest err");
+                }
+
+                @Test public void m1() {
+                    System.out.println("m1 out");
+                    System.err.println("m1 err");
+                }
+
+                @Test public void m2() {
+                    System.out.println("m2 out");
+                    System.err.println("m2 err");
+                }
+
+                @After
+                public void afterTest() {
+                    System.out.println("afterTest out");
+                    System.err.println("afterTest err");
+                }
+
+                @AfterClass
+                public static void afterClass() {
+                    System.out.println("afterClass out");
+                    System.err.println("afterClass err");
+                }
+            }
+        """
+
+        succeeds "test"
+
+        then:
+        def xmlReport = new JUnitXmlTestExecutionResult(testDirectory)
+        def clazz = xmlReport.testClass("OutputLifecycleTest")
+        clazz.assertTestCaseStderr("m1", is("beforeTest err\nm1 err\nafterTest err\n"))
+        clazz.assertTestCaseStderr("m2", is("beforeTest err\nm2 err\nafterTest err\n"))
+        clazz.assertTestCaseStdout("m1", is("beforeTest out\nm1 out\nafterTest out\n"))
+        clazz.assertTestCaseStdout("m2", is("beforeTest out\nm2 out\nafterTest out\n"))
+        clazz.assertStderr(is("beforeClass err\nconstructor err\nconstructor err\nafterClass err\n"))
+        clazz.assertStdout(is("beforeClass out\nconstructor out\nconstructor out\nafterClass out\n"))
+    }
+
+    String getJunitSetup() {
+        """
+        apply plugin: 'java'
+        repositories { mavenCentral() }
+        dependencies { testCompile 'junit:junit:4.11' }
+        """
+    }
+
+    void failingTestClass(String name) {
+        testClass(name, true)
+    }
+
+    void testClass(String name, boolean failing = false) {
+        file("src/test/java/${name}.java") << """
+            public class $name {
+                @org.junit.Test
+                public void test() {
+                    assert false == ${failing};
+                }
+            }
+        """
+    }
+
 }

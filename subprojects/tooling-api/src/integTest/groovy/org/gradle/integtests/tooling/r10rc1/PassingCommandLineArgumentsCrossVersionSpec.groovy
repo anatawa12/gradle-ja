@@ -18,15 +18,15 @@
 
 package org.gradle.integtests.tooling.r10rc1
 
-import org.gradle.integtests.tooling.fixture.MinTargetGradleVersion
-import org.gradle.integtests.tooling.fixture.MinToolingApiVersion
+import org.gradle.integtests.tooling.fixture.TargetGradleVersion
 import org.gradle.integtests.tooling.fixture.ToolingApiSpecification
+import org.gradle.integtests.tooling.fixture.ToolingApiVersion
 import org.gradle.tooling.ProjectConnection
 import org.gradle.tooling.exceptions.UnsupportedBuildArgumentException
 import org.gradle.tooling.model.GradleProject
 
-@MinToolingApiVersion("1.0-rc-1")
-@MinTargetGradleVersion("1.0-rc-2")
+@ToolingApiVersion(">=1.0")
+@TargetGradleVersion(">=1.0")
 class PassingCommandLineArgumentsCrossVersionSpec extends ToolingApiSpecification {
 
 //    We don't want to validate *all* command line options here, just enough to make sure passing through works.
@@ -144,12 +144,11 @@ class PassingCommandLineArgumentsCrossVersionSpec extends ToolingApiSpecificatio
         noExceptionThrown()
     }
 
-    def "can overwrite searchUpwards via build arguments"() {
+    def "can configure searchUpwards via build arguments"() {
         given:
         file('build.gradle') << "assert !gradle.startParameter.searchUpwards"
 
         when:
-        toolingApi.withConnector { it.searchUpwards(true) }
         withConnection {
             it.newBuild().withArguments('-u').run()
         }

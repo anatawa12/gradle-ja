@@ -40,9 +40,6 @@ import static org.gradle.util.WrapUtil.toSet
 import static org.hamcrest.Matchers.*
 import static org.junit.Assert.*
 
-/**
- * @author Hans Dockter
- */
 class JavaPluginTest {
     @Rule
     public TestNameTestDirectoryProvider tmpDir = new TestNameTestDirectoryProvider()
@@ -134,7 +131,7 @@ class JavaPluginTest {
     @Test public void createsMappingsForCustomSourceSets() {
         javaPlugin.apply(project)
 
-        def set = project.sourceSets.add('custom')
+        def set = project.sourceSets.create('custom')
         assertThat(set.java.srcDirs, equalTo(toLinkedSet(project.file('src/custom/java'))))
         assertThat(set.resources.srcDirs, equalTo(toLinkedSet(project.file('src/custom/resources'))))
         assertThat(set.compileClasspath, sameInstance(project.configurations.customCompile))
@@ -184,7 +181,7 @@ class JavaPluginTest {
         assertThat(task, instanceOf(Jar))
         assertThat(task, dependsOn(JavaPlugin.CLASSES_TASK_NAME))
         assertThat(task.destinationDir, equalTo(project.libsDir))
-        assertThat(task.copyAction.mainSpec.sourcePaths, equalTo([project.sourceSets.main.output] as Set))
+        assertThat(task.mainSpec.sourcePaths, equalTo([project.sourceSets.main.output] as Set))
         assertThat(task.manifest, notNullValue())
         assertThat(task.manifest, not(sameInstance(project.manifest)))
         assertThat(task.manifest.mergeSpecs.size(), equalTo(1))

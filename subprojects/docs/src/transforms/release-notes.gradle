@@ -10,16 +10,16 @@ buildscript {
 }
 
 import org.jsoup.nodes.Element
+import org.jsoup.nodes.TextNode
 import org.jsoup.select.Elements
 import com.uwyn.jhighlight.renderer.XhtmlRendererFactory
 
-ext {
-    baseStyleFile = project.file("$project.cssFiles.dir/base.css")
-    releaseNotesStyleFile = project.file("$project.cssFiles.dir/release-notes.css")
-    scriptFile = project.file("src/docs/release/content/script.js")
-}
+def baseStyleFile = project.file("$project.cssFiles.dir/base.css")
+def releaseNotesStyleFile = project.file("$project.cssFiles.dir/release-notes.css")
+def scriptFile = project.file("src/docs/release/content/script.js")
+def incubatingMarker = " (i)"
 
-inputs.files([project.cssFiles, baseStyleFile, releaseNotesStyleFile, project.configurations.jquery, scriptFile])
+inputs.files([project.cssFiles, baseStyleFile, releaseNotesStyleFile, project.configurations.jquery, project.configurations.jqueryTipTip, scriptFile])
 
 transformDocument {
     outputSettings().indentAmount(2).prettyPrint(true)
@@ -32,21 +32,9 @@ transformDocument {
 
     head().append("<style>p{}</style>").children().last().childNode(0).attr("data", baseStyleFile.text + releaseNotesStyleFile.text)
 
-    head().append("<script type='text/javascript'>1;</script>").children().last().childNode(0).attr("data", project.configurations.jquery.singleFile.text)
-    head().append("<script type='text/javascript'>1;</script>").children().last().childNode(0).attr("data", scriptFile.text)
-}
-
-// Add the extra doc links
-transformDocument {
-    body().append("""
-            <h2>Gradle @version@ documentation links</h2>
-            <ul>
-                <li><a href='dsl/index.html'>DSL Reference</a></li>
-                <li><a href='userguide/userguide.html'>User Guide</a></li>
-                <li><a href='javadoc/index.html'>Javadoc</a></li>
-                <li><a href='groovydoc/index.html'>Groovdoc</a></li>
-            </ul>
-        """)
+    [project.configurations.jquery.singleFile, project.configurations.jqueryTipTip.singleFile, scriptFile].each {
+        head().append("<script type='text/javascript'>1;</script>").children().last().childNode(0).attr("data", it.text)
+    }
 }
 
 // wrap each h2 section in section.topic
@@ -72,6 +60,17 @@ transformDocument {
         }
 
         next = next.nextElementSibling()
+    }
+}
+
+// replace the incubating marker in h3 with class
+transformDocument {
+    for (heading in body().select(".topic").select("h3")) {
+        def textNode = heading.childNodes().last()
+        if (textNode instanceof TextNode && textNode.text().endsWith(incubatingMarker)) {
+            textNode.text(textNode.text() - incubatingMarker)
+            heading.addClass("incubating")
+        }
     }
 }
 
@@ -150,12 +149,18 @@ transformDocument {
         if (subs) {
             def sublist = toc.children().last().append("<ul class='toc-sub'/>").children().last()
             subs.each {
-                def subName = it.text()
+                def subName = it.html()
                 def subAnchorName = it.attr("id")
-                sublist.append("<li><a/></li>").children().last().select("a").first().text(subName).attr("href", "#$subAnchorName")
+                sublist.append("<li><a/></li>").children().last().select("a").first().html(subName).attr("href", "#$subAnchorName")
             }
         }
+    }
+}
 
+// add a tooltip to all h3 marked incubating
+transformDocument {
+    for (heading in body().select(".incubating").select("h3")) {
+        heading.append(" <a class='incubating-marker' href='userguide/feature_lifecycle.html' title='“incubating” features are not yet guaranteed to be backwards compatible<br />(click for more information)'>incubating feature</a>")
     }
 }
 

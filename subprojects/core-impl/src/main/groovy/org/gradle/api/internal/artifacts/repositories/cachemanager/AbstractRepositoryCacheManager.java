@@ -26,13 +26,13 @@ import org.apache.ivy.core.module.id.ModuleRevisionId;
 import org.apache.ivy.core.resolve.ResolvedModuleRevision;
 import org.apache.ivy.core.settings.IvySettings;
 import org.apache.ivy.plugins.parser.ModuleDescriptorParser;
+import org.apache.ivy.plugins.parser.ModuleDescriptorParserRegistry;
 import org.apache.ivy.plugins.parser.ParserSettings;
 import org.apache.ivy.plugins.repository.Resource;
 import org.apache.ivy.plugins.resolver.DependencyResolver;
 import org.apache.ivy.plugins.resolver.util.ResolvedResource;
 import org.gradle.api.internal.artifacts.ivyservice.ivyresolve.IvyContextualiser;
 import org.gradle.api.internal.artifacts.ivyservice.ivyresolve.parser.ModuleScopedParserSettings;
-import org.gradle.api.internal.artifacts.ivyservice.ivyresolve.parser.ParserRegistry;
 import org.gradle.internal.UncheckedException;
 
 import java.io.File;
@@ -40,9 +40,8 @@ import java.io.IOException;
 import java.net.URL;
 import java.text.ParseException;
 
-abstract class AbstractRepositoryCacheManager implements RepositoryCacheManager {
+abstract class AbstractRepositoryCacheManager implements RepositoryArtifactCache, RepositoryCacheManager {
     protected final String name;
-    private final ParserRegistry parserRegistry = new ParserRegistry();
 
     public AbstractRepositoryCacheManager(String name) {
         this.name = name;
@@ -77,10 +76,11 @@ abstract class AbstractRepositoryCacheManager implements RepositoryCacheManager 
         try {
             IvySettings ivySettings = IvyContextualiser.getIvyContext().getSettings();
             ParserSettings parserSettings = new ModuleScopedParserSettings(ivySettings, resolver, moduleRevisionId);
-            ModuleDescriptorParser parser = parserRegistry.forResource(resource);
+            ModuleDescriptorParser parser = ModuleDescriptorParserRegistry.getInstance().getParser(resource);
             return parser.parseDescriptor(parserSettings, new URL(artifactFile.toURI().toASCIIString()), resource, options.isValidate());
         } catch (IOException e) {
             throw UncheckedException.throwAsUncheckedException(e);
         }
     }
+
 }

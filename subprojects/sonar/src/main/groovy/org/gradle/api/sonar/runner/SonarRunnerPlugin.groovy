@@ -22,6 +22,7 @@ import org.gradle.api.plugins.JavaBasePlugin
 import org.gradle.api.plugins.JavaPlugin
 import org.gradle.api.tasks.SourceSet
 import org.gradle.internal.jvm.Jvm
+import org.gradle.testing.jacoco.plugins.JacocoPlugin
 
 /**
  * A plugin for analyzing projects with the
@@ -100,7 +101,10 @@ class SonarRunnerPlugin implements Plugin<Project> {
 
     void apply(Project project) {
         targetProject = project
-        def sonarRunnerTask = project.tasks.add("sonarRunner", SonarRunner)
+        def sonarRunnerTask = project.tasks.create("sonarRunner", SonarRunner)
+        sonarRunnerTask.with {
+            description = "Analyzes $project and its subprojects with Sonar Runner."
+        }
         sonarRunnerTask.conventionMapping.with {
             sonarProperties = {
                 def properties = new Properties()
@@ -120,21 +124,27 @@ class SonarRunnerPlugin implements Plugin<Project> {
 
     void computeSonarProperties(Project project, Properties properties) {
         def extension = project.extensions.getByType(SonarRunnerExtension)
-        if (extension.skipProject) { return }
+        if (extension.skipProject) {
+            return
+        }
 
         Map<String, Object> rawProperties = [:]
         addGradleDefaults(project, rawProperties)
         extension.evaluateSonarPropertiesBlocks(rawProperties)
-        if (project == targetProject) { addSystemProperties(rawProperties) }
+        if (project == targetProject) {
+            addSystemProperties(rawProperties)
+        }
 
         def projectPrefix = project.path.substring(targetProject.path.size()).replace(":", ".")
         if (projectPrefix.startsWith(".")) {
             projectPrefix = projectPrefix.substring(1)
         }
         convertProperties(rawProperties, projectPrefix, properties)
-        
-        def enabledChildProjects = project.childProjects.values().findAll { !it.sonarRunner.skipProject }
-        if (enabledChildProjects.empty) { return }
+
+        def enabledChildProjects = project.childProjects.values().findAll { !it.sonarRunner.skipProject }.sort()
+        if (enabledChildProjects.empty) {
+            return
+        }
 
         properties[convertKey("sonar.modules", projectPrefix)] = convertValue(enabledChildProjects.name)
         for (childProject in enabledChildProjects) {
@@ -143,10 +153,6 @@ class SonarRunnerPlugin implements Plugin<Project> {
     }
 
     private void addGradleDefaults(Project project, Map<String, Object> properties) {
-        // for some reason, sonar.sources must always be set (as of Sonar 3.4)
-        properties["sonar.sources"] = ""
-
-        properties["sonar.projectKey"] = getProjectKey(project)
         properties["sonar.projectName"] = project.name
         properties["sonar.projectDescription"] = project.description
         properties["sonar.projectVersion"] = project.version
@@ -154,6 +160,10 @@ class SonarRunnerPlugin implements Plugin<Project> {
         properties["sonar.dynamicAnalysis"] = "reuseReports"
 
         if (project == targetProject) {
+            // We only set project key for root project because Sonar Runner 2.0 will automatically
+            // prefix subproject keys with parent key, even if subproject keys are set explicitly.
+            // Therefore it's better to rely on Sonar's defaults.
+            properties["sonar.projectKey"] = getProjectKey(project)
             properties["sonar.environment.information.key"] = "Gradle"
             properties["sonar.environment.information.version"] = project.gradle.gradleVersion
             properties["sonar.working.directory"] = new File(project.buildDir, "sonar")
@@ -172,21 +182,28 @@ class SonarRunnerPlugin implements Plugin<Project> {
             properties["sonar.tests"] = test.allSource.srcDirs.findAll { it.exists() } ?: null
             properties["sonar.binaries"] = main.runtimeClasspath.findAll { it.directory } ?: null
             properties["sonar.libraries"] = getLibraries(main)
-            properties["sonar.surefire.reportsPath"] = project.test.testResultsDir.exists() ? project.test.testResultsDir : null
+            File testResultsDir = project.test.reports.junitXml.destination
+            properties["sonar.surefire.reportsPath"] = testResultsDir.exists() ? testResultsDir : null
+
+            project.plugins.withType(JacocoPlugin) {
+                properties["sonar.jacoco.reportPath"] = project.test.jacoco.destinationFile.exists() ? project.test.jacoco.destinationFile : null
+            }
+        }
+
+        if (properties["sonar.sources"] == null) {
+            // Should be able to remove this after upgrading to Sonar Runner 2.1 (issue is already marked as fixed),
+            // if we can live with the fact that leaf projects w/o source dirs will still cause a failure.
+            properties["sonar.sources"] = ""
         }
     }
 
     private String getProjectKey(Project project) {
-        String result
-        if (project.parent) {
-            result = "$project.group:$project.rootProject.name$project.path"
-        } else {
-            result = "$project.group:$project.name"
-        }
-
-        // project key gets used in URL parameter
-        // example: http://localhost:63450/batch_bootstrap/properties?project=org.gradle.test.sonar:Sonar+Test+Build
-        URLEncoder.encode(result, "utf-8")
+        // Sonar uses project keys in URL parameters without internally URL-encoding them.
+        // According to my manual tests with sonar-runner plugin based on Sonar Runner 2.0 and Sonar 3.4.1,
+        // the current defaults will only cause a problem if project.group or project.name of
+        // the Gradle project to which the plugin is applied contains special characters.
+        // (':' works, ' ' doesn't.) In such a case, sonar.projectKey can be overridden manually.
+        project.group ? "$project.group:$project.name" : project.name
     }
 
     private void addSystemProperties(Map<String, Object> properties) {
@@ -209,12 +226,13 @@ class SonarRunnerPlugin implements Plugin<Project> {
             }
         }
     }
-    
+
     private String convertKey(String key, String projectPrefix) {
         projectPrefix ? "${projectPrefix}.$key" : key
     }
-    
+
     private String convertValue(Object value) {
         value instanceof Iterable ? value.collect { convertValue(it) }.join(",") : value.toString()
     }
+
 }

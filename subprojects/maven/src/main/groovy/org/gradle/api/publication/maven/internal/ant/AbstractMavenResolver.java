@@ -42,6 +42,8 @@ import org.gradle.api.Action;
 import org.gradle.api.artifacts.PublishArtifact;
 import org.gradle.api.artifacts.maven.*;
 import org.gradle.api.internal.ClosureBackedAction;
+import org.gradle.api.internal.artifacts.ModuleVersionPublisher;
+import org.gradle.api.internal.artifacts.ivyservice.IvyResolverBackedModuleVersionPublisher;
 import org.gradle.api.internal.artifacts.ivyservice.ivyresolve.IvyAwareModuleVersionRepository;
 import org.gradle.api.internal.artifacts.ivyservice.ivyresolve.NoOpRepositoryCacheManager;
 import org.gradle.api.internal.artifacts.repositories.AbstractArtifactRepository;
@@ -58,9 +60,6 @@ import java.text.ParseException;
 import java.util.Map;
 import java.util.Set;
 
-/**
- * @author Hans Dockter
- */
 public abstract class AbstractMavenResolver extends AbstractArtifactRepository implements MavenResolver, DependencyResolver {
     
     private ArtifactPomContainer artifactPomContainer;
@@ -81,15 +80,15 @@ public abstract class AbstractMavenResolver extends AbstractArtifactRepository i
         this.loggingManager = loggingManager;
     }
 
-    public IvyAwareModuleVersionRepository createResolveRepository() {
+    public IvyAwareModuleVersionRepository createResolver() {
         throw new UnsupportedOperationException("A Maven deployer cannot be used to resolve dependencies. It can only be used to publish artifacts.");
     }
 
-    public DependencyResolver createPublisher() {
-        return this;
+    public ModuleVersionPublisher createPublisher() {
+        return new IvyResolverBackedModuleVersionPublisher(this);
     }
 
-    public DependencyResolver createResolver() {
+    public DependencyResolver createLegacyDslObject() {
         return this;
     }
 

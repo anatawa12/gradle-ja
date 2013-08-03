@@ -18,11 +18,11 @@
     <title>Maven Publishing (new)</title>
     <note>
         <para>
-            This chapter describes the new <emphasis>incubating</emphasis> Maven publishing support provided by the “<literal>maven-publish</literal>”
+            This chapter describes the new <link linkend="feature_lifecycle">incubating</link> Maven publishing support provided by the “<literal>maven-publish</literal>”
             plugin. Eventually this new publishing support will replace publishing via the <literal>Upload</literal> task.
         </para>
         <para>
-            If you are looking for documentation on 'traditional' Maven publishing using the <literal>Upload</literal> task please see
+            If you are looking for documentation on the original Maven publishing support using the <literal>Upload</literal> task please see
             <xref linkend="artifact_management"/>.
         </para>
     </note>
@@ -141,7 +141,7 @@
         </section>
 
         <section>
-            <title>Default identity values in the generated POM</title>
+            <title>Identity values in the generated POM</title>
             <para>
                 The attributes of the generated <literal>POM</literal> file will contain identity values derived from the following project properties:
             </para>
@@ -150,8 +150,25 @@
                 <listitem><literal>artifactId</literal> - <apilink class="org.gradle.api.Project" method="getName()" /></listitem>
                 <listitem><literal>version</literal> - <apilink class="org.gradle.api.Project" method="getVersion()" /></listitem>
             </itemizedlist>
+
             <para>
-                Note that you can set the value of these project properties in your build script, with the exception of <literal>name</literal>.
+                Overriding the default identity values is easy: simply specify the <literal>groupId</literal>, <literal>artifactId</literal>
+                or <literal>version</literal> attributes when configuring the <literal>MavenPublication</literal>.
+            </para>
+            <sample dir="maven-publish/multiple-publications" id="publishing_maven:publish-customise-identity" title="Customising the publication identity">
+                <sourcefile file="build.gradle" snippet="customise-identity" />
+            </sample>
+            <tip>
+                Certain repositories will not be able to handle all supported characters.
+                For example, the ':' character cannot be used as an identifier when publishing to a filesystem-backed repository on Windows.
+            </tip>
+            <para>
+                Maven restricts 'groupId' and 'artifactId' to a limited character set (<literal>[A-Za-z0-9_\\-.]+</literal>) and Gradle enforces this restriction.
+                For 'version' (as well as artifact 'extension' and 'classifier'), Gradle will handle any valid Unicode character.
+            </para>
+            <para>
+                The only Unicode values that are explicitly prohibited are '<literal>\</literal>', '<literal>/</literal>' and any ISO control character.
+                Supplied values are validated early in publication.
             </para>
         </section>
         <section>
@@ -179,6 +196,20 @@
                 The identifier (groupId, artifactId, version) of the published module is an exception; these values cannot be modified in the POM using the `withXML` hook.
             </para>
         </section>
+        <section>
+             <title>Publishing multiple modules</title>
+             <para>
+                 Sometimes it's useful to publish multiple modules from your Gradle build, without creating a separate Gradle subproject.
+                 An example is publishing a separate API and implementation jar for your library. With Gradle this is simple:
+             </para>
+             <sample dir="maven-publish/multiple-publications" id="publishing_maven:publish-multiple-publications" title="Publishing multiple modules from a single project">
+                 <sourcefile file="build.gradle" snippet="multiple-publications" />
+             </sample>
+             <para>
+                 If a project defines multiple publications then Gradle will publish each of these to the defined repositories. Each publication
+                 must be given a unique identity as described above.
+             </para>
+         </section>
     </section>
 
     <section id="publishing_maven:repositories">
@@ -245,16 +276,29 @@
         </para>
         <para>
             The task for generating the POM file is of type <apilink class="org.gradle.api.publish.maven.tasks.GenerateMavenPom"/>, and it is given a name based on the name
-            of the publication: "<literal>generatePomFileFor«<emphasis>NAME OF PUBLICATION</emphasis>»Publication</literal>". So in the above example where the publication is named
-            "<literal>mavenJava</literal>",
-            the task will be named "<literal>generatePomFileForMavenJavaPublication</literal>".
+            of the publication: "<literal>generatePomFileFor«<emphasis>NAME OF PUBLICATION</emphasis>»Publication</literal>". So in the below example where the publication is named
+            "<literal>mavenCustom</literal>",
+            the task will be named "<literal>generatePomFileForMavenCustomPublication</literal>".
         </para>
-        <sample dir="maven-publish/quickstart" id="publishingMavenGeneratePom" title="Generate a POM file without publishing">
-            <output args="generatePomFileForMavenJavaPublication"/>
+        <sample dir="maven-publish/pomCustomization" id="publishingMavenGeneratePom" title="Generate a POM file without publishing">
+            <sourcefile file="build.gradle" snippet="generate" />
+            <output args="generatePomFileForMavenCustomPublication"/>
         </sample>
         <para>
             All details of the publishing model are still considered in POM generation, including <literal>components</literal>`, custom <literal>artifacts</literal>,
             and any modifications made via <literal>pom.withXml</literal>.
         </para>
+        <note>
+            <para>
+                The “<literal>maven-publish</literal>” plugin leverages some experimental support for late plugin configuration,
+                and any <literal>GenerateMavenPom</literal> tasks will not be constructed until the publishing extension is configured.
+                The simplest way to ensure that the publishing plugin is configured when you attempt to access the <literal>GenerateMavenPom</literal> task
+                is to place the access inside a <literal>publishing</literal> block, as the above example demonstrates.
+            </para>
+            <para>
+                The same applies to any attempt to access publication-specific tasks like <apilink class="org.gradle.api.publish.maven.tasks.PublishToMavenRepository"/>.
+                These tasks should be referenced from within a <literal>publishing</literal> block.
+            </para>
+        </note>
     </section>
 </chapter>

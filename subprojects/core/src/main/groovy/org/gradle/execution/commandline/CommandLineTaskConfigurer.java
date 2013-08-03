@@ -23,6 +23,7 @@ import org.gradle.cli.CommandLineArgumentException;
 import org.gradle.cli.CommandLineParser;
 import org.gradle.cli.ParsedCommandLine;
 import org.gradle.cli.ParsedCommandLineOption;
+import org.gradle.internal.reflect.JavaReflectionUtil;
 import org.gradle.util.JavaMethod;
 
 import java.lang.reflect.Method;
@@ -31,9 +32,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-/**
- * by Szczepan Faber, created at: 9/5/12
- */
 public class CommandLineTaskConfigurer {
 
     public List<String> configureTasks(Collection<Task> tasks, List<String> arguments) {
@@ -59,7 +57,7 @@ public class CommandLineTaskConfigurer {
                         if (method.getParameterTypes().length > 0 && !hasSingleBooleanParameter(method)) {
                             option.hasArgument();
                         }
-                        options.put(optionName, JavaMethod.create(Object.class, Object.class, method));
+                        options.put(optionName, JavaReflectionUtil.method(Object.class, Object.class, method));
                     }
                 }
             }

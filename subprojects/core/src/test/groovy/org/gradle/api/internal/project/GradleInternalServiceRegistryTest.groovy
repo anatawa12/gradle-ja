@@ -13,20 +13,22 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.gradle.api.internal.project;
-
+package org.gradle.api.internal.project
 
 import org.gradle.StartParameter
-import org.gradle.api.internal.DocumentationRegistry
 import org.gradle.api.internal.GradleInternal
-import org.gradle.api.internal.plugins.DefaultPluginRegistry
+import org.gradle.api.internal.file.FileResolver
+import org.gradle.api.internal.file.IdentityFileResolver
+import org.gradle.api.internal.plugins.DefaultPluginContainer
 import org.gradle.api.internal.plugins.PluginRegistry
+import org.gradle.api.plugins.PluginContainer
 import org.gradle.cache.CacheRepository
 import org.gradle.execution.BuildExecuter
 import org.gradle.execution.DefaultBuildExecuter
 import org.gradle.execution.TaskGraphExecuter
 import org.gradle.execution.taskgraph.DefaultTaskGraphExecuter
 import org.gradle.internal.service.ServiceRegistry
+import org.gradle.invocation.BuildClassLoaderRegistry
 import org.gradle.listener.ListenerManager
 import org.gradle.util.MultiParentClassLoader
 import spock.lang.Specification
@@ -40,14 +42,18 @@ public class GradleInternalServiceRegistryTest extends Specification {
     private CacheRepository cacheRepository = Mock()
     private GradleInternalServiceRegistry registry = new GradleInternalServiceRegistry(parent, gradle)
     private StartParameter startParameter = new StartParameter()
+    private PluginRegistry pluginRegistryParent = Mock()
+    private PluginRegistry pluginRegistryChild = Mock()
 
     public void setup() {
         parent.get(StartParameter) >> Mock(StartParameter)
         parent.get(ListenerManager) >> listenerManager
         parent.get(CacheRepository) >> cacheRepository
-        parent.get(DocumentationRegistry) >> Mock(DocumentationRegistry)
+        parent.get(PluginRegistry) >> pluginRegistryParent
+        parent.get(BuildClassLoaderRegistry) >> Stub(BuildClassLoaderRegistry)
         gradle.getStartParameter() >> startParameter
         gradle.getScriptClassLoader() >> new MultiParentClassLoader()
+        pluginRegistryParent.createChild(_, _) >> pluginRegistryChild
     }
 
     def "can create services for a project instance"() {
@@ -62,8 +68,8 @@ public class GradleInternalServiceRegistryTest extends Specification {
 
     def "provides a project registry"() {
         when:
-        def projectRegistry = registry.get(IProjectRegistry)
-        def secondRegistry = registry.get(IProjectRegistry)
+        def projectRegistry = registry.get(ProjectRegistry)
+        def secondRegistry = registry.get(ProjectRegistry)
 
         then:
         projectRegistry instanceof DefaultProjectRegistry
@@ -76,7 +82,7 @@ public class GradleInternalServiceRegistryTest extends Specification {
         def secondRegistry = registry.get(PluginRegistry)
 
         then:
-        pluginRegistry instanceof DefaultPluginRegistry
+        pluginRegistry == pluginRegistryChild
         secondRegistry sameInstance(pluginRegistry)
     }
 
@@ -88,6 +94,26 @@ public class GradleInternalServiceRegistryTest extends Specification {
         then:
         buildExecuter instanceof DefaultBuildExecuter
         buildExecuter sameInstance(secondExecuter)
+    }
+
+    def "provides a plugin container"() {
+        when:
+        def pluginContainer = registry.get(PluginContainer)
+        def secondPluginContainer = registry.get(PluginContainer)
+
+        then:
+        pluginContainer instanceof DefaultPluginContainer
+        secondPluginContainer sameInstance(pluginContainer)
+    }
+
+    def "provides a file resolver"() {
+        when:
+        def fileResolver = registry.get(FileResolver)
+        def secondFileResolver = registry.get(FileResolver)
+
+        then:
+        fileResolver instanceof IdentityFileResolver
+        secondFileResolver sameInstance(fileResolver)
     }
 
     def "provides a task graph executer"() {

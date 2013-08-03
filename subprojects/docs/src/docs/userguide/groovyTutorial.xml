@@ -44,10 +44,10 @@
         <para role="original">To use the groovy compilation tasks, you must also declare the Groovy version to use and where to find the
             Groovy libraries. You do this by adding a dependency to the <literal>groovy</literal> configuration.
             The <literal>compile</literal> configuration inherits this dependency, so the groovy libraries will
-            be included in classpath when compiling Groovy and Java source.  For our sample, we will use Groovy 1.7.10
+            be included in classpath when compiling Groovy and Java source.  For our sample, we will use Groovy 2.0.5
             from the public Maven repository:</para>
-        <para>Groovy用のcompileタスクを使うには、GroovyのバージョンとGroovyライブラリの存在場所を宣言する必要もあります。これは、<literal>groovy</literal>設定に依存関係を追加することによって行います。<literal>compile</literal>設定はこの依存関係を継承するので、GroovyやJavaソースをコンパイルするとき、クラスパスにはgroovyライブラリが含まれるようになります。この例では、公開MavenリポジトリのGroovyを使います：</para>
-        <sample id="groovyQuickstart" dir="groovy/quickstart" title="Groovyへの依存関係 / Dependency on Groovy 1.7.10">
+        <para>Groovy用のcompileタスクを使うには、GroovyのバージョンとGroovyライブラリを探してくる場所を宣言する必要があります。これは、<literal>compile</literal>コンフィギュレーションに依存関係を追加することによって行います。この例では、Groovy 2.0.5を使用します。</para>
+        <sample id="groovyQuickstart" dir="groovy/quickstart" title="Dependency on Groovy 2.0.5">
             <sourcefile file="build.gradle" snippet="groovy-dependency"/>
         </sample>
         <para role="original">Here is our complete build file:</para>

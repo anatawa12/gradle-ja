@@ -23,22 +23,21 @@ import org.gradle.api.artifacts.ModuleVersionIdentifier;
 import org.gradle.api.internal.artifacts.ivyservice.IvyModuleDescriptorWriter;
 import org.gradle.api.internal.artifacts.ivyservice.ivyresolve.IvyContextualiser;
 import org.gradle.api.internal.artifacts.ivyservice.ivyresolve.ModuleVersionRepository;
-import org.gradle.api.internal.artifacts.ivyservice.ivyresolve.parser.IvyXmlModuleDescriptorParser;
-import org.gradle.api.internal.filestore.FileStoreEntry;
+import org.gradle.api.internal.artifacts.ivyservice.ivyresolve.parser.ModuleDescriptorParser;
 import org.gradle.api.internal.filestore.PathKeyFileStore;
 import org.gradle.internal.UncheckedException;
+import org.gradle.internal.resource.local.LocallyAvailableResource;
 
 import java.io.File;
-import java.net.URL;
 
 public class ModuleDescriptorStore {
 
     public static final String FILE_PATH_PATTERN = "module-metadata/%s/%s/%s/%s/ivy.xml";
-    private final IvyXmlModuleDescriptorParser parser;
+    private final ModuleDescriptorParser parser;
     private final PathKeyFileStore pathKeyFileStore;
     private final IvyModuleDescriptorWriter ivyModuleDescriptorWriter;
 
-    public ModuleDescriptorStore(PathKeyFileStore pathKeyFileStore, IvyModuleDescriptorWriter ivyModuleDescriptorWriter, IvyXmlModuleDescriptorParser ivyXmlModuleDescriptorParser) {
+    public ModuleDescriptorStore(PathKeyFileStore pathKeyFileStore, IvyModuleDescriptorWriter ivyModuleDescriptorWriter, ModuleDescriptorParser ivyXmlModuleDescriptorParser) {
         this.pathKeyFileStore = pathKeyFileStore;
         this.ivyModuleDescriptorWriter = ivyModuleDescriptorWriter;
         parser = ivyXmlModuleDescriptorParser;
@@ -46,14 +45,14 @@ public class ModuleDescriptorStore {
 
     public ModuleDescriptor getModuleDescriptor(ModuleVersionRepository repository, ModuleVersionIdentifier moduleVersionIdentifier) {
         String filePath = getFilePath(repository, moduleVersionIdentifier);
-        final FileStoreEntry fileStoreEntry = pathKeyFileStore.get(filePath);
-        if (fileStoreEntry != null) {
-            return parseModuleDescriptorFile(fileStoreEntry.getFile());
+        final LocallyAvailableResource resource = pathKeyFileStore.get(filePath);
+        if (resource != null) {
+            return parseModuleDescriptorFile(resource.getFile());
         }
         return null;
     }
 
-    public FileStoreEntry putModuleDescriptor(ModuleVersionRepository repository, final ModuleDescriptor moduleDescriptor) {
+    public LocallyAvailableResource putModuleDescriptor(ModuleVersionRepository repository, final ModuleDescriptor moduleDescriptor) {
         String filePath = getFilePath(repository, moduleDescriptor.getModuleRevisionId());
         return pathKeyFileStore.add(filePath, new Action<File>() {
             public void execute(File moduleDescriptorFile) {
@@ -68,12 +67,7 @@ public class ModuleDescriptorStore {
 
     private ModuleDescriptor parseModuleDescriptorFile(File moduleDescriptorFile) {
         ParserSettings settings = IvyContextualiser.getIvyContext().getSettings();
-        try {
-            URL result = moduleDescriptorFile.toURI().toURL();
-            return parser.parseDescriptor(settings, result, false);
-        } catch (Exception e) {
-            throw UncheckedException.throwAsUncheckedException(e);
-        }
+        return parser.parseDescriptor(settings, moduleDescriptorFile, false);
     }
 
     private String getFilePath(ModuleVersionRepository repository, ModuleRevisionId moduleRevisionId) {

@@ -16,7 +16,7 @@
 
 package org.gradle.tooling.internal.gradle;
 
-import org.gradle.tooling.internal.protocol.ProjectVersion3;
+import org.gradle.tooling.internal.protocol.InternalGradleProject;
 import org.gradle.tooling.model.DomainObjectSet;
 import org.gradle.tooling.model.GradleProject;
 import org.gradle.tooling.model.GradleTask;
@@ -27,10 +27,7 @@ import java.io.Serializable;
 import java.util.LinkedList;
 import java.util.List;
 
-/**
- * @author: Szczepan Faber, created at: 7/27/11
- */
-public class DefaultGradleProject implements ProjectVersion3, GradleProject, Serializable {
+public class DefaultGradleProject implements InternalGradleProject, GradleProject, Serializable {
 
     private String name;
     private String description;
@@ -38,6 +35,7 @@ public class DefaultGradleProject implements ProjectVersion3, GradleProject, Ser
     private GradleProject parent;
     private List<? extends GradleProject> children = new LinkedList<GradleProject>();
     private List<GradleTask> tasks = new LinkedList<GradleTask>();
+    private DefaultGradleScript buildScript = new DefaultGradleScript();
 
     public DefaultGradleProject() {}
 
@@ -115,6 +113,10 @@ public class DefaultGradleProject implements ProjectVersion3, GradleProject, Ser
         }
 
         return null;
+    }
+
+    public DefaultGradleScript getBuildScript() {
+        return buildScript;
     }
 
     public String toString() {

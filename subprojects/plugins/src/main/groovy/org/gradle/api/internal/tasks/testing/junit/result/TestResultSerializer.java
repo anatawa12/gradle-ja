@@ -31,16 +31,23 @@ import java.util.List;
 
 public class TestResultSerializer {
     private static final int RESULT_VERSION = 1;
-    private static final String RESULTS_FILE_NAME = "results.bin";
 
-    public void write(Collection<TestClassResult> results, File outputDir) {
+    private final File resultsFile;
+
+    public TestResultSerializer(File resultsDir) {
+        this.resultsFile = new File(resultsDir, "results.bin");
+    }
+
+    public void write(Collection<TestClassResult> results) {
         try {
-            OutputStream outputStream = new FileOutputStream(new File(outputDir, RESULTS_FILE_NAME));
+            OutputStream outputStream = new FileOutputStream(resultsFile);
             try {
-                Output output = new Output(outputStream);
-                output.writeInt(RESULT_VERSION, true);
-                write(results, output);
-                output.flush();
+                if (!results.isEmpty()) { // only write if we have results, otherwise truncate
+                    Output output = new Output(outputStream);
+                    output.writeInt(RESULT_VERSION, true);
+                    write(results, output);
+                    output.flush();
+                }
             } finally {
                 outputStream.close();
             }
@@ -57,6 +64,7 @@ public class TestResultSerializer {
     }
 
     private void write(TestClassResult classResult, Output output) throws IOException {
+        output.writeLong(classResult.getId(), true);
         output.writeString(classResult.getClassName());
         output.writeLong(classResult.getStartTime());
         output.writeInt(classResult.getResults().size(), true);
@@ -66,6 +74,7 @@ public class TestResultSerializer {
     }
 
     private void write(TestMethodResult methodResult, Output output) throws IOException {
+        output.writeLong(methodResult.getId(), true);
         output.writeString(methodResult.getName());
         output.writeInt(methodResult.getResultType().ordinal(), true);
         output.writeLong(methodResult.getDuration(), true);
@@ -78,14 +87,17 @@ public class TestResultSerializer {
         }
     }
 
-    public void read(File inputDir, Action<? super TestClassResult> visitor) {
+    public void read(Action<? super TestClassResult> visitor) {
+        if (!isHasResults()) {
+            return;
+        }
         try {
-            InputStream inputStream = new FileInputStream(new File(inputDir, "results.bin"));
+            InputStream inputStream = new FileInputStream(resultsFile);
             try {
                 Input input = new Input(inputStream);
                 int version = input.readInt(true);
                 if (version != RESULT_VERSION) {
-                    throw new IllegalArgumentException(String.format("Unexpected result file version %d found in %s.", version, inputDir));
+                    throw new IllegalArgumentException(String.format("Unexpected result file version %d found in %s.", version, resultsFile));
                 }
                 readResults(input, visitor);
             } finally {
@@ -94,6 +106,10 @@ public class TestResultSerializer {
         } catch (Exception e) {
             throw UncheckedException.throwAsUncheckedException(e);
         }
+    }
+
+    public boolean isHasResults() {
+        return resultsFile.exists() && resultsFile.length() > 0;
     }
 
     private void readResults(Input input, Action<? super TestClassResult> visitor) throws ClassNotFoundException, IOException {
@@ -105,9 +121,10 @@ public class TestResultSerializer {
     }
 
     private TestClassResult readClassResult(Input input) throws IOException, ClassNotFoundException {
+        long id = input.readLong(true);
         String className = input.readString();
         long startTime = input.readLong();
-        TestClassResult result = new TestClassResult(className, startTime);
+        TestClassResult result = new TestClassResult(id, className, startTime);
         int testMethodCount = input.readInt(true);
         for (int i = 0; i < testMethodCount; i++) {
             TestMethodResult methodResult = readMethodResult(input);
@@ -117,6 +134,7 @@ public class TestResultSerializer {
     }
 
     private TestMethodResult readMethodResult(Input input) throws ClassNotFoundException, IOException {
+        long id = input.readLong(true);
         String name = input.readString();
         TestResult.ResultType resultType = TestResult.ResultType.values()[input.readInt(true)];
         long duration = input.readLong(true);
@@ -128,6 +146,7 @@ public class TestResultSerializer {
         } else {
             failures = Collections.emptyList();
         }
-        return new TestMethodResult(name, resultType, duration, endTime, failures);
+        return new TestMethodResult(id, name, resultType, duration, endTime, failures);
     }
+
 }

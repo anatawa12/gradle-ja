@@ -36,10 +36,10 @@ import java.util.Map;
 
 import static org.gradle.util.CollectionUtils.flattenToList;
 
-/**
- * @author Hans Dockter
- */
 public class DefaultRepositoryHandler extends DefaultArtifactRepositoryContainer implements RepositoryHandler {
+
+    public static final String DEFAULT_BINTRAY_JCENTER_REPO_NAME = "BintrayJCenter";
+    public static final String BINTRAY_JCENTER_URL = "http://jcenter.bintray.com/";
 
     public static final String FLAT_DIR_DEFAULT_NAME = "flatDir";
     private static final String MAVEN_REPO_DEFAULT_NAME = "maven";
@@ -72,6 +72,14 @@ public class DefaultRepositoryHandler extends DefaultArtifactRepositoryContainer
         return addRepository(repositoryFactory.createMavenCentralRepository(), DEFAULT_MAVEN_CENTRAL_REPO_NAME);
     }
 
+    public MavenArtifactRepository jcenter() {
+        return addRepository(repositoryFactory.createJCenterRepository(), DEFAULT_BINTRAY_JCENTER_REPO_NAME);
+    }
+
+    public MavenArtifactRepository jcenter(Action<? super MavenArtifactRepository> action) {
+        return addRepository(repositoryFactory.createJCenterRepository(), DEFAULT_BINTRAY_JCENTER_REPO_NAME, action);
+    }
+
     public MavenArtifactRepository mavenCentral(Map<String, ?> args) {
         Map<String, Object> modifiedArgs = new HashMap<String, Object>(args);
         if (modifiedArgs.containsKey("urls")) {
@@ -95,14 +103,11 @@ public class DefaultRepositoryHandler extends DefaultArtifactRepositoryContainer
     }
 
     public DependencyResolver mavenRepo(Map<String, ?> args, Closure configClosure) {
+        DeprecationLogger.nagUserOfReplacedMethod("RepositoryHandler.mavenRepo()", "maven()");
         Map<String, Object> modifiedArgs = new HashMap<String, Object>(args);
         if (modifiedArgs.containsKey("urls")) {
             List<?> urls = flattenToList(modifiedArgs.remove("urls"));
             if (!urls.isEmpty()) {
-                DeprecationLogger.nagUserOfDeprecated(
-                        "The 'urls' property of the RepositoryHandler.mavenRepo() method",
-                        "You should use the 'url' property to define the core maven repository & the 'artifactUrls' property to define any additional artifact locations"
-                );
                 modifiedArgs.put("url", urls.get(0));
                 List<?> extraUrls = urls.subList(1, urls.size());
                 modifiedArgs.put("artifactUrls", extraUrls);

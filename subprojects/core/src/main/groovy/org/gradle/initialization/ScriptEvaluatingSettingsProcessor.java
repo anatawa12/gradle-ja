@@ -25,14 +25,10 @@ import org.gradle.util.Clock;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.net.URLClassLoader;
 import java.util.Collections;
 import java.util.Map;
 
 
-/**
- * @author Hans Dockter
- */
 public class ScriptEvaluatingSettingsProcessor implements SettingsProcessor {
     private static Logger logger = LoggerFactory.getLogger(ScriptEvaluatingSettingsProcessor.class);
 
@@ -50,20 +46,20 @@ public class ScriptEvaluatingSettingsProcessor implements SettingsProcessor {
 
     public SettingsInternal process(GradleInternal gradle,
                                     SettingsLocation settingsLocation,
-                                    URLClassLoader buildSourceClassLoader,
+                                    ClassLoader buildSourceClassLoader,
                                     StartParameter startParameter) {
         Clock settingsProcessingClock = new Clock();
         Map<String, String> properties = propertiesLoader.mergeProperties(Collections.<String, String>emptyMap());
         SettingsInternal settings = settingsFactory.createSettings(gradle, settingsLocation.getSettingsDir(),
                 settingsLocation.getSettingsScriptSource(), properties, startParameter, buildSourceClassLoader);
-        applySettingsScript(settingsLocation, buildSourceClassLoader, settings);
+        applySettingsScript(settingsLocation, settings);
         logger.debug("Timing: Processing settings took: {}", settingsProcessingClock.getTime());
         return settings;
     }
 
-    private void applySettingsScript(SettingsLocation settingsLocation, ClassLoader buildSourceClassLoader, SettingsInternal settings) {
+    private void applySettingsScript(SettingsLocation settingsLocation, SettingsInternal settings) {
         ScriptPlugin configurer = configurerFactory.create(settingsLocation.getSettingsScriptSource());
-        configurer.setClassLoader(buildSourceClassLoader);
+        configurer.setClassLoader(settings.getClassLoader());
         configurer.setScriptBaseClass(SettingsScript.class);
         configurer.apply(settings);
     }

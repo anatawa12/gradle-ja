@@ -15,7 +15,9 @@
  */
 package org.gradle.launcher.daemon.client;
 
-import org.gradle.initialization.DefaultGradleLauncherFactory;
+import org.gradle.api.internal.project.GlobalServicesRegistry;
+import org.gradle.initialization.BuildLayoutParameters;
+import org.gradle.initialization.GradleLauncherFactory;
 import org.gradle.internal.Factory;
 import org.gradle.internal.concurrent.ExecutorFactory;
 import org.gradle.internal.nativeplatform.ProcessEnvironment;
@@ -65,13 +67,13 @@ public class EmbeddedDaemonClientServices extends DaemonClientServicesSupport {
 
     protected DaemonCommandExecuter createDaemonCommandExecuter() {
         LoggingManagerInternal mgr = getLoggingServices().getFactory(LoggingManagerInternal.class).create();
-        return new DefaultDaemonCommandExecuter(new DefaultGradleLauncherFactory(getLoggingServices()),
-                get(ProcessEnvironment.class), mgr, new File("dummy"));
+        return new DefaultDaemonCommandExecuter(get(GradleLauncherFactory.class), get(ProcessEnvironment.class), mgr, new File("dummy"));
     }
 
     public EmbeddedDaemonClientServices(ServiceRegistry loggingServices, boolean displayOutput) {
         super(loggingServices, System.in);
         this.displayOutput = displayOutput;
+        add(new GlobalServicesRegistry(loggingServices));
         add(EmbeddedDaemonFactory.class, new EmbeddedDaemonFactory());
     }
 
@@ -90,7 +92,7 @@ public class EmbeddedDaemonClientServices extends DaemonClientServicesSupport {
     @Override
     protected void configureDaemonContextBuilder(DaemonContextBuilder builder) {
         builder.setUid(UUID.randomUUID().toString());
-        builder.setDaemonRegistryDir(new DaemonDir(new DaemonParameters().getBaseDir()).getRegistry());
+        builder.setDaemonRegistryDir(new DaemonDir(new DaemonParameters(new BuildLayoutParameters()).getBaseDir()).getRegistry());
     }
 
     protected DaemonServerConnector createDaemonServerConnector() {

@@ -32,15 +32,18 @@ import org.apache.ivy.plugins.repository.Resource;
 import org.apache.ivy.plugins.repository.ResourceDownloader;
 import org.apache.ivy.plugins.resolver.DependencyResolver;
 import org.apache.ivy.plugins.resolver.util.ResolvedResource;
-import org.apache.ivy.util.Message;
 import org.gradle.api.internal.artifacts.ivyservice.CacheLockingManager;
+import org.gradle.api.internal.externalresource.DefaultLocallyAvailableExternalResource;
 import org.gradle.api.internal.externalresource.ExternalResource;
+import org.gradle.api.internal.externalresource.LocallyAvailableExternalResource;
 import org.gradle.api.internal.externalresource.cached.CachedExternalResourceIndex;
 import org.gradle.api.internal.externalresource.metadata.ExternalResourceMetaData;
 import org.gradle.api.internal.file.TemporaryFileProvider;
-import org.gradle.api.internal.filestore.FileStore;
-import org.gradle.api.internal.filestore.FileStoreEntry;
 import org.gradle.internal.Factory;
+import org.gradle.internal.filestore.FileStore;
+import org.gradle.internal.resource.local.LocallyAvailableResource;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.IOException;
@@ -50,6 +53,8 @@ import java.text.ParseException;
  * A cache manager for remote repositories, that downloads files and stores them in the FileStore provided.
  */
 public class DownloadingRepositoryCacheManager extends AbstractRepositoryCacheManager {
+    private static final Logger LOGGER = LoggerFactory.getLogger(DownloadingRepositoryCacheManager.class);
+
     private final FileStore<ArtifactRevisionId> fileStore;
     private final CachedExternalResourceIndex<String> artifactUrlCachedResolutionIndex;
     private final TemporaryFileProvider temporaryFileProvider;
@@ -62,6 +67,10 @@ public class DownloadingRepositoryCacheManager extends AbstractRepositoryCacheMa
         this.artifactUrlCachedResolutionIndex = artifactUrlCachedResolutionIndex;
         this.temporaryFileProvider = temporaryFileProvider;
         this.cacheLockingManager = cacheLockingManager;
+    }
+
+    public boolean isLocal() {
+        return false;
     }
 
     public EnhancedArtifactDownloadReport download(Artifact artifact, ArtifactResourceResolver resourceResolver,
@@ -83,7 +92,7 @@ public class DownloadingRepositoryCacheManager extends AbstractRepositoryCacheMa
                     listener.startArtifactDownload(this, artifactRef, artifact, origin);
                 }
 
-                File artifactFile = downloadArtifactFile(artifact, resourceDownloader, artifactRef);
+                File artifactFile = downloadAndCacheArtifactFile(artifact, resourceDownloader, artifactRef.getResource());
 
                 adr.setDownloadTimeMillis(System.currentTimeMillis() - start);
                 adr.setSize(artifactFile.length());
@@ -105,21 +114,31 @@ public class DownloadingRepositoryCacheManager extends AbstractRepositoryCacheMa
         return adr;
     }
 
-    private File downloadArtifactFile(final Artifact artifact, final ResourceDownloader resourceDownloader, final ResolvedResource artifactRef) throws IOException {
-        final Resource resource = artifactRef.getResource();
+    private File downloadAndCacheArtifactFile(final Artifact artifact, ResourceDownloader resourceDownloader, Resource resource) throws IOException {
         final File tmpFile = temporaryFileProvider.createTemporaryFile("gradle_download", "bin");
         try {
             resourceDownloader.download(artifact, resource, tmpFile);
             return cacheLockingManager.useCache(String.format("Store %s", artifact), new Factory<File>() {
                 public File create() {
-                    FileStoreEntry fileStoreEntry = fileStore.move(artifact.getId(), tmpFile);
-                    File fileInFileStore = fileStoreEntry.getFile();
-                    if (resource instanceof ExternalResource) {
-                        ExternalResource externalResource = (ExternalResource) resource;
-                        ExternalResourceMetaData metaData = externalResource.getMetaData();
-                        artifactUrlCachedResolutionIndex.store(metaData.getLocation(), fileInFileStore, metaData);
-                    }
-                    return fileInFileStore;
+                    return fileStore.move(artifact.getId(), tmpFile).getFile();
+                }
+            });
+        } finally {
+            tmpFile.delete();
+        }
+    }
+
+    public LocallyAvailableExternalResource downloadAndCacheArtifactFile(final ArtifactRevisionId artifactId, ExternalResourceDownloader resourceDownloader, final ExternalResource resource) throws IOException {
+        final File tmpFile = temporaryFileProvider.createTemporaryFile("gradle_download", "bin");
+        try {
+            resourceDownloader.download(resource, tmpFile);
+            return cacheLockingManager.useCache(String.format("Store %s", artifactId), new Factory<LocallyAvailableExternalResource>() {
+                public LocallyAvailableExternalResource create() {
+                    LocallyAvailableResource cachedResource = fileStore.move(artifactId, tmpFile);
+                    File fileInFileStore = cachedResource.getFile();
+                    ExternalResourceMetaData metaData = resource.getMetaData();
+                    artifactUrlCachedResolutionIndex.store(metaData.getLocation(), fileInFileStore, metaData);
+                    return new DefaultLocallyAvailableExternalResource(resource.getName(), cachedResource, metaData);
                 }
             });
         } finally {
@@ -140,14 +159,12 @@ public class DownloadingRepositoryCacheManager extends AbstractRepositoryCacheMa
         ArtifactDownloadReport report = download(moduleArtifact, artifactResourceResolver, downloader, new CacheDownloadOptions().setListener(options.getListener()).setForce(true));
 
         if (report.getDownloadStatus() == DownloadStatus.FAILED) {
-            Message.warn("problem while downloading module descriptor: " + resolvedResource.getResource()
-                    + ": " + report.getDownloadDetails()
-                    + " (" + report.getDownloadTimeMillis() + "ms)");
+            LOGGER.warn("problem while downloading module descriptor: {}: {} ({} ms)", resolvedResource.getResource(), report.getDownloadDetails(), report.getDownloadTimeMillis());
             return null;
         }
 
         ModuleDescriptor md = parseModuleDescriptor(resolver, moduleArtifact, options, report.getLocalFile(), resolvedResource.getResource());
-        Message.debug("\t" + getName() + ": parsed downloaded md file for " + moduleArtifact.getModuleRevisionId() + "; parsed=" + md.getModuleRevisionId());
+        LOGGER.debug("\t{}: parsed downloaded md file for {}; parsed={}" + getName(), moduleArtifact.getModuleRevisionId(), md.getModuleRevisionId());
 
         MetadataArtifactDownloadReport madr = new MetadataArtifactDownloadReport(md.getMetadataArtifact());
         madr.setSearched(true);

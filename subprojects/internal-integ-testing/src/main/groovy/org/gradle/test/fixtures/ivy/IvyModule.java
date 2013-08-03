@@ -44,9 +44,15 @@ public interface IvyModule {
     IvyModule publishWithChangedContent();
 
     /**
-     * Publishes ivy.xml plus all artifacts
+     * Publishes ivy.xml plus all artifacts. Publishes only those artifacts whose content has changed since the
+     * last call to {@code #publish()}.
      */
     IvyModule publish();
 
     IvyDescriptor getIvy();
+
+    /**
+     * Assert that exactly the ivy.xml and jar file for this module, plus checksum files, have been published.
+     */
+    void assertIvyAndJarFilePublished();
 }

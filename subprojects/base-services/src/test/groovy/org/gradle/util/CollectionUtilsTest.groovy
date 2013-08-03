@@ -94,6 +94,11 @@ class CollectionUtilsTest extends Specification {
         collect([1, 2, 3] as Object[], transformer { it * 2 }) == [2, 4, 6]
     }
 
+    def "collect iterable"() {
+        expect:
+        collect([1, 2, 3] as Iterable, transformer { it * 2 }) == [2, 4, 6]
+    }
+
     def "list stringize"() {
         expect:
         stringize([1, 2, 3]) == ["1", "2", "3"]
@@ -281,6 +286,17 @@ class CollectionUtilsTest extends Specification {
         sort([2, 1, 3] as Set, naturalComparator) == [1, 2, 3]
         sort([], naturalComparator) == []
         sort([] as Set, naturalComparator) == []
+    }
+
+    def "scoring"() {
+        expect:
+        score([1,2,3], transformer { it.toString() }) == [
+                new ScoredItem(1, "1"),
+                new ScoredItem(2, "2"),
+                new ScoredItem(3, "3")
+        ]
+
+        score([], transformer {}) == []
     }
 
     Spec<?> spec(Closure c) {

@@ -22,6 +22,7 @@ import org.gradle.api.InvalidUserDataException;
 import org.gradle.api.UnknownDomainObjectException;
 import org.gradle.api.internal.ClosureBackedAction;
 import org.gradle.api.plugins.DeferredConfigurable;
+import org.gradle.internal.UncheckedException;
 import org.gradle.listener.ActionBroadcast;
 import org.gradle.listener.ListenerNotificationException;
 
@@ -30,9 +31,6 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
-/**
- * @author Szczepan Faber, created at: 6/24/11
- */
 public class ExtensionsStorage {
     private final Map<String, ExtensionHolder> extensions = new LinkedHashMap<String, ExtensionHolder>();
 
@@ -40,7 +38,7 @@ public class ExtensionsStorage {
         if (extensions.containsKey(name)) {
             throw new IllegalArgumentException(String.format("Cannot add extension with name '%s', as there is an extension already registered with that name.", name));
         }
-        extensions.put(name, wrap(extension));
+        extensions.put(name, wrap(name, extension));
     }
 
     public boolean hasExtension(String name) {
@@ -81,11 +79,13 @@ public class ExtensionsStorage {
     }
 
     public <T> T findByType(Class<T> type) {
+        ExtensionHolder<T> holder;
         try {
-            return getHolderByType(type).get();
+            holder = getHolderByType(type);
         } catch (UnknownDomainObjectException e) {
             return null;
         }
+        return holder.get();
     }
 
     private <T> ExtensionHolder<T> getHolderByType(Class<T> type) {
@@ -112,19 +112,15 @@ public class ExtensionsStorage {
         return extensionHolder == null ? null : extensionHolder.get();
     }
 
-    private <T> ExtensionHolder<T> wrap(T extension) {
+    private <T> ExtensionHolder<T> wrap(String name, T extension) {
         if (isDeferredConfigurable(extension)) {
-            return new DeferredConfigurableExtensionHolder<T>(extension);
+            return new DeferredConfigurableExtensionHolder<T>(name, extension);
         }
         return new ExtensionHolder<T>(extension);
     }
 
     private <T> boolean isDeferredConfigurable(T extension) {
-        if (extension.getClass().isAnnotationPresent(DeferredConfigurable.class)) {
-            return true;
-        }
-        // TODO:DAZ Fix it so that our class decoration doesn't hide annotations
-        return extension.getClass().getSuperclass() != null && extension.getClass().getSuperclass().isAnnotationPresent(DeferredConfigurable.class);
+        return extension.getClass().isAnnotationPresent(DeferredConfigurable.class);
     }
 
     private static class ExtensionHolder<T> {
@@ -153,11 +149,14 @@ public class ExtensionsStorage {
     }
 
     private static class DeferredConfigurableExtensionHolder<T> extends ExtensionHolder<T> {
+        private final String name;
         private ActionBroadcast<T> actions = new ActionBroadcast<T>();
         private boolean configured;
+        private Throwable configureFailure;
 
-        private DeferredConfigurableExtensionHolder(T extension) {
+        public DeferredConfigurableExtensionHolder(String name, T extension) {
             super(extension);
+            this.name = name;
         }
 
         public T get() {
@@ -173,7 +172,7 @@ public class ExtensionsStorage {
 
         private void configureLater(Action<? super T> action) {
             if (configured) {
-                throw new IllegalStateException("The 'publishing' extension is already configured");
+                throw new InvalidUserDataException(String.format("Cannot configure the '%s' extension after it has been accessed.", name));
             }
             actions.add(action);
         }
@@ -184,8 +183,13 @@ public class ExtensionsStorage {
                 try {
                     actions.execute(extension);
                 } catch (ListenerNotificationException e) {
-                    throw new InvalidUserDataException("A problem occurred configuring the 'publishing' extension", e.getCause());
+                    configureFailure = e.getCause();
                 }
+                actions = null;
+            }
+
+            if (configureFailure != null) {
+                throw UncheckedException.throwAsUncheckedException(configureFailure);
             }
         }
 

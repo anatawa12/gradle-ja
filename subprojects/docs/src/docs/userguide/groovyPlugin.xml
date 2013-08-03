@@ -169,64 +169,41 @@
     </section>
 
     <section>
-        <title>依存関係の管理<phrase role="original">Dependency management</phrase></title>
-        <para role="original">Because Gradle itself is partly implemented in Groovy, and its build language is also based on Groovy, Gradle already ships
-            with a Groovy library (1.8.6 as of Gradle 1.3). Nevertheless, Groovy projects need to explicitly add a Groovy dependency to
-            the appropriate configuration(s). This dependency, which can be the same or a different Groovy version than the one used internally by Gradle,
-            will then be used as a compile and runtime dependency for the project's Groovy code. It will also be used to execute the Groovy
-            compiler and Groovydoc tool, respectively.
-            <footnote><para role="original">
-                More precisely, if a <literal>GroovyCompile</literal> or <literal>Groovydoc</literal> task's <literal>groovyClasspath</literal>
-                is empty, the plugin searches the task's <literal>classpath</literal> for a
-                <literal>groovy-all(-indy)</literal> or <literal>groovy(-indy)</literal> artifact. If it finds the former, it adds the same artifact
-                to <literal>groovyClasspath</literal>. If it finds the latter, and the project has at least one repository declared, the plugin adds
-                a corresponding repository dependency to <literal>groovyClasspath</literal>.
-            </para></footnote>
+        <title>依存関係の管理 <phrase role="original">Dependency management</phrase></title>
+        <para role="original">Because Gradle's build language is based on Groovy, and parts of Gradle are implemented in Groovy, Gradle already ships
+            with a Groovy library (1.8.6 as of Gradle 1.6). Nevertheless, Groovy projects need to explicitly declare a Groovy dependency.
+            This dependency will then be used on compile and runtime class paths. It will also be used to get hold of the Groovy compiler
+            and Groovydoc tool, respectively.
         </para>
-        <para>Gradleはそれ自身が部分的にGroovyで実装されており、またビルド言語もGroovyをベースにしているので、Gradleには既にGroovyライブラリ（Gradle1.3からは1.8.6）が同梱されています。しかしGroovyプロジェクトでは、使用するGroovyを明示的に適切なコンフィグレーションに追加しなければなりません。
-            このGroovyは、（Gradleが内部的に使用するGroovyとは同じバージョンかもしれませんし違うかもしれませんが）プロジェクト内のGroovyコードのcompile依存関係およびruntime依存関係に追加されます。また、実行されるGroovyコンパイラやGroovydocツールにも使用されます。
-            <footnote><para>
-                正確に言えば、<literal>GroovyCompile</literal>タスクや<literal>Groovydoc</literal>タスクの<literal>groovyClasspath</literal>が未設定だった場合に、これらのクラスパスを設定するためにプラグインが<literal>groovy-all(-indy)</literal>か<literal>groovy(-indy)</literal>アーティファクトを探しにいくのです。
-                もし前者が見つかれば、同じアーティファクトを<literal>groovyClasspath</literal>に設定します。後者が見つかれば、そしてプロジェクトに少なくとも一つのリポジトリ定義があれば、プラグインは対応するリポジトリの依存関係を<literal>groovyClasspath</literal>に設定します。
-            </para></footnote>
+        <para>Gradleのビルド言語はGroovyをベースにしており、Gradleの一部もGroovyで実装されているので、Gradleには既にGroovyライブラリ（Gradle1.3からは1.8.6）が同梱されています。ですが、Groovyプロジェクトでは明示的にGroovyへの依存関係を宣言しなければなりません。
+            ここで宣言したGroovyへの依存関係は、コンパイルクラスパスおよび実行時クラスパスに追加されます。さらに、GroovyコンパイラおよびGroovydocツールを取得するのにも使用されます。
         </para>
         <para role="original">
-            If Groovy is used both for production code, the Groovy dependency should be added to the <literal>compile</literal>
+            If Groovy is used for production code, the Groovy dependency should be added to the <literal>compile</literal>
             configuration:
         </para>
-        <para>もしGroovyが製品コードで使われている場合は、Groovy依存関係は<literal>compile</literal>に追加してください。</para>
+        <para>Groovyが製品コードで使われている場合は、Groovy依存関係は<literal>compile</literal>コンフィギュレーションに追加してください。</para>
         <sample id="quickstartGroovyDependency" dir="groovy/quickstart" title="Groovyプラグインの設定 / Configuration of Groovy plugin">
             <sourcefile file="build.gradle" snippet="groovy-dependency"/>
         </sample>
         <para role="original">
             If Groovy is only used for test code, the Groovy dependency should be added to the <literal>testCompile</literal>
-            (but not the <literal>compile</literal>) configuration:
+            configuration:
         </para>
-        <para>もしGroovyがテストコードのみで使われている場合は、Groovy依存関係は（<literal>compile</literal>でなく）<literal>testCompile</literal>に追加してください。</para>
+        <para>Groovyがテストコードのみで使われている場合は、Groovy依存関係は<literal>testCompile</literal>コンフィギュレーションに追加してください。</para>
         <sample id="groovyTestDependency" dir="userguide/groovy/groovyDependency" title="Groovyテスト用の依存関係設定 / Configuration of Groovy test dependency">
             <sourcefile file="build.gradle" snippet="groovy-test-dependency"/>
         </sample>
         <para role="original">
-            To use the same Groovy library that ships with Gradle, declare a <literal>localGroovy()</literal> dependency. Note that
+            To use the Groovy library that ships with Gradle, declare a <literal>localGroovy()</literal> dependency. Note that
             different Gradle versions ship with different Groovy versions; as such, using <literal>localGroovy()</literal> is less
-            safe then explicitly choosing a Groovy version.
+            safe then declaring a regular Groovy dependency.
         </para>
         <para>
-            Gradleに同梱されているGroovyを使うには、<literal>localGroovy()</literal>を依存関係で宣言してください。ただ注意してほしいのは、Gradleのバージョンが異なれば同梱されているGroovyのバージョンも異なる可能性があるということです。<literal>localGroovy()</literal>は、明示的にGroovyのバージョンを指定する方法に比べると安全とは言えません。
+            Gradleに同梱されているGroovyを使うには、<literal>localGroovy()</literal>を依存関係で宣言してください。ただ注意してほしいのは、Gradleのバージョンが異なれば同梱されているGroovyのバージョンも異なる可能性があるということです。<literal>localGroovy()</literal>は、普通の宣言方法に比べると安全とは言えません。
         </para>
         <sample id="bundledGroovyDependency" dir="userguide/groovy/groovyDependency" title="同梱のGroovyを使用する依存関係設定 / Configuration of bundled Groovy dependency">
             <sourcefile file="build.gradle" snippet="bundled-groovy-dependency"/>
-        </sample>
-        <para role="original">
-            In earlier Gradle versions, the Groovy dependency was instead added to the <literal>groovy</literal> configuration.
-            This is no longer the preferred approach, but is still supported for backwards compatibility.
-        </para>
-        <para>
-            以前は、依存するGroovyを宣言するために<literal>groovy</literal>コンフィグレーションを使用していました。
-            これはもう推奨される方法ではありませんが、後方互換性のためにまだサポートされています。
-        </para>
-        <sample id="groovyConfiguration" dir="userguide/groovy/groovyDependency" title="groovyコンフィグレーションの設定 / Configuration of Groovy configuration">
-            <sourcefile file="build.gradle" snippet="groovy-configuration"/>
         </sample>
         <para role="original">The Groovy library doesn't necessarily have to come from a remote repository. It could also come from a local
             <literal>lib</literal> directory, perhaps checked in to source control:</para>
@@ -238,40 +215,38 @@
     </section>
 
     <section>
-        <title>GroovyCompileタスクとGroovydocタスクをカスタマイズする <phrase role="original">Adding custom GroovyCompile and Groovydoc tasks</phrase></title>
+        <title>Groovyクラスパスの自動設定 <phrase role="original">Automatic configuration of groovyClasspath</phrase></title>
         <para role="original">
-            When adding custom <literal>GroovyCompile</literal> and <literal>Groovydoc</literal> tasks, it's important to understand
-            that these tasks consume Groovy in two ways: on their <literal>classpath</literal>, and on their <literal>groovyClasspath</literal>.
-            The former is the regular class path required by these tools to locate referenced classes, and will typically contain more than
-            just the Groovy library. The latter is used to load the Groovy compiler and Groovydoc tool, respectively, and shouldn't contain anything
-            other than the Groovy library and its dependencies.
+            <literal>GroovyCompile</literal> and <literal>Groovydoc</literal> tasks consume Groovy in two ways: on their <literal>classpath</literal>,
+            and on their <literal>groovyClasspath</literal>. The former is used to locate classes referenced by the source code, and will typically
+            contain the Groovy library along with other libraries. The latter is used to load and execute the Groovy compiler and Groovydoc tool,
+            respectively, and should only contain the Groovy library and its dependencies.
         </para>
-        <para>
-            カスタマイズした<literal>GroovyCompile</literal>タスクや<literal>Groovydoc</literal>タスクを追加する際は、これらのタスクがGroovyを二つの用途で使用するということを理解しておく必要があります。つまり、<literal>classpath</literal>と<literal>groovyClasspath</literal>です。
-            前者はいわゆる一般的なクラスパスで、これらのツールが参照クラスを探す場所を指定します。通常Groovyだけでなく他のライブラリも含まれています。
-            後者はGroovyコンパイラとGroovydocをロードするために使われるパスで、ここにはGroovyとその依存ライブラリ以外のものが含まれるべきではありません。
-        </para>
-        <para role="original">
-            Unless <literal>groovyClasspath</literal> is explicitly configured for a task, the Groovy (base) plugin will try to infer
-            the Groovy library to be used from the task's<literal>classpath</literal>. For example, if <literal>classpath</literal> contains
-            <literal>groovy-all-2.0.5.jar</literal>, the plugin will add the same dependency to <literal>groovyClasspath</literal>. If the project
-            has at least one repository defined, an external dependency will be added (e.g. <literal>"org.codehaus.groovy:groovy-all:2.0.5"</literal>);
-            otherwise, a file dependency will be added.
-        </para>
-        <para>
-            <literal>groovyClasspath</literal>が明示的にタスクに設定されなくても、Groovy（ベース）プラグインはタスクの<literal>classpath</literal>から使用するべきGroovyライブラリを推測しようと試みます。例えば、<literal>classpath</literal>に<literal>groovy-all-2.0.5.jar</literal>が含まれていた場合、プラグインはこれと同じ依存関係をgroovyClasspathに追加します。プロジェクトに一つでもリポジトリが定義されていれば、外部依存関係（例えば<literal>"org.codehaus.groovy:groovy-all:2.0.5"</literal>）が追加され、定義されていなければファイル依存関係として追加されます。
-        </para>
-        <para role="original">
-            Note: When using the <literal>groovy</literal> rather than the <literal>groovy-all</literal> artifact, automatic configuration of
-            <literal>groovyClasspath</literal> will only work correctly if the project declares a repository that contains the <literal>groovy</literal>
-            artifact along with a descriptor (<filename>pom.xml</filename> or <filename>ivy.xml</filename>) listing its dependencies. Otherwise, only the
-            artifact itself will be added to <literal>groovyClasspath</literal>, which will likely result in a <literal>NoClassDefFoundError</literal>
-            during compilation.
-        </para>
-        <para>
-            注意: <literal>groovy-all</literal>でなく<literal>groovy</literal>アーティファクトを使っている場合、groovyClasspathの自動設定はプロジェクトがリポジトリを定義し、そのリポジトリにgroovyアーティファクトが、依存関係をリストしたディスクリプタ（<filename>pom.xml</filename>や<filename>ivy.xml</filename>）とともに置かれているときのみ正しく動作します。そうでない場合、アーティファクトのみが<literal>groovyClasspath</literal>に追加されることになるので、おそらくコンパイル時に<literal>NoClassDefFoundError</literal>が発生することになるでしょう。
+        <para><literal>GroovyCompile</literal>タスクと<literal>Groovydoc</literal>タスクは二つの用途でGroovyを使用します。タスクの<literal>classpath</literal>と<literal>groovyClasspath</literal>です。前者はソースコードから参照されているクラスを配置するパスで、Groovyライブラリも典型的には他のライブラリと一緒に格納されます。後者はGroovyコンパイラとGroovydocツールをロードして実行するために使用されるパスで、Groovyライブラリとその依存関係のみが配置されていなければなりません。</para>
+        <para><phrase role="original">
+            Unless a task's <literal>groovyClasspath</literal> is configured explicitly, the Groovy (base) plugin will try to infer it
+            from the task's <literal>classpath</literal>. This is done as follows:
+            </phrase>
+            <literal>groovyClasspath</literal>が明示的に設定されていない場合、Groovy(base)プラグインはタスクの<literal>classpath</literal>から以下のように設定値を推論しようとします。
+            <itemizedlist>
+                <listitem><phrase role="original">
+                    If a <literal>groovy-all(-indy)</literal> Jar is found on <literal>classpath</literal>, the same Jar will be added to
+                    <literal>groovyClasspath</literal>.</phrase>
+                    <literal>groovy-all(-indy)</literal>のJarが<literal>classpath</literal>に見つかれば、同じJarを<literal>groovyClasspath</literal>にも追加します。
+                </listitem>
+                <listitem><phrase role="original">
+                    If a <literal>groovy(-indy)</literal> Jar is found on <literal>classpath</literal>, and the project has at least one repository declared,
+                    a corresponding <literal>groovy(-indy)</literal> repository dependency will be added to <literal>groovyClasspath</literal>.</phrase>
+                    <literal>groovy(-indy)</literal>のJarが<literal>classpath</literal>に見つかれば、そして少なくとも一つのリポジトリがプロジェクトに設定されていれば、リポジトリから対応する<literal>groovy(-indy)</literal>の依存関係を取得して<literal>groovyClasspath</literal>に追加します。
+                </listitem>
+                <listitem>
+                    <phrase role="original">Otherwise, execution of the task will fail with a message saying that <literal>groovyClasspath</literal> could not be inferred.</phrase>
+                    それ以外の場合は、<literal>groovyClasspath</literal>の推論に失敗した旨のメッセージを出力してタスクは失敗します。
+                </listitem>
+            </itemizedlist>
         </para>
     </section>
+
     <section>
         <title>規約プロパティ<phrase role="original">Convention properties</phrase></title>
         <para role="original">The Groovy plugin does not add any convention properties to the project.</para>

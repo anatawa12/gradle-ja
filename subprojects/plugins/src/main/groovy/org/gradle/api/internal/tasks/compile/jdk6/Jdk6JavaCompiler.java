@@ -15,8 +15,11 @@
  */
 package org.gradle.api.internal.tasks.compile.jdk6;
 
-import org.gradle.api.internal.tasks.compile.*;
+import org.gradle.api.internal.tasks.SimpleWorkResult;
+import org.gradle.api.internal.tasks.compile.CompilationFailedException;
 import org.gradle.api.internal.tasks.compile.Compiler;
+import org.gradle.api.internal.tasks.compile.JavaCompileSpec;
+import org.gradle.api.internal.tasks.compile.JavaCompilerArgumentsBuilder;
 import org.gradle.api.tasks.WorkResult;
 import org.gradle.api.tasks.compile.CompileOptions;
 import org.slf4j.Logger;
@@ -34,7 +37,7 @@ public class Jdk6JavaCompiler implements Compiler<JavaCompileSpec>, Serializable
     private static final Logger LOGGER = LoggerFactory.getLogger(Jdk6JavaCompiler.class);
 
     public WorkResult execute(JavaCompileSpec spec) {
-        LOGGER.info("Compiling with JDK 6 Java compiler API.");
+        LOGGER.info("Compiling with JDK Java compiler API.");
 
         JavaCompiler.CompilationTask task = createCompileTask(spec);
         boolean success = task.call();

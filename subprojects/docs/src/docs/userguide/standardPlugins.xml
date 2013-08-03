@@ -1,18 +1,3 @@
-﻿<!--
-  ~ Copyright 2010 the original author or authors.
-  ~
-  ~ Licensed under the Apache License, Version 2.0 (the "License");
-  ~ you may not use this file except in compliance with the License.
-  ~ You may obtain a copy of the License at
-  ~
-  ~      http://www.apache.org/licenses/LICENSE-2.0
-  ~
-  ~ Unless required by applicable law or agreed to in writing, software
-  ~ distributed under the License is distributed on an "AS IS" BASIS,
-  ~ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-  ~ See the License for the specific language governing permissions and
-  ~ limitations under the License.
-  -->
 <chapter id="standard_plugins" xml:lang="ja">
     <title>標準Gradleプラグイン<phrase role="original">Standard Gradle plugins</phrase></title>
     <para role="original">There are a number of plugins included in the Gradle distribution. These are listed below.
@@ -20,8 +5,8 @@
     <para>Gradleの配布物にはいくつかのプラグインが同梱されています。以下にその一覧を掲載します。</para>
     <section>
         <title>言語プラグイン<phrase role="original">Language plugins</phrase></title>
-        <para role="original">These plugins add support for various languages which can be compiled and executed in the JVM.</para>
-        <para>これらのプラグインは、Gradleに様々な言語サポートを追加するものです。コンパイルやJVM上でのプログラム実行などを行います。</para>
+        <para role="original">These plugins add support for various languages which can be compiled for and executed in the JVM.</para>
+        <para>これらのプラグインは、Gradleに様々な言語サポートを追加します。JVMに向けたコンパイルやJVM上でのプログラム実行などを行います。</para>
         <table>
             <title>言語プラグイン<phrase role="original">Language plugins</phrase></title>
             <thead>
@@ -91,9 +76,9 @@
                 </td>
                 <td>-</td>
                 <td>
-                    <para>Adds support for generating parsers using <ulink url="http://www.antlr.org/">Antlr</ulink>.
+                    <para role="original">Adds support for generating parsers using <ulink url="http://www.antlr.org/">Antlr</ulink>.
                     </para>
-                    <para><ulink url="http://www.antlr.org/">ANTLR</ulink>を使ったパーサーの生成をサポートします。</para>
+                    <para><ulink url="http://www.antlr.org/">Antlr</ulink>を使ったパーサーの生成をサポートします。</para>
                 </td>
             </tr>
         </table>
@@ -159,8 +144,8 @@
     </section>
     <section>
         <title>統合プラグイン<phrase role="original">Integration plugins</phrase></title>
-        <para role="original">These plugins provide some integration with various build and runtime technologies.</para>
-        <para>これらのプラグインは、様々なビルド機能や実行方法をプロジェクトに統合して使用できるようにします。</para>
+        <para role="original">These plugins provide some integration with various runtime technologies.</para>
+        <para>これらのプラグインは、様々なランタイムをプロジェクトに統合して使用できるようにします。</para>
         <table>
             <title>統合プラグイン<phrase role="original">Integration plugins</phrase></title>
             <thead>
@@ -171,19 +156,6 @@
                     <td><phrase role="original">Description</phrase> 説明</td>
                 </tr>
             </thead>
-            <tr>
-                <td>
-                    <link linkend='announce_plugin'>
-                        <literal>announce</literal>
-                    </link>
-                </td>
-                <td>-</td>
-                <td>-</td>
-                <td>
-                    <para role="original">Publish messages to your favourite platforms, such as Twitter or Growl.</para>
-                    <para>TwitterやGrowlなど、任意のプラットフォーム上にメッセージを流します。</para>
-                </td>
-            </tr>
             <tr>
                 <td>
                     <link linkend='application_plugin'>
@@ -198,19 +170,6 @@
                     <para role="original">Adds tasks for running and bundling a Java project as a command-line application.
                     </para>
                     <para>プロジェクトをコマンドラインアプリケーションとしてビルド、実行するためのタスクを追加します。</para>
-                </td>
-            </tr>
-            <tr>
-                <td>
-                    <link linkend='build_announcements_plugin'>
-                        <literal>build-announcements</literal>
-                    </link>
-                </td>
-                <td>announce</td>
-                <td>-</td>
-                <td>
-                    <para role="original">Sends local announcements to your desktop about interesting events in the build lifecycle.</para>
-                    <para>ビルドライフサイクル中に特定のイベントが発生した際、任意でデスクトップ上にメッセージを送信します。</para>
                 </td>
             </tr>
             <tr>
@@ -296,8 +255,8 @@
     </section>
     <section>
         <title>試験的な統合プラグイン <phrase role="original">Incubating integration plugins</phrase></title>
-        <para role="original">These plugins provide some integration with various build and runtime technologies.</para>
-        <para>これらのプラグインは、様々なビルド機能や実行方法をプロジェクトに統合して使用できるようにします。</para>
+        <para role="original">These plugins provide some integration with various runtime technologies.</para>
+        <para>これらのプラグインは、様々なランタイムをプロジェクトに統合して使用できるようにします。</para>
         <table>
             <title>試験的な統合プラグイン <phrase role="original">Incubating integration plugins</phrase></title>
             <thead>
@@ -310,15 +269,29 @@
             </thead>
             <tr>
                 <td>
+                    <link linkend="distribution_plugin">
+                        <literal>distribution</literal>
+                    </link>
+                </td>
+                <td>-</td>
+                <td>-</td>
+                <td>
+                    <para role="original">Adds support for building ZIP and TAR distributions.
+                    </para>
+                    <para>ZIPおよびTARの配布物をビルドできるようにします。</para>
+                </td>
+            </tr>
+            <tr>
+                <td>
                     <link linkend="javaLibraryDistribution_plugin">
                         <literal>java-library-distribution</literal>
                     </link>
                 </td>
-                <td><literal>java</literal></td>
+                <td><literal>java</literal>, <literal>distribution</literal></td>
                 <td>-</td>
                 <td>
-                    <para role="original">Adds support for building a ZIP distribution for a Java library.</para>
-                    <para>JavaライブラリをZIPの配布物としてビルドできるようにします。</para>
+                    <para role="original">Adds support for building ZIP and TAR distributions for a Java library.</para>
+                    <para>JavaライブラリをZIPおよびTARの配布物としてビルドできるようにします。</para>
                 </td>
             </tr>
             <tr>
@@ -328,7 +301,7 @@
                     </link>
                 </td>
                 <td>-</td>
-                <td>-</td>
+                <td><literal>java</literal>, <literal>war</literal></td>
                 <td>
                     <para role="original">This plugin provides a new DSL to support publishing artifacts to Ivy repositories, which improves on the existing DSL.
                     </para>
@@ -349,42 +322,14 @@
                     <para>Mavenリポジトリへアーティファクトを公開できるようにします。DSLが既存のものから新しく改善されています。</para>
                 </td>
             </tr>
-            <tr>
-                <td>
-                    <link linkend="bootstrap_plugin">
-                        <literal>maven2Gradle</literal>
-                    </link>
-                </td>
-                <td>-</td>
-                <td>-</td>
-                <td>
-                    <para role="original">Adds support for converting an existing Maven build into a Gradle project.
-                    </para>
-                    <para>MavenプロジェクトからGradleプロジェクトへの変換をサポートします。</para>
-                </td>
-            </tr>
-            <tr>
-                <td>
-                    <link linkend="buildDashboard_plugin">
-                        <literal>build-dashboard</literal>
-                    </link>
-                </td>
-                <td>reporting-base</td>
-                <td>-</td>
-                <td>
-                    <para role="original">Generates build dashboard report.
-                    </para>
-                    <para>ビルドのダッシュボードを生成します。</para>
-                </td>
-            </tr>
         </table>
     </section>
     <section>
-        <title>ソフトウェア開発プラグイン<phrase role="original">Software development plugins</phrase></title>
+        <title>ソフトウェア開発プラグイン <phrase role="original">Software development plugins</phrase></title>
         <para role="original">These plugins provide help with your software development process.</para>
         <para>これらのプラグインは、ソフトウェアの開発プロセスを支援します。</para>
         <table>
-            <title>ソフトウェア開発プラグイン<phrase role="original">Software development plugins</phrase></title>
+            <title>ソフトウェア開発プラグイン <phrase role="original">Software development plugins</phrase></title>
             <thead>
                 <tr>
                     <td><phrase role="original">Plugin Id</phrase> プラグインID</td>
@@ -393,6 +338,32 @@
                     <td><phrase role="original">Description</phrase> 説明</td>
                 </tr>
             </thead>
+            <tr>
+                <td>
+                    <link linkend='announce_plugin'>
+                        <literal>announce</literal>
+                    </link>
+                </td>
+                <td>-</td>
+                <td>-</td>
+                <td>
+                    <para role="original">Publish messages to your favourite platforms, such as Twitter or Growl.</para>
+                    <para>TwitterやGrowlなど、任意のプラットフォーム上にメッセージを発行します。</para>
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    <link linkend='build_announcements_plugin'>
+                        <literal>build-announcements</literal>
+                    </link>
+                </td>
+                <td>announce</td>
+                <td>-</td>
+                <td>
+                    <para role="original">Sends local announcements to your desktop about interesting events in the build lifecycle.</para>
+                    <para>ビルドライフサイクルの各種イベントのうち、指定したものについてデスクトップ上にローカルで通知します。</para>
+                </td>
+            </tr>
             <tr>
                 <td>
                     <link linkend='checkstyle_plugin'>
@@ -575,7 +546,7 @@
                     </link>
                 </td>
                 <td>-</td>
-                <td>-</td>
+                <td>java-base, java, jacoco</td>
                 <td>
                     <para role="original">Provides integration with the
                         <ulink url="http://www.sonarsource.org">Sonar</ulink>
@@ -602,18 +573,72 @@
             </thead>
             <tr>
                 <td>
+                    <link linkend="buildDashboard_plugin">
+                        <literal>build-dashboard</literal>
+                    </link>
+                </td>
+                <td>reporting-base</td>
+                <td>-</td>
+                <td>
+                    <para>Generates build dashboard report.
+                    </para>
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    <link linkend="build_setup_plugin">
+                        <literal>build-setup</literal>
+                    </link>
+                </td>
+                <td>wrapper</td>
+                <td>-</td>
+                <td>
+                    <para>Adds support for initializing a new Gradle build. Handles converting a Maven build to a Gradle build.
+                    </para>
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    <link linkend='jacoco_plugin'>
+                        <literal>jacoco</literal>
+                    </link>
+                </td>
+                <td>reporting-base</td>
+                <td>java</td>
+                <td>
+                    <para>Provides integration with the
+                        <ulink url="http://www.eclemma.org/jacoco/">JaCoCo</ulink>
+                            code coverage library for Java.
+                    </para>
+                </td>
+            </tr>
+            <tr>
+                <td>
                     <link linkend='sonar_runner_plugin'>
                         <literal>sonar-runner</literal>
                     </link>
                 </td>
                 <td>-</td>
-                <td>-</td>
+                <td>java-base, java, jacoco</td>
                 <td>
                     <para role="original">Provides integration with the
                         <ulink url="http://www.sonarsource.org">Sonar</ulink>
                         code quality platform. Superceeds the <link linkend='sonar_plugin'><literal>sonar</literal></link> plugin.
                     </para>
                     <para><ulink url="http://www.sonarsource.org">Sonar</ulink>コード品質プラットフォームとの連携機能を提供します。<link linkend='sonar_plugin'><literal>sonar</literal></link>プラグインの後継プラグインです。</para>
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    <link linkend="wrapper_plugin">
+                        <literal>wrapper</literal>
+                    </link>
+                </td>
+                <td>-</td>
+                <td>-</td>
+                <td>
+                    <para>Adds a <apilink class="org.gradle.api.tasks.wrapper.Wrapper"/> task for generating Gradle wrapper files.
+                    </para>
                 </td>
             </tr>
         </table>

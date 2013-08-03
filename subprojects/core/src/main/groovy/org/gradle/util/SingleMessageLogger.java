@@ -16,12 +16,14 @@
 
 package org.gradle.util;
 
+import net.jcip.annotations.ThreadSafe;
 import org.apache.commons.lang.StringUtils;
-import org.codehaus.groovy.runtime.StackTraceUtils;
-import org.gradle.api.logging.LogLevel;
 import org.gradle.api.logging.Logger;
 import org.gradle.api.logging.Logging;
 import org.gradle.internal.Factory;
+import org.gradle.internal.featurelifecycle.DeprecatedFeatureUsage;
+import org.gradle.internal.featurelifecycle.LoggingDeprecatedFeatureHandler;
+import org.gradle.internal.featurelifecycle.UsageLocationReporter;
 
 import java.util.Collections;
 import java.util.HashSet;
@@ -29,15 +31,11 @@ import java.util.Set;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
+@ThreadSafe
 public class SingleMessageLogger {
-
     private static final Logger LOGGER = Logging.getLogger(DeprecationLogger.class);
-    private static final Set<String> PLUGINS = Collections.synchronizedSet(new HashSet<String>());
-    private static final Set<String> TASKS = Collections.synchronizedSet(new HashSet<String>());
-    private static final Set<String> METHODS = Collections.synchronizedSet(new HashSet<String>());
     private static final Set<String> DYNAMIC_PROPERTIES = Collections.synchronizedSet(new HashSet<String>());
-    private static final Set<String> PROPERTIES = Collections.synchronizedSet(new HashSet<String>());
-    private static final Set<String> NAMED_PARAMETERS = Collections.synchronizedSet(new HashSet<String>());
+    private static final Set<String> FEATURES = Collections.synchronizedSet(new HashSet<String>());
 
     private static final ThreadLocal<Boolean> ENABLED = new ThreadLocal<Boolean>() {
         @Override
@@ -46,128 +44,106 @@ public class SingleMessageLogger {
         }
     };
 
-    private static final ThreadLocal<Boolean> LOG_TRACE = new ThreadLocal<Boolean>() {
-        @Override
-        protected Boolean initialValue() {
-            return false;
-        }
-    };
-
     public static final String ORG_GRADLE_DEPRECATION_TRACE_PROPERTY_NAME = "org.gradle.deprecation.trace";
+    public static final String INCUBATION_MESSAGE = "%s is an incubating feature.";
 
+    private static final Lock LOCK = new ReentrantLock();
+    private static LoggingDeprecatedFeatureHandler handler = new LoggingDeprecatedFeatureHandler();
     private static String deprecationMessage;
-    private static Lock deprecationMessageLock = new ReentrantLock();
-    public static final String INCUBATION_MESSAGE = "%s is an incubating feature. Enjoy it and let us know how it works for you.";
 
     private static String getDeprecationMessage() {
-        if (deprecationMessage == null) {
-            deprecationMessageLock.lock();
-            try {
-                if (deprecationMessage == null) {
-                    String messageBase = "has been deprecated and is scheduled to be removed in";
-                    String when;
+        LOCK.lock();
+        try {
+            if (deprecationMessage == null) {
+                String messageBase = "has been deprecated and is scheduled to be removed in";
 
-                    GradleVersion currentVersion = GradleVersion.current();
-                    int versionMajor = currentVersion.getMajor();
-                    if (versionMajor == -1) { // don't understand version number
-                        when = "the next major version of Gradle";
-                    } else {
-                        when = String.format("Gradle %d.0", versionMajor + 1);
-                    }
+                GradleVersion currentVersion = GradleVersion.current();
+                String when = String.format("Gradle %s", currentVersion.getNextMajor().getVersion());
 
-                    deprecationMessage = String.format("%s %s", messageBase, when);
-                }
-            } finally {
-                deprecationMessageLock.unlock();
+                deprecationMessage = String.format("%s %s", messageBase, when);
             }
+            return deprecationMessage;
+        } finally {
+            LOCK.unlock();
         }
-
-        return deprecationMessage;
     }
 
     public static void reset() {
-        PLUGINS.clear();
-        METHODS.clear();
-        PROPERTIES.clear();
-        NAMED_PARAMETERS.clear();
         DYNAMIC_PROPERTIES.clear();
+        FEATURES.clear();
+        LOCK.lock();
+        try {
+            handler = new LoggingDeprecatedFeatureHandler();
+        } finally {
+            LOCK.unlock();
+        }
+    }
+
+    public static void useLocationReporter(UsageLocationReporter reporter) {
+        LOCK.lock();
+        try {
+            handler.setLocationReporter(reporter);
+        } finally {
+            LOCK.unlock();
+        }
     }
 
     public static void nagUserOfReplacedPlugin(String pluginName, String replacement) {
-        if (isEnabled() && PLUGINS.add(pluginName)) {
-            LOGGER.warn(String.format(
-                    "The %s plugin %S. Please use the %s plugin instead.",
-                    pluginName, getDeprecationMessage(), replacement));
-            logTraceIfNecessary();
-        }
+        nagUserWith(String.format(
+                "The %s plugin %s. Please use the %s plugin instead.",
+                pluginName, getDeprecationMessage(), replacement));
     }
 
     public static void nagUserOfReplacedTaskType(String taskName, String replacement) {
-        if (isEnabled() && TASKS.add(taskName)) {
-            LOGGER.warn(String.format(
-                    "The %s task type %s. Please use the %s instead.",
-                    taskName, getDeprecationMessage(), replacement));
-            logTraceIfNecessary();
-        }
+        nagUserWith(String.format(
+                "The %s task type %s. Please use the %s instead.",
+                taskName, getDeprecationMessage(), replacement));
     }
 
     public static void nagUserOfReplacedMethod(String methodName, String replacement) {
-        if (isEnabled() && METHODS.add(methodName)) {
-            LOGGER.warn(String.format(
-                    "The %s method %s. Please use the %s method instead.",
-                    methodName, getDeprecationMessage(), replacement));
-            logTraceIfNecessary();
-        }
+        nagUserWith(String.format(
+                "The %s method %s. Please use the %s method instead.",
+                methodName, getDeprecationMessage(), replacement));
     }
 
     public static void nagUserOfReplacedProperty(String propertyName, String replacement) {
-        if (isEnabled() && PROPERTIES.add(propertyName)) {
-            LOGGER.warn(String.format(
-                    "The %s property %s. Please use the %s property instead.",
-                    propertyName, getDeprecationMessage(), replacement));
-            logTraceIfNecessary();
-        }
+        nagUserWith(String.format(
+                "The %s property %s. Please use the %s property instead.",
+                propertyName, getDeprecationMessage(), replacement));
     }
 
     public static void nagUserOfDiscontinuedMethod(String methodName) {
-        if (isEnabled() && METHODS.add(methodName)) {
-            LOGGER.warn(String.format("The %s method %s.",
-                    methodName, getDeprecationMessage()));
-            logTraceIfNecessary();
-        }
+        nagUserWith(String.format("The %s method %s.",
+                methodName, getDeprecationMessage()));
     }
 
     public static void nagUserOfDiscontinuedProperty(String propertyName, String advice) {
-        if (isEnabled() && PROPERTIES.add(propertyName)) {
-            LOGGER.warn(String.format("The %s property %s. %s",
-                    propertyName, getDeprecationMessage(), advice));
-            logTraceIfNecessary();
-        }
+        nagUserWith(String.format("The %s property %s. %s",
+                propertyName, getDeprecationMessage(), advice));
+    }
+
+    public static void nagUserOfDiscontinuedConfiguration(String configurationName, String advice) {
+        nagUserWith(String.format("The %s configuration %s. %s",
+                configurationName, getDeprecationMessage(), advice));
     }
 
     public static void nagUserOfReplacedNamedParameter(String parameterName, String replacement) {
-        if (isEnabled() && NAMED_PARAMETERS.add(parameterName)) {
-            LOGGER.warn(String.format(
-                    "The %s named parameter %s. Please use the %s named parameter instead.",
-                    parameterName, getDeprecationMessage(), replacement));
-            logTraceIfNecessary();
-        }
+        nagUserWith(String.format(
+                "The %s named parameter %s. Please use the %s named parameter instead.",
+                parameterName, getDeprecationMessage(), replacement));
     }
 
     /**
      * Try to avoid using this nagging method. The other methods use a consistent wording for when things will be removed.
      */
     public static void nagUserWith(String message) {
-        inform(LogLevel.WARN, message);
-        logTraceIfNecessary();
-    }
-
-    /**
-     * Try to avoid using this nagging method. The other methods use a consistent wording for when things will be removed.
-     */
-    public static void inform(LogLevel level, String message) {
-        if (isEnabled() && METHODS.add(message)) {
-            LOGGER.log(level, message);
+        if (isEnabled()) {
+            LOCK.lock();
+            try {
+                handler.deprecatedFeatureUsed(new DeprecatedFeatureUsage(message, SingleMessageLogger.class));
+            } finally {
+                LOCK.unlock();
+            }
         }
     }
 
@@ -204,27 +180,8 @@ public class SingleMessageLogger {
         }
     }
 
-    private static boolean isTraceLoggingEnabled() {
-        return Boolean.getBoolean(ORG_GRADLE_DEPRECATION_TRACE_PROPERTY_NAME) || LOG_TRACE.get();
-    }
-
-    private static void logTraceIfNecessary() {
-        if (isTraceLoggingEnabled()) {
-            StackTraceElement[] stack = StackTraceUtils.sanitize(new Exception()).getStackTrace();
-            for (StackTraceElement frame : stack) {
-                if (!frame.getClassName().startsWith(DeprecationLogger.class.getName())) {
-                    LOGGER.warn("    {}", frame.toString());
-                }
-            }
-        }
-    }
-
     private static boolean isEnabled() {
         return ENABLED.get();
-    }
-
-    public static void setLogTrace(boolean flag) {
-        LOG_TRACE.set(flag);
     }
 
     public static void nagUserAboutDynamicProperty(String propertyName, Object target, Object value) {
@@ -243,7 +200,9 @@ public class SingleMessageLogger {
         }
     }
 
-    public static void informAboutIncubating(String incubatingFeature) {
-        inform(LogLevel.LIFECYCLE, String.format(INCUBATION_MESSAGE, incubatingFeature));
+    public static void incubatingFeatureUsed(String incubatingFeature) {
+        if (FEATURES.add(incubatingFeature)) {
+            LOGGER.lifecycle(String.format(INCUBATION_MESSAGE, incubatingFeature));
+        }
     }
 }

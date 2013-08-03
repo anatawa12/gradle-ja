@@ -16,34 +16,33 @@
 
 package org.gradle.api.internal.artifacts.repositories.resolver;
 
-import com.google.common.collect.Iterables;
 import org.apache.ivy.core.module.descriptor.Artifact;
 import org.gradle.api.internal.resource.ResourceException;
 import org.gradle.api.internal.resource.ResourceNotFoundException;
 
+import java.util.HashMap;
 import java.util.HashSet;
-import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 public class DefaultVersionList extends AbstractVersionList {
-    private final Set<String> versions = new HashSet<String>();
-
-    public DefaultVersionList(List<String> versionStrings) {
-        this.versions.addAll(versionStrings);
-    }
+    private final Map<String, ListedVersion> versions = new HashMap<String, ListedVersion>();
 
     public DefaultVersionList() {
     }
 
-    protected void add(Iterable<String> versionStrings) {
-        Iterables.addAll(versions, versionStrings);
+    protected void add(ListedVersion newVersion) {
+        if (versions.containsKey(newVersion.getVersion())) {
+            return;
+        }
+        versions.put(newVersion.getVersion(), newVersion);
     }
 
     public void visit(ResourcePattern pattern, Artifact artifact) throws ResourceNotFoundException, ResourceException {
         throw new UnsupportedOperationException();
     }
 
-    public Set<String> getVersionStrings() {
-        return versions;
+    public Set<ListedVersion> getVersions() {
+        return new HashSet<ListedVersion>(versions.values());
     }
 }

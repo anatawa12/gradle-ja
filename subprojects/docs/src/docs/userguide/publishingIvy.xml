@@ -18,11 +18,11 @@
     <title>Ivy Publishing (new)</title>
     <note>
         <para>
-            This chapter describes the new <emphasis>incubating</emphasis> Ivy publishing support provided by the “<literal>ivy-publish</literal>”
+            This chapter describes the new <link linkend="feature_lifecycle">incubating</link> Ivy publishing support provided by the “<literal>ivy-publish</literal>”
             plugin. Eventually this new publishing support will replace publishing via the <literal>Upload</literal> task.
         </para>
         <para>
-            If you are looking for documentation on 'traditional' Ivy publishing using the <literal>Upload</literal> task please see
+            If you are looking for documentation on the original Ivy publishing support using the <literal>Upload</literal> task please see
             <xref linkend="artifact_management"/>.
         </para>
     </note>
@@ -141,10 +141,10 @@
             </para>
         </section>
         <section>
-            <title>Default identity values for the published project</title>
+            <title>Identity values for the published project</title>
             <para>
-                The generated Ivy module descriptor file contains an<literal>&lt;info&gt;</literal> tag that identifies the module.
-                The identity values are derived from the following project properties:
+                The generated Ivy module descriptor file contains an <literal>&lt;info&gt;</literal> tag that identifies the module.
+                The default identity values are derived from the following project properties:
             </para>
             <itemizedlist>
                 <listitem><literal>organisation</literal> - <apilink class="org.gradle.api.Project" method="getGroup()" /></listitem>
@@ -152,8 +152,21 @@
                 <listitem><literal>revision</literal> - <apilink class="org.gradle.api.Project" method="getVersion()" /></listitem>
                 <listitem><literal>status</literal> - <apilink class="org.gradle.api.Project" method="getStatus()" /></listitem>
             </itemizedlist>
+
             <para>
-                Note that you can set the value of these project properties in your build script, with the exception of <literal>name</literal>.
+                Overriding the default identity values is easy: simply specify the <literal>organisation</literal>, <literal>module</literal>
+                or <literal>revision</literal> attributes when configuring the <literal>IvyPublication</literal>.
+            </para>
+            <sample dir="ivy-publish/multiple-publications" id="publishing_ivy:publish-customise-identity" title="Customising the publication identity">
+                <sourcefile file="build.gradle" snippet="customise-identity" />
+            </sample>
+            <tip>
+                Certain repositories are not able to handle all supported characters.
+                For example, the ':' character cannot be used as an identifier when publishing to a filesystem-backed repository on Windows.
+            </tip>
+            <para>
+                Gradle will handle any valid Unicode character for organisation, module and revision (as well as artifact name, extension and classifier).
+                The only values that are explicitly prohibited are '<literal>\</literal>', '<literal>/</literal>' and any ISO control character. The supplied values are validated early in publication.
             </para>
         </section>
         <section>
@@ -179,6 +192,20 @@
             </para>
             <para>
                 The identifier (organisation, module, revision) of the published module is an exception; these values cannot be modified in the descriptor using the `withXML` hook.
+            </para>
+        </section>
+        <section>
+            <title>Publishing multiple modules</title>
+            <para>
+                Sometimes it's useful to publish multiple modules from your Gradle build, without creating a separate Gradle subproject.
+                An example is publishing a separate API and implementation jar for your library. With Gradle this is simple:
+            </para>
+            <sample dir="ivy-publish/multiple-publications" id="publishing_ivy:publish-multiple-publications" title="Publishing multiple modules from a single project">
+                <sourcefile file="build.gradle" snippet="multiple-publications" />
+            </sample>
+            <para>
+                If a project defines multiple publications then Gradle will publish each of these to the defined repositories. Each publication
+                must be given a unique identity as described above.
             </para>
         </section>
     </section>
@@ -236,16 +263,29 @@
         <para>
             The “<literal>ivy-publish</literal>” plugin automatically wires in one <apilink class="org.gradle.api.publish.ivy.tasks.GenerateIvyDescriptor" /> task
             for each registered <apilink class="org.gradle.api.publish.ivy.IvyPublication" />.
-            This task is given a name based on the name of the publication:  "<literal>generate«<emphasis>NAME OF PUBLICATION</emphasis>»IvyModuleDescriptor</literal>".
-            So in the above example where the publication is named "<literal>ivyJava</literal>", the task will be named "<literal>generateIvyJavaIvyModuleDescriptor</literal>".
+            This task is given a name based on the name of the publication:  "<literal>generateDescriptorFileFor«<emphasis>NAME OF PUBLICATION</emphasis>»Publication</literal>".
+            So in the above example where the publication is named "<literal>ivyJava</literal>", the task will be named "<literal>generateDescriptorFileForIvyJavaPublication</literal>".
         </para>
         <para>
             You can specify where the generated Ivy file will be located by setting the <literal>destination</literal> property on the generate task.
             By default this file is generated to <literal>build/publications/«<emphasis>NAME OF PUBLICATION</emphasis>»/ivy.xml</literal>.
         </para>
-        <sample dir="ivy-publish/descriptor-customization" id="generateIvyModuleDescriptor" title="Generating the Ivy module descriptor file">
+        <sample dir="ivy-publish/descriptor-customization" id="publishingIvyGenerateDescriptor" title="Generating the Ivy module descriptor file">
             <sourcefile file="build.gradle" snippet="generate" />
+            <output args="generateDescriptorFileForIvyCustomPublication"/>
         </sample>
+        <note>
+            <para>
+                The “<literal>ivy-publish</literal>” plugin leverages some experimental support for late plugin configuration,
+                and the <literal>GenerateIvyDescriptor</literal> task will not be constructed until the publishing extension is configured.
+                The simplest way to ensure that the publishing plugin is configured when you attempt to access the <literal>GenerateIvyDescriptor</literal> task
+                is to place the access inside a <literal>publishing</literal> block, as the above example demonstrates.
+            </para>
+            <para>
+                The same applies to any attempt to access publication-specific tasks like <apilink class="org.gradle.api.publish.ivy.tasks.PublishToIvyRepository" />.
+                These tasks should be referenced from within a <literal>publishing</literal> block.
+            </para>
+        </note>
     </section>
     <section id="publishing_ivy:example">
         <title>Complete example</title>
@@ -277,7 +317,7 @@
     <section id="publishing_ivy:future">
         <title>Future features</title>
         <para>
-            The “<literal>ivy-publish</literal>” plugin functionality as described above is incomplete, as the feature is still <firstterm>incubating</firstterm>.
+            The “<literal>ivy-publish</literal>” plugin functionality as described above is incomplete, as the feature is still <link linkend="feature_lifecycle">incubating</link>.
             Over the coming Gradle releases, the functionality will be expanded to include (but not limited to):
         </para>
         <itemizedlist>

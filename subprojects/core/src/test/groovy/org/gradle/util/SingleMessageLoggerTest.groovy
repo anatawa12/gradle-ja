@@ -19,24 +19,31 @@ package org.gradle.util
 import org.gradle.internal.Factory
 import org.gradle.logging.ConfigureLogging
 import org.gradle.logging.TestAppender
+import org.gradle.test.fixtures.concurrent.ConcurrentSpec
 import org.junit.Rule
-import spock.lang.Specification
 
-class SingleMessageLoggerTest extends Specification {
+class SingleMessageLoggerTest extends ConcurrentSpec {
     final TestAppender appender = new TestAppender()
     @Rule final ConfigureLogging logging = new ConfigureLogging(appender)
 
-    public void cleanup() {
+    def cleanup() {
         SingleMessageLogger.reset()
     }
 
-    def "logs deprecation warning once"() {
+    def "logs deprecation warning once until reset"() {
         when:
         SingleMessageLogger.nagUserWith("nag")
         SingleMessageLogger.nagUserWith("nag")
 
         then:
         appender.toString() == '[WARN nag]'
+
+        when:
+        SingleMessageLogger.reset()
+        SingleMessageLogger.nagUserWith("nag")
+
+        then:
+        appender.toString() == '[WARN nag][WARN nag]'
     }
 
     def "does not log warning while disabled with factory"() {
@@ -54,6 +61,9 @@ class SingleMessageLoggerTest extends Specification {
             return "result"
         }
         0 * _._
+
+        and:
+        appender.toString().length() == 0
     }
 
     def "does not log warning while disabled with action"() {
@@ -65,19 +75,40 @@ class SingleMessageLoggerTest extends Specification {
         then:
         1 * action.run()
         0 * _._
+
+        and:
+        appender.toString().length() == 0
+    }
+
+    def "warnings are disabled for the current thread only"() {
+        when:
+        async {
+            start {
+                thread.blockUntil.disabled
+                SingleMessageLogger.nagUserWith("nag")
+                instant.logged
+            }
+            start {
+                SingleMessageLogger.whileDisabled {
+                    instant.disabled
+                    SingleMessageLogger.nagUserWith("ignored")
+                    thread.blockUntil.logged
+                }
+            }
+        }
+
+        then:
+        appender.toString() == '[WARN nag]'
     }
 
     def "deprecation message has next major version"() {
         given:
-        def major = GradleVersion.current().major
-
-        expect:
-        major != -1
+        def major = GradleVersion.current().nextMajor
 
         when:
         SingleMessageLogger.nagUserOfDeprecated("foo", "bar")
 
         then:
-        appender.toString() == "[WARN foo has been deprecated and is scheduled to be removed in Gradle ${major + 1}.0. bar.]"
+        appender.toString() == "[WARN foo has been deprecated and is scheduled to be removed in Gradle ${major.version}. bar.]"
     }
 }

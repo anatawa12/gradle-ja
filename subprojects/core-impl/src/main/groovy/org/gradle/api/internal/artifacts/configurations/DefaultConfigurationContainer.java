@@ -27,14 +27,12 @@ import org.gradle.api.internal.artifacts.ConfigurationResolver;
 import org.gradle.api.internal.artifacts.ivyservice.resolutionstrategy.DefaultResolutionStrategy;
 import org.gradle.internal.reflect.Instantiator;
 import org.gradle.listener.ListenerManager;
+import org.gradle.util.DeprecationLogger;
 
 import java.util.Collection;
 import java.util.Set;
 
-/**
- * @author Hans Dockter
- */
-public class DefaultConfigurationContainer extends AbstractNamedDomainObjectContainer<Configuration> 
+public class DefaultConfigurationContainer extends AbstractNamedDomainObjectContainer<Configuration>
         implements ConfigurationContainerInternal, ConfigurationsProvider {
     public static final String DETACHED_CONFIGURATION_DEFAULT_NAME = "detachedConfiguration";
     
@@ -69,10 +67,12 @@ public class DefaultConfigurationContainer extends AbstractNamedDomainObjectCont
     }
 
     public Configuration add(String name) {
+        DeprecationLogger.nagUserOfReplacedMethod("ConfigurationContainer.add()", "create()");
         return create(name);
     }
 
     public Configuration add(String name, Closure closure) {
+        DeprecationLogger.nagUserOfReplacedMethod("ConfigurationContainer.add()", "create()");
         return create(name, closure);
     }
 

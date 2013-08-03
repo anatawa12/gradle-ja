@@ -25,20 +25,17 @@ import java.io.File;
 import java.util.LinkedHashSet;
 import java.util.Set;
 
-/**
- * @author Hans Dockter
- */
 public class DefaultProjectDescriptor implements ProjectDescriptor, ProjectIdentifier {
     private String name;
     private File dir;
     private DefaultProjectDescriptor parent;
     private Set<ProjectDescriptor> children = new LinkedHashSet<ProjectDescriptor>();
-    private IProjectDescriptorRegistry projectDescriptorRegistry;
+    private ProjectDescriptorRegistry projectDescriptorRegistry;
     private Path path;
     private String buildFileName = Project.DEFAULT_BUILD_FILE;
 
     public DefaultProjectDescriptor(DefaultProjectDescriptor parent, String name, File dir,
-                                    IProjectDescriptorRegistry projectDescriptorRegistry) {
+                                    ProjectDescriptorRegistry projectDescriptorRegistry) {
         this.parent = parent;
         this.name = name;
         this.dir = GFileUtils.canonicalise(dir);
@@ -115,11 +112,11 @@ public class DefaultProjectDescriptor implements ProjectDescriptor, ProjectIdent
         return GFileUtils.canonicalise(new File(dir, buildFileName));
     }
 
-    public IProjectDescriptorRegistry getProjectDescriptorRegistry() {
+    public ProjectDescriptorRegistry getProjectDescriptorRegistry() {
         return projectDescriptorRegistry;
     }
 
-    public void setProjectDescriptorRegistry(IProjectDescriptorRegistry projectDescriptorRegistry) {
+    public void setProjectDescriptorRegistry(ProjectDescriptorRegistry projectDescriptorRegistry) {
         this.projectDescriptorRegistry = projectDescriptorRegistry;
     }
 

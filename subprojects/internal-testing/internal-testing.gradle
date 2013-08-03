@@ -18,10 +18,11 @@
     Provides generally useful test utilities, used for unit and integration testing.
 */
 dependencies {
-    groovy libraries.groovy
+    compile libraries.groovy
 
     compile project(":baseServices")
     compile project(":native")
+    compile libraries.guava
     compile libraries.commons_lang
     compile libraries.commons_io
     compile libraries.ant

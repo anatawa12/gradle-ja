@@ -168,6 +168,9 @@
                 <td>org.gradle.api.tasks.SourceSetOutput</td>
             </tr>
             <tr>
+                <td>org.gradle.api.tasks.incremental.IncrementalTaskInputs</td>
+            </tr>
+            <tr>
                 <td>org.gradle.api.artifacts.Configuration</td>
             </tr>
             <tr>
@@ -184,6 +187,18 @@
             </tr>
             <tr>
                 <td>org.gradle.api.publish.PublishingExtension</td>
+            </tr>
+            <tr>
+                <td>org.gradle.api.reporting.Report</td>
+            </tr>
+            <tr>
+                <td>org.gradle.api.reporting.Reporting</td>
+            </tr>
+            <tr>
+                <td>org.gradle.api.reporting.ReportContainer</td>
+            </tr>
+            <tr>
+                <td>org.gradle.api.reporting.ReportingExtension</td>
             </tr>
             <tr>
                 <td>org.gradle.api.publish.ivy.IvyPublication</td>
@@ -220,6 +235,9 @@
 	    <title>コンテナ型<phrase role="original">Container types</phrase></title>
             <tr>
                 <td>org.gradle.api.artifacts.ConfigurationContainer</td>
+            </tr>
+            <tr>
+                <td>org.gradle.api.artifacts.dsl.RepositoryHandler</td>
             </tr>
             <tr>
                 <td>org.gradle.api.artifacts.dsl.DependencyHandler</td>
@@ -277,9 +295,6 @@
                 <td>org.gradle.api.plugins.buildcomparison.gradle.CompareGradleBuilds</td>
             </tr>
             <tr>
-                <td>org.gradle.api.tasks.compile.Compile</td>
-            </tr>
-            <tr>
                 <td>org.gradle.api.tasks.Copy</td>
             </tr>
             <tr>
@@ -319,6 +334,12 @@
                 <td>org.gradle.api.tasks.javadoc.Groovydoc</td>
             </tr>
             <tr>
+                <td>org.gradle.testing.jacoco.tasks.JacocoReport</td>
+            </tr>
+            <tr>
+                <td>org.gradle.testing.jacoco.tasks.JacocoMerge</td>
+            </tr>
+            <tr>
                 <td>org.gradle.api.tasks.bundling.Jar</td>
             </tr>
             <tr>
@@ -356,6 +377,9 @@
             </tr>
             <tr>
                 <td>org.gradle.api.tasks.scala.ScalaDoc</td>
+            </tr>
+            <tr>
+                <td>org.gradle.buildsetup.tasks.SetupBuild</td>
             </tr>
             <tr>
                 <td>org.gradle.plugins.signing.Sign</td>
@@ -471,4 +495,66 @@
         </table>
     </section>
 
+    <section>
+        <title>Native component core types</title>
+        <para>Used to configure components developed with native code.</para>
+        <table>
+            <title>Native component core types</title>
+            <tr>
+                <td>org.gradle.nativecode.base.NativeComponent</td>
+            </tr>
+            <tr>
+                <td>org.gradle.nativecode.base.Executable</td>
+            </tr>
+            <tr>
+                <td>org.gradle.nativecode.base.Library</td>
+            </tr>
+            <tr>
+                <td>org.gradle.nativecode.base.NativeBinary</td>
+            </tr>
+            <tr>
+                <td>org.gradle.nativecode.base.ExecutableBinary</td>
+            </tr>
+            <tr>
+                <td>org.gradle.nativecode.base.SharedLibraryBinary</td>
+            </tr>
+            <tr>
+                <td>org.gradle.nativecode.base.StaticLibraryBinary</td>
+            </tr>
+            <tr>
+                <td>org.gradle.nativecode.base.ToolChain</td>
+            </tr>
+            <tr>
+                <td>org.gradle.nativecode.base.ToolChainRegistry</td>
+            </tr>
+        </table>
+    </section>
+    <section>
+        <title>Native component task and plugin types</title>
+        <para>Tasks and plugins used to build native code components.</para>
+        <table>
+            <title>Native component task and plugin types</title>
+            <tr>
+                <td>org.gradle.nativecode.language.cpp.tasks.CppCompile</td>
+            </tr>
+            <tr>
+                <td>org.gradle.nativecode.language.c.tasks.CCompile</td>
+            </tr>
+            <tr>
+                <td>org.gradle.nativecode.language.asm.tasks.Assemble</td>
+            </tr>
+            <tr>
+                <td>org.gradle.nativecode.base.tasks.LinkExecutable</td>
+            </tr>
+            <tr>
+                <td>org.gradle.nativecode.base.tasks.LinkSharedLibrary</td>
+            </tr>
+            <tr>
+                <td>org.gradle.nativecode.base.tasks.CreateStaticLibrary</td>
+            </tr>
+            <tr>
+                <td>org.gradle.nativecode.base.tasks.InstallExecutable</td>
+            </tr>
+        </table>
+    </section>
 </book>

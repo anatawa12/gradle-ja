@@ -16,37 +16,40 @@
 package org.gradle.api.internal.artifacts.ivyservice;
 
 import org.gradle.api.artifacts.*;
-import org.gradle.api.internal.CachingDirectedGraphWalker;
-import org.gradle.api.internal.DirectedGraphWithEdgeValues;
 import org.gradle.api.internal.artifacts.ivyservice.ivyresolve.ArtifactResolveException;
+import org.gradle.api.internal.artifacts.ivyservice.resolveengine.oldresult.ResolvedConfigurationResults;
 import org.gradle.api.specs.Spec;
+import org.gradle.api.specs.Specs;
+import org.gradle.internal.Factory;
+import org.gradle.internal.graph.CachingDirectedGraphWalker;
+import org.gradle.internal.graph.DirectedGraphWithEdgeValues;
 import org.gradle.util.CollectionUtils;
 
 import java.io.File;
 import java.util.*;
 
-public class DefaultLenientConfiguration implements ResolvedConfigurationBuilder, LenientConfiguration {
-    private final ResolvedDependency root;
+public class DefaultLenientConfiguration implements LenientConfiguration {
+    private CacheLockingManager cacheLockingManager;
     private final Configuration configuration;
-    private final Map<ModuleDependency, ResolvedDependency> firstLevelDependencies = new LinkedHashMap<ModuleDependency, ResolvedDependency>();
-    private final Set<ResolvedArtifact> artifacts = new LinkedHashSet<ResolvedArtifact>();
-    private final Set<UnresolvedDependency> unresolvedDependencies = new LinkedHashSet<UnresolvedDependency>();
+    private ResolvedConfigurationResults results;
+    //TODO SF check if we can avoid creating the walker if we don't need this. What about thread safety?
     private final CachingDirectedGraphWalker<ResolvedDependency, ResolvedArtifact> walker
             = new CachingDirectedGraphWalker<ResolvedDependency, ResolvedArtifact>(new ResolvedDependencyArtifactsGraph());
 
-    public DefaultLenientConfiguration(Configuration configuration, ResolvedDependency root) {
+    public DefaultLenientConfiguration(Configuration configuration, ResolvedConfigurationResults results, CacheLockingManager cacheLockingManager) {
         this.configuration = configuration;
-        this.root = root;
+        this.results = results;
+        this.cacheLockingManager = cacheLockingManager;
     }
 
     public boolean hasError() {
-        return !unresolvedDependencies.isEmpty();
+        return results.hasError();
     }
 
     public void rethrowFailure() throws ResolveException {
-        if (!unresolvedDependencies.isEmpty()) {
+        if (hasError()) {
             List<Throwable> failures = new ArrayList<Throwable>();
-            for (UnresolvedDependency unresolvedDependency : unresolvedDependencies) {
+            for (UnresolvedDependency unresolvedDependency : results.getUnresolvedDependencies()) {
                 failures.add(unresolvedDependency.getProblem());
             }
             throw new ResolveException(configuration, failures);
@@ -54,36 +57,16 @@ public class DefaultLenientConfiguration implements ResolvedConfigurationBuilder
     }
 
     public Set<UnresolvedDependency> getUnresolvedModuleDependencies() {
-        return unresolvedDependencies;
+        return results.getUnresolvedDependencies();
     }
 
     public Set<ResolvedArtifact> getResolvedArtifacts() throws ResolveException {
-        return artifacts;
-    }
-
-    public ResolvedDependency getRoot() {
-        return root;
-    }
-
-    public void addFirstLevelDependency(ModuleDependency moduleDependency, ResolvedDependency refersTo) {
-        firstLevelDependencies.put(moduleDependency, refersTo);
-    }
-
-    public void addArtifact(ResolvedArtifact artifact) {
-        artifacts.add(artifact);
-    }
-
-    public void addUnresolvedDependency(UnresolvedDependency unresolvedDependency) {
-        unresolvedDependencies.add(unresolvedDependency);
-    }
-
-    public Set<ResolvedDependency> getFirstLevelModuleDependencies() {
-        return root.getChildren();
+        return results.getArtifacts();
     }
 
     public Set<ResolvedDependency> getFirstLevelModuleDependencies(Spec<? super Dependency> dependencySpec) {
         Set<ResolvedDependency> matches = new LinkedHashSet<ResolvedDependency>();
-        for (Map.Entry<ModuleDependency, ResolvedDependency> entry : firstLevelDependencies.entrySet()) {
+        for (Map.Entry<ModuleDependency, ResolvedDependency> entry : results.more().getFirstLevelDependencies().entrySet()) {
             if (dependencySpec.isSatisfiedBy(entry.getKey())) {
                 matches.add(entry.getValue());
             }
@@ -107,27 +90,35 @@ public class DefaultLenientConfiguration implements ResolvedConfigurationBuilder
      * @param dependencySpec dependency spec
      */
     public Set<ResolvedArtifact> getArtifacts(Spec<? super Dependency> dependencySpec) {
-        Set<ResolvedArtifact> allArtifacts = getAllArtifacts(dependencySpec);
-        return CollectionUtils.filter(allArtifacts, new Spec<ResolvedArtifact>() {
-            public boolean isSatisfiedBy(ResolvedArtifact element) {
-                try {
-                    File file = element.getFile();
-                    return file != null;
-                } catch (ArtifactResolveException e) {
-                    return false;
-                }
+        final Set<ResolvedArtifact> allArtifacts = getAllArtifacts(dependencySpec);
+        return cacheLockingManager.useCache("retrieve artifacts from " + configuration, new Factory<Set<ResolvedArtifact>>() {
+            public Set<ResolvedArtifact> create() {
+                return CollectionUtils.filter(allArtifacts, new Spec<ResolvedArtifact>() {
+                    public boolean isSatisfiedBy(ResolvedArtifact element) {
+                        try {
+                            File file = element.getFile();
+                            return file != null;
+                        } catch (ArtifactResolveException e) {
+                            return false;
+                        }
+                    }
+                });
             }
         });
     }
 
-    private Set<File> getFiles(Set<ResolvedArtifact> artifacts) {
-        Set<File> files = new LinkedHashSet<File>();
-        for (ResolvedArtifact artifact : artifacts) {
-            File depFile = artifact.getFile();
-            if (depFile != null) {
-                files.add(depFile);
+    private Set<File> getFiles(final Set<ResolvedArtifact> artifacts) {
+        final Set<File> files = new LinkedHashSet<File>();
+        cacheLockingManager.useCache("resolve files from " + configuration, new Runnable() {
+            public void run() {
+                for (ResolvedArtifact artifact : artifacts) {
+                    File depFile = artifact.getFile();
+                    if (depFile != null) {
+                        files.add(depFile);
+                    }
+                }
             }
-        }
+        });
         return files;
     }
 
@@ -137,12 +128,18 @@ public class DefaultLenientConfiguration implements ResolvedConfigurationBuilder
      * @param dependencySpec dependency spec
      */
     public Set<ResolvedArtifact> getAllArtifacts(Spec<? super Dependency> dependencySpec) {
+        //this is not very nice might be good enough until we get rid of ResolvedConfiguration and friends
+        //avoid traversing the graph causing the full ResolvedDependency graph to be loaded for the most typical scenario
+        if (dependencySpec == Specs.SATISFIES_ALL) {
+            return results.getArtifacts();
+        }
+
         Set<ResolvedDependency> firstLevelModuleDependencies = getFirstLevelModuleDependencies(dependencySpec);
 
         Set<ResolvedArtifact> artifacts = new LinkedHashSet<ResolvedArtifact>();
 
         for (ResolvedDependency resolvedDependency : firstLevelModuleDependencies) {
-            artifacts.addAll(resolvedDependency.getParentArtifacts(root));
+            artifacts.addAll(resolvedDependency.getParentArtifacts(results.more().getRoot()));
             walker.add(resolvedDependency);
         }
 
@@ -154,9 +151,13 @@ public class DefaultLenientConfiguration implements ResolvedConfigurationBuilder
         return configuration;
     }
 
+    public Set<ResolvedDependency> getFirstLevelModuleDependencies() {
+        return results.more().getRoot().getChildren();
+    }
+
     private static class ResolvedDependencyArtifactsGraph implements DirectedGraphWithEdgeValues<ResolvedDependency, ResolvedArtifact> {
-        public void getNodeValues(ResolvedDependency node, Collection<ResolvedArtifact> values,
-                                  Collection<ResolvedDependency> connectedNodes) {
+        public void getNodeValues(ResolvedDependency node, Collection<? super ResolvedArtifact> values,
+                                  Collection<? super ResolvedDependency> connectedNodes) {
             connectedNodes.addAll(node.getChildren());
         }
 

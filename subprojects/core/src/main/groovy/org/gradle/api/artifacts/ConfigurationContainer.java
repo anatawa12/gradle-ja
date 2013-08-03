@@ -29,16 +29,16 @@ import org.gradle.api.internal.HasInternalProtocol;
  * <p>The configurations in a container are accessible as read-only properties of the container, using the name of the
  * configuration as the property name. For example:</p>
  *
- * <pre>
- * configurations.add('myConfiguration')
+ * <pre autoTested='true'>
+ * configurations.create('myConfiguration')
  * configurations.myConfiguration.transitive = false
  * </pre>
  *
  * <p>A dynamic method is added for each configuration which takes a configuration closure. This is equivalent to
  * calling {@link #getByName(String, groovy.lang.Closure)}. For example:</p>
  *
- * <pre>
- * configurations.add('myConfiguration')
+ * <pre autoTested='true'>
+ * configurations.create('myConfiguration')
  * configurations.myConfiguration {
  *     transitive = false
  * }
@@ -79,8 +79,6 @@ import org.gradle.api.internal.HasInternalProtocol;
  * </pre>
  *
  * Examples on configuring the <b>resolution strategy</b> - see docs for {@link ResolutionStrategy}
- *
- * @author Hans Dockter
  */
 @HasInternalProtocol
 public interface ConfigurationContainer extends NamedDomainObjectContainer<Configuration> {
@@ -105,7 +103,9 @@ public interface ConfigurationContainer extends NamedDomainObjectContainer<Confi
      * @param name The name of the new configuration.
      * @return The newly added configuration.
      * @throws InvalidUserDataException when a configuration with the given name already exists in this container.
+     * @deprecated use {@link #create(String)} instead
      */
+    @Deprecated
     Configuration add(String name) throws InvalidUserDataException;
 
     /**
@@ -116,7 +116,9 @@ public interface ConfigurationContainer extends NamedDomainObjectContainer<Confi
      * @param configureClosure The closure to use to configure the configuration.
      * @return The newly added configuration.
      * @throws InvalidUserDataException when a configuration with the given name already exists in this container.
+     * @deprecated use {@link #create(String, groovy.lang.Closure)} instead
      */
+    @Deprecated
     Configuration add(String name, Closure configureClosure) throws InvalidUserDataException;
 
     /**

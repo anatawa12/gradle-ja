@@ -25,6 +25,7 @@ import org.gradle.api.internal.project.ProjectInternalServiceRegistry
 import org.gradle.api.internal.project.TopLevelBuildServiceRegistry
 import org.gradle.integtests.fixtures.executer.GradleContextualExecuter
 import org.gradle.integtests.fixtures.executer.IntegrationTestBuildContext
+import org.gradle.internal.CompositeStoppable
 import org.gradle.util.HelperUtil
 
 class ToolingApiDistributionResolver {
@@ -32,6 +33,7 @@ class ToolingApiDistributionResolver {
     private final Map<String, ToolingApiDistribution> distributions = [:]
     private final IntegrationTestBuildContext buildContext = new IntegrationTestBuildContext()
     private boolean useExternalToolingApiDistribution = false;
+    private CompositeStoppable stopLater = new CompositeStoppable()
 
     ToolingApiDistributionResolver() {
         resolutionServices = createResolutionServices()
@@ -54,7 +56,7 @@ class ToolingApiDistributionResolver {
             } else {
                 Dependency toolingApiDep = resolutionServices.dependencyHandler.create("org.gradle:gradle-tooling-api:$toolingApiVersion")
                 Configuration toolingApiConfig = resolutionServices.configurationContainer.detachedConfiguration(toolingApiDep)
-                distributions[toolingApiVersion] = new ExternalToolingApiDistribution(toolingApiVersion, toolingApiConfig)
+                distributions[toolingApiVersion] = new ExternalToolingApiDistribution(toolingApiVersion, toolingApiConfig.files)
             }
         }
         distributions[toolingApiVersion]
@@ -68,15 +70,22 @@ class ToolingApiDistributionResolver {
 
     private DependencyResolutionServices createResolutionServices() {
         GlobalServicesRegistry globalRegistry = new GlobalServicesRegistry()
+        stopLater.add(globalRegistry)
         StartParameter startParameter = new StartParameter()
         startParameter.gradleUserHomeDir = new IntegrationTestBuildContext().gradleUserHomeDir
         TopLevelBuildServiceRegistry topLevelRegistry = new TopLevelBuildServiceRegistry(globalRegistry, startParameter)
+        stopLater.add(topLevelRegistry)
         ProjectInternalServiceRegistry projectRegistry = new ProjectInternalServiceRegistry(topLevelRegistry, HelperUtil.createRootProject())
+        stopLater.add(projectRegistry)
         projectRegistry.get(DependencyResolutionServices)
     }
 
     ToolingApiDistributionResolver withExternalToolingApiDistribution() {
         this.useExternalToolingApiDistribution = true
         this
+    }
+
+    void stop() {
+        stopLater.stop()
     }
 }

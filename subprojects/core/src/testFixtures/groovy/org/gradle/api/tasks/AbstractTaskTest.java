@@ -29,6 +29,7 @@ import org.gradle.api.internal.project.DefaultProject;
 import org.gradle.api.internal.project.ProjectInternal;
 import org.gradle.api.internal.project.taskfactory.ITaskFactory;
 import org.gradle.api.internal.tasks.TaskExecuter;
+import org.gradle.api.internal.tasks.TaskExecutionContext;
 import org.gradle.api.internal.tasks.TaskStateInternal;
 import org.gradle.api.specs.Spec;
 import org.gradle.internal.reflect.Instantiator;
@@ -49,11 +50,8 @@ import static org.hamcrest.Matchers.notNullValue;
 import static org.hamcrest.Matchers.sameInstance;
 import static org.junit.Assert.*;
 
-/**
- * @author Hans Dockter
- */
 public abstract class AbstractTaskTest {
-    public static final String TEST_TASK_NAME = "taskname";
+    public static final String TEST_TASK_NAME = "testTask";
     @Rule
     public TestNameTestDirectoryProvider tmpDir = new TestNameTestDirectoryProvider();
 
@@ -145,7 +143,7 @@ public abstract class AbstractTaskTest {
         task.setExecuter(executer);
 
         context.checking(new Expectations() {{
-            one(executer).execute(with(sameInstance(task)), with(notNullValue(TaskStateInternal.class)));
+            one(executer).execute(with(sameInstance(task)), with(notNullValue(TaskStateInternal.class)), with(notNullValue(TaskExecutionContext.class)));
         }});
 
         task.execute();

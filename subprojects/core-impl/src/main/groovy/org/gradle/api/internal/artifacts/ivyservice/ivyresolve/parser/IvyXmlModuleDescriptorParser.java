@@ -16,6 +16,7 @@
 
 package org.gradle.api.internal.artifacts.ivyservice.ivyresolve.parser;
 
+import com.google.common.base.Joiner;
 import org.apache.ivy.core.IvyContext;
 import org.apache.ivy.core.NormalRelativeUrlResolver;
 import org.apache.ivy.core.RelativeUrlResolver;
@@ -30,37 +31,37 @@ import org.apache.ivy.core.resolve.ResolvedModuleRevision;
 import org.apache.ivy.plugins.matcher.PatternMatcher;
 import org.apache.ivy.plugins.namespace.NameSpaceHelper;
 import org.apache.ivy.plugins.namespace.Namespace;
-import org.apache.ivy.plugins.parser.AbstractModuleDescriptorParser;
-import org.apache.ivy.plugins.parser.ModuleDescriptorParser;
 import org.apache.ivy.plugins.parser.ParserSettings;
-import org.apache.ivy.plugins.repository.Resource;
-import org.apache.ivy.plugins.repository.url.URLResource;
+import org.apache.ivy.plugins.parser.xml.XmlModuleDescriptorParser;
 import org.apache.ivy.plugins.resolver.DependencyResolver;
 import org.apache.ivy.util.XMLHelper;
 import org.apache.ivy.util.extendable.DefaultExtendableItem;
 import org.apache.ivy.util.extendable.ExtendableItemHelper;
+import org.gradle.api.Action;
+import org.gradle.api.internal.externalresource.ExternalResource;
+import org.gradle.api.internal.externalresource.LocallyAvailableExternalResource;
+import org.gradle.api.internal.externalresource.UrlExternalResource;
 import org.gradle.util.DeprecationLogger;
+import org.gradle.util.TextUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xml.sax.Attributes;
+import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
+import org.xml.sax.SAXParseException;
+import org.xml.sax.helpers.DefaultHandler;
 
 import javax.xml.parsers.ParserConfigurationException;
-import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
-import java.util.Arrays;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
- * Copied from org.apache.ivy.plugins.parser.xml.XmlModuleDescriptorParser into gradle codebase to make
- * it thread-safe.
+ * Copied from org.apache.ivy.plugins.parser.xml.XmlModuleDescriptorParser into Gradle codebase.
  */
 public class IvyXmlModuleDescriptorParser extends AbstractModuleDescriptorParser {
     static final String[] DEPENDENCY_REGULAR_ATTRIBUTES =
@@ -70,25 +71,315 @@ public class IvyXmlModuleDescriptorParser extends AbstractModuleDescriptorParser
 
     private static final Logger LOGGER = LoggerFactory.getLogger(IvyXmlModuleDescriptorParser.class);
 
-    public DefaultModuleDescriptor parseDescriptor(ParserSettings ivySettings, URL xmlURL, Resource res, boolean validate) throws ParseException, IOException {
-        Parser parser = new Parser(this, ivySettings, res);
+    protected DefaultModuleDescriptor doParseDescriptor(ParserSettings ivySettings, LocallyAvailableExternalResource resource, boolean validate) throws IOException, ParseException {
+        Parser parser = new Parser(this, ivySettings, resource, resource.getLocalResource().getFile().toURI().toURL());
         parser.setValidate(validate);
-        parser.setInput(xmlURL);
         parser.parse();
-        return (DefaultModuleDescriptor) parser.getModuleDescriptor();
+        return parser.getModuleDescriptor();
     }
 
-    public ModuleDescriptor parseDescriptor(ParserSettings ivySettings, URL descriptorURL, boolean validate) throws ParseException, IOException {
-        return parseDescriptor(ivySettings, descriptorURL, new URLResource(descriptorURL), validate);
+    @Override
+    protected String getTypeName() {
+        return "Ivy file";
     }
 
-    public boolean accept(Resource res) {
+    public boolean accept(ExternalResource res) {
         return true; // this the default parser, it thus accepts all resources
     }
 
-    public void toIvyFile(InputStream is, Resource res, File destFile, ModuleDescriptor md)
-            throws IOException, ParseException {
-        throw new UnsupportedOperationException();
+    protected abstract static class AbstractParser extends DefaultHandler {
+        private static final String DEFAULT_CONF_MAPPING = "*->*";
+
+        private String defaultConf; // used only as defaultconf, not used for
+
+        // guessing right side part of a mapping
+        private String defaultConfMapping; // same as default conf but is used
+
+        // for guessing right side part of a mapping
+        private DefaultDependencyDescriptor defaultConfMappingDescriptor;
+
+        private final ExternalResource res;
+
+        private final List<String> errors = new ArrayList<String>();
+
+        private final DefaultModuleDescriptor md;
+
+        private final IvyXmlModuleDescriptorParser parser;
+
+        protected AbstractParser(IvyXmlModuleDescriptorParser parser, ExternalResource resource) {
+            this.parser = parser;
+            this.res = resource; // used for log and date only
+            md = new DefaultModuleDescriptor(XmlModuleDescriptorParser.getInstance(), null);
+            md.setLastModified(res.getLastModified());
+        }
+
+        public IvyXmlModuleDescriptorParser getModuleDescriptorParser() {
+            return parser;
+        }
+
+        protected void checkErrors() throws ParseException {
+            if (!errors.isEmpty()) {
+                throw new ParseException(Joiner.on(TextUtil.getPlatformLineSeparator()).join(errors), 0);
+            }
+        }
+
+        protected ExternalResource getResource() {
+            return res;
+        }
+
+        protected String getDefaultConfMapping() {
+            return defaultConfMapping;
+        }
+
+        protected void setDefaultConfMapping(String defaultConf) {
+            defaultConfMapping = defaultConf;
+        }
+
+        protected void parseDepsConfs(String confs, DefaultDependencyDescriptor dd) {
+            parseDepsConfs(confs, dd, defaultConfMapping != null);
+        }
+
+        protected void parseDepsConfs(String confs, DefaultDependencyDescriptor dd,
+                boolean useDefaultMappingToGuessRightOperande) {
+            parseDepsConfs(confs, dd, useDefaultMappingToGuessRightOperande, true);
+        }
+
+        protected void parseDepsConfs(String confs, DefaultDependencyDescriptor dd,
+                boolean useDefaultMappingToGuessRightOperande, boolean evaluateConditions) {
+            if (confs == null) {
+                return;
+            }
+
+            String[] conf = confs.split(";");
+            parseDepsConfs(conf, dd, useDefaultMappingToGuessRightOperande, evaluateConditions);
+        }
+
+        protected void parseDepsConfs(String[] conf, DefaultDependencyDescriptor dd,
+                boolean useDefaultMappingToGuessRightOperande) {
+            parseDepsConfs(conf, dd, useDefaultMappingToGuessRightOperande, true);
+        }
+
+        protected void parseDepsConfs(String[] conf, DefaultDependencyDescriptor dd,
+                boolean useDefaultMappingToGuessRightOperande, boolean evaluateConditions) {
+            replaceConfigurationWildcards(md);
+            for (int i = 0; i < conf.length; i++) {
+                String[] ops = conf[i].split("->");
+                if (ops.length == 1) {
+                    String[] modConfs = ops[0].split(",");
+                    if (!useDefaultMappingToGuessRightOperande) {
+                        for (int j = 0; j < modConfs.length; j++) {
+                            dd.addDependencyConfiguration(modConfs[j].trim(), modConfs[j].trim());
+                        }
+                    } else {
+                        for (int j = 0; j < modConfs.length; j++) {
+                            String[] depConfs = getDefaultConfMappingDescriptor()
+                                    .getDependencyConfigurations(modConfs[j]);
+                            if (depConfs.length > 0) {
+                                for (int k = 0; k < depConfs.length; k++) {
+                                    String mappedDependency = evaluateConditions
+                                    ? evaluateCondition(depConfs[k].trim(), dd)
+                                            : depConfs[k].trim();
+                                    if (mappedDependency != null) {
+                                        dd.addDependencyConfiguration(modConfs[j].trim(),
+                                            mappedDependency);
+                                    }
+                                }
+                            } else {
+                                // no default mapping found for this configuration, map
+                                // configuration to itself
+                                dd.addDependencyConfiguration(modConfs[j].trim(), modConfs[j]
+                                        .trim());
+                            }
+                        }
+                    }
+                } else if (ops.length == 2) {
+                    String[] modConfs = ops[0].split(",");
+                    String[] depConfs = ops[1].split(",");
+                    for (int j = 0; j < modConfs.length; j++) {
+                        for (int k = 0; k < depConfs.length; k++) {
+                            String mappedDependency = evaluateConditions ? evaluateCondition(
+                                depConfs[k].trim(), dd) : depConfs[k].trim();
+                            if (mappedDependency != null) {
+                                dd.addDependencyConfiguration(modConfs[j].trim(), mappedDependency);
+                            }
+                        }
+                    }
+                } else {
+                    addError("invalid conf " + conf[i] + " for " + dd);
+                }
+            }
+
+            if (md.isMappingOverride()) {
+                addExtendingConfigurations(conf, dd, useDefaultMappingToGuessRightOperande);
+            }
+        }
+
+        /**
+         * Evaluate the optional condition in the given configuration, like "[org=MYORG]confX". If
+         * the condition evaluates to true, the configuration is returned, if the condition
+         * evaluatate to false, null is returned. If there are no conditions, the configuration
+         * itself is returned.
+         *
+         * @param conf
+         *            the configuration to evaluate
+         * @param dd
+         *            the dependencydescriptor to which the configuration will be added
+         * @return the evaluated condition
+         */
+        private String evaluateCondition(String conf, DefaultDependencyDescriptor dd) {
+            if (conf.charAt(0) != '[') {
+                return conf;
+            }
+
+            int endConditionIndex = conf.indexOf(']');
+            if (endConditionIndex == -1) {
+                addError("invalid conf " + conf + " for " + dd);
+                return null;
+            }
+
+            String condition = conf.substring(1, endConditionIndex);
+
+            int notEqualIndex = condition.indexOf("!=");
+            if (notEqualIndex == -1) {
+                int equalIndex = condition.indexOf('=');
+                if (equalIndex == -1) {
+                    addError("invalid conf " + conf + " for " + dd.getDependencyRevisionId());
+                    return null;
+                }
+
+                String leftOp = condition.substring(0, equalIndex).trim();
+                String rightOp = condition.substring(equalIndex + 1).trim();
+
+                // allow organisation synonyms, like 'org' or 'organization'
+                if (leftOp.equals("org") || leftOp.equals("organization")) {
+                    leftOp = "organisation";
+                }
+
+                String attrValue = dd.getAttribute(leftOp);
+                if (!rightOp.equals(attrValue)) {
+                    return null;
+                }
+            } else {
+                String leftOp = condition.substring(0, notEqualIndex).trim();
+                String rightOp = condition.substring(notEqualIndex + 2).trim();
+
+                // allow organisation synonyms, like 'org' or 'organization'
+                if (leftOp.equals("org") || leftOp.equals("organization")) {
+                    leftOp = "organisation";
+                }
+
+                String attrValue = dd.getAttribute(leftOp);
+                if (rightOp.equals(attrValue)) {
+                    return null;
+                }
+            }
+
+            return conf.substring(endConditionIndex + 1);
+        }
+
+        private void addExtendingConfigurations(String[] confs, DefaultDependencyDescriptor dd,
+                boolean useDefaultMappingToGuessRightOperande) {
+            for (int i = 0; i < confs.length; i++) {
+                addExtendingConfigurations(confs[i], dd, useDefaultMappingToGuessRightOperande);
+            }
+        }
+
+        private void addExtendingConfigurations(String conf, DefaultDependencyDescriptor dd,
+                boolean useDefaultMappingToGuessRightOperande) {
+            Set configsToAdd = new HashSet();
+            Configuration[] configs = md.getConfigurations();
+            for (int i = 0; i < configs.length; i++) {
+                String[] ext = configs[i].getExtends();
+                for (int j = 0; j < ext.length; j++) {
+                    if (conf.equals(ext[j])) {
+                        String configName = configs[i].getName();
+                        configsToAdd.add(configName);
+                        addExtendingConfigurations(configName, dd,
+                            useDefaultMappingToGuessRightOperande);
+                    }
+                }
+            }
+
+            String[] confs = (String[]) configsToAdd.toArray(new String[configsToAdd.size()]);
+            parseDepsConfs(confs, dd, useDefaultMappingToGuessRightOperande);
+        }
+
+        protected DependencyDescriptor getDefaultConfMappingDescriptor() {
+            if (defaultConfMappingDescriptor == null) {
+                defaultConfMappingDescriptor = new DefaultDependencyDescriptor(ModuleRevisionId
+                        .newInstance("", "", ""), false);
+                parseDepsConfs(defaultConfMapping, defaultConfMappingDescriptor, false, false);
+            }
+            return defaultConfMappingDescriptor;
+        }
+
+        protected void addError(String msg) {
+            errors.add(msg + " in " + res.getName());
+        }
+
+        public void warning(SAXParseException ex) {
+            LOGGER.warn("xml parsing: " + getLocationString(ex) + ": " + ex.getMessage());
+        }
+
+        public void error(SAXParseException ex) {
+            addError("xml parsing: " + getLocationString(ex) + ": " + ex.getMessage());
+        }
+
+        public void fatalError(SAXParseException ex) throws SAXException {
+            addError("[Fatal Error] " + getLocationString(ex) + ": " + ex.getMessage());
+        }
+
+        /** Returns a string of the location. */
+        private String getLocationString(SAXParseException ex) {
+            StringBuffer str = new StringBuffer();
+
+            String systemId = ex.getSystemId();
+            if (systemId != null) {
+                int index = systemId.lastIndexOf('/');
+                if (index != -1) {
+                    systemId = systemId.substring(index + 1);
+                }
+                str.append(systemId);
+            } else {
+                str.append(getResource().getName());
+            }
+            str.append(':');
+            str.append(ex.getLineNumber());
+            str.append(':');
+            str.append(ex.getColumnNumber());
+
+            return str.toString();
+
+        } // getLocationString(SAXParseException):String
+
+        protected String getDefaultConf() {
+            return defaultConf != null ? defaultConf
+                    : (defaultConfMapping != null ? defaultConfMapping : DEFAULT_CONF_MAPPING);
+        }
+
+        protected void setDefaultConf(String defaultConf) {
+            this.defaultConf = defaultConf;
+        }
+
+        public DefaultModuleDescriptor getModuleDescriptor() throws ParseException {
+            checkErrors();
+            return md;
+        }
+
+        protected Date getDefaultPubDate() {
+            return new Date(md.getLastModified());
+        }
+
+        private void replaceConfigurationWildcards(ModuleDescriptor md) {
+            Configuration[] configs = md.getConfigurations();
+            for (int i = 0; i < configs.length; i++) {
+                configs[i].replaceWildcards(md);
+            }
+        }
+
+        protected DefaultModuleDescriptor getMd() {
+            return md;
+        }
     }
 
     public static class Parser extends AbstractParser {
@@ -126,12 +417,10 @@ public class IvyXmlModuleDescriptorParser extends AbstractModuleDescriptorParser
         private static final List ALLOWED_VERSIONS = Arrays.asList("1.0", "1.1", "1.2", "1.3", "1.4", "2.0", "2.1", "2.2");
 
         /* how and what do we have to parse */
-        private ParserSettings parserSettings;
+        private final ParserSettings parserSettings;
         private final RelativeUrlResolver relativeUrlResolver = new NormalRelativeUrlResolver();
+        private final URL descriptorURL;
         private boolean validate = true;
-        private URL descriptorURL;
-        private InputStream descriptorInput;
-
 
         /* Parsing state */
         private int state = State.NONE;
@@ -145,59 +434,47 @@ public class IvyXmlModuleDescriptorParser extends AbstractModuleDescriptorParser
         private String descriptorVersion;
         private String[] publicationsDefaultConf;
 
-        public Parser(ModuleDescriptorParser moduleDescriptorParser, ParserSettings ivySettings, Resource res) {
-            super(moduleDescriptorParser);
+        public Parser(IvyXmlModuleDescriptorParser moduleDescriptorParser, ParserSettings ivySettings, ExternalResource res, URL descriptorURL) {
+            super(moduleDescriptorParser, res);
             parserSettings = ivySettings;
-            setResource(res);
+            this.descriptorURL = descriptorURL;
         }
         
-        public Parser newParser(Resource res) {
-            Parser parser = new Parser(getModuleDescriptorParser(), parserSettings, res);
+        public Parser newParser(ExternalResource res, URL descriptorURL) {
+            Parser parser = new Parser(getModuleDescriptorParser(), parserSettings, res, descriptorURL);
             parser.setValidate(validate);
             return parser;
-        }
-
-        public void setInput(InputStream descriptorInput) {
-            this.descriptorInput = descriptorInput;
-        }
-
-        public void setInput(URL descriptorURL) {
-            this.descriptorURL = descriptorURL;
         }
 
         public void setValidate(boolean validate) {
             this.validate = validate;
         }
 
-        public void parse() throws ParseException,
-                IOException {
-            try {
-                URL schemaURL = validate ? getSchemaURL() : null;
-                if (descriptorURL != null) {
-                    XMLHelper.parse(descriptorURL, schemaURL, this);
-                } else {
-                    XMLHelper.parse(descriptorInput, schemaURL, this, null);
-                }
-                checkConfigurations();
-                replaceConfigurationWildcards();
-                getMd().setModuleArtifact(DefaultArtifact.newIvyArtifact(getMd().getResolvedModuleRevisionId(), getMd().getPublicationDate()));
-                if (!artifactsDeclared) {
-                    String[] configurationNames = getMd().getConfigurationsNames();
-                    for (String configurationName : configurationNames) {
-                        getMd().addArtifact(configurationName, new MDArtifact(getMd(), getMd().getModuleRevisionId().getName(), "jar", "jar"));
+        public void parse() throws ParseException, IOException {
+            getResource().withContent(new Action<InputStream>() {
+                public void execute(InputStream inputStream) {
+                    URL schemaURL = validate ? getSchemaURL() : null;
+                    InputSource inSrc = new InputSource(inputStream);
+                    inSrc.setSystemId(descriptorURL.toExternalForm());
+                    try {
+                        XMLHelper.parse(inSrc, schemaURL, Parser.this, null);
+                    } catch (Exception e) {
+                        throw new MetaDataParseException("Ivy file", getResource(), e);
                     }
                 }
-                getMd().check();
-            } catch (ParserConfigurationException ex) {
-                IllegalStateException ise = new IllegalStateException(ex.getMessage() + " in " + descriptorURL);
-                ise.initCause(ex);
-                throw ise;
-            } catch (Exception ex) {
-                checkErrors();
-                ParseException pe = new ParseException(ex.getMessage() + " in " + descriptorURL, 0);
-                pe.initCause(ex);
-                throw pe;
+            });
+            checkErrors();
+            checkConfigurations();
+            replaceConfigurationWildcards();
+            getMd().setModuleArtifact(DefaultArtifact.newIvyArtifact(getMd().getResolvedModuleRevisionId(), getMd().getPublicationDate()));
+            if (!artifactsDeclared) {
+                String[] configurationNames = getMd().getConfigurationsNames();
+                for (String configurationName : configurationNames) {
+                    getMd().addArtifact(configurationName, new MDArtifact(getMd(), getMd().getModuleRevisionId().getName(), "jar", "jar"));
+                }
             }
+            checkErrors();
+            getMd().check();
         }
 
         public void startElement(String uri, String localName, String qName, Attributes attributes)
@@ -214,7 +491,11 @@ public class IvyXmlModuleDescriptorParser extends AbstractModuleDescriptorParser
                     extendsStarted(attributes);
                 } else if (state == State.INFO && "license".equals(qName)) {
                     getMd().addLicense(new License(substitute(attributes.getValue("name")), substitute(attributes.getValue("url"))));
-                } else if (state == State.INFO && "description".equals(qName)) {
+                } /* CHECKSTYLE:OFF */ else if (state == State.INFO && "ivyauthor".equals(qName)) {
+                    // nothing to do, we don't store this
+                } else if (state == State.INFO && "repository".equals(qName)) {
+                    // nothing to do, we don't store this
+                } /* CHECKSTYLE:ON */ else if (state == State.INFO && "description".equals(qName)) {
                     getMd().setHomePage(substitute(attributes.getValue("homepage")));
                     state = State.DESCRIPTION;
                     buffer = new StringBuffer();
@@ -229,7 +510,7 @@ public class IvyXmlModuleDescriptorParser extends AbstractModuleDescriptorParser
                     dependenciesStarted(attributes);
                 } else if ("conflicts".equals(qName)) {
                     if (!descriptorVersion.startsWith("1.")) {
-                        DeprecationLogger.nagUserWith("Using conflicts section in ivy.xml is deprecated: please use hints section instead. Ivy file URL: " + descriptorURL);
+                        DeprecationLogger.nagUserWith("Using conflicts section in ivy.xml is deprecated: please use hints section instead. Ivy file: " + getResource().getName());
                     }
                     state = State.CONFLICT;
                     checkConfigurations();
@@ -250,9 +531,9 @@ public class IvyXmlModuleDescriptorParser extends AbstractModuleDescriptorParser
                 } else if ("mapped".equals(qName)) {
                     dd.addDependencyConfiguration(conf, substitute(attributes.getValue("name")));
                 } else if (("conflict".equals(qName) && state == State.DEPS) || "manager".equals(qName) && state == State.CONFLICT) {
-                    LOGGER.info("Ivy.xml conflict managers are not supported by Gradle. Ignoring conflict manager declared in %s", getResource().getName());
+                    LOGGER.debug("Ivy.xml conflict managers are not supported by Gradle. Ignoring conflict manager declared in {}", getResource().getName());
                 } else if ("override".equals(qName) && state == State.DEPS) {
-                    LOGGER.info("Ivy.xml dependency overrides are not supported by Gradle. Ignoring override declared in %s", getResource().getName());
+                    LOGGER.debug("Ivy.xml dependency overrides are not supported by Gradle. Ignoring override declared in {}", getResource().getName());
                 } else if ("include".equals(qName) && state == State.CONF) {
                     includeConfStarted(attributes);
                 } else if (validate && state != State.EXTRA_INFO && state != State.DESCRIPTION) {
@@ -348,7 +629,6 @@ public class IvyXmlModuleDescriptorParser extends AbstractModuleDescriptorParser
                     mergeDescription(parent.getDescription());
                 }
             }
-
         }
 
         private void mergeAll(ModuleDescriptor parent) {
@@ -422,7 +702,7 @@ public class IvyXmlModuleDescriptorParser extends AbstractModuleDescriptorParser
                 throws ParseException, IOException {
             URL url = relativeUrlResolver.getURL(descriptorURL, location);
             LOGGER.debug("Trying to load included ivy file from " + url.toString());
-            Parser parser = newParser(new URLResource(url));
+            Parser parser = newParser(new UrlExternalResource(url), url);
             parser.parse();
             return parser.getModuleDescriptor();
         }
@@ -478,8 +758,7 @@ public class IvyXmlModuleDescriptorParser extends AbstractModuleDescriptorParser
 
             // create a new temporary parser to read the configurations from
             // the specified file.
-            Parser parser = newParser(new URLResource(url));
-            parser.setInput(url);
+            Parser parser = newParser(new UrlExternalResource(url), url);
             XMLHelper.parse(url , null, parser);
 
             // add the configurations from this temporary parser to this module descriptor
@@ -636,7 +915,7 @@ public class IvyXmlModuleDescriptorParser extends AbstractModuleDescriptorParser
                 setDefaultConf(defaultConf);
             }
             String defaultConfMapping = substitute(attributes.getValue("defaultconfmapping"));
-            if (defaultConf != null) {
+            if (defaultConfMapping != null) {
                 setDefaultConfMapping(defaultConfMapping);
             }
             String confMappingOverride = substitute(attributes.getValue("confmappingoverride"));
@@ -893,7 +1172,9 @@ public class IvyXmlModuleDescriptorParser extends AbstractModuleDescriptorParser
         }
 
         private URL getSchemaURL() {
-            return getClass().getResource("ivy.xsd");
+            URL resource = getClass().getClassLoader().getResource("org/apache/ivy/plugins/parser/xml/ivy.xsd");
+            assert resource != null;
+            return resource;
         }
 
         private String elvis(String value, String defaultValue) {

@@ -17,6 +17,7 @@
 package org.gradle.initialization;
 
 import org.gradle.api.internal.ClassPathRegistry;
+import org.gradle.internal.classloader.MutableURLClassLoader;
 import org.gradle.internal.classpath.ClassPath;
 import org.gradle.internal.classpath.DefaultClassPath;
 import org.gradle.internal.jvm.Jvm;
@@ -46,7 +47,7 @@ public class DefaultClassLoaderRegistry implements ClassLoaderRegistry {
 
         // Add in libs for plugins
         ClassPath pluginsClassPath = classPathRegistry.getClassPath("GRADLE_PLUGINS");
-        MultiParentClassLoader pluginsImports = new MultiParentClassLoader(runtimeClassLoader, coreImplClassLoader);
+        ClassLoader pluginsImports = new CachingClassLoader(new MultiParentClassLoader(runtimeClassLoader, coreImplClassLoader));
         pluginsClassLoader = new MutableURLClassLoader(pluginsImports, pluginsClassPath);
 
         rootClassLoader = classLoaderFactory.createFilteringClassLoader(pluginsClassLoader);
@@ -73,9 +74,5 @@ public class DefaultClassLoaderRegistry implements ClassLoaderRegistry {
 
     public ClassLoader getPluginsClassLoader() {
         return pluginsClassLoader;
-    }
-
-    public MultiParentClassLoader createScriptClassLoader() {
-        return new MultiParentClassLoader(rootClassLoader);
     }
 }

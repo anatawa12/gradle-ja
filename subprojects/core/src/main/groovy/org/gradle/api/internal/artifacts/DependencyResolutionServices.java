@@ -17,6 +17,7 @@ package org.gradle.api.internal.artifacts;
 
 import org.gradle.api.artifacts.dsl.ArtifactHandler;
 import org.gradle.api.artifacts.dsl.DependencyHandler;
+import org.gradle.api.artifacts.dsl.ComponentMetadataHandler;
 import org.gradle.api.artifacts.dsl.RepositoryHandler;
 import org.gradle.api.internal.artifacts.configurations.ConfigurationContainerInternal;
 
@@ -26,6 +27,8 @@ public interface DependencyResolutionServices {
     ConfigurationContainerInternal getConfigurationContainer();
 
     DependencyHandler getDependencyHandler();
+
+    ComponentMetadataHandler getComponentMetadataHandler();
 
     ArtifactHandler getArtifactHandler();
 

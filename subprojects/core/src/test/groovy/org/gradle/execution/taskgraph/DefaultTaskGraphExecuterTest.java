@@ -22,8 +22,9 @@ import org.gradle.api.Task;
 import org.gradle.api.execution.TaskExecutionGraphListener;
 import org.gradle.api.execution.TaskExecutionListener;
 import org.gradle.api.internal.TaskInternal;
-import org.gradle.api.internal.changedetection.TaskArtifactStateCacheAccess;
+import org.gradle.api.internal.changedetection.state.TaskArtifactStateCacheAccess;
 import org.gradle.api.internal.project.ProjectInternal;
+import org.gradle.api.internal.tasks.DefaultTaskDependency;
 import org.gradle.api.internal.tasks.TaskStateInternal;
 import org.gradle.api.specs.Spec;
 import org.gradle.api.tasks.TaskDependency;
@@ -41,6 +42,7 @@ import org.jmock.Expectations;
 import org.jmock.api.Invocation;
 import org.jmock.integration.junit4.JMock;
 import org.jmock.integration.junit4.JUnit4Mockery;
+import org.jmock.lib.action.CustomAction;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -55,14 +57,11 @@ import static org.gradle.util.WrapUtil.toSet;
 import static org.hamcrest.Matchers.*;
 import static org.junit.Assert.*;
 
-/**
- * @author Hans Dockter
- */
 @RunWith(JMock.class)
 public class DefaultTaskGraphExecuterTest {
-
-    JUnit4Mockery context = new JUnit4GroovyMockery();
-    private final ListenerManager listenerManager = context.mock(ListenerManager.class);
+    final JUnit4Mockery context = new JUnit4GroovyMockery();
+    final ListenerManager listenerManager = context.mock(ListenerManager.class);
+    final TaskArtifactStateCacheAccess taskArtifactStateCacheAccess = context.mock(TaskArtifactStateCacheAccess.class);
     DefaultTaskGraphExecuter taskExecuter;
     ProjectInternal root;
     List<Task> executedTasks = new ArrayList<Task>();
@@ -75,8 +74,16 @@ public class DefaultTaskGraphExecuterTest {
             will(returnValue(new ListenerBroadcast<TaskExecutionGraphListener>(TaskExecutionGraphListener.class)));
             one(listenerManager).createAnonymousBroadcaster(TaskExecutionListener.class);
             will(returnValue(new ListenerBroadcast<TaskExecutionListener>(TaskExecutionListener.class)));
+            allowing(taskArtifactStateCacheAccess).longRunningOperation(with(notNullValue(String.class)), with(notNullValue(Runnable.class)));
+            will(new CustomAction("run action") {
+                public Object invoke(Invocation invocation) throws Throwable {
+                    Runnable action = (Runnable) invocation.getParameter(1);
+                    action.run();
+                    return null;
+                }
+            });
         }});
-        taskExecuter = new org.gradle.execution.taskgraph.DefaultTaskGraphExecuter(listenerManager, new DefaultTaskPlanExecutor());
+        taskExecuter = new DefaultTaskGraphExecuter(listenerManager, new DefaultTaskPlanExecutor(taskArtifactStateCacheAccess));
     }
 
     @Test
@@ -244,8 +251,9 @@ public class DefaultTaskGraphExecuterTest {
         Task c = task("c", b);
         dependsOn(a, c);
 
+        taskExecuter.addTasks(toList(c));
         try {
-            taskExecuter.addTasks(toList(c));
+            taskExecuter.execute();
             fail();
         } catch (CircularReferenceException e) {
             // Expected
@@ -524,6 +532,12 @@ public class DefaultTaskGraphExecuterTest {
             will(returnValue(":" + name));
             allowing(task).getState();
             will(returnValue(state));
+            allowing(task).getMustRunAfter();
+            will(returnValue(new DefaultTaskDependency()));
+            allowing(task).getFinalizedBy();
+            will(returnValue(new DefaultTaskDependency()));
+            allowing(task).getDidWork();
+            will(returnValue(true));
             allowing(task).compareTo(with(notNullValue(TaskInternal.class)));
             will(new org.jmock.api.Action() {
                 public Object invoke(Invocation invocation) throws Throwable {

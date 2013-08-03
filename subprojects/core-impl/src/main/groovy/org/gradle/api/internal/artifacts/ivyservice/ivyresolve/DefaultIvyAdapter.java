@@ -15,23 +15,23 @@
  */
 package org.gradle.api.internal.artifacts.ivyservice.ivyresolve;
 
-import org.apache.ivy.core.resolve.ResolveData;
-import org.gradle.api.internal.artifacts.ivyservice.DependencyToModuleResolver;
+import org.apache.ivy.plugins.version.VersionMatcher;
+import org.gradle.api.internal.artifacts.ivyservice.DependencyToModuleVersionResolver;
 
 class DefaultIvyAdapter implements IvyAdapter {
-    private final ResolveData resolveData;
-    private final DependencyToModuleResolver userResolver;
+    private final VersionMatcher versionMatcher;
+    private final DependencyToModuleVersionResolver userResolver;
 
-    public DefaultIvyAdapter(ResolveData resolveData, DependencyToModuleResolver userResolverChain) {
-        this.resolveData = resolveData;
+    public DefaultIvyAdapter(VersionMatcher versionMatcher, DependencyToModuleVersionResolver userResolverChain) {
+        this.versionMatcher = versionMatcher;
         userResolver = userResolverChain;
     }
 
-    public ResolveData getResolveData() {
-        return resolveData;
+    public VersionMatcher getVersionMatcher() {
+        return versionMatcher;
     }
 
-    public DependencyToModuleResolver getDependencyToModuleResolver() {
+    public DependencyToModuleVersionResolver getDependencyToModuleResolver() {
         return userResolver;
     }
 }

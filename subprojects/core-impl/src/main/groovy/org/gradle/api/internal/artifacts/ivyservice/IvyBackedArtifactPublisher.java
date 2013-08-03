@@ -16,11 +16,14 @@
 package org.gradle.api.internal.artifacts.ivyservice;
 
 import org.apache.ivy.Ivy;
-import org.apache.ivy.plugins.resolver.DependencyResolver;
+import org.apache.ivy.core.module.descriptor.ModuleDescriptor;
+import org.gradle.api.Action;
 import org.gradle.api.artifacts.Configuration;
 import org.gradle.api.artifacts.Module;
 import org.gradle.api.artifacts.PublishException;
 import org.gradle.api.internal.artifacts.ArtifactPublisher;
+import org.gradle.api.internal.artifacts.ModuleVersionPublishMetaData;
+import org.gradle.api.internal.artifacts.ModuleVersionPublisher;
 import org.gradle.api.internal.artifacts.configurations.Configurations;
 import org.gradle.api.internal.artifacts.repositories.PublicationAwareRepository;
 
@@ -29,42 +32,47 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 
-/**
- * @author Hans Dockter
- */
 public class IvyBackedArtifactPublisher implements ArtifactPublisher {
-    private final SettingsConverter settingsConverter;
     private final ModuleDescriptorConverter publishModuleDescriptorConverter;
-    private final IvyFactory ivyFactory;
+    private final IvyContextManager ivyContextManager;
     private final IvyDependencyPublisher dependencyPublisher;
+    private final IvyModuleDescriptorWriter ivyModuleDescriptorWriter;
 
-    public IvyBackedArtifactPublisher(SettingsConverter settingsConverter,
-                                      ModuleDescriptorConverter publishModuleDescriptorConverter,
-                                      IvyFactory ivyFactory,
-                                      IvyDependencyPublisher dependencyPublisher) {
-        this.settingsConverter = settingsConverter;
+    public IvyBackedArtifactPublisher(ModuleDescriptorConverter publishModuleDescriptorConverter,
+                                      IvyContextManager ivyContextManager,
+                                      IvyDependencyPublisher dependencyPublisher,
+                                      IvyModuleDescriptorWriter ivyModuleDescriptorWriter) {
         this.publishModuleDescriptorConverter = publishModuleDescriptorConverter;
-        this.ivyFactory = ivyFactory;
+        this.ivyContextManager = ivyContextManager;
         this.dependencyPublisher = dependencyPublisher;
+        this.ivyModuleDescriptorWriter = ivyModuleDescriptorWriter;
     }
 
-    private Ivy ivyForPublish(List<DependencyResolver> publishResolvers) {
-        return ivyFactory.createIvy(settingsConverter.convertForPublish(publishResolvers));
-    }
+    public void publish(final Iterable<? extends PublicationAwareRepository> repositories, final Module module, final Set<? extends Configuration> configurations, final File descriptor) throws PublishException {
+        ivyContextManager.withIvy(new Action<Ivy>() {
+            public void execute(Ivy ivy) {
+                Set<Configuration> allConfigurations = configurations.iterator().next().getAll();
+                ModuleVersionPublishMetaData publishMetaData = publishModuleDescriptorConverter.convert(allConfigurations, module);
+                if (descriptor != null) {
+                    ModuleDescriptor moduleDescriptor = publishMetaData.getModuleDescriptor();
+                    ivyModuleDescriptorWriter.write(moduleDescriptor, descriptor);
+                }
 
-    public void publish(Iterable<? extends PublicationAwareRepository> repositories, Module module, Set<? extends Configuration> configurations, File descriptor) throws PublishException {
-        List<DependencyResolver> publishResolvers = new ArrayList<DependencyResolver>();
-        for (PublicationAwareRepository repository : repositories) {
-            publishResolvers.add(repository.createPublisher());
-        }
-        Ivy ivy = ivyForPublish(publishResolvers);
-        Set<String> confs = Configurations.getNames(configurations, false);
-        dependencyPublisher.publish(
-                confs,
-                publishResolvers,
-                publishModuleDescriptorConverter.convert(configurations, module),
-                descriptor,
-                ivy.getEventManager());
-    }
+                List<ModuleVersionPublisher> publishResolvers = new ArrayList<ModuleVersionPublisher>();
+                for (PublicationAwareRepository repository : repositories) {
+                    ModuleVersionPublisher publisher = repository.createPublisher();
+                    publisher.setSettings(ivy.getSettings());
+                    publishResolvers.add(publisher);
+                }
 
+                publishMetaData = publishModuleDescriptorConverter.convert(configurations, module);
+                Set<String> confs = Configurations.getNames(configurations, false);
+                dependencyPublisher.publish(
+                        confs,
+                        publishResolvers,
+                        publishMetaData,
+                        descriptor);
+            }
+        });
+    }
 }

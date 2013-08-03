@@ -29,14 +29,12 @@ import org.gradle.api.internal.project.ServiceRegistryFactory;
 import org.gradle.groovy.scripts.StringScriptSource;
 import org.gradle.initialization.DefaultProjectDescriptor;
 import org.gradle.initialization.DefaultProjectDescriptorRegistry;
+import org.gradle.invocation.BuildClassLoaderRegistry;
 import org.gradle.invocation.DefaultGradle;
 import org.gradle.util.GFileUtils;
 
 import java.io.File;
 
-/**
- * by Szczepan Faber, created at: 10/1/11
- */
 public class ProjectBuilderImpl {
     private static final GlobalTestServices GLOBAL_SERVICES = new GlobalTestServices();
     private static final AsmBackedClassGenerator CLASS_GENERATOR = new AsmBackedClassGenerator();
@@ -74,7 +72,7 @@ public class ProjectBuilderImpl {
         gradle.setRootProject(project);
         gradle.setDefaultProject(project);
 
-        gradle.getScriptClassLoader().addParent(getClass().getClassLoader());
+        gradle.getServices().get(BuildClassLoaderRegistry.class).addRootClassLoader(getClass().getClassLoader());
 
         return project;
     }

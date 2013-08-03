@@ -189,7 +189,7 @@
             </sample>
             <para role="original">That is all. Calling the
                 <literal>uploadArchives</literal>
-                task will generate the POM and deploys the artifact and the pom to the specified repository.
+                task will generate the POM and deploys the artifact and the POM to the specified repository.
             </para>
             <para>これが全てです。
                 <literal>uploadArchives</literal>タスクを呼び出すことでPOMが生成され、
@@ -274,7 +274,7 @@
                 </tr>
                 <tr>
                     <td>webdav</td>
-                    <td>org.apache.maven.wagon:wagon-webdav-jackrabbit:2.2</td>
+                    <td>org.apache.maven.wagon:wagon-webdav:1.0-beta-2</td>
                 </tr>
                 <tr>
                     <td>file</td>

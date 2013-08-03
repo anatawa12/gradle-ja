@@ -37,6 +37,10 @@ public abstract class CollectionUtils {
         return null;
     }
 
+    public static <T> boolean any(Iterable<? extends T> source, Spec<? super T> filter) {
+        return findFirst(source, filter) != null;
+    }
+
     public static <T> Set<T> filter(Set<? extends T> set, Spec<? super T> filter) {
         return filter(set, new LinkedHashSet<T>(), filter);
     }
@@ -102,6 +106,10 @@ public abstract class CollectionUtils {
 
     public static <R, I> Set<R> collect(Set<? extends I> set, Transformer<? extends R, ? super I> transformer) {
         return collect(set, new HashSet<R>(), transformer);
+    }
+
+    public static <R, I> List<R> collect(Iterable<? extends I> source, Transformer<? extends R, ? super I> transformer) {
+        return collect(source, new LinkedList<R>(), transformer);
     }
 
     public static <R, I, C extends Collection<R>> C collect(Iterable<? extends I> source, C destination, Transformer<? extends R, ? super I> transformer) {
@@ -442,4 +450,63 @@ public abstract class CollectionUtils {
         return target;
     }
 
+    public static class ScoredItem<T, S> {
+        private final T item;
+        private final S score;
+
+        public ScoredItem(T item, S score) {
+            this.item = item;
+            this.score = score;
+        }
+
+        public T getItem() {
+            return item;
+        }
+
+        public S getScore() {
+            return score;
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) {
+                return true;
+            }
+            if (o == null || getClass() != o.getClass()) {
+                return false;
+            }
+
+            ScoredItem that = (ScoredItem) o;
+
+            if (!item.equals(that.item)) {
+                return false;
+            }
+            if (score != null ? !score.equals(that.score) : that.score != null) {
+                return false;
+            }
+
+            return true;
+        }
+
+        @Override
+        public int hashCode() {
+            int result = item.hashCode();
+            result = 31 * result + (score != null ? score.hashCode() : 0);
+            return result;
+        }
+    }
+
+    public static <T, S> List<ScoredItem<T, S>> score(Iterable<? extends T> things, Transformer<? extends S, ? super T> scorer) {
+        return score(new LinkedList<ScoredItem<T, S>>(), things, scorer);
+    }
+
+    public static <T, S, C extends Collection<ScoredItem<T, S>>> C score(C destination, Iterable<? extends T> things, final Transformer<? extends S, ? super T> scorer) {
+        return inject(destination, things, new Action<InjectionStep<C, T>>() {
+            public void execute(InjectionStep<C, T> injectionStep) {
+                T item = injectionStep.getItem();
+                S score = scorer.transform(item);
+                injectionStep.getTarget().add(new ScoredItem<T, S>(item, score));
+            }
+        });
+    }
 }

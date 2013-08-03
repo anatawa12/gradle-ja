@@ -140,7 +140,7 @@
         <para><filename>buildSrc</filename>プロジェクトには、次のビルドスクリプトがデフォルトで適用されます。</para>
         <figure>
             <title>デフォルトのbuildSrcビルドスクリプト<phrase role="original">Default buildSrc build script</phrase></title>
-            <programlisting><xi:include href='../../../../../subprojects/core/src/main/resources/org/gradle/initialization/defaultBuildSourceScript.txt' parse='text'/></programlisting>
+            <programlisting><xi:include href='../../../../../subprojects/core/src/main/resources/org/gradle/initialization/buildsrc/defaultBuildSourceScript.txt' parse='text'/></programlisting>
         </figure>
         <para role="original">
             This means that you can just put you build source code in this directory and stick to the layout convention for a 
@@ -230,7 +230,7 @@
         <sample id="buildLogic" dir="userguide/organizeBuildLogic" title="Ant optional dependencies">
             <sourcefile file="build.gradle"/>
         </sample>
-        <para role="original">This is also nice example for the usage of client modules. The <filename>pom.xml</filename> in maven central for the
+        <para>This is also nice example for the usage of client modules. The POM file in Maven Central for the
         ant-commons-net task does not provide the right information for this use case.</para>
         <para>これはクライアントモジュールのいい使用例でもあります。mavenのセントラルリポジトリにあるant-commons-netタスクの<filename>pom.xml</filename>は、このユースケースのための正しい情報を提供していません。</para>
     </section>

@@ -16,6 +16,7 @@
 package org.gradle.api.internal;
 
 import groovy.lang.*;
+import org.gradle.api.NonExtensible;
 import org.gradle.api.Transformer;
 import org.gradle.api.plugins.Convention;
 import org.gradle.api.plugins.ExtensionAware;
@@ -34,7 +35,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class AsmBackedClassGenerator extends AbstractClassGenerator {
-    private static final JavaMethod<ClassLoader, Class> DEFINE_CLASS_METHOD = JavaMethod.create(ClassLoader.class, Class.class, "defineClass", String.class, byte[].class, Integer.TYPE, Integer.TYPE);
+    private static final JavaMethod<ClassLoader, Class> DEFINE_CLASS_METHOD = JavaReflectionUtil.method(ClassLoader.class, Class.class, "defineClass", String.class, byte[].class, Integer.TYPE, Integer.TYPE);
 
     @Override
     protected <T> ClassBuilder<T> start(Class<T> type) {
@@ -57,7 +58,12 @@ public class AsmBackedClassGenerator extends AbstractClassGenerator {
         private final Type dynamicObjectType = Type.getType(DynamicObject.class);
         private final Type conventionMappingType = Type.getType(ConventionMapping.class);
         private final Type groovyObjectType = Type.getType(GroovyObject.class);
+        private final Type groovyInterceptableType = Type.getType(GroovyInterceptable.class);
         private final Type conventionType = Type.getType(Convention.class);
+        private final Type extensibleDynamicObjectHelperType = Type.getType(MixInExtensibleDynamicObject.class);
+        private final Type nonExtensibleDynamicObjectHelperType = Type.getType(BeanDynamicObject.class);
+
+        private final boolean extensible;
 
         private ClassBuilderImpl(Class<T> type) {
             this.type = type;
@@ -66,17 +72,24 @@ public class AsmBackedClassGenerator extends AbstractClassGenerator {
             typeName = type.getName() + "_Decorated";
             generatedType = Type.getType("L" + typeName.replaceAll("\\.", "/") + ";");
             superclassType = Type.getType(type);
+
+            extensible = JavaReflectionUtil.getAnnotation(type, NonExtensible.class) == null;
         }
 
         public void startClass(boolean isConventionAware) {
             List<String> interfaceTypes = new ArrayList<String>();
-            if (isConventionAware) {
+            if (isConventionAware && extensible) {
                 interfaceTypes.add(conventionAwareType.getInternalName());
             }
+
+            if (extensible) {
+                interfaceTypes.add(extensionAwareType.getInternalName());
+                interfaceTypes.add(hasConventionType.getInternalName());
+            }
+
             interfaceTypes.add(dynamicObjectAwareType.getInternalName());
-            interfaceTypes.add(extensionAwareType.getInternalName());
-            interfaceTypes.add(hasConventionType.getInternalName());
             interfaceTypes.add(groovyObjectType.getInternalName());
+            interfaceTypes.add(groovyInterceptableType.getInternalName());
 
             visitor.visit(Opcodes.V1_5, Opcodes.ACC_PUBLIC, generatedType.getInternalName(), null,
                     superclassType.getInternalName(), interfaceTypes.toArray(new String[interfaceTypes.size()]));
@@ -109,7 +122,7 @@ public class AsmBackedClassGenerator extends AbstractClassGenerator {
             // this.super(p0 .. pn)
             methodVisitor.visitVarInsn(Opcodes.ALOAD, 0);
             for (int i = 0; i < constructor.getParameterTypes().length; i++) {
-                methodVisitor.visitVarInsn(Type.getType(constructor.getParameterTypes()[i]).getOpcode(Opcodes.ILOAD), i+1);
+                methodVisitor.visitVarInsn(Type.getType(constructor.getParameterTypes()[i]).getOpcode(Opcodes.ILOAD), i + 1);
             }
             methodVisitor.visitMethodInsn(Opcodes.INVOKESPECIAL, superclassType.getInternalName(), "<init>",
                     methodDescriptor);
@@ -225,44 +238,15 @@ public class AsmBackedClassGenerator extends AbstractClassGenerator {
         }
 
         public void mixInDynamicAware() throws Exception {
-            final Type helperType = Type.getType(MixInExtensibleDynamicObject.class);
 
             // GENERATE private MixInExtensibleDynamicObject dynamicObjectHelper = new MixInExtensibleDynamicObject(this, super.getAsDynamicObject())
 
-            final String fieldSignature = "L" + MixInExtensibleDynamicObject.class.getName().replaceAll("\\.", "/") + ";";
+            Class<?> extensibleObjectFieldType = extensible ? MixInExtensibleDynamicObject.class : BeanDynamicObject.class;
+            final String fieldSignature = Type.getDescriptor(extensibleObjectFieldType);
             visitor.visitField(Opcodes.ACC_PRIVATE, "dynamicObjectHelper", fieldSignature, null, null);
             initDynamicObjectHelper = new MethodCodeBody() {
                 public void add(MethodVisitor visitor) throws Exception {
-                    String helperTypeConstructorDesc = Type.getMethodDescriptor(Type.VOID_TYPE, new Type[]{
-                            Type.getType(Object.class), dynamicObjectType
-                    });
-
-                    // GENERATE dynamicObjectHelper = new MixInExtensibleDynamicObject(this, super.getAsDynamicObject())
-
-                    visitor.visitVarInsn(Opcodes.ALOAD, 0);
-
-                    // GENERATE new MixInExtensibleDynamicObject(this, super.getAsDynamicObject())
-                    visitor.visitTypeInsn(Opcodes.NEW, helperType.getInternalName());
-                    visitor.visitInsn(Opcodes.DUP);
-
-                    visitor.visitVarInsn(Opcodes.ALOAD, 0);
-
-                    boolean useInheritedDynamicObject = GroovySystem.getMetaClassRegistry().getMetaClass(type).pickMethod("getAsDynamicObject", new Class[0]) != null;
-
-                    if (useInheritedDynamicObject) {
-                        // GENERATE super.getAsDynamicObject()
-                        visitor.visitVarInsn(Opcodes.ALOAD, 0);
-                        visitor.visitMethodInsn(Opcodes.INVOKESPECIAL, Type.getType(type).getInternalName(),
-                                "getAsDynamicObject", Type.getMethodDescriptor(dynamicObjectType, new Type[0]));
-                    } else {
-                        // GENERATE null
-                        visitor.visitInsn(Opcodes.ACONST_NULL);
-                    }
-
-                    visitor.visitMethodInsn(Opcodes.INVOKESPECIAL, helperType.getInternalName(), "<init>",
-                            helperTypeConstructorDesc);
-                    // END
-
+                    generateCreateDynamicObject(visitor);
                     visitor.visitFieldInsn(Opcodes.PUTFIELD, generatedType.getInternalName(), "dynamicObjectHelper",
                             fieldSignature);
                     // END
@@ -271,62 +255,133 @@ public class AsmBackedClassGenerator extends AbstractClassGenerator {
 
             // END
 
-            // GENERATE public Convention getConvention() { return dynamicObjectHelper.getConvention(); }
+            if (extensible) {
+                // GENERATE public Convention getConvention() { return dynamicObjectHelper.getConvention(); }
 
-            addGetter(HasConvention.class.getDeclaredMethod("getConvention"), new MethodCodeBody() {
-                public void add(MethodVisitor visitor) throws Exception {
+                addGetter(HasConvention.class.getDeclaredMethod("getConvention"), new MethodCodeBody() {
+                    public void add(MethodVisitor visitor) throws Exception {
 
-                    // GENERATE dynamicObjectHelper.getConvention()
+                        // GENERATE dynamicObjectHelper.getConvention()
 
-                    visitor.visitVarInsn(Opcodes.ALOAD, 0);
-                    visitor.visitFieldInsn(Opcodes.GETFIELD, generatedType.getInternalName(), "dynamicObjectHelper",
-                            fieldSignature);
-                    String getterDescriptor = Type.getMethodDescriptor(ExtensibleDynamicObject.class.getDeclaredMethod(
-                            "getConvention"));
-                    visitor.visitMethodInsn(Opcodes.INVOKEVIRTUAL, helperType.getInternalName(), "getConvention",
-                            getterDescriptor);
-                }
-            });
+                        visitor.visitVarInsn(Opcodes.ALOAD, 0);
+                        visitor.visitFieldInsn(Opcodes.GETFIELD, generatedType.getInternalName(), "dynamicObjectHelper",
+                                fieldSignature);
+                        String getterDescriptor = Type.getMethodDescriptor(ExtensibleDynamicObject.class.getDeclaredMethod(
+                                "getConvention"));
+                        visitor.visitMethodInsn(Opcodes.INVOKEVIRTUAL, extensibleDynamicObjectHelperType.getInternalName(), "getConvention",
+                                getterDescriptor);
+                    }
+                });
+
+                // END
+
+                // GENERATE public ExtensionContainer getExtensions() { return getConvention(); }
+
+                addGetter(ExtensionAware.class.getDeclaredMethod("getExtensions"), new MethodCodeBody() {
+                    public void add(MethodVisitor visitor) throws Exception {
+
+                        // GENERATE getConvention()
+
+                        visitor.visitVarInsn(Opcodes.ALOAD, 0);
+                        String getterDescriptor = Type.getMethodDescriptor(ExtensibleDynamicObject.class.getDeclaredMethod(
+                                "getConvention"));
+                        visitor.visitMethodInsn(Opcodes.INVOKEVIRTUAL, generatedType.getInternalName(), "getConvention",
+                                getterDescriptor);
+                    }
+                });
+            }
 
             // END
 
-            // GENERATE public ExtensionContainer getExtensions() { return getConvention(); }
-
-            addGetter(ExtensionAware.class.getDeclaredMethod("getExtensions"), new MethodCodeBody() {
-                public void add(MethodVisitor visitor) throws Exception {
-
-                    // GENERATE getConvention()
-
-                    visitor.visitVarInsn(Opcodes.ALOAD, 0);
-                    String getterDescriptor = Type.getMethodDescriptor(ExtensibleDynamicObject.class.getDeclaredMethod(
-                            "getConvention"));
-                    visitor.visitMethodInsn(Opcodes.INVOKEVIRTUAL, generatedType.getInternalName(), "getConvention",
-                            getterDescriptor);
-                }
-            });
-
-            // END
-
-            // GENERATE public DynamicObject.getAsDynamicObject() { return dynamicObjectHelper; }
+            // GENERATE public DynamicObject getAsDynamicObject() { if (dynamicObjectHelper != null) { return dynamicObjectHelper; } else { new MixInExtensibleDynamicObject(this, super.getAsDynamicObject()) } }
+            // the null check is for when getAsDynamicObject() is called by a superclass constructor
 
             addGetter(DynamicObjectAware.class.getDeclaredMethod("getAsDynamicObject"), new MethodCodeBody() {
                 public void add(MethodVisitor visitor) {
-
-                    // GENERATE dynamicObjectHelper
+                    // GENERATE if (dynamicObjectHelper != null) {... }
+                    visitor.visitVarInsn(Opcodes.ALOAD, 0);
+                    visitor.visitFieldInsn(Opcodes.GETFIELD, generatedType.getInternalName(), "dynamicObjectHelper", fieldSignature);
+                    visitor.visitInsn(Opcodes.DUP);
+                    Label nullBranch = new Label();
+                    visitor.visitJumpInsn(Opcodes.IFNULL, nullBranch);
+                    visitor.visitInsn(Opcodes.ARETURN);
+                    // GENERATE else { return new MixInExtensibleDynamicObject(this, super.getAsDynamicObject()); }
+                    visitor.visitLabel(nullBranch);
 
                     visitor.visitVarInsn(Opcodes.ALOAD, 0);
-                    visitor.visitFieldInsn(Opcodes.GETFIELD, generatedType.getInternalName(), "dynamicObjectHelper",
-                            fieldSignature);
+
+                    // GENERATE new MixInExtensibleDynamicObject(this, super.getAsDynamicObject())
+                    generateCreateDynamicObject(visitor);
+                    // END
+
+                    visitor.visitInsn(Opcodes.ARETURN);
                 }
             });
 
             // END
         }
 
+        private void generateCreateDynamicObject(MethodVisitor visitor) {
+            if (extensible) {
+
+                String helperTypeConstructorDesc = Type.getMethodDescriptor(Type.VOID_TYPE, new Type[]{
+                        Type.getType(Object.class), dynamicObjectType
+                });
+
+                // GENERATE dynamicObjectHelper = new MixInExtensibleDynamicObject(this, super.getAsDynamicObject())
+
+                visitor.visitVarInsn(Opcodes.ALOAD, 0);
+
+                // GENERATE new MixInExtensibleDynamicObject(this, super.getAsDynamicObject())
+                visitor.visitTypeInsn(Opcodes.NEW, extensibleDynamicObjectHelperType.getInternalName());
+                visitor.visitInsn(Opcodes.DUP);
+
+                visitor.visitVarInsn(Opcodes.ALOAD, 0);
+
+                boolean useInheritedDynamicObject = GroovySystem.getMetaClassRegistry().getMetaClass(type).pickMethod("getAsDynamicObject", new Class[0]) != null;
+
+                if (useInheritedDynamicObject) {
+                    // GENERATE super.getAsDynamicObject()
+                    visitor.visitVarInsn(Opcodes.ALOAD, 0);
+                    visitor.visitMethodInsn(Opcodes.INVOKESPECIAL, Type.getType(type).getInternalName(),
+                            "getAsDynamicObject", Type.getMethodDescriptor(dynamicObjectType, new Type[0]));
+                } else {
+                    // GENERATE null
+                    visitor.visitInsn(Opcodes.ACONST_NULL);
+                }
+
+                visitor.visitMethodInsn(Opcodes.INVOKESPECIAL, extensibleDynamicObjectHelperType.getInternalName(), "<init>",
+                        helperTypeConstructorDesc);
+                // END
+            } else {
+                String helperTypeConstructorDesc = Type.getMethodDescriptor(Type.VOID_TYPE, new Type[]{
+                        Type.getType(Object.class)
+                });
+
+                // GENERATE new BeanDynamicObject(this)
+
+                visitor.visitVarInsn(Opcodes.ALOAD, 0);
+
+                // GENERATE new BeanDynamicObject(this)
+                visitor.visitTypeInsn(Opcodes.NEW, nonExtensibleDynamicObjectHelperType.getInternalName());
+                visitor.visitInsn(Opcodes.DUP);
+
+                visitor.visitVarInsn(Opcodes.ALOAD, 0);
+
+                visitor.visitMethodInsn(Opcodes.INVOKESPECIAL, nonExtensibleDynamicObjectHelperType.getInternalName(), "<init>",
+                        helperTypeConstructorDesc);
+                // END
+            }
+        }
+
         public void mixInConventionAware() throws Exception {
+            if (!extensible) {
+                return;
+            }
+
             // GENERATE private ConventionMapping mapping = new ConventionAwareHelper(this, getConvention())
 
-            final String mappingFieldSignature = "L" + ConventionMapping.class.getName().replaceAll("\\.", "/") + ";";
+            final String mappingFieldSignature = Type.getDescriptor(ConventionMapping.class);
             final String getConventionDesc = Type.getMethodDescriptor(conventionType, new Type[0]);
 
             visitor.visitField(Opcodes.ACC_PRIVATE, "mapping", mappingFieldSignature, null, null);
@@ -395,7 +450,7 @@ public class AsmBackedClassGenerator extends AbstractClassGenerator {
 
             // GENERATE private MetaClass metaClass = GroovySystem.getMetaClassRegistry().getMetaClass(getClass())
 
-            final String metaClassFieldSignature = "L" + MetaClass.class.getName().replaceAll("\\.", "/") + ";";
+            final String metaClassFieldSignature = Type.getDescriptor(MetaClass.class);
             visitor.visitField(Opcodes.ACC_PRIVATE, "metaClass", metaClassFieldSignature, null, null);
 
             initMetaClass = new MethodCodeBody() {
@@ -598,6 +653,9 @@ public class AsmBackedClassGenerator extends AbstractClassGenerator {
         }
 
         public void addGetter(MetaBeanProperty property) throws Exception {
+            if (!extensible) {
+                return;
+            }
             MetaMethod getter = property.getGetter();
 
             // GENERATE private boolean <prop>Set;
@@ -606,7 +664,7 @@ public class AsmBackedClassGenerator extends AbstractClassGenerator {
             visitor.visitField(Opcodes.ACC_PRIVATE, flagName, Type.BOOLEAN_TYPE.getDescriptor(), null, null);
 
             addConventionGetter(getter.getName(), flagName, property);
-    
+
             String getterName = getter.getName();
             Class<?> returnType = getter.getReturnType();
 
@@ -681,6 +739,9 @@ public class AsmBackedClassGenerator extends AbstractClassGenerator {
         }
 
         public void addSetter(MetaBeanProperty property) throws Exception {
+            if (!extensible) {
+                return;
+            }
             MetaMethod setter = property.getSetter();
 
             // GENERATE public <return-type> <setter>(<type> v) { <return-type> v = super.<setter>(v); <prop>Set = true; return v; }
@@ -740,6 +801,9 @@ public class AsmBackedClassGenerator extends AbstractClassGenerator {
         }
 
         public void overrideSetMethod(MetaBeanProperty property, MetaMethod metaMethod) throws Exception {
+            if (!extensible) {
+                return;
+            }
             Type paramType = Type.getType(metaMethod.getParameterTypes()[0].getTheClass());
             Type returnType = Type.getType(metaMethod.getReturnType());
             String methodDescriptor = Type.getMethodDescriptor(returnType, new Type[]{paramType});

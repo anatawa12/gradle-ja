@@ -23,8 +23,9 @@ import org.gradle.api.internal.artifacts.repositories.resolver.IvyResourcePatter
 import org.gradle.api.internal.artifacts.repositories.resolver.M2ResourcePattern;
 import org.gradle.api.internal.artifacts.repositories.resolver.ResourcePattern;
 import org.gradle.api.internal.externalresource.local.*;
-import org.gradle.api.internal.filestore.FileStoreSearcher;
+import org.gradle.internal.filestore.FileStoreSearcher;
 import org.gradle.internal.Factory;
+import org.gradle.internal.resource.local.LocallyAvailableResource;
 import org.gradle.util.hash.HashValue;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -54,6 +55,12 @@ public class LocallyAvailableResourceFinderFactory implements Factory<LocallyAva
 
         // The current filestore
         finders.add(new LocallyAvailableResourceFinderSearchableFileStoreAdapter<ArtifactRevisionId>(fileStore));
+
+        // 1.5
+        addForPattern(finders, "artifacts-24", "filestore/[organisation]/[module](/[branch])/[revision]/[type]/*/[artifact]-[revision](-[classifier])(.[ext])");
+
+        // 1.4
+        addForPattern(finders, "artifacts-23", "filestore/[organisation]/[module](/[branch])/[revision]/[type]/*/[artifact]-[revision](-[classifier])(.[ext])");
 
         // 1.3
         addForPattern(finders, "artifacts-15", "filestore/[organisation]/[module](/[branch])/[revision]/[type]/*/[artifact]-[revision](-[classifier])(.[ext])");
@@ -110,7 +117,7 @@ public class LocallyAvailableResourceFinderFactory implements Factory<LocallyAva
         public LocallyAvailableResourceCandidates findCandidates(ArtifactRevisionId criterion) {
             if(!logged){
                 LOGGER.warn("Unable to locate local Maven repository.");
-                LOGGER.debug("Problems while locating local maven repository.", ex);
+                LOGGER.debug("Problems while locating local Maven repository.", ex);
                 logged = true;
             }
             return new LocallyAvailableResourceCandidates() {

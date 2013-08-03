@@ -18,20 +18,19 @@ package org.gradle.plugins.ide.idea
 import org.gradle.api.JavaVersion
 import org.gradle.api.Project
 import org.gradle.api.plugins.JavaPlugin
+import org.gradle.api.plugins.scala.ScalaBasePlugin
 import org.gradle.internal.reflect.Instantiator
 import org.gradle.plugins.ide.api.XmlFileContentMerger
 import org.gradle.plugins.ide.idea.internal.IdeaNameDeduper
 import org.gradle.plugins.ide.idea.internal.IdeaScalaConfigurer
-import org.gradle.plugins.ide.internal.IdePlugin
 import org.gradle.plugins.ide.idea.model.*
+import org.gradle.plugins.ide.internal.IdePlugin
 
 import javax.inject.Inject
 
 /**
  * Adds a GenerateIdeaModule task. When applied to a root project, also adds a GenerateIdeaProject task.
  * For projects that have the Java plugin applied, the tasks receive additional Java-specific configuration.
- *
- *  @author Hans Dockter
  */
 class IdeaPlugin extends IdePlugin {
     private final Instantiator instantiator
@@ -173,6 +172,10 @@ class IdeaPlugin extends IdePlugin {
     }
 
     private void configureForScalaPlugin() {
+        project.plugins.withType(ScalaBasePlugin) {
+            //see IdeaScalaConfigurer
+            project.tasks.ideaModule.dependsOn(project.rootProject.tasks.ideaProject)
+        }
         if (isRoot(project)) {
             new IdeaScalaConfigurer(project).configure()
         }

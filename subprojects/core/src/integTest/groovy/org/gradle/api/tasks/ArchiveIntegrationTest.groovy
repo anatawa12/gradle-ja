@@ -13,16 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-
-
-
 package org.gradle.api.tasks
 
 import org.apache.commons.lang.RandomStringUtils
-import org.apache.commons.lang.StringUtils
 import org.gradle.integtests.fixtures.AbstractIntegrationSpec
 import org.gradle.integtests.fixtures.TestResources
+import org.gradle.test.fixtures.archive.TarTestFixture
 import org.gradle.test.fixtures.file.TestFile
 import org.junit.Rule
 
@@ -70,8 +66,6 @@ public class ArchiveIntegrationTest extends AbstractIntegrationSpec {
         then:
         file('build/test.tar').assertDoesNotExist()
     }
-
-
 
     def canCopyFromATar() {
         given:
@@ -222,7 +216,8 @@ public class ArchiveIntegrationTest extends AbstractIntegrationSpec {
         file('dest').assertHasDescendants('someDir/1.txt')
     }
 
-    @Rule public final TestResources resources = new TestResources(temporaryFolder)
+    @Rule
+    public final TestResources resources = new TestResources(temporaryFolder)
 
     def "tarTreeFailsGracefully"() {
         given:
@@ -344,11 +339,11 @@ public class ArchiveIntegrationTest extends AbstractIntegrationSpec {
         run 'uncompressedZip'
         run 'compressedZip'
         then:
-	def uncompressedSize = file('build/uncompressedTest.zip').length()
-	def compressedSize = file('build/compressedTest.zip').length()
-	println "uncompressed" + uncompressedSize
-	println "compressed" + compressedSize
-    assert compressedSize < uncompressedSize
+        def uncompressedSize = file('build/uncompressedTest.zip').length()
+        def compressedSize = file('build/compressedTest.zip').length()
+        println "uncompressed" + uncompressedSize
+        println "compressed" + compressedSize
+        assert compressedSize < uncompressedSize
 
         def expandDir = file('expandedUncompressed')
         file('build/uncompressedTest.zip').unzipTo(expandDir)
@@ -598,10 +593,67 @@ public class ArchiveIntegrationTest extends AbstractIntegrationSpec {
         expandDir.assertHasDescendants('shared/zip.txt', 'zipdir1/file1.txt', 'shared/tar.txt', 'tardir1/file1.txt', 'shared/dir.txt', 'dir1/file1.txt')
     }
 
-    def createTar(String name, Closure cl) {
+
+    def ensureDuplicatesIncludedInTarByDefault() {
+        given:
+        createFilesStructureForDupeTests();
+        buildFile << '''
+            task tar(type: Tar) {
+                from 'dir1'
+                from 'dir2'
+                from 'dir3'
+                destinationDir = buildDir
+                archiveName = 'test.tar'
+            }
+            '''
+        when:
+        run 'tar'
+
+        then:
+        def tar = new TarTestFixture(file("build/test.tar"))
+        tar.assertContainsFile('file1.txt', 2)
+        tar.assertContainsFile('file2.txt')
+    }
+
+    def ensureDuplicatesCanBeExcludedFromTar() {
+        given:
+        createFilesStructureForDupeTests()
+        buildFile << '''
+            task tar(type: Tar) {
+                from 'dir1'
+                from 'dir2'
+                from 'dir3'
+                destinationDir = buildDir
+                archiveName = 'test.tar'
+                eachFile { it.duplicatesStrategy = 'exclude' }
+            }
+            '''
+        when:
+        run 'tar'
+
+        then:
+        def tar = new TarTestFixture(file("build/test.tar"))
+        tar.assertContainsFile('file1.txt')
+        tar.assertContainsFile('file2.txt')
+        tar.content("file1.txt") == "dir1/file1.txt"
+    }
+
+    private def createTar(String name, Closure cl) {
         TestFile tarRoot = file("${name}.root")
         TestFile tar = file(name)
         tarRoot.create(cl)
         tarRoot.tarTo(tar)
+    }
+
+    private def createFilesStructureForDupeTests() {
+        createDir('dir1', {
+            file('file1.txt').text = "dir1/file1.txt"
+        })
+        createDir('dir2', {
+            file 'file2.txt'
+        })
+        createDir('dir3', {
+            file('file1.txt').text = "dir3/file1.txt"
+        })
     }
 }

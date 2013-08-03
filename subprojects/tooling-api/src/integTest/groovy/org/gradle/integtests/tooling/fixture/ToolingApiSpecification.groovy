@@ -24,12 +24,22 @@ import org.gradle.tooling.GradleConnector
 import org.gradle.util.GradleVersion
 import org.gradle.util.SetSystemProperties
 import org.junit.Rule
-import org.junit.internal.AssumptionViolatedException
 import org.junit.runner.RunWith
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import spock.lang.Specification
 
+/**
+ * A spec that executes tests against all compatible versions of tooling API consumer and provider, including the current Gradle version under test.
+ *
+ * <p>A test class or test method can be annotated with the following annotations to specify which versions the test is compatible with:
+ * </p>
+ *
+ * <ul>
+ *     <li>{@link ToolingApiVersion} - specifies the tooling API consumer versions that the test is compatible with.
+ *     <li>{@link TargetGradleVersion} - specifies the tooling API provider versions that the test is compatible with.
+ * </ul>
+ */
 @RunWith(ToolingApiCompatibilitySuiteRunner)
 abstract class ToolingApiSpecification extends Specification {
     static final Logger LOGGER = LoggerFactory.getLogger(ToolingApiSpecification)
@@ -52,10 +62,6 @@ abstract class ToolingApiSpecification extends Specification {
         def consumerGradle = GradleVersion.current()
         def target = GradleVersion.version(VERSION.get().version.version)
         LOGGER.info(" Using Tooling API consumer ${consumerGradle}, provider ${target}")
-        boolean accept = accept(consumerGradle, target)
-        if (!accept) {
-            throw new AssumptionViolatedException("Test class ${getClass().name} does not work with tooling API ${consumerGradle} and Gradle ${target}.")
-        }
         this.toolingApi.withConnector {
             if (consumerGradle.version != target.version) {
                 LOGGER.info("Overriding daemon tooling API provider to use installation: " + target);
@@ -63,13 +69,6 @@ abstract class ToolingApiSpecification extends Specification {
                 it.embedded(false)
             }
         }
-    }
-
-    /**
-     * Returns true if this test class works with the given combination of tooling API consumer and provider.
-     */
-    protected boolean accept(GradleVersion toolingApi, GradleVersion targetGradle) {
-        return true
     }
 
     public <T> T withConnection(Closure<T> cl) {

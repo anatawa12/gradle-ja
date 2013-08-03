@@ -19,7 +19,7 @@ import org.gradle.api.GradleException;
 import org.gradle.api.internal.specs.ExplainingSpec;
 import org.gradle.api.logging.Logger;
 import org.gradle.api.logging.Logging;
-import org.gradle.initialization.GradleLauncherAction;
+import org.gradle.initialization.BuildAction;
 import org.gradle.internal.UncheckedException;
 import org.gradle.internal.concurrent.ExecutorFactory;
 import org.gradle.internal.id.IdGenerator;
@@ -27,8 +27,8 @@ import org.gradle.launcher.daemon.context.DaemonContext;
 import org.gradle.launcher.daemon.diagnostics.DaemonDiagnostics;
 import org.gradle.launcher.daemon.logging.DaemonMessages;
 import org.gradle.launcher.daemon.protocol.*;
+import org.gradle.launcher.exec.BuildActionExecuter;
 import org.gradle.launcher.exec.BuildActionParameters;
-import org.gradle.launcher.exec.GradleLauncherActionExecuter;
 import org.gradle.logging.internal.OutputEvent;
 import org.gradle.logging.internal.OutputEventListener;
 import org.gradle.messaging.remote.internal.Connection;
@@ -69,7 +69,7 @@ import java.util.Set;
  * <p>
  * If the daemon returns a {@code null} message before returning a {@link Result} object, it has terminated unexpectedly for some reason.
  */
-public class DaemonClient implements GradleLauncherActionExecuter<BuildActionParameters> {
+public class DaemonClient implements BuildActionExecuter<BuildActionParameters> {
     private static final Logger LOGGER = Logging.getLogger(DaemonClient.class);
     private static final int STOP_TIMEOUT_SECONDS = 30;
     private final DaemonConnector connector;
@@ -79,7 +79,7 @@ public class DaemonClient implements GradleLauncherActionExecuter<BuildActionPar
     private final ExecutorFactory executorFactory;
     private final IdGenerator<?> idGenerator;
 
-    //TODO SF - outputEventListener and buildStandardInput are per-build settings
+    //TODO - outputEventListener and buildStandardInput are per-build settings
     //so down the road we should refactor the code accordingly and potentially attach them to BuildActionParameters
     public DaemonClient(DaemonConnector connector, OutputEventListener outputEventListener, ExplainingSpec<DaemonContext> compatibilitySpec,
                         InputStream buildStandardInput, ExecutorFactory executorFactory, IdGenerator<?> idGenerator) {
@@ -140,7 +140,7 @@ public class DaemonClient implements GradleLauncherActionExecuter<BuildActionPar
      * @param action The action
      * @throws org.gradle.launcher.exec.ReportedException On failure, when the failure has already been logged/reported.
      */
-    public <T> T execute(GradleLauncherAction<T> action, BuildActionParameters parameters) {
+    public <T> T execute(BuildAction<T> action, BuildActionParameters parameters) {
         Build build = new Build(idGenerator.generateId(), action, parameters);
         int saneNumberOfAttempts = 100; //is it sane enough?
         for (int i = 1; i < saneNumberOfAttempts; i++) {
@@ -154,7 +154,7 @@ public class DaemonClient implements GradleLauncherActionExecuter<BuildActionPar
                 connection.stop();
             }
         }
-        //TODO SF if we want to keep below sanity it should include the errors that were accumulated above.
+        //TODO it would be nice if below includes the errors that were accumulated above.
         throw new NoUsableDaemonFoundException("Unable to find a usable idle daemon. I have connected to "
                 + saneNumberOfAttempts + " different daemons but I could not use any of them to run build: " + build + ".");
     }
@@ -231,7 +231,7 @@ public class DaemonClient implements GradleLauncherActionExecuter<BuildActionPar
     }
 
     private IllegalStateException invalidResponse(Object response, Build command) {
-        //TODO SF we could include diagnostics here (they might be available).
+        //TODO diagnostics could be included in the exception (they might be available).
         return new IllegalStateException(String.format(
                 "Received invalid response from the daemon: '%s' is a result of a type we don't have a strategy to handle."
                         + "Earlier, '%s' request was sent to the daemon.", response, command));

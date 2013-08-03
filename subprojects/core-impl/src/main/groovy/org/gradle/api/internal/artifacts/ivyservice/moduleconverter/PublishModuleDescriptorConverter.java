@@ -17,17 +17,14 @@
 package org.gradle.api.internal.artifacts.ivyservice.moduleconverter;
 
 import org.apache.ivy.core.module.descriptor.DefaultModuleDescriptor;
-import org.apache.ivy.core.module.descriptor.ModuleDescriptor;
 import org.gradle.api.artifacts.Configuration;
 import org.gradle.api.artifacts.Module;
-import org.gradle.api.artifacts.ModuleDependency;
+import org.gradle.api.internal.artifacts.BuildableModuleVersionPublishMetaData;
+import org.gradle.api.internal.artifacts.ModuleVersionPublishMetaData;
 import org.gradle.api.internal.artifacts.ivyservice.ModuleDescriptorConverter;
 
 import java.util.Set;
 
-/**
- * @author Hans Dockter
- */
 public class PublishModuleDescriptorConverter implements ModuleDescriptorConverter {
     static final String IVY_MAVEN_NAMESPACE = "http://ant.apache.org/ivy/maven";
     static final String IVY_MAVEN_NAMESPACE_PREFIX = "m";
@@ -41,19 +38,11 @@ public class PublishModuleDescriptorConverter implements ModuleDescriptorConvert
         this.artifactsToModuleDescriptorConverter = artifactsToModuleDescriptorConverter;
     }
 
-    public ModuleDescriptor convert(Set<? extends Configuration> configurations, Module module) {
-         DefaultModuleDescriptor moduleDescriptor = (DefaultModuleDescriptor) resolveModuleDescriptorConverter
-                .convert(configurations, module);
+    public ModuleVersionPublishMetaData convert(Set<? extends Configuration> configurations, Module module) {
+        BuildableModuleVersionPublishMetaData publishMetaData = (BuildableModuleVersionPublishMetaData) resolveModuleDescriptorConverter.convert(configurations, module);
+        DefaultModuleDescriptor moduleDescriptor = publishMetaData.getModuleDescriptor();
         moduleDescriptor.addExtraAttributeNamespace(IVY_MAVEN_NAMESPACE_PREFIX, IVY_MAVEN_NAMESPACE);
-        artifactsToModuleDescriptorConverter.addArtifacts(moduleDescriptor, configurations);
-        return moduleDescriptor;
-    }
-
-    public ModuleDescriptor createModuleDescriptor(Module module) {
-        return resolveModuleDescriptorConverter.createModuleDescriptor(module);
-    }
-
-    public void addDependencyDescriptor(String configuration, DefaultModuleDescriptor moduleDescriptor, ModuleDependency dependency) {
-        resolveModuleDescriptorConverter.addDependencyDescriptor(configuration, moduleDescriptor, dependency);
+        artifactsToModuleDescriptorConverter.addArtifacts(publishMetaData, configurations);
+        return publishMetaData;
     }
 }

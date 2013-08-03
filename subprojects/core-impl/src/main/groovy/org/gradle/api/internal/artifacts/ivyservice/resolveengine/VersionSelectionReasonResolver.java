@@ -20,9 +20,6 @@ import org.gradle.api.internal.artifacts.ivyservice.resolveengine.result.Version
 
 import java.util.Collection;
 
-/**
-* by Szczepan Faber, created at: 1/29/13
-*/
 public class VersionSelectionReasonResolver implements ModuleConflictResolver {
 
     private final ModuleConflictResolver delegate;
@@ -31,8 +28,8 @@ public class VersionSelectionReasonResolver implements ModuleConflictResolver {
         this.delegate = delegate;
     }
 
-    public ModuleRevisionResolveState select(Collection<? extends ModuleRevisionResolveState> candidates, ModuleRevisionResolveState root) {
-        ModuleRevisionResolveState selected = delegate.select(candidates, root);
+    public ModuleRevisionResolveState select(Collection<? extends ModuleRevisionResolveState> candidates) {
+        ModuleRevisionResolveState selected = delegate.select(candidates);
         selected.setSelectionReason(VersionSelectionReasons.withConflictResolution(selected.getSelectionReason()));
         return selected;
     }

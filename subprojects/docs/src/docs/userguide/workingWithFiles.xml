@@ -215,7 +215,7 @@
         <para role="original">Many objects in Gradle have properties which accept a set of input files. For example, the
             <apilink class="org.gradle.api.tasks.compile.JavaCompile"/> task has a <literal>source</literal> property,
             which defines the source files to compile. You can set the value of this property using any of the types
-            supported by the <link linkend="sec:file_collections">files()</link> method, which we have seen in above.
+            supported by the <link linkend="sec:file_collections">files()</link> method, which was shown above.
             This means you can set the property using, for example, a <classname>File</classname>, <classname>String</classname>,
             collection, <classname>FileCollection</classname> or even a closure.
             Here are some examples:
@@ -241,7 +241,7 @@
     <section id="sec:copying_files">
         <title>ファイルをコピーする <phrase role="original">Copying files</phrase></title>
         <para role="original">You can use the <apilink class="org.gradle.api.tasks.Copy"/> task to copy files. The copy task is very flexible, and allows
-            you to, for example, filter the contents of the files as they are copied, and to map the files names.
+            you to, for example, filter the contents of the files as they are copied, and map to the file names.
         </para>
         <para><apilink class="org.gradle.api.tasks.Copy"/>タスクを使ってファイルをコピーできます。このタスクはとても柔軟で、コピーしたファイルの内容をフィルターにかけたり、ファイル名をマッピングで変換したりできます。</para>
         <para role="original">To use the <literal>Copy</literal> task, you must provide a set of source files to copy, and a destination directory to copy
@@ -249,7 +249,7 @@
             <firstterm>copy spec</firstterm>. A copy spec is represented by the <apilink class="org.gradle.api.file.CopySpec"/> interface. The
             <literal>Copy</literal> task implements this interface.
             You specify the source files using the <apilink class="org.gradle.api.file.CopySpec" method="from(java.lang.Object...)"/>
-            method. To specify the destination directory, you use the <apilink class="org.gradle.api.file.CopySpec" method="into(java.lang.Object)"/>
+            method. To specify the destination directory, use the <apilink class="org.gradle.api.file.CopySpec" method="into(java.lang.Object)"/>
             method.
         </para>
         <para><literal>Copy</literal>タスクを使うには、コピーすべきソースファイルと、コピー先のディレクトリを指定しなければなりません。また、コピー時にファイルを編集する場合は、それについても指定します。これらの指定は全て、<firstterm>Copy仕様</firstterm>を使って行います。Copy仕様は、<apilink class="org.gradle.api.file.CopySpec"/>インターフェースで表現されており、<literal>Copy</literal>タスクはこのインターフェースを実装したものです。ソースファイルの指定には、<apilink class="org.gradle.api.file.CopySpec" method="from(java.lang.Object...)"/>メソッドを使います。コピー先ディレクトリの指定には、<apilink class="org.gradle.api.file.CopySpec" method="into(java.lang.Object)"/>メソッドを使います。
@@ -262,13 +262,16 @@
             <link linkend="sec:file_collections">files()</link> method does. When an argument resolves to a directory,
             everything under that directory (but not the directory itself) is recursively copied into the destination
             directory. When an argument resolves to a file, that file is copied into the destination directory.
-            When an argument resolves to a non-existing file, that argument is ignored.
+            When an argument resolves to a non-existing file, that argument is ignored. When an argument resolves to 
+            a task (or explicitly its output), the output of the task is used as the argument for the <literal>from()</literal>
+            method and this task is automatically added as a dependency of the <literal>Copy</literal> task.            
             The <literal>into()</literal> accepts
             any of the arguments that the <link linkend="sec:locating_files">file()</link> method does. Here is another
             example:
         </para>
         <para><literal>from()</literal>メソッドが受け付ける型は、<literal>files()</literal>メソッドと同じです。ディレクトリパスに解決されるような引数を渡した場合、そのディレクトリ以下の全て（ただし、そのディレクトリ自身は除く）が再帰的にターゲットディレクトリにコピーされます。渡した引数がファイルパスに解決された場合は、そのファイルが目的のディレクトリにコピーされます。
             もし、引数に渡したパスにファイルがない場合、その引数は無視されます。
+            引数にタスク（または明示的にそのoutput）を渡した場合、そのタスクのoutputが<literal>from()</literal>の引数として使用され、そのタスクは自動的にCopyタスクが依存しているタスクとして設定されます。
             <literal>into()</literal>メソッドは、<literal>file()</literal>と同じ型を引数に取ります。以下にもう一つ例を挙げます。
         </para>
         <sample id="copy" dir="userguide/files/copy" title="Copyタスクのコピー元と宛先を指定する / Specifying copy task source files and destination directory">
@@ -280,11 +283,28 @@
             <sourcefile file="build.gradle" snippet="copy-task-with-patterns"/>
         </sample>
         <para role="original">You can also use the <apilink class="org.gradle.api.Project" method="copy"/> method to copy files. It works the
-            same way as the task.</para>
-        <para>また、<apilink class="org.gradle.api.Project" method="copy"/>メソッドを使ってファイルをコピーすることもできます。このメソッドもCopyタスクと同じように動作します。</para>
-        <sample id="copy" dir="userguide/files/copy" title="copy()メソッドでファイルをコピーする / Copying files using the copy() method">
+            same way as the task with some major limitations though. First, the <literal>copy()</literal> method can not automatically handle the up-to-date
+            check of the copied files.
+        </para>
+        <para>また、<apilink class="org.gradle.api.Project" method="copy"/>メソッドでファイルをコピーすることもできます。これはタスクの場合と大体同じように動作しますが、いくつかの大きな制限もあります。まず、<literal>copy()</literal>メソッドはコピーされるファイルに対し自動的にはup-to-dateチェックを行いません。</para>
+        <sample id="copy" dir="userguide/files/copy" title="Copying files using the copy() method without up-to-date check">
             <sourcefile file="build.gradle" snippet="copy-method"/>
         </sample>
+        <para role="original">Secondly, the <literal>copy()</literal> method can not automatically add a task as a dependency when used as an argument
+            of <literal>from()</literal>. Actually, in this situation, if this task is not explicitly declared as a dependency of the
+            task enclosing the use of the <literal>copy()</literal> method, the dependent task will not be executed and either an out of
+            date file will be copied or no file will be copied. Here is a verbose example of <literal>copy()</literal>
+            method with up-to-date check and task dependency manually added to be at par with the <literal>Copy()</literal> task :
+        </para>
+        <para>次に、<literal>copy()</literal>メソッドは、タスクが<literal>from()</literal>メソッドの引数に渡されても、そのタスクを自動的に依存タスクに追加することはありません。
+            実際、この場合は、<literal>copy()</literal>メソッドを呼び出しているタスクが依存しているタスクとして明示的に宣言されなければ、依存先のタスクは実行されず、古いファイルがコピーされたり、ファイルがコピーされなかったりするかもしれません。以下に<literal>copy()</literal>メソッドをup-to-dateチェックおよび手動によるCopy()タスクへの依存性の追加とともに使用する例について、詳しく注釈した例を挙げます。
+        </para>
+        <sample id="copy" dir="userguide/files/copy" title="up-to-dateチェックとともにcopy()メソッドでファイルをコピーする / Copying files using the copy() method with up-to-date check">
+            <sourcefile file="build.gradle" snippet="copy-method-with-dependency"/>
+        </sample>
+        <para role="original">The bottom line is that the <literal>Copy()</literal> task should be preferred over the <literal>copy()</literal> method most of the time.
+        </para>
+        <para>要するに、ほとんどの場合<literal>copy()</literal>メソッドより<literal>Copy()</literal>タスクを使う方が望ましいということです。</para>
         <section>
             <title>ファイルをリネームする <phrase role="original">Renaming files</phrase></title>
             <sample id="renameOnCopy" dir="userguide/files/copy" title="コピー時にファイルをリネームする / Renaming files as they are copied">
@@ -300,7 +320,7 @@
         <section>
             <title><classname>CopySpec</classname>クラスを使う <phrase role="original">Using the <classname>CopySpec</classname> class</phrase></title>
             <para role="original">Copy specs form a hierarchy. A copy spec inherits its destination path, include patterns, exclude patterns, copy actions,
-                name mappings, filters.</para>
+                name mappings and filters.</para>
             <para>コピー仕様は階層構造を構成でき、宛先パス、include/excludeパターン、コピー動作、ファイル名のマッピング、フィルターを継承できます。</para>
             <sample id="nestedCopySpecs" dir="userguide/files/copy" title="入れ子構造のコピー仕様 / Nested copy specs">
                 <sourcefile file="build.gradle" snippet="nested-specs"/>
@@ -332,8 +352,9 @@
             Archives are created using the various archive tasks:
             <apilink class="org.gradle.api.tasks.bundling.Zip"/>,
             <apilink class="org.gradle.api.tasks.bundling.Tar"/>,
-            <apilink class="org.gradle.api.tasks.bundling.Jar"/>, and
-            <apilink class="org.gradle.api.tasks.bundling.War"/>.
+            <apilink class="org.gradle.api.tasks.bundling.Jar"/>,
+            <apilink class="org.gradle.api.tasks.bundling.War"/>, and
+            <apilink class="org.gradle.plugins.ear.Ear"/>.
             They all work the same way, so let's look at how you create a ZIP file.
         </para>
         <para>
@@ -342,7 +363,8 @@
             <apilink class="org.gradle.api.tasks.bundling.Zip"/>、
             <apilink class="org.gradle.api.tasks.bundling.Tar"/>、
             <apilink class="org.gradle.api.tasks.bundling.Jar"/>、
-            <apilink class="org.gradle.api.tasks.bundling.War"/>などのアーカイブタスクを使って作成します。
+            <apilink class="org.gradle.api.tasks.bundling.War"/>、
+            <apilink class="org.gradle.plugins.ear.Ear"/>などのアーカイブタスクを使って作成します。
             これらは全て同じ使い方なので、ここではZIPファイルの作成方法を見てみましょう。
         </para>
         <sample id="createZip" dir="userguide/files/archives" title="ZIPアーカイブの作成 / Creating a ZIP archive">
@@ -472,7 +494,7 @@
 
         <section>
             <title>複数のアーカイブで中身を共有する <phrase role="original">Sharing content between multiple archives</phrase></title>
-            <para role="original">Using the <apilink class="org.gradle.api.Project" method="copySpec"/> method to share content between archives.</para>
+            <para role="original">You can use the <apilink class="org.gradle.api.Project" method="copySpec"/> method to share content between archives.</para>
             <para><apilink class="org.gradle.api.Project" method="copySpec"/>メソッドを使ってアーカイブ間で中身を共有できます。</para>
         </section>
 

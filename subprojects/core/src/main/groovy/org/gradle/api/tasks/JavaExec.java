@@ -33,8 +33,6 @@ import java.util.Map;
 
 /**
  * Executes a Java application in a child process.
- *
- * @author Hans Dockter
  */
 public class JavaExec extends ConventionTask implements JavaExecSpec {
     private JavaExecAction javaExecHandleBuilder;
@@ -46,7 +44,8 @@ public class JavaExec extends ConventionTask implements JavaExecSpec {
 
     @TaskAction
     public void exec() {
-        setMain(getMain()); // make convention mapping work (at least for 'main')
+        setMain(getMain()); // make convention mapping work (at least for 'main'...
+        setJvmArgs(getJvmArgs()); // ...and for 'jvmArgs')
         javaExecHandleBuilder.execute();
     }
 

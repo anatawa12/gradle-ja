@@ -16,34 +16,30 @@
 
 package org.gradle.initialization
 
-import groovy.mock.interceptor.MockFor
 import org.gradle.StartParameter
 import org.gradle.api.internal.GradleInternal
+import org.gradle.api.internal.SettingsInternal
 import org.gradle.configuration.ScriptPlugin
 import org.gradle.configuration.ScriptPluginFactory
 import org.gradle.groovy.scripts.ScriptSource
 import org.gradle.util.JUnit4GroovyMockery
 import org.junit.Before
 import org.junit.Test
+
 import static org.junit.Assert.assertSame
 
-/**
- * @author Hans Dockter
- */
 class ScriptEvaluatingSettingsProcessorTest {
     static final File TEST_ROOT_DIR = new File('rootDir')
-    static final File TEST_CURRENT_DIR = new File('currentDir')
     ScriptEvaluatingSettingsProcessor settingsProcessor
     DefaultSettingsFinder expectedSettingsFinder
     SettingsFactory settingsFactory
     StartParameter expectedStartParameter
-    DefaultSettings expectedSettings
-    MockFor settingsFactoryMocker
+    SettingsInternal expectedSettings
     ScriptSource scriptSourceMock
     IGradlePropertiesLoader propertiesLoaderMock
     ScriptPluginFactory configurerFactoryMock
     Map expectedGradleProperties
-    URLClassLoader urlClassLoader
+    ClassLoader urlClassLoader
     GradleInternal gradleMock
     SettingsLocation settingsLocation
 
@@ -65,16 +61,14 @@ class ScriptEvaluatingSettingsProcessorTest {
     }
 
     private void initExpectedSettings() {
-        expectedSettings = new DefaultSettings()
-        DefaultProjectDescriptorRegistry projectDescriptorRegistry = new DefaultProjectDescriptorRegistry()
-        expectedSettings.setRootProjectDescriptor(new DefaultProjectDescriptor(null, TEST_ROOT_DIR.name,
-                TEST_ROOT_DIR, projectDescriptorRegistry))
-        expectedSettings.setProjectDescriptorRegistry(projectDescriptorRegistry)
-        expectedSettings.setStartParameter(expectedStartParameter)
+        expectedSettings = context.mock(SettingsInternal.class)
         context.checking {
             one(settingsFactory).createSettings(gradleMock, TEST_ROOT_DIR, scriptSourceMock, expectedGradleProperties, expectedStartParameter, urlClassLoader)
             will(returnValue(expectedSettings))
-            
+
+            allowing(expectedSettings).getClassLoader()
+            will(returnValue(urlClassLoader))
+
             one(settingsLocation).getSettingsDir()
             will(returnValue(TEST_ROOT_DIR))
             allowing(settingsLocation).getSettingsScriptSource()

@@ -23,12 +23,9 @@ import org.gradle.api.internal.ConventionMapping;
 import org.gradle.api.internal.IConventionAware;
 import org.gradle.api.internal.plugins.DslObject;
 import org.gradle.api.internal.project.ProjectInternal;
-import org.gradle.api.internal.tasks.DefaultClassDirectoryBinary;
-import org.gradle.api.internal.tasks.DefaultJavaSourceSet;
-import org.gradle.api.internal.tasks.DefaultResourceSet;
 import org.gradle.api.internal.tasks.SourceSetCompileClasspath;
 import org.gradle.api.reporting.ReportingExtension;
-import org.gradle.api.tasks.*;
+import org.gradle.api.tasks.SourceSet;
 import org.gradle.api.tasks.compile.AbstractCompile;
 import org.gradle.api.tasks.compile.JavaCompile;
 import org.gradle.api.tasks.javadoc.Javadoc;
@@ -37,6 +34,14 @@ import org.gradle.api.tasks.testing.TestDescriptor;
 import org.gradle.api.tasks.testing.TestListener;
 import org.gradle.api.tasks.testing.TestResult;
 import org.gradle.internal.reflect.Instantiator;
+import org.gradle.language.base.BinaryContainer;
+import org.gradle.language.base.FunctionalSourceSet;
+import org.gradle.language.base.ProjectSourceSet;
+import org.gradle.language.java.internal.DefaultJavaSourceSet;
+import org.gradle.language.jvm.ClassDirectoryBinary;
+import org.gradle.language.jvm.Classpath;
+import org.gradle.language.jvm.ResourceSet;
+import org.gradle.language.jvm.internal.DefaultResourceSet;
 import org.gradle.util.WrapUtil;
 
 import javax.inject.Inject;
@@ -45,8 +50,6 @@ import java.util.concurrent.Callable;
 
 /**
  * <p>A {@link org.gradle.api.Plugin} which compiles and tests Java source, and assembles it into a JAR file.</p>
- *
- * @author Hans Dockter
  */
 public class JavaBasePlugin implements Plugin<Project> {
     public static final String CHECK_TASK_NAME = "check";
@@ -94,18 +97,18 @@ public class JavaBasePlugin implements Plugin<Project> {
 
                 Configuration compileConfiguration = configurations.findByName(sourceSet.getCompileConfigurationName());
                 if (compileConfiguration == null) {
-                    compileConfiguration = configurations.add(sourceSet.getCompileConfigurationName());
+                    compileConfiguration = configurations.create(sourceSet.getCompileConfigurationName());
                 }
                 compileConfiguration.setVisible(false);
-                compileConfiguration.setDescription(String.format("Classpath for compiling the %s sources.", sourceSet.getName()));
+                compileConfiguration.setDescription(String.format("Compile classpath for %s.", sourceSet));
 
                 Configuration runtimeConfiguration = configurations.findByName(sourceSet.getRuntimeConfigurationName());
                 if (runtimeConfiguration == null) {
-                    runtimeConfiguration = configurations.add(sourceSet.getRuntimeConfigurationName());
+                    runtimeConfiguration = configurations.create(sourceSet.getRuntimeConfigurationName());
                 }
                 runtimeConfiguration.setVisible(false);
                 runtimeConfiguration.extendsFrom(compileConfiguration);
-                runtimeConfiguration.setDescription(String.format("Classpath for running the compiled %s classes.", sourceSet.getName()));
+                runtimeConfiguration.setDescription(String.format("Runtime classpath for %s.", sourceSet));
 
                 sourceSet.setCompileClasspath(compileConfiguration);
                 sourceSet.setRuntimeClasspath(sourceSet.getOutput().plus(runtimeConfiguration));
@@ -125,10 +128,6 @@ public class JavaBasePlugin implements Plugin<Project> {
 
                 sourceSet.getJava().srcDir(String.format("src/%s/java", sourceSet.getName()));
                 sourceSet.getResources().srcDir(String.format("src/%s/resources", sourceSet.getName()));
-
-                // TODO: bring this across to new source set model
-                // classes.dependsOn(sourceSet.getOutput().getDirs());
-
                 sourceSet.compiledBy(sourceSet.getClassesTaskName());
 
                 FunctionalSourceSet functionalSourceSet = projectSourceSet.create(sourceSet.getName());
@@ -138,9 +137,8 @@ public class JavaBasePlugin implements Plugin<Project> {
                 ResourceSet resourceSet = instantiator.newInstance(DefaultResourceSet.class, "resources", sourceSet.getResources(), functionalSourceSet);
                 functionalSourceSet.add(resourceSet);
 
-                BinaryContainer extension = project.getExtensions().getByType(BinaryContainer.class);
-                ClassDirectoryBinary binary = instantiator.newInstance(DefaultClassDirectoryBinary.class, sourceSet.getName());
-                extension.getJvm().add(binary);
+                BinaryContainer binaryContainer = project.getExtensions().getByType(BinaryContainer.class);
+                ClassDirectoryBinary binary = binaryContainer.create(String.format("%sClasses", sourceSet.getName()), ClassDirectoryBinary.class);
                 ConventionMapping conventionMapping = new DslObject(binary).getConventionMapping();
                 conventionMapping.map("classesDir", new Callable<File>() {
                     public File call() throws Exception {
@@ -155,6 +153,8 @@ public class JavaBasePlugin implements Plugin<Project> {
 
                 binary.getSource().add(javaSourceSet);
                 binary.getSource().add(resourceSet);
+
+                binary.dependsOn(sourceSet.getOutput().getDirs());
             }
         });
     }
@@ -222,13 +222,13 @@ public class JavaBasePlugin implements Plugin<Project> {
     }
 
     private void configureCheck(final Project project) {
-        Task checkTask = project.getTasks().add(CHECK_TASK_NAME);
+        Task checkTask = project.getTasks().create(CHECK_TASK_NAME);
         checkTask.setDescription("Runs all checks.");
         checkTask.setGroup(VERIFICATION_GROUP);
     }
 
     private void configureBuild(Project project) {
-        DefaultTask buildTask = project.getTasks().add(BUILD_TASK_NAME, DefaultTask.class);
+        DefaultTask buildTask = project.getTasks().create(BUILD_TASK_NAME, DefaultTask.class);
         buildTask.setDescription("Assembles and tests this project.");
         buildTask.setGroup(BasePlugin.BUILD_GROUP);
         buildTask.dependsOn(BasePlugin.ASSEMBLE_TASK_NAME);
@@ -236,14 +236,14 @@ public class JavaBasePlugin implements Plugin<Project> {
     }
 
     private void configureBuildNeeded(Project project) {
-        DefaultTask buildTask = project.getTasks().add(BUILD_NEEDED_TASK_NAME, DefaultTask.class);
+        DefaultTask buildTask = project.getTasks().create(BUILD_NEEDED_TASK_NAME, DefaultTask.class);
         buildTask.setDescription("Assembles and tests this project and all projects it depends on.");
         buildTask.setGroup(BasePlugin.BUILD_GROUP);
         buildTask.dependsOn(BUILD_TASK_NAME);
     }
 
     private void configureBuildDependents(Project project) {
-        DefaultTask buildTask = project.getTasks().add(BUILD_DEPENDENTS_TASK_NAME, DefaultTask.class);
+        DefaultTask buildTask = project.getTasks().create(BUILD_DEPENDENTS_TASK_NAME, DefaultTask.class);
         buildTask.setDescription("Assembles and tests this project and all projects that depend on it.");
         buildTask.setGroup(BasePlugin.BUILD_GROUP);
         buildTask.dependsOn(BUILD_TASK_NAME);
@@ -259,7 +259,7 @@ public class JavaBasePlugin implements Plugin<Project> {
             public void execute(Project project) {
                 project.getTasks().withType(Test.class, new Action<Test>() {
                     public void execute(Test test) {
-                        overwriteIncludesIfSinglePropertyIsSet(test);
+                        configureBasedOnSingleProperty(test);
                         overwriteDebugIfDebugPropertyIsSet(test);
                     }
                 });
@@ -279,9 +279,13 @@ public class JavaBasePlugin implements Plugin<Project> {
         }
     }
 
-    private void overwriteIncludesIfSinglePropertyIsSet(final Test test) {
+    private void configureBasedOnSingleProperty(final Test test) {
         String singleTest = getTaskPrefixedProperty(test, "single");
         if (singleTest == null) {
+            //configure inputs so that the test task is skipped when there are no source files.
+            //unfortunately, this only applies when 'test.single' is *not* applied
+            //We should fix this distinction, the behavior with 'test.single' or without it should be the same
+            test.getInputs().source(test.getCandidateClassFiles());
             return;
         }
         test.doFirst(new Action<Task>() {
@@ -325,12 +329,15 @@ public class JavaBasePlugin implements Plugin<Project> {
     }
 
     private void configureTestDefaults(final Test test, Project project, final JavaPluginConvention convention) {
-        test.getConventionMapping().map("testResultsDir", new Callable<Object>() {
+        DslObject htmlReport = new DslObject(test.getReports().getHtml());
+        DslObject xmlReport = new DslObject(test.getReports().getJunitXml());
+
+        xmlReport.getConventionMapping().map("destination", new Callable<Object>() {
             public Object call() throws Exception {
                 return convention.getTestResultsDir();
             }
         });
-        test.getConventionMapping().map("testReportDir", new Callable<Object>() {
+        htmlReport.getConventionMapping().map("destination", new Callable<Object>() {
             public Object call() throws Exception {
                 return convention.getTestReportDir();
             }

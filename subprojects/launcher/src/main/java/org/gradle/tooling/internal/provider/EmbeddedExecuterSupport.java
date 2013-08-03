@@ -16,27 +16,25 @@
 
 package org.gradle.tooling.internal.provider;
 
-import org.gradle.initialization.DefaultGradleLauncherFactory;
+import org.gradle.api.internal.project.GlobalServicesRegistry;
+import org.gradle.initialization.GradleLauncherFactory;
+import org.gradle.launcher.exec.BuildActionExecuter;
 import org.gradle.launcher.exec.BuildActionParameters;
-import org.gradle.launcher.exec.GradleLauncherActionExecuter;
-import org.gradle.launcher.exec.InProcessGradleLauncherActionExecuter;
+import org.gradle.launcher.exec.InProcessBuildActionExecuter;
 import org.gradle.logging.LoggingServiceRegistry;
 
-/**
- * by Szczepan Faber, created at: 12/6/11
- */
 public class EmbeddedExecuterSupport {
 
-    private DefaultGradleLauncherFactory gradleLauncherFactory;
+    private GradleLauncherFactory gradleLauncherFactory;
     private LoggingServiceRegistry embeddedLogging;
 
     public EmbeddedExecuterSupport() {
         embeddedLogging = LoggingServiceRegistry.newEmbeddableLogging();
-        gradleLauncherFactory = new DefaultGradleLauncherFactory(embeddedLogging);
+        gradleLauncherFactory = new GlobalServicesRegistry(embeddedLogging).get(GradleLauncherFactory.class);
     }
 
-    public GradleLauncherActionExecuter<BuildActionParameters> getExecuter() {
-        return new InProcessGradleLauncherActionExecuter(gradleLauncherFactory);
+    public BuildActionExecuter<BuildActionParameters> getExecuter() {
+        return new InProcessBuildActionExecuter(gradleLauncherFactory);
     }
 
     public LoggingServiceRegistry getLoggingServices() {

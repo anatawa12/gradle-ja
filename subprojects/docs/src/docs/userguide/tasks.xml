@@ -44,9 +44,9 @@
             <sourcefile file="build.gradle"/>
         </sample>
         <para role="original">Here we add tasks to the <literal>tasks</literal> collection. Have a look at
-            <apilink class="org.gradle.api.tasks.TaskContainer"/> for more variations of the <literal>add()</literal>
+            <apilink class="org.gradle.api.tasks.TaskContainer"/> for more variations of the <literal>create()</literal>
             method.</para>
-        <para>この例では、<literal>tasks</literal>コレクションにタスクを追加しています。<literal>add()</literal>メソッドのバリエーションについては<apilink class="org.gradle.api.tasks.TaskContainer"/>をご参照ください。</para>
+        <para>この例では、<literal>tasks</literal>コレクションにタスクを追加しています。<literal>create()</literal>メソッドのバリエーションについては<apilink class="org.gradle.api.tasks.TaskContainer"/>をご参照ください。</para>
     </section>
     <section>
         <title>タスクを参照する<phrase role="original">Locating tasks</phrase></title>
@@ -174,6 +174,58 @@
         <para role="original">For more information about task dependencies, see the <apilink class="org.gradle.api.Task"/> API.</para>
         <para>さらにタスクの依存関係に関する情報を得るには、<apilink class="org.gradle.api.Task"/> APIを参照してください。</para>
     </section>
+    <section id="sec:ordering_tasks">
+        <title>Ordering tasks</title>
+        <note>
+            <para>
+                Task ordering is an <link linkend="feature_lifecycle">incubating</link> feature. Please be aware that this feature may change in later Gradle versions.
+            </para>
+        </note>
+        <para>
+            In some cases it is useful to control the <emphasis>order</emphasis> in which 2 tasks will execute, without introducing an explicit dependency between those tasks.
+            The primary difference between a task <emphasis>ordering</emphasis> and a task <emphasis>dependency</emphasis> is that an ordering rule does not influence which tasks
+            will be executed, only the order in which they will be executed.
+        </para>
+        <para>
+            Task ordering can be useful in a number of scenarios:
+        </para>
+        <itemizedlist>
+            <listitem>Enforce sequential ordering of tasks: eg. 'build' never runs before 'clean'.</listitem>
+            <listitem>Run build validations early in the build: eg. validate I have the correct credentials before starting the work for a release build.</listitem>
+            <listitem>Get feedback faster by running quick verification tasks before long verification tasks: eg. unit tests should run before integration tests.</listitem>
+            <listitem>A task that aggregates the results of all tasks of a particular type: eg. test report task combines the outputs of all executed test tasks.</listitem>
+        </itemizedlist>
+        <para>
+            Presently, the only task ordering rule available is "<emphasis>must run after</emphasis>", which allows you to specify that <literal>taskB</literal> must always run after <literal>taskA</literal>,
+            whenever both <literal>taskA</literal> and <literal>taskB</literal> are scheduled for execution. This is expressed as <literal>taskB.mustRunAfter(taskA)</literal>.
+            With this rule present it is still possible to execute <literal>taskA</literal> without <literal>taskB</literal> and vice-versa.
+        </para>
+        <note>
+            <para>
+                While 'must-run-after' is useful in many cases, there are times when your ordering requirements are slightly different.
+                An example is an ordering preference for faster feedback, where the ordering is helpful but not strictly required.
+                We plan to add different types of task ordering in the future, to better support the full gamut of ordering use cases.
+            </para>
+        </note>
+        <sample id="mustRunAfter" dir="userguide/tasks/mustRunAfter" title="Adding a 'must run after' task ordering">
+            <sourcefile file="build.gradle"/>
+            <output args="-q taskY taskX"/>
+        </sample>
+        <para>In the example, it is still possible to execute <literal>taskY</literal> without causing <literal>taskX</literal> to run:</para>
+        <sample id="mustRunAfterSingleTask" dir="userguide/tasks/mustRunAfter" title="Task ordering does not imply task execution">
+            <output args="-q taskY"/>
+        </sample>
+        <para>To specify a "must run after" ordering between 2 tasks, you use the <apilink class="org.gradle.api.Task" method="mustRunAfter"/> method.
+            This method accepts a task instance, a task name or any other input accepted by <apilink class="org.gradle.api.Task" method="dependsOn"/>.
+        </para>
+        <para>
+            Note that "<literal>B.mustRunAfter(A)</literal>" does not imply any execution dependency between the tasks:
+        </para>
+        <itemizedlist>
+            <listitem>It is possible to execute tasks <literal>A</literal> and <literal>B</literal> independently. The ordering rule only has an effect when both tasks are scheduled for execution.</listitem>
+            <listitem>When run with <literal>--continue</literal>, it is possible for <literal>B</literal> to execute in the event that <literal>A</literal> fails.</listitem>
+        </itemizedlist>
+    </section>
     <section>
         <title>タスクに説明書きを追加する<phrase role="original">Adding a description to a task</phrase></title>
         <para role="original">You can add a description to your task. This description is for example displayed when executing
@@ -264,7 +316,7 @@
         </section>
     </section>
 
-    <section>
+    <section id="sec:up_to_date_checks">
         <title>更新されていないタスクをスキップする<phrase role="original">Skipping tasks that are up-to-date</phrase></title>
         <para role="original">If you are using one of the tasks that come with Gradle, such as a task added by the Java plugin,
             you might have noticed that Gradle will skip tasks that are up-to-date. This behaviour is also available
@@ -352,6 +404,34 @@
             <output args="-q groupPing"/>
         </sample>
     </section>
+
+    <section>
+        <title>Finalizer tasks</title>
+        <note>
+            <para>
+                Finalizers tasks are an <firstterm>incubating</firstterm> feature (see <xref linkend="sec:incubating_state"/>).
+            </para>
+        </note>
+        <para>Finalizer tasks are automatically added to the task graph when the finalized task is scheduled to run.</para>
+        <sample id="taskFinalizers" dir="userguide/tasks/finalizers" title="Adding a task finalizer">
+            <sourcefile file="build.gradle"/>
+            <output args="-q taskX"/>
+        </sample>
+        <para>Finalizer task will be executed even if the finalized task fails.</para>
+        <sample id="taskFinalizersWithFailure" dir="userguide/tasks/finalizersWithFailure" title="Task finalizer for a failing task">
+            <sourcefile file="build.gradle"/>
+            <output args="-q taskX"/>
+        </sample>
+        <para>On the other hand, finalizer tasks are not executed if the finalized task didn't do any work, for example due to failed
+            task dependency or if it's considered up to date.</para>
+        <para>Finalizer tasks are useful in situations where build creates a resource that has to be cleaned up regardless
+            of the build failing or succeeding. An example of such resource is a web container started before an integration test task
+            and which should be always shut down, even if some of the tests fail.</para>
+        <para>To specify a finalizer task you use the <apilink class="org.gradle.api.Task" method="finalizedBy"/> method.
+            This method accepts a task instance, a task name or any other input accepted by <apilink class="org.gradle.api.Task" method="dependsOn"/>.
+        </para>
+    </section>
+
     <section id='sec:the_idea_behind_gradle_tasks'>
         <title>まとめ<phrase role="original">Summary</phrase></title>
         <para role="original">If you are coming from Ant, such an enhanced Gradle task as <emphasis>Copy</emphasis> looks like a mixture

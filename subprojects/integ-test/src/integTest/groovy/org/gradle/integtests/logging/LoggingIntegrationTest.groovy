@@ -26,9 +26,6 @@ import org.gradle.test.fixtures.file.TestFile
 import org.junit.Rule
 import org.junit.Test
 
-/**
- * @author Hans Dockter
- */
 class LoggingIntegrationTest extends AbstractIntegrationTest {
 
     @Rule public final TestResources resources = new TestResources(testDirectoryProvider)
@@ -246,39 +243,6 @@ class LoggingIntegrationTest extends AbstractIntegrationTest {
     void checkOutput(Closure run, LogLevel level) {
         ExecutionResult result = run.call(level)
         level.checkOuts(result)
-    }
-
-    @Test
-    public void deprecatedLogging() {
-        LogLevel deprecated = new LogLevel(
-            args: [],
-            infoMessages: [['A deprecation warning']],
-            errorMessages: [],
-            allMessages: []
-        )
-
-        resources.maybeCopy('LoggingIntegrationTest/deprecated')
-        ExecutionResult result = executer.withDeprecationChecksDisabled().withArguments(deprecated.args).withTasks('log').run()
-        deprecated.checkOuts(result)
-
-        // Ensure warnings are logged the second time
-        ExecutionResult secondResult = executer.withDeprecationChecksDisabled().withArguments(deprecated.args).withTasks('log').run()
-        deprecated.checkOuts(secondResult)
-    }
-
-    @Test
-    public void deprecatedLoggingIsNotDisplayedWithQuietFlag() {
-        LogLevel deprecated = new LogLevel(
-            args: ['-q'],
-            infoMessages: [],
-            errorMessages: [],
-            allMessages: [['A deprecation warning']]
-        )
-
-        resources.maybeCopy('LoggingIntegrationTest/deprecated')
-        ExecutionResult result = executer.withArguments(deprecated.args).withTasks('log').run()
-
-        deprecated.checkOuts(result)
     }
 }
 

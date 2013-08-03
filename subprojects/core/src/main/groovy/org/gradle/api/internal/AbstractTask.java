@@ -24,6 +24,7 @@ import org.gradle.api.*;
 import org.gradle.api.internal.file.TemporaryFileProvider;
 import org.gradle.api.internal.project.ProjectInternal;
 import org.gradle.api.internal.tasks.*;
+import org.gradle.api.internal.tasks.execution.DefaultTaskExecutionContext;
 import org.gradle.api.internal.tasks.execution.TaskValidator;
 import org.gradle.api.logging.Logger;
 import org.gradle.api.logging.Logging;
@@ -52,9 +53,6 @@ import java.util.List;
 import java.util.Set;
 import java.util.concurrent.Callable;
 
-/**
- * @author Hans Dockter
- */
 public abstract class AbstractTask implements TaskInternal, DynamicObjectAware {
     private static Logger buildLogger = Logging.getLogger(Task.class);
     private static ThreadLocal<TaskInfo> nextInstance = new ThreadLocal<TaskInfo>();
@@ -62,13 +60,17 @@ public abstract class AbstractTask implements TaskInternal, DynamicObjectAware {
 
     private String name;
 
-    private List<Action<? super Task>> actions = new ArrayList<Action<? super Task>>();
+    private List<ContextAwareTaskAction> actions = new ArrayList<ContextAwareTaskAction>();
 
     private String path;
 
     private boolean enabled = true;
 
     private DefaultTaskDependency dependencies;
+
+    private DefaultTaskDependency mustRunAfter;
+
+    private DefaultTaskDependency finalizedBy;
 
     private ExtensibleDynamicObject extensibleDynamicObject;
 
@@ -115,6 +117,8 @@ public abstract class AbstractTask implements TaskInternal, DynamicObjectAware {
         path = project.absoluteProjectPath(name);
         state = new TaskStateInternal(toString());
         dependencies = new DefaultTaskDependency(project.getTasks());
+        mustRunAfter = new DefaultTaskDependency(project.getTasks());
+        finalizedBy = new DefaultTaskDependency(project.getTasks());
         services = project.getServices().createFor(this);
         extensibleDynamicObject = new ExtensibleDynamicObject(this, getServices().get(Instantiator.class));
         taskStatusNagger = services.get(TaskStatusNagger.class);
@@ -175,6 +179,10 @@ public abstract class AbstractTask implements TaskInternal, DynamicObjectAware {
     }
 
     public List<Action<? super Task>> getActions() {
+        return observableActionList;
+    }
+
+    public List<ContextAwareTaskAction> getTaskActions() {
         return observableActionList;
     }
 
@@ -272,7 +280,7 @@ public abstract class AbstractTask implements TaskInternal, DynamicObjectAware {
     }
 
     public void executeWithoutThrowingTaskFailure() {
-        executer.execute(this, state);
+        executer.execute(this, state, new DefaultTaskExecutionContext());
     }
 
     public TaskExecuter getExecuter() {
@@ -448,11 +456,11 @@ public abstract class AbstractTask implements TaskInternal, DynamicObjectAware {
         return validators;
     }
 
-    private Action<Task> convertClosureToAction(Closure actionClosure) {
+    private ContextAwareTaskAction convertClosureToAction(Closure actionClosure) {
         return new ClosureTaskAction(actionClosure);
     }
 
-    private Action<Task> wrap(final Action<? super Task> action) {
+    private ContextAwareTaskAction wrap(final Action<? super Task> action) {
         return new TaskActionWrapper(action);
     }
 
@@ -466,11 +474,14 @@ public abstract class AbstractTask implements TaskInternal, DynamicObjectAware {
         }
     }
 
-    private static class ClosureTaskAction implements Action<Task> {
+    private static class ClosureTaskAction implements ContextAwareTaskAction {
         private final Closure closure;
 
         private ClosureTaskAction(Closure closure) {
             this.closure = closure;
+        }
+
+        public void contextualise(TaskExecutionContext context) {
         }
 
         public void execute(Task task) {
@@ -496,11 +507,17 @@ public abstract class AbstractTask implements TaskInternal, DynamicObjectAware {
         }
     }
 
-    private static class TaskActionWrapper implements Action<Task> {
+    private static class TaskActionWrapper implements ContextAwareTaskAction {
         private final Action<? super Task> action;
 
         public TaskActionWrapper(Action<? super Task> action) {
             this.action = action;
+        }
+
+        public void contextualise(TaskExecutionContext context) {
+            if (action instanceof ContextAwareTaskAction) {
+                ((ContextAwareTaskAction) action).contextualise(context);
+            }
         }
 
         public void execute(Task task) {
@@ -512,5 +529,35 @@ public abstract class AbstractTask implements TaskInternal, DynamicObjectAware {
                 Thread.currentThread().setContextClassLoader(original);
             }
         }
+    }
+
+    public void setMustRunAfter(Iterable<?> mustRunAfterTasks) {
+        taskStatusNagger.nagIfTaskNotInConfigurableState("Task.setMustRunAfter(Iterable)");
+        mustRunAfter.setValues(mustRunAfterTasks);
+    }
+
+    public Task mustRunAfter(Object... paths) {
+        taskStatusNagger.nagIfTaskNotInConfigurableState("Task.mustRunAfter(Object...)");
+        mustRunAfter.add(paths);
+        return this;
+    }
+
+    public TaskDependency getMustRunAfter() {
+        return mustRunAfter;
+    }
+
+    public void setFinalizedBy(Iterable<?> finalizedByTasks) {
+        taskStatusNagger.nagIfTaskNotInConfigurableState("Task.setFinalizedBy(Iterable)");
+        finalizedBy.setValues(finalizedByTasks);
+    }
+
+    public Task finalizedBy(Object... paths) {
+        taskStatusNagger.nagIfTaskNotInConfigurableState("Task.finalizedBy(Object...)");
+        finalizedBy.add(paths);
+        return this;
+    }
+
+    public TaskDependency getFinalizedBy() {
+        return finalizedBy;
     }
 }

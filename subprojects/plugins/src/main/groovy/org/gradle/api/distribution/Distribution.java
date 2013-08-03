@@ -17,29 +17,33 @@
 package org.gradle.api.distribution;
 
 import org.gradle.api.Action;
-import org.gradle.api.Named;
 import org.gradle.api.Incubating;
+import org.gradle.api.Named;
 import org.gradle.api.file.CopySpec;
 
 /**
  * A distribution allow to bundle an application or a library including dependencies,sources...
- *
- * @author scogneau
  */
 @Incubating
 public interface Distribution extends Named {
+
     /**
      * The name of this distribution.
      */
     String getName();
 
     /**
-     * Returns the baseName of the distribution. This is used in file names for the distribution.
+     * The baseName of the distribution, used in naming the distribution archives.
+     * <p>
+     * If the {@link #getName()} of this distribution is "{@code main}" this defaults to the project's name.
+     * Otherwise it is "{@code $project.name-$this.name}".
      */
     String getBaseName();
 
     /**
-     * Set the baseName of the distribution. This is used in file names for the distribution.
+     * The baseName of the distribution.
+     * <p>
+     * Set to change the name of the distribution archives.
      */
     void setBaseName(String baseName);
 
@@ -50,6 +54,20 @@ public interface Distribution extends Named {
 
     /**
      * Configures the contents of the distribution.
+     * <p>
+     * Can be used to configure the contents of the distribution:
+     * <pre autoTested=''>
+     * apply plugin: "distribution"
+     *
+     * distributions {
+     *     main {
+     *         contents {
+     *             from "src/readme"
+     *         }
+     *     }
+     * }
+     * </pre>
+     * The DSL inside the {@code contents\{} } block is the same DSL used for Copy tasks.
      */
     CopySpec contents(Action<? super CopySpec> action);
 }

@@ -16,9 +16,9 @@
 
 package org.gradle.performance.fixture
 
-/**
- * by Szczepan Faber, created at: 8/14/12
- */
+import org.gradle.performance.measure.DataAmount
+import org.gradle.performance.measure.MeasuredOperation
+
 public class MemoryInfoCollector implements DataCollector {
 
     String outputFileName

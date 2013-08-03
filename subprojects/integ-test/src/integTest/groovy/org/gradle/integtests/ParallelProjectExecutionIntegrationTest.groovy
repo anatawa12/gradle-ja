@@ -31,9 +31,15 @@ public class ParallelProjectExecutionIntegrationTest extends AbstractIntegration
         buildFile << """
 assert gradle.startParameter.parallelThreadCount != 0
 allprojects {
-    task pingServer << {
-        URL url = new URL("http://localhost:${blockingServer.port}/" + project.path)
-        println url.openConnection().getHeaderField('RESPONSE')
+    tasks.addRule("ping<>") { String name ->
+        if (name.startsWith("ping")) {
+            tasks.create(name) {
+                doLast {
+                    URL url = new URL("http://localhost:${blockingServer.port}/" + path)
+                    println url.openConnection().getHeaderField('RESPONSE')
+                }
+            }
+        }
     }
 }
 """
@@ -42,12 +48,11 @@ allprojects {
     }
 
     def "executes dependency project targets concurrently"() {
-
         projectDependency from: 'a', to: ['b', 'c', 'd']
 
         expect:
-        blockingServer.expectConcurrentExecution(':b', ':c', ':d')
-        blockingServer.expectConcurrentExecution(':a')
+        blockingServer.expectConcurrentExecution(':b:pingServer', ':c:pingServer', ':d:pingServer')
+        blockingServer.expectConcurrentExecution(':a:pingServer')
 
         run ':a:pingServer'
     }
@@ -59,9 +64,9 @@ allprojects {
         projectDependency from: 'c', to: ['d']
 
         expect:
-        blockingServer.expectConcurrentExecution(':d')
-        blockingServer.expectConcurrentExecution(':b', ':c')
-        blockingServer.expectConcurrentExecution(':a')
+        blockingServer.expectConcurrentExecution(':d:pingServer')
+        blockingServer.expectConcurrentExecution(':b:pingServer', ':c:pingServer')
+        blockingServer.expectConcurrentExecution(':a:pingServer')
 
         run ':a:pingServer'
     }
@@ -72,7 +77,7 @@ allprojects {
         failingBuild 'c'
 
         when:
-        blockingServer.expectConcurrentExecution(':b', ':c')
+        blockingServer.expectConcurrentExecution(':b:pingServer', ':c:pingServer')
 
         fails ':a:pingServer'
 
@@ -81,6 +86,20 @@ allprojects {
         failure.error =~ 'c failed'
     }
 
+    def "tasks are executed when they are ready and not necessarily alphabetically"() {
+        buildFile << """
+            tasks.getByPath(':b:pingA').dependsOn(':a:pingA')
+            tasks.getByPath(':b:pingC').dependsOn([':b:pingA', ':b:pingB'])
+        """
+
+        expect:
+        //project a and b are both executed even though alphabetically more important task is blocked
+        blockingServer.expectConcurrentExecution(':b:pingB', ':a:pingA')
+        blockingServer.expectConcurrentExecution(':b:pingA')
+        blockingServer.expectConcurrentExecution(':b:pingC')
+
+        run 'b:pingC'
+    }
 
     def projectDependency(def link) {
         def from = link['from']

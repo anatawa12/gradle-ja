@@ -16,6 +16,7 @@
 
 package org.gradle.api.internal
 
+import org.gradle.api.Action
 import org.gradle.api.Named
 import org.gradle.api.Namer
 import spock.lang.Specification
@@ -62,6 +63,24 @@ class TransformersTest extends Specification {
         }
 
         name(namer).transform(3) == "3"
+    }
+
+    def "by type"() {
+        expect:
+        type().transform("foo") == String
+    }
+
+    def "action as transformer"() {
+        def action = Mock(Action)
+
+        when:
+        def result = toTransformer(action).transform("original")
+
+        then:
+        1 * action.execute("original")
+
+        and:
+        result == null
     }
 
     Named named(String name) {

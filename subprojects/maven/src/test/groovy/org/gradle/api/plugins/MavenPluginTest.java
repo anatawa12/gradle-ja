@@ -33,9 +33,6 @@ import static org.hamcrest.Matchers.*;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertThat;
 
-/**
- * @author Hans Dockter
- */
 public class MavenPluginTest {
     private final DefaultProject project = HelperUtil.createRootProject();
 
@@ -115,7 +112,7 @@ public class MavenPluginTest {
         MavenRepositoryHandlerConvention convention = new DslObject(task.getRepositories()).getConvention().getPlugin(MavenRepositoryHandlerConvention.class);
         assertThat(convention, notNullValue());
 
-        task = project.getTasks().add("customUpload", Upload.class);
+        task = project.getTasks().create("customUpload", Upload.class);
         convention = new DslObject(task.getRepositories()).getConvention().getPlugin(MavenRepositoryHandlerConvention.class);
         assertThat(convention, notNullValue());
     }

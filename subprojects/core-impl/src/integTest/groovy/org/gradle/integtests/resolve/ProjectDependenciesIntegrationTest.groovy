@@ -21,9 +21,6 @@ package org.gradle.integtests.resolve
 import org.gradle.integtests.fixtures.AbstractDependencyResolutionTest
 import spock.lang.Issue
 
-/**
- * by Szczepan Faber, created at: 11/21/12
- */
 class ProjectDependenciesIntegrationTest extends AbstractDependencyResolutionTest {
 
     @Issue("GRADLE-2477") //this is a feature on its own but also covers one of the reported issues
@@ -59,7 +56,7 @@ class ProjectDependenciesIntegrationTest extends AbstractDependencyResolutionTes
     def "configuring project dependencies by map is validated"() {
         settingsFile << "include 'impl'"
         buildFile << """
-            allprojects { configurations.add('conf') }
+            allprojects { configurations.create('conf') }
             task extraKey << {
                 def dep = dependencies.project(path: ":impl", configuration: ":conf", foo: "bar")
                 assert dep.foo == "bar"

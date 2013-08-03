@@ -20,9 +20,6 @@ import groovy.util.slurpersupport.GPathResult
 import org.gradle.test.fixtures.file.TestFile
 import org.hamcrest.Matcher
 
-/**
- * by Szczepan Faber, created at: 11/3/11
- */
 class TestNGExecutionResult implements TestExecutionResult {
     private final TestFile projectDir
     private GPathResult resultsXml
@@ -139,7 +136,15 @@ private class TestNgTestClassExecutionResult implements TestClassExecutionResult
         throw new UnsupportedOperationException();
     }
 
+    TestClassExecutionResult assertTestCaseStdout(String testCaseName, Matcher<? super String> matcher) {
+        throw new UnsupportedOperationException();
+    }
+
     TestClassExecutionResult assertStderr(Matcher<? super String> matcher) {
+        throw new UnsupportedOperationException();
+    }
+
+    TestClassExecutionResult assertTestCaseStderr(String testCaseName, Matcher<? super String> matcher) {
         throw new UnsupportedOperationException();
     }
 

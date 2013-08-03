@@ -15,33 +15,102 @@
  */
 package org.gradle.tooling.internal.consumer.connection
 
+import org.gradle.tooling.UnknownModelException
+import org.gradle.tooling.exceptions.UnsupportedOperationConfigurationException
+import org.gradle.tooling.internal.adapter.ProtocolToModelAdapter
 import org.gradle.tooling.internal.consumer.parameters.ConsumerOperationParameters
+import org.gradle.tooling.internal.consumer.versioning.CustomModel
+import org.gradle.tooling.internal.consumer.versioning.ModelMapping
+import org.gradle.tooling.internal.protocol.ConnectionMetaDataVersion1
 import org.gradle.tooling.internal.protocol.InternalConnection
+import org.gradle.tooling.model.GradleProject
+import org.gradle.tooling.model.build.BuildEnvironment
+import org.gradle.tooling.model.eclipse.EclipseProject
+import org.gradle.tooling.model.eclipse.HierarchicalEclipseProject
+import org.gradle.tooling.model.idea.BasicIdeaProject
+import org.gradle.tooling.model.idea.IdeaProject
+import org.gradle.tooling.model.internal.outcomes.ProjectOutcomes
 import spock.lang.Specification
 
 class InternalConnectionBackedConsumerConnectionTest extends Specification {
-    final InternalConnection target = Mock()
+    final ConnectionMetaDataVersion1 metaData = Stub() {
+        getVersion() >> '1.0-milestone-8'
+    }
+    final InternalConnection target = Mock() {
+        getMetaData() >> metaData
+    }
     final ConsumerOperationParameters parameters = Mock()
-    final InternalConnectionBackedConsumerConnection connection = new InternalConnectionBackedConsumerConnection(target)
+    final ProtocolToModelAdapter adapter = Mock()
+    final ModelMapping modelMapping = Stub()
+    final InternalConnectionBackedConsumerConnection connection = new InternalConnectionBackedConsumerConnection(target, modelMapping, adapter)
 
-    def "builds model using getTheModel() method"() {
-        when:
-        def result = connection.run(String.class, parameters)
+    def "describes capabilities of the provider"() {
+        given:
+        def details = connection.versionDetails
 
-        then:
-        result == 'ok'
+        expect:
+        details.supportsGradleProjectModel()
 
         and:
-        1 * target.getTheModel(String.class, parameters) >> 'ok'
+        !details.supportsRunningTasksWhenBuildingModel()
+
+        and:
+        details.isModelSupported(HierarchicalEclipseProject)
+        details.isModelSupported(EclipseProject)
+        details.isModelSupported(IdeaProject)
+        details.isModelSupported(BasicIdeaProject)
+        details.isModelSupported(GradleProject)
+        details.isModelSupported(BuildEnvironment)
+        details.isModelSupported(Void)
+
+        and:
+        !details.isModelSupported(ProjectOutcomes)
+        !details.isModelSupported(CustomModel)
+    }
+
+    def "builds model using connection's getTheModel() method"() {
+        def model = Stub(GradleProject)
+
+        when:
+        def result = connection.run(GradleProject.class, parameters)
+
+        then:
+        result == model
+
+        and:
+        _ * modelMapping.getProtocolType(GradleProject.class) >> Integer.class
+        1 * target.getTheModel(Integer.class, parameters) >> 12
+        1 * adapter.adapt(GradleProject.class, 12, _) >> model
         0 * target._
     }
 
-    def "runs build using executeBuild() method"() {
+    def "runs build using connection's executeBuild() method"() {
         when:
         connection.run(Void.class, parameters)
 
         then:
         1 * target.executeBuild(parameters, parameters)
         0 * target._
+    }
+
+    def "fails when unknown model is requested"() {
+        when:
+        connection.run(CustomModel.class, parameters)
+
+        then:
+        UnknownModelException e = thrown()
+        e.message == /The version of Gradle you are using (1.0-milestone-8) does not support building a model of type 'CustomModel'./
+    }
+
+    def "fails when both tasks and model requested"() {
+        given:
+        parameters.tasks >> ['a']
+
+        when:
+        connection.run(GradleProject.class, parameters)
+
+        then:
+        UnsupportedOperationConfigurationException e = thrown()
+        e.message.startsWith("Unsupported configuration: modelBuilder.forTasks()")
     }
 }

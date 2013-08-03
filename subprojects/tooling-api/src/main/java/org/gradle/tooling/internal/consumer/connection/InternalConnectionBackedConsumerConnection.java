@@ -16,20 +16,63 @@
 
 package org.gradle.tooling.internal.consumer.connection;
 
+import org.gradle.tooling.internal.adapter.ProtocolToModelAdapter;
 import org.gradle.tooling.internal.consumer.parameters.ConsumerOperationParameters;
+import org.gradle.tooling.internal.consumer.versioning.ModelMapping;
+import org.gradle.tooling.internal.consumer.versioning.VersionDetails;
 import org.gradle.tooling.internal.protocol.ConnectionVersion4;
 import org.gradle.tooling.internal.protocol.InternalConnection;
+import org.gradle.tooling.model.GradleProject;
+import org.gradle.tooling.model.build.BuildEnvironment;
+import org.gradle.tooling.model.eclipse.EclipseProject;
+import org.gradle.tooling.model.eclipse.HierarchicalEclipseProject;
+import org.gradle.tooling.model.idea.BasicIdeaProject;
+import org.gradle.tooling.model.idea.IdeaProject;
+import org.gradle.tooling.model.internal.Exceptions;
 
-public class InternalConnectionBackedConsumerConnection extends AdaptedConnection {
+/**
+ * An adapter for a {@link InternalConnection} based provider.
+ */
+public class InternalConnectionBackedConsumerConnection extends AbstractPre12ConsumerConnection {
     private final InternalConnection connection;
+    private final ModelMapping modelMapping;
 
-    public InternalConnectionBackedConsumerConnection(ConnectionVersion4 delegate) {
-        super(delegate);
+    public InternalConnectionBackedConsumerConnection(ConnectionVersion4 delegate, ModelMapping modelMapping, ProtocolToModelAdapter adapter) {
+        super(delegate, new R10M8VersionDetails(delegate.getMetaData().getVersion()), adapter);
         connection = (InternalConnection) delegate;
+        this.modelMapping = modelMapping;
     }
 
     @Override
-    protected <T> T doGetModel(Class<T> type, ConsumerOperationParameters operationParameters) {
-        return connection.getTheModel(type, operationParameters);
+    protected Object doGetModel(Class<?> modelType, ConsumerOperationParameters operationParameters) {
+        VersionDetails versionDetails = getVersionDetails();
+        if (!versionDetails.isModelSupported(modelType)) {
+            //don't bother asking the provider for this model
+            throw Exceptions.unknownModel(modelType, versionDetails.getVersion());
+        }
+        Class<?> protocolType = modelMapping.getProtocolType(modelType);
+        return connection.getTheModel(protocolType, operationParameters);
+    }
+
+    private static class R10M8VersionDetails extends VersionDetails {
+        public R10M8VersionDetails(String version) {
+            super(version);
+        }
+
+        @Override
+        public boolean supportsGradleProjectModel() {
+            return true;
+        }
+
+        @Override
+        public boolean isModelSupported(Class<?> modelType) {
+            return modelType.equals(Void.class)
+                    || modelType.equals(HierarchicalEclipseProject.class)
+                    || modelType.equals(EclipseProject.class)
+                    || modelType.equals(IdeaProject.class)
+                    || modelType.equals(BasicIdeaProject.class)
+                    || modelType.equals(GradleProject.class)
+                    || modelType.equals(BuildEnvironment.class);
+        }
     }
 }

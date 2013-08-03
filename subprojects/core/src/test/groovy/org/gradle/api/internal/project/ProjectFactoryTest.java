@@ -43,9 +43,6 @@ import java.io.IOException;
 import static org.hamcrest.Matchers.*;
 import static org.junit.Assert.*;
 
-/**
- * @author Hans Dockter
- */
 @RunWith(JMock.class)
 public class ProjectFactoryTest {
     private final JUnit4Mockery context = new JUnit4GroovyMockery();
@@ -77,9 +74,7 @@ public class ProjectFactoryTest {
             allowing(gradle).getStartParameter();
             will(returnValue(startParameterStub));
             allowing(gradle).getProjectRegistry();
-            will(returnValue(gradleServices.get(IProjectRegistry.class)));
-            allowing(gradle).getScriptClassLoader();
-            will(returnValue(buildScriptClassLoader));
+            will(returnValue(gradleServices.get(ProjectRegistry.class)));
             allowing(gradle).getGradleUserHomeDir();
             will(returnValue(new File("gradleUserHomeDir")));
             ignoring(gradle).getProjectEvaluationBroadcaster();

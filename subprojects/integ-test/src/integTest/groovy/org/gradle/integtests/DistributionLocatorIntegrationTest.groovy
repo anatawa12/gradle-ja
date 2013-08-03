@@ -18,11 +18,11 @@ package org.gradle.integtests
 
 import org.gradle.util.DistributionLocator
 import org.gradle.util.GradleVersion
+import org.gradle.util.Requires
+import org.gradle.util.TestPrecondition
 import spock.lang.Specification
 
-/**
- * @author: Szczepan Faber, created at: 8/20/11
- */
+@Requires(TestPrecondition.ONLINE)
 class DistributionLocatorIntegrationTest extends Specification {
 
     def locator = new DistributionLocator()
@@ -36,7 +36,7 @@ class DistributionLocatorIntegrationTest extends Specification {
 
     def "locates snapshot versions"() {
         expect:
-        urlExist(locator.getDistributionFor(GradleVersion.version("1.3-20120919220026+0000")))
+        urlExist(locator.getDistributionFor(GradleVersion.version("1.6-20130321190822+0000")))
     }
 
     void urlExist(URI url) {

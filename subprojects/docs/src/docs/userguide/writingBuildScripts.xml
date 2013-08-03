@@ -220,7 +220,7 @@
         <title>Groovyの基本 <phrase role="original">Some Groovy basics</phrase></title>
         <para role="original">Groovy provides plenty of features for creating DSLs, and the Gradle build language takes advantage of these.
             Understanding how the build language works will help you when you write your build script, and in particular,
-            when you start to write customs plugins and tasks.
+            when you start to write custom plugins and tasks.
         </para>
         GroovyにはDSLを作るための機能が豊富に用意されていて、Gradleもその長所を活用しています。Gradleビルド言語がどういう仕組みで動いているか理解すれば、ビルドスクリプトを書くのに、特にカスタムプラグインやタスクを作り始めたときには役に立つはずです。
         <section>

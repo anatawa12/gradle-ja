@@ -19,6 +19,7 @@ package org.gradle.api.initialization;
 import org.gradle.StartParameter;
 import org.gradle.api.UnknownProjectException;
 import org.gradle.api.invocation.Gradle;
+import org.gradle.api.plugins.PluginAware;
 
 import java.io.File;
 
@@ -59,10 +60,8 @@ import java.io.File;
  * <li>Provided on the command-line using the -P option.</li>
  *
  * </ul>
- *
- * @author Hans Dockter
  */
-public interface Settings {
+public interface Settings extends PluginAware {
     /**
      * <p>The default name for the settings file.</p>
      */

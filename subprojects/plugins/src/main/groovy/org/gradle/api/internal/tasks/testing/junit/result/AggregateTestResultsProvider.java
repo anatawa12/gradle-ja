@@ -17,46 +17,89 @@
 package org.gradle.api.internal.tasks.testing.junit.result;
 
 import org.gradle.api.Action;
+import org.gradle.api.specs.Spec;
 import org.gradle.api.tasks.testing.TestOutputEvent;
+import org.gradle.internal.CompositeStoppable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.File;
+import java.io.IOException;
 import java.io.Writer;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
+
+import static org.gradle.util.CollectionUtils.any;
 
 public class AggregateTestResultsProvider implements TestResultsProvider {
     private static final Logger LOGGER = LoggerFactory.getLogger(AggregateTestResultsProvider.class);
-    private final Iterable<File> binaryResultDirs;
-    private Map<String, TestResultsProvider> classOutputProviders;
+    private final Iterable<TestResultsProvider> providers;
+    private Map<Long, TestResultsProvider> classOutputProviders;
+    private Map<Long, Long> idMappings;
 
-    public AggregateTestResultsProvider(Iterable<File> binaryResultDirs) {
-        this.binaryResultDirs = binaryResultDirs;
+    public AggregateTestResultsProvider(Iterable<TestResultsProvider> providers) {
+        this.providers = providers;
     }
 
     public void visitClasses(final Action<? super TestClassResult> visitor) {
-        classOutputProviders = new HashMap<String, TestResultsProvider>();
-        for (File dir : binaryResultDirs) {
-            final BinaryResultBackedTestResultsProvider provider = new BinaryResultBackedTestResultsProvider(dir);
+        classOutputProviders = new HashMap<Long, TestResultsProvider>();
+        idMappings = new HashMap<Long, Long>();
+        final Set<String> seenClasses = new HashSet<String>();
+        final long[] newIdCounter = {1};
+        for (final TestResultsProvider provider : providers) {
             provider.visitClasses(new Action<TestClassResult>() {
                 public void execute(TestClassResult classResult) {
-                    if (classOutputProviders.containsKey(classResult.getClassName())) {
+                    if (seenClasses.contains(classResult.getClassName())) {
                         LOGGER.warn("Discarding duplicate results for test class {}.", classResult.getClassName());
                         return;
                     }
-                    classOutputProviders.put(classResult.getClassName(), provider);
-                    visitor.execute(classResult);
+
+                    long newId = newIdCounter[0]++;
+                    classOutputProviders.put(newId, provider);
+                    idMappings.put(newId, classResult.getId());
+                    TestClassResult newIdResult = new OverlayedIdTestClassResult(newId, classResult);
+                    visitor.execute(newIdResult);
                 }
             });
         }
     }
 
-    public boolean hasOutput(String className, TestOutputEvent.Destination destination) {
-        return classOutputProviders.get(className).hasOutput(className, destination);
+    private static class OverlayedIdTestClassResult extends TestClassResult {
+        public OverlayedIdTestClassResult(long id, TestClassResult delegate) {
+            super(id, delegate.getClassName(), delegate.getStartTime());
+
+            for (TestMethodResult result : delegate.getResults()) {
+                add(result);
+            }
+        }
     }
 
-    public void writeOutputs(String className, TestOutputEvent.Destination destination, Writer writer) {
-        classOutputProviders.get(className).writeOutputs(className, destination, writer);
+    public boolean hasOutput(long id, TestOutputEvent.Destination destination) {
+        return classOutputProviders.get(id).hasOutput(id, destination);
+    }
+
+    public void writeAllOutput(long id, TestOutputEvent.Destination destination, Writer writer) {
+        classOutputProviders.get(id).writeAllOutput(id, destination, writer);
+    }
+
+    public boolean isHasResults() {
+        return any(providers, new Spec<TestResultsProvider>() {
+            public boolean isSatisfiedBy(TestResultsProvider element) {
+                return element.isHasResults();
+            }
+        });
+    }
+    
+    public void writeNonTestOutput(long id, TestOutputEvent.Destination destination, Writer writer) {
+        classOutputProviders.get(id).writeNonTestOutput(id, destination, writer);
+    }
+
+    public void writeTestOutput(long classId, long testId, TestOutputEvent.Destination destination, Writer writer) {
+        classOutputProviders.get(classId).writeTestOutput(classId, testId, destination, writer);
+    }
+
+    public void close() throws IOException {
+        CompositeStoppable.stoppable(providers).stop();
     }
 }

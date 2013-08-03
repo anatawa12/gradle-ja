@@ -51,7 +51,7 @@ class PmdPluginTest extends Specification {
     def "configures pmd extension"() {
         expect:
         PmdExtension extension = project.extensions.pmd
-        extension.ruleSets == []
+        extension.ruleSets == ["basic"]
         extension.ruleSetFiles.empty
         extension.reportsDir == project.file("build/reports/pmd")
         !extension.ignoreFailures
@@ -101,7 +101,7 @@ class PmdPluginTest extends Specification {
             assert description == "Run PMD analysis for ${sourceSet.name} classes"
             source as List == sourceSet.allJava as List
             assert pmdClasspath == project.configurations.pmd
-            assert ruleSets == []
+            assert ruleSets == ["basic"]
             assert ruleSetFiles.empty
             assert reports.xml.destination == project.file("build/reports/pmd/${sourceSet.name}.xml")
             assert reports.html.destination == project.file("build/reports/pmd/${sourceSet.name}.html")
@@ -110,13 +110,13 @@ class PmdPluginTest extends Specification {
     }
 
     def "configures any additional PMD tasks"() {
-        def task = project.tasks.add("pmdCustom", Pmd)
+        def task = project.tasks.create("pmdCustom", Pmd)
 
         expect:
         task.description == null
         task.source.empty
         task.pmdClasspath == project.configurations.pmd
-        task.ruleSets == []
+        task.ruleSets == ["basic"]
         task.ruleSetFiles.empty
         task.reports.xml.destination == project.file("build/reports/pmd/custom.xml")
         task.reports.html.destination == project.file("build/reports/pmd/custom.html")
@@ -175,7 +175,7 @@ class PmdPluginTest extends Specification {
     }
 
     def "can customize any additional PMD tasks via extension"() {
-        def task = project.tasks.add("pmdCustom", Pmd)
+        def task = project.tasks.create("pmdCustom", Pmd)
         project.pmd {
             ruleSets = ["braces", "unusedcode"]
             ruleSetFiles = project.files("my-ruleset.xml")

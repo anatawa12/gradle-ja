@@ -24,15 +24,15 @@ import org.apache.ivy.core.module.id.ModuleId;
 import org.apache.ivy.core.module.id.ModuleRevisionId;
 import org.apache.ivy.plugins.matcher.ExactPatternMatcher;
 import org.apache.ivy.plugins.matcher.PatternMatcher;
-import org.apache.ivy.plugins.parser.ModuleDescriptorParser;
 import org.apache.ivy.plugins.parser.ParserSettings;
 import org.apache.ivy.plugins.parser.m2.DefaultPomDependencyMgt;
 import org.apache.ivy.plugins.parser.m2.PomDependencyMgt;
-import org.apache.ivy.plugins.parser.m2.PomReader.PomDependencyData;
-import org.apache.ivy.plugins.repository.Resource;
+import org.apache.ivy.plugins.parser.xml.XmlModuleDescriptorParser;
 import org.apache.ivy.plugins.resolver.DependencyResolver;
-import org.apache.ivy.util.Message;
+import org.gradle.api.internal.externalresource.ExternalResource;
 import org.gradle.util.DeprecationLogger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.*;
 import java.util.Map.Entry;
@@ -43,6 +43,7 @@ import java.util.Map.Entry;
  * classifiers)
  */
 public class GradlePomModuleDescriptorBuilder {
+    private static final Logger LOGGER = LoggerFactory.getLogger(GradlePomModuleDescriptorBuilder.class);
 
     private static final int DEPENDENCY_MANAGEMENT_KEY_PARTS_COUNT = 4;
 
@@ -166,13 +167,9 @@ public class GradlePomModuleDescriptorBuilder {
 
     private ParserSettings parserSettings;
 
-    private static final String WRONG_NUMBER_OF_PARTS_MSG = "what seemed to be a dependency "
-            + "management extra info exclusion had the wrong number of parts (should have 2) ";
 
-
-    public GradlePomModuleDescriptorBuilder(
-            ModuleDescriptorParser parser, Resource res, ParserSettings ivySettings) {
-        ivyModuleDescriptor = new DefaultModuleDescriptor(parser, res);
+    public GradlePomModuleDescriptorBuilder(ExternalResource res, ParserSettings ivySettings) {
+        ivyModuleDescriptor = new DefaultModuleDescriptor(XmlModuleDescriptorParser.getInstance(), null);
         ivyModuleDescriptor.setResolvedPublicationDate(new Date(res.getLastModified()));
         for (Configuration maven2Configuration : MAVEN2_CONFIGURATIONS) {
             ivyModuleDescriptor.addConfiguration(maven2Configuration);
@@ -182,7 +179,7 @@ public class GradlePomModuleDescriptorBuilder {
         parserSettings = ivySettings;
     }
 
-    public ModuleDescriptor getModuleDescriptor() {
+    public DefaultModuleDescriptor getModuleDescriptor() {
         return ivyModuleDescriptor;
     }
 
@@ -251,7 +248,7 @@ public class GradlePomModuleDescriptorBuilder {
         return "jar".equals(packaging) || JAR_PACKAGINGS.contains(packaging);
     }
 
-    public void addDependency(PomDependencyData dep) {
+    public void addDependency(PomReader.PomDependencyData dep) {
         String scope = dep.getScope();
         if ((scope != null) && (scope.length() > 0) && !MAVEN2_CONF_MAPPING.containsKey(scope)) {
             // unknown scope, defaulting to 'compile'
@@ -328,7 +325,7 @@ public class GradlePomModuleDescriptorBuilder {
     }
 
     public void addDependency(DependencyDescriptor descriptor) {
-        // Some POMs depend on theirselfves through their parent pom, don't add this dependency
+        // Some POMs depend on theirselfves through their parent POM, don't add this dependency
         // since Ivy doesn't allow this!
         // Example: http://repo2.maven.org/maven2/com/atomikos/atomikos-util/3.6.4/atomikos-util-3.6.4.pom
         ModuleId dependencyId = descriptor.getDependencyId();
@@ -424,12 +421,12 @@ public class GradlePomModuleDescriptorBuilder {
         }
     }
 
-    private String getDefaultVersion(PomDependencyData dep) {
+    private String getDefaultVersion(PomReader.PomDependencyData dep) {
         String key = getDependencyMgtExtraInfoKeyForVersion(dep.getGroupId(), dep.getArtifactId());
         return (String) ivyModuleDescriptor.getExtraInfo().get(key);
     }
 
-    private String getDefaultScope(PomDependencyData dep) {
+    private String getDefaultScope(PomReader.PomDependencyData dep) {
         String key = getDependencyMgtExtraInfoKeyForScope(dep.getGroupId(), dep.getArtifactId());
         String result = (String) ivyModuleDescriptor.getExtraInfo().get(key);
         if ((result == null) || !MAVEN2_CONF_MAPPING.containsKey(result)) {
@@ -469,8 +466,8 @@ public class GradlePomModuleDescriptorBuilder {
                 String fullExclusion = entry.getValue();
                 String[] exclusionParts = fullExclusion.split(EXTRA_INFO_DELIMITER);
                 if (exclusionParts.length != 2) {
-                    Message.error(WRONG_NUMBER_OF_PARTS_MSG + exclusionParts.length + " : "
-                            + fullExclusion);
+                    LOGGER.error("Wrong number of parts for dependency management extra info exclusion: expect 2, found {}: {}",
+                            exclusionParts.length, fullExclusion);
                     continue;
                 }
                 exclusionIds.add(ModuleId.newInstance(exclusionParts[0], exclusionParts[1]));
@@ -489,7 +486,7 @@ public class GradlePomModuleDescriptorBuilder {
             if (key.startsWith(DEPENDENCY_MANAGEMENT)) {
                 String[] parts = key.split(EXTRA_INFO_DELIMITER);
                 if (parts.length != DEPENDENCY_MANAGEMENT_KEY_PARTS_COUNT) {
-                    Message.warn("what seem to be a dependency management extra info doesn't match expected pattern: " + key);
+                    LOGGER.warn("Dependency management extra info doesn't match expected pattern: {}", key);
                 } else {
                     String versionKey = DEPENDENCY_MANAGEMENT + EXTRA_INFO_DELIMITER + parts[1]
                             + EXTRA_INFO_DELIMITER + parts[2]

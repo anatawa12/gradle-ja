@@ -20,16 +20,8 @@ import org.junit.Test;
 
 import static org.junit.Assert.assertThat;
 
-/**
- * @author Hans Dockter
- */
 public class ConfigurationsTest {
     private static final String TEST_CONF = "testConf";
-
-    @Test
-    public void testUploadInternalTaskName() {
-        assertThat(Configurations.uploadInternalTaskName(TEST_CONF), Matchers.equalTo("uploadTestConfInternal"));
-    }
 
     @Test
     public void testUploadTaskName() {

@@ -26,9 +26,6 @@ import org.gradle.util.TestPrecondition
 import org.gradle.util.TextUtil
 import spock.lang.IgnoreIf
 
-/**
- * by Szczepan Faber, created at: 1/20/12
- */
 @IgnoreIf( { GradleContextualExecuter.embedded })
 class GradleConfigurabilityIntegrationSpec extends AbstractIntegrationSpec {
 
@@ -74,7 +71,6 @@ assert java.lang.management.ManagementFactory.runtimeMXBean.inputArguments.conta
         javaLink.usingNativeTools().deleteDir()
     }
 
-    //TODO SF add coverage for reconnecting to those daemons.
     def "honours jvm sys property that contain a space in gradle.properties"() {
         given:
         file("gradle.properties") << 'org.gradle.jvmargs=-Dsome-prop="i have space"'

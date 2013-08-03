@@ -20,6 +20,7 @@ import org.gradle.api.AntBuilder;
 import org.gradle.api.artifacts.Module;
 import org.gradle.api.artifacts.dsl.ArtifactHandler;
 import org.gradle.api.artifacts.dsl.DependencyHandler;
+import org.gradle.api.artifacts.dsl.ComponentMetadataHandler;
 import org.gradle.api.artifacts.dsl.RepositoryHandler;
 import org.gradle.api.component.SoftwareComponentContainer;
 import org.gradle.api.internal.ClassGenerator;
@@ -39,20 +40,25 @@ import org.gradle.api.internal.initialization.DefaultScriptHandlerFactory;
 import org.gradle.api.internal.initialization.ScriptClassLoaderProvider;
 import org.gradle.api.internal.initialization.ScriptHandlerFactory;
 import org.gradle.api.internal.initialization.ScriptHandlerInternal;
-import org.gradle.api.internal.plugins.DefaultProjectsPluginContainer;
+import org.gradle.api.internal.plugins.DefaultPluginContainer;
 import org.gradle.api.internal.plugins.PluginRegistry;
 import org.gradle.api.internal.project.ant.AntLoggingAdapter;
 import org.gradle.api.internal.project.taskfactory.ITaskFactory;
 import org.gradle.api.internal.tasks.DefaultTaskContainerFactory;
 import org.gradle.api.internal.tasks.TaskContainerInternal;
 import org.gradle.api.plugins.PluginContainer;
+import org.gradle.configuration.project.DefaultProjectConfigurationActionContainer;
+import org.gradle.configuration.project.ProjectConfigurationActionContainer;
 import org.gradle.initialization.ProjectAccessListener;
 import org.gradle.internal.Factory;
 import org.gradle.internal.nativeplatform.filesystem.FileSystem;
 import org.gradle.internal.reflect.Instantiator;
 import org.gradle.internal.service.DefaultServiceRegistry;
 import org.gradle.internal.service.ServiceRegistry;
+import org.gradle.invocation.BuildClassLoaderRegistry;
 import org.gradle.logging.LoggingManagerInternal;
+import org.gradle.tooling.provider.model.ToolingModelBuilderRegistry;
+import org.gradle.tooling.provider.model.internal.DefaultToolingModelBuilderRegistry;
 
 import java.io.File;
 
@@ -79,8 +85,12 @@ public class ProjectInternalServiceRegistry extends DefaultServiceRegistry imple
         return getFactory(LoggingManagerInternal.class).create();
     }
 
+    protected ProjectConfigurationActionContainer createProjectConfigurationActionContainer() {
+        return new DefaultProjectConfigurationActionContainer();
+    }
+
     protected DefaultFileOperations createFileOperations() {
-        return new DefaultFileOperations(get(FileResolver.class), project.getTasks(), get(TemporaryFileProvider.class));
+        return new DefaultFileOperations(get(FileResolver.class), project.getTasks(), get(TemporaryFileProvider.class), get(Instantiator.class));
     }
 
     protected TemporaryFileProvider createTemporaryFileProvider() {
@@ -95,8 +105,12 @@ public class ProjectInternalServiceRegistry extends DefaultServiceRegistry imple
         return new DefaultAntBuilderFactory(new AntLoggingAdapter(), project);
     }
 
+    protected ToolingModelBuilderRegistry createToolingModelRegistry() {
+        return new DefaultToolingModelBuilderRegistry();
+    }
+
     protected PluginContainer createPluginContainer() {
-        return new DefaultProjectsPluginContainer(get(PluginRegistry.class), project);
+        return new DefaultPluginContainer(get(PluginRegistry.class), project);
     }
 
     protected ITaskFactory createTaskFactory(ITaskFactory parentFactory) {
@@ -148,6 +162,10 @@ public class ProjectInternalServiceRegistry extends DefaultServiceRegistry imple
         return get(DependencyResolutionServices.class).getDependencyHandler();
     }
 
+    protected ComponentMetadataHandler createModuleHandler() {
+        return get(DependencyResolutionServices.class).getComponentMetadataHandler();
+    }
+
     protected ScriptHandlerInternal createScriptHandler() {
         ScriptHandlerFactory factory = new DefaultScriptHandlerFactory(
                 get(DependencyManagementServices.class),
@@ -157,7 +175,7 @@ public class ProjectInternalServiceRegistry extends DefaultServiceRegistry imple
         if (project.getParent() != null) {
             parentClassLoader = project.getParent().getBuildscript().getClassLoader();
         } else {
-            parentClassLoader = project.getGradle().getScriptClassLoader();
+            parentClassLoader = get(BuildClassLoaderRegistry.class).getScriptClassLoader();
         }
         return factory.create(project.getBuildScriptSource(), parentClassLoader, project);
     }

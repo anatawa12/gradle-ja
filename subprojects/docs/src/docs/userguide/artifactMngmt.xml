@@ -18,10 +18,10 @@
     <note>
         <para role="original">
             This chapter describes the <emphasis>original</emphasis> publishing mechanism available in Gradle 1.0: in Gradle 1.3 a new mechanism for publishing was introduced.
-            While this new mechanism is <emphasis>incubating</emphasis> and not yet complete, it introduces some new concepts and features that do (and will) make Gradle publishing even more powerful.
+            While this new mechanism is <link linkend="feature_lifecycle">incubating</link> and not yet complete, it introduces some new concepts and features that do (and will) make Gradle publishing even more powerful.
         </para>
         この章は、Grails1.0の段階で使用されている<emphasis>既存の</emphasis>公開システムについて書かれています。Gradle1.3からは、公開処理に新しい仕組みが導入されました。
-        この仕組みは現在試験的な段階にあり、まだ完成していませんが、Gradleの公開処理をより強力にする新しい概念、機能がいくつか取り入れられる予定です。
+        この仕組みは現在<link linkend="feature_lifecycle">試験的な</link>段階にあり、まだ完成していませんが、Gradleの公開処理をより強力にする新しい概念、機能がいくつか取り入れられる予定です。
         <para role="original">
             You can read about the new publishing plugins in <xref linkend="publishing_ivy"/> and <xref linkend="publishing_maven"/>.
         </para>
@@ -121,7 +121,7 @@
         <para role="original">If an upload repository is defined with multiple patterns, Gradle must choose a pattern to use for uploading each file.
             By default, Gradle will upload to the pattern defined by the <literal>url</literal> parameter, combined with the optional <literal>layout</literal> parameter.
             If no <literal>url</literal> parameter is supplied, then Gradle will use the first defined <literal>artifactPattern</literal> for uploading,
-            or the first defined <literal>ivyPattern</literal> for uploading ivy files, if this is set.
+            or the first defined <literal>ivyPattern</literal> for uploading Ivy files, if this is set.
         </para>
         <para>
         アップロード先のリポジトリ定義に複数のレイアウトパターンが含まれている場合、どのパターンに従ってファイルをアップロードするか決定しなければなりません。

@@ -14,13 +14,9 @@
  * limitations under the License.
  */
 
-package org.gradle.api.internal.tasks;
+package org.gradle.api.internal.tasks
 
-
-import org.gradle.api.InvalidUserDataException
-import org.gradle.api.Rule
-import org.gradle.api.Task
-import org.gradle.api.UnknownTaskException
+import org.gradle.api.*
 import org.gradle.api.internal.TaskInternal
 import org.gradle.api.internal.project.ProjectInternal
 import org.gradle.api.internal.project.taskfactory.ITaskFactory
@@ -28,7 +24,6 @@ import org.gradle.api.tasks.TaskDependency
 import org.gradle.initialization.ProjectAccessListener
 import org.gradle.internal.reflect.Instantiator
 import org.gradle.util.GUtil
-import org.gradle.util.HelperUtil
 import spock.lang.Specification
 
 import static java.util.Collections.singletonMap
@@ -76,7 +71,7 @@ public class DefaultTaskContainerTest extends Specification {
 
     void "adds by name and closure"() {
         given:
-        final Closure action = HelperUtil.toClosure("{ description = 'description' }")
+        final Closure action = {}
         def options = singletonMap(Task.TASK_NAME, "task")
         def task = task("task")
 
@@ -88,6 +83,38 @@ public class DefaultTaskContainerTest extends Specification {
         then:
         added == task
         1 * task.configure(action) >> task
+    }
+
+    void "creates by name and closure"() {
+        given:
+        final Closure action = {}
+        def options = singletonMap(Task.TASK_NAME, "task")
+        def task = task("task")
+
+        taskFactory.createTask(options) >> task
+
+        when:
+        def added = container.create("task", action)
+
+        then:
+        added == task
+        1 * task.configure(action) >> task
+    }
+
+    void "creates by name and action"() {
+        given:
+        def action = Mock(Action)
+        def options = singletonMap(Task.TASK_NAME, "task")
+        def task = task("task")
+
+        taskFactory.createTask(options) >> task
+
+        when:
+        def added = container.create("task", action)
+
+        then:
+        added == task
+        1 * action.execute(task)
     }
 
     void "replaces task by name"() {
@@ -272,13 +299,34 @@ public class DefaultTaskContainerTest extends Specification {
         aTaskDependency.getDependencies(task) >> { container.add("b"); Collections.singleton(b) }
         task.dependsOn("b")
 
+        addPlaceholderTask("c")
+
         assert container.size() == 1
 
         when:
         container.actualize()
 
         then:
-        container.size() == 2
+        container.size() == 3
+    }
+
+    void "can add task via placeholder action"() {
+        when:
+        addPlaceholderTask("task")
+        then:
+        container.getByName("task") != null
+    }
+
+    void "task priotized over placeholders"() {
+        given:
+        Task task = addTask("task")
+        Runnable placeholderAction = addPlaceholderTask("task")
+
+        when:
+        container.getByName("task") == task
+
+        then:
+        0 * placeholderAction.run()
     }
 
     private ProjectInternal expectTaskLookupInOtherProject(final String projectPath, final String taskName, def task) {
@@ -299,11 +347,18 @@ public class DefaultTaskContainerTest extends Specification {
         }
     }
 
+    private Runnable addPlaceholderTask(String placeholderName) {
+        Runnable runnable = Mock(Runnable)
+        runnable.run() >> { addTask(placeholderName) }
+        container.addPlaceholderAction(placeholderName, runnable)
+        runnable
+    }
+
     private Task addTask(String name) {
         def task = task(name)
         def options = singletonMap(Task.TASK_NAME, name)
         taskFactory.createTask(options) >> task
-        container.add(name)
+        container.create(name)
         return task;
     }
 }

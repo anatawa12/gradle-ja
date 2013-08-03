@@ -19,7 +19,6 @@ import org.apache.ivy.core.module.descriptor.DependencyDescriptor
 import org.apache.ivy.core.module.descriptor.ModuleDescriptor
 import org.apache.ivy.core.module.id.ArtifactRevisionId
 import org.apache.ivy.core.module.id.ModuleRevisionId
-import org.apache.ivy.plugins.parser.ParserSettings
 import org.gradle.test.fixtures.file.TestFile
 import org.gradle.test.fixtures.file.TestNameTestDirectoryProvider
 import org.junit.Rule
@@ -161,8 +160,25 @@ class GradlePomModuleDescriptorParserTest extends Specification {
         descriptor.dependencies.length == 0
     }
 
+    def "fails when POM is not well formed XML"() {
+        given:
+        pomFile << """
+<project>
+    <modelVersion
+</project>
+"""
+
+        when:
+        parsePom()
+
+        then:
+        def e = thrown(MetaDataParseException)
+        e.message == "Could not parse POM ${pomFile.toURI()}"
+        e.cause.message.contains('Element type "modelVersion"')
+    }
+
     private ModuleDescriptor parsePom() {
-        parser.parseDescriptor(ivySettings, pomFile.toURI().toURL(), false)
+        parser.parseDescriptor(ivySettings, pomFile, true)
     }
 
     private void hasArtifact(ModuleDescriptor descriptor, String name, String type, String ext, String classifier = null) {

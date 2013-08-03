@@ -14,19 +14,16 @@
  * limitations under the License.
  */
 
-package org.gradle.api.internal.artifacts.ivyservice.moduleconverter;
-
+package org.gradle.api.internal.artifacts.ivyservice.moduleconverter
 
 import org.apache.ivy.core.module.descriptor.DefaultModuleDescriptor
+import org.apache.ivy.core.module.id.ModuleRevisionId
 import org.gradle.api.artifacts.Configuration
 import org.gradle.api.artifacts.Module
+import org.gradle.api.internal.artifacts.DefaultModuleVersionPublishMetaData
 import org.gradle.api.internal.artifacts.ivyservice.moduleconverter.dependencies.DependenciesToModuleDescriptorConverter
-import org.gradle.api.internal.artifacts.ivyservice.moduleconverter.dependencies.DependencyDescriptorFactory
 import spock.lang.Specification
 
-/**
- * @author Hans Dockter, Szczepan
- */
 public class ResolveModuleDescriptorConverterTest extends Specification {
 
     def "converts"() {
@@ -35,25 +32,27 @@ public class ResolveModuleDescriptorConverterTest extends Specification {
         def module = Mock(Module)
         def moduleDescriptor = Mock(DefaultModuleDescriptor)
         def moduleDescriptorFactory = Mock(ModuleDescriptorFactory)
-        def dependencyDescriptorFactory = Mock(DependencyDescriptorFactory)
         def configurationsConverter = Mock(ConfigurationsToModuleDescriptorConverter)
         def dependenciesConverter = Mock(DependenciesToModuleDescriptorConverter)
 
         ResolveModuleDescriptorConverter resolveModuleDescriptorConverter = new ResolveModuleDescriptorConverter(
                 moduleDescriptorFactory,
-                dependencyDescriptorFactory,
                 configurationsConverter,
                 dependenciesConverter);
 
-        moduleDescriptorFactory.createModuleDescriptor(module) >> moduleDescriptor
+        and:
+        moduleDescriptor.moduleRevisionId >> ModuleRevisionId.newInstance("group", "module", "version")
 
         when:
         def actualDescriptor = resolveModuleDescriptorConverter.convert(configurations, module);
 
         then:
+        1 * moduleDescriptorFactory.createModuleDescriptor(module) >> moduleDescriptor
         1 * configurationsConverter.addConfigurations(moduleDescriptor, configurations)
         1 * dependenciesConverter.addDependencyDescriptors(moduleDescriptor, configurations)
 
-        actualDescriptor == moduleDescriptor
+        and:
+        actualDescriptor instanceof DefaultModuleVersionPublishMetaData
+        actualDescriptor.moduleDescriptor == moduleDescriptor
     }
 }

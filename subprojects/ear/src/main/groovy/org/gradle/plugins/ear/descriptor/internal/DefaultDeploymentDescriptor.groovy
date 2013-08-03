@@ -27,9 +27,6 @@ import org.gradle.plugins.ear.descriptor.EarModule
 import org.gradle.plugins.ear.descriptor.EarSecurityRole
 import org.gradle.plugins.ear.descriptor.EarWebModule
 
-/**
- * @author David Gileadi
- */
 class DefaultDeploymentDescriptor implements DeploymentDescriptor {
 
     private String fileName = "application.xml"
@@ -149,7 +146,7 @@ class DefaultDeploymentDescriptor implements DeploymentDescriptor {
                         child.children().each { moduleNode ->
                             switch (localNameOf(moduleNode)) {
                                 case "web":
-                                    module = new DefaultEarWebModule(moduleNode."web-uri".text(), moduleNode."context-root".text())
+                                    module = new DefaultEarWebModule(moduleNode."web-uri".text(), moduleNode."context-parent".text())
                                     modules.add(module)
                                     moduleTypeMappings[module.path] = "web"
                                     break

@@ -16,8 +16,9 @@
 
 package org.gradle.api.internal.externalresource.transfer;
 
-import org.apache.ivy.plugins.repository.Resource;
+import org.gradle.api.Action;
 import org.gradle.api.Nullable;
+import org.gradle.api.Transformer;
 import org.gradle.api.internal.externalresource.ExternalResource;
 import org.gradle.api.internal.externalresource.metadata.ExternalResourceMetaData;
 import org.gradle.logging.ProgressLoggerFactory;
@@ -81,8 +82,12 @@ public class ProgressLoggingExternalResourceAccessor extends AbstractProgressLog
             }
         }
 
-        public Resource clone(String cloneName) {
-            return resource.clone(cloneName);
+        public void withContent(Action<? super InputStream> readAction) throws IOException {
+            resource.withContent(readAction);
+        }
+
+        public <T> T withContent(Transformer<? extends T, ? super InputStream> readAction) throws IOException {
+            return resource.withContent(readAction);
         }
 
         public void close() throws IOException {
@@ -112,10 +117,6 @@ public class ProgressLoggingExternalResourceAccessor extends AbstractProgressLog
 
         public boolean isLocal() {
             return resource.isLocal();
-        }
-
-        public InputStream openStream() throws IOException {
-            return resource.openStream();
         }
 
         public String toString(){

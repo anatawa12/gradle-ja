@@ -19,15 +19,17 @@ import org.gradle.StartParameter;
 import org.gradle.api.internal.DependencyInjectingInstantiator;
 import org.gradle.api.internal.GradleInternal;
 import org.gradle.api.internal.artifacts.dsl.dependencies.ProjectFinder;
-import org.gradle.api.internal.changedetection.TaskArtifactStateCacheAccess;
-import org.gradle.api.internal.changedetection.TaskCacheLockHandlingBuildExecuter;
-import org.gradle.api.internal.plugins.DefaultPluginRegistry;
+import org.gradle.api.internal.file.FileResolver;
+import org.gradle.api.internal.file.IdentityFileResolver;
+import org.gradle.api.internal.plugins.DefaultPluginContainer;
 import org.gradle.api.internal.plugins.PluginRegistry;
+import org.gradle.api.plugins.PluginContainer;
 import org.gradle.execution.*;
 import org.gradle.execution.taskgraph.DefaultTaskGraphExecuter;
 import org.gradle.execution.taskgraph.TaskPlanExecutor;
 import org.gradle.internal.service.DefaultServiceRegistry;
 import org.gradle.internal.service.ServiceRegistry;
+import org.gradle.invocation.BuildClassLoaderRegistry;
 import org.gradle.listener.ListenerManager;
 
 import java.util.LinkedList;
@@ -59,8 +61,7 @@ public class GradleInternalServiceRegistry extends DefaultServiceRegistry implem
         return new DefaultBuildExecuter(
                 configs,
                 asList(new DryRunBuildExecutionAction(),
-                        new TaskCacheLockHandlingBuildExecuter(get(TaskArtifactStateCacheAccess.class)),
-                        new SelectedTaskExecutionAction()));
+                       new SelectedTaskExecutionAction()));
     }
 
     protected ProjectFinder createProjectFinder() {
@@ -71,7 +72,7 @@ public class GradleInternalServiceRegistry extends DefaultServiceRegistry implem
         };
     }
 
-    protected IProjectRegistry createIProjectRegistry() {
+    protected ProjectRegistry createIProjectRegistry() {
         return new DefaultProjectRegistry<ProjectInternal>();
     }
 
@@ -79,14 +80,22 @@ public class GradleInternalServiceRegistry extends DefaultServiceRegistry implem
         return new DefaultTaskGraphExecuter(get(ListenerManager.class), get(TaskPlanExecutor.class));
     }
 
-    protected PluginRegistry createPluginRegistry() {
-        return new DefaultPluginRegistry(gradle.getScriptClassLoader(), new DependencyInjectingInstantiator(this));
-    }
-
     public ServiceRegistryFactory createFor(Object domainObject) {
         if (domainObject instanceof ProjectInternal) {
             return new ProjectInternalServiceRegistry(this, (ProjectInternal) domainObject);
         }
         throw new UnsupportedOperationException();
+    }
+
+    protected FileResolver createFileResolver() {
+        return new IdentityFileResolver();
+    }
+
+    protected PluginRegistry createPluginRegistry(PluginRegistry parentRegistry) {
+        return parentRegistry.createChild(get(BuildClassLoaderRegistry.class).getScriptClassLoader(), new DependencyInjectingInstantiator(this));
+    }
+
+    protected PluginContainer createPluginContainer() {
+        return new DefaultPluginContainer(get(PluginRegistry.class), gradle);
     }
 }

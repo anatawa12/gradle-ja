@@ -208,7 +208,7 @@
                     <apilink class="org.gradle.plugins.ide.idea.model.IdeaWorkspace"/>
                 </td>
                 <td><literal>idea.workspace</literal></td>
-                <td><phrase role="original">Allows configuring the workspace xml</phrase>
+                <td><phrase role="original">Allows configuring the workspace XML</phrase>
                     ワークスペースXMLの設定ができる</td>
             </tr>
         </table>
@@ -265,7 +265,7 @@
                         Gradleのビルド内容から推測される、またはDSLで明示された設定内容と、既存の設定内容がマージされる。</listitem>
                     <listitem><phrase role="original">The <code>whenMerged</code> hook is executed with a domain object representing contents of the file to be persisted</phrase>
                         <code>whenMerged</code>フックが実行され、保存される予定の設定内容を表すドメインオブジェクトがフックに引き渡される。</listitem>
-                    <listitem><phrase role="original">The <code>withXml</code> hook is executed with a raw representation of the xml that will be persisted</phrase>
+                    <listitem><phrase role="original">The <code>withXml</code> hook is executed with a raw representation of the XML that will be persisted</phrase>
                         <code>withXml</code>フックが実行され、保存される予定の生XMLがフックに引き渡される。</listitem>
                     <listitem><phrase role="original">The final XML is persisted</phrase>
                         最終的なXMLが保存される。</listitem>

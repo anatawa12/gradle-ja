@@ -17,14 +17,14 @@
 package org.gradle.api.internal.artifacts.ivyservice.resolveengine.result;
 
 import org.gradle.api.artifacts.ModuleVersionIdentifier;
+import org.gradle.api.artifacts.result.ResolutionResult;
 
 import java.util.Collection;
 
-/**
- * by Szczepan Faber, created at: 7/26/12
- */
+//listens to result events tailored for the new dependency graph model, TODO SF rename job needed
 public interface ResolvedConfigurationListener {
     ResolvedConfigurationListener start(ModuleVersionIdentifier root);
     void resolvedModuleVersion(ModuleVersionSelection moduleVersion);
     void resolvedConfiguration(ModuleVersionIdentifier id, Collection<? extends InternalDependencyResult> dependencies);
+    ResolutionResult getResult();
 }

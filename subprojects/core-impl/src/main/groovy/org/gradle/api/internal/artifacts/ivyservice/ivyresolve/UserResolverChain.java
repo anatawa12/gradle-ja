@@ -19,23 +19,26 @@ package org.gradle.api.internal.artifacts.ivyservice.ivyresolve;
 import org.apache.ivy.core.module.descriptor.Artifact;
 import org.apache.ivy.plugins.latest.ArtifactInfo;
 import org.apache.ivy.plugins.latest.ComparatorLatestStrategy;
-import org.apache.ivy.plugins.resolver.ResolverSettings;
+import org.apache.ivy.plugins.version.VersionMatcher;
 import org.gradle.api.artifacts.ModuleVersionSelector;
+import org.gradle.api.internal.artifacts.DefaultArtifactIdentifier;
 import org.gradle.api.internal.artifacts.ivyservice.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.*;
 
-public class UserResolverChain implements DependencyToModuleResolver {
+public class UserResolverChain implements DependencyToModuleVersionResolver {
     private static final Logger LOGGER = LoggerFactory.getLogger(UserResolverChain.class);
 
     private final List<LocalAwareModuleVersionRepository> moduleVersionRepositories = new ArrayList<LocalAwareModuleVersionRepository>();
     private final List<String> moduleVersionRepositoryNames = new ArrayList<String>();
-    private ResolverSettings settings;
+    private final VersionMatcher versionMatcher;
+    private final ComparatorLatestStrategy comparatorLatestStrategy;
 
-    public void setSettings(ResolverSettings settings) {
-        this.settings = settings;
+    public UserResolverChain(VersionMatcher versionMatcher, ComparatorLatestStrategy comparatorLatestStrategy) {
+        this.versionMatcher = versionMatcher;
+        this.comparatorLatestStrategy = comparatorLatestStrategy;
     }
 
     public void add(LocalAwareModuleVersionRepository repository) {
@@ -84,7 +87,7 @@ public class UserResolverChain implements DependencyToModuleResolver {
     }
 
     private ModuleResolution findLatestModule(DependencyMetaData dependency, LinkedList<RepositoryResolveState> queue, Collection<Throwable> failures, Collection<RepositoryResolveState> missing) {
-        boolean isStaticVersion = !settings.getVersionMatcher().isDynamic(dependency.getDescriptor().getDependencyRevisionId());
+        boolean isStaticVersion = !versionMatcher.isDynamic(dependency.getDescriptor().getDependencyRevisionId());
         ModuleResolution best = null;
         while (!queue.isEmpty()) {
             RepositoryResolveState request = queue.removeFirst();
@@ -110,7 +113,7 @@ public class UserResolverChain implements DependencyToModuleResolver {
                     }
                     break;
                 case Resolved:
-                    ModuleResolution moduleResolution = new ModuleResolution(request.repository, request.descriptor, request.descriptor.getModuleSource());
+                    ModuleResolution moduleResolution = new ModuleResolution(request.repository, request.descriptor.getMetaData(), request.descriptor.getModuleSource());
                     if (isStaticVersion && !moduleResolution.isGeneratedModuleDescriptor()) {
                         return moduleResolution;
                     }
@@ -132,7 +135,7 @@ public class UserResolverChain implements DependencyToModuleResolver {
             return two.module == null ? one : two;
         }
 
-        ComparatorLatestStrategy latestStrategy = (ComparatorLatestStrategy) settings.getDefaultLatestStrategy();
+        ComparatorLatestStrategy latestStrategy = comparatorLatestStrategy;
         Comparator<ArtifactInfo> comparator = latestStrategy.getComparator();
         int comparison = comparator.compare(one, two);
 
@@ -156,13 +159,13 @@ public class UserResolverChain implements DependencyToModuleResolver {
         }
 
         public void resolve(Artifact artifact, BuildableArtifactResolveResult result) {
-            delegate.resolve(artifact, result, moduleSource);
+            delegate.resolve(new DefaultArtifactIdentifier(artifact), result, moduleSource);
         }
     }
 
     private static class RepositoryResolveState {
         final LocalAwareModuleVersionRepository repository;
-        final DefaultBuildableModuleVersionMetaData descriptor = new DefaultBuildableModuleVersionMetaData();
+        final DefaultBuildableModuleVersionMetaDataResolveResult descriptor = new DefaultBuildableModuleVersionMetaDataResolveResult();
 
         boolean searchedLocally;
         boolean searchedRemotely;
@@ -179,7 +182,7 @@ public class UserResolverChain implements DependencyToModuleResolver {
                 searchedRemotely = true;
                 repository.getDependency(dependency, descriptor);
             }
-            if (descriptor.getState() == BuildableModuleVersionMetaData.State.Failed) {
+            if (descriptor.getState() == BuildableModuleVersionMetaDataResolveResult.State.Failed) {
                 throw descriptor.getFailure();
             }
         }

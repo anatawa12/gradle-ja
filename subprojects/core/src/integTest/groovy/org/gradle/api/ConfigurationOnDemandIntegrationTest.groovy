@@ -17,12 +17,11 @@
 package org.gradle.api
 
 import org.gradle.integtests.fixtures.AbstractIntegrationSpec
+import org.gradle.integtests.fixtures.executer.GradleContextualExecuter
 import org.gradle.integtests.fixtures.executer.ProjectLifecycleFixture
 import org.junit.Rule
+import spock.lang.IgnoreIf
 
-/**
- * by Szczepan Faber, created at: 11/21/12
- */
 class ConfigurationOnDemandIntegrationTest extends AbstractIntegrationSpec {
 
     @Rule ProjectLifecycleFixture fixture = new ProjectLifecycleFixture(executer, temporaryFolder)
@@ -31,13 +30,41 @@ class ConfigurationOnDemandIntegrationTest extends AbstractIntegrationSpec {
         file("gradle.properties") << "org.gradle.configureondemand=true"
     }
 
-    def "works with single-module project"() {
+    @IgnoreIf({ GradleContextualExecuter.isParallel() }) //parallel mode hides incubating message
+    def "presents incubating message"() {
+        file("gradle.properties") << "org.gradle.configureondemand=false"
         buildFile << "task foo"
+
         when:
-        run("foo")
+        run("foo", "--configure-on-demand")
+
         then:
         fixture.assertProjectsConfigured(":")
-        assert output.contains("Configuration on demand is an incubating feature")
+        output.count("Configuration on demand is an incubating feature") == 1
+    }
+
+    @IgnoreIf({ GradleContextualExecuter.isParallel() }) //parallel mode hides incubating message
+    def "presents incubating message with parallel mode"() {
+        file("gradle.properties") << "org.gradle.configureondemand=false"
+        buildFile << "task foo"
+
+        when:
+        run("foo", "--configure-on-demand", "--parallel")
+
+        then:
+        fixture.assertProjectsConfigured(":")
+        output.count("Parallel execution with configuration on demand is an incubating feature") == 1
+    }
+
+    def "can be enabled from command line for a single module build"() {
+        file("gradle.properties") << "org.gradle.configureondemand=false"
+        buildFile << "task foo"
+
+        when:
+        run("foo", "--configure-on-demand")
+
+        then:
+        fixture.assertProjectsConfigured(":")
     }
 
     def "evaluates only project referenced in the task list"() {
@@ -49,15 +76,14 @@ class ConfigurationOnDemandIntegrationTest extends AbstractIntegrationSpec {
 
         then:
         fixture.assertProjectsConfigured(":", ":util:impl")
-        assert output.contains("Configuration on demand is an incubating feature")
     }
 
-    def "does not show configuration on demand message in a regular mode"() {
+    def "does not show configuration on demand incubating message in a regular mode"() {
         file("gradle.properties").text = "org.gradle.configureondemand=false"
         when:
         run()
         then:
-        assert !output.contains("Configuration on demand is an incubating feature")
+        !output.contains("Configuration on demand is incubating")
     }
 
     def "follows java project dependencies"() {
@@ -104,6 +130,26 @@ class ConfigurationOnDemandIntegrationTest extends AbstractIntegrationSpec {
 
         then:
         fixture.assertProjectsConfigured(":", ":util", ":impl", ":api")
+    }
+
+    def "can have cycles in project dependencies"() {
+        settingsFile << "include 'api', 'impl', 'util'"
+        buildFile << """
+allprojects { apply plugin: 'java' }
+project(':impl') {
+    dependencies { compile project(path: ':api', configuration: 'archives') }
+}
+project(':api') {
+    dependencies { runtime project(':impl') }
+    task run(dependsOn: configurations.runtime)
+}
+"""
+
+        when:
+        run(":api:run")
+
+        then:
+        fixture.assertProjectsConfigured(":", ":api", ':impl')
     }
 
     def "follows project dependencies when ran in subproject"() {
@@ -220,12 +266,9 @@ class ConfigurationOnDemandIntegrationTest extends AbstractIntegrationSpec {
         run("impl:build", "--no-rebuild") // impl -> api
 
         then:
-        //api tasks are not executed
+        //api tasks are not executed and api is not configured
         !result.executedTasks.find { it.startsWith ":api" }
-        //but the api project is still configured
-        //ideally, the ':api' project is not configured in the configure on demand mode
-        //but this is complicated to implement so lets leave it for now
-        fixture.assertProjectsConfigured(":", ":impl", ":api")
+        fixture.assertProjectsConfigured(":", ":impl")
     }
 
     def "respects external task dependencies"() {
@@ -258,7 +301,7 @@ class ConfigurationOnDemandIntegrationTest extends AbstractIntegrationSpec {
         buildFile << "task foo(type: FooTask)"
 
         when:
-        run("foo")
+        run("foo", "-s")
         then:
         output.contains "Horray!!!"
     }

@@ -16,13 +16,19 @@
 
 package org.gradle.internal.reflect;
 
+import org.gradle.api.Transformer;
+import org.gradle.api.specs.Spec;
 import org.gradle.internal.UncheckedException;
+import org.gradle.util.CollectionUtils;
+import org.gradle.util.JavaMethod;
 
+import java.lang.annotation.Annotation;
+import java.lang.annotation.Inherited;
 import java.lang.reflect.Method;
+import java.util.*;
 
 /**
- * Simple implementations of some reflection capabilities. In contrast to org.gradle.util.ReflectionUtil,
- * this class doesn't make use of Groovy.
+ * Simple implementations of some reflection capabilities. In contrast to org.gradle.util.ReflectionUtil, this class doesn't make use of Groovy.
  */
 public class JavaReflectionUtil {
     public static Object readProperty(Object target, String property) {
@@ -46,9 +52,13 @@ public class JavaReflectionUtil {
     public static void writeProperty(Object target, String property, Object value) {
         try {
             String setterName = toMethodName("set", property);
-            for (Method method: target.getClass().getMethods()) {
-                if (!method.getName().equals(setterName)) { continue; }
-                if (method.getParameterTypes().length != 1) { continue; }
+            for (Method method : target.getClass().getMethods()) {
+                if (!method.getName().equals(setterName)) {
+                    continue;
+                }
+                if (method.getParameterTypes().length != 1) {
+                    continue;
+                }
                 method.invoke(target, value);
                 return;
             }
@@ -80,4 +90,112 @@ public class JavaReflectionUtil {
         }
         throw new IllegalArgumentException(String.format("Don't know how wrapper type for primitive type %s.", type));
     }
+
+    public static <T, R> JavaMethod<T, R> method(Class<T> target, Class<R> returnType, String name, Class<?>... paramTypes) {
+        return new JavaMethod<T, R>(target, returnType, name, paramTypes);
+    }
+
+    public static <T, R> JavaMethod<T, R> method(Class<T> target, Class<R> returnType, Method method) {
+        return new JavaMethod<T, R>(target, returnType, method);
+    }
+
+    public static <T, R> JavaMethod<T, R> method(T target, Class<R> returnType, Method method) {
+        @SuppressWarnings("unchecked")
+        Class<T> targetClass = (Class<T>) target.getClass();
+        return new JavaMethod<T, R>(targetClass, returnType, method);
+    }
+
+    /**
+     * Search methods in an inheritance aware fashion, stopping when stopIndicator returns true.
+     */
+    public static void searchMethods(Class<?> target, final Transformer<Boolean, Method> stopIndicator) {
+        Spec<Method> stopIndicatorAsSpec = new Spec<Method>() {
+            public boolean isSatisfiedBy(Method element) {
+                return stopIndicator.transform(element);
+            }
+        };
+
+        findAllMethodsInternal(target, stopIndicatorAsSpec, new MultiMap<String, Method>(), new ArrayList<Method>(1), true);
+    }
+
+    public static List<Method> findAllMethods(Class<?> target, Spec<Method> predicate) {
+        return findAllMethodsInternal(target, predicate, new MultiMap<String, Method>(), new LinkedList<Method>(), false);
+    }
+
+    public static Method findMethod(Class<?> target, Spec<Method> predicate) {
+        List<Method> methods = findAllMethodsInternal(target, predicate, new MultiMap<String, Method>(), new ArrayList<Method>(1), true);
+        return methods.isEmpty() ? null : methods.get(0);
+    }
+
+    private static class MultiMap<K, V> extends HashMap<K, List<V>> {
+        @Override
+        public List<V> get(Object key) {
+            if (!containsKey(key)) {
+                @SuppressWarnings("unchecked") K keyCast = (K) key;
+                put(keyCast, new LinkedList<V>());
+            }
+
+            return super.get(key);
+        }
+    }
+
+    private static List<Method> findAllMethodsInternal(Class<?> target, Spec<Method> predicate, MultiMap<String, Method> seen, List<Method> collector, boolean stopAtFirst) {
+        for (final Method method : target.getDeclaredMethods()) {
+            List<Method> seenWithName = seen.get(method.getName());
+            Method override = CollectionUtils.findFirst(seenWithName, new Spec<Method>() {
+                public boolean isSatisfiedBy(Method potentionOverride) {
+                    return potentionOverride.getName().equals(method.getName())
+                            && Arrays.equals(potentionOverride.getParameterTypes(), method.getParameterTypes());
+                }
+            });
+
+
+            if (override == null) {
+                seenWithName.add(method);
+                if (predicate.isSatisfiedBy(method)) {
+                    collector.add(method);
+                    if (stopAtFirst) {
+                        return collector;
+                    }
+                }
+            }
+        }
+
+        Class<?> parent = target.getSuperclass();
+        if (parent != null) {
+            return findAllMethodsInternal(parent, predicate, seen, collector, stopAtFirst);
+        }
+
+        return collector;
+    }
+
+    public static <A extends Annotation> A getAnnotation(Class<?> type, Class<A> annotationType) {
+        return getAnnotation(type, annotationType, true);
+    }
+
+    private static <A extends Annotation> A getAnnotation(Class<?> type, Class<A> annotationType, boolean checkType) {
+        A annotation;
+        if (checkType) {
+            annotation = type.getAnnotation(annotationType);
+            if (annotation != null) {
+                return annotation;
+            }
+        }
+
+        if (annotationType.getAnnotation(Inherited.class) != null) {
+            for (Class<?> anInterface : type.getInterfaces()) {
+                annotation = getAnnotation((Class<?>) anInterface, (Class<A>) annotationType, true);
+                if (annotation != null) {
+                    return annotation;
+                }
+            }
+        }
+
+        if (type.isInterface() || type.equals(Object.class)) {
+            return null;
+        } else {
+            return getAnnotation((Class<?>) type.getSuperclass(), (Class<A>) annotationType, false);
+        }
+    }
+
 }

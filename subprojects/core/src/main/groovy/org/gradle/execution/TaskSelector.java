@@ -17,12 +17,16 @@ package org.gradle.execution;
 
 import com.google.common.collect.SetMultimap;
 import org.gradle.api.Task;
+import org.gradle.api.Transformer;
 import org.gradle.api.internal.GradleInternal;
 import org.gradle.api.internal.project.ProjectInternal;
 import org.gradle.execution.taskpath.ResolvedTaskPath;
 import org.gradle.execution.taskpath.TaskPathResolver;
+import org.gradle.util.CollectionUtils;
 import org.gradle.util.NameMatcher;
 
+import java.util.Collection;
+import java.util.HashSet;
 import java.util.Set;
 
 public class TaskSelector {
@@ -40,7 +44,7 @@ public class TaskSelector {
     }
 
     public TaskSelection getSelection(String path) {
-        SetMultimap<String, Task> tasksByName;
+        SetMultimap<String, TaskSelectionResult> tasksByName;
         ProjectInternal project = gradle.getDefaultProject();
         ResolvedTaskPath taskPath = taskPathResolver.resolvePath(path, project);
 
@@ -50,7 +54,7 @@ public class TaskSelector {
             tasksByName = taskNameResolver.selectAll(path, project);
         }
 
-        Set<Task> tasks = tasksByName.get(taskPath.getTaskName());
+        Set<TaskSelectionResult> tasks = tasksByName.get(taskPath.getTaskName());
         if (!tasks.isEmpty()) {
             // An exact match
             return new TaskSelection(path, tasks);
@@ -58,9 +62,7 @@ public class TaskSelector {
 
         NameMatcher matcher = new NameMatcher();
         String actualName = matcher.find(taskPath.getTaskName(), tasksByName.keySet());
-
         if (actualName != null) {
-            // A partial match
             return new TaskSelection(taskPath.getPrefix() + actualName, tasksByName.get(actualName));
         }
 
@@ -69,11 +71,10 @@ public class TaskSelector {
 
     public static class TaskSelection {
         private String taskName;
-        private Set<Task> tasks;
-
-        public TaskSelection(String taskName, Set<Task> tasks) {
+        private Collection<TaskSelectionResult> taskSelectionResult;
+        public TaskSelection(String taskName, Set<TaskSelectionResult> tasks) {
             this.taskName = taskName;
-            this.tasks = tasks;
+            taskSelectionResult = tasks;
         }
 
         public String getTaskName() {
@@ -81,7 +82,11 @@ public class TaskSelector {
         }
 
         public Set<Task> getTasks() {
-            return tasks;
+            return new HashSet<Task>(CollectionUtils.collect(taskSelectionResult, new Transformer<Task, TaskSelectionResult>() {
+                public Task transform(TaskSelectionResult original) {
+                    return original.getTask();
+                }
+            }));
         }
     }
 }

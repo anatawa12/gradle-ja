@@ -15,7 +15,7 @@
  */
 
 package org.gradle.api.publish.maven
-import org.gradle.test.fixtures.publish.Identifier
+import org.gradle.test.fixtures.encoding.Identifier
 import spock.lang.Unroll
 
 class MavenPublishIdentifierValidationIntegTest extends AbstractMavenPublishIntegTest {
@@ -142,7 +142,7 @@ class MavenPublishIdentifierValidationIntegTest extends AbstractMavenPublishInte
         fails 'publish'
 
         then:
-        failure.assertHasDescription "Execution failed for task ':publishMavenPublicationToMavenRepository'"
+        failure.assertHasDescription "Execution failed for task ':publishMavenPublicationToMavenRepository'."
         failure.assertHasCause "Failed to publish publication 'maven' to repository 'maven'"
         failure.assertHasCause "Invalid publication 'maven': groupId cannot be empty"
     }

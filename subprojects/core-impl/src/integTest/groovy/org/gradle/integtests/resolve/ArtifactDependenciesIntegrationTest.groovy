@@ -165,6 +165,36 @@ project(':b') {
     }
 
     @Test
+    public void artifactFilesPreserveFixedOrder() {
+        repo.module('org', 'leaf1').publish()
+        repo.module('org', 'leaf2').publish()
+        repo.module('org', 'leaf3').publish()
+        repo.module('org', 'leaf4').publish()
+
+        repo.module('org', 'middle1').dependsOn("leaf1", "leaf2").publish()
+        repo.module('org', 'middle2').dependsOn("leaf3", "leaf4").publish()
+
+        repo.module('org', 'top').dependsOn("middle1", "middle2").publish()
+
+        testFile('build.gradle') << """
+            repositories {
+                maven { url '${repo.uri}' }
+            }
+            configurations {
+                compile
+            }
+            dependencies {
+                compile "org:middle2:1.0", "org:middle1:1.0"
+            }
+            task test << {
+                assert configurations.compile.files.collect { it.name } == ['middle2-1.0.jar', 'middle1-1.0.jar', 'leaf3-1.0.jar', 'leaf4-1.0.jar', 'leaf1-1.0.jar', 'leaf2-1.0.jar']
+            }
+        """
+
+        executer.withTasks("test").run()
+    }
+
+    @Test
     public void exposesMetaDataAboutResolvedArtifactsInAFixedOrder() {
         def module = repo.module('org.gradle.test', 'lib', '1.0')
         module.artifact(type: 'zip')
@@ -186,7 +216,7 @@ dependencies {
     compile "org.gradle.test:dist:1.0"
 }
 task test << {
-    assert configurations.compile.files.collect { it.name } == ['lib-1.0.jar', 'lib-1.0.zip', 'lib-1.0-classifier.jar', 'dist-1.0.zip']
+    assert configurations.compile.files.collect { it.name } == ['lib-1.0.jar', 'lib-1.0-classifier.jar', 'lib-1.0.zip', 'dist-1.0.zip']
     def artifacts = configurations.compile.resolvedConfiguration.resolvedArtifacts as List
     assert artifacts.size() == 4
     assert artifacts[0].name == 'lib'
@@ -611,7 +641,7 @@ task test << {
 
         failure
                 .assertHasFileName("Build file '" + buildFile.getPath() + "'")
-                .assertHasDescription("Execution failed for task ':listJars'");
+                .assertHasDescription("Execution failed for task ':listJars'.");
 
         failure.assertResolutionFailure(':compile')
                 .assertHasCause("Could not find test:unknownProjectA:1.2.")
@@ -622,7 +652,7 @@ task test << {
     public void projectCanDependOnItself() {
         TestFile buildFile = testFile("build.gradle");
         buildFile << '''
-            configurations { compile; add('default') }
+            configurations { compile; create('default') }
             dependencies { compile project(':') }
             task jar1(type: Jar) { destinationDir = buildDir; baseName = '1' }
             task jar2(type: Jar) { destinationDir = buildDir; baseName = '2' }

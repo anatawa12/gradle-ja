@@ -1,0 +1,39 @@
+apply plugin: 'cpp'
+
+sources {
+    exe {}
+    lib {}
+}
+libraries {
+    // Define some common settings for all shared library binaries
+    all {
+        binaries.withType(SharedLibraryBinary) {
+            define "DLL_EXPORT"
+        }
+    }
+    hello {
+        source sources.lib
+        flavors {
+            english {}
+            french {}
+        }
+        binaries.all {
+            if (flavor == flavors.french) {
+                define "FRENCH"
+            }
+        }
+    }
+}
+
+executables {
+    main {
+        source sources.exe
+        flavors {
+            english {}
+            french {}
+        }
+        binaries.all {
+            lib libraries.hello
+        }
+    }
+}

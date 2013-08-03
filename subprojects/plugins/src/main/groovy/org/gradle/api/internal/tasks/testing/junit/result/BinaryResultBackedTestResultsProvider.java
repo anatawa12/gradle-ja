@@ -20,27 +20,43 @@ import org.gradle.api.Action;
 import org.gradle.api.tasks.testing.TestOutputEvent;
 
 import java.io.File;
+import java.io.IOException;
 import java.io.Writer;
 
 public class BinaryResultBackedTestResultsProvider implements TestResultsProvider {
-    private final File resultsDir;
-    private final TestOutputSerializer outputSerializer;
-    private final TestResultSerializer resultSerializer = new TestResultSerializer();
+    private final TestOutputStore.Reader outputReader;
+    private final TestResultSerializer resultSerializer;
 
     public BinaryResultBackedTestResultsProvider(File resultsDir) {
-        this.resultsDir = resultsDir;
-        outputSerializer = new TestOutputSerializer(resultsDir);
+        this.outputReader = new TestOutputStore(resultsDir).reader();
+        this.resultSerializer = new TestResultSerializer(resultsDir);
     }
 
-    public boolean hasOutput(String className, TestOutputEvent.Destination destination) {
-        return outputSerializer.hasOutput(className, destination);
+    public boolean hasOutput(long id, TestOutputEvent.Destination destination) {
+        return outputReader.hasOutput(id, destination);
     }
 
-    public void writeOutputs(String className, TestOutputEvent.Destination destination, Writer writer) {
-        outputSerializer.writeOutputs(className, destination, writer);
+    public void writeAllOutput(long id, TestOutputEvent.Destination destination, Writer writer) {
+        outputReader.writeAllOutput(id, destination, writer);
+    }
+    
+    public boolean isHasResults() {
+        return resultSerializer.isHasResults();
+    }
+
+    public void writeNonTestOutput(long id, TestOutputEvent.Destination destination, Writer writer) {
+        outputReader.writeNonTestOutput(id, destination, writer);
+    }
+
+    public void writeTestOutput(long classId, long testId, TestOutputEvent.Destination destination, Writer writer) {
+        outputReader.writeTestOutput(classId, testId, destination, writer);
     }
 
     public void visitClasses(final Action<? super TestClassResult> visitor) {
-        resultSerializer.read(resultsDir, visitor);
+        resultSerializer.read(visitor);
+    }
+
+    public void close() throws IOException {
+        outputReader.close();
     }
 }

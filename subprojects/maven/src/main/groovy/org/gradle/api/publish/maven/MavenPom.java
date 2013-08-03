@@ -42,7 +42,7 @@ public interface MavenPom {
      *   publications {
      *     maven(MavenPublication) {
      *       pom.withXml {
-     *         asNode().appendNode('description', 'A demonstration of maven pom customisation')
+     *         asNode().appendNode('description', 'A demonstration of Maven POM customisation')
      *       }
      *     }
      *   }
@@ -62,5 +62,16 @@ public interface MavenPom {
      * @see XmlProvider
      */
     void withXml(Action<? super XmlProvider> action);
+
+    /**
+     * Returns the packaging for this publication.
+     */
+    String getPackaging();
+
+    /**
+     * Sets the packaging for this publication.
+     */
+    void setPackaging(String packaging);
+
 
 }

@@ -24,7 +24,7 @@ class IvyUrlResolverIntegrationTest extends AbstractDependencyResolutionTest {
     @Rule ProgressLoggingFixture progressLogging = new ProgressLoggingFixture(executer, temporaryFolder)
 
     def setup() {
-        server.expectUserAgent(null) // custom resolver uses apache/ivy as useragent strings
+        server.expectUserAgent(null) // custom resolver uses apache/ivy as user agent strings
     }
 
     public void "can resolve and cache dependencies from an HTTP Ivy repository"() {
@@ -52,6 +52,7 @@ task listJars << {
         module.expectIvyGet()
         module.expectJarHead()
         module.expectJarGet()
+        executer.withDeprecationChecksDisabled()
 
         then:
         succeeds 'listJars'
@@ -62,6 +63,7 @@ task listJars << {
 
         when:
         server.resetExpectations()
+        executer.withDeprecationChecksDisabled()
 
         // No extra calls for cached dependencies
         then:
@@ -97,6 +99,7 @@ task retrieve(type: Sync) {
         module.expectIvyGet()
         module.expectJarHead()
         module.expectJarGet()
+        executer.withDeprecationChecksDisabled()
 
         run 'retrieve'
 
@@ -114,6 +117,7 @@ task retrieve(type: Sync) {
         module.expectIvyGet()
         module.expectJarHead()
         module.expectJarGet()
+        executer.withDeprecationChecksDisabled()
 
         run 'retrieve'
 

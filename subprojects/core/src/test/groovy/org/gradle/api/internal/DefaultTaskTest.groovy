@@ -39,9 +39,6 @@ import static org.gradle.util.Matchers.isEmpty
 import static org.hamcrest.Matchers.*
 import static org.junit.Assert.*
 
-/**
- * @author Hans Dockter
- */
 class DefaultTaskTest extends AbstractTaskTest {
     ClassLoader cl
     DefaultTask defaultTask
@@ -69,7 +66,7 @@ class DefaultTaskTest extends AbstractTaskTest {
     }
 
     @Test public void testHasUsefulToString() {
-        assertEquals('task \':taskname\'', task.toString())
+        assertEquals('task \':testTask\'', task.toString())
     }
 
     @Test public void testCanInjectValuesIntoTaskWhenUsingNoArgsConstructor() {
@@ -89,6 +86,36 @@ class DefaultTaskTest extends AbstractTaskTest {
         assertThat(task, dependsOn("path1"));
         task.dependsOn("path2", dependsOnTask);
         assertThat(task, dependsOn("path1", "path2", "somename"));
+    }
+
+    @Test
+    public void testMustRunAfter() {
+        Task mustRunAfterTask = createTask(project, "mustRunAfter")
+        Task mustRunAfterTaskUsingPath = project.getTasks().add("path")
+        Task task = createTask(project, TEST_TASK_NAME)
+
+        task.mustRunAfter(mustRunAfterTask, "path")
+        assert task.mustRunAfter.getDependencies(task) == [mustRunAfterTask, mustRunAfterTaskUsingPath] as Set
+    }
+
+    @Test
+    public void testFinalizedBy() {
+        Task finalizer = createTask(project, "finalizer")
+        Task finalizerFromPath = project.getTasks().create("path")
+        Task finalized = createTask(project, TEST_TASK_NAME)
+
+        finalized.finalizedBy(finalizer, "path")
+        assert finalized.finalizedBy.getDependencies(finalized) == [finalizer, finalizerFromPath] as Set
+    }
+
+    @Test
+    public void testSetFinalizedBy() {
+        Task finalizer = createTask(project, "finalizer")
+        Task finalizerFromPath = project.getTasks().create("path")
+        Task finalized = createTask(project, TEST_TASK_NAME)
+
+        finalized.finalizedBy = [finalizer, "path"]
+        assert finalized.finalizedBy.getDependencies(finalized) == [finalizer, finalizerFromPath] as Set
     }
 
     @Test
@@ -239,7 +266,7 @@ class DefaultTaskTest extends AbstractTaskTest {
 
     @Test
     void canGetTemporaryDirectory() {
-        File tmpDir = new File(project.buildDir, "tmp/taskname")
+        File tmpDir = new File(project.buildDir, "tmp/testTask")
         assertFalse(tmpDir.exists())
 
         assertThat(defaultTask.temporaryDir, equalTo(tmpDir))

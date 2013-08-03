@@ -72,7 +72,7 @@ public class IvyPublishBasicIntegTest extends AbstractIvyPublishIntegTest {
             configurations.isEmpty()
             artifacts.isEmpty()
             dependencies.isEmpty()
-            status == "release"
+            status == "integration"
         }
 
         and:
@@ -91,7 +91,6 @@ public class IvyPublishBasicIntegTest extends AbstractIvyPublishIntegTest {
 
             group = 'group'
             version = '1.0'
-            status = 'integration'
 
             publishing {
                 repositories {
@@ -150,7 +149,7 @@ public class IvyPublishBasicIntegTest extends AbstractIvyPublishIntegTest {
         fails 'publish'
 
         then:
-        failure.assertHasDescription("A problem occurred configuring the 'publishing' extension")
+        failure.assertHasDescription("A problem occurred configuring root project 'bad-project'.")
         failure.assertHasCause("Ivy publication 'ivy' cannot include multiple components")
     }
 

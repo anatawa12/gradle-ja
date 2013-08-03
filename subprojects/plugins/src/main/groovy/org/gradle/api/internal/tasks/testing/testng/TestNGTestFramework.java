@@ -33,9 +33,6 @@ import java.io.File;
 import java.io.Serializable;
 import java.util.List;
 
-/**
- * @author Tom Eyckmans
- */
 public class TestNGTestFramework implements TestFramework {
     private TestNGOptions options;
     private TestNGDetector detector;
@@ -51,7 +48,7 @@ public class TestNGTestFramework implements TestFramework {
     public WorkerTestClassProcessorFactory getProcessorFactory() {
         options.setTestResources(testTask.getTestSrcDirs());
         List<File> suiteFiles = options.getSuites(testTask.getTemporaryDir());
-        return new TestClassProcessorFactoryImpl(testTask.getTestReportDir(), new TestNGSpec(options), suiteFiles);
+        return new TestClassProcessorFactoryImpl(testTask.getReports().getHtml().getDestination(), new TestNGSpec(options), suiteFiles);
     }
 
     public Action<WorkerProcessBuilder> getWorkerConfigurationAction() {

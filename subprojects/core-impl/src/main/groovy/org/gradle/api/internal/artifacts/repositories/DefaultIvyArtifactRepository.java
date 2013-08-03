@@ -19,12 +19,14 @@ import groovy.lang.Closure;
 import org.apache.ivy.core.module.id.ArtifactRevisionId;
 import org.apache.ivy.plugins.resolver.DependencyResolver;
 import org.gradle.api.InvalidUserDataException;
-import org.gradle.api.artifacts.repositories.ArtifactRepositoryMetaDataProvider;
+import org.gradle.api.internal.artifacts.ModuleMetadataProcessor;
 import org.gradle.api.artifacts.repositories.IvyArtifactRepository;
-import org.gradle.api.artifacts.repositories.IvyMetaDataProvider;
+import org.gradle.api.artifacts.repositories.IvyArtifactRepositoryMetaDataProvider;
 import org.gradle.api.artifacts.repositories.PasswordCredentials;
+import org.gradle.api.internal.artifacts.ModuleVersionPublisher;
 import org.gradle.api.internal.artifacts.ivyservice.ivyresolve.ExternalResourceResolverAdapter;
 import org.gradle.api.internal.artifacts.ivyservice.ivyresolve.IvyAwareModuleVersionRepository;
+import org.gradle.api.internal.artifacts.ivyservice.ivyresolve.parser.MetaDataParser;
 import org.gradle.api.internal.artifacts.repositories.layout.*;
 import org.gradle.api.internal.artifacts.repositories.resolver.IvyResolver;
 import org.gradle.api.internal.artifacts.repositories.resolver.PatternBasedResolver;
@@ -46,31 +48,36 @@ public class DefaultIvyArtifactRepository extends AbstractAuthenticationSupporte
     private final FileResolver fileResolver;
     private final RepositoryTransportFactory transportFactory;
     private final LocallyAvailableResourceFinder<ArtifactRevisionId> locallyAvailableResourceFinder;
-    private final DefaultArtifactRepositoryMetaDataProvider metaDataProvider;
+    private final MetaDataProvider metaDataProvider;
     private final Instantiator instantiator;
+    private final MetaDataParser metaDataParser;
+    private final ModuleMetadataProcessor metadataProcessor;
 
     public DefaultIvyArtifactRepository(FileResolver fileResolver, PasswordCredentials credentials, RepositoryTransportFactory transportFactory,
-                                        LocallyAvailableResourceFinder<ArtifactRevisionId> locallyAvailableResourceFinder, Instantiator instantiator) {
+                                        LocallyAvailableResourceFinder<ArtifactRevisionId> locallyAvailableResourceFinder, Instantiator instantiator,
+                                        MetaDataParser metaDataParser, ModuleMetadataProcessor metadataProcessor) {
         super(credentials);
         this.fileResolver = fileResolver;
         this.transportFactory = transportFactory;
         this.locallyAvailableResourceFinder = locallyAvailableResourceFinder;
         this.additionalPatternsLayout = new AdditionalPatternsRepositoryLayout(fileResolver);
         this.layout = new GradleRepositoryLayout();
-        this.metaDataProvider = new DefaultArtifactRepositoryMetaDataProvider();
+        this.metaDataProvider = new MetaDataProvider();
         this.instantiator = instantiator;
+        this.metaDataParser = metaDataParser;
+        this.metadataProcessor = metadataProcessor;
     }
 
-    public DependencyResolver createResolver() {
+    public DependencyResolver createLegacyDslObject() {
         IvyResolver resolver = createRealResolver();
         return new LegacyDependencyResolver(resolver, wrapResolver(resolver));
     }
 
-    public DependencyResolver createPublisher() {
+    public ModuleVersionPublisher createPublisher() {
         return createRealResolver();
     }
 
-    public IvyAwareModuleVersionRepository createResolveRepository() {
+    public IvyAwareModuleVersionRepository createResolver() {
         return wrapResolver(createRealResolver());
     }
 
@@ -101,10 +108,10 @@ public class DefaultIvyArtifactRepository extends AbstractAuthenticationSupporte
             throw new InvalidUserDataException("You may only specify 'file', 'http' and 'https' urls for an Ivy repository.");
         }
         if (WrapUtil.toSet("http", "https").containsAll(schemes)) {
-            return new IvyResolver(getName(), transportFactory.createHttpTransport(getName(), getCredentials()), locallyAvailableResourceFinder);
+            return new IvyResolver(getName(), transportFactory.createHttpTransport(getName(), getCredentials()), locallyAvailableResourceFinder, metaDataParser, metadataProcessor);
         }
         if (WrapUtil.toSet("file").containsAll(schemes)) {
-            return new IvyResolver(getName(), transportFactory.createFileTransport(getName()), locallyAvailableResourceFinder);
+            return new IvyResolver(getName(), transportFactory.createFileTransport(getName()), locallyAvailableResourceFinder, metaDataParser, metadataProcessor);
         }
         throw new InvalidUserDataException("You cannot mix file and http(s) urls for a single Ivy repository. Please declare 2 separate repositories.");
     }
@@ -140,7 +147,7 @@ public class DefaultIvyArtifactRepository extends AbstractAuthenticationSupporte
         ConfigureUtil.configure(config, layout);
     }
 
-    public ArtifactRepositoryMetaDataProvider getResolve() {
+    public IvyArtifactRepositoryMetaDataProvider getResolve() {
         return metaDataProvider;
     }
 
@@ -180,18 +187,14 @@ public class DefaultIvyArtifactRepository extends AbstractAuthenticationSupporte
         }
     }
 
-    private static class DefaultArtifactRepositoryMetaDataProvider implements ArtifactRepositoryMetaDataProvider, IvyMetaDataProvider {
+    private static class MetaDataProvider implements IvyArtifactRepositoryMetaDataProvider {
         boolean dynamicResolve;
 
-        public IvyMetaDataProvider getIvy() {
-            return this;
-        }
-
-        public boolean isDynamicResolveMode() {
+        public boolean isDynamicMode() {
             return dynamicResolve;
         }
 
-        public void setDynamicResolveMode(boolean mode) {
+        public void setDynamicMode(boolean mode) {
             this.dynamicResolve = mode;
         }
     }

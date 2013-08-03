@@ -177,50 +177,60 @@
 
     <section>
         <title>依存関係の管理 <phrase role="original">Dependency management</phrase></title>
-        <para role="original">
-            Scala projects need to add a <literal>scala-library</literal> dependency to the appropriate configuration(s). This dependency will then
-            be used as a compile and runtime dependency for the project's Scala code. It will also be used to infer a <literal>scala-compiler</literal>
-            dependency for executing the Scala compiler and Scaladoc tool.
+        <para><phrase role="original">
+            Scala projects need to declare a <literal>scala-library</literal> dependency. This dependency will then be used on compile and
+            runtime class paths. It will also be used to get hold of the Scala compiler and Scaladoc tool, respectively.
+            </phrase>
+            Scalaプロジェクトでは、<literal>scala-library</literal>への依存関係を宣言する必要があります。
+            この依存関係は、Scalaコードをコンパイルしたり実行したりする際のクラスパスに追加されるほか、ScalaコンパイラおよびScaladocツールを取得する際にも使用されます。
             <footnote><para role="original">
-                More precisely, if a <literal>ScalaCompile</literal> or <literal>ScalaDoc</literal> task's <literal>scalaClasspath</literal> is empty,
-                and the project has at least one repository declared, the plugin searches the task's <literal>classpath</literal> for a
-                <literal>scala-library</literal> artifact, and adds a corresponding <literal>scala-compiler</literal> repository dependency to the
-                task's <literal>scalaClasspath</literal>.
-            </para></footnote>
-        </para>
-        <para>
-            Scalaプロジェクトでは、<literal>scala-library</literal>への依存関係を適切なコンフィグレーションに追加しなければなりません。
-            この依存関係は、Scalaコードをコンパイルしたり実行したりする際に使用されます。
-            また、ScalaコンパイラおよびScaladocツールを含む<literal>scala-compiler</literal>への依存関係を推測するのにも用いられます。
-            <footnote><para>
-                正確に言えば、<literal>ScalaCompile</literal>タスクや<literal>Scaladoc</literal>タスクの<literal>scalaClasspath</literal>が未設定だった場合に、そしてプロジェクトに少なくとも一つのリポジトリ定義があれば、プラグインがタスクの<literal>classpath</literal>から<literal>scala-library</literal>アーティファクトを探し、そして対応する<literal>scala-compiler</literal>への外部依存関係をscalaClasspathに追加するのです。
+                <para role="original">See <xref linkend="sec:configure_scala_classpath"/>.</para>
+                <para><xref linkend="sec:configure_scala_classpath"/>参照</para>
             </para></footnote>
         </para>
         <para role="original">
             If Scala is used for production code, the <literal>scala-library</literal> dependency should be added to the
             <literal>compile</literal> configuration:
         </para>
-        <para>もしScalaが製品コードで使われている場合は、<literal>scala-library</literal>への依存関係は<literal>compile</literal>コンフィグレーションに追加してください。</para>
+        <para>Scalaが製品コードで使われている場合は、<literal>scala-library</literal>への依存関係は<literal>compile</literal>コンフィグレーションに追加してください。</para>
         <sample id="declareScalaDependency" dir="scala/quickstart" title="製品コードに使うScalaへの依存関係の宣言 / Declaring a Scala dependency for production code">
             <sourcefile file="build.gradle" snippet="scala-dependency"/>
         </sample>
         <para role="original">
             If Scala is only used for test code, the <literal>scala-library</literal> dependency should be added to the <literal>testCompile</literal>
-            (but not the <literal>compile</literal>)
             configuration:
         </para>
-        <para>もしScalaがテストコードのみで使われている場合は、<literal>scala-library</literal>への依存関係は（<literal>compile</literal>でなく）<literal>testCompile</literal>コンフィグレーションに追加してください。</para>
+        <para>Scalaがテストコードのみで使われている場合は、<literal>scala-library</literal>への依存関係は<literal>testCompile</literal>コンフィグレーションに追加してください。</para>
         <sample id="declareScalaTestDependency" dir="userguide/scala/scalaDependency" title="テストコードに使うScalaへの依存関係の宣言 / Declaring a Scala dependency for test code">
             <sourcefile file="build.gradle" snippet="scala-test-dependency"/>
         </sample>
+    </section>
+
+    <section id="sec:configure_scala_classpath">
+        <title>scalaClasspathの自動設定 <phrase role="original">Automatic configuration of scalaClasspath</phrase></title>
         <para role="original">
-            In earlier Gradle versions, it was necessary to add a <literal>scala-compiler</literal> dependency to the <literal>scalaTools</literal>
-            configuration. Although typically no longer necessary (because the compiler dependency is inferred), this is still supported for
-            backwards compatibility.
+            <literal>ScalaCompile</literal> and <literal>ScalaDoc</literal> tasks consume Scala in two ways: on their <literal>classpath</literal>,
+            and on their <literal>scalaClasspath</literal>. The former is used to locate classes referenced by the source code, and will typically
+            contain <literal>scala-library</literal> along with other libraries. The latter is used to load and execute the Scala compiler
+            and Scaladoc tool, respectively, and should only contain the <literal>scala-compiler</literal> library and its dependencies.
         </para>
-        <para>
-            以前は、<literal>scala-compiler</literal>への依存関係を<literal>scalaTools</literal>コンフィグレーションに追加する必要がありました。
-            この作業はもう（依存するScalaコンパイラは自動で推測されるため）一般的には必要ありませんが、後方互換性のためまだサポートされています。
+        <para><literal>ScalaCompile</literal>タスクと<literal>ScalaDoc</literal>タスクは二つの用途でScalaを使用します。タスクの<literal>classpath</literal>と<literal>scalaClasspath</literal>です。前者はソースコードから参照されているクラスを配置するパスで、scala-libraryも典型的には他のライブラリと一緒に格納されます。後者はScalaコンパイラとScaladocツールをロードして実行するために使用されるパスで、scala-compilerライブラリとその依存関係のみが配置されていなければなりません。</para>
+        <para><phrase role="original">
+            Unless a task's <literal>scalaClasspath</literal> is configured explicitly, the Scala (base) plugin will try to infer it
+            from the task's <literal>classpath</literal>. This is done as follows:
+            </phrase>
+            <literal>scalaClasspath</literal>が明示的に設定されていない場合、Scala(base)プラグインはタスクの<literal>classpath</literal>から以下のように設定値を推論しようとします。
+            <itemizedlist>
+                <listitem>
+                    <phrase role="original">If a <literal>scala-library</literal> Jar is found on <literal>classpath</literal>, and the project has at least one repository declared,
+                    a corresponding <literal>scala-compiler</literal> repository dependency will be added to <literal>scalaClasspath</literal>.</phrase>
+                    <literal>scala-library</literal>のJarが<literal>classpath</literal>に見つかれば、そして少なくとも一つのリポジトリがプロジェクトに設定されていれば、リポジトリから対応する<literal>scala-compiler</literal>の依存関係を取得して<literal>scalaClasspath</literal>に追加します。
+                </listitem>
+                <listitem>
+                    <phrase role="original">Otherwise, execution of the task will fail with a message saying that <literal>scalaClasspath</literal> could not be inferred.</phrase>
+                    それ以外の場合は、<literal>scalaClasspath</literal>の推論に失敗した旨のメッセージを出力してタスクは失敗します。
+                </listitem>
+            </itemizedlist>
         </para>
     </section>
 

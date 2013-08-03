@@ -99,6 +99,9 @@ class UserGuideSamplesRunner extends Runner {
             try {
                 cleanup(sampleRun)
                 for (run in sampleRun.runs) {
+                    if (run.brokenForParallel && GradleContextualExecuter.parallel) {
+                        continue
+                    }
                     runSample(run)
                 }
             } catch (Throwable t) {
@@ -130,7 +133,7 @@ class UserGuideSamplesRunner extends Runner {
                 def expectedResult = replaceWithPlatformNewLines(buildContext.userGuideOutputDir.file(run.outputFile).text)
                 expectedResult = replaceWithRealSamplesDir(expectedResult)
                 try {
-                    result.assertOutputEquals(expectedResult, run.ignoreExtraLines)
+                    result.assertOutputEquals(expectedResult, run.ignoreExtraLines, run.ignoreLineOrder)
                 } catch (AssertionError e) {
                     println 'Expected Result:'
                     println expectedResult
@@ -184,12 +187,14 @@ class UserGuideSamplesRunner extends Runner {
             def args = sample.'@args'
             def outputFile = sample.'@outputFile'
             boolean ignoreExtraLines = Boolean.valueOf(sample.'@ignoreExtraLines')
+            boolean ignoreLineOrder = Boolean.valueOf(sample.'@ignoreLineOrder')
 
             def run = new GradleRun(id: id)
             run.subDir = dir
             run.args = args ? args.split('\\s+') as List : []
             run.outputFile = outputFile
             run.ignoreExtraLines = ignoreExtraLines as boolean
+            run.ignoreLineOrder = ignoreLineOrder as boolean
 
             sample.file.each { file -> run.files << file.'@path' }
             sample.dir.each { file -> run.dirs << file.'@path' }
@@ -201,6 +206,9 @@ class UserGuideSamplesRunner extends Runner {
         samplesByDir.get('userguide/tutorial/properties').each { it.envs['ORG_GRADLE_PROJECT_envProjectProp'] = 'envPropertyValue' }
         samplesByDir.get('userguide/buildlifecycle/taskExecutionEvents')*.expectFailure = true
         samplesByDir.get('userguide/buildlifecycle/buildProjectEvaluateEvents')*.expectFailure = true
+        samplesByDir.get('userguide/tasks/finalizersWithFailure')*.expectFailure = true
+        samplesByDir.get('userguide/multiproject/dependencies/firstMessages/messages')*.brokenForParallel = true
+        samplesByDir.get('userguide/multiproject/dependencies/messagesHack/messages')*.brokenForParallel = true
 
         Map<String, SampleRun> samplesById = new TreeMap<String, SampleRun>()
 
@@ -241,6 +249,8 @@ Please run 'gradle docs:userguideDocbook' first"""
         String outputFile
         boolean expectFailure
         boolean ignoreExtraLines
+        boolean ignoreLineOrder
+        boolean brokenForParallel
         List files = []
         List dirs = []
 

@@ -15,8 +15,40 @@
  */
 package org.gradle.api.internal.file.copy;
 
+import org.gradle.api.Action;
+import org.gradle.api.internal.file.FileResolver;
+import org.gradle.api.internal.tasks.SimpleWorkResult;
+import org.gradle.api.tasks.WorkResult;
+
 import java.io.File;
 
-public interface FileCopyAction extends CopyAction {
-    File getDestinationDir();
+public class FileCopyAction implements CopyAction {
+
+    private final FileResolver fileResolver;
+
+    public FileCopyAction(FileResolver fileResolver) {
+        this.fileResolver = fileResolver;
+    }
+
+    private static class BooleanHolder {
+        boolean flag;
+    }
+
+    public WorkResult execute(CopyActionProcessingStream stream) {
+        final BooleanHolder didWorkHolder = new BooleanHolder();
+
+        stream.process(new Action<FileCopyDetailsInternal>() {
+            public void execute(FileCopyDetailsInternal details) {
+                File target = fileResolver.resolve(details.getRelativePath().getPathString());
+                boolean copied = details.copyTo(target);
+                if (copied) {
+                    didWorkHolder.flag = true;
+                }
+
+            }
+        });
+
+        return new SimpleWorkResult(didWorkHolder.flag);
+    }
+
 }

@@ -19,21 +19,20 @@ import org.gradle.api.Action;
 import org.gradle.api.distribution.Distribution;
 import org.gradle.api.file.CopySpec;
 import org.gradle.api.internal.file.FileResolver;
-import org.gradle.api.internal.file.copy.CopySpecImpl;
+import org.gradle.api.internal.file.copy.DefaultCopySpec;
+import org.gradle.internal.reflect.Instantiator;
 
 /**
  * Allow user to declare a distribution.
- *
- * @author scogneau
  */
 public class DefaultDistribution implements Distribution {
     private final String name;
     private String baseName;
     private final CopySpec contents;
 
-    public DefaultDistribution(String name, FileResolver fileResolver) {
+    public DefaultDistribution(String name, FileResolver fileResolver, Instantiator instantiator) {
         this.name = name;
-        this.contents = new CopySpecImpl(fileResolver);
+        this.contents = new DefaultCopySpec(fileResolver, instantiator);
     }
 
     public String getName() {

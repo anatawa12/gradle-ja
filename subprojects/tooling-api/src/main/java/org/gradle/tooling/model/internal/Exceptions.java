@@ -16,12 +16,10 @@
 
 package org.gradle.tooling.model.internal;
 
+import org.gradle.tooling.UnknownModelException;
 import org.gradle.tooling.exceptions.UnsupportedOperationConfigurationException;
 import org.gradle.tooling.model.UnsupportedMethodException;
 
-/**
- * by Szczepan Faber, created at: 12/22/11
- */
 public class Exceptions {
 
     public final static String INCOMPATIBLE_VERSION_HINT =
@@ -40,14 +38,16 @@ public class Exceptions {
                 , method);
     }
 
-    public static UnsupportedOperationConfigurationException unsupportedOperationConfiguration(String operation) {
-        //we only need that cause for backwards-compatibility.
-        UnsupportedMethodException cause = new UnsupportedMethodException(operation);
+    public static UnsupportedOperationConfigurationException unsupportedOperationConfiguration(String operation, String targetVersion) {
         return new UnsupportedOperationConfigurationException(String.format("Unsupported configuration: %s."
                 + "\nYou configured the LongRunningOperation (ModelBuilder or BuildLauncher) with an unsupported option."
-                + "\nThe version of Gradle you connect to does not support this configuration option."
-                + "\nTo resolve the problem you can change/upgrade the target version of Gradle you connect to."
-                + "\nAlternatively, you may stop using this configuration option."
-                , operation), cause);
+                + "\nThe version of Gradle are using (%s) does not support this configuration option."
+                + "\nTo resolve the problem you can change/upgrade the target version of Gradle."
+                , operation, targetVersion));
+    }
+
+    public static UnknownModelException unknownModel(Class<?> modelType, String targetVersion) {
+        throw new UnknownModelException(String.format("The version of Gradle you are using (%s) does not support building a model of type '%s'.",
+                targetVersion, modelType.getSimpleName()));
     }
 }

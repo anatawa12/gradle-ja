@@ -17,7 +17,8 @@
 package org.gradle.api.internal.artifacts.repositories.resolver;
 
 import org.apache.ivy.core.module.descriptor.Artifact;
-import org.apache.ivy.plugins.latest.LatestStrategy;
+import org.gradle.api.internal.artifacts.ivyservice.ivyresolve.LatestStrategy;
+import org.gradle.api.internal.artifacts.ivyservice.ivyresolve.Versioned;
 import org.gradle.api.internal.resource.ResourceException;
 import org.gradle.api.internal.resource.ResourceNotFoundException;
 
@@ -33,9 +34,41 @@ public interface VersionList {
      */
     void visit(ResourcePattern pattern, Artifact artifact) throws ResourceNotFoundException, ResourceException;
 
-    Set<String> getVersionStrings();
+    Set<ListedVersion> getVersions();
 
     boolean isEmpty();
 
-    List<String> sortLatestFirst(LatestStrategy latestStrategy);
+    List<ListedVersion> sortLatestFirst(LatestStrategy latestStrategy);
+
+    class ListedVersion implements Versioned {
+        private String version;
+        private ResourcePattern pattern;
+
+        public ListedVersion(String version, ResourcePattern pattern) {
+            this.pattern = pattern;
+            this.version = version;
+        }
+
+        public String getVersion() {
+            return version;
+        }
+
+        /**
+         * @return The pattern that can be used to load this version.
+         */
+        public ResourcePattern getPattern() {
+            return pattern;
+        }
+
+        public boolean equals(Object other) {
+            if (!(other instanceof ListedVersion)) {
+                return false;
+            }
+            return version.equals(((ListedVersion) other).getVersion());
+        }
+
+        public int hashCode() {
+            return version.hashCode();
+        }
+    }
 }

@@ -24,25 +24,23 @@ import org.gradle.api.artifacts.result.ResolvedDependencyResult;
 import org.gradle.api.artifacts.result.ResolvedModuleVersionResult;
 import org.gradle.api.internal.Actions;
 import org.gradle.api.internal.ClosureBackedAction;
+import org.gradle.internal.Factory;
 
 import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.Set;
 
-/**
- * by Szczepan Faber, created at: 8/10/12
- */
 public class DefaultResolutionResult implements ResolutionResult {
 
-    private final ResolvedModuleVersionResult root;
+    private final Factory<ResolvedModuleVersionResult> rootSource;
 
-    public DefaultResolutionResult(ResolvedModuleVersionResult root) {
-        assert root != null;
-        this.root = root;
+    public DefaultResolutionResult(Factory<ResolvedModuleVersionResult> rootSource) {
+        assert rootSource != null;
+        this.rootSource = rootSource;
     }
 
     public ResolvedModuleVersionResult getRoot() {
-        return root;
+        return rootSource.create();
     }
 
     public Set<? extends DependencyResult> getAllDependencies() {
@@ -56,7 +54,7 @@ public class DefaultResolutionResult implements ResolutionResult {
     }
 
     public void allDependencies(Action<? super DependencyResult> action) {
-        eachElement(root, Actions.doNothing(), action, new HashSet<ResolvedModuleVersionResult>());
+        eachElement(rootSource.create(), Actions.doNothing(), action, new HashSet<ResolvedModuleVersionResult>());
     }
 
     public void allDependencies(final Closure closure) {
@@ -80,12 +78,12 @@ public class DefaultResolutionResult implements ResolutionResult {
 
     public Set<ResolvedModuleVersionResult> getAllModuleVersions() {
         final Set<ResolvedModuleVersionResult> out = new LinkedHashSet<ResolvedModuleVersionResult>();
-        eachElement(root, Actions.doNothing(), Actions.doNothing(), out);
+        eachElement(rootSource.create(), Actions.doNothing(), Actions.doNothing(), out);
         return out;
     }
 
     public void allModuleVersions(final Action<? super ResolvedModuleVersionResult> action) {
-        eachElement(root, action, Actions.doNothing(), new HashSet<ResolvedModuleVersionResult>());
+        eachElement(rootSource.create(), action, Actions.doNothing(), new HashSet<ResolvedModuleVersionResult>());
     }
 
     public void allModuleVersions(final Closure closure) {

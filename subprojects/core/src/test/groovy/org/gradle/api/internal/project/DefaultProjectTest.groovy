@@ -17,15 +17,17 @@
 package org.gradle.api.internal.project
 
 import org.apache.tools.ant.types.FileSet
+import org.gradle.api.*
 import org.gradle.api.artifacts.Module
 import org.gradle.api.artifacts.dsl.ArtifactHandler
 import org.gradle.api.artifacts.dsl.DependencyHandler
+import org.gradle.api.artifacts.dsl.ComponentMetadataHandler
 import org.gradle.api.artifacts.dsl.RepositoryHandler
 import org.gradle.api.component.SoftwareComponentContainer
 import org.gradle.api.initialization.dsl.ScriptHandler
+import org.gradle.api.internal.*
 import org.gradle.api.internal.artifacts.configurations.ConfigurationContainerInternal
 import org.gradle.api.internal.artifacts.configurations.DependencyMetaDataProvider
-import org.gradle.api.internal.artifacts.dsl.dependencies.DependencyFactory
 import org.gradle.api.internal.file.FileOperations
 import org.gradle.api.internal.file.FileResolver
 import org.gradle.api.internal.initialization.ScriptClassLoaderProvider
@@ -33,8 +35,9 @@ import org.gradle.api.internal.tasks.TaskContainerInternal
 import org.gradle.api.invocation.Gradle
 import org.gradle.api.plugins.PluginContainer
 import org.gradle.api.tasks.Directory
-import org.gradle.configuration.ProjectEvaluator
 import org.gradle.configuration.ScriptPluginFactory
+import org.gradle.configuration.project.ProjectConfigurationActionContainer
+import org.gradle.configuration.project.ProjectEvaluator
 import org.gradle.groovy.scripts.EmptyScript
 import org.gradle.groovy.scripts.ScriptSource
 import org.gradle.internal.Factory
@@ -50,27 +53,17 @@ import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
 
-import java.awt.Point
+import java.awt.*
 import java.text.FieldPosition
-
-import org.gradle.api.*
-import org.gradle.api.internal.*
 
 import static org.hamcrest.Matchers.*
 import static org.junit.Assert.*
 
-/**
- * @author Hans Dockter
- */
 @RunWith (JMock.class)
 class DefaultProjectTest {
     JUnit4GroovyMockery context = new JUnit4GroovyMockery()
 
-    static final String TEST_PROJECT_NAME = 'testproject'
-
     static final String TEST_BUILD_FILE_NAME = 'build.gradle'
-
-    static final String TEST_TASK_NAME = 'testtask'
 
     Task testTask;
 
@@ -78,7 +71,7 @@ class DefaultProjectTest {
 
     ProjectEvaluator projectEvaluator = context.mock(ProjectEvaluator.class)
 
-    IProjectRegistry projectRegistry
+    ProjectRegistry projectRegistry
 
     File rootDir
 
@@ -94,8 +87,8 @@ class DefaultProjectTest {
 
     ConfigurationContainerInternal configurationContainerMock = context.mock(ConfigurationContainerInternal.class)
     RepositoryHandler repositoryHandlerMock = context.mock(RepositoryHandler.class)
-    DependencyFactory dependencyFactoryMock = context.mock(DependencyFactory.class)
     DependencyHandler dependencyHandlerMock = context.mock(DependencyHandler)
+    ComponentMetadataHandler moduleHandlerMock = context.mock(ComponentMetadataHandler)
     PluginContainer pluginContainerMock = context.mock(PluginContainer)
     ScriptHandler scriptHandlerMock = context.mock(ScriptHandler)
     DependencyMetaDataProvider dependencyMetaDataProviderMock = context.mock(DependencyMetaDataProvider)
@@ -105,6 +98,7 @@ class DefaultProjectTest {
     LoggingManagerInternal loggingManagerMock = context.mock(LoggingManagerInternal.class)
     Instantiator instantiatorMock = context.mock(Instantiator)
     SoftwareComponentContainer softwareComponentsMock = context.mock(SoftwareComponentContainer.class)
+    ProjectConfigurationActionContainer configureActions = context.mock(ProjectConfigurationActionContainer.class)
 
     @Before
     void setUp() {
@@ -135,6 +129,7 @@ class DefaultProjectTest {
             allowing(serviceRegistryMock).get(ConfigurationContainerInternal); will(returnValue(configurationContainerMock))
             allowing(serviceRegistryMock).get(ArtifactHandler); will(returnValue(context.mock(ArtifactHandler)))
             allowing(serviceRegistryMock).get(DependencyHandler); will(returnValue(dependencyHandlerMock))
+            allowing(serviceRegistryMock).get(ComponentMetadataHandler); will(returnValue(moduleHandlerMock))
             allowing(serviceRegistryMock).get(SoftwareComponentContainer); will(returnValue(softwareComponentsMock))
             allowing(serviceRegistryMock).get(ProjectEvaluator); will(returnValue(projectEvaluator))
             allowing(serviceRegistryMock).getFactory(AntBuilder); will(returnValue(antBuilderFactoryMock))
@@ -143,13 +138,14 @@ class DefaultProjectTest {
             allowing(serviceRegistryMock).get(ScriptClassLoaderProvider); will(returnValue(context.mock(ScriptClassLoaderProvider)))
             allowing(serviceRegistryMock).get(LoggingManagerInternal); will(returnValue(loggingManagerMock))
             allowing(serviceRegistryMock).get(StandardOutputCapture); will(returnValue(context.mock(StandardOutputCapture)))
-            allowing(serviceRegistryMock).get(IProjectRegistry); will(returnValue(projectRegistry))
+            allowing(serviceRegistryMock).get(ProjectRegistry); will(returnValue(projectRegistry))
             allowing(serviceRegistryMock).get(DependencyMetaDataProvider); will(returnValue(dependencyMetaDataProviderMock))
             allowing(serviceRegistryMock).get(FileResolver); will(returnValue([toString: { -> "file resolver" }] as FileResolver))
             allowing(serviceRegistryMock).get(Instantiator); will(returnValue(instantiatorMock))
             allowing(serviceRegistryMock).get(FileOperations); will(returnValue(fileOperationsMock))
             allowing(serviceRegistryMock).get(ProcessOperations); will(returnValue(processOperationsMock))
             allowing(serviceRegistryMock).get(ScriptPluginFactory); will(returnValue([toString: { -> "script plugin factory" }] as ScriptPluginFactory))
+            allowing(serviceRegistryMock).get(ProjectConfigurationActionContainer); will(returnValue(configureActions))
             Object listener = context.mock(ProjectEvaluationListener)
             ignoring(listener)
             allowing(build).getProjectEvaluationBroadcaster();
@@ -794,11 +790,11 @@ def scriptMethod(Closure closure) {
         Task dirTask123 = HelperUtil.createTask(Directory.class)
         context.checking {
             one(taskContainerMock).findByName('dir1'); will(returnValue(null))
-            one(taskContainerMock).add('dir1', Directory); will(returnValue(dirTask1))
+            one(taskContainerMock).create('dir1', Directory); will(returnValue(dirTask1))
             one(taskContainerMock).findByName('dir1/dir2'); will(returnValue(null))
-            one(taskContainerMock).add('dir1/dir2', Directory); will(returnValue(dirTask12))
+            one(taskContainerMock).create('dir1/dir2', Directory); will(returnValue(dirTask12))
             one(taskContainerMock).findByName('dir1/dir2/dir3'); will(returnValue(null))
-            one(taskContainerMock).add('dir1/dir2/dir3', Directory); will(returnValue(dirTask123))
+            one(taskContainerMock).create('dir1/dir2/dir3', Directory); will(returnValue(dirTask123))
         }
         assertSame(dirTask123, project.dir('dir1/dir2/dir3'));
     }
@@ -807,7 +803,7 @@ def scriptMethod(Closure closure) {
         Task dirTask1 = HelperUtil.createTask(Directory.class)
         context.checking {
             one(taskContainerMock).findByName('dir1'); will(returnValue(null))
-            one(taskContainerMock).add('dir1', Directory); will(returnValue(dirTask1))
+            one(taskContainerMock).create('dir1', Directory); will(returnValue(dirTask1))
         }
         project.dir('dir1')
 
@@ -815,7 +811,7 @@ def scriptMethod(Closure closure) {
         context.checking {
             one(taskContainerMock).findByName('dir1'); will(returnValue(dirTask1))
             one(taskContainerMock).findByName('dir1/dir4'); will(returnValue(null))
-            one(taskContainerMock).add('dir1/dir4', Directory); will(returnValue(dirTask14))
+            one(taskContainerMock).create('dir1/dir4', Directory); will(returnValue(dirTask14))
         }
         assertSame(dirTask14, project.dir('dir1/dir4'))
     }
@@ -826,7 +822,7 @@ def scriptMethod(Closure closure) {
         Task dirTask1 = HelperUtil.createTask(Directory.class)
         context.checking {
             one(taskContainerMock).findByName('dir1'); will(returnValue(null))
-            one(taskContainerMock).add('dir1', Directory); will(returnValue(dirTask1))
+            one(taskContainerMock).create('dir1', Directory); will(returnValue(dirTask1))
             one(taskContainerMock).findByName('dir1/dir4'); will(returnValue(dirTask14))
         }
 
@@ -894,7 +890,7 @@ def scriptMethod(Closure closure) {
     private void checkConfigureProject(String configureMethod, Set projectsToCheck) {
         String propValue = 'someValue'
         if (configureMethod == 'configure') {
-            project."$configureMethod" projectsToCheck as List,
+            project."$configureMethod" projectsToCheck as java.util.List,
                     {
                         testSubProp = propValue
                     }

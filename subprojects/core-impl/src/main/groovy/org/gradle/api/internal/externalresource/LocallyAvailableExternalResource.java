@@ -1,5 +1,5 @@
 /*
- * Copyright 2012 the original author or authors.
+ * Copyright 2013 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,30 +16,12 @@
 
 package org.gradle.api.internal.externalresource;
 
-import org.gradle.api.internal.externalresource.local.LocallyAvailableResource;
-import org.gradle.api.internal.externalresource.metadata.ExternalResourceMetaData;
-import org.gradle.util.hash.HashValue;
+import org.gradle.internal.resource.local.LocallyAvailableResource;
 
-public class LocallyAvailableExternalResource extends LocalFileStandInExternalResource {
-
-    private final LocallyAvailableResource locallyAvailableResource;
-
-    public LocallyAvailableExternalResource(String source, LocallyAvailableResource locallyAvailableResource) {
-        this(source, locallyAvailableResource, null);
-    }
-
-    public LocallyAvailableExternalResource(String source, LocallyAvailableResource locallyAvailableResource, ExternalResourceMetaData metaData) {
-        super(source, locallyAvailableResource.getFile(), metaData);
-        this.locallyAvailableResource = locallyAvailableResource;
-    }
-
-    @Override
-    public long getContentLength() {
-        return locallyAvailableResource.getContentLength();
-    }
-
-    @Override
-    protected HashValue getLocalFileSha1() {
-        return locallyAvailableResource.getSha1();
-    }
+/**
+ * Represents an external resource whose meta-data and content is available locally. The content and meta-data may be a copy of some original resource and the original may or may not be a local
+ * resource.
+ */
+public interface LocallyAvailableExternalResource extends ExternalResource {
+    LocallyAvailableResource getLocalResource();
 }

@@ -18,6 +18,7 @@ package org.gradle.api.artifacts.dsl;
 import groovy.lang.Closure;
 import org.apache.ivy.plugins.resolver.DependencyResolver;
 import org.gradle.api.Action;
+import org.gradle.api.Incubating;
 import org.gradle.api.artifacts.ArtifactRepositoryContainer;
 import org.gradle.api.artifacts.repositories.FlatDirectoryArtifactRepository;
 import org.gradle.api.artifacts.repositories.IvyArtifactRepository;
@@ -27,8 +28,6 @@ import java.util.Map;
 
 /**
  * A {@code RepositoryHandler} manages a set of repositories, allowing repositories to be defined and queried.
- *
- * @author Hans Dockter
  */
 public interface RepositoryHandler extends ArtifactRepositoryContainer {
 
@@ -52,7 +51,7 @@ public interface RepositoryHandler extends ArtifactRepositoryContainer {
      * </table>
      *
      * <p>Examples:
-     * <pre>
+     * <pre autoTested=''>
      * repositories {
      *     flatDir name: 'libs', dirs: "$projectDir/libs"
      *     flatDir dirs: ["$projectDir/libs1", "$projectDir/libs2"]
@@ -84,8 +83,52 @@ public interface RepositoryHandler extends ArtifactRepositoryContainer {
     FlatDirectoryArtifactRepository flatDir(Action<? super FlatDirectoryArtifactRepository> action);
 
     /**
+     * Adds a repository which looks in Bintray's JCenter repository for dependencies.
+     * <p>
+     * The URL used to access this repository is {@literal "http://jcenter.bintray.com/"}.
+     * The behavior of this resolver is otherwise the same as the ones added by {@link #maven(org.gradle.api.Action)}.
+     * <p>
+     * Examples:
+     * <pre autoTested="">
+     * repositories {
+     *   jcenter {
+     *     artifactUrls = ["http://www.mycompany.com/artifacts1", "http://www.mycompany.com/artifacts2"]
+     *   }
+     *   jcenter {
+     *     name = "nonDefaultName"
+     *     artifactUrls = ["http://www.mycompany.com/artifacts1"]
+     *   }
+     * }
+     * </pre>
+     *
+     * @param action a configuration action
+     * @return the added repository
+     */
+    @Incubating
+    MavenArtifactRepository jcenter(Action<? super MavenArtifactRepository> action);
+
+    /**
+     * Adds a repository which looks in Bintray's JCenter repository for dependencies.
+     * <p>
+     * The URL used to access this repository is {@literal "http://jcenter.bintray.com/"}.
+     * The behavior of this resolver is otherwise the same as the ones added by {@link #mavenCentral()}.
+     * <p>
+     * Examples:
+     * <pre autoTested="">
+     * repositories {
+     *     jcenter()
+     * }
+     * </pre>
+     *
+     * @return the added resolver
+     * @see #jcenter(Action)
+     */
+    @Incubating
+    MavenArtifactRepository jcenter();
+
+    /**
      * Adds a repository which looks in the Maven central repository for dependencies. The URL used to access this repository is
-     * always {@link org.gradle.api.artifacts.ArtifactRepositoryContainer#MAVEN_CENTRAL_URL}. The behavior of this resolver
+     * {@value org.gradle.api.artifacts.ArtifactRepositoryContainer#MAVEN_CENTRAL_URL}. The behavior of this resolver
      * is otherwise the same as the ones added by {@link #mavenRepo(java.util.Map)}.
      *
      * The following parameter are accepted as keys for the map:
@@ -99,13 +142,13 @@ public interface RepositoryHandler extends ArtifactRepositoryContainer {
      * must be unique amongst a repository group.
      * </td></tr>
      * <tr><td><code>artifactUrls</code></td>
-     *     <td>A single jar repository or a collection of jar repositories containing additional artifacts not found in the maven central repository.
-     * But be aware that the POM must exist in maven central.
+     *     <td>A single jar repository or a collection of jar repositories containing additional artifacts not found in the Maven central repository.
+     * But be aware that the POM must exist in Maven central.
      * The provided values are evaluated as per {@link org.gradle.api.Project#uri(Object)}.</td></tr>
      * </table>
      *
      * <p>Examples:
-     * <pre>
+     * <pre autoTested="">
      * repositories {
      *     mavenCentral artifactUrls: ["http://www.mycompany.com/artifacts1", "http://www.mycompany.com/artifacts2"]
      *     mavenCentral name: "nonDefaultName", artifactUrls: ["http://www.mycompany.com/artifacts1"]
@@ -124,7 +167,7 @@ public interface RepositoryHandler extends ArtifactRepositoryContainer {
      * {@value org.gradle.api.artifacts.ArtifactRepositoryContainer#DEFAULT_MAVEN_CENTRAL_REPO_NAME}.
      *
      * <p>Examples:
-     * <pre>
+     * <pre autoTested="">
      * repositories {
      *     mavenCentral()
      * }
@@ -141,7 +184,7 @@ public interface RepositoryHandler extends ArtifactRepositoryContainer {
      * {@value org.gradle.api.artifacts.ArtifactRepositoryContainer#DEFAULT_MAVEN_LOCAL_REPO_NAME}.
      *
      * <p>Examples:
-     * <pre>
+     * <pre autoTested="">
      * repositories {
      *     mavenLocal()
      * }
@@ -158,10 +201,10 @@ public interface RepositoryHandler extends ArtifactRepositoryContainer {
      * to a Maven repository, have a look at {@link org.gradle.api.plugins.MavenRepositoryHandlerConvention#mavenDeployer(java.util.Map)} or
      * {@link org.gradle.api.plugins.MavenRepositoryHandlerConvention#mavenInstaller(java.util.Map)}.
      *
-     * By default the repository accepts to resolve artifacts without a pom. The repository always looks first for the pom
+     * By default the repository accepts to resolve artifacts without a POM. The repository always looks first for the POM
      * in the root repository. It then looks for the artifact in the root repository. Sometimes the artifact
-     * lives in a different repository than the pom. In such a case you can specify further locations to look for an artifact.
-     * But be aware that the pom is only looked up in the root repository.
+     * lives in a different repository than the POM. In such a case you can specify further locations to look for an artifact.
+     * But be aware that the POM is only looked up in the root repository.
      *
      * The following parameter are accepted as keys for the map:
      *
@@ -197,18 +240,22 @@ public interface RepositoryHandler extends ArtifactRepositoryContainer {
      *
      * @param args The argument to create the repository
      * @return the added repository
+     * @deprecated Use {@link #maven(groovy.lang.Closure)} instead.
      */
     @SuppressWarnings("JavadocReference")
+    @Deprecated
     DependencyResolver mavenRepo(Map<String, ?> args);
 
     /**
      * Adds a repository which is Maven compatible.
-     * 
+     *
      * @param args The argument to create the repository
      * @param configClosure Further configuration of the dependency resolver
      * @return The created dependency resolver
      * @see #mavenRepo(java.util.Map)
+     * @deprecated Use {@link #maven(groovy.lang.Closure)} instead.
      */
+    @Deprecated
     DependencyResolver mavenRepo(Map<String, ?> args, Closure configClosure);
 
     /**

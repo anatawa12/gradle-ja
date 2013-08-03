@@ -37,13 +37,12 @@ class HtmlTestExecutionResult implements TestExecutionResult {
         return this
     }
 
-    def indexContainsTestClass(String... testClasses) {
+    def indexContainsTestClass(String... expectedTestClasses) {
         def indexFile = new File(htmlReportDirectory, "index.html")
         assert indexFile.exists()
         Document html = Jsoup.parse(indexFile, null)
-        testClasses.each { testClass ->
-            assert html.select("a").find { it.text() == testClass } != null
-        }
+        def executedTestClasses = html.select("div:has(h2:contains(Classes)).tab a").collect { it.text() }
+        assert executedTestClasses.containsAll(expectedTestClasses)
     }
 
     def assertHtmlReportForTestClassExists(String... classNames) {
@@ -115,6 +114,7 @@ class HtmlTestExecutionResult implements TestExecutionResult {
         }
 
         TestClassExecutionResult assertTestFailed(String name, Matcher<? super String>... messageMatchers) {
+            assert testsFailures.containsKey(name)
             def message = testsFailures[name];
             messageMatchers.each { it.matches(message) }
             return this
@@ -138,9 +138,18 @@ class HtmlTestExecutionResult implements TestExecutionResult {
             return this;
         }
 
+        TestClassExecutionResult assertTestCaseStdout(String testCaseName, Matcher<? super String> matcher) {
+            throw new UnsupportedOperationException()
+        }
+
         TestClassExecutionResult assertStderr(Matcher<? super String> matcher) {
             matcher.matches(html.select("div#tab3 > span > pre").text())
             return this;
         }
+
+        TestClassExecutionResult assertTestCaseStderr(String testCaseName, Matcher<? super String> matcher) {
+            throw new UnsupportedOperationException()
+        }
+
     }
 }

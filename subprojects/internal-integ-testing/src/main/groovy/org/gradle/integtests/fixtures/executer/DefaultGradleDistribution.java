@@ -34,6 +34,11 @@ public class DefaultGradleDistribution implements GradleDistribution {
         this.binDistribution = binDistribution;
     }
 
+    @Override
+    public String toString() {
+        return version.toString();
+    }
+
     public TestFile getGradleHomeDir() {
         return gradleHomeDir;
     }
@@ -52,11 +57,11 @@ public class DefaultGradleDistribution implements GradleDistribution {
 
     public boolean worksWith(Jvm jvm) {
         // Milestone 4 was broken on the IBM jvm
-        if (jvm.isIbmJvm() && version == GradleVersion.version("1.0-milestone-4")) {
+        if (jvm.isIbmJvm() && isVersion("1.0-milestone-4")) {
             return false;
         }
         // 0.9-rc-1 was broken for Java 5
-        if (version == GradleVersion.version("0.9-rc-1")) {
+        if (isVersion("0.9-rc-1")) {
             return jvm.getJavaVersion().isJava6Compatible();
         }
 
@@ -66,7 +71,7 @@ public class DefaultGradleDistribution implements GradleDistribution {
     public boolean worksWith(OperatingSystem os) {
         // 1.0-milestone-5 was broken where jna was not available
         //noinspection SimplifiableIfStatement
-        if (version == GradleVersion.version("1.0-milestone-5")) {
+        if (isVersion("1.0-milestone-5")) {
             return os.isWindows() || os.isMacOsX() || os.isLinux();
         } else {
             return true;
@@ -75,7 +80,7 @@ public class DefaultGradleDistribution implements GradleDistribution {
 
     public boolean isDaemonSupported() {
         // Milestone 7 was broken on the IBM jvm
-        if (Jvm.current().isIbmJvm() && version == GradleVersion.version("1.0-milestone-7")) {
+        if (Jvm.current().isIbmJvm() && isVersion("1.0-milestone-7")) {
             return false;
         }
 
@@ -100,8 +105,19 @@ public class DefaultGradleDistribution implements GradleDistribution {
         return isSameOrNewer("1.0-milestone-3");
     }
 
+    public boolean isToolingApiNonAsciiOutputSupported() {
+        if (OperatingSystem.current().isWindows()) {
+            return !isVersion("1.0-milestone-7") && !isVersion("1.0-milestone-8") && !isVersion("1.0-milestone-8a");
+        }
+        return true;
+    }
+
     public int getArtifactCacheLayoutVersion() {
-        if (isSameOrNewer("1.4-rc-1")) {
+        if (isSameOrNewer("1.7-rc-1")) {
+            return 26;
+        } else if (isSameOrNewer("1.6-rc-1")) {
+            return 24;
+        } else if (isSameOrNewer("1.4-rc-1")) {
             return 23;
         } else if (isSameOrNewer("1.3")) {
             return 15;
@@ -146,7 +162,7 @@ public class DefaultGradleDistribution implements GradleDistribution {
 
     protected boolean isVersion(String otherVersionString) {
         GradleVersion otherVersion = GradleVersion.version(otherVersionString);
-        return version.compareTo(otherVersion) == 0 || (version.isSnapshot() && version.getVersionBase().equals(otherVersion.getVersionBase()));
+        return version.compareTo(otherVersion) == 0 || (version.isSnapshot() && version.getBaseVersion().equals(otherVersion.getBaseVersion()));
     }
 
 }

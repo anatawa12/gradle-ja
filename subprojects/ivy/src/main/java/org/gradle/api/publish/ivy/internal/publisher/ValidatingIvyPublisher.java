@@ -22,21 +22,20 @@ import org.apache.ivy.plugins.parser.ParserSettings;
 import org.gradle.api.InvalidUserDataException;
 import org.gradle.api.internal.artifacts.ivyservice.ivyresolve.parser.DisconnectedParserSettings;
 import org.gradle.api.internal.artifacts.ivyservice.ivyresolve.parser.IvyXmlModuleDescriptorParser;
+import org.gradle.api.internal.artifacts.ivyservice.ivyresolve.parser.MetaDataParseException;
 import org.gradle.api.internal.artifacts.repositories.PublicationAwareRepository;
 import org.gradle.api.publish.internal.PublicationFieldValidator;
 import org.gradle.api.publish.ivy.InvalidIvyPublicationException;
 import org.gradle.api.publish.ivy.IvyArtifact;
-import org.gradle.internal.UncheckedException;
 
 import java.io.File;
-import java.net.URL;
-import java.text.ParseException;
 import java.util.HashSet;
 import java.util.Set;
 
 public class ValidatingIvyPublisher implements IvyPublisher {
     private final ParserSettings parserSettings = new DisconnectedParserSettings();
     private final IvyPublisher delegate;
+    private IvyXmlModuleDescriptorParser moduleDescriptorParser = new IvyXmlModuleDescriptorParser();
 
     public ValidatingIvyPublisher(IvyPublisher delegate) {
         this.delegate = delegate;
@@ -69,14 +68,10 @@ public class ValidatingIvyPublisher implements IvyPublisher {
     }
 
     private ModuleRevisionId parseIvyFile(IvyNormalizedPublication publication) {
-
         try {
-            URL ivyFileLocation = publication.getDescriptorFile().toURI().toURL();
-            return new IvyXmlModuleDescriptorParser().parseDescriptor(parserSettings, ivyFileLocation, true).getModuleRevisionId();
-        } catch (ParseException pe) {
+            return moduleDescriptorParser.parseDescriptor(parserSettings, publication.getDescriptorFile(), true).getModuleRevisionId();
+        } catch (MetaDataParseException pe) {
             throw new InvalidIvyPublicationException(publication.getName(), pe.getLocalizedMessage(), pe);
-        } catch (Exception ex) {
-            throw UncheckedException.throwAsUncheckedException(ex);
         }
     }
 

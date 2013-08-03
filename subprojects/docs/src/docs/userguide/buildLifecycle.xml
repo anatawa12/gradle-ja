@@ -49,12 +49,12 @@
                 <listitem>
                     <para role="original">During this phase the project objects are configured.
                         The build scripts of <emphasis>all</emphasis> projects which are part of the build are
-                        executed. Gradle 1.4 introduces an incubating opt-in feature called 'configuration on demand'.
+                        executed. Gradle 1.4 introduces an <link linkend="feature_lifecycle">incubating</link> opt-in feature called <firstterm>configuration on demand</firstterm>.
                         In this mode, Gradle configures only relevant projects (see <xref linkend="sec:configuration_on_demand"/>).
                     </para>
-                    <para>プロジェクトのオブジェクトが設定されるフェーズです。ビルドに参加している<emphasis>すべて</emphasis>のプロジェクトのビルドスクリプトが実行されます。
-                        Gradle1.4では、試験的に「オンデマンド設定」という機能を選択できます。
-                        オンデマンド設定モードでは、Gradleは全てのプロジェクトではなく、ビルドに関係するプロジェクトのみを設定します。
+                    <para>プロジェクトのオブジェクトが設定されるフェーズです。ビルドに含まれる<emphasis>すべて</emphasis>のプロジェクトのビルドスクリプトが実行されます。
+                        Gradle1.4で、「オンデマンド設定」という機能が<link linkend="feature_lifecycle">試験的に</link>導入されました。
+                        オンデマンド設定モードでは、Gradleは全てのプロジェクトではなく、実行時に必要なプロジェクトのみ設定します。
                     </para>
                 </listitem>
             </varlistentry>
@@ -75,7 +75,7 @@
         <title>設定ファイル<phrase role="original">Settings file</phrase></title>
         <para role="original">Beside the build script files, Gradle defines a settings file. The settings file is determined by Gradle
             via a naming convention. The default name for this file is <filename>settings.gradle</filename>. Later in
-            this chapter we explain, how Gradle looks for a settings file.
+            this chapter we explain how Gradle looks for a settings file.
         </para>
         <para>ビルドスクリプトの他、Gradleではビルドの「設定ファイル」を作成することができます。設定ファイルの場所はGradleの規約により決定され、デフォルトではプロジェクトディレクトリの<filename>settings.gradle</filename>です。この設定ファイルをGradleがどのように探すのかについては、後ほど解説します。</para>
         <para role="original">The settings file gets executed during the initialization phase. A multiproject build must have a
@@ -159,10 +159,10 @@
                     <sourcefile file="settings.gradle" snippet="flat-layout"/>
                 </sample>
                 <para role="original">The <literal>includeFlat</literal> method takes directory names as an argument. Those directories
-                    need to exist at the same level as the root project directory. The location of those directories
+                    need to exist as siblings of the root project directory. The location of those directories
                     are considered as child projects of the root project in the multi-project tree.
                 </para>
-                <para><literal>includeFlat</literal>メソッドは、ディレクトリ名を引数にとります。これらのディレクトリはルートプロジェクトのディレクトリと同じ階層になければなりませんが、マルチプロジェクト・ツリーにおいてはルートプロジェクトの子プロジェクトに設定されます。</para>
+                <para><literal>includeFlat</literal>メソッドは、ディレクトリ名を引数にとります。これらのディレクトリは、ルートプロジェクトのディレクトリと同じ階層にある隣接ディレクトリでなければなりませんが、マルチプロジェクト・ツリーにおいてはルートプロジェクトの子プロジェクトに設定されます。</para>
             </section>
         </section>
         <section id='sub:modifying_element_of_the_project_tree'>

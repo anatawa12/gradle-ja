@@ -28,14 +28,12 @@ import org.jmock.Expectations;
 import org.junit.Before;
 
 import java.io.File;
+import java.util.Collections;
 
 import static junit.framework.Assert.assertNotNull;
 import static org.hamcrest.Matchers.instanceOf;
 import static org.junit.Assert.assertThat;
 
-/**
- * @author Tom Eyckmans
- */
 public class JUnitTestFrameworkTest extends AbstractTestFrameworkTest {
     private JUnitTestFramework jUnitTestFramework;
     private JUnitOptions jUnitOptionsMock;
@@ -63,6 +61,8 @@ public class JUnitTestFrameworkTest extends AbstractTestFrameworkTest {
             will(returnValue(context.mock(AntBuilder.class)));
             allowing(testMock).getTemporaryDirFactory();
             will(returnValue(temporaryDirFactory));
+            allowing(classpathMock).iterator();
+            will(returnIterator(Collections.EMPTY_LIST));
         }});
     }
 
@@ -81,8 +81,10 @@ public class JUnitTestFrameworkTest extends AbstractTestFrameworkTest {
         final ActorFactory actorFactory = context.mock(ActorFactory.class);
 
         context.checking(new Expectations() {{
-            one(testMock).getTestResultsDir();
-            will(returnValue(testResultsDir));
+            allowing(jUnitOptionsMock).getIncludeCategories();
+            will(returnValue(Collections.emptySet()));
+            allowing(jUnitOptionsMock).getExcludeCategories();
+            will(returnValue(Collections.emptySet()));
             one(serviceRegistry).get(IdGenerator.class);
             will(returnValue(idGenerator));
             one(serviceRegistry).get(ActorFactory.class);

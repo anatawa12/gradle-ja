@@ -2,11 +2,9 @@
     <title>ビルド通知プラグイン<phrase role="original">The Build Announcements Plugin</phrase></title>
     <note>
         <para role="original">
-            The build announcements is incubating and should not be considered stable.
+            The build announcements plugin is currently <link linkend="feature_lifecycle">incubating</link>. Please be aware that the DSL and other configuration may change in later Gradle versions.
         </para>
-        <para>
-            ビルド通知プラグインはまだ試験的なプラグインです。安定した状態ではありません (<xref linkend="sec:incubating_state"/>を参照してください)。
-        </para>
+        <para>ビルド通知プラグインはまだ<link linkend="feature_lifecycle">試験的な</link>プラグインです。DSLやその他設定が後のバージョンで変更される可能性もありますので注意してください。</para>
     </note>
     <para role="original">The build announcements plugin uses the <link linkend="announce_plugin">announce</link> plugin to send local announcements on important events in the build.</para>
     <para>ビルド通知プラグインは、<link linkend="announce_plugin">通知</link>プラグインを使って、ビルドで重要なイベントが発生したときにローカル上で通知します。</para>
@@ -20,10 +18,10 @@
         <para role="original">That's it. If you want to tweak where the announcements go, you can configure the <link linkend="announce_plugin">announce</link> plugin to
             change the local announcer.
         </para>
-        <para>以上です。通知先を調整したい場合は、<link linkend="announce_plugin">通知</link>プラグインのコンフィグレーションでローカル通知機能を切り替えられます。
+        <para>通知先を調整したい場合は、<link linkend="announce_plugin">通知</link>プラグインのコンフィグレーションでローカル通知機能を切り替えられます。
         </para>
         <para role="original">You can also apply the plugin from an init script:</para>
-        <para>初期化スクリプトからでもプラグインを適用できます:</para>
+        <para>また、初期化スクリプトを使ってプラグインを適用することもできます:</para>
         <sample id="useBuildAnnouncementsPlugin" dir="announce" title="初期化スクリプトからビルド通知プラグインを使う / Using the build announcements plugin from an init script">
             <sourcefile file="init.gradle"/>
             <test args="-I init.gradle"/>

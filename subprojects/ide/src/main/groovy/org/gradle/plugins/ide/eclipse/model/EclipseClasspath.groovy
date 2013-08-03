@@ -82,7 +82,7 @@ import org.gradle.util.ConfigureUtil
  * eclipse {
  *   classpath {
  *     file {
- *       //if you want to mess with the resulting xml in whatever way you fancy
+ *       //if you want to mess with the resulting XML in whatever way you fancy
  *       withXml {
  *         def node = it.asNode()
  *         node.appendNode('xml', 'is what I love')
@@ -103,8 +103,6 @@ import org.gradle.util.ConfigureUtil
  *   }
  * }
  * </pre>
- *
- * @author Szczepan Faber, created at: 4/16/11
  */
 class EclipseClasspath {
 
