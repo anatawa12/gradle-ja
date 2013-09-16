@@ -46,33 +46,37 @@ import java.util.Map;
 import java.util.Set;
 
 /**
- * <p>このインターフェースは、ビルドファイル内でGradleとやりとりする際、メインで使用するAPIです。<code>Project</code>から、Gradleの全ての機能にプログラム的にアクセスできます。</p>
- * <p class="original">This interface is the main API you use to interact with Gradle from your build file. From a <code>Project</code>,
- * you have programmatic access to all of Gradle's features.</p>
+ * <p><span class="original">This interface is the main API you use to interact with Gradle from your build file. From a <code>Project</code>,
+ * you have programmatic access to all of Gradle's features.</span>
+ * このインターフェースは、ビルドファイル内でGradleとやりとりする際、メインで使用するAPIです。<code>Project</code>から、Gradleの全ての機能にプログラム的にアクセスできます。</p>
  *
- * <h3>ライフサイクル <span class="original">Lifecycle</span></h3>
+ * <h3><span class="original">Lifecycle</span>ライフサイクル </h3>
  *
- * <p><code>Project</code>と<code>{@value #DEFAULT_BUILD_FILE}ファイルは、１対１の関係性を持ちます。</code>
- * ビルドの初期化の間中、Gradleはビルドに参加している<code>Project</code>
- * オブジェクトを、以下に示すような組み付けを行います。</p>
- * <p class="original">There is a one-to-one relationship between a <code>Project</code> and a <code>{@value #DEFAULT_BUILD_FILE}</code>
+ * <p><span class="original">There is a one-to-one relationship between a <code>Project</code> and a <code>{@value #DEFAULT_BUILD_FILE}</code>
  * file. During build initialisation, Gradle assembles a <code>Project</code> object for each project which is to
- * participate in the build, as follows:</p>
+ * participate in the build, as follows: </span>
+ * <code>Project</code>と<code>{@value #DEFAULT_BUILD_FILE}</code>ファイルは、１対１の関係性を持ちます。
+ * ビルドの初期化の際に、Gradleは各プロジェクトのビルドに参加している<code>Project</code>
+ * オブジェクトに、以下に示すような組み付けを行います。</p>
  *
  * <ul>
  *
  * <li><span class="original">Create a {@link org.gradle.api.initialization.Settings} instance for the build.</span> ビルド用に、{@link org.gradle.api.initialization.Settings}インスタンスを作成します。</li>
  *
- * <li>Evaluate the <code>{@value org.gradle.api.initialization.Settings#DEFAULT_SETTINGS_FILE}</code> script, if
- * present, against the {@link org.gradle.api.initialization.Settings} object to configure it.</li>
+ * <li><span class="original">Evaluate the <code>{@value org.gradle.api.initialization.Settings#DEFAULT_SETTINGS_FILE}</code> script, if
+ * present, against the {@link org.gradle.api.initialization.Settings} object to configure it.</span>構成する{@link org.gradle.api.initialization.Settings}オブジェクトに対して、<code>{@value org.gradle.api.initialization.Settings#DEFAULT_SETTINGS_FILE}</code>が存在するならば、評価します。</li>
  *
- * <li>Use the configured {@link org.gradle.api.initialization.Settings} object to create the hierarchy of
- * <code>Project</code> instances.</li>
+ * <li><span class="original">Use the configured {@link org.gradle.api.initialization.Settings} object to create the hierarchy of
+ * <code>Project</code> instances.</span><code>Project</code>インスタンスの階層の作成に、構成した{@link org.gradle.api.initialization.Settings}オブジェクトを使用します。</li>
  *
- * <li>Finally, evaluate each <code>Project</code> by executing its <code>{@value #DEFAULT_BUILD_FILE}</code> file, if
+ * <li><span class="original">Finally, evaluate each <code>Project</code> by executing its <code>{@value #DEFAULT_BUILD_FILE}</code> file, if
  * present, against the project. The project are evaluated in breadth-wise order, such that a project is evaluated
  * before its child projects. This order can be overridden by calling <code>{@link #evaluationDependsOnChildren()}</code> or by adding an
- * explicit evaluation dependency using <code>{@link #evaluationDependsOn(String)}</code>.</li>
+ * explicit evaluation dependency using <code>{@link #evaluationDependsOn(String)}</code>.</span>
+ * 最後に、プロジェクトに対して存在するならば、<code>{@value #DEFAULT_BUILD_FILE}</code>ファイルを実行し各<code>Project</code>を評価します。
+ * プロジェクトは、子プロジェクトより前に評価されるプロジェクトの様に、横方向の順序で評価されます。
+ * <span class="original">This order can be overridden by calling <code>{@link #evaluationDependsOnChildren()}</code> or by adding an
+ * explicit evaluation dependency using <code>{@link #evaluationDependsOn(String)}</code>.</span>この順序は<code>{@link #evaluationDependsOnChildren()}</code>の呼び出しか、<code>{@link #evaluationDependsOn(String)}</code>を使用した明示的な評価依存関係の追加によって上書きできます。</li>
  *
  * </ul>
  *
