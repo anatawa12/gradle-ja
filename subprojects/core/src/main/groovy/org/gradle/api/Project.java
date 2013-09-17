@@ -80,28 +80,37 @@ import java.util.Set;
  *
  * </ul>
  *
- * <h3>Tasks</h3>
+ * <h3><span class="original">Tasks</span>タスク</h3>
  *
- * <p>A project is essentially a collection of {@link Task} objects. Each task performs some basic piece of work, such
+ * <p><span class="original">A project is essentially a collection of {@link Task} objects. Each task performs some basic piece of work, such
  * as compiling classes, or running unit tests, or zipping up a WAR file. You add tasks to a project using one of the
  * {@code add()} methods on {@link TaskContainer}, such as {@link TaskContainer#add(String)}.  You can locate existing
- * tasks using one of the lookup methods on {@link TaskContainer}, such as {@link org.gradle.api.tasks.TaskCollection#getByName(String)}.</p>
+ * tasks using one of the lookup methods on {@link TaskContainer}, such as {@link org.gradle.api.tasks.TaskCollection#getByName(String)}.</span>
+ * プロジェクトは効果的な{@link Task}オブジェクトのコレクションです。 それぞれのタスクは、クラスのコンパイルや、ユニットテストの実行、WARファイルの圧縮などのような、作業の基本的な一片として動作します。
+ * あなたは{@link TaskContainer#add(String)}のような{@link TaskContainer}上の{@code add()}メソッドの１つを使用し、タスクをプロジェクトに追加します。
+ * あなたは{@link org.gradle.api.tasks.TaskCollection#getByName(String)}のような{@link TaskContainer}上のルックアップメソッドの１つを使用し、存在するタスクを配置できます。
+ * </p>
+ * <h3><span class="original">Dependencies</span>依存性</h3>
  *
- * <h3>Dependencies</h3>
- *
- * <p>A project generally has a number of dependencies it needs in order to do its work.  Also, a project generally
+ * <p><span class="original">A project generally has a number of dependencies it needs in order to do its work.  Also, a project generally
  * produces a number of artifacts, which other projects can use. Those dependencies are grouped in configurations, and
  * can be retrieved and uploaded from repositories. You use the {@link org.gradle.api.artifacts.ConfigurationContainer}
  * returned by {@link #getConfigurations()} method to manage the configurations. The {@link
  * org.gradle.api.artifacts.dsl.DependencyHandler} returned by {@link #getDependencies()} method to manage the
  * dependencies. The {@link org.gradle.api.artifacts.dsl.ArtifactHandler} returned by {@link #getArtifacts()} method to
  * manage the artifacts. The {@link org.gradle.api.artifacts.dsl.RepositoryHandler} returned by {@link
- * #getRepositories()} method to manage the repositories.</p>
+ * #getRepositories()} method to manage the repositories.</span>
+ * 一般的なプロジェクトはその動作をするために必要ないくつもの依存性を持っています。さらに、一般的なプロジェクトは他のプロジェクトが使用できるようないくつもの成果物を生成します。
+ * それらの依存性は構成内でグループ化され、リポジトリから回収され、アップロードされる事ができます。
+ * あなたは構成を管理する{@link #getConfigurations()}メソッドから返された{@link org.gradle.api.artifacts.ConfigurationContainer}や、依存性を管理する{@link #getDependencies()}メソッドから返された{@link org.gradle.api.artifacts.dsl.DependencyHandler}や、成果物を管理する{@link #getArtifacts()}メソッドから返された{@link org.gradle.api.artifacts.dsl.ArtifactHandler}や、リポジトリを管理する{@link #getRepositories()}メソッドから返された{@link org.gradle.api.artifacts.dsl.RepositoryHandler}を使います。
+ * </p>
  *
- * <h3>Multi-project Builds</h3>
+ * <h3><span class="original">Multi-project Builds</span>マルチプロジェクトビルド</h3>
  *
- * <p>Projects are arranged into a hierarchy of projects. A project has a name, and a fully qualified path which
- * uniquely identifies it in the hierarchy.</p>
+ * <p><span class="original">Projects are arranged into a hierarchy of projects. A project has a name, and a fully qualified path which
+ * uniquely identifies it in the hierarchy.</span>
+ * プロジェクトはプロジェクトの階層の中に配置されます。プロジェクトは名前やプロジェクト階層内において一意に識別できる絶対パスを持ちます。
+ * </p>
  *
  * <a name="properties"/> <h3>Properties</h3>
  *
