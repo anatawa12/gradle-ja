@@ -112,54 +112,86 @@ import java.util.Set;
  * プロジェクトはプロジェクトの階層の中に配置されます。プロジェクトは名前やプロジェクト階層内において一意に識別できる絶対パスを持ちます。
  * </p>
  *
- * <a name="properties"/> <h3>Properties</h3>
+ * <a name="properties"/> <h3><span class="original">Properties</span>プロパティ</h3>
  *
- * <p>Gradle executes the project's build file against the <code>Project</code> instance to configure the project. Any
+ * <p><span class="original">Gradle executes the project's build file against the <code>Project</code> instance to configure the project. Any
  * property or method which your script uses is delegated through to the associated <code>Project</code> object.  This
  * means, that you can use any of the methods and properties on the <code>Project</code> interface directly in your script.
- * </p><p>For example:
+ * </span>
+ * Gradleはプロジェクトを構成する<code>Project</code>インスタンスに対してプロジェクトのビルドファイルを実行します。
+ * あなたのスクリプトが使用するようないくつかのプロパティやメソッドは、組織された<code>Project</code>オブジェクトを通して委譲されます。
+ * この意味は、あなたのスクリプトの中でダイレクトに<code>Project</code>インターフェイスのいくつかのメソッドやプロパティをあなたは使用できるという事です。
+ * </p>
+ * <p><span class="original">For example:</span>
+ * 例:</p>
  * <pre>
  * defaultTasks('some-task')  // Delegates to Project.defaultTasks()
  * reportsDir = file('reports') // Delegates to Project.file() and the Java Plugin
  * </pre>
- * <p>You can also access the <code>Project</code> instance using the <code>project</code> property. This can make the
+ * <p><span class="original">You can also access the <code>Project</code> instance using the <code>project</code> property. This can make the
  * script clearer in some cases. For example, you could use <code>project.name</code> rather than <code>name</code> to
- * access the project's name.</p>
+ * access the project's name.</span>
+ * あなたは<code>Project</code>プロパティを使用して<code>Project</code>インスタンスにアクセスできます。これによっていくつかのケースで冴えたスクリプトを作ることができます。
+ * 例えば、あなたはプロジェクトの名前を参照するのに<code>name</code>を使用するのではなく、<code>project.name</code>を使うことができました。
+ * </p>
  *
- * <p>A project has 5 property 'scopes', which it searches for properties. You can access these properties by name in
- * your build file, or by calling the project's {@link #property(String)} method. The scopes are:</p>
+ * <p><span class="original">A project has 5 property 'scopes', which it searches for properties. You can access these properties by name in
+ * your build file, or by calling the project's {@link #property(String)} method. The scopes are:</span>
+ * プロジェクトはプロパティを探す５つの「プロパティスコープ」を持っています。あなたはあなたのビルドファイルの中で名前で、もしくはプロジェクトの{@link #property(String)}メソッドの呼び出しでそれらのプロパティにアクセスできます。
+ * そのスコープとは:</p>
  *
  * <ul>
  *
- * <li>The <code>Project</code> object itself. This scope includes any property getters and setters declared by the
+ * <li><span class="original">The <code>Project</code> object itself. This scope includes any property getters and setters declared by the
  * <code>Project</code> implementation class.  For example, {@link #getRootProject()} is accessible as the
  * <code>rootProject</code> property.  The properties of this scope are readable or writable depending on the presence
- * of the corresponding getter or setter method.</li>
+ * of the corresponding getter or setter method.</span>
+ * <code>Project</code>オブジェクト自身。このスコープは<code>Project</code>をimplemantしたクラスが宣言したいくつかのプロパティのgetter、setterメソッドを含みます。
+ * 例えば{@link #getRootProject()}は<code>rootProject</code>プロパティにアクセス可能です。
+ * このスコープのプロパティは一致したgetter、setterメソッドの存在に依存したままで読み書き可能です。
+ * </li>
  *
- * <li>The <em>additional</em> properties of the project.  Each project maintains a map of additional properties, which
- * can contain any arbitrary name -> value pair.  The properties of this scope are readable and writable.</li>
+ * <li><span class="original">The <em>additional</em> properties of the project.  Each project maintains a map of additional properties, which
+ * can contain any arbitrary name -> value pair.  The properties of this scope are readable and writable.</span>
+ * プロジェクトの<em>additional</em>プロパティ。各自のプロジェクトは任意の名前 -> 値のペアを含むことができる追加されたプロパティのマップを維持します。
+ * このスコープのプロパティは読み書き可能です。</li>
  *
- * <li>The <em>convention</em> properties added to the project by each {@link Plugin} applied to the project. A {@link
+ * <li><span class="original">The <em>convention</em> properties added to the project by each {@link Plugin} applied to the project. A {@link
  * Plugin} can add properties and methods to a project through the project's {@link Convention} object.  The properties
- * of this scope may be readable or writable, depending on the convention objects.</li>
+ * of this scope may be readable or writable, depending on the convention objects.</span>
+ * <em>convention</em>プロパティはプロジェクトに付属の各{@link Plugin}によってプロジェクトに追加しました。{@link Plugin}は{@link Convention}オブジェクトを通じてプロジェクトにプロパティやメソッドを追加できます。
+ * このスコープのプロパティは参加しているオブジェクトに依存していて、おそらく読み書き可能です。
+ * </li>
  *
- * <li>The tasks of the project.  A task is accessible by using its name as a property name.  The properties of this
+ * <li><span class="original">The tasks of the project.  A task is accessible by using its name as a property name.  The properties of this
  * scope are read-only. For example, a task called <code>compile</code> is accessible as the <code>compile</code>
- * property.</li>
+ * property.</span>
+ * プロジェクトのタスク。タスクはそのプロパティの名前を使ってアクセスできます。このスコープのプロパティは読み取り専用です。
+ * 例えば、タスクが呼び出した<code>compile</code>は<code>compile</code>プロパティでアクセスできます。
+ * </li>
  *
- * <li>The additional properties and convention properties of the project's parent project, recursively up to the root
- * project. The properties of this scope are read-only.</li>
+ * <li><span class="original">The additional properties and convention properties of the project's parent project, recursively up to the root
+ * project. The properties of this scope are read-only.</span>
+ * プロジェクトの親プロジェクトの追加のプロパティや通常のプロパティはrootプロジェクトに向かって繰り返し用いられます。
+ * このスコープのプロジェクトは読み取り専用です。</li>
  *
  * </ul>
  *
- * <p>When reading a property, the project searches the above scopes in order, and returns the value from the first
- * scope it finds the property in.  See {@link #property(String)} for more details.</p>
+ * <p><span class="original">When reading a property, the project searches the above scopes in order, and returns the value from the first
+ * scope it finds the property in.  See {@link #property(String)} for more details.</span>
+ * プロパティを読み込んだ際、プロジェクトは順に上のスコープを探し、発見したプロパティの最初のスコープからの値を返します。
+ * 詳しい詳細は{@link #property(String)}をご覧ください。</p>
  *
- * <p>When writing a property, the project searches the above scopes in order, and sets the property in the first scope
+ * <p><span class="original">When writing a property, the project searches the above scopes in order, and sets the property in the first scope
  * it finds the property in. If not found, the project adds the property to its map of additional properties.  For the
  * next few releases a deprecation warning will be issued when trying to set a property that does not exist. Dynamic
  * properties will eventually be removed entirely, meaning that this will be a fatal error in future versions of Gradle.
- * See Extra Properties to learn how to add properties dynamically. </p>
+ * See Extra Properties to learn how to add properties dynamically. </span>
+ * プロパティ書き込み時は、プロジェクトは順に上のスコープを探し、プロパティを発見する最初のスコープの中でプロパティをセットします。
+ * もし見つからなければ、プロジェクトはそれらの追加プロパティのマップのプロジェクトを追加します。
+ * プロパティに値をセットしようとした際にそれらが存在せず、次の少しのリリースに向かって抗議の警告が発行されるかもしれません。
+ * ダイナミックなプロパティはついには完全に削除されるでしょう、つまりそれはこれが未来のGradleのバージョンにおいて、いずれ致命的なエラーになる事を意味します。
+ * どのようにダイナミックにプロパティを追加するかはエクストラプロパティを参照してください。</p>
  *
  * <a name="extraproperties"/> <h4>Extra Properties</h4>
  *
