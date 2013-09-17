@@ -193,11 +193,14 @@ import java.util.Set;
  * ダイナミックなプロパティはついには完全に削除されるでしょう、つまりそれはこれが未来のGradleのバージョンにおいて、いずれ致命的なエラーになる事を意味します。
  * どのようにダイナミックにプロパティを追加するかはエクストラプロパティを参照してください。</p>
  *
- * <a name="extraproperties"/> <h4>Extra Properties</h4>
+ * <a name="extraproperties"/> <h4><span class="original">Extra Properties</span>エクストラプロパティ</h4>
  *
- * All extra properties must be created through the &quot;ext&quot; namespace. Once extra properties have been created,
+ * <p><span class="original">All extra properties must be created through the &quot;ext&quot; namespace. Once extra properties have been created,
  * they are available on the owning object (in the below case the Project, Task, and sub-projects respectively) and can
- * be read and changed. It's only the initial declaration that needs to be done via the namespace.
+ * be read and changed. It's only the initial declaration that needs to be done via the namespace.</span>
+ * 全てのエクストラプロパティは&quot;ext&quot;ネームスペースを通して作られなければなりません。一度エクストラプロパティが作られた場合、それらは専有オブジェクト（下記のプロジェクト、タスク、サブプロジェクト各々）のケー
+ * ス上で可能にし、読み込みや編集ができます。
+ * それは名前空間経由で実行される際に必要な初めの宣言にだけです。</p>
  *
  * <pre>
  * project.ext.prop1 = "foo"
@@ -207,7 +210,8 @@ import java.util.Set;
  * subprojects { ext.${prop3} = false }
  * </pre>
  *
- * Reading extra properties is done through the &quot;ext&quot; or through the owning object.
+ * <p><span class="original">Reading extra properties is done through the &quot;ext&quot; or through the owning object.</span>
+ * &quot;ext&quot;を通じてもしくは専有オブジェクトを追加し、エクストラプロパティの読み込みは行われました。</p>
  *
  * <pre>
  * ext.isSnapshot = version.endsWith("-SNAPSHOT")
@@ -216,25 +220,34 @@ import java.util.Set;
  * }
  * </pre>
  *
- * <h4>Dynamic Methods</h4>
+ * <h4><span class="original">Dynamic Methods</span>ダイナミックメソッド</h4>
  *
- * <p>A project has 5 method 'scopes', which it searches for methods:</p>
+ * <p><span class="original">A project has 5 method 'scopes', which it searches for methods:</span>
+ * プロジェクトはメソッドを探す５つの「メソッドスコープ」を持っています。</p>
  *
  * <ul>
  *
- * <li>The <code>Project</code> object itself.</li>
+ * <li><span class="original">The <code>Project</code> object itself.</span><code>Project</code>オブジェクト自身。</li>
  *
- * <li>The build file. The project searches for a matching method declared in the build file.</li>
+ * <li><span class="original">The build file. The project searches for a matching method declared in the build file.</span>
+ * ビルドファイル。プロジェクトはビルドファイルの中で宣言された適合するメソッドを探します。</li>
  *
- * <li>The <em>convention</em> methods added to the project by each {@link Plugin} applied to the project. A {@link
- * Plugin} can add properties and method to a project through the project's {@link Convention} object.</li>
+ * <li><span class="original">The <em>convention</em> methods added to the project by each {@link Plugin} applied to the project. A {@link
+ * Plugin} can add properties and method to a project through the project's {@link Convention} object.</span>
+ * <em>convention</em>メソッドがプロジェクトに適応した各{@link Plugin}によってプロジェクトに追加しました。
+ * {@link Plugin}はプロジェクトの{@link Convention}オブジェクトを通してプロジェクトにプロパティやメソッドを追加できます。</li>
  *
- * <li>The tasks of the project. A method is added for each task, using the name of the task as the method name and
+ * <li><span class="original">The tasks of the project. A method is added for each task, using the name of the task as the method name and
  * taking a single closure parameter. The method calls the {@link Task#configure(groovy.lang.Closure)} method for the
  * associated task with the provided closure. For example, if the project has a task called <code>compile</code>, then a
- * method is added with the following signature: <code>void compile(Closure configureClosure)</code>.</li>
+ * method is added with the following signature: <code>void compile(Closure configureClosure)</code>.</span>
+ * プロジェクトのタスク。メソッドはメソッド名のタスクや単一のクロージャーパラメーターから取得した名前を使用してそれぞれのタスクに追加されました。
+ * メソッドの呼び出しは提供されたクロージャに付帯の構成されたタスクの{@link Task#configure(groovy.lang.Closure)}メソッドを呼びます。
+ * 例えば、もしプロジェクトが<code>compile</code>と呼ばれるタスクを持っていて、その時メソッドは後述のような記述が追加されています。<code>void compile(ClosureconfigureClosure)</code>
+ * </li>
  *
- * <li>The parent project, recursively up to the root project.</li>
+ * <li><span class="original">The parent project, recursively up to the root project.</span>
+ * 親プロジェクト。ルートプロジェクトに向かって再帰的になります。</li>
  *
  * </ul>
  */
