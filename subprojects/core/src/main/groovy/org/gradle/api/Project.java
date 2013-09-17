@@ -277,100 +277,121 @@ public interface Project extends Comparable<Project>, ExtensionAware, PluginAwar
     public static final String DEFAULT_STATUS = "release";
 
     /**
-     * <p>Returns the root project for the hierarchy that this project belongs to.  In the case of a single-project
-     * build, this method returns this project.</p>
+     * <p><span class="original">Returns the root project for the hierarchy that this project belongs to.  In the case of a single-project
+     * build, this method returns this project.</span>
+     * このプロジェクトが所属するルートプロジェクトを階層に沿って返します。シングルプロジェクトのビルドの場合は、このメソッドはそのプロジェクト自身を返します。
+     * </p>
      *
      * @return The root project. Never returns null.
      */
     Project getRootProject();
 
     /**
-     * <p>Returns the root directory of this project. The root directory is the project directory of the root
-     * project.</p>
+     * <p><span class="original">Returns the root directory of this project. The root directory is the project directory of the root
+     * project.</span>
+     * このプロジェクトのルートディレクトリを返します。ルートディレクトリはルートプロジェクトのプロジェクトディレクトリです。
+     * </p>
      *
      * @return The root directory. Never returns null.
      */
     File getRootDir();
 
     /**
-     * <p>Returns the build directory of this project.  The build directory is the directory which all artifacts are
-     * generated into.  The default value for the build directory is <code><i>projectDir</i>/build</code></p>
+     * <p><span class="original">Returns the build directory of this project.  The build directory is the directory which all artifacts are
+     * generated into.  The default value for the build directory is <code><i>projectDir</i>/build</code></span>
+     * このプロジェクトのビルドディレクトリを返します。ビルドディレクトリは全ての生成物の生成先ディレクトリです。
+     * ビルドディレクトリのデフォルト値は<code><i>projectDir</i>/build</code>です。</p>
      *
      * @return The build directory. Never returns null.
      */
     File getBuildDir();
 
     /**
-     * <p>Sets the build directory of this project. The build directory is the directory which all artifacts are
+     * <p><span class="original">Sets the build directory of this project. The build directory is the directory which all artifacts are
      * generated into. The path parameter is evaluated as described for {@link #file(Object)}. This mean you can use,
-     * amongst other things, a relative or absolute path or File object to specify the build directory.</p>
+     * amongst other things, a relative or absolute path or File object to specify the build directory.</span>
+     * このプロジェクトのビルドディレクトリにセットします。ビルドディレクトリは全ての生成物の生成先ディレクトリです。
+     * パス値は{@link #file(Object)}記述で評価されます。これは、あなたがビルドディレクトリを明記したファイルオブジェクトや、絶対パスや相対パスなどいろいろな方法で使うことができる事を意味します。
+     * </p>
      *
      * @param path The build directory. This is evaluated as per {@link #file(Object)}
      */
     void setBuildDir(Object path);
 
     /**
-     * <p>Returns the build file Gradle will evaluate against this project object. The default is <code> {@value
-     * #DEFAULT_BUILD_FILE}</code>. If an embedded script is provided the build file will be null. </p>
+     * <p><span class="original">Returns the build file Gradle will evaluate against this project object. The default is <code> {@value
+     * #DEFAULT_BUILD_FILE}</code>. If an embedded script is provided the build file will be null. </span>
+     * Gradleがプロジェクトオブジェクトに対して評価するビルドファイルを返します。
+     *もし埋め込むスクリプトに空っぽのビルドファイルを提供された時、デフォルトは<code>{@value #DEFAULT_BUILD_FILE}</code>です。
+     *  </p>
      *
      * @return Current build file. May return null.
      */
     File getBuildFile();
 
     /**
-     * <p>Returns the parent project of this project, if any.</p>
+     * <p><span class="original">Returns the parent project of this project, if any.</span>
+     * もし存在するなら、このプロジェクトの親プロジェクトを返します。</p>
      *
      * @return The parent project, or null if this is the root project.
      */
     Project getParent();
 
     /**
-     * <p>Returns the name of this project. The project's name is not necessarily unique within a project hierarchy. You
-     * should use the {@link #getPath()} method for a unique identifier for the project.</p>
+     * <p><span class="original">Returns the name of this project. The project's name is not necessarily unique within a project hierarchy. You
+     * should use the {@link #getPath()} method for a unique identifier for the project.</span>
+     * このプロジェクトの名前を返します。プロジェクトの階層の範囲内でプロジェクトの名前はユニークである必要はありません。
+     * あなたはプロジェクトのユニークな識別子のために{@link #getPath()}メソッドを使うべきです。</p>
      *
      * @return The name of this project. Never return null.
      */
     String getName();
 
     /**
-     * Returns the description of this project.
+     * <p><span class="original">Returns the description of this project.</span>
+     * このプロジェクトの記述を返します。</p>
      *
      * @return the description. May return null.
      */
     String getDescription();
 
     /**
-     * Sets a description for this project.
+     * <p><span class="original">Sets a description for this project.</span>このプロジェクトに記述をセットします。</p>
      *
      * @param description The description of the project. Might be null.
      */
     void setDescription(String description);
 
     /**
-     * <p>Returns the group of this project. Gradle always uses the {@code toString()} value of the group. The group
-     * defaults to the path with dots a separators.</p>
+     * <p><span class="original">Returns the group of this project. Gradle always uses the {@code toString()} value of the group. The group
+     * defaults to the path with dots a separators.</span>
+     * このプロジェクトのグループを返します。Gradleはグループの{@code toString()}の値をいつも使います。
+     * グループはパスをドットで区切るのが標準です。</p>
      *
      * @return The group of this project. Never returns null.
      */
     Object getGroup();
 
     /**
-     * <p>Sets the group of this project.</p>
+     * <p><span class="original">Sets the group of this project.</span>このプロジェクトのグループをセットします。</p>
      *
      * @param group The group of this project. Must not be null.
      */
     void setGroup(Object group);
 
     /**
-     * <p>Returns the version of this project. Gradle always uses the {@code toString()} value of the version. The
-     * version defaults to {@value #DEFAULT_VERSION}.</p>
+     * <p><span class="original">Returns the version of this project. Gradle always uses the {@code toString()} value of the version. The
+     * version defaults to {@value #DEFAULT_VERSION}.</span>
+     * このプロジェクトのバージョンを返します。Gradleはバージョンの{@code toString()}の値をいつも使います。
+     * バージョンのデフォルトは{@value #DEFAULT_VERSION}です。</p>
      *
      * @return The version of this project. Never returns null.
      */
     Object getVersion();
 
     /**
-     * <p>Sets the version of this project.</p>
+     * <p><span class="original">Sets the version of this project.</span>
+     * このプロジェクトのバージョンをセットします。</p>
      *
      * @param version The version of this project. Must not be null.
      */
