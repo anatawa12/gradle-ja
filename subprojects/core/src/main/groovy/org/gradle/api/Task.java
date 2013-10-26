@@ -33,8 +33,8 @@ import java.util.List;
 import java.util.Set;
 
 /**
- * <p>A <code>Task</code> represents a single atomic piece of work for a build, such as compiling classes or generating
- * javadoc.</p>
+ * <p><code>Task</code>はクラスのコンパイルやjavadocの生成など、ビルドに対する単一のアトミックな断片を表します。<span class="original">A <code>Task</code> represents a single atomic piece of work for a build, such as compiling classes or generating
+ * javadoc.</span></p>
  *
  * <p>Each task belongs to a {@link Project}. You can use the various methods on {@link
  * org.gradle.api.tasks.TaskContainer} to create and lookup task instances. For example, {@link
