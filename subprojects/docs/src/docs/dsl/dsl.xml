@@ -417,7 +417,7 @@
     <section>
 	<title>Eclipse/IDEAモデル型<phrase role="original">Eclipse/IDEA model types</phrase></title>
         <para role="original">Used to configure Eclipse or IDEA plugins</para>
-        <para>EclipseもしくはIDEAを設定するプラグインを使用する</para>
+        <para>EclipseプラグインもしくはIDEAプラグインを設定するために利用します。</para>
         <table>
 	    <title>Eclipse/IDEAモデルの型<phrase role="original">Eclipse/IDEA model types</phrase></title>
             <tr>
@@ -465,7 +465,7 @@
     <section>
 	<title>Eclipse/IDEAタスク型<phrase role="original">Eclipse/IDEA task types</phrase></title>
         <para role="original">Tasks contributed by IDE plugins. To configure IDE plugins please use IDE model types.</para>
-	<para>タスク達はIDEプラグインによって貢献します。IDEプラグインを設定する事は使用するIDEモデル型を喜ばせるでしょう。</para>
+	<para>IDEプラグインが提供するタスクです。IDEプラグインを設定するためには、IDEモデル型を利用してください。</para>
         <table>
 	    <title>Eclipse/IDEAタスク型<phrase role="original">Eclipse/IDEA task types</phrase></title>
             <tr>
@@ -496,10 +496,11 @@
     </section>
 
     <section>
-        <title>Native component core types</title>
-        <para>Used to configure components developed with native code.</para>
+        <title>ネィティブコンポーネントの核となる型<phrase role="original">Native component core types</phrase></title>
+        <para role="original">Used to configure components developed with native code.</para>
+        <para>ネィティブコードによる開発時に利用するコンポーネントを設定するために利用します。</para>
         <table>
-            <title>Native component core types</title>
+            <title>ネィティブコンポーネントの核となる型<phrase role="original">Native component core types</phrase></title>
             <tr>
                 <td>org.gradle.nativecode.base.NativeComponent</td>
             </tr>
@@ -530,10 +531,11 @@
         </table>
     </section>
     <section>
-        <title>Native component task and plugin types</title>
-        <para>Tasks and plugins used to build native code components.</para>
+        <title>ネィティブコンポーネントのタスク型とプラグイン型<phrase role="original">Native component task and plugin types</phrase></title>
+        <para role="original">Tasks and plugins used to build native code components.</para>
+        <para>ネィティブコードによるコンポーネントのビルドに利用するタスクとプラグインです。</para>
         <table>
-            <title>Native component task and plugin types</title>
+            <title><phrase role="original">Native component task and plugin types</phrase></title>
             <tr>
                 <td>org.gradle.nativecode.language.cpp.tasks.CppCompile</td>
             </tr>
