@@ -271,7 +271,7 @@
         </para>
         <para><literal>from()</literal>メソッドが受け付ける型は、<literal>files()</literal>メソッドと同じです。ディレクトリパスに解決されるような引数を渡した場合、そのディレクトリ以下の全て（ただし、そのディレクトリ自身は除く）が再帰的にターゲットディレクトリにコピーされます。渡した引数がファイルパスに解決された場合は、そのファイルが目的のディレクトリにコピーされます。
             もし、引数に渡したパスにファイルがない場合、その引数は無視されます。
-            引数にタスク（または明示的にそのoutput）を渡した場合、そのタスクのoutputが<literal>from()</literal>の引数として使用され、そのタスクは自動的にCopyタスクが依存しているタスクとして設定されます。
+            引数にタスクを渡した場合、そのタスクの出力ファイル(タスクが作成するファイル)がコピーされ、そのタスクは自動的にCopyタスクが依存しているタスクとして設定されます。
             <literal>into()</literal>メソッドは、<literal>file()</literal>と同じ型を引数に取ります。以下にもう一つ例を挙げます。
         </para>
         <sample id="copy" dir="userguide/files/copy" title="Copyタスクのコピー元と宛先を指定する / Specifying copy task source files and destination directory">
@@ -286,28 +286,33 @@
             same way as the task with some major limitations though. First, the <literal>copy()</literal> is not incremental
             (see <xref linkend="sec:up_to_date_checks" />).
         </para>
-        <para>また、<apilink class="org.gradle.api.Project" method="copy"/>メソッドでファイルをコピーすることもできます。これはタスクの場合と大体同じように動作しますが、いくつかの大きな制限もあります。まず、<literal>copy()</literal>メソッドはコピーされるファイルに対し自動的にはup-to-dateチェックを行いません。</para>
-        <sample id="copy" dir="userguide/files/copy" title="Copying files using the copy() method without up-to-date check">
+        <para>また、<apilink class="org.gradle.api.Project" method="copy"/>メソッドでファイルをコピーすることもできます。これはタスクの場合と大体同じように動作しますが、いくつかの大きな制限もあります。まず、<literal>copy()</literal>メソッドはインクリメンタルには実施されません(<xref linkend="sec:up_to_date_checks" />参照)。</para>
+        <sample id="copy" dir="userguide/files/copy" title="copy()メソッドで更新チェックせずにファイルをコピーする / Copying files using the copy() method without up-to-date check">
             <sourcefile file="build.gradle" snippet="copy-method"/>
         </sample>
-        <para>Secondly, the <literal>copy()</literal> method can not honor task dependencies when a task is used as a copy source
+        <para role="original">Secondly, the <literal>copy()</literal> method can not honor task dependencies when a task is used as a copy source
             (i.e. as an argument to <literal>from()</literal>) because it's a method and not a task.
             As such, if you are using the <literal>copy()</literal> method as part of a task action, you must explicitly
             declare all inputs and outputs in order to get the correct behavior.
         </para>
-        <para>次に、<literal>copy()</literal>メソッドは、タスクが<literal>from()</literal>メソッドの引数に渡されても、そのタスクを自動的に依存タスクに追加することはありません。
-            実際、この場合は、<literal>copy()</literal>メソッドを呼び出しているタスクが依存しているタスクとして明示的に宣言されなければ、依存先のタスクは実行されず、古いファイルがコピーされたり、ファイルがコピーされなかったりするかもしれません。以下に<literal>copy()</literal>メソッドをup-to-dateチェックおよび手動によるCopy()タスクへの依存性の追加とともに使用する例について、詳しく注釈した例を挙げます。
+        <para>次に、タスクがコピー元として使われる場合(<literal>from()</literal>メソッドの引数になる場合)でも、<literal>copy()</literal>メソッドはタスクの依存関係を考慮しません。copy()はあくまでメソッドであってタスクではないからです。
+            よって、copy()メソッドをタスクアクションの中で呼び出す場合は、正しく動作させるために明示的に全ての入力と出力を宣言する必要があります。
         </para>
-        <sample id="copy" dir="userguide/files/copy" title="up-to-dateチェックとともにcopy()メソッドでファイルをコピーする / Copying files using the copy() method with up-to-date check">
+        <sample id="copy" dir="userguide/files/copy" title="copy()メソッドで更新チェックを実施してファイルをコピーする / Copying files using the copy() method with up-to-date check">
             <sourcefile file="build.gradle" snippet="copy-method-with-dependency"/>
         </sample>
-        <para>
+        <para role="original">
             It is preferable to use the <literal>Copy</literal> task wherever possible, as it support incremental building and task dependency inference
             without any extra effort on your part. The <literal>copy()</literal> method can be used to copy files as <emphasis>part</emphasis> of a task's
             implementation. That is, the copy method is intended to be used by custom tasks (see <xref linkend="custom_tasks" />) that need to copy files
             as part of their function. In such a scenario, the custom task should sufficiently declare the inputs/outputs relevant to the copy action.
         </para>
-        <para>要するに、ほとんどの場合<literal>copy()</literal>メソッドより<literal>Copy()</literal>タスクを使う方が望ましいということです。</para>
+        <para>
+            できるだけ<literal>Copy</literal>タスクのほうを使用するようにしてください。そうすれば、余計な手間をかけずにインクリメンタルビルドやタスク依存関係の恩恵を受けることができます。
+            一方、copy()メソッドは、あるタスクの実装の<emphasis>一部として</emphasis>ファイルコピーを組み込むことができます。
+            つまり、copy()メソッドはカスタムタスク(<xref linkend="custom_tasks" />参照)の機能でファイルコピーが必要になった場合に使用されることを想定しています。
+            そのカスタムタスクでは、ファイルコピーの実際の仕様に基づいて適切に入力と出力が宣言されていなければなりません。
+        </para>
         <section>
             <title>ファイルをリネームする <phrase role="original">Renaming files</phrase></title>
             <sample id="renameOnCopy" dir="userguide/files/copy" title="コピー時にファイルをリネームする / Renaming files as they are copied">

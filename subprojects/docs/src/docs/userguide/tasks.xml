@@ -96,10 +96,10 @@
             nice to read.
         </para>
         <para>これは、普段私たちがJavaオブジェクトを設定するのと同じ方法で設定する方法です。この方法では、設定処理を呼び出すたびに同じコンテキスト(<literal>myCopy</literal>)を何度も書く必要があります。これは冗長だし、あまり可読性もよくありません。</para>
-        <para>There is another way of configuring a task. It also preserves the context and it is arguably the
+        <para role="original">There is another way of configuring a task. It also preserves the context and it is arguably the
             most readable. It is usually our favorite.
         </para>
-        <para>しかし、まだ別の設定方法があります。この方法もやはりコンテキストを保持するもので、おそらく最も可読性の高い方法でしょう。私たちは、普段この方法を好んで使っています。</para>
+        <para>タスクの設定には別の方法があります。この方法でも同様にコンテキストは保持されますし、おそらく最も可読性の高い方法です。私たちは、普段この方法を好んで使っています。</para>
         <sample id="configureUsingClosure" dir="userguide/tasks/configureUsingClosure" title="タスクの設定 - クロージャの使用 / Configuring a task - with closure">
             <sourcefile file="build.gradle"/>
         </sample>
@@ -108,7 +108,7 @@
             <literal>getByName()</literal> method, this closure is applied to <emphasis>configure</emphasis> the task, not when
             the task executes.
         </para>
-        <para>すべてのタスクは<literal>configure()</literal>メソッドを持っており、このメソッドにタスクを設定するためのクロージャを渡すことができます。Gradleでは、このスタイルでオブジェクトを設定することが(タスクに限らず)よくあります。</para>
+        <para>この方法は、<emphasis>あらゆる</emphasis>タスクで使用できます。3行目のコードは、<literal>tasks.getByName()</literal>の単なるショートカットです。大事なことは、<literal>getByName()</literal>メソッドにクロージャを渡すと、そのクロージャがタスクが実行されるときではなく、<emphasis>設定</emphasis>されるときに適用されるという点です。</para>
         <para role="original">You can also use a configuration closure when you define a task.</para>
         <para>また、タスクを定義するときに、同時に設定クロージャを使うこともできます。</para>
         <sample id="defineAndConfigure" dir="userguide/tasks/defineAndConfigure" title="クロージャを伴うタスク定義 / Defining a task with closure">

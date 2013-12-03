@@ -113,7 +113,7 @@
             <para>
                 どちらのツールも、ある特定のjarファイルについて、その依存関係の情報をXML形式のディスクリプタに定義して使用します。また、リポジトリに実際のjarファイルをディスクリプタファイルと一緒に配置したり、jarのバージョンが競合したときに様々な形でそれを解決する手段を備えている点も同様です。
                 どちらも依存関係を解決するための標準的な方法となっており、Gradleも最初は依存関係管理機能の水面下でIvyを使用していました。
-                Gradleは、今ではそのように直接Ivyに依存するのではなく、Gradle独自の依存関係解決エンジンを使用しています。このエンジンは、POMおよびIvyディスクリプタを含む様々な管理方法に対応しています。
+                Gradleは、今ではそのように直接Ivyに依存するのではなく、Gradle独自の依存関係解決エンジンを使用しています。このエンジンは、POMおよびIvyディスクリプタによる管理方法を含め様々な方法に対応しています。
             </para>
         </section>
     </section>
@@ -223,26 +223,47 @@
                 and the often accidental order of the classpath will determine what version of a dependency will win. On a large project with many developers changing dependencies, successful builds
                 will be few and far between as the order of dependencies may directly affect whether a build succeeds or fails (or whether a bug appears or disappears in production).
             </para>
-            <para>If you haven't had to deal with the curse of conflicting versions of jars on a classpath, here is a small anecdote of the fun that awaits you. In a large project with 30
+            <para>
+                同じjar間でバージョンの競合が検出された場合、それを解決するか、エラーを発生させなければなりません。ここでもし推移的な依存関係を管理していなければ、バージョン競合は検出できず、クラスパス内で偶然そうなっただけのjarの順序がどのバージョンを優先するか決定することになります。
+                たくさんの開発者が依存関係を変更しているような巨大プロジェクトの場合、依存関係の順序がビルドの成否(またはプロダクション環境でバグが発生するかどうか)に直接影響するような状態では、上手くいくビルドはほとんどなくなってしまうでしょう。
+            </para>
+            <para role="original">If you haven't had to deal with the curse of conflicting versions of jars on a classpath, here is a small anecdote of the fun that awaits you. In a large project with 30
                 submodules, adding a dependency to a subproject changed the order of a classpath, swapping Spring 2.5 for an older 2.4 version. While
                 the build continued to work, developers were starting to notice all sorts of surprising (and surprisingly awful) bugs in production. Worse yet, this unintentional downgrade of Spring
                 introduced several security vulnerabilities into the system, which now required a full security audit throughout the organization.
             </para>
-            <para>In short, version conflicts are bad, and you should manage your transitive dependencies to avoid them. You might also want to learn where conflicting versions are used and consolidate on a
+            <para>
+                もしクラスパスのバージョンが競合するという不幸に苦しんだことがないようでしたら、あなたを待ち受ける愉快な逸話を一つ紹介しましょう。
+                30のサブモジュールからなるある巨大なプロジェクトがありました。ここにあるサブモジュールに依存関係を追加したところ、クラスパスの順序が変わり、Spring2.5が古いバージョンの2.4に置き換わってしまったのです。
+                ビルドはまだ正常に動き続けているのに、開発者たちは無数の驚くような、というか驚くくらいひどいバグをプロダクション環境で見つけ始めます。
+                さらに悪いことに、この意図しないSpringのダウングレードはいくつかのセキュリティ的な脆弱性をシステムに招き、組織全体があらゆるセキュリティ監査を受けることになりました。
+            </para>
+            <para role="original">In short, version conflicts are bad, and you should manage your transitive dependencies to avoid them. You might also want to learn where conflicting versions are used and consolidate on a
                 particular version of a dependency across your organization. With a good conflict reporting tool like Gradle, that information can be used to communicate with the entire organization
                 and standardize on a single version.
                 <emphasis>If you think version conflicts don't happen to you, think again.</emphasis>
                 It is very common for different first-level dependencies to rely on a range of different overlapping versions for other dependencies, and the JVM doesn't yet offer an easy way to have
                 different versions of the same jar in the classpath (see <xref linkend='sub:dependency_management_and_java'/>).
             </para>
-            <para>Gradle offers the following conflict resolution strategies:</para>
+            <para>
+                要するに、バージョンの競合は悪いことなので、それを避けるために推移的な依存関係は管理しなければならないのです。
+                また、競合したバージョンが組織全体で何処で使われているのか調べ、一つのバージョンに統一したいという場合について考えると、Gradleのような競合に関する優秀なレポートを作成できるツールがあれば、組織全体でのコミュニケーション、および一つのバージョンへの標準化などに役立つはずです。
+                <emphasis>もしバージョン競合など自分には起こるわけがないと思っているようでしたら、どうかもう一度考え直してみてください。</emphasis>
+                第一層の依存関係が、更に別のライブラリに依存していて、それが他の依存関係とバージョンが競合しているというのは非常に良くあることです。
+                また、JVMには同じjarの違うバージョンをクラスパスで共存させられるような簡単な方法がありません(<xref linkend='sub:dependency_management_and_java'/>参照)。
+            </para>
+            <para role="original">Gradle offers the following conflict resolution strategies:</para>
+            <para>Gradleでは、バージョン競合を解決するための戦略として以下のものを用意しています。</para>
             <itemizedlist>
                 <listitem>
-                    <emphasis>Newest</emphasis>: The newest version of the dependency is used. This is Gradle's default strategy, and is often an appropriate choice as long as versions are backwards-compatible.
+                    <emphasis>Newest</emphasis>: <phrase role="original">The newest version of the dependency is used. This is Gradle's default strategy, and is often an appropriate choice as long as versions are backwards-compatible.</phrase>
+                    もっとも新しいバージョンの依存関係を使用します。これはGradleのデフォルトの戦略で、バージョン間で上位互換性が保たれている限り、この戦略を選択するのが多くの場合適切です。
                 </listitem>
                 <listitem>
-                    <emphasis>Fail</emphasis>: A version conflict results in a build failure. This strategy enforces that all version conflicts are resolved explicitly in the build script. See
-                    <apilink class='org.gradle.api.artifacts.ResolutionStrategy'/> for details on how to explicitly choose a particular version.
+                    <emphasis>Fail</emphasis>: <phrase role="original">A version conflict results in a build failure. This strategy enforces that all version conflicts are resolved explicitly in the build script. See
+                    <apilink class='org.gradle.api.artifacts.ResolutionStrategy'/> for details on how to explicitly choose a particular version.</phrase>
+                    バージョンが競合した場合、ビルドを失敗させます。この戦略は、ビルドスクリプトで全てのバージョン競合をユーザーが明示的に解決することを強制します。
+                    特定のバージョンを明示的に選択する方法については<apilink class='org.gradle.api.artifacts.ResolutionStrategy'/>を参照してください。
                 </listitem>
             </itemizedlist>
             <para role="original">While the strategies introduced above are usually enough to solve most conflicts, Gradle provides more fine-grained mechanisms to resolve version conflicts:</para>
@@ -410,12 +431,11 @@
             <sample id="moduleDependencies" dir="userguide/artifacts/externalDependencies" title="モジュール依存関係 / Module dependencies">
                 <sourcefile file="build.gradle" snippet="module-dependencies"/>
             </sample>
-            <para>See <apilink class='org.gradle.api.artifacts.dsl.DependencyHandler'/>
+            <para role="original">See <apilink class='org.gradle.api.artifacts.dsl.DependencyHandler'/>
                 for more examples and a complete reference.
             </para>
             <para>
                 より多くの例と完全なリファレンスは<apilink class='org.gradle.api.artifacts.dsl.DependencyHandler'/>を参照してください。
-                Gradleの依存関係管理システムを概観するなら、このまま読み進めてください。
             </para>
             <para role="original">Gradle provides different notations for module dependencies. There is a string notation and
                 a map notation. A module dependency has an API which allows for further configuration. Have a look at
@@ -444,23 +464,36 @@
                 Mavenのモジュールは、アーティファクトを一つしか持つことができません。GradleとIvyは一つのモジュールが複数のアーティファクトを持つことができます。それらのアーティファクトは、それぞれ別の依存関係を持っています。
             </para>
             <section id='ssub:multi_artifact_dependencies'>
-                <title>Depending on modules with multiple artifacts</title>
-                As mentioned earlier, a Maven module has only one artifact. Hence, when your project depends on a Maven module, it's obvious what its artifact is.
+                <title>複数のアーティファクトを持つモジュールへの依存関係 <phrase role="original">Depending on modules with multiple artifacts</phrase></title>
+                <para role="original">As mentioned earlier, a Maven module has only one artifact. Hence, when your project depends on a Maven module, it's obvious what its artifact is.
                 With Gradle or Ivy, the case is different. Ivy's dependency descriptor (<filename>ivy.xml</filename>) can declare multiple artifacts.
                 For more information, see the Ivy reference for<filename>ivy.xml</filename>.
                 In Gradle, when you declare a dependency on an Ivy module, you actually declare a dependency on the <literal>default</literal> configuration of that module.
                 So the actual set of artifacts (typically jars) you depend on is the set of artifacts that are associated with the
-                <literal>default</literal> configuration of that module. Here are some situations where this matters:
+                <literal>default</literal> configuration of that module. Here are some situations where this matters:</para>
+                <para>
+                    前述のように、Mavenのモジュールはアーティファクトを一つしか持てません。そのため、プロジェクトが依存しているモジュールがMavenのモジュールだった場合、そのアーティファクトは明らかです。
+                    しかし、GradleやIvyの場合は違います。Ivyの依存関係モデル(<filename>ivy.xml</filename>)では、一つのモジュールに複数のアーティファクトを宣言できるからです。
+                    詳細については<filename>ivy.xml</filename>のリファレンスを参照してください。
+                    Gradleでivyモジュールへ依存していることを宣言したとき、実際にはそのモジュールの<literal>default</literal>コンフィギュレーションへの依存関係を宣言しています。
+                    つまり、プロジェクトが実際に依存しているアーティファクト(典型的にはjar)は、モジュールの<literal>default</literal>コンフィギュレーションに格納された全アーティファクトです。
+                    このことが重要になるのは、以下のような場合です。
+                </para>
                 <itemizedlist>
-                    <listitem>The <literal>default</literal> configuration of a module contains undesired artifacts. Rather than depending on the
-                        whole configuration, a dependency on just the desired artifacts is declared.
+                    <listitem><phrase role="original">The <literal>default</literal> configuration of a module contains undesired artifacts. Rather than depending on the
+                        whole configuration, a dependency on just the desired artifacts is declared.</phrase>
+                        <literal>default</literal>コンフィグレーションに、不必要なアーティファクトが含まれている場合。この場合、<literal>default</literal>コンフィグレーション全てに依存するのではなく、必要なアーティファクトへの依存関係のみを宣言します。
                     </listitem>
-                    <listitem>The desired artifact belongs to a configuration other than <literal>default</literal>. That configuration is explicitly named
-                        as part of the dependency declaration.
+                    <listitem><phrase role="original">The desired artifact belongs to a configuration other than <literal>default</literal>. That configuration is explicitly named
+                        as part of the dependency declaration.</phrase>
+                        必要なアーティファクトが<literal>default</literal>コンフィグレーション以外のコンフィグレーションに含まれている場合。この場合、そのコンフィグレーションを依存関係の宣言で明示的に指定します。
                     </listitem>
                 </itemizedlist>
-                There are other situations where it is necessary to fine-tune dependency declarations.
-                Please see <apilink class='org.gradle.api.artifacts.dsl.DependencyHandler'/> for examples and a complete reference for declaring dependencies.
+                <para role="original">There are other situations where it is necessary to fine-tune dependency declarations.
+                Please see <apilink class='org.gradle.api.artifacts.dsl.DependencyHandler'/> for examples and a complete reference for declaring dependencies.</para>
+                <para>依存関係の宣言を微調整しなければならないようなシチュエーションはまだまだあります。
+                    その他の例や依存関係宣言の完全なリファレンスについては<apilink class='org.gradle.api.artifacts.dsl.DependencyHandler'/>をご覧ください。
+                </para>
             </section>
             <section id='ssub:artifact_dependencies'>
                 <title>アーティファクトオンリー記法 <phrase role="original">Artifact only notation</phrase></title>
@@ -497,34 +530,35 @@
                 <sample id="classifier" dir="userguide/artifacts/excludesAndClassifiers" title="分類子付きの依存関係 / Dependency with classifier">
                     <sourcefile file="build.gradle" snippet="classifier"/>
                 </sample>
-                <para>As can be seen in the first line above, classifiers can be used together with artifact only notation.
+                <para role="original">As can be seen in the first line above, classifiers can be used together with artifact only notation.
                 </para>
-                <para>例にあるように、分類子は明示的に拡張子を指定して(アーティファクトオンリー記法で)使うこともできます。</para>
+                <para>上記の一行目にあるように、分類子は明示的に拡張子を指定して(アーティファクトオンリー記法で)使うこともできます。</para>
             </section>
-            <para>It is easy to iterate over the dependency artifacts of a configuration:</para>
-            <sample id="externalDependencies" dir="userguide/artifacts/externalDependencies" title="Iterating over a configuration">
+            <para role="original">It is easy to iterate over the dependency artifacts of a configuration:</para>
+            <para>コンフィグレーションに含まれる依存アーティファクトの一覧は簡単に列挙できます。</para>
+            <sample id="externalDependencies" dir="userguide/artifacts/externalDependencies" title="あるコンフィグレーションの内部を列挙する / Iterating over a configuration">
                 <sourcefile file="build.gradle" snippet="use-configuration"/>
                 <output args="-q listJars"/>
             </sample>
         </section>
 
         <section id='sub:client_module_dependencies'>
-            <title>Client module dependencies</title>
-            <para>Client module dependencies allow to declare <emphasis>transitive</emphasis> dependencies directly in the build script. They are a replacement for a module descriptor
+            <title>クライアントモジュール依存関係 <phrase role="original">Client module dependencies</phrase></title>
+            <para role="original">Client module dependencies allow to declare <emphasis>transitive</emphasis> dependencies directly in the build script. They are a replacement for a module descriptor
                 in an external repository.
             </para>
-            <para>クライアントモジュール依存関係を使うと、モジュールの<emphasis>推移的な</emphasis>依存関係をビルドスクリプトの中で直接定義できます。これは外部リポジトリに置かれているXMLディスクリプタファイルの定義と置き換えられて使用されます。</para>
+            <para>クライアントモジュール依存関係を使うと、モジュールの<emphasis>推移的な</emphasis>依存関係をビルドスクリプトの中で直接定義できます。これは外部リポジトリにある実際のモジュールディスクリプタの代わりに使用されます。</para>
             <sample id="client-modules" dir="userguide/artifacts/externalDependencies" title="クライアントモジュール依存関係 - 推移的な依存関係 / Client module dependencies - transitive dependencies">
                 <sourcefile file="build.gradle" snippet="client-modules"/>
             </sample>
-            <para>This declares a dependency on Groovy. Groovy itself has dependencies. But Gradle does
+            <para role="original">This declares a dependency on Groovy. Groovy itself has dependencies. But Gradle does
                 not look for an XML descriptor to figure them out but gets the information from the build file. The
                 dependencies of a client module can be normal module dependencies or artifact dependencies or another
                 client module. Have also a look at the API documentation:
                 <apilink class='org.gradle.api.artifacts.ClientModule'/>
             </para>
             <para>
-                この例では、プロジェクトがGroovyに依存していることが宣言されています。Groovyは、それ自身別の依存関係を持っているのですが、ここではGradleはその依存関係を無視し、ビルドスクリプト内の定義を見てその推移的な依存関係を決定します。
+                この例では、Groovyに依存していることが宣言されています。Groovyは、それ自身別の依存関係を持っているのですが、ここではGradleはXMLディスクリプタではなく、ビルドスクリプト内の定義を見てGroovyの推移的な依存関係を決定します。
                 クライアントモジュールの依存関係としては、普通のモジュール依存関係の他、アーティファクトオンリー記法、また別のクライアントモジュール依存関係も使うことができます。APIドキュメント<apilink class='org.gradle.api.artifacts.ClientModule'/>も参考にしてください。
             </para>
             <para role="original">In the current release client modules have one limitation. Let's say your project is a library and

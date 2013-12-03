@@ -501,7 +501,7 @@
     <section>
         <title>ネィティブバイナリの核となる型<phrase role="original">Native binary core types</phrase></title>
         <para role="original">Used to configure components developed with native code.</para>
-        <para>ネィティブコードによる開発時に利用するコンポーネントを設定するために利用します。</para>
+        <para>ネィティブコードで開発されたコンポーネントを設定するために利用します。</para>
         <table>
             <title>ネィティブコンポーネントの核となる型<phrase role="original">Native component core types</phrase></title>
             <tr>
