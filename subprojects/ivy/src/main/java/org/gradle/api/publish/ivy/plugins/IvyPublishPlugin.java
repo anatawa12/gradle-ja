@@ -20,19 +20,19 @@ import org.gradle.api.*;
 import org.gradle.api.artifacts.Module;
 import org.gradle.api.internal.artifacts.configurations.DependencyMetaDataProvider;
 import org.gradle.api.internal.file.FileResolver;
-import org.gradle.api.internal.notations.api.NotationParser;
+import org.gradle.api.publish.internal.ProjectDependencyPublicationResolver;
+import org.gradle.internal.typeconversion.NotationParser;
 import org.gradle.api.publish.PublishingExtension;
 import org.gradle.api.publish.ivy.IvyArtifact;
 import org.gradle.api.publish.ivy.IvyPublication;
+import org.gradle.api.publish.ivy.internal.IvyPublicationTasksModelRule;
 import org.gradle.api.publish.ivy.internal.artifact.IvyArtifactNotationParserFactory;
-import org.gradle.api.publish.ivy.internal.plugins.IvyPublicationDynamicDescriptorGenerationTaskCreator;
-import org.gradle.api.publish.ivy.internal.plugins.IvyPublishDynamicTaskCreator;
 import org.gradle.api.publish.ivy.internal.publication.DefaultIvyPublication;
 import org.gradle.api.publish.ivy.internal.publication.DefaultIvyPublicationIdentity;
 import org.gradle.api.publish.ivy.internal.publisher.IvyPublicationIdentity;
 import org.gradle.api.publish.plugins.PublishingPlugin;
-import org.gradle.api.tasks.TaskContainer;
 import org.gradle.internal.reflect.Instantiator;
+import org.gradle.model.ModelRules;
 
 import javax.inject.Inject;
 
@@ -47,36 +47,32 @@ public class IvyPublishPlugin implements Plugin<Project> {
     private final Instantiator instantiator;
     private final DependencyMetaDataProvider dependencyMetaDataProvider;
     private final FileResolver fileResolver;
+    private final ModelRules modelRules;
+    private final ProjectDependencyPublicationResolver projectDependencyResolver;
 
     @Inject
-    public IvyPublishPlugin(Instantiator instantiator, DependencyMetaDataProvider dependencyMetaDataProvider, FileResolver fileResolver) {
+    public IvyPublishPlugin(Instantiator instantiator, DependencyMetaDataProvider dependencyMetaDataProvider, FileResolver fileResolver, ModelRules modelRules,
+                            ProjectDependencyPublicationResolver projectDependencyResolver) {
         this.instantiator = instantiator;
         this.dependencyMetaDataProvider = dependencyMetaDataProvider;
         this.fileResolver = fileResolver;
+        this.modelRules = modelRules;
+        this.projectDependencyResolver = projectDependencyResolver;
     }
 
     public void apply(final Project project) {
         project.getPlugins().apply(PublishingPlugin.class);
 
-        // Create the default publication
+        // Can't move this to rules yet, because it has to happen before user deferred configurable actions
         project.getExtensions().configure(PublishingExtension.class, new Action<PublishingExtension>() {
             public void execute(PublishingExtension extension) {
-                // Register factory for IvyPublication
+                // Register factory for MavenPublication
                 extension.getPublications().registerFactory(IvyPublication.class, new IvyPublicationFactory(dependencyMetaDataProvider, instantiator, fileResolver));
-
-                // Create generate descriptor tasks
-                IvyPublicationDynamicDescriptorGenerationTaskCreator descriptorGenerationTaskCreator = new IvyPublicationDynamicDescriptorGenerationTaskCreator(project);
-                descriptorGenerationTaskCreator.monitor(extension.getPublications());
-
-                // Create publish tasks automatically for any Ivy publication and repository combinations
-                TaskContainer tasks = project.getTasks();
-                Task publishLifecycleTask = tasks.getByName(PublishingPlugin.PUBLISH_LIFECYCLE_TASK_NAME);
-                IvyPublishDynamicTaskCreator publishTaskCreator = new IvyPublishDynamicTaskCreator(tasks, publishLifecycleTask);
-                publishTaskCreator.monitor(extension.getPublications(), extension.getRepositories());
             }
         });
-    }
 
+        modelRules.rule(new IvyPublicationTasksModelRule(project));
+    }
 
     private class IvyPublicationFactory implements NamedDomainObjectFactory<IvyPublication> {
         private final Instantiator instantiator;
@@ -92,11 +88,12 @@ public class IvyPublishPlugin implements Plugin<Project> {
         public IvyPublication create(String name) {
             Module module = dependencyMetaDataProvider.getModule();
             IvyPublicationIdentity publicationIdentity = new DefaultIvyPublicationIdentity(module.getGroup(), module.getName(), module.getVersion());
-            NotationParser<IvyArtifact> notationParser = new IvyArtifactNotationParserFactory(instantiator, fileResolver, publicationIdentity).create();
+            NotationParser<Object, IvyArtifact> notationParser = new IvyArtifactNotationParserFactory(instantiator, fileResolver, publicationIdentity).create();
             return instantiator.newInstance(
                     DefaultIvyPublication.class,
-                    name, instantiator, publicationIdentity, notationParser
+                    name, instantiator, publicationIdentity, notationParser, projectDependencyResolver
             );
         }
     }
+
 }

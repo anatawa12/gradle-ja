@@ -25,6 +25,8 @@ import org.gradle.internal.nativeplatform.services.NativeServices
 import org.gradle.test.fixtures.file.TestFile
 import org.gradle.util.GradleVersion
 
+import static org.gradle.cache.internal.filelock.LockOptionsBuilder.mode
+
 abstract class DownloadableGradleDistribution extends DefaultGradleDistribution {
 
     private static final CACHE_FACTORY = createCacheFactory()
@@ -35,7 +37,7 @@ abstract class DownloadableGradleDistribution extends DefaultGradleDistribution 
                         new DefaultProcessMetaDataProvider(
                                 NativeServices.getInstance().get(org.gradle.internal.nativeplatform.ProcessEnvironment)),
                         20 * 60 * 1000 // allow up to 20 minutes to download a distribution
-                , new NoOpFileLockContentionHandler()    )).create()
+                , new NoOpFileLockContentionHandler())).create()
     }
 
     protected TestFile versionDir
@@ -65,7 +67,7 @@ abstract class DownloadableGradleDistribution extends DefaultGradleDistribution 
                 super.binDistribution.usingNativeTools().unzipTo(versionDir)
             }
             //noinspection GrDeprecatedAPIUsage
-            cache = CACHE_FACTORY.open(versionDir, version.version, CacheUsage.ON, null, [:], FileLockManager.LockMode.Shared, downloadAction as Action)
+            cache = CACHE_FACTORY.open(versionDir, version.version, CacheUsage.ON, null, [:], mode(FileLockManager.LockMode.Shared).useCrossVersionImplementation(), downloadAction as Action)
         }
 
         super.binDistribution.assertIsFile()

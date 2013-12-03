@@ -22,7 +22,6 @@ import org.gradle.launcher.daemon.client.EmbeddedDaemonClientServices
 import org.gradle.launcher.exec.DefaultBuildActionParameters
 import org.gradle.test.fixtures.file.TestNameTestDirectoryProvider
 import org.gradle.tooling.internal.provider.ConfiguringBuildAction
-import org.gradle.tooling.internal.provider.ExecuteBuildAction
 import org.junit.Rule
 import spock.lang.Specification
 
@@ -65,7 +64,8 @@ class EmbeddedDaemonSmokeTest extends Specification {
     }
     
     def cleanup() {
-        daemonClientServices?.close()
+        // TODO:ADAM - switch this back on
+//        daemonClientServices?.close()
     }
 
 }

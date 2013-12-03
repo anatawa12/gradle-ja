@@ -16,8 +16,11 @@
 
 package org.gradle.api.internal.artifacts.repositories;
 
-import org.gradle.api.internal.artifacts.ivyservice.ivyresolve.IvyAwareModuleVersionRepository;
+import org.gradle.api.internal.artifacts.ivyservice.ivyresolve.ConfiguredModuleVersionRepository;
 
 public interface ResolutionAwareRepository {
-    IvyAwareModuleVersionRepository createResolver();
+    /**
+     * Creates a resolver for this repository. Result may also implement {@link org.gradle.api.internal.artifacts.ivyservice.ivyresolve.IvyAwareModuleVersionRepository}.
+     */
+    ConfiguredModuleVersionRepository createResolver();
 }

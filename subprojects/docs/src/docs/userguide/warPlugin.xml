@@ -208,7 +208,7 @@
         </para>
         <para>以下は最も重要なカスタマイズ例です。
         </para>
-        <sample id="webproject" dir="webApplication/customised" title="Customization of war plugin">
+        <sample id="webproject" dir="webApplication/customized" title="Customization of war plugin">
             <sourcefile file="build.gradle" snippet="customization"/>
         </sample>
         <para role="original">Of course one can configure the different file-sets with a closure to define excludes and includes.

@@ -42,17 +42,25 @@ task resolve(type: Sync) {
 """
     }
 
-    def "rule is being passed correct metadata"() {
+    def "rule is being passed correct, mutable metadata"() {
         ivyRepo.module('org.test', 'projectA', '1.0').withStatus("release").publish()
         buildFile <<
 """
-componentMetadata {
-    eachComponent { details ->
-        assert details.id.group == "org.test"
-        assert details.id.name == "projectA"
-        assert details.id.version == "1.0"
-        assert details.status == "release"
-        assert details.statusScheme == ["integration", "milestone", "release"]
+dependencies {
+    components {
+        eachComponent { details ->
+            assert details.id.group == "org.test"
+            assert details.id.name == "projectA"
+            assert details.id.version == "1.0"
+            assert details.status == "release"
+            assert details.statusScheme == ["integration", "milestone", "release"]
+
+            details.status "silver" // verify that 'details' is enhanced
+            assert details.status == "silver"
+
+            details.statusScheme = ["bronze", "silver", "gold"]
+            assert details.statusScheme == ["bronze", "silver", "gold"]
+        }
     }
 }
 """
@@ -65,9 +73,11 @@ componentMetadata {
         ivyRepo.module('org.test', 'projectA', '1.0').withStatus("silver").publish()
         buildFile <<
 """
-componentMetadata {
-    eachComponent { details ->
-        details.statusScheme = ["gold", "silver", "bronze"]
+dependencies {
+    components {
+        eachComponent { details ->
+            details.statusScheme = ["gold", "silver", "bronze"]
+        }
     }
 }
 """
@@ -89,9 +99,11 @@ componentMetadata {
         ivyRepo.module('org.test', 'projectA', '1.0').withStatus("silver").publish()
         buildFile <<
 """
-componentMetadata {
-    eachComponent { details ->
-        details.statusScheme = ["gold", "bronze"]
+dependencies {
+    components {
+        eachComponent { details ->
+            details.statusScheme = ["gold", "bronze"]
+        }
     }
 }
 """
@@ -105,9 +117,11 @@ componentMetadata {
         ivyRepo.module('org.test', 'projectA', '1.0').withStatus("silver").publish()
         buildFile <<
 """
-componentMetadata {
-    eachComponent { details ->
-        details.status = "milestone"
+dependencies {
+    components {
+        eachComponent { details ->
+            details.status = "milestone"
+        }
     }
 }
 """

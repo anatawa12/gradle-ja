@@ -22,36 +22,32 @@ import org.gradle.tooling.internal.consumer.versioning.ModelMapping;
 import org.gradle.tooling.internal.consumer.versioning.VersionDetails;
 import org.gradle.tooling.internal.protocol.ConnectionVersion4;
 import org.gradle.tooling.internal.protocol.ModelBuilder;
-import org.gradle.tooling.internal.protocol.ModelIdentifier;
+import org.gradle.tooling.model.gradle.GradleBuild;
+import org.gradle.util.GradleVersion;
 
 /**
  * An adapter for a {@link ModelBuilder} based provider.
  */
 public class ModelBuilderBackedConsumerConnection extends AbstractPost12ConsumerConnection {
-    private final ModelBuilder builder;
-    private final ProtocolToModelAdapter adapter;
+    private final ModelProducer modelProducer;
 
-    public ModelBuilderBackedConsumerConnection(ConnectionVersion4 delegate, ProtocolToModelAdapter adapter) {
-        super(delegate, new R16VersionDetails(delegate.getMetaData().getVersion()));
-        this.adapter = adapter;
-        builder = (ModelBuilder) delegate;
+    public ModelBuilderBackedConsumerConnection(ConnectionVersion4 delegate, ModelMapping modelMapping, ProtocolToModelAdapter adapter) {
+        super(delegate, getMetaData(delegate));
+        ModelBuilder builder = (ModelBuilder) delegate;
+        ModelProducer consumerConnectionBackedModelProducer = new ModelBuilderBackedModelProducer(adapter, getVersionDetails(), modelMapping, builder);
+        modelProducer = new GradleBuildAdapterProducer(adapter, getVersionDetails(), modelMapping, consumerConnectionBackedModelProducer);
+    }
+
+    private static R16VersionDetails getMetaData(ConnectionVersion4 delegate) {
+        GradleVersion version = GradleVersion.version(delegate.getMetaData().getVersion());
+        if (version.compareTo(GradleVersion.version("1.8-rc-1")) >= 0) {
+            return new R18VersionDetails(version.getVersion());
+        }
+        return new R16VersionDetails(version.getVersion());
     }
 
     public <T> T run(Class<T> type, ConsumerOperationParameters operationParameters) throws UnsupportedOperationException, IllegalStateException {
-        ModelIdentifier modelIdentifier = mapModelTypeToModelIdentifier(type);
-        Object model = builder.getModel(modelIdentifier, operationParameters).getModel();
-        return adapter.adapt(type, model);
-    }
-
-    private ModelIdentifier mapModelTypeToModelIdentifier(final Class<?> modelType) {
-        if (modelType.equals(Void.class)) {
-            return new DefaultModelIdentifier(ModelIdentifier.NULL_MODEL);
-        }
-        String modelName = new ModelMapping().getModelName(modelType);
-        if (modelName != null) {
-            return new DefaultModelIdentifier(modelName);
-        }
-        return new DefaultModelIdentifier(modelType.getName());
+        return modelProducer.produceModel(type, operationParameters);
     }
 
     private static class R16VersionDetails extends VersionDetails {
@@ -61,30 +57,23 @@ public class ModelBuilderBackedConsumerConnection extends AbstractPost12Consumer
 
         @Override
         public boolean isModelSupported(Class<?> modelType) {
-            return true;
+            return modelType != GradleBuild.class;
         }
 
         @Override
         public boolean supportsGradleProjectModel() {
             return true;
         }
-
-        @Override
-        public boolean supportsRunningTasksWhenBuildingModel() {
-            return true;
-        }
-
     }
 
-    private static class DefaultModelIdentifier implements ModelIdentifier {
-        private final String model;
-
-        public DefaultModelIdentifier(String model) {
-            this.model = model;
+    private static class R18VersionDetails extends R16VersionDetails {
+        private R18VersionDetails(String version) {
+            super(version);
         }
 
-        public String getName() {
-            return model;
+        @Override
+        public boolean isModelSupported(Class<?> modelType) {
+            return true;
         }
     }
 }

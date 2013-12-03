@@ -15,68 +15,59 @@
  */
 package org.gradle.api.internal.artifacts.ivyservice.projectmodule;
 
-import org.apache.ivy.core.module.descriptor.Artifact;
 import org.apache.ivy.core.module.descriptor.DependencyDescriptor;
-import org.apache.ivy.core.module.descriptor.ModuleDescriptor;
 import org.gradle.api.artifacts.Configuration;
-import org.gradle.api.artifacts.Module;
-import org.gradle.api.artifacts.ModuleVersionIdentifier;
-import org.gradle.api.internal.artifacts.DefaultArtifactIdentifier;
-import org.gradle.api.internal.artifacts.ModuleVersionPublishMetaData;
+import org.gradle.api.internal.artifacts.ModuleInternal;
 import org.gradle.api.internal.artifacts.ivyservice.*;
-import org.gradle.api.internal.artifacts.ivyservice.ivyresolve.DependencyMetaData;
 import org.gradle.api.internal.artifacts.ivyservice.moduleconverter.dependencies.ProjectDependencyDescriptor;
+import org.gradle.api.internal.artifacts.metadata.DependencyMetaData;
+import org.gradle.api.internal.artifacts.metadata.LocalArtifactMetaData;
+import org.gradle.api.internal.artifacts.metadata.LocalComponentMetaData;
+import org.gradle.api.internal.artifacts.metadata.ModuleVersionArtifactMetaData;
 
-import java.io.File;
-import java.util.Map;
 import java.util.Set;
 
 public class ProjectDependencyResolver implements DependencyToModuleVersionResolver, ModuleToModuleVersionResolver {
     private final ProjectModuleRegistry projectModuleRegistry;
     private final DependencyToModuleVersionResolver resolver;
-    private final ModuleDescriptorConverter moduleDescriptorConverter;
+    private final LocalComponentFactory localComponentFactory;
 
-    public ProjectDependencyResolver(ProjectModuleRegistry projectModuleRegistry, DependencyToModuleVersionResolver resolver, ModuleDescriptorConverter moduleDescriptorConverter) {
+    public ProjectDependencyResolver(ProjectModuleRegistry projectModuleRegistry, DependencyToModuleVersionResolver resolver, LocalComponentFactory localComponentFactory) {
         this.projectModuleRegistry = projectModuleRegistry;
         this.resolver = resolver;
-        this.moduleDescriptorConverter = moduleDescriptorConverter;
+        this.localComponentFactory = localComponentFactory;
     }
 
     public void resolve(DependencyMetaData dependency, BuildableModuleVersionResolveResult result) {
         DependencyDescriptor descriptor = dependency.getDescriptor();
         if (descriptor instanceof ProjectDependencyDescriptor) {
             ProjectDependencyDescriptor desc = (ProjectDependencyDescriptor) descriptor;
-            ModuleVersionPublishMetaData publishMetaData = projectModuleRegistry.findProject(desc);
-            ModuleDescriptor moduleDescriptor = publishMetaData.getModuleDescriptor();
-            ModuleVersionIdentifier moduleVersionIdentifier = publishMetaData.getId();
-            result.resolved(moduleVersionIdentifier, moduleDescriptor, new ProjectArtifactResolver(publishMetaData));
+            LocalComponentMetaData componentMetaData = projectModuleRegistry.findProject(desc);
+            result.resolved(componentMetaData.toResolveMetaData(), new ProjectArtifactResolver(componentMetaData));
         } else {
             resolver.resolve(dependency, result);
         }
     }
 
-    public void resolve(Module module, Set<? extends Configuration> configurations, BuildableModuleVersionResolveResult result) {
-        ModuleVersionPublishMetaData publishMetaData = moduleDescriptorConverter.convert(configurations, module);
-        ModuleDescriptor moduleDescriptor = publishMetaData.getModuleDescriptor();
-        ModuleVersionIdentifier moduleVersionIdentifier = publishMetaData.getId();
-        result.resolved(moduleVersionIdentifier, moduleDescriptor, new ProjectArtifactResolver(publishMetaData));
+    public void resolve(ModuleInternal module, Set<? extends Configuration> configurations, BuildableModuleVersionResolveResult result) {
+        LocalComponentMetaData componentMetaData = localComponentFactory.convert(configurations, module);
+        result.resolved(componentMetaData.toResolveMetaData(), new ProjectArtifactResolver(componentMetaData));
     }
 
     private static class ProjectArtifactResolver implements ArtifactResolver {
-        private final ModuleVersionPublishMetaData publishMetaData;
+        private final LocalComponentMetaData publishMetaData;
 
-        public ProjectArtifactResolver(ModuleVersionPublishMetaData publishMetaData) {
+        public ProjectArtifactResolver(LocalComponentMetaData publishMetaData) {
             this.publishMetaData = publishMetaData;
         }
 
-        public void resolve(Artifact artifact, BuildableArtifactResolveResult result) {
-            for (Map.Entry<Artifact, File> entry : publishMetaData.getArtifacts().entrySet()) {
-                if (entry.getKey().getId().equals(artifact.getId())) {
-                    result.resolved(entry.getValue());
-                    return;
-                }
+        public void resolve(ModuleVersionArtifactMetaData artifact, BuildableArtifactResolveResult result) {
+            LocalArtifactMetaData artifactMetaData = publishMetaData.getArtifact(artifact.getId());
+            if (artifactMetaData != null) {
+                result.resolved(artifactMetaData.getFile());
+            } else {
+                result.notFound(artifact.getId());
             }
-            result.notFound(new DefaultArtifactIdentifier(artifact));
         }
     }
 }

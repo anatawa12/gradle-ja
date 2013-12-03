@@ -22,6 +22,7 @@ import org.gradle.api.internal.changedetection.TaskArtifactStateRepository;
 import org.gradle.api.internal.tasks.TaskExecuter;
 import org.gradle.api.internal.tasks.TaskExecutionContext;
 import org.gradle.api.internal.tasks.TaskStateInternal;
+import org.gradle.util.Clock;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -44,15 +45,16 @@ public class SkipUpToDateTaskExecuter implements TaskExecuter {
 
     public void execute(TaskInternal task, TaskStateInternal state, TaskExecutionContext context) {
         LOGGER.debug("Determining if {} is up-to-date", task);
+        Clock clock = new Clock();
         TaskArtifactState taskArtifactState = repository.getStateFor(task);
         try {
             List<String> messages = new ArrayList<String>();
             if (taskArtifactState.isUpToDate(messages)) {
-                LOGGER.info("Skipping {} as it is up-to-date", task);
+                LOGGER.info("Skipping {} as it is up-to-date (took {}).", task, clock.getTime());
                 state.upToDate();
                 return;
             }
-            logOutOfDateMessages(messages, task);
+            logOutOfDateMessages(messages, task, clock.getTime());
 
             task.getOutputs().setHistory(taskArtifactState.getExecutionHistory());
             context.setTaskArtifactState(taskArtifactState);
@@ -73,10 +75,10 @@ public class SkipUpToDateTaskExecuter implements TaskExecuter {
     }
 
 
-    private void logOutOfDateMessages(List<String> messages, TaskInternal task) {
+    private void logOutOfDateMessages(List<String> messages, TaskInternal task, String took) {
         if (LOGGER.isInfoEnabled()) {
             Formatter formatter = new Formatter();
-            formatter.format("Executing %s due to:", task);
+            formatter.format("Executing %s (up-to-date check took %s) due to:", task, took);
             for (String message : messages) {
                 formatter.format("%n  %s", message);
             }

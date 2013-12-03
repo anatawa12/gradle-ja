@@ -1,4 +1,3 @@
-
 This specification defines a number of improvements to the tooling API.
 
 # Use cases
@@ -20,9 +19,9 @@ Note that this is not the same thing as making the IDE plugins more flexible (al
 too). It is about allowing a completely different implementation of the Java domain - such as the Android plugins - to provide
 their own opinion of how the project should be represented in the IDE.
 
-## Built-in Gradle plugins should be less priviledged
+## Built-in Gradle plugins should be less privileged
 
-Currently, the built-in Gradle plugins are priviledged in several ways, such that only built-in plugins can use
+Currently, the built-in Gradle plugins are privileged in several ways, such that only built-in plugins can use
 certain features. One such feature is exposing their models to tooling. The IDE and build comparison models
 are baked into the tooling API. This means that these plugins, and only these plugins, can contribute models to tooling.
 
@@ -37,7 +36,7 @@ This hard-coding has a number of downsides beyond the obvious lack of flexibilit
 * A tooling model must be distributed as part of the core Gradle runtime. This makes it difficult to bust up the
   Gradle distribution.
 
-Over time, we want to make the built-in plugins less priviledged so that the difference between a 'built-in' plugin and
+Over time, we want to make the built-in plugins less privileged so that the difference between a 'built-in' plugin and
 a 'custom' is gradually reduced. Allowing custom plugins to contribute tooling models and changing the build-in plugins
 to use this same mechanism is one step in this direction.
 
@@ -72,7 +71,7 @@ An example usage:
 This story exposes some information about how a build script will be compiled. This information can be used by an
 IDE to provide some basic content assistance for a build script.
 
-1. Introduce a new hierachy to represent a classpath element. Retrofit the IDEA and Eclipse models to use this.
+1. Introduce a new hierarchy to represent a classpath element. Retrofit the IDEA and Eclipse models to use this.
     - Should expose a set of files, a set of source archives and a set of API docs.
 2. Add `compileClasspath` property to `GradleScript` to expose the build script classpath.
 3. Include the Gradle API and core plugins in the script classpath.
@@ -104,7 +103,8 @@ story exposes the outgoing publications of a Gradle project.
     1. An `id` property with type `GradleModuleVersion`.
 2. Add a `publications` property to `GradleProject` with type `DomainObjectSet<GradlePublication>`.
 3. Include an `@since` javadoc tag and an `@Incubating` annotation on the new types and methods.
-4. Introduce a project-scoped internal service which provides some detail about the publications of a project:
+4. Introduce a project-scoped internal service which provides some detail about the publications of a project.
+   This service will also be used during dependency resolution. See [dependency-management.md](dependency-management.md#story-dependency-resolution-result-exposes-local-component-instances-that-are-not-module-versions)
     1. The `publishing` plugin registers each publication defined in the `publishing.publications` container.
        For an instance of type `IvyPublicationInternal`, use the publication's `identity` property to determine the publication identifier to use.
        For an instance of type `MavenPublicationInternal`, use the publication's `mavenProjectIdentity` property.
@@ -150,7 +150,7 @@ This story allows a custom plugin to expose a tooling model to any tooling API c
 - Generalise `UnsupportedModelFeedbackCrossVersionSpec`.
 - Plugin attempts to register a model that some other plugin already has registered.
 
-## Story: Tooling API client builds a complex tooling model in a single operation
+## Story: Tooling API client builds a complex tooling model in a single batch operation
 
 This story adds support for a tooling API to query portions of the Gradle model in an efficient way.
 
@@ -186,6 +186,13 @@ models is used.
 ### Test cases
 
 - Action builds a result and this result is received by the client.
+    - Returns a custom result type
+    - Returns null
+    - Returns a built-in tooling model (such as `IdeaProject`)
+    - Returns a custom result type that references a built-in tooling model
+    - Returns a custom result type that references multiple tooling models
+    - Returns a custom result type that references a custom tooling model whose implementation uses classes that conflict with the client
+    - Client changes action implementation to return a different result
 - Verify environment that the action executes in:
     - Logging is received by the client as part of the build output.
     - Context ClassLoader is set appropriately.
@@ -194,13 +201,223 @@ models is used.
     - Target Gradle version does not support consumer actions.
     - The action throws an exception.
     - A failure occurs configuring the build.
+    - A failure occurs building a requested model.
     - The action cannot be serialized or deserialized.
     - The action result cannot be serialized or deserialized.
+    - The action throws an exception that cannot be serialized or deserialized.
     - The Gradle process is killed before the action completes.
+    - The action requests an unknown model.
+    - The action is compiled for Java 6 but the build runs with Java 5.
 
-## Story: Tooling API build action iterates over the projects of build
+## Story: Tooling API build action requests a tooling model for a Gradle project
 
-Extend `BuildController` to add methods to query which projects are included in the build, and to request a model from a given project.
+1. Add a new `GradleBuild` model which contains information about which projects are included in the build.
+2. Add a new `BasicGradleProject` type to provide basic structural information about a project.
+3. Extend `BuildController` to add methods to query a model for a given project.
+4. Change `ProjectConnection.getModel(type)` and `BuildController.getModel(type)` to return only build-level models.
+5. Change `BuildController.getModel(project, type)` to return only project-level models.
+
+Here are the above types:
+
+    interface BasicGradleProject { }
+
+    interface GradleBuild {
+        BasicGradleProject getRootProject();
+        Set<? extends BasicGradleProject> getProjects();
+    }
+
+    interface BuildController {
+        <T> T getModel(Model target, Class<T> modelType) throws UnknownModelException;
+    }
+
+Note: there is a breaking change here.
+
+### Test cases
+
+- Can request the `GradleBuild` model via `ProjectConnection`.
+- Can request the `GradleBuild` model via a build action.
+- Can request a model for a given project:
+    - A `BasicGradleProject` for the specified project, not the root.
+    - A `GradleProject` for the specified project, not the root.
+    - An `IdeaModule` for the specified project, not the root.
+    - An `EclipseProject` for the specified project, not the root.
+- Cannot request a build model for a project:
+    - Cannot request a `BuildModel`.
+    - Cannot request a `BuildEnvironment`.
+- Client receives decent feedback when
+    - Requests a model from an unknown project.
+    - Requests an unknown model.
+
+## Story: Tooling API client requests build model for old Gradle version
+
+This story adds support for the `GradleBuild` model for older target Gradle versions.
+
+### Implementation
+
+Change the implementations of `ConsumerConnection.run(type, parameters)` so that when asked for a `GradleBuild` model, they instead
+request the `GradleProject` model and then convert it to a `DefaultGradleBuild` instance. See `ConnectionVersion4BackedConsumerConnection.doGetModel()`
+for an example of this kind of thing.
+
+For the `ModelBuilderBackedConsumerConnection` implementation, if the provider Gradle version supports the `GradleBuild` model (is >= 1.8-rc-1) then
+forward to the provider, as it does now.
+
+To implement this cleanly, one option might be to introduce some chain of model producers into the `ConsumerConnection` subclasses, so that each producer is
+asked in turn whether it can produce the requested model. The last producer can delegate to the provider connection. Stop at the first producer that can
+produce the model.
+
+### Test cases
+
+- For all Gradle versions, can request the `GradleBuild` model via `ProjectConnection`. This basically means removing the `@TargetGradleVersion` from
+  the test case in `GradleBuildModelCrossVersionSpec`.
+
+## Story: Gradle provider builds build model efficiently
+
+When the `GradleBuild` model is requested, execute only the settings script, and don't configure any of the projects.
+
+## Story: Tooling API client determines whether model is available
+
+This story adds support for conditionally requesting a model, if it is available
+
+    interface BuildController {
+        <T> T findModel(Class<T> type); // returns null when model not present
+        <T> T findModel(Model target, Class<T> type); // returns null when model not present
+    }
+
+    interface ModelBuilder<T> {
+        T find(); // returns null when model not present
+    }
+
+### Test cases
+
+- Client receives null for unknown model, for all target Gradle versions.
+- Build action receives null for unknown model, for all target Gradle versions >= 1.8
+
+## Story: Tooling API client changes implementation of a build action
+
+Fix the `ClassLoader` caching in the tooling API so that it can deal with changing implementations.
+
+## Story: GRADLE-2434 - Expose the aggregate tasks for a project
+
+This story allows an IDE to implement a way to select the tasks to execute based on their name, similar to the Gradle command-line.
+
+1. Add an `EntryPoint` model interface, which represents some arbitrary entry point to the build.
+2. Add a `TaskSelector` model interface, which represents an entry point that uses a task name to select the tasks to execute.
+3. Change `GradleTask` to extend `EntryPoint`, so that each task can be used as an entry point.
+4. Add a method to `GradleProject` to expose the task selectors for the project.
+    - For new target Gradle versions, delegate to the provider.
+    - For older target Gradle versions, use a client-side mix-in that assembles the task selectors using the information available in `GradleProject`.
+5. Add methods to `BuildLauncher` to allow a sequence of entry points to be used to specify what the build should execute.
+6. Add `@since` and `@Incubating` to the new types and methods.
+
+Here are the above types:
+
+    interface EntryPoint {
+    }
+
+    interface TaskSelector extends EntryPoint {
+        String getName(); // A display name
+    }
+
+    interface GradleTask extends EntryPoint {
+        ...
+    }
+
+    interface GradleProject {
+        DomainObjectSet<? extends TaskSelector> getTaskSelectors();
+        ...
+    }
+
+    interface BuildLauncher {
+        BuildLauncher forTasks(Iterable<? extends EntryPoint> tasks);
+        BuildLauncher forTasks(EntryPoint... tasks);
+        ...
+    }
+
+TBD - maybe don't change `forTasks()` but instead add an `execute(Iterable<? extends EntryPoint> tasks)` method.
+
+### Test cases
+
+- Can request the entry points for a given project hierarchy
+    - Task is present in some subprojects but not the target project
+    - Task is present in target project but no subprojects
+    - Task is present in target project and some subprojects
+- Executing a task selector when task is also present in subprojects runs all the matching tasks, for the above cases.
+- Executing a task (as an `EntryPoint`) when task is also present in subprojects run the specified task only and nothing from subprojects.
+- Can request the entry points for all target Gradle versions.
+
+## Story: Tooling API client cancels an operation
+
+Represent the execution of a long running operation using a `Future`. This `Future` can be used to cancel the operation.
+
+    interface BuildFuture<T> extends Future<T> {
+        void onSuccess(Action<? super T> action); // called immediately if the operation has completed successfully
+        void onFailure(Action<? super GradleConnectionException> action); // called immediately if the operation has failed
+        void onComplete(ResultHandler<? super T> handler); // called immediately if the operation has completed successfully
+    }
+
+    interface ModelBuilder<T> {
+        BuildInvocation<T> fetch(); // starts building the model, does not block
+        ...
+    }
+
+    interface BuildLauncher {
+        BuildInvocation<Void> start(); // starts running the build, does not block
+        ...
+    }
+
+    interface BuildActionExecuter<T> {
+        BuildInvocation<T> start(); // starts running the build, does not block
+        ...
+    }
+
+    BuildFuture<GradleProject> model = connection.model(GradleProject.class).fetch();
+    model.cancel(true);
+
+    BuildFuture<Void> build = connection.newBuild().forTasks('a').start();
+    build.get();
+
+    BuildFuture<CustomModel> action = connection.action(new MyAction()).start();
+    CustomModel m = action.get();
+
+### Implementation
+
+The overall plan is to start close to the client and gradually move the asynchronous execution and cancellation closer
+to the build:
+
+Use futures to represent the existing asynchronous behaviour:
+
+1. Change internal class `BlockingResultHandler` to implement `BuildInvocation` and reuse this type to implement the futures.
+2. Implementation should discard handlers once they have been notified, so they can be garbage collected.
+
+Push asynchronous execution down to the provider:
+
+1. Change `AsyncConsumerActionExecutor.run()` to return a future (not necessarily a `Future`) instead of accepting a
+   result handler.
+2. Rework `DefaultAsyncConsumerActionExecutor` and `LazyConsumerActionExecutor` into a lazy `AsyncConsumerActionExecutor`
+   implementation that composes two asynchronous operations into a single operation, represented by a composite future. The
+   first operation creates the real `AsyncConsumerActionExecutor` (possibly downloading the distribution) and the second dispatches
+   the client action to this executor once it is available.
+3. Add a new asynchronous protocol interface similar to `AsyncConsumerActionExecutor` that allows actions to be queued up for
+   execution, returning a future representing the result.
+4. For provider connections that implement this protocol interface, delegate to the provider to execute the action. For
+   connections that do not, adapt the connection in the client.
+
+Forward cancellation requests to the daemon:
+
+1. When `Future.cancel()` is called by the client, close the daemon connection. The daemon will stop the build and exit.
+
+For target versions that do not support cancellation, `Future.cancel()` always returns false.
+
+### Test cases
+
+- Client blocks until results available when using `get()`
+- Client receives failure when using `get()` and operation fails
+- Client receives timeout exception when blocking with timeout
+- Client can cancel operation
+    - Stops the operation for all target versions that support cancellation
+    - Returns `false` for all older target versions
+- Client is notified when result is available
+- Client is notified when operation fails
 
 ## Story: Expose the IDE output directories
 
@@ -248,5 +465,6 @@ Need to allow a debug port to be specified, as hard-coded port 5005 can conflict
 
 # Open issues
 
-* Discovery or registration?
-* Per-build or per-project?
+* Replace `LongRunningOperation.standardOutput` and `standardError` with overloads that take a `Writer`, and (later) deprecate the `OutputStream` variants.
+* Handle cancellation during the Gradle distribution download.
+* Daemon cleanly stops the build when cancellation is requested.

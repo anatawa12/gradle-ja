@@ -15,20 +15,17 @@
  */
 package org.gradle.integtests.fixtures
 
+import org.gradle.internal.FileUtils
 import org.hamcrest.Matcher
 import org.jsoup.Jsoup
 import org.jsoup.nodes.Document
-
-import static junit.framework.Assert.assertTrue
-import static org.hamcrest.Matchers.equalTo
-import static org.junit.Assert.assertThat
 
 class HtmlTestExecutionResult implements TestExecutionResult {
 
     private File htmlReportDirectory
 
-    public HtmlTestExecutionResult(File projectDirectory, String testReportDirectory = "tests") {
-        this.htmlReportDirectory = new File(projectDirectory, "build/reports/$testReportDirectory");
+    public HtmlTestExecutionResult(File projectDirectory, String testReportDirectory = "build/reports/tests") {
+        this.htmlReportDirectory = new File(projectDirectory, testReportDirectory);
     }
 
     TestExecutionResult assertTestClassesExecuted(String... testClasses) {
@@ -37,7 +34,7 @@ class HtmlTestExecutionResult implements TestExecutionResult {
         return this
     }
 
-    def indexContainsTestClass(String... expectedTestClasses) {
+    private void indexContainsTestClass(String... expectedTestClasses) {
         def indexFile = new File(htmlReportDirectory, "index.html")
         assert indexFile.exists()
         Document html = Jsoup.parse(indexFile, null)
@@ -45,22 +42,22 @@ class HtmlTestExecutionResult implements TestExecutionResult {
         assert executedTestClasses.containsAll(expectedTestClasses)
     }
 
-    def assertHtmlReportForTestClassExists(String... classNames) {
+    private void assertHtmlReportForTestClassExists(String... classNames) {
         classNames.each {
-            assertTrue new File(htmlReportDirectory, "${it}.html").exists();
+            assert new File(htmlReportDirectory, "classes/${FileUtils.toSafeFileName(it)}.html").file
         }
     }
 
     TestClassExecutionResult testClass(String testClass) {
-        return new HtmlTestClassExecutionResult(new File(htmlReportDirectory, "${testClass}.html"));
+        return new HtmlTestClassExecutionResult(new File(htmlReportDirectory, "classes/${FileUtils.toSafeFileName(testClass)}.html"));
     }
 
     private static class HtmlTestClassExecutionResult implements TestClassExecutionResult {
         private File htmlFile
-        private List testsExecuted = []
-        private List testsSucceeded = []
-        private Map testsFailures = [:]
-        private Set testsSkipped = []
+        private List<String> testsExecuted = []
+        private List<String> testsSucceeded = []
+        private Map<String, List<String>> testsFailures = [:]
+        private Set<String> testsSkipped = []
         private Document html
 
         public HtmlTestClassExecutionResult(File htmlFile) {
@@ -69,31 +66,33 @@ class HtmlTestExecutionResult implements TestExecutionResult {
             parseTestClassFile()
         }
 
-        def parseTestClassFile() {
+        private void parseTestClassFile() {
             html.select("tr > td.success:eq(0)").each {
-                testsExecuted << it.text()
-                testsSucceeded << it.text()
+                def testName = it.textNodes().first().wholeText.trim()
+                testsExecuted << testName
+                testsSucceeded << testName
 
             }
             html.select("tr > td.failures:eq(0)").each {
-                testsExecuted << it.text()
-                String failure = getFailureMessage(it.text());
-                testsFailures[it.text()] = failure
+                def testName = it.textNodes().first().wholeText.trim()
+                testsExecuted << testName
+                def failures = getFailureMessages(testName);
+                testsFailures[it.text()] = failures
             }
 
             html.select("tr > td.skipped:eq(0)").each {
-                testsSkipped << it.text()
-                testsExecuted << it.text()
+                def testName = it.textNodes().first().wholeText.trim()
+                testsSkipped << testName
+                testsExecuted << testName
             }
-            return this
         }
 
-        String getFailureMessage(String testmethod) {
-            html.select("div#test:has(a[name=$testmethod]) > span > pre").text()
+        List<String> getFailureMessages(String testmethod) {
+            html.select("div.test:has(a[name=$testmethod]) > span > pre").collect { it.text().readLines().first() }
         }
 
         TestClassExecutionResult assertTestsExecuted(String... testNames) {
-            assertThat(testsExecuted - testsSkipped, equalTo(testNames as List))
+            assert testsExecuted - testsSkipped == testNames as List
             return this
         }
 
@@ -104,7 +103,7 @@ class HtmlTestExecutionResult implements TestExecutionResult {
         }
 
         TestClassExecutionResult assertTestsSkipped(String... testNames) {
-            assertThat(testsSkipped, equalTo(testNames as Set))
+            assert testsSkipped == testNames as Set
             return this
         }
 
@@ -115,8 +114,11 @@ class HtmlTestExecutionResult implements TestExecutionResult {
 
         TestClassExecutionResult assertTestFailed(String name, Matcher<? super String>... messageMatchers) {
             assert testsFailures.containsKey(name)
-            def message = testsFailures[name];
-            messageMatchers.each { it.matches(message) }
+            def messages = testsFailures[name]
+            assert messages.size() == messageMatchers.length
+            for (int i = 0; i < messageMatchers.length; i++) {
+                assert messageMatchers[i].matches(messages[i])
+            }
             return this
         }
 
@@ -134,7 +136,9 @@ class HtmlTestExecutionResult implements TestExecutionResult {
         }
 
         TestClassExecutionResult assertStdout(Matcher<? super String> matcher) {
-            matcher.matches(html.select("div#tab2 > span > pre").text())
+            def tabs = html.select("div.tab")
+            def tab = tabs.find { it.select("h2").text() == 'Standard output' }
+            assert matcher.matches(tab ? tab.select("span > pre").first().textNodes().first().wholeText : "")
             return this;
         }
 
@@ -143,7 +147,9 @@ class HtmlTestExecutionResult implements TestExecutionResult {
         }
 
         TestClassExecutionResult assertStderr(Matcher<? super String> matcher) {
-            matcher.matches(html.select("div#tab3 > span > pre").text())
+            def tabs = html.select("div.tab")
+            def tab = tabs.find { it.select("h2").text() == 'Standard error' }
+            assert matcher.matches(tab ? tab.select("span > pre").first().textNodes().first().wholeText : "")
             return this;
         }
 

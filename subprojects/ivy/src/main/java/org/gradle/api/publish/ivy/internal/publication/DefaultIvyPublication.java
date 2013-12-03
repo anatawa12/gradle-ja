@@ -28,7 +28,7 @@ import org.gradle.api.internal.artifacts.DefaultModuleVersionIdentifier;
 import org.gradle.api.internal.component.SoftwareComponentInternal;
 import org.gradle.api.internal.component.Usage;
 import org.gradle.api.internal.file.UnionFileCollection;
-import org.gradle.api.internal.notations.api.NotationParser;
+import org.gradle.internal.typeconversion.NotationParser;
 import org.gradle.api.publish.internal.ProjectDependencyPublicationResolver;
 import org.gradle.api.publish.ivy.IvyArtifact;
 import org.gradle.api.publish.ivy.IvyConfigurationContainer;
@@ -52,14 +52,17 @@ public class DefaultIvyPublication implements IvyPublicationInternal {
     private final IvyConfigurationContainer configurations;
     private final DefaultIvyArtifactSet ivyArtifacts;
     private final DefaultIvyDependencySet ivyDependencies;
+    private final ProjectDependencyPublicationResolver projectDependencyResolver;
     private FileCollection descriptorFile;
     private SoftwareComponentInternal component;
 
     public DefaultIvyPublication(
-            String name, Instantiator instantiator, IvyPublicationIdentity publicationIdentity, NotationParser<IvyArtifact> ivyArtifactNotationParser
+            String name, Instantiator instantiator, IvyPublicationIdentity publicationIdentity, NotationParser<Object, IvyArtifact> ivyArtifactNotationParser,
+            ProjectDependencyPublicationResolver projectDependencyResolver
     ) {
         this.name = name;
         this.publicationIdentity = publicationIdentity;
+        this.projectDependencyResolver = projectDependencyResolver;
         configurations = instantiator.newInstance(DefaultIvyConfigurationContainer.class, instantiator);
         ivyArtifacts = instantiator.newInstance(DefaultIvyArtifactSet.class, name, ivyArtifactNotationParser);
         ivyDependencies = instantiator.newInstance(DefaultIvyDependencySet.class);
@@ -112,7 +115,7 @@ public class DefaultIvyPublication implements IvyPublicationInternal {
     }
 
     private void addProjectDependency(ProjectDependency dependency, String confMapping) {
-        ModuleVersionIdentifier identifier = new ProjectDependencyPublicationResolver().resolve(dependency);
+        ModuleVersionIdentifier identifier = projectDependencyResolver.resolve(dependency);
         ivyDependencies.add(new DefaultIvyDependency(identifier.getGroup(), identifier.getName(), identifier.getVersion(), confMapping));
     }
 

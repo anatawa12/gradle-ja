@@ -16,9 +16,12 @@
 
 package org.gradle.api.internal.tasks.testing.junit.result;
 
-import org.gradle.api.internal.tasks.testing.TestDescriptorInternal;
+import org.gradle.api.internal.tasks.testing.TestSuiteExecutionException;
 import org.gradle.api.tasks.testing.*;
+import org.gradle.messaging.remote.internal.PlaceholderException;
 
+import java.io.PrintWriter;
+import java.io.StringWriter;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -29,8 +32,7 @@ public class TestReportDataCollector implements TestListener, TestOutputListener
 
     private final Map<String, TestClassResult> results;
     private final TestOutputStore.Writer outputWriter;
-
-    private final Map<Object, Long> idMappings = new HashMap<Object, Long>();
+    private final Map<TestDescriptor, TestMethodResult> currentTestMethods = new HashMap<TestDescriptor, TestMethodResult>();
     private long internalIdCounter = 1;
 
     public TestReportDataCollector(Map<String, TestClassResult> results, TestOutputStore.Writer outputWriter) {
@@ -42,21 +44,69 @@ public class TestReportDataCollector implements TestListener, TestOutputListener
     }
 
     public void afterSuite(TestDescriptor suite, TestResult result) {
+        if (result.getResultType() == TestResult.ResultType.FAILURE && result.getException() instanceof TestSuiteExecutionException) {
+            //something went wrong initialising test execution, most likely no test results were created
+            //let's synthesize the error so that it can show up in the test reports
+            TestMethodResult methodResult = new TestMethodResult(internalIdCounter++, result.getException().getMessage());
+            for (Throwable throwable : result.getExceptions()) {
+                methodResult.addFailure(failureMessage(throwable), stackTrace(throwable), exceptionClassName(throwable));
+            }
+            methodResult.completed(result);
+            TestClassResult classResult = new TestClassResult(internalIdCounter++, suite.getName(), result.getStartTime());
+            classResult.add(methodResult);
+            results.put(suite.getName(), classResult);
+        }
     }
 
     public void beforeTest(TestDescriptor testDescriptor) {
+        TestMethodResult methodResult = new TestMethodResult(internalIdCounter++, testDescriptor.getName());
+        currentTestMethods.put(testDescriptor, methodResult);
     }
 
     public void afterTest(TestDescriptor testDescriptor, TestResult result) {
-        if (!testDescriptor.isComposite()) {
-            String className = testDescriptor.getClassName();
-            TestMethodResult methodResult = new TestMethodResult(getInternalId((TestDescriptorInternal) testDescriptor), testDescriptor.getName(), result);
-            TestClassResult classResult = results.get(className);
-            if (classResult == null) {
-                classResult = new TestClassResult(internalIdCounter++, className, result.getStartTime());
-                results.put(className, classResult);
-            }
-            classResult.add(methodResult);
+        String className = testDescriptor.getClassName();
+        TestMethodResult methodResult = currentTestMethods.remove(testDescriptor).completed(result);
+        for (Throwable throwable : result.getExceptions()) {
+            methodResult.addFailure(failureMessage(throwable), stackTrace(throwable), exceptionClassName(throwable));
+        }
+        TestClassResult classResult = results.get(className);
+        if (classResult == null) {
+            classResult = new TestClassResult(internalIdCounter++, className, result.getStartTime());
+            results.put(className, classResult);
+        } else if (classResult.getStartTime() == 0) {
+            //class results may be created earlier, where we don't yet have access to the start time
+            classResult.setStartTime(result.getStartTime());
+        }
+        classResult.add(methodResult);
+    }
+
+    private String failureMessage(Throwable throwable) {
+        try {
+            return throwable.toString();
+        } catch (Throwable t) {
+            String exceptionClassName = exceptionClassName(throwable);
+            return String.format("Could not determine failure message for exception of type %s: %s",
+                    exceptionClassName, t);
+        }
+    }
+
+    private String exceptionClassName(Throwable throwable) {
+        return throwable instanceof PlaceholderException ? ((PlaceholderException) throwable).getExceptionClassName() : throwable.getClass().getName();
+    }
+
+    private String stackTrace(Throwable throwable) {
+        try {
+            StringWriter stringWriter = new StringWriter();
+            PrintWriter writer = new PrintWriter(stringWriter);
+            throwable.printStackTrace(writer);
+            writer.close();
+            return stringWriter.toString();
+        } catch (Throwable t) {
+            StringWriter stringWriter = new StringWriter();
+            PrintWriter writer = new PrintWriter(stringWriter);
+            t.printStackTrace(writer);
+            writer.close();
+            return stringWriter.toString();
         }
     }
 
@@ -67,32 +117,20 @@ public class TestReportDataCollector implements TestListener, TestOutputListener
             //we don't have a place for such output in any of the reports so skipping.
             return;
         }
-        TestDescriptorInternal testDescriptorInternal = (TestDescriptorInternal) testDescriptor;
         TestClassResult classResult = results.get(className);
         if (classResult == null) {
+            //it's possible that we receive an output for a suite here
+            //in this case we will create the test result for a suite that normally would not be created
+            //feels like this scenario should modelled more explicitly
             classResult = new TestClassResult(internalIdCounter++, className, 0);
             results.put(className, classResult);
         }
 
-        String name = testDescriptor.getName();
-
-        // This is a rather weak contract, but given the current inputs is the best we can do
-        boolean isClassLevelOutput = name.equals(className);
-
-        if (isClassLevelOutput) {
+        TestMethodResult methodResult = currentTestMethods.get(testDescriptor);
+        if (methodResult == null) {
             outputWriter.onOutput(classResult.getId(), outputEvent);
         } else {
-            outputWriter.onOutput(classResult.getId(), getInternalId(testDescriptorInternal), outputEvent);
+            outputWriter.onOutput(classResult.getId(), methodResult.getId(), outputEvent);
         }
-    }
-
-    private long getInternalId(TestDescriptorInternal testDescriptor) {
-        Object id = testDescriptor.getId();
-        Long internalId = idMappings.get(id);
-        if (internalId == null) {
-            internalId = internalIdCounter++;
-            idMappings.put(id, internalId);
-        }
-        return internalId;
     }
 }

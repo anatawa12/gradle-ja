@@ -17,8 +17,8 @@
 package org.gradle.invocation
 
 import org.gradle.initialization.ClassLoaderRegistry
-import org.gradle.util.CachingClassLoader
-import org.gradle.util.MultiParentClassLoader
+import org.gradle.internal.classloader.CachingClassLoader
+import org.gradle.internal.classloader.MultiParentClassLoader
 import spock.lang.Specification
 
 class DefaultBuildClassLoaderRegistryTest extends Specification {
@@ -29,7 +29,7 @@ class DefaultBuildClassLoaderRegistryTest extends Specification {
         def additionalClassLoader = Mock(ClassLoader)
 
         given:
-        globalRegistry.rootClassLoader >> rootClassLoader
+        globalRegistry.gradleApiClassLoader >> rootClassLoader
 
         when:
         def registry = new DefaultBuildClassLoaderRegistry(globalRegistry)

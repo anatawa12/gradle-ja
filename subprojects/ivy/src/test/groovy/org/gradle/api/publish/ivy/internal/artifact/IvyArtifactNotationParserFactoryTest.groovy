@@ -20,14 +20,14 @@ import org.gradle.api.artifacts.PublishArtifact
 import org.gradle.api.internal.AsmBackedClassGenerator
 import org.gradle.api.internal.ClassGeneratorBackedInstantiator
 import org.gradle.api.internal.file.FileResolver
-import org.gradle.api.internal.notations.api.NotationParser
+import org.gradle.internal.typeconversion.NotationParser
 import org.gradle.api.publish.ivy.IvyArtifact
 import org.gradle.api.publish.ivy.internal.publisher.IvyPublicationIdentity
 import org.gradle.api.tasks.TaskDependency
 import org.gradle.api.tasks.bundling.Jar
 import org.gradle.internal.reflect.DirectInstantiator
 import org.gradle.internal.reflect.Instantiator
-import org.gradle.util.HelperUtil
+import org.gradle.util.TestUtil
 import spock.lang.Specification
 
 public class IvyArtifactNotationParserFactoryTest extends Specification {
@@ -44,7 +44,7 @@ public class IvyArtifactNotationParserFactoryTest extends Specification {
     def task = Mock(Task)
     def dependencies = Collections.singleton(Mock(Task))
 
-    NotationParser<IvyArtifact> parser
+    NotationParser<Object, IvyArtifact> parser
 
     def "setup"() {
         def fileResolver = Stub(FileResolver) {
@@ -135,7 +135,7 @@ public class IvyArtifactNotationParserFactoryTest extends Specification {
 
     def "creates IvyArtifact for ArchivePublishArtifact"() {
         when:
-        def rootProject = HelperUtil.createRootProject()
+        def rootProject = TestUtil.createRootProject()
         def archive = rootProject.task(type: Jar, {})
         archive.setBaseName("base-name")
         archive.setExtension('extension')

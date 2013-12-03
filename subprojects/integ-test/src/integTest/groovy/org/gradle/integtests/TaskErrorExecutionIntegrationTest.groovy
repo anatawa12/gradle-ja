@@ -115,4 +115,31 @@ task custom(type: CustomTask)
         failure.assertHasCause("No value has been specified for property 'srcFile'.")
         failure.assertHasCause("No value has been specified for property 'destFile'.")
     }
+
+    @Test
+    public void reportsUnknownTask() {
+        def settingsFile = testFile("settings.gradle")
+        settingsFile << """
+rootProject.name = 'test'
+include 'a', 'b'
+"""
+        def buildFile = testFile('build.gradle')
+        buildFile << """
+allprojects { task someTask }
+project(':a') { task someTaskA }
+project(':b') { task someTaskB }
+"""
+
+        def failure = inTestDirectory().withTasks("someTest").runWithFailure()
+        failure.assertHasDescription("Task 'someTest' not found in root project 'test'. Some candidates are: 'someTask', 'someTaskA', 'someTaskB'.")
+        failure.assertHasResolution("Run gradle tasks to get a list of available tasks. Run with --info or --debug option to get more log output.")
+
+        failure = inTestDirectory().withTasks(":someTest").runWithFailure()
+        failure.assertHasDescription("Task 'someTest' not found in root project 'test'. Some candidates are: 'someTask'.")
+        failure.assertHasResolution("Run gradle tasks to get a list of available tasks. Run with --info or --debug option to get more log output.")
+
+        failure = inTestDirectory().withTasks("a:someTest").runWithFailure()
+        failure.assertHasDescription("Task 'someTest' not found in project ':a'. Some candidates are: 'someTask', 'someTaskA'.")
+        failure.assertHasResolution("Run gradle tasks to get a list of available tasks. Run with --info or --debug option to get more log output.")
+    }
 }

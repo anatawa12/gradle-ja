@@ -16,10 +16,9 @@
 
 package org.gradle.api.internal.artifacts.ivyservice.ivyresolve;
 
-import org.apache.ivy.core.module.descriptor.ModuleDescriptor;
 import org.gradle.api.Nullable;
-import org.gradle.api.artifacts.ModuleVersionIdentifier;
 import org.gradle.api.internal.artifacts.ivyservice.ModuleVersionResolveException;
+import org.gradle.api.internal.artifacts.metadata.MutableModuleVersionMetaData;
 
 /**
  * The result of attempting to resolve a dependency descriptor to the meta-data for a module version.
@@ -39,20 +38,15 @@ public interface BuildableModuleVersionMetaDataResolveResult {
      *
      * @throws ModuleVersionResolveException If the resolution was not successful.
      */
-    ModuleVersionMetaData getMetaData() throws ModuleVersionResolveException;
+    MutableModuleVersionMetaData getMetaData() throws ModuleVersionResolveException;
 
     @Nullable
     ModuleVersionResolveException getFailure();
 
     /**
-     * Marks the module version as resolved, with the given meta-data.
+     * Marks the module version as resolved, with the given meta-data and source.
      */
-    void resolved(ModuleDescriptor descriptor, boolean changing, ModuleSource moduleSource);
-
-    /**
-     * Marks the module version as resolved, with the given meta-data.
-     */
-    void resolved(ModuleVersionIdentifier id, ModuleDescriptor descriptor, boolean changing, ModuleSource moduleSource);
+    void resolved(MutableModuleVersionMetaData metaData, ModuleSource moduleSource);
 
     /**
      * Marks the resolve as failed with the given exception.
@@ -75,9 +69,4 @@ public interface BuildableModuleVersionMetaDataResolveResult {
     public ModuleSource getModuleSource();
 
     void setModuleSource(ModuleSource moduleSource);
-
-    /**
-     * Replaces the dependencies of this module version.
-     */
-    void setDependencies(Iterable<? extends DependencyMetaData> dependencies);
 }

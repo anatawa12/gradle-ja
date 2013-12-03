@@ -19,7 +19,7 @@ package org.gradle.api.internal.tasks.testing.junit.result;
 import org.gradle.api.Action;
 import org.gradle.api.specs.Spec;
 import org.gradle.api.tasks.testing.TestOutputEvent;
-import org.gradle.internal.CompositeStoppable;
+import org.gradle.internal.concurrent.CompositeStoppable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -50,7 +50,7 @@ public class AggregateTestResultsProvider implements TestResultsProvider {
         for (final TestResultsProvider provider : providers) {
             provider.visitClasses(new Action<TestClassResult>() {
                 public void execute(TestClassResult classResult) {
-                    if (seenClasses.contains(classResult.getClassName())) {
+                    if (!seenClasses.add(classResult.getClassName())) {
                         LOGGER.warn("Discarding duplicate results for test class {}.", classResult.getClassName());
                         return;
                     }
@@ -76,11 +76,11 @@ public class AggregateTestResultsProvider implements TestResultsProvider {
     }
 
     public boolean hasOutput(long id, TestOutputEvent.Destination destination) {
-        return classOutputProviders.get(id).hasOutput(id, destination);
+        return classOutputProviders.get(id).hasOutput(idMappings.get(id), destination);
     }
 
     public void writeAllOutput(long id, TestOutputEvent.Destination destination, Writer writer) {
-        classOutputProviders.get(id).writeAllOutput(id, destination, writer);
+        classOutputProviders.get(id).writeAllOutput(idMappings.get(id), destination, writer);
     }
 
     public boolean isHasResults() {
@@ -92,11 +92,11 @@ public class AggregateTestResultsProvider implements TestResultsProvider {
     }
     
     public void writeNonTestOutput(long id, TestOutputEvent.Destination destination, Writer writer) {
-        classOutputProviders.get(id).writeNonTestOutput(id, destination, writer);
+        classOutputProviders.get(id).writeNonTestOutput(idMappings.get(id), destination, writer);
     }
 
     public void writeTestOutput(long classId, long testId, TestOutputEvent.Destination destination, Writer writer) {
-        classOutputProviders.get(classId).writeTestOutput(classId, testId, destination, writer);
+        classOutputProviders.get(classId).writeTestOutput(idMappings.get(classId), testId, destination, writer);
     }
 
     public void close() throws IOException {

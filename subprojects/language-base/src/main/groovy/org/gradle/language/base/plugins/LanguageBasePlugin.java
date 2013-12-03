@@ -16,11 +16,13 @@
 package org.gradle.language.base.plugins;
 
 import org.gradle.api.*;
+import org.gradle.internal.Factory;
 import org.gradle.internal.reflect.Instantiator;
 import org.gradle.language.base.BinaryContainer;
 import org.gradle.language.base.internal.BinaryInternal;
 import org.gradle.language.base.internal.DefaultBinaryContainer;
 import org.gradle.language.base.internal.DefaultProjectSourceSet;
+import org.gradle.model.ModelRules;
 
 import javax.inject.Inject;
 
@@ -32,20 +34,26 @@ import javax.inject.Inject;
  */
 @Incubating
 public class LanguageBasePlugin implements Plugin<Project> {
-    // TODO:DAZ Find a good way to share this with the BuildPlugin, without introducing dependency on plugins module
     public static final String BUILD_GROUP = "build";
 
     private final Instantiator instantiator;
-
+    private final ModelRules modelRules;
 
     @Inject
-    public LanguageBasePlugin(Instantiator instantiator) {
+    public LanguageBasePlugin(Instantiator instantiator, ModelRules modelRules) {
         this.instantiator = instantiator;
+        this.modelRules = modelRules;
     }
 
     public void apply(final Project target) {
         target.getExtensions().create("sources", DefaultProjectSourceSet.class, instantiator);
         final BinaryContainer binaries = target.getExtensions().create("binaries", DefaultBinaryContainer.class, instantiator);
+
+        modelRules.register("binaries", BinaryContainer.class, new Factory<BinaryContainer>() {
+            public BinaryContainer create() {
+                return binaries;
+            }
+        });
 
         binaries.withType(BinaryInternal.class).all(new Action<BinaryInternal>() {
             public void execute(BinaryInternal binary) {

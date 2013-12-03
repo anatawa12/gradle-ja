@@ -16,8 +16,10 @@
 
 package org.gradle.api.internal.artifacts.ivyservice.ivyresolve;
 
-import org.gradle.api.artifacts.ArtifactIdentifier;
 import org.gradle.api.internal.artifacts.ivyservice.BuildableArtifactResolveResult;
+import org.gradle.api.internal.artifacts.metadata.DependencyMetaData;
+import org.gradle.api.internal.artifacts.metadata.ModuleVersionArtifactMetaData;
+import org.gradle.api.internal.artifacts.metadata.MutableModuleVersionMetaData;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -52,14 +54,15 @@ public class IvyDynamicResolveModuleVersionRepository implements LocalAwareModul
     }
 
     private void transformDependencies(BuildableModuleVersionMetaDataResolveResult result) {
+        MutableModuleVersionMetaData metaData = result.getMetaData();
         List<DependencyMetaData> transformed = new ArrayList<DependencyMetaData>();
-        for (DependencyMetaData dependency : result.getMetaData().getDependencies()) {
+        for (DependencyMetaData dependency : metaData.getDependencies()) {
             transformed.add(dependency.withRequestedVersion(dependency.getDescriptor().getDynamicConstraintDependencyRevisionId().getRevision()));
         }
-        result.setDependencies(transformed);
+        metaData.setDependencies(transformed);
     }
 
-    public void resolve(ArtifactIdentifier artifact, BuildableArtifactResolveResult result, ModuleSource moduleSource) {
+    public void resolve(ModuleVersionArtifactMetaData artifact, BuildableArtifactResolveResult result, ModuleSource moduleSource) {
         repository.resolve(artifact, result, moduleSource);
     }
 }

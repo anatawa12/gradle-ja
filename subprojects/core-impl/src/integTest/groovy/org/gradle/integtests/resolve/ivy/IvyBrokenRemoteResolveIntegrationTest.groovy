@@ -21,19 +21,16 @@ import static org.hamcrest.Matchers.containsString
 
 class IvyBrokenRemoteResolveIntegrationTest extends AbstractDependencyResolutionTest {
 
-    public void "reports and caches missing module"() {
+    public void "reports and recovers from missing module"() {
         server.start()
 
         given:
-        def repo1 = ivyHttpRepo("repo1")
-        def repo2 = ivyHttpRepo("repo2")
-        def moduleInRepo1 = repo1.module("group", "projectA", "1.2")
-        def moduleInRepo2 = repo2.module('group', 'projectA', '1.2').publish()
+        def repo = ivyHttpRepo("repo1")
+        def module = repo.module("group", "projectA", "1.2").publish()
 
         buildFile << """
 repositories {
-    ivy { url "${repo1.uri}"}
-    ivy { url "${repo2.uri}"}
+    ivy { url "${repo.uri}"}
 }
 configurations { missing }
 dependencies {
@@ -43,16 +40,21 @@ task showMissing << { println configurations.missing.files }
 """
 
         when:
-        moduleInRepo1.expectIvyGetMissing()
-        moduleInRepo1.expectJarHeadMissing()
-        moduleInRepo2.expectIvyGet()
-        moduleInRepo2.expectJarGet()
+        module.ivy.expectGetMissing()
+        module.jar.expectHeadMissing()
 
         then:
-        succeeds("showMissing")
+        fails("showMissing")
+        failure
+            .assertHasDescription('Execution failed for task \':showMissing\'.')
+            .assertHasCause('Could not resolve all dependencies for configuration \':missing\'.')
+            .assertHasCause('Could not find group:projectA:1.2.')
 
         when:
-        server.resetExpectations() // Missing status in repo1 is cached
+        server.resetExpectations()
+        module.ivy.expectGet()
+        module.jar.expectGet()
+
         then:
         succeeds('showMissing')
     }
@@ -77,7 +79,7 @@ task showBroken << { println configurations.broken.files }
 """
 
         when:
-        module.expectIvyGetBroken()
+        module.ivy.expectGetBroken()
         fails("showBroken")
 
         then:
@@ -85,12 +87,12 @@ task showBroken << { println configurations.broken.files }
             .assertHasDescription('Execution failed for task \':showBroken\'.')
             .assertResolutionFailure(':broken')
             .assertHasCause('Could not resolve group:projectA:1.3.')
-            .assertHasCause("Could not GET '${ivyHttpRepo.uri}/group/projectA/1.3/ivy-1.3.xml'. Received status code 500 from server: broken")
+            .assertHasCause("Could not GET '${module.ivy.uri}'. Received status code 500 from server: broken")
 
         when:
         server.resetExpectations()
-        module.expectIvyGet()
-        module.expectJarGet()
+        module.ivy.expectGet()
+        module.jar.expectGet()
 
         then:
         succeeds("showBroken")
@@ -120,20 +122,20 @@ task retrieve(type: Sync) {
         def module = ivyHttpRepo.module('group', 'projectA', '1.2').publish()
 
         when:
-        module.expectIvyGet()
-        module.expectJarGetMissing()
+        module.ivy.expectGet()
+        module.jar.expectGetMissing()
 
         then:
         fails "retrieve"
 
-        failure.assertThatCause(containsString("Artifact 'group:projectA:1.2@jar' not found"))
+        failure.assertThatCause(containsString("Artifact 'group:projectA:1.2:projectA.jar' not found"))
 
         when:
         server.resetExpectations()
 
         then:
         fails "retrieve"
-        failure.assertThatCause(containsString("Artifact 'group:projectA:1.2@jar' not found"))
+        failure.assertThatCause(containsString("Artifact 'group:projectA:1.2:projectA.jar' not found"))
     }
 
     public void "reports and recovers from failed artifact download"() {
@@ -160,51 +162,20 @@ task retrieve(type: Sync) {
         def module = ivyHttpRepo.module('group', 'projectA', '1.2').publish()
 
         when:
-        module.expectIvyGet()
-        module.expectJarGetBroken()
+        module.ivy.expectGet()
+        module.jar.expectGetBroken()
 
         then:
         fails "retrieve"
-        failure.assertHasCause("Could not download artifact 'group:projectA:1.2@jar'")
-        failure.assertHasCause("Could not GET '${ivyHttpRepo.uri}/group/projectA/1.2/projectA-1.2.jar'. Received status code 500 from server: broken")
+        failure.assertHasCause("Could not download artifact 'group:projectA:1.2:projectA.jar'")
+        failure.assertHasCause("Could not GET '${module.jar.uri}'. Received status code 500 from server: broken")
 
         when:
         server.resetExpectations()
-        module.expectJarGet()
+        module.jar.expectGet()
 
         then:
         succeeds "retrieve"
         file('libs').assertHasDescendants('projectA-1.2.jar')
-    }
-
-    public void "reports Ivy descriptor that cannot be parsed"() {
-        server.start()
-        given:
-        buildFile << """
-repositories {
-    ivy {
-        url "${ivyHttpRepo.uri}"
-    }
-}
-configurations { compile }
-dependencies {
-    compile 'group:projectA:1.2'
-}
-task showBroken << { println configurations.compile.files }
-"""
-
-        and:
-        def module = ivyHttpRepo.module('group', 'projectA', '1.2').publish()
-        module.ivyFile.text = "<ivy-module>"
-
-        when:
-        module.expectIvyGet()
-
-        then:
-        fails "showBroken"
-        failure
-            .assertResolutionFailure(":compile")
-            .assertHasCause("Could not parse Ivy file ${module.ivyFileUri}")
-            .assertHasCause("invalid version null")
     }
 }

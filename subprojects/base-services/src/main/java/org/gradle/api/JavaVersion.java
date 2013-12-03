@@ -15,8 +15,6 @@
  */
 package org.gradle.api;
 
-import org.gradle.internal.SystemProperties;
-
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -71,7 +69,7 @@ public enum JavaVersion {
      * @return The version of the current JVM.
      */
     public static JavaVersion current() {
-        return toVersion(SystemProperties.getJavaVersion());
+        return toVersion(System.getProperty("java.version"));
     }
 
     public boolean isJava5() {
@@ -91,19 +89,19 @@ public enum JavaVersion {
     }
 
     public boolean isJava5Compatible() {
-        return isJava5() || isJava6Compatible();
+        return this.compareTo(VERSION_1_5) >= 0;
     }
 
     public boolean isJava6Compatible() {
-        return isJava6() || isJava7Compatible();
+        return this.compareTo(VERSION_1_6) >= 0;
     }
 
     public boolean isJava7Compatible() {
-        return isJava7() || isJava8Compatible();
+        return this.compareTo(VERSION_1_7) >= 0;
     }
 
     public boolean isJava8Compatible() {
-        return isJava8();
+        return this.compareTo(VERSION_1_8) >= 0;
     }
 
     @Override
@@ -113,5 +111,9 @@ public enum JavaVersion {
 
     private String getName() {
         return name().substring("VERSION_".length()).replace('_', '.');
+    }
+
+    public String getMajorVersion() {
+        return name().substring(10);
     }
 }

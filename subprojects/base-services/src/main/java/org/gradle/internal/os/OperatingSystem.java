@@ -25,11 +25,11 @@ import java.util.List;
 import java.util.regex.Pattern;
 
 public abstract class OperatingSystem {
-    private static final Windows WINDOWS = new Windows();
-    private static final MacOs MAC_OS = new MacOs();
-    private static final Solaris SOLARIS = new Solaris();
-    private static final Linux LINUX = new Linux();
-    private static final Unix UNIX = new Unix();
+    public static final Windows WINDOWS = new Windows();
+    public static final MacOs MAC_OS = new MacOs();
+    public static final Solaris SOLARIS = new Solaris();
+    public static final Linux LINUX = new Linux();
+    public static final Unix UNIX = new Unix();
 
     public static OperatingSystem current() {
         String osName = System.getProperty("os.name").toLowerCase();
@@ -73,6 +73,10 @@ public abstract class OperatingSystem {
     }
 
     public boolean isLinux() {
+        return false;
+    }
+
+    public boolean isSolaris() {
         return false;
     }
 
@@ -122,8 +126,8 @@ public abstract class OperatingSystem {
         return all;
     }
     
-    List<File> getPath() {                       
-        String path = System.getenv("PATH");
+    List<File> getPath() {
+        String path = System.getenv(getPathVar());
         if (path == null) {
             return Collections.emptyList();
         }
@@ -132,6 +136,10 @@ public abstract class OperatingSystem {
             entries.add(new File(entry));
         }
         return entries;
+    }
+
+    public String getPathVar() {
+        return "PATH";
     }
 
     static class Windows extends OperatingSystem {
@@ -173,7 +181,23 @@ public abstract class OperatingSystem {
             if (executablePath.toLowerCase().endsWith(extension)) {
                 return executablePath;
             }
-            return executablePath + extension;
+            return removeExtension(executablePath) + extension;
+        }
+
+        private String removeExtension(String executablePath) {
+            int fileNameStart = Math.max(executablePath.lastIndexOf('/'), executablePath.lastIndexOf('\\'));
+            int extensionPos = executablePath.lastIndexOf('.');
+
+            if (extensionPos > fileNameStart) {
+                return executablePath.substring(0, extensionPos);
+            }
+            return executablePath;
+        }
+
+
+        @Override
+        public String getPathVar() {
+            return "Path";
         }
     }
 
@@ -276,6 +300,11 @@ public abstract class OperatingSystem {
     }
 
     static class Solaris extends Unix {
+        @Override
+        public boolean isSolaris() {
+            return true;
+        }
+
         @Override
         protected String getOsPrefix() {
             return "sunos";

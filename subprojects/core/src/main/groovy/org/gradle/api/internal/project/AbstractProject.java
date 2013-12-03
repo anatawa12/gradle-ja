@@ -23,7 +23,6 @@ import org.gradle.api.*;
 import org.gradle.api.artifacts.Module;
 import org.gradle.api.artifacts.dsl.ArtifactHandler;
 import org.gradle.api.artifacts.dsl.DependencyHandler;
-import org.gradle.api.artifacts.dsl.ComponentMetadataHandler;
 import org.gradle.api.artifacts.dsl.RepositoryHandler;
 import org.gradle.api.component.SoftwareComponentContainer;
 import org.gradle.api.file.ConfigurableFileCollection;
@@ -32,10 +31,13 @@ import org.gradle.api.file.CopySpec;
 import org.gradle.api.file.FileTree;
 import org.gradle.api.initialization.dsl.ScriptHandler;
 import org.gradle.api.internal.*;
+import org.gradle.api.internal.artifacts.ModuleInternal;
+import org.gradle.api.internal.artifacts.ProjectBackedModule;
 import org.gradle.api.internal.artifacts.configurations.ConfigurationContainerInternal;
 import org.gradle.api.internal.artifacts.configurations.DependencyMetaDataProvider;
 import org.gradle.api.internal.file.FileOperations;
 import org.gradle.api.internal.file.FileResolver;
+import org.gradle.api.internal.file.copy.CopySpecInternal;
 import org.gradle.api.internal.initialization.ScriptClassLoaderProvider;
 import org.gradle.api.internal.plugins.ExtensionContainerInternal;
 import org.gradle.api.internal.tasks.TaskContainerInternal;
@@ -46,6 +48,7 @@ import org.gradle.api.plugins.Convention;
 import org.gradle.api.plugins.PluginContainer;
 import org.gradle.api.resources.ResourceHandler;
 import org.gradle.api.tasks.Directory;
+import org.gradle.api.tasks.TaskContainer;
 import org.gradle.api.tasks.WorkResult;
 import org.gradle.configuration.ScriptPlugin;
 import org.gradle.configuration.ScriptPluginFactory;
@@ -54,10 +57,16 @@ import org.gradle.configuration.project.ProjectEvaluator;
 import org.gradle.groovy.scripts.ScriptSource;
 import org.gradle.internal.Factory;
 import org.gradle.internal.reflect.Instantiator;
+import org.gradle.internal.service.scopes.ServiceRegistryFactory;
 import org.gradle.listener.ClosureBackedMethodInvocationDispatch;
 import org.gradle.listener.ListenerBroadcast;
 import org.gradle.logging.LoggingManagerInternal;
 import org.gradle.logging.StandardOutputCapture;
+import org.gradle.model.ModelPath;
+import org.gradle.model.ModelRules;
+import org.gradle.model.dsl.ModelDsl;
+import org.gradle.model.dsl.internal.GroovyModelDsl;
+import org.gradle.model.internal.ModelRegistry;
 import org.gradle.process.ExecResult;
 import org.gradle.util.Configurable;
 import org.gradle.util.ConfigureUtil;
@@ -126,8 +135,6 @@ public abstract class AbstractProject extends AbstractPluginAware implements Pro
 
     private DependencyHandler dependencyHandler;
 
-    private ComponentMetadataHandler componentMetadataHandler;
-
     private ConfigurationContainerInternal configurationContainer;
 
     private ArtifactHandler artifactHandler;
@@ -147,6 +154,9 @@ public abstract class AbstractProject extends AbstractPluginAware implements Pro
     private ExtensibleDynamicObject extensibleDynamicObject;
 
     private ProjectConfigurationActionContainer configurationActions;
+
+    private final ModelRegistry modelRegistry;
+    private final ModelRules modelRules;
 
     private String description;
 
@@ -190,7 +200,6 @@ public abstract class AbstractProject extends AbstractPluginAware implements Pro
         pluginContainer = services.get(PluginContainer.class);
         artifactHandler = services.get(ArtifactHandler.class);
         dependencyHandler = services.get(DependencyHandler.class);
-        componentMetadataHandler = services.get(ComponentMetadataHandler.class);
         scriptHandler = services.get(ScriptHandler.class);
         scriptClassLoaderProvider = services.get(ScriptClassLoaderProvider.class);
         projectRegistry = services.get(ProjectRegistry.class);
@@ -198,6 +207,8 @@ public abstract class AbstractProject extends AbstractPluginAware implements Pro
         softwareComponentContainer = services.get(SoftwareComponentContainer.class);
         scriptPluginFactory = services.get(ScriptPluginFactory.class);
         configurationActions = services.get(ProjectConfigurationActionContainer.class);
+        modelRegistry = services.get(ModelRegistry.class);
+        modelRules = services.get(ModelRules.class);
 
         extensibleDynamicObject = new ExtensibleDynamicObject(this, services.get(Instantiator.class));
         if (parent != null) {
@@ -206,6 +217,34 @@ public abstract class AbstractProject extends AbstractPluginAware implements Pro
         extensibleDynamicObject.addObject(taskContainer.getTasksAsDynamicObject(), ExtensibleDynamicObject.Location.AfterConvention);
 
         evaluationListener.add(gradle.getProjectEvaluationBroadcaster());
+
+        final ModelPath tasksModelPath = ModelPath.path(TaskContainerInternal.MODEL_PATH);
+        modelRules.register(tasksModelPath.toString(), taskContainer);
+        taskContainer.all(new Action<Task>() {
+            public void execute(Task task) {
+                String name = task.getName();
+                modelRules.register(tasksModelPath.child(name).toString(), Task.class, new TaskFactory(taskContainer, name));
+            }
+        });
+        taskContainer.whenObjectRemoved(new Action<Task>() {
+            public void execute(Task task) {
+                modelRules.remove(tasksModelPath.child(task.getName()).toString());
+            }
+        });
+    }
+
+    private static class TaskFactory implements Factory<Task> {
+        private final TaskContainer tasks;
+        private final String name;
+
+        private TaskFactory(TaskContainer tasks, String name) {
+            this.tasks = tasks;
+            this.name = name;
+        }
+
+        public Task create() {
+            return tasks.getByName(name);
+        }
     }
 
     public ProjectInternal getRootProject() {
@@ -592,7 +631,7 @@ public abstract class AbstractProject extends AbstractPluginAware implements Pro
         DeprecationLogger.nagUserOfDiscontinuedMethod("Project.dependsOnChildren()");
         return DeprecationLogger.whileDisabled(new Factory<Project>() {
             public Project create() {
-               return dependsOnChildren(false);
+                return dependsOnChildren(false);
             }
         });
     }
@@ -754,10 +793,6 @@ public abstract class AbstractProject extends AbstractPluginAware implements Pro
         return dependencyHandler;
     }
 
-    public ComponentMetadataHandler getComponentMetadata() {
-        return componentMetadataHandler;
-    }
-
     public void setDependencyHandler(DependencyHandler dependencyHandler) {
         this.dependencyHandler = dependencyHandler;
     }
@@ -822,8 +857,16 @@ public abstract class AbstractProject extends AbstractPluginAware implements Pro
         return fileOperations.copy(closure);
     }
 
+    public WorkResult sync(Action<? super CopySpec> action) {
+        return fileOperations.sync(action);
+    }
+
     public CopySpec copySpec(Closure closure) {
         return fileOperations.copySpec(closure);
+    }
+
+    public CopySpecInternal copySpec(Action<? super CopySpec> action) {
+        return fileOperations.copySpec(action);
     }
 
     public ExecResult javaexec(Closure closure) {
@@ -881,10 +924,6 @@ public abstract class AbstractProject extends AbstractPluginAware implements Pro
         ConfigureUtil.configure(configureClosure, getDependencies());
     }
 
-    public void componentMetadata(Closure configureClosure) {
-        ConfigureUtil.configure(configureClosure, getComponentMetadata());
-    }
-
     public void artifacts(Closure configureClosure) {
         ConfigureUtil.configure(configureClosure, getArtifacts());
     }
@@ -929,6 +968,10 @@ public abstract class AbstractProject extends AbstractPluginAware implements Pro
         return configurationActions;
     }
 
+    public ModelRegistry getModelRegistry() {
+        return modelRegistry;
+    }
+
     @Override
     protected ScriptPluginFactory getScriptPluginFactory() {
         return scriptPluginFactory;
@@ -960,4 +1003,13 @@ public abstract class AbstractProject extends AbstractPluginAware implements Pro
         return (ExtensionContainerInternal) getConvention();
     }
 
+    // This is here temporarily as a quick way to expose it in the build script
+    // Longer term it will not be available via Project, but be only available in a build script
+    public void model(Action<? super ModelDsl> action) {
+        action.execute(new GroovyModelDsl(modelRules));
+    }
+
+    public ModuleInternal getModuleInternal() {
+        return new ProjectBackedModule(this);
+    }
 }

@@ -19,11 +19,11 @@ package org.gradle.api.internal.artifacts.dsl;
 import org.gradle.api.IllegalDependencyNotation;
 import org.gradle.api.InvalidUserDataException;
 import org.gradle.api.artifacts.ModuleVersionSelector;
-import org.gradle.api.internal.notations.NotationParserBuilder;
-import org.gradle.api.internal.notations.api.NotationParser;
-import org.gradle.api.internal.notations.parsers.MapKey;
-import org.gradle.api.internal.notations.parsers.MapNotationParser;
-import org.gradle.api.internal.notations.parsers.TypedNotationParser;
+import org.gradle.internal.typeconversion.NotationParserBuilder;
+import org.gradle.internal.typeconversion.NotationParser;
+import org.gradle.internal.typeconversion.MapKey;
+import org.gradle.internal.typeconversion.MapNotationParser;
+import org.gradle.internal.typeconversion.TypedNotationParser;
 
 import java.util.Collection;
 import java.util.Set;
@@ -32,11 +32,11 @@ import static org.gradle.api.internal.artifacts.DefaultModuleVersionSelector.new
 
 public class ModuleVersionSelectorParsers {
 
-    public static NotationParser<Set<ModuleVersionSelector>> multiParser() {
+    public static NotationParser<Object, Set<ModuleVersionSelector>> multiParser() {
         return builder().toFlatteningComposite();
     }
 
-    public static NotationParser<ModuleVersionSelector> parser() {
+    public static NotationParser<Object, ModuleVersionSelector> parser() {
         return builder().toComposite();
     }
 

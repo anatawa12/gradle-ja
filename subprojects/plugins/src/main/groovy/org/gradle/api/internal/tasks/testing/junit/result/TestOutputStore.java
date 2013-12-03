@@ -21,8 +21,10 @@ import com.esotericsoftware.kryo.io.Output;
 import com.google.common.collect.ImmutableMap;
 import org.gradle.api.UncheckedIOException;
 import org.gradle.api.tasks.testing.TestOutputEvent;
+import org.gradle.cache.internal.stream.RandomAccessFileInputStream;
 import org.gradle.internal.UncheckedException;
-import org.gradle.util.GFileUtils;
+import org.gradle.messaging.serialize.kryo.KryoBackedDecoder;
+import org.gradle.messaging.serialize.kryo.KryoBackedEncoder;
 
 import java.io.*;
 import java.nio.charset.Charset;
@@ -68,13 +70,13 @@ public class TestOutputStore {
     }
 
     public class Writer implements Closeable {
-        private final Output output;
+        private final KryoBackedEncoder output;
 
         private final Map<Long, Map<Long, TestCaseRegion>> index = new LinkedHashMap<Long, Map<Long, TestCaseRegion>>();
 
         public Writer() {
             try {
-                output = new Output(new FileOutputStream(getOutputsFile()));
+                output = new KryoBackedEncoder(new FileOutputStream(getOutputsFile()));
             } catch (FileNotFoundException e) {
                 throw new UncheckedIOException(e);
             }
@@ -94,8 +96,8 @@ public class TestOutputStore {
             mark(classId, testId, stdout);
 
             output.writeBoolean(stdout);
-            output.writeLong(classId);
-            output.writeLong(testId);
+            output.writeSmallLong(classId);
+            output.writeSmallLong(testId);
 
             byte[] bytes;
             try {
@@ -103,8 +105,8 @@ public class TestOutputStore {
             } catch (UnsupportedEncodingException e) {
                 throw UncheckedException.throwAsUncheckedException(e);
             }
-            output.writeInt(bytes.length);
-            output.writeBytes(bytes);
+            output.writeSmallInt(bytes.length);
+            output.writeBytes(bytes, 0, bytes.length);
         }
 
         private void mark(long classId, long testId, boolean isStdout) {
@@ -122,7 +124,7 @@ public class TestOutputStore {
 
             Region streamRegion = isStdout ? region.stdOutRegion : region.stdErrRegion;
 
-            int total = output.total();
+            int total = output.getWritePosition();
             if (streamRegion.start < 0) {
                 streamRegion.start = total;
             }
@@ -173,10 +175,6 @@ public class TestOutputStore {
         final Region stdOut;
         final Region stdErr;
 
-        private Index() {
-            this(new Region(), new Region());
-        }
-
         private Index(Region stdOut, Region stdErr) {
             this.children = ImmutableMap.of();
             this.stdOut = stdOut;
@@ -219,12 +217,8 @@ public class TestOutputStore {
     }
 
     public class Reader implements Closeable {
-
-        private final static int RECORD_HEADER_LENGTH = 1 + 8 + 8 + 4; // bool(1) + long(8) + long(8) + int(4)
-
         private final Index index;
         private final RandomAccessFile dataFile;
-        private byte[] recordHeaderBuffer = new byte[RECORD_HEADER_LENGTH];
 
         public Reader() {
             File indexFile = getIndexFile();
@@ -232,7 +226,7 @@ public class TestOutputStore {
 
             if (outputsFile.exists()) {
                 if (!indexFile.exists()) {
-                    throw new IllegalStateException(String.format("Test outputs data file '{}' exists but the index file '{}' does not", outputsFile, indexFile));
+                    throw new IllegalStateException(String.format("Test outputs data file '%s' exists but the index file '%s' does not", outputsFile, indexFile));
                 }
 
                 Input input;
@@ -266,27 +260,33 @@ public class TestOutputStore {
                 }
 
                 index = rootBuilder.build();
+
+                try {
+                    dataFile = new RandomAccessFile(getOutputsFile(), "r");
+                } catch (FileNotFoundException e) {
+                    throw new UncheckedIOException(e);
+                }
             } else { // no outputs file
                 if (indexFile.exists()) {
-                    throw new IllegalStateException(String.format("Test outputs data file '{}' does not exist but the index file '{}' does", outputsFile, indexFile));
+                    throw new IllegalStateException(String.format("Test outputs data file '%s' does not exist but the index file '%s' does", outputsFile, indexFile));
                 }
 
-                GFileUtils.touch(getOutputsFile());
-                index = new Index();
-            }
-
-            try {
-                dataFile = new RandomAccessFile(getOutputsFile(), "r");
-            } catch (FileNotFoundException e) {
-                throw new UncheckedIOException(e);
+                index = null;
+                dataFile = null;
             }
         }
 
         public void close() throws IOException {
-            dataFile.close();
+            if (dataFile != null) {
+                dataFile.close();
+            }
         }
 
         public boolean hasOutput(long classId, TestOutputEvent.Destination destination) {
+            if (dataFile == null) {
+                return false;
+            }
+
             Index classIndex = index.children.get(classId);
             if (classIndex == null) {
                 return false;
@@ -309,6 +309,10 @@ public class TestOutputStore {
         }
 
         private void doRead(long classId, long testId, boolean allClassOutput, TestOutputEvent.Destination destination, java.io.Writer writer) {
+            if (dataFile == null) {
+                return;
+            }
+
             Index targetIndex = index.children.get(classId);
             if (targetIndex != null && testId != 0) {
                 targetIndex = targetIndex.children.get(testId);
@@ -330,36 +334,34 @@ public class TestOutputStore {
 
             try {
                 dataFile.seek(region.start);
-
-                while (dataFile.getFilePointer() <= region.stop) {
-                    dataFile.read(recordHeaderBuffer);
-                    Input input = new Input(recordHeaderBuffer);
-                    boolean readStdout = input.readBoolean();
-                    long readClassId = input.readLong();
-                    long readTestId = input.readLong();
-                    int readLength = input.readInt();
-                    input.close();
+                long maxPos = region.stop - region.start;
+                KryoBackedDecoder decoder = new KryoBackedDecoder(new RandomAccessFileInputStream(dataFile));
+                while (decoder.getReadPosition() <= maxPos) {
+                    boolean readStdout = decoder.readBoolean();
+                    long readClassId = decoder.readSmallLong();
+                    long readTestId = decoder.readSmallLong();
+                    int readLength = decoder.readSmallInt();
 
                     boolean isClassLevel = readTestId == 0;
 
                     if (stdout != readStdout || classId != readClassId) {
-                        dataFile.skipBytes(readLength);
+                        decoder.skipBytes(readLength);
                         continue;
                     }
 
                     if (ignoreClassLevel && isClassLevel) {
-                        dataFile.skipBytes(readLength);
+                        decoder.skipBytes(readLength);
                         continue;
                     }
 
                     if (ignoreTestLevel && !isClassLevel) {
-                        dataFile.skipBytes(readLength);
+                        decoder.skipBytes(readLength);
                         continue;
                     }
 
                     if (testId == 0 || testId == readTestId) {
                         byte[] stringBytes = new byte[readLength];
-                        dataFile.read(stringBytes);
+                        decoder.readBytes(stringBytes);
                         String message;
                         try {
                             message = new String(stringBytes, messageStorageCharset.name());
@@ -370,14 +372,12 @@ public class TestOutputStore {
 
                         writer.write(message);
                     } else {
-                        dataFile.skipBytes(readLength);
-                        continue;
+                        decoder.skipBytes(readLength);
                     }
                 }
             } catch (IOException e1) {
                 throw new UncheckedIOException(e1);
             }
-
         }
     }
 

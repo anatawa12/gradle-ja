@@ -17,16 +17,16 @@
 package org.gradle.api.tasks.diagnostics.internal.dsl;
 
 import org.gradle.api.artifacts.result.DependencyResult;
-import org.gradle.api.internal.notations.NotationParserBuilder;
-import org.gradle.api.internal.notations.TypeInfo;
-import org.gradle.api.internal.notations.api.NotationParser;
-import org.gradle.api.internal.notations.api.UnsupportedNotationException;
-import org.gradle.api.internal.notations.parsers.ClosureToSpecNotationParser;
+import org.gradle.internal.typeconversion.NotationParserBuilder;
+import org.gradle.internal.typeconversion.TypeInfo;
+import org.gradle.internal.typeconversion.NotationParser;
+import org.gradle.internal.typeconversion.UnsupportedNotationException;
+import org.gradle.internal.typeconversion.ClosureToSpecNotationParser;
 import org.gradle.api.specs.Spec;
 
 import java.util.Collection;
 
-public class DependencyResultSpecNotationParser implements NotationParser<Spec<DependencyResult>> {
+public class DependencyResultSpecNotationParser implements NotationParser<Object, Spec<DependencyResult>> {
 
     public Spec<DependencyResult> parseNotation(final Object notation) throws UnsupportedNotationException {
         if (notation instanceof CharSequence) {
@@ -43,7 +43,7 @@ public class DependencyResultSpecNotationParser implements NotationParser<Spec<D
         candidateFormats.add("Closure that returns boolean and takes a single DependencyResult as parameter.");
     }
 
-    public static NotationParser<Spec<DependencyResult>> create() {
+    public static NotationParser<Object, Spec<DependencyResult>> create() {
         return new NotationParserBuilder<Spec<DependencyResult>>()
                 .resultingType(new TypeInfo<Spec<DependencyResult>>(Spec.class))
                 .invalidNotationMessage("Please check the input for the DependencyInsight.dependency element.")

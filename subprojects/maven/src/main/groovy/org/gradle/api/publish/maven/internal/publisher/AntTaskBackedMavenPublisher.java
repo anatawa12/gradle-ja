@@ -16,59 +16,30 @@
 
 package org.gradle.api.publish.maven.internal.publisher;
 
-import org.apache.maven.artifact.ant.AttachedArtifact;
 import org.apache.maven.artifact.ant.InstallDeployTaskSupport;
-import org.apache.maven.artifact.ant.Pom;
 import org.apache.maven.artifact.ant.RemoteRepository;
+import org.apache.maven.artifact.repository.ArtifactRepository;
+import org.apache.maven.artifact.repository.DefaultArtifactRepository;
+import org.apache.maven.artifact.repository.layout.ArtifactRepositoryLayout;
 import org.gradle.api.artifacts.repositories.MavenArtifactRepository;
-import org.gradle.api.logging.LogLevel;
 import org.gradle.api.publication.maven.internal.ant.CustomDeployTask;
-import org.gradle.api.publication.maven.internal.ant.EmptyMavenSettingsSupplier;
-import org.gradle.api.publication.maven.internal.ant.MavenSettingsSupplier;
-import org.gradle.api.publication.maven.internal.ant.NoInstallDeployTaskFactory;
-import org.gradle.api.publish.maven.InvalidMavenPublicationException;
-import org.gradle.api.publish.maven.MavenArtifact;
-import org.gradle.api.specs.Spec;
 import org.gradle.internal.Factory;
 import org.gradle.logging.LoggingManagerInternal;
-import org.gradle.util.AntUtil;
-import org.gradle.util.CollectionUtils;
-import org.gradle.util.GUtil;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.io.File;
-import java.util.Set;
 
-public class AntTaskBackedMavenPublisher implements MavenPublisher {
-    private final Factory<LoggingManagerInternal> loggingManagerFactory;
-
-    private static Logger logger = LoggerFactory.getLogger(AntTaskBackedMavenPublisher.class);
-    private final Factory<File> temporaryDirFactory;
-
+public class AntTaskBackedMavenPublisher extends AbstractAntTaskBackedMavenPublisher {
     public AntTaskBackedMavenPublisher(Factory<LoggingManagerInternal> loggingManagerFactory, Factory<File> temporaryDirFactory) {
-        this.loggingManagerFactory = loggingManagerFactory;
-        this.temporaryDirFactory = temporaryDirFactory;
+        super(loggingManagerFactory, temporaryDirFactory);
     }
 
-    public void publish(MavenNormalizedPublication publication, MavenArtifactRepository artifactRepository) {
-        logger.info("Publishing to repository {}", artifactRepository);
-        CustomDeployTask deployTask = createDeployTask();
-
-        MavenSettingsSupplier mavenSettingsSupplier = new EmptyMavenSettingsSupplier();
-        mavenSettingsSupplier.supply(deployTask);
-
+    protected void postConfigure(InstallDeployTaskSupport task, MavenArtifactRepository artifactRepository) {
+        CustomDeployTask deployTask = (CustomDeployTask) task;
         addRepository(deployTask, artifactRepository);
-        addPomAndArtifacts(deployTask, publication);
-        execute(deployTask);
-
-        mavenSettingsSupplier.done();
     }
 
-    private CustomDeployTask createDeployTask() {
-        Factory<CustomDeployTask> deployTaskFactory = new NoInstallDeployTaskFactory(temporaryDirFactory);
-        CustomDeployTask deployTask = deployTaskFactory.create();
-        deployTask.setProject(AntUtil.createProject());
+    protected InstallDeployTaskSupport createDeployTask() {
+        CustomDeployTask deployTask = new DeployTask(temporaryDirFactory);
         deployTask.setUniqueVersion(true);
         return deployTask;
     }
@@ -78,50 +49,22 @@ public class AntTaskBackedMavenPublisher implements MavenPublisher {
         deployTask.addRemoteRepository(mavenRepository);
     }
 
-    private void addPomAndArtifacts(InstallDeployTaskSupport installOrDeployTask, MavenNormalizedPublication publication) {
-        Pom pom = new Pom();
-        pom.setProject(installOrDeployTask.getProject());
-        pom.setFile(publication.getPomFile());
-        installOrDeployTask.addPom(pom);
+    private static class DeployTask extends CustomDeployTask {
+        private final Factory<File> tmpDirFactory;
 
-        MavenArtifact mainArtifact = determineMainArtifact(publication.getName(), publication.getArtifacts());
-        installOrDeployTask.setFile(mainArtifact == null ? publication.getPomFile() : mainArtifact.getFile());
+        public DeployTask(Factory<File> tmpDirFactory) {
+            this.tmpDirFactory = tmpDirFactory;
+        }
 
-        for (MavenArtifact mavenArtifact : publication.getArtifacts()) {
-            if (mavenArtifact == mainArtifact) {
-                continue;
-            }
-            AttachedArtifact attachedArtifact = installOrDeployTask.createAttach();
-            attachedArtifact.setClassifier(GUtil.elvis(mavenArtifact.getClassifier(), ""));
-            attachedArtifact.setType(GUtil.elvis(mavenArtifact.getExtension(), ""));
-            attachedArtifact.setFile(mavenArtifact.getFile());
+        @Override
+        protected ArtifactRepository createLocalArtifactRepository() {
+            ArtifactRepositoryLayout repositoryLayout = (ArtifactRepositoryLayout) lookup(ArtifactRepositoryLayout.ROLE, getLocalRepository().getLayout());
+            return new DefaultArtifactRepository("local", tmpDirFactory.create().toURI().toString(), repositoryLayout);
+        }
+
+        @Override
+        protected void updateRepositoryWithSettings(RemoteRepository repository) {
+            // Do nothing
         }
     }
-
-    private MavenArtifact determineMainArtifact(String publicationName, Set<MavenArtifact> mavenArtifacts) {
-        Set<MavenArtifact> candidateMainArtifacts = CollectionUtils.filter(mavenArtifacts, new Spec<MavenArtifact>() {
-            public boolean isSatisfiedBy(MavenArtifact element) {
-                return element.getClassifier() == null || element.getClassifier().length() == 0;
-            }
-        });
-        if (candidateMainArtifacts.isEmpty()) {
-            return null;
-        }
-        if (candidateMainArtifacts.size() > 1) {
-            throw new InvalidMavenPublicationException(publicationName, "Cannot determine main artifact - multiple artifacts found with empty classifier.");
-        }
-        return candidateMainArtifacts.iterator().next();
-    }
-
-
-    private void execute(InstallDeployTaskSupport deployTask) {
-            LoggingManagerInternal loggingManager = loggingManagerFactory.create();
-            loggingManager.captureStandardOutput(LogLevel.INFO).start();
-            try {
-                deployTask.execute();
-            } finally {
-                loggingManager.stop();
-            }
-        }
-
 }

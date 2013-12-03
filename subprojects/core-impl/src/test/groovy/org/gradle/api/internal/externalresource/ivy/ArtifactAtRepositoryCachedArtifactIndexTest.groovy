@@ -16,20 +16,20 @@
 
 package org.gradle.api.internal.externalresource.ivy
 
-import org.gradle.api.artifacts.ArtifactIdentifier
 import org.gradle.api.internal.artifacts.ivyservice.CacheLockingManager
+import org.gradle.api.internal.artifacts.metadata.ModuleVersionArtifactIdentifier
 import org.gradle.api.internal.externalresource.cached.CachedArtifact
 import org.gradle.api.internal.externalresource.metadata.ExternalResourceMetaData
 import org.gradle.cache.PersistentIndexedCache
-import org.gradle.internal.TimeProvider
 import org.gradle.test.fixtures.file.TestNameTestDirectoryProvider
+import org.gradle.util.BuildCommencedTimeProvider
 import org.junit.Rule
 import spock.lang.Specification
 
 class ArtifactAtRepositoryCachedArtifactIndexTest extends Specification {
 
     CacheLockingManager cacheLockingManager = Mock()
-    TimeProvider timeProvider = Mock()
+    BuildCommencedTimeProvider timeProvider = Mock()
     ArtifactAtRepositoryKey key = Mock()
     ExternalResourceMetaData metaData = Mock()
     @Rule TestNameTestDirectoryProvider folder = new TestNameTestDirectoryProvider();
@@ -37,12 +37,12 @@ class ArtifactAtRepositoryCachedArtifactIndexTest extends Specification {
     PersistentIndexedCache persistentIndexedCache = Mock()
 
     ArtifactAtRepositoryCachedArtifactIndex index
-    File persistentCacheFile
+    String persistentCacheFile
     CachedArtifact cachedArtifact = Mock()
 
 
     def setup() {
-        persistentCacheFile = folder.createFile("cacheFile")
+        persistentCacheFile = "cacheFile"
         index = new ArtifactAtRepositoryCachedArtifactIndex(persistentCacheFile, timeProvider, cacheLockingManager)
     }
 
@@ -66,7 +66,7 @@ class ArtifactAtRepositoryCachedArtifactIndexTest extends Specification {
     def "stored artifact is put into persistentIndexedCache"() {
         setup:
         1 * cacheLockingManager.createCache(persistentCacheFile, _, _) >> persistentIndexedCache
-        def key = new ArtifactAtRepositoryKey("RepoID", Stub(ArtifactIdentifier));
+        def key = new ArtifactAtRepositoryKey("RepoID", Stub(ModuleVersionArtifactIdentifier));
         def testFile = folder.createFile("aTestFile");
         when:
         index.store(key, testFile, BigInteger.TEN)
@@ -121,7 +121,7 @@ class ArtifactAtRepositoryCachedArtifactIndexTest extends Specification {
     def createEntryInPersistentCache() {
         1 * cacheLockingManager.createCache(persistentCacheFile, _, _) >> persistentIndexedCache
         1 * cacheLockingManager.useCache("lookup from artifact resolution cache \'cacheFile\'", _) >> {descr, factory -> factory.create()}
-        def key = new ArtifactAtRepositoryKey("RepoID", Stub(ArtifactIdentifier));
+        def key = new ArtifactAtRepositoryKey("RepoID", Stub(ModuleVersionArtifactIdentifier));
         1 * persistentIndexedCache.get(key) >> cachedArtifact;
         key
     }

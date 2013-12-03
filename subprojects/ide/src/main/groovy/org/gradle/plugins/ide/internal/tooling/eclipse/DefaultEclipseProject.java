@@ -16,16 +16,17 @@
 package org.gradle.plugins.ide.internal.tooling.eclipse;
 
 import com.google.common.collect.Lists;
+import org.gradle.tooling.internal.gradle.DefaultGradleProject;
+import org.gradle.tooling.internal.gradle.GradleProjectIdentity;
 import org.gradle.tooling.internal.protocol.ExternalDependencyVersion1;
 import org.gradle.tooling.internal.protocol.eclipse.*;
-import org.gradle.tooling.model.GradleProject;
 
 import java.io.File;
 import java.io.Serializable;
 import java.util.Collections;
 import java.util.List;
 
-public class DefaultEclipseProject implements EclipseProjectVersion3, Serializable {
+public class DefaultEclipseProject implements EclipseProjectVersion3, Serializable, GradleProjectIdentity {
     private final String name;
     private final String path;
     private EclipseProjectVersion3 parent;
@@ -37,7 +38,7 @@ public class DefaultEclipseProject implements EclipseProjectVersion3, Serializab
     private final File projectDirectory;
     private Iterable<? extends EclipseTaskVersion1> tasks;
     private Iterable<? extends EclipseLinkedResourceVersion1> linkedResources;
-    private GradleProject gradleProject;
+    private DefaultGradleProject gradleProject;
 
     public DefaultEclipseProject(String name, String path, String description, File projectDirectory, Iterable<? extends EclipseProjectVersion3> children) {
         this.name = name;
@@ -123,11 +124,11 @@ public class DefaultEclipseProject implements EclipseProjectVersion3, Serializab
         this.linkedResources = linkedResources;
     }
 
-    public GradleProject getGradleProject() {
+    public DefaultGradleProject getGradleProject() {
         return gradleProject;
     }
 
-    public DefaultEclipseProject setGradleProject(GradleProject gradleProject) {
+    public DefaultEclipseProject setGradleProject(DefaultGradleProject gradleProject) {
         this.gradleProject = gradleProject;
         return this;
     }

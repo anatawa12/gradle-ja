@@ -26,7 +26,7 @@ import org.gradle.util.CollectionUtils;
 import org.gradle.util.NameMatcher;
 
 import java.util.Collection;
-import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.Set;
 
 public class TaskSelector {
@@ -51,7 +51,7 @@ public class TaskSelector {
         if (taskPath.isQualified()) {
             tasksByName = taskNameResolver.select(taskPath.getTaskName(), taskPath.getProject());
         } else {
-            tasksByName = taskNameResolver.selectAll(path, project);
+            tasksByName = taskNameResolver.selectAll(taskPath.getTaskName(), taskPath.getProject());
         }
 
         Set<TaskSelectionResult> tasks = tasksByName.get(taskPath.getTaskName());
@@ -66,7 +66,7 @@ public class TaskSelector {
             return new TaskSelection(taskPath.getPrefix() + actualName, tasksByName.get(actualName));
         }
 
-        throw new TaskSelectionException(matcher.formatErrorMessage("task", project));
+        throw new TaskSelectionException(matcher.formatErrorMessage("task", taskPath.getProject()));
     }
 
     public static class TaskSelection {
@@ -82,11 +82,11 @@ public class TaskSelector {
         }
 
         public Set<Task> getTasks() {
-            return new HashSet<Task>(CollectionUtils.collect(taskSelectionResult, new Transformer<Task, TaskSelectionResult>() {
+            return CollectionUtils.collect(taskSelectionResult, new LinkedHashSet<Task>(), new Transformer<Task, TaskSelectionResult>() {
                 public Task transform(TaskSelectionResult original) {
                     return original.getTask();
                 }
-            }));
+            });
         }
     }
 }

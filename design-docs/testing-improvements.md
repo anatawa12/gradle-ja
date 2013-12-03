@@ -1,4 +1,4 @@
-Improve TestNG test execution/reporting
+Improve test execution and reporting
 
 # Use cases
 
@@ -9,142 +9,6 @@ Improve TestNG test execution/reporting
 
 # Implementation plan
 
-## Story: TestNG XML generation is efficient (DONE)
-
--test events/output stored in binary format (internal format geared towards efficiency)
-    -2 files per test class (events and output, the latter is streamed), cache of open files
-    -uses java serialization
-    -the binary file with output is streamed. We should keep reasonable amount of files open
--parent process writes the binary results
--parent process writes the XML results
-
-### Coverage
-
--update existing coverage if needed
--inconsistent data in the binary format: unfinished tests, output for tests with unknown id, etc
--no binary results after test execution
--file handles are closed
-
-### Backwards compatibility
-
--story introduces negligible breaking change: if the worker process / parent process crashes, no XML results are generated at all. Previously, partial XML results are available.
-
-## Story: TestNG produces the new XML/HTML result by default (DONE)
-
-- Change the Test `testReport` default value to `true`.
-- Change the Test `testNGOptions.useDefaultListeners` default value to `false`.
-- Extract a shared `TestReporter` implementation out of `TestNGTestFramework` and `JUnitTestFramework` and remove `TestFramework.report()`.
-- Update the documentation and release notes accordingly.
-
-### Coverage
-
-- Add a performance test with a build with many TestNG tests which do not generate any logging output. Verify that this build is not any slower than Gradle 1.0 or Gradle 1.3.
-- Update `TestNGProducesJUnitXmlResultsIntegrationTest` so that it uses the default value for the `testReport` property.
-- Update `TestNGProducesOldReportsIntegrationTest` so that it uses the appropriate values for the `testReport` property.
-- Update performance tests to use the default setting for the `testReport` property.
-
-### Backwards compatibility:
-
-- Story changes the default values (for better, though)
-
-## Story: JUnit XML generation is efficient (DONE)
-
-Use the same mechanism as TestNG for XML result generation
-
-- Change `Test.executeTests()` so that it uses a TestReportDataCollector for all test frameworks (not just TestNG)
-- Change `JUnitTestClassProcessor.startProcessing()` so that it no longer uses `JUnitXmlReportGenerator`.
-- Remove `JUnitXmlReportGenerator`, `XmlTestSuiteWriter` and `XmlTestSuiteWriterFactory`.
-
-### Coverage
-
-- Add a performance test with a build with many JUnit tests which do not generate any logging output. Verify that this build is not any slower than Gradle 1.0 or Gradle 1.3.
-- Add coverage for tests that don't have an associated method or class.
-- Check that start-time and duration reported for a class should include all setup and tear-down.
-
-### Backwards compatibility:
-
-- No partial XML results available when process crashes (see first story for more)
-
-## Story: HTML test report generation is efficient (DONE)
-
-HTML report is generated from the binary format, not from XML results
-
-- Change `DefaultTestReport` to use `TestResultsProvider` to get results instead of loading from XML.
-- Spike using [jatl](http://code.google.com/p/jatl/) to generate the report instead of using the DOM.
-- Change the report rendering so that it copies the test output directly from `TestResultsProvider` to file, rather than loading it into heap.
-
-## Bug GRADLE-2649: Test report shows implementation class for tests run via `@RunWith(Suite.class)` (DONE)
-
-- Change `DecoratingTestDescriptor.getClassName()` to return the delegate's class name.
-- Change `TestReportDataCollector.onOutput()` to create a class test result object when the test descriptor has a class name associated with it, and
-  there are no results for the test class.
-
-### Coverage
-
-- A JUnit 4 suite `SomeSuite` includes 2 test classes `Class1` and `Class2`, and has @BeforeClass and @AfterClass methods that generate logging.
-    - The XML results should include an XML file for `SomeSuite` containing its logging, an XML file for `Class1` containing its tests and their
-      logging, and an XML file for `Class2` containing its tests and their logging.
-    - The HTML report should include the same information.
-- A JUnit 3 suite `SomeSuite` includes 2 test classes, wrapped in a `TestSetup` decorator that generates logging during setup and teardown. The suite includes
-  2 test classes `Class1` and `Class2`.
-    - The XML results and HTML report should include the same information as the previous test case.
-- Multiple JUnit suites that include the same test class `SomeClass`.
-    - The XML results should include an XML file for `SomeClass` that includes each test method multiple times, one for each time it was executed.
-    - The HTML report should include the same information.
-
-## Story: Add support for JUnit categories (DONE)
-
-- Add `JUnitOptions.includeCategories` and `excludeCategories` properties. These define a set of category types
-  to include and exclude, respectively.
-- When include categories are specified, a test method is filtered if it or its test class is not annotated with a
-  `@Category` annotation where one of the listed types is assignable-to one of the specified include category types.
-- When exclude categories are specified, a test method is filtered if it or its test class is annotated with a
-  `@Category` annotation where one of the listed types is assignable-to one of the specified exclude category types.
-- A test class is filtered when all of its test methods are filtered.
-- if include and/or exclude categories are defined but the selected JUnit version does not support categories, a warning is emitted.
-
-### Implementation
-
-1. Add the above filtering in `JUnitTestClassExecuter`.
-2. Add documentation to the 'testing' section of the user guide that describes how to use categories with JUnit and
-  groups with TestNG.
-3. Extend the JUnit test detection so that:
-    - When exclude categories have been specified, then filter the following classes:
-        - The class is annotated with an exclude category or one of its subtypes OR
-        - The class and its supertypes are not annotated with `@RunWith` and all of of the class' declared and inherited
-          `@Test` methods are annotated with an exclude category or one of its subtypes.
-    - When include categories have been specified, then filter the following classes:
-        - The class or its super types are not annotated with `@RunWith` AND
-        - The class is not annotated with an include category or one of its subtypes AND
-        - None of the class' declared or inherited `@Test` methods annotated with an include category or one
-          of its subtypes.
-
-### Test coverage
-
-- When include and exclude categories specified:
-    - All test methods from a class annotated with include category are executed.
-    - All test methods from a class annotated with include category subtype are executed.
-    - No test methods for a class annotated with exclude category are executed.
-    - No test methods for a class annotated with exclude category subtype are executed.
-    - No test methods for a class annotated with both include and exclude categories are executed.
-    - No test methods for a class annotated with some other category are executed.
-    - No test methods for a class with no annotations are executed.
-    - Test method annotated with include category on class with no annotations is executed.
-    - Test method annotated with exclude category on class annotated with include category is not executed.
-    - Test method annotated with include category on class annotated with exclude category is not executed.
-- When exclude categories specified:
-    - All test methods for a class annotated with some other category are executed.
-    - All test methods from a class with no annotations are executed.
-    - No test methods for a class annotated with exclude category are executed.
-    - Test method annotated with include category on class with no annotations is executed.
-    - Test method annotated with exclude category on class with no annotations is not executed.
-- Class uses custom test runner that creates a tree of tests with a mix of categories.
-- Run one filtering test case against multiple JUnit versions in `JUnitCrossVersionIntegrationSpec`.
-- Warning is emitted if categories are configured but junit version does not support categories.
-- Report includes details when one of the include or exclude annotation types cannot be loaded.
-- Report include details when all test classes are excluded
-- When a test method is both included and @Ignored, the test method is reported as 'skipped'.
-
 ## Story: Add a JaCoCo code coverage plugin
 
 - Merge the [JaCoCo plugin pull request](https://github.com/gradle/gradle/pull/138)
@@ -154,18 +18,38 @@ HTML report is generated from the binary format, not from XML results
 - Move default destination dir from `JacocoMerge` to plugin.
 - Move default report dir from `JacocoReport` to plugin.
 - Fix up input and output files on `JacocoReport`.
-- `JacocoReport` should not use sourcesets to represent source
-- Change the reporting task so that it `mustRunAfter` the test task.
+- Change the reporting task so that it `mustRunAfter` the test task rather than depends on the test task
+- Running `gradle check` should generate the unit test report
 - Flip the relationship between `jacoco` plugin and `sonar` plugins.
+- Flip the relationship between `jacoco` plugin and `java` plugins.
+- Add `jacoco.reportFormat` extension property.
+- `JacocoReport` should not use sourcesets to represent source
 - Rename the `jacoco` project to `testing`.
 - Move the testing infrastructure into this project.
 - Change the reporting task to implement `Reporting`.
+- Merge `JacocoReport.sourceDirectories` and `additionalSourceDirectories`.
+- Merge `JacocoReport.classDirectories` and `additionalClassDirectories`.
+- Move the input execution data stuff up to `JacocoBase`.
+- Separate coverage infrastructure and convention.
+- Fail build if certain coverage thresholds have not been reached.
+- Document the defaults for `JaCoCoTaskExtension`.
+- Introduce the concept of a test suite.
+    - Add a container of test suites.
+    - Each test suite has an associated test task.
+    - Each test suite has an associated test binary and production binary.
+    - The java plugin (or whatever) defines a single test suite.
+    - The jacoco plugin should add a report task for each test suite for which coverage is enabled.
+    - The jacoco plugin should use the production binary to decide which classes and source files to
+      report on.
 
 ### Test coverage
 
-- Report is generated when all tests fail.
-- Report is generated when one or more tests fail.
+- Report is generated when all tests fail and run with `--continue`.
+- Report is generated when one or more tests fail and run with `--continue`.
 - Report is not generated when tests cannot be run.
+- Dashboard report includes link to each coverage report.
+- Running `gradle jacocoTestReport` generates empty report if test has not been run.
+- Running `gradle test jacocoTestReport` generates report.
 
 ## Story: `Test` task implements the `Reporting` contract
 
@@ -295,21 +179,20 @@ Test output is associated with the correct test when test cases are run concurre
 
 ## Story: HTML test report shows aggregated output (out + err)
 
--instead of showing separate tabs for out + err, there's a single tab 'output'
+Introduce a timeline of the test execution that visualizes the output and error logging of the tests for a class:
 
-### Backwards compatibility:
-
--depending how the story is implemented, we might drop support for separate err and std output.
-It's a breaking change in a way but I don't find the separate err/std output useful.
+- Instead of showing separate tabs for out + err, there's a single tab 'output'
+- stdout and stderr are rendered in visually distinct ways
+- Interleave the test start and complete events into the output.
 
 ## Story: HTML test report shows runtime grouping of tests into suites
 
-- Add the tree of test execution to the test report
+- Show the runtime tree of test execution to the test report, in addition to the current implementation view.
+- Include some way to attach context to a test suite to include in the reports
 
-## Story: Aggregate HTML test report can be generated
+## Story: Aggregate HTML test report shows execution of same class in multiple suites
 
-- Change test task to persist test results in internal format.
-- Add test report task.
+Currently the aggregate test report implementation cannot handle a given class executing in multiple suites.
 
 ## Story: HTML report contains the output from TestNG Reporter
 
@@ -339,3 +222,4 @@ We could possibly fix it by starting redirecting the output at suite start in th
 # Other issues
 
 - Provide some way to generate only the old TestNG reports, so that both test report and test XML generation can be disabled.
+- Reports should distinguish between tests and configure operations.

@@ -24,6 +24,8 @@ import org.apache.tools.ant.taskdefs.Tar;
 import org.apache.tools.ant.taskdefs.Zip;
 import org.apache.tools.ant.types.EnumeratedAttribute;
 import org.codehaus.groovy.runtime.DefaultGroovyMethods;
+import org.gradle.internal.nativeplatform.filesystem.*;
+import org.gradle.internal.nativeplatform.services.NativeServices;
 import org.hamcrest.Matcher;
 
 import java.io.*;
@@ -63,6 +65,16 @@ public class TestFile extends File {
 
     Object writeReplace() throws ObjectStreamException {
         return new File(getAbsolutePath());
+    }
+
+    @Override
+    public File getCanonicalFile() throws IOException {
+        return new File(getAbsolutePath()).getCanonicalFile();
+    }
+
+    @Override
+    public String getCanonicalPath() throws IOException {
+        return new File(getAbsolutePath()).getCanonicalPath();
     }
 
     private static URI toUri(URL url) {
@@ -340,9 +352,16 @@ public class TestFile extends File {
         }
     }
 
-    public TestFile assertPermissions(Matcher<String> matcher) {
-        assertThat(String.format("mismatched permissions for '%s'", this), getPermissions(), matcher);
-        return this;
+    public void createLink(File target) {
+        createLink(target.getAbsolutePath());
+    }
+
+    public void createLink(String target) {
+        try {
+            NativeServices.getInstance().get(FileSystem.class).createSymbolicLink(this, new File(target));
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     public String readLink() {
@@ -517,6 +536,11 @@ public class TestFile extends File {
         assertTrue(now.modTime != snapshot.modTime || !Arrays.equals(now.hash, snapshot.hash));
     }
 
+    public void assertContentsHaveChangedSince(Snapshot snapshot) {
+        Snapshot now = snapshot();
+        assertTrue(String.format("contents of %s have not changed", this), !Arrays.equals(now.hash, snapshot.hash));
+    }
+
     public void assertContentsHaveNotChangedSince(Snapshot snapshot) {
         Snapshot now = snapshot();
         assertArrayEquals(String.format("contents of %s has changed", this), snapshot.hash, now.hash);
@@ -543,8 +567,12 @@ public class TestFile extends File {
         }
     }
     
-    public Map<String, ?> exec(Object... args) {
-        return new TestFileHelper(this).exec(args);
+    public ExecOutput exec(Object... args) {
+        return new TestFileHelper(this).execute(Arrays.asList(args), null);
+    }
+
+    public ExecOutput execute(List args, List env) {
+        return new TestFileHelper(this).execute(args, env);
     }
 
     public class Snapshot {

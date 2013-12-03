@@ -17,28 +17,20 @@
 package org.gradle.initialization;
 
 import org.gradle.api.internal.ClassPathRegistry;
-import org.gradle.internal.classloader.MutableURLClassLoader;
+import org.gradle.internal.classloader.*;
 import org.gradle.internal.classpath.ClassPath;
 import org.gradle.internal.classpath.DefaultClassPath;
 import org.gradle.internal.jvm.Jvm;
-import org.gradle.util.*;
 
 import java.io.File;
 import java.net.URLClassLoader;
 
-public class DefaultClassLoaderRegistry implements ClassLoaderRegistry {
+public class DefaultClassLoaderRegistry implements ClassLoaderRegistry, JdkToolsInitializer {
     private final FilteringClassLoader rootClassLoader;
     private final ClassLoader coreImplClassLoader;
     private final ClassLoader pluginsClassLoader;
 
     public DefaultClassLoaderRegistry(ClassPathRegistry classPathRegistry, ClassLoaderFactory classLoaderFactory) {
-        // Add in tools.jar to the systemClassloader parent
-        File toolsJar = Jvm.current().getToolsJar();
-        if (toolsJar != null) {
-            final ClassLoader systemClassLoaderParent = ClassLoader.getSystemClassLoader().getParent();
-            ClasspathUtil.addUrl((URLClassLoader) systemClassLoaderParent, new DefaultClassPath(toolsJar).getAsURLs());
-        }
-
         ClassLoader runtimeClassLoader = getClass().getClassLoader();
 
         // Core impl
@@ -64,7 +56,20 @@ public class DefaultClassLoaderRegistry implements ClassLoaderRegistry {
         rootClassLoader.allowPackage("javax.inject");
     }
 
-    public ClassLoader getRootClassLoader() {
+    public void initializeJdkTools() {
+        // Add in tools.jar to the systemClassloader parent
+        File toolsJar = Jvm.current().getToolsJar();
+        if (toolsJar != null) {
+            final ClassLoader systemClassLoaderParent = ClassLoader.getSystemClassLoader().getParent();
+            ClasspathUtil.addUrl((URLClassLoader) systemClassLoaderParent, new DefaultClassPath(toolsJar).getAsURLs());
+        }
+    }
+
+    public ClassLoader getRuntimeClassLoader() {
+        return getClass().getClassLoader();
+    }
+
+    public ClassLoader getGradleApiClassLoader() {
         return rootClassLoader;
     }
 

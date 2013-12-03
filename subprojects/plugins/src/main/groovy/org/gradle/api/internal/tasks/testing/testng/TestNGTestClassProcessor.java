@@ -21,17 +21,20 @@ import org.gradle.api.internal.tasks.testing.TestClassProcessor;
 import org.gradle.api.internal.tasks.testing.TestClassRunInfo;
 import org.gradle.api.internal.tasks.testing.TestResultProcessor;
 import org.gradle.api.internal.tasks.testing.processors.CaptureTestOutputTestResultProcessor;
+import org.gradle.api.internal.tasks.testing.selection.TestSelectionMatcher;
 import org.gradle.internal.id.IdGenerator;
+import org.gradle.internal.reflect.JavaReflectionUtil;
+import org.gradle.internal.reflect.NoSuchMethodException;
 import org.gradle.logging.StandardOutputRedirector;
 import org.gradle.util.CollectionUtils;
 import org.gradle.util.GFileUtils;
-import org.testng.ITestListener;
-import org.testng.TestNG;
+import org.testng.*;
 
 import java.io.File;
-import java.lang.reflect.Method;
 import java.util.ArrayList;
+import java.util.LinkedList;
 import java.util.List;
+import java.util.Set;
 
 public class TestNGTestClassProcessor implements TestClassProcessor {
     private final List<Class<?>> testClasses = new ArrayList<Class<?>>();
@@ -76,12 +79,9 @@ public class TestNGTestClassProcessor implements TestClassProcessor {
         testNg.setParallel(options.getParallel());
         testNg.setThreadCount(options.getThreadCount());
         try {
-            final Method setAnnotations = TestNG.class.getMethod("setAnnotations");
-            setAnnotations.invoke(testNg, options.getAnnotations());
+            JavaReflectionUtil.method(TestNG.class, Object.class, "setAnnotations").invoke(testNg, options.getAnnotations());
         } catch (NoSuchMethodException e) {
             /* do nothing; method has been removed in TestNG 6.3 */
-        } catch (Exception e) {
-            throw new GradleException(String.format("Could not configure TestNG annotations with value '%s'.", options.getAnnotations()), e);
         }
         if (options.getJavadocAnnotations()) {
             testNg.setSourcePath(CollectionUtils.join(File.pathSeparator, options.getTestResources()));
@@ -89,6 +89,9 @@ public class TestNGTestClassProcessor implements TestClassProcessor {
 
         testNg.setUseDefaultListeners(options.getUseDefaultListeners());
         testNg.addListener((Object) adaptListener(testResultProcessor));
+        if (!options.getIncludedTests().isEmpty()) {
+            testNg.addListener(new SelectedTestsFilter(options.getIncludedTests()));
+        }
         testNg.setVerbose(0);
         testNg.setGroups(CollectionUtils.join(",", options.getIncludeGroups()));
         testNg.setExcludedGroups(CollectionUtils.join(",", options.getExcludeGroups()));
@@ -103,8 +106,7 @@ public class TestNGTestClassProcessor implements TestClassProcessor {
         if (!suiteFiles.isEmpty()) {
             testNg.setTestSuites(GFileUtils.toPaths(suiteFiles));
         } else {
-            Class[] classes = testClasses.toArray(new Class[testClasses.size()]);
-            testNg.setTestClasses(classes);
+            testNg.setTestClasses(testClasses.toArray(new Class[testClasses.size()]));
         }
 
         testNg.run();
@@ -113,5 +115,24 @@ public class TestNGTestClassProcessor implements TestClassProcessor {
     private ITestListener adaptListener(ITestListener listener) {
         TestNGListenerAdapterFactory factory = new TestNGListenerAdapterFactory(applicationClassLoader);
         return factory.createAdapter(listener);
+    }
+
+    private static class SelectedTestsFilter implements IMethodInterceptor {
+
+        private final TestSelectionMatcher matcher;
+
+        public SelectedTestsFilter(Set<String> includedTests) {
+            matcher = new TestSelectionMatcher(includedTests);
+        }
+
+        public List<IMethodInstance> intercept(List<IMethodInstance> methods, ITestContext context) {
+            List<IMethodInstance> filtered = new LinkedList<IMethodInstance>();
+            for (IMethodInstance candidate : methods) {
+                if (matcher.matchesTest(candidate.getMethod().getTestClass().getName(), candidate.getMethod().getMethodName())) {
+                    filtered.add(candidate);
+                }
+            }
+            return filtered;
+        }
     }
 }

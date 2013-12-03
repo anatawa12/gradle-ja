@@ -18,11 +18,11 @@ package org.gradle.api.internal.file.copy;
 import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.ListMultimap;
 import groovy.lang.Closure;
-import org.gradle.api.Action;
 import org.gradle.api.file.ContentFilterable;
 import org.gradle.api.file.DuplicatesStrategy;
 import org.gradle.api.file.RelativePath;
 import org.gradle.api.internal.file.AbstractFileTreeElement;
+import org.gradle.api.internal.file.CopyActionProcessingStreamAction;
 import org.gradle.api.tasks.WorkResult;
 
 import java.io.File;
@@ -47,17 +47,19 @@ public class NormalizingCopyActionDecorator implements CopyAction {
         final ListMultimap<RelativePath, FileCopyDetailsInternal> pendingDirs = ArrayListMultimap.create();
 
         WorkResult result = delegate.execute(new CopyActionProcessingStream() {
-            public void process(final Action<? super FileCopyDetailsInternal> action) {
-                stream.process(new Action<FileCopyDetailsInternal>() {
-                    public void execute(FileCopyDetailsInternal details) {
+            public void process(final CopyActionProcessingStreamAction action) {
+
+
+                stream.process(new CopyActionProcessingStreamAction() {
+                    public void processFile(FileCopyDetailsInternal details) {
                         if (details.isDirectory()) {
                             RelativePath path = details.getRelativePath();
                             if (!visitedDirs.contains(path)) {
                                 pendingDirs.put(path, details);
                             }
                         } else {
-                            maybeVisit(details.getRelativePath().getParent(), details.getCopySpec(), action);
-                            action.execute(details);
+                            maybeVisit(details.getRelativePath().getParent(), details.isIncludeEmptyDirs(), action);
+                            action.processFile(details);
                         }
                     }
                 });
@@ -65,8 +67,8 @@ public class NormalizingCopyActionDecorator implements CopyAction {
                 for (RelativePath path : new LinkedHashSet<RelativePath>(pendingDirs.keySet())) {
                     List<FileCopyDetailsInternal> detailsList = new ArrayList<FileCopyDetailsInternal>(pendingDirs.get(path));
                     for (FileCopyDetailsInternal details : detailsList) {
-                        if (details.getCopySpec().getIncludeEmptyDirs()) {
-                            maybeVisit(path, details.getCopySpec(), action);
+                        if (details.isIncludeEmptyDirs()) {
+                            maybeVisit(path, details.isIncludeEmptyDirs(), action);
                         }
                     }
                 }
@@ -75,21 +77,21 @@ public class NormalizingCopyActionDecorator implements CopyAction {
                 pendingDirs.clear();
             }
 
-            private void maybeVisit(RelativePath path, CopySpecInternal copySpec, Action<? super FileCopyDetailsInternal> delegateAction) {
+            private void maybeVisit(RelativePath path, boolean includeEmptyDirs, CopyActionProcessingStreamAction delegateAction) {
                 if (path == null || path.getParent() == null || !visitedDirs.add(path)) {
                     return;
                 }
-                maybeVisit(path.getParent(), copySpec, delegateAction);
+                maybeVisit(path.getParent(), includeEmptyDirs, delegateAction);
                 List<FileCopyDetailsInternal> detailsForPath = pendingDirs.removeAll(path);
 
                 FileCopyDetailsInternal dir;
                 if (detailsForPath.isEmpty()) {
                     // TODO - this is pretty nasty, look at avoiding using a time bomb stub here
-                    dir = new StubbedFileCopyDetails(path, copySpec);
+                    dir = new StubbedFileCopyDetails(path, includeEmptyDirs);
                 } else {
                     dir = detailsForPath.get(0);
                 }
-                delegateAction.execute(dir);
+                delegateAction.processFile(dir);
             }
         });
 
@@ -99,16 +101,16 @@ public class NormalizingCopyActionDecorator implements CopyAction {
 
     private static class StubbedFileCopyDetails extends AbstractFileTreeElement implements FileCopyDetailsInternal {
         private final RelativePath path;
+        private final boolean includeEmptyDirs;
         private long lastModified = System.currentTimeMillis();
-        private final CopySpecInternal copySpec;
 
-        private StubbedFileCopyDetails(RelativePath path, CopySpecInternal copySpec) {
+        private StubbedFileCopyDetails(RelativePath path, boolean includeEmptyDirs) {
             this.path = path;
-            this.copySpec = copySpec;
+            this.includeEmptyDirs = includeEmptyDirs;
         }
 
-        public CopySpecInternal getCopySpec() {
-            return copySpec;
+        public boolean isIncludeEmptyDirs() {
+            return includeEmptyDirs;
         }
 
         @Override

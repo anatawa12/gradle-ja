@@ -29,12 +29,13 @@ import org.apache.ivy.core.resolve.ResolvedModuleRevision;
 import org.apache.ivy.core.search.ModuleEntry;
 import org.apache.ivy.core.search.OrganisationEntry;
 import org.apache.ivy.core.search.RevisionEntry;
+import org.apache.ivy.plugins.latest.LatestStrategy;
 import org.apache.ivy.plugins.namespace.Namespace;
 import org.apache.ivy.plugins.resolver.BasicResolver;
 import org.apache.ivy.plugins.resolver.DependencyResolver;
 import org.apache.ivy.plugins.resolver.ResolverSettings;
 import org.apache.ivy.plugins.resolver.util.ResolvedResource;
-import org.gradle.api.internal.artifacts.ivyservice.ivyresolve.IvyAwareModuleVersionRepository;
+import org.gradle.api.internal.artifacts.ivyservice.ivyresolve.ConfiguredModuleVersionRepository;
 import org.gradle.api.internal.artifacts.repositories.resolver.ExternalResourceResolver;
 
 import java.io.File;
@@ -50,11 +51,10 @@ import java.util.Map;
  */
 public class LegacyDependencyResolver implements DependencyResolver, ResolutionAwareRepository {
     private final ExternalResourceResolver resolver;
-    private final IvyAwareModuleVersionRepository repository;
+    private ResolverSettings settings;
 
-    public LegacyDependencyResolver(ExternalResourceResolver resolver, IvyAwareModuleVersionRepository repository) {
+    public LegacyDependencyResolver(ExternalResourceResolver resolver) {
         this.resolver = resolver;
-        this.repository = repository;
     }
 
     public String getName() {
@@ -69,16 +69,16 @@ public class LegacyDependencyResolver implements DependencyResolver, ResolutionA
         return resolver.toString();
     }
 
-    public IvyAwareModuleVersionRepository createResolver() {
-        return repository;
+    public ConfiguredModuleVersionRepository createResolver() {
+        return resolver;
     }
 
-    public void setSettings(ResolverSettings ivy) {
-        resolver.setSettings(ivy);
+    public void setSettings(ResolverSettings settings) {
+        this.settings = settings;
     }
 
     public ResolverSettings getSettings() {
-        return resolver.getSettings();
+        return settings;
     }
 
     public ResolvedModuleRevision getDependency(DependencyDescriptor dd, ResolveData data) throws ParseException {
@@ -249,6 +249,22 @@ public class LegacyDependencyResolver implements DependencyResolver, ResolutionA
 
     public void setChecksums(String checksums) {
         resolver.setChecksums(checksums);
+    }
+
+    public LatestStrategy getLatestStrategy() {
+        throw new UnsupportedOperationException("getLatestStrategy");
+    }
+
+    public void setLatestStrategy(LatestStrategy latestStrategy) {
+        throw new UnsupportedOperationException("setLatestStrategy");
+    }
+
+    public String getLatest() {
+        throw new UnsupportedOperationException("getLatest");
+    }
+
+    public void setLatest(String strategyName) {
+        throw new UnsupportedOperationException("setLatest");
     }
 
     public void setChangingMatcher(String changingMatcherName) {

@@ -24,7 +24,6 @@ import org.gradle.integtests.tooling.fixture.TextUtil
 import org.gradle.integtests.tooling.fixture.ToolingApi
 import org.gradle.test.fixtures.file.TestFile
 import org.gradle.tooling.GradleConnector
-import org.gradle.tooling.UnsupportedVersionException
 import org.gradle.tooling.model.GradleProject
 import org.gradle.util.GradleVersion
 import spock.lang.Issue
@@ -33,7 +32,6 @@ class ToolingApiIntegrationTest extends AbstractIntegrationSpec {
 
     final ToolingApi toolingApi = new ToolingApi(distribution, temporaryFolder)
     final GradleDistribution otherVersion = new ReleasedVersionDistributions().mostRecentFinalRelease
-    final IntegrationTestBuildContext buildContext = new IntegrationTestBuildContext()
 
     TestFile projectDir
 
@@ -142,23 +140,11 @@ allprojects {
         model != null
     }
 
-    def "tooling api reports an error when the specified gradle version does not support the tooling api"() {
-        def distroZip = buildContext.distribution('0.9.2').binDistribution
-
-        when:
-        toolingApi.withConnector { connector -> connector.useDistribution(distroZip.toURI()) }
-        toolingApi.maybeFailWithConnection { connection -> connection.getModel(GradleProject.class) }
-
-        then:
-        UnsupportedVersionException e = thrown()
-        e.message == "The specified Gradle distribution '${distroZip.toURI()}' is not supported by this tooling API version (${GradleVersion.current().version}, protocol version 4)"
-    }
-
     @Issue("GRADLE-2419")
     def "tooling API does not hold JVM open"() {
         given:
         def buildFile = projectDir.file("build.gradle")
-        def startTimeoutMs = 60000
+        def startTimeoutMs = 90000
         def stateChangeTimeoutMs = 15000
         def stopTimeoutMs = 10000
         def retryIntervalMs = 500
@@ -253,7 +239,6 @@ allprojects {
         when:
         GradleHandle handle = executer.inDirectory(projectDir)
                 .withTasks('run')
-                .withDaemonIdleTimeoutSecs(60)
                 .start()
 
         then:
@@ -284,6 +269,7 @@ allprojects {
             if (System.currentTimeMillis() - stopMarkerAt > stopTimeoutMs) {
                 throw new Exception("timeout after placing stop marker (JVM might have been held open")
             }
+            sleep retryIntervalMs
         }
 
         handle.waitForFinish()

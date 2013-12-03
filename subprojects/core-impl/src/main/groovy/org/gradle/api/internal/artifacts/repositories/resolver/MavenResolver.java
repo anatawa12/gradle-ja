@@ -24,7 +24,10 @@ import org.apache.ivy.plugins.matcher.PatternMatcher;
 import org.gradle.api.internal.artifacts.ModuleMetadataProcessor;
 import org.gradle.api.internal.artifacts.ivyservice.ivyresolve.BuildableModuleVersionMetaDataResolveResult;
 import org.gradle.api.internal.artifacts.ivyservice.ivyresolve.ModuleSource;
-import org.gradle.api.internal.artifacts.ivyservice.ivyresolve.parser.MetaDataParser;
+import org.gradle.api.internal.artifacts.ivyservice.ivyresolve.parser.GradlePomModuleDescriptorParser;
+import org.gradle.api.internal.artifacts.ivyservice.ivyresolve.strategy.LatestStrategy;
+import org.gradle.api.internal.artifacts.ivyservice.ivyresolve.strategy.ResolverStrategy;
+import org.gradle.api.internal.artifacts.ivyservice.ivyresolve.strategy.VersionMatcher;
 import org.gradle.api.internal.artifacts.repositories.transport.RepositoryTransport;
 import org.gradle.api.internal.externalresource.local.LocallyAvailableResourceFinder;
 import org.gradle.api.internal.resource.ResourceNotFoundException;
@@ -51,13 +54,11 @@ public class MavenResolver extends ExternalResourceResolver implements PatternBa
 
     public MavenResolver(String name, URI rootUri, RepositoryTransport transport,
                          LocallyAvailableResourceFinder<ArtifactRevisionId> locallyAvailableResourceFinder,
-                         MetaDataParser metaDataParser, ModuleMetadataProcessor metadataProcessor
-    ) {
-        super(name,
-                transport.getRepository(),
+                         ModuleMetadataProcessor metadataProcessor, VersionMatcher versionMatcher,
+                         LatestStrategy latestStrategy, ResolverStrategy resolverStrategy) {
+        super(name, transport.getRepository(),
                 new ChainedVersionLister(new MavenVersionLister(transport.getRepository()), new ResourceVersionLister(transport.getRepository())),
-                locallyAvailableResourceFinder,
-                metaDataParser, metadataProcessor);
+                locallyAvailableResourceFinder, new GradlePomModuleDescriptorParser(), metadataProcessor, resolverStrategy, versionMatcher, latestStrategy);
         transport.configureCacheManager(this);
 
         this.mavenMetaDataLoader = new MavenMetadataLoader(transport.getRepository());
@@ -73,7 +74,7 @@ public class MavenResolver extends ExternalResourceResolver implements PatternBa
         updatePatterns();
     }
 
-    public void getDependency(DependencyDescriptor dd, BuildableModuleVersionMetaDataResolveResult result) {
+    protected void getDependency(DependencyDescriptor dd, BuildableModuleVersionMetaDataResolveResult result) {
         if (isSnapshotVersion(dd)) {
             getSnapshotDependency(dd, result);
         } else {
@@ -86,12 +87,12 @@ public class MavenResolver extends ExternalResourceResolver implements PatternBa
         final String uniqueSnapshotVersion = findUniqueSnapshotVersion(dependencyRevisionId);
         if (uniqueSnapshotVersion != null) {
             DependencyDescriptor enrichedDependencyDescriptor = enrichDependencyDescriptorWithSnapshotVersionInfo(dd, dependencyRevisionId, uniqueSnapshotVersion);
-            super.getDependency(enrichedDependencyDescriptor, result);
+            findStaticDependency(enrichedDependencyDescriptor, result);
             if (result.getState() == BuildableModuleVersionMetaDataResolveResult.State.Resolved) {
                 result.setModuleSource(new TimestampedModuleSource(uniqueSnapshotVersion));
             }
         } else {
-            super.getDependency(dd, result);
+            findStaticDependency(dd, result);
         }
     }
 
@@ -158,12 +159,11 @@ public class MavenResolver extends ExternalResourceResolver implements PatternBa
         setArtifactPatterns(artifactPatterns);
     }
 
-    protected ResolvedArtifact findIvyFileRef(DependencyDescriptor dd) {
+    @Override
+    protected Artifact getMetaDataArtifactFor(ModuleRevisionId moduleRevisionId) {
         if (isUsepoms()) {
-            ModuleRevisionId moduleRevisionId = dd.getDependencyRevisionId();
             ArtifactRevisionId artifactRevisionId = ArtifactRevisionId.newInstance(moduleRevisionId, moduleRevisionId.getName(), "pom", "pom", moduleRevisionId.getExtraAttributes());
-            Artifact pomArtifact = new DefaultArtifact(artifactRevisionId, null, null, true);
-            return findResourceUsingPatterns(moduleRevisionId, getIvyPatterns(), pomArtifact, true);
+            return new DefaultArtifact(artifactRevisionId, null, null, true);
         }
 
         return null;

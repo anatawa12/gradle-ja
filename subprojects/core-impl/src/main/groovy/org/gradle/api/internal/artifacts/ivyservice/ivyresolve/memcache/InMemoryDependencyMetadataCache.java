@@ -20,7 +20,7 @@ import com.google.common.collect.MapMaker;
 import org.gradle.api.internal.artifacts.ivyservice.ivyresolve.LocalAwareModuleVersionRepository;
 import org.gradle.api.logging.Logger;
 import org.gradle.api.logging.Logging;
-import org.gradle.internal.Stoppable;
+import org.gradle.internal.concurrent.Stoppable;
 
 import java.util.Map;
 
@@ -33,7 +33,7 @@ public class InMemoryDependencyMetadataCache implements Stoppable {
 
     private final static Logger LOG = Logging.getLogger(InMemoryDependencyMetadataCache.class);
 
-    Map<String, DependencyMetadataCache> cachePerRepo = new MapMaker().softValues().makeMap();
+    Map<String, DependencyMetadataCache> cachePerRepo = new MapMaker().makeMap();
 
     final DependencyMetadataCacheStats stats = new DependencyMetadataCacheStats();
 

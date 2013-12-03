@@ -50,8 +50,8 @@ import org.junit.runner.RunWith;
 import java.util.ArrayList;
 import java.util.List;
 
-import static org.gradle.util.HelperUtil.createRootProject;
-import static org.gradle.util.HelperUtil.toClosure;
+import static org.gradle.util.TestUtil.createRootProject;
+import static org.gradle.util.TestUtil.toClosure;
 import static org.gradle.util.WrapUtil.toList;
 import static org.gradle.util.WrapUtil.toSet;
 import static org.hamcrest.Matchers.*;
@@ -536,6 +536,8 @@ public class DefaultTaskGraphExecuterTest {
             will(returnValue(new DefaultTaskDependency()));
             allowing(task).getFinalizedBy();
             will(returnValue(new DefaultTaskDependency()));
+            allowing(task).getShouldRunAfter();
+            will(returnValue(new DefaultTaskDependency()));
             allowing(task).getDidWork();
             will(returnValue(true));
             allowing(task).compareTo(with(notNullValue(TaskInternal.class)));
@@ -587,7 +589,7 @@ public class DefaultTaskGraphExecuterTest {
             throw new UnsupportedOperationException();
         }
 
-        public <K, V> PersistentIndexedCache<K, V> createCache(String cacheName, Class<K> keyType, Class<V> valueType, Serializer<V> valueSerializer) {
+        public <K, V> PersistentIndexedCache<K, V> createCache(String cacheName, Class<K> keyType, Serializer<V> valueSerializer) {
             throw new UnsupportedOperationException();
         }
     }

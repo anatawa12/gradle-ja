@@ -16,13 +16,13 @@
 
 package org.gradle.api.internal.artifacts.ivyservice.ivyresolve.memcache
 
-import org.gradle.api.artifacts.ArtifactIdentifier
 import org.gradle.api.internal.artifacts.ivyservice.BuildableArtifactResolveResult
 import org.gradle.api.internal.artifacts.ivyservice.ivyresolve.BuildableModuleVersionMetaDataResolveResult
-import org.gradle.api.internal.artifacts.ivyservice.ivyresolve.ModuleVersionMetaData
+import org.gradle.api.internal.artifacts.ivyservice.ivyresolve.ModuleSource
+import org.gradle.api.internal.artifacts.metadata.ModuleVersionArtifactIdentifier
+import org.gradle.api.internal.artifacts.metadata.MutableModuleVersionMetaData
 import spock.lang.Specification
 
-import static org.gradle.api.internal.artifacts.DefaultModuleVersionIdentifier.newId
 import static org.gradle.api.internal.artifacts.DefaultModuleVersionSelector.newSelector
 
 class DependencyMetadataCacheTest extends Specification {
@@ -31,12 +31,20 @@ class DependencyMetadataCacheTest extends Specification {
     def cache = new DependencyMetadataCache(stats)
 
     def "caches and supplies remote metadata"() {
+        def suppliedMetaData = Stub(MutableModuleVersionMetaData)
+        def cachedCopy = Stub(MutableModuleVersionMetaData)
+        def originalMetaData = Stub(MutableModuleVersionMetaData)
+        def source = Stub(ModuleSource)
         def resolvedResult = Mock(BuildableModuleVersionMetaDataResolveResult.class) {
             getState() >> BuildableModuleVersionMetaDataResolveResult.State.Resolved
-            getMetaData() >> Stub(ModuleVersionMetaData)
+            getMetaData() >> originalMetaData
+            getModuleSource() >> source
         }
-        cache.newDependencyResult(newSelector("org", "foo", "1.0"), resolvedResult)
         def result = Mock(BuildableModuleVersionMetaDataResolveResult.class)
+
+        given:
+        _ * originalMetaData.copy() >> cachedCopy
+        cache.newDependencyResult(newSelector("org", "foo", "1.0"), resolvedResult)
 
         when:
         def local = cache.supplyLocalMetaData(newSelector("org", "foo", "1.0"), result)
@@ -54,16 +62,25 @@ class DependencyMetadataCacheTest extends Specification {
         then:
         match
         stats.metadataServed == 1
-        1 * result.resolved(_, _, _, _)
+        _ * cachedCopy.copy() >> suppliedMetaData
+        1 * result.resolved(suppliedMetaData, source)
     }
 
     def "caches and supplies remote and local metadata"() {
+        def localSource = Stub(ModuleSource)
+        def localMetaData = Stub(MutableModuleVersionMetaData)
+        _ * localMetaData.copy() >> localMetaData
+        def remoteSource = Stub(ModuleSource)
+        def remoteMetaData = Stub(MutableModuleVersionMetaData)
+        _ * remoteMetaData.copy() >> remoteMetaData
         def resolvedLocal = Mock(BuildableModuleVersionMetaDataResolveResult.class) {
-            getMetaData() >> Mock(ModuleVersionMetaData)
+            getMetaData() >> localMetaData
+            getModuleSource() >> localSource
             getState() >> BuildableModuleVersionMetaDataResolveResult.State.Resolved
         }
         def resolvedRemote = Mock(BuildableModuleVersionMetaDataResolveResult.class) {
-            getMetaData() >> Mock(ModuleVersionMetaData)
+            getMetaData() >> remoteMetaData
+            getModuleSource() >> remoteSource
             getState() >> BuildableModuleVersionMetaDataResolveResult.State.Resolved
         }
 
@@ -74,14 +91,19 @@ class DependencyMetadataCacheTest extends Specification {
 
         when:
         def local = cache.supplyLocalMetaData(newSelector("org", "local", "1.0"), result)
-        def remote = cache.supplyMetaData(newSelector("org", "remote", "1.0"), result)
 
         then:
         local
+        stats.metadataServed == 1
+        1 * result.resolved(localMetaData, localSource)
+
+        when:
+        def remote = cache.supplyMetaData(newSelector("org", "remote", "1.0"), result)
+
+        then:
         remote
         stats.metadataServed == 2
-        1 * result.resolved(_, _, _, _)
-        1 * result.resolved(_, _, _, _)
+        1 * result.resolved(remoteMetaData, remoteSource)
     }
 
     def "does not cache failed resolves"() {
@@ -99,25 +121,25 @@ class DependencyMetadataCacheTest extends Specification {
     }
 
     def "caches and supplies artifacts"() {
-        def foo = Stub(ArtifactIdentifier) { getModuleVersionIdentifier() >> newId("org", "foo", "1.0") }
+        def fooId = Stub(ModuleVersionArtifactIdentifier)
         def fooFile = new File("foo")
         def fooResult = Mock(BuildableArtifactResolveResult) { getFile() >> fooFile }
         def anotherFooResult = Mock(BuildableArtifactResolveResult)
 
-        def different = Stub(ArtifactIdentifier) { getModuleVersionIdentifier() >> newId("org", "XXX", "1.0") }
+        def differentId = Stub(ModuleVersionArtifactIdentifier)
         def differentResult = Mock(BuildableArtifactResolveResult)
 
-        cache.newArtifact(foo, fooResult)
+        cache.newArtifact(fooId, fooResult)
 
         when:
-        def differentCached = cache.supplyArtifact(different, differentResult )
+        def differentCached = cache.supplyArtifact(differentId, differentResult )
 
         then:
         !differentCached
         0 * differentResult._
 
         when:
-        def fooCached = cache.supplyArtifact(foo, anotherFooResult )
+        def fooCached = cache.supplyArtifact(fooId, anotherFooResult )
 
         then:
         fooCached

@@ -16,7 +16,7 @@
 package org.gradle.gradleplugin.foundation;
 
 import org.codehaus.groovy.runtime.StackTraceUtils;
-import org.gradle.api.internal.LocationAwareException;
+import org.gradle.internal.exceptions.LocationAwareException;
 import org.gradle.api.internal.classpath.DefaultModuleRegistry;
 import org.gradle.api.logging.LogLevel;
 import org.gradle.api.logging.Logger;
@@ -603,7 +603,7 @@ public class GradlePluginLord {
             if (failure instanceof LocationAwareException) {
                 LocationAwareException scriptException = (LocationAwareException) failure;
                 formatter.format("%s%n%n", scriptException.getLocation());
-                formatter.format("%s", scriptException.getOriginalMessage());
+                formatter.format("%s", scriptException.getCause().getMessage());
 
                 for (Throwable cause : scriptException.getReportableCauses()) {
                     formatter.format("%nCause: %s", getMessage(cause));

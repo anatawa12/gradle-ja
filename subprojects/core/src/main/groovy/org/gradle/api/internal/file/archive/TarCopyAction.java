@@ -18,10 +18,11 @@ package org.gradle.api.internal.file.archive;
 import org.apache.tools.tar.TarEntry;
 import org.apache.tools.tar.TarOutputStream;
 import org.apache.tools.zip.UnixStat;
-import org.gradle.api.Action;
 import org.gradle.api.GradleException;
-import org.gradle.api.UncheckedIOException;
 import org.gradle.api.file.FileCopyDetails;
+import org.gradle.internal.ErroringAction;
+import org.gradle.internal.IoActions;
+import org.gradle.api.internal.file.CopyActionProcessingStreamAction;
 import org.gradle.api.internal.file.archive.compression.ArchiveOutputStreamFactory;
 import org.gradle.api.internal.file.copy.CopyAction;
 import org.gradle.api.internal.file.copy.CopyActionProcessingStream;
@@ -30,7 +31,6 @@ import org.gradle.api.internal.tasks.SimpleWorkResult;
 import org.gradle.api.tasks.WorkResult;
 
 import java.io.File;
-import java.io.IOException;
 import java.io.OutputStream;
 
 public class TarCopyAction implements CopyAction {
@@ -42,61 +42,73 @@ public class TarCopyAction implements CopyAction {
         this.compressor = compressor;
     }
 
-    public WorkResult execute(CopyActionProcessingStream stream) {
-        final TarOutputStream tarOutStr;
+    public WorkResult execute(final CopyActionProcessingStream stream) {
 
+        final OutputStream outStr;
         try {
-            OutputStream outStr = compressor.createArchiveOutputStream(tarFile);
-            tarOutStr = new TarOutputStream(outStr);
-            tarOutStr.setLongFileMode(TarOutputStream.LONGFILE_GNU);
+            outStr = compressor.createArchiveOutputStream(tarFile);
         } catch (Exception e) {
             throw new GradleException(String.format("Could not create TAR '%s'.", tarFile), e);
         }
 
-        stream.process(new Action<FileCopyDetailsInternal>() {
-            public void execute(FileCopyDetailsInternal details) {
-                if (details.isDirectory()) {
-                    visitDir(details);
-                } else {
-                    visitFile(details);
-                }
-            }
-
-            private void visitFile(FileCopyDetails fileDetails) {
+        IoActions.withResource(outStr, new ErroringAction<OutputStream>() {
+            @Override
+            protected void doExecute(final OutputStream outStr) throws Exception {
+                TarOutputStream tarOutStr;
                 try {
-                    TarEntry archiveEntry = new TarEntry(fileDetails.getRelativePath().getPathString());
-                    archiveEntry.setModTime(fileDetails.getLastModified());
-                    archiveEntry.setSize(fileDetails.getSize());
-                    archiveEntry.setMode(UnixStat.FILE_FLAG | fileDetails.getMode());
-                    tarOutStr.putNextEntry(archiveEntry);
-                    fileDetails.copyTo(tarOutStr);
-                    tarOutStr.closeEntry();
+                    tarOutStr = new TarOutputStream(outStr);
                 } catch (Exception e) {
-                    throw new GradleException(String.format("Could not add %s to TAR '%s'.", fileDetails, tarFile), e);
+                    throw new GradleException(String.format("Could not create TAR '%s'.", tarFile), e);
                 }
-            }
-
-            private void visitDir(FileCopyDetails dirDetails) {
-                try {
-                    // Trailing slash on name indicates entry is a directory
-                    TarEntry archiveEntry = new TarEntry(dirDetails.getRelativePath().getPathString() + '/');
-                    archiveEntry.setModTime(dirDetails.getLastModified());
-                    archiveEntry.setMode(UnixStat.DIR_FLAG | dirDetails.getMode());
-                    tarOutStr.putNextEntry(archiveEntry);
-                    tarOutStr.closeEntry();
-                } catch (Exception e) {
-                    throw new GradleException(String.format("Could not add %s to TAR '%s'.", dirDetails, tarFile), e);
-                }
+                tarOutStr.setLongFileMode(TarOutputStream.LONGFILE_GNU);
+                stream.process(new StreamAction(tarOutStr));
+                tarOutStr.close();
             }
         });
-
-        try {
-            tarOutStr.close();
-        } catch (IOException e) {
-            throw new UncheckedIOException(e);
-        }
 
         return new SimpleWorkResult(true);
     }
 
+    private class StreamAction implements CopyActionProcessingStreamAction {
+        private final TarOutputStream tarOutStr;
+
+        public StreamAction(TarOutputStream tarOutStr) {
+            this.tarOutStr = tarOutStr;
+        }
+
+        public void processFile(FileCopyDetailsInternal details) {
+            if (details.isDirectory()) {
+                visitDir(details);
+            } else {
+                visitFile(details);
+            }
+        }
+
+        private void visitFile(FileCopyDetails fileDetails) {
+            try {
+                TarEntry archiveEntry = new TarEntry(fileDetails.getRelativePath().getPathString());
+                archiveEntry.setModTime(fileDetails.getLastModified());
+                archiveEntry.setSize(fileDetails.getSize());
+                archiveEntry.setMode(UnixStat.FILE_FLAG | fileDetails.getMode());
+                tarOutStr.putNextEntry(archiveEntry);
+                fileDetails.copyTo(tarOutStr);
+                tarOutStr.closeEntry();
+            } catch (Exception e) {
+                throw new GradleException(String.format("Could not add %s to TAR '%s'.", fileDetails, tarFile), e);
+            }
+        }
+
+        private void visitDir(FileCopyDetails dirDetails) {
+            try {
+                // Trailing slash on name indicates entry is a directory
+                TarEntry archiveEntry = new TarEntry(dirDetails.getRelativePath().getPathString() + '/');
+                archiveEntry.setModTime(dirDetails.getLastModified());
+                archiveEntry.setMode(UnixStat.DIR_FLAG | dirDetails.getMode());
+                tarOutStr.putNextEntry(archiveEntry);
+                tarOutStr.closeEntry();
+            } catch (Exception e) {
+                throw new GradleException(String.format("Could not add %s to TAR '%s'.", dirDetails, tarFile), e);
+            }
+        }
+    }
 }

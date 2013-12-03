@@ -16,6 +16,8 @@
 package org.gradle.api.internal.changedetection.state
 
 import org.gradle.api.internal.GradleInternal
+import org.gradle.api.internal.changedetection.changes.NoOpInMemoryPersistentCacheDecoratorFactory
+import org.gradle.api.internal.project.ProjectInternal
 import org.gradle.cache.CacheRepository
 import org.gradle.cache.DirectoryCacheBuilder
 import org.gradle.cache.PersistentCache
@@ -26,16 +28,17 @@ import spock.lang.Specification
 class DefaultTaskArtifactStateCacheAccessTest extends Specification {
     final GradleInternal gradle = Mock()
     final CacheRepository cacheRepository = Mock()
-    final DefaultTaskArtifactStateCacheAccess cacheAccess = new DefaultTaskArtifactStateCacheAccess(gradle, cacheRepository)
+    final DefaultTaskArtifactStateCacheAccess cacheAccess = new DefaultTaskArtifactStateCacheAccess(gradle, cacheRepository, new NoOpInMemoryPersistentCacheDecoratorFactory())
     
     def "opens backing cache on first use"() {
         DirectoryCacheBuilder cacheBuilder = Mock()
         PersistentCache backingCache = Mock()
         PersistentIndexedCache<String, Integer> backingIndexedCache = Mock()
+        ProjectInternal project = Mock()
 
         def serializer = new DefaultSerializer<Integer>()
         when:
-        def indexedCache = cacheAccess.createCache("some-cache", String, Integer, serializer)
+        def indexedCache = cacheAccess.createCache("some-cache", String, serializer)
 
         then:
         0 * _._
@@ -48,8 +51,10 @@ class DefaultTaskArtifactStateCacheAccessTest extends Specification {
         1 * cacheBuilder.open() >> backingCache
         _ * cacheBuilder._ >> cacheBuilder
         _ * backingCache.baseDir >> new File("baseDir")
-        1 * backingCache.createCache(new File("baseDir/some-cache.bin"), String, serializer) >> backingIndexedCache
+        1 * backingCache.createCache({it.cacheFile == new File("baseDir/some-cache.bin")}) >> backingIndexedCache
         1 * backingIndexedCache.get("key")
+        1 * gradle.getRootProject() >> project
+        1 * project.getRootProject() >> project
         0 * _._
     }
 }

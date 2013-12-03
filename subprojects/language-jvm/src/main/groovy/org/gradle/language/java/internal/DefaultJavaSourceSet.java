@@ -15,64 +15,38 @@
  */
 package org.gradle.language.java.internal;
 
-import org.apache.commons.lang.StringUtils;
-import org.gradle.api.Action;
 import org.gradle.api.Task;
 import org.gradle.api.file.SourceDirectorySet;
-import org.gradle.language.base.internal.LanguageSourceSetInternal;
-import org.gradle.language.jvm.Classpath;
-import org.gradle.language.base.FunctionalSourceSet;
-import org.gradle.language.java.JavaSourceSet;
 import org.gradle.api.tasks.TaskDependency;
+import org.gradle.language.base.FunctionalSourceSet;
+import org.gradle.language.base.internal.AbstractLanguageSourceSet;
+import org.gradle.language.java.JavaSourceSet;
+import org.gradle.language.jvm.Classpath;
 
 import java.util.HashSet;
 import java.util.Set;
 
-public class DefaultJavaSourceSet implements JavaSourceSet, LanguageSourceSetInternal {
-    private final String name;
-    private final SourceDirectorySet source;
+public class DefaultJavaSourceSet extends AbstractLanguageSourceSet implements JavaSourceSet {
     private final Classpath compileClasspath;
-    private final FunctionalSourceSet parent;
 
     public DefaultJavaSourceSet(String name, SourceDirectorySet source, Classpath compileClasspath, FunctionalSourceSet parent) {
-        this.name = name;
-        this.source = source;
+        super(name, parent, "Java source", source);
         this.compileClasspath = compileClasspath;
-        this.parent = parent;
     }
 
     public Classpath getCompileClasspath() {
         return compileClasspath;
     }
 
-    public SourceDirectorySet getSource() {
-        return source;
-    }
-
-    public void source(Action<SourceDirectorySet> config) {
-        config.execute(getSource());
-    }
 
     public TaskDependency getBuildDependencies() {
         return new TaskDependency() {
             public Set<? extends Task> getDependencies(Task task) {
                 Set<Task> dependencies = new HashSet<Task>();
                 dependencies.addAll(compileClasspath.getBuildDependencies().getDependencies(task));
-                dependencies.addAll(source.getBuildDependencies().getDependencies(task));
+                dependencies.addAll(getSource().getBuildDependencies().getDependencies(task));
                 return dependencies;
             }
         };
-    }
-
-    public String getName() {
-        return name;
-    }
-
-    public String getFullName() {
-        return parent.getName() + StringUtils.capitalize(name);
-    }
-
-    public String toString() {
-        return String.format("source set '%s:%s'", parent.getName(), name);
     }
 }

@@ -20,7 +20,6 @@ import org.gradle.integtests.fixtures.AbstractIntegrationSpec
 import org.gradle.integtests.fixtures.AvailableJavaHomes
 import org.gradle.integtests.fixtures.executer.GradleContextualExecuter
 import org.gradle.internal.jvm.Jvm
-import org.gradle.internal.nativeplatform.filesystem.FileSystems
 import org.gradle.util.Requires
 import org.gradle.util.TestPrecondition
 import org.gradle.util.TextUtil
@@ -54,7 +53,7 @@ assert java.lang.management.ManagementFactory.runtimeMXBean.inputArguments.conta
         given:
         def javaHome = Jvm.current().javaHome
         def javaLink = file("javaLink")
-        FileSystems.default.createSymbolicLink(javaLink, javaHome)
+        javaLink.createLink(javaHome)
         file("tmp").deleteDir().createDir()
 
         String linkPath = TextUtil.escapeString(javaLink.absolutePath)
@@ -92,14 +91,31 @@ assert inputArgs.find { it.contains('-XX:HeapDumpPath=') }
 """
     }
 
-    @IgnoreIf({ AvailableJavaHomes.bestAlternative == null })
-    def "honours java home specified in gradle.properties"() {
-        given:
+    def String useAlternativeJavaPath() {
         File javaHome = AvailableJavaHomes.bestAlternative
         String javaPath = TextUtil.escapeString(javaHome.canonicalPath)
         file("gradle.properties") << "org.gradle.java.home=$javaPath"
 
+        return javaPath
+    }
+
+    @IgnoreIf({ AvailableJavaHomes.bestAlternative == null })
+    def "honours java home specified in gradle.properties"() {
+        given:
+        String javaPath = useAlternativeJavaPath()
+
         expect:
         buildSucceeds "assert System.getProperty('java.home').startsWith('$javaPath')"
+    }
+
+    @IgnoreIf({ AvailableJavaHomes.bestAlternative == null || System.getProperty('java.runtime.version') == null})
+    def "does not alter java.runtime.version"() {
+        given:
+
+        useAlternativeJavaPath()
+        String javaRuntimeVersion = System.getProperty('java.runtime.version')
+
+        expect:
+        buildSucceeds "assert System.getProperty('java.runtime.version') != '${javaRuntimeVersion}'"
     }
 }

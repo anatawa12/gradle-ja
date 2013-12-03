@@ -17,14 +17,14 @@
 package org.gradle.api.internal.file.copy;
 
 import groovy.lang.Closure;
-import org.gradle.api.internal.notations.api.NotationParser;
+import org.gradle.internal.typeconversion.NotationParser;
 import org.gradle.internal.UncheckedException;
 import org.gradle.util.DeprecationLogger;
 
 import java.util.Collection;
 import java.util.concurrent.Callable;
 
-public class PathNotationParser<T extends String> implements NotationParser<T> {
+public class PathNotationParser<T extends String> implements NotationParser<Object, T> {
 
     public void describe(Collection<String> candidateFormats) {
         candidateFormats.add("Strings, Boolean, Number like: 'path/to', true, Boolean.TRUE, 42, 3.14");

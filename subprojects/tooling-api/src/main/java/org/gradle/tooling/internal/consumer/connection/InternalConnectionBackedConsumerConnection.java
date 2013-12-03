@@ -34,24 +34,17 @@ import org.gradle.tooling.model.internal.Exceptions;
  * An adapter for a {@link InternalConnection} based provider.
  */
 public class InternalConnectionBackedConsumerConnection extends AbstractPre12ConsumerConnection {
-    private final InternalConnection connection;
-    private final ModelMapping modelMapping;
+    private final ModelProducer modelProducer;
 
     public InternalConnectionBackedConsumerConnection(ConnectionVersion4 delegate, ModelMapping modelMapping, ProtocolToModelAdapter adapter) {
         super(delegate, new R10M8VersionDetails(delegate.getMetaData().getVersion()), adapter);
-        connection = (InternalConnection) delegate;
-        this.modelMapping = modelMapping;
+        ModelProducer consumerConnectionBackedModelProducer = new InternalConnectionBackedModelProducer(adapter, getVersionDetails(), modelMapping, (InternalConnection) delegate);
+        modelProducer = new GradleBuildAdapterProducer(adapter, getVersionDetails(), modelMapping, consumerConnectionBackedModelProducer);
     }
 
     @Override
-    protected Object doGetModel(Class<?> modelType, ConsumerOperationParameters operationParameters) {
-        VersionDetails versionDetails = getVersionDetails();
-        if (!versionDetails.isModelSupported(modelType)) {
-            //don't bother asking the provider for this model
-            throw Exceptions.unknownModel(modelType, versionDetails.getVersion());
-        }
-        Class<?> protocolType = modelMapping.getProtocolType(modelType);
-        return connection.getTheModel(protocolType, operationParameters);
+    protected <T> T doGetModel(Class<T> modelType, ConsumerOperationParameters operationParameters) {
+        return modelProducer.produceModel(modelType, operationParameters);
     }
 
     private static class R10M8VersionDetails extends VersionDetails {
@@ -73,6 +66,24 @@ public class InternalConnectionBackedConsumerConnection extends AbstractPre12Con
                     || modelType.equals(BasicIdeaProject.class)
                     || modelType.equals(GradleProject.class)
                     || modelType.equals(BuildEnvironment.class);
+        }
+    }
+
+    private class InternalConnectionBackedModelProducer extends AbstractModelProducer {
+        private final InternalConnection delegate;
+
+        public InternalConnectionBackedModelProducer(ProtocolToModelAdapter adapter, VersionDetails versionDetails, ModelMapping modelMapping, InternalConnection delegate) {
+            super(adapter, versionDetails, modelMapping);
+            this.delegate = delegate;
+        }
+
+        public <T> T produceModel(Class<T> type, ConsumerOperationParameters operationParameters) {
+            if (!versionDetails.isModelSupported(type)) {
+                //don't bother asking the provider for this model
+                throw Exceptions.unsupportedModel(type, versionDetails.getVersion());
+            }
+            Class<?> protocolType = modelMapping.getProtocolType(type);
+            return adapter.adapt(type, delegate.getTheModel(protocolType, operationParameters));
         }
     }
 }

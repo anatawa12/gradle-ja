@@ -16,21 +16,27 @@
 
 package org.gradle.launcher.daemon.testing
 
+import org.gradle.initialization.BuildLayoutParameters
+import org.gradle.internal.service.ServiceRegistry
+import org.gradle.launcher.daemon.client.DaemonClientServices
+import org.gradle.launcher.daemon.configuration.DaemonParameters
 import org.gradle.launcher.daemon.registry.DaemonRegistry
-import org.gradle.launcher.daemon.registry.DaemonRegistryServices
+import org.gradle.logging.LoggingServiceRegistry
 
 class DaemonLogsAnalyzer {
 
     private List<File> daemonLogs
     private File daemonBaseDir
-    private DaemonRegistryServices services
+    private ServiceRegistry services
 
     DaemonLogsAnalyzer(File daemonBaseDir) {
         this.daemonBaseDir = daemonBaseDir
         assert daemonBaseDir.listFiles().length == 1
         def daemonFiles = daemonBaseDir.listFiles()[0].listFiles()
         daemonLogs = daemonFiles.findAll { it.name.endsWith('.log') }
-        services = new DaemonRegistryServices(daemonBaseDir)
+        DaemonParameters daemonParameters = new DaemonParameters(new BuildLayoutParameters())
+        daemonParameters.setBaseDir(daemonBaseDir)
+        services = new DaemonClientServices(LoggingServiceRegistry.newEmbeddableLogging(), daemonParameters, new ByteArrayInputStream(new byte[0]))
     }
 
     List<TestableDaemon> getDaemons() {

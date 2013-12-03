@@ -15,47 +15,64 @@
  */
 package org.gradle.api.internal.changedetection.state;
 
-import org.gradle.internal.Factory;
+import org.gradle.api.Transformer;
 import org.gradle.api.invocation.Gradle;
 import org.gradle.cache.CacheRepository;
 import org.gradle.cache.PersistentCache;
 import org.gradle.cache.PersistentIndexedCache;
-import org.gradle.messaging.serialize.Serializer;
+import org.gradle.cache.internal.CacheLayoutBuilder;
 import org.gradle.cache.internal.FileLockManager;
+import org.gradle.cache.internal.MultiProcessSafePersistentIndexedCache;
+import org.gradle.cache.internal.PersistentIndexedCacheParameters;
+import org.gradle.internal.Factory;
 import org.gradle.listener.LazyCreationProxy;
+import org.gradle.messaging.serialize.Serializer;
 
 import java.io.File;
+
+import static org.gradle.cache.internal.filelock.LockOptionsBuilder.mode;
 
 public class DefaultTaskArtifactStateCacheAccess implements TaskArtifactStateCacheAccess {
     private final Gradle gradle;
     private final CacheRepository cacheRepository;
+    private InMemoryPersistentCacheDecorator inMemoryDecorator;
     private PersistentCache cache;
     private final Object lock = new Object();
 
-    public DefaultTaskArtifactStateCacheAccess(Gradle gradle, CacheRepository cacheRepository) {
+    public DefaultTaskArtifactStateCacheAccess(Gradle gradle, CacheRepository cacheRepository, Factory<InMemoryPersistentCacheDecorator> decoratorFactory) {
         this.gradle = gradle;
         this.cacheRepository = cacheRepository;
+        this.inMemoryDecorator = decoratorFactory.create();
     }
 
     private PersistentCache getCache() {
         //TODO SF just do it in the constructor
         synchronized (lock) {
             if (cache == null) {
+                CacheLayoutBuilder layout = new CacheLayoutBuilder().withBuildScope(gradle.getRootProject());
                 cache = cacheRepository
                         .cache("taskArtifacts")
-                        .forObject(gradle)
+                        .withLayout(layout)
                         .withDisplayName("task artifact state cache")
-                        .withLockMode(FileLockManager.LockMode.Exclusive)
+                        .withLockOptions(mode(FileLockManager.LockMode.Exclusive))
                         .open();
             }
             return cache;
         }
     }
 
-    public <K, V> PersistentIndexedCache<K, V> createCache(final String cacheName, final Class<K> keyType, final Class<V> valueType, final Serializer<V> valueSerializer) {
+    public <K, V> PersistentIndexedCache<K, V> createCache(final String cacheName, final Class<K> keyType, final Serializer<V> valueSerializer) {
         Factory<PersistentIndexedCache> factory = new Factory<PersistentIndexedCache>() {
             public PersistentIndexedCache create() {
-                return getCache().createCache(cacheFile(cacheName), keyType, valueSerializer);
+                final File cacheFile = cacheFile(cacheName);
+                PersistentIndexedCacheParameters parameters =
+                        new PersistentIndexedCacheParameters(cacheFile, keyType, valueSerializer)
+                            .cacheDecorator(new Transformer<MultiProcessSafePersistentIndexedCache<Object, Object>, MultiProcessSafePersistentIndexedCache<Object, Object>>() {
+                                public MultiProcessSafePersistentIndexedCache<Object, Object> transform(MultiProcessSafePersistentIndexedCache<Object, Object> original) {
+                                    return inMemoryDecorator.withMemoryCaching(cacheFile, original);
+                                }
+                            });
+                return getCache().createCache(parameters);
             }
         };
         return new LazyCreationProxy<PersistentIndexedCache>(PersistentIndexedCache.class, factory).getSource();

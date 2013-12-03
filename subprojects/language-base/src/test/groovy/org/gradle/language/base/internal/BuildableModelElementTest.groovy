@@ -17,7 +17,7 @@ package org.gradle.language.base.internal
 
 import org.gradle.api.DefaultTask
 import org.gradle.api.Task
-import org.gradle.util.HelperUtil
+import org.gradle.util.TestUtil
 import spock.lang.Specification
 
 public class BuildableModelElementTest extends Specification {
@@ -25,11 +25,11 @@ public class BuildableModelElementTest extends Specification {
     def element = new TestBuildableModelElement()
     def dependedOn1 = Stub(Task)
     def dependedOn2 = Stub(Task)
-    def lifecycleTask = HelperUtil.createTask(DefaultTask)
+    def lifecycleTask = TestUtil.createTask(DefaultTask)
 
     def "has direct dependencies with no lifecycle task set"() {
         when:
-        element.dependsOn(dependedOn1, dependedOn2)
+        element.builtBy(dependedOn1, dependedOn2)
 
         then:
         element.getBuildDependencies().getDependencies(Stub(Task)) == [dependedOn1, dependedOn2] as Set
@@ -37,9 +37,9 @@ public class BuildableModelElementTest extends Specification {
 
     def "has intervening lifecycle task as dependency when set"() {
         when:
-        element.dependsOn(dependedOn1)
+        element.builtBy(dependedOn1)
         element.setLifecycleTask(lifecycleTask)
-        element.dependsOn(dependedOn2)
+        element.builtBy(dependedOn2)
 
         then:
         element.getBuildDependencies().getDependencies(Stub(Task)) == [lifecycleTask] as Set

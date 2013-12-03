@@ -5,7 +5,7 @@ command line options & task configuration
 1. User selects the dependency criteria to run dependency reports for.
 2. User selects which tests to include/exclude for test execution.
 3. User requests that tests be executed with debugging enabled.
-4. User specifies which Gradle version to perform an upgrade comparision build against.
+4. User specifies which Gradle version to perform an upgrade comparison build against.
 5. User specifies which Gradle version the wrapper should use.
 
 ## State of things
@@ -16,36 +16,6 @@ State of things now: There's an internal `@CommandLineOption(options='theOption'
 2. Works only with Strings and booleans setters (e.g. `setTheOption()`), which are annotated with `@CommandLineOption`
 
 # Stories
-
-## Configure dependency and configuration for the dependency insight report
-
-There should be some simple way to run the report from the command line.
-While doing that consider adding support for selecting configuration for the regular 'dependencies' report from command line.
-
-### User visible changes
-
-1. When the dependencyInsight task is issued from the command line, it is possible to configure extra command line parameters.
-It's not 100% decided what will be the naming of the parameters, currently it would be:
- dependencyInsight --include org.foo:bar --configuration runtime
- When we decide on exact naming of the task and the parameters, this spec needs to be updated.
-1. Each parameter must be applicable to at least one task specified at command line. If any of the parameters cannot be applied to any of the tasks
- then the command should fail fast. Examples:
-    'dependencyInsight --include x --configuration y' - works fine
-    'clean build dependencyInsight --include x --configuration y' - works fine, applies the configuration only to dependencyInsight task
-    'clean build --include x --configuration' - breaks as the dependencyInsight is not included so the parameters should not be used
-1. If multiple tasks match given parameters (for example, when name-matching execution schedules multiple dependency insight tasks)
- then *all* of the tasks should be configured with given parameters.
-1. The command line parameter takes precedence over the build script configuration
-
-### Test coverage
-
-1. uses command line parameter to configure task
-1. the command line parameter takes precedence over the build script configuration
-1. configures multiple tasks if parameters match multiple tasks
-1. deals with the scenario when value of the parameter matches some existing task name
-1. multiple different tasks configured at single command line
-1. works when there are other, not-configurable tasks scheduled
-1. nice error messages on incorrect use are fine. More in a separate story.
 
 ## Improve error handling
 
@@ -76,22 +46,6 @@ Nice messages when user incorrectly uses a command line option.
 1. When a value has not been specified for a required task property and that property has a `@CommandLineOption` annotation, then the validation error
    message should inform the user that they can use the specified option to provide a value.
 
-## Make the dependencies' report 'configuration' configurable via cmd line
-
-### User visible changes
-
-It is possible to show the dependencies for a single configuration.
-This way there's way less noise in the report (many times, the user is only interested in compile dependencies).
-Consider defaulting the dependencies report to 'compile' dependencies if java plugin applied.
-
-### Test coverage
-
-TBD
-
-### Implementation approach
-
-TBD
-
 ## Make the feature public
 
 ### User visible changes
@@ -121,60 +75,148 @@ TBD
     * Annotation is missing 'options' value.
     * Annotation is missing 'description' value.
 
-## Allow command-line options to be discovered
+## Help task shows basic details about a task
 
-Add some command line interface for discovering available command-line options.
-
-### User visible changes
-
-Running `gradle --help test` shows a usage message for the `test` task.
-
-The resolution message (ie the `*Try: ....` console output) for a problem configuring tasks from the command-line options should suggest that the user
-run `${app-name} --help <broken-task>` or `${app-name} --help`
-
-### Test coverage
-
-TBD
-
-### Implementation approach
-
-TBD
-
-## Add command-line options to other tasks
+Add some command line interface for discovering details about a task (name, type, path, description)
 
 ### User visible changes
 
-TBD
+Running `gradle help --task test` shows a usage message for the `test` task.
+
+If multiple tasks match, details of the matching tasks are shown
+
+* all matched tasks have the same type
+    * print one report of the task type and include all matching paths in the report
+
+* matched tasks have different types
+    * print one detail output for each different task type including all available paths
 
 ### Test coverage
 
-TBD
+* integration tests
+    * `gradle help --task` on simple task
+    * `gradle help --task` on task referenced by full path  (e.g. `:someProj:dependencies`)
+    * `gradle help --task` on implicit task task
+    * `gradle help --task` on task defined via placeholder
+    * `gradle help --task` on non existing task displays reasonable error message, including candidate matches
+    * `gradle help --task` on multiple matching tasks
+    * `gradle help --task` using camel-case matching to select task
 
 ### Implementation approach
 
-1. Add option to `DependencyReportTask` to select the configuration(s) to be reported on.
-2. Add option to `Test` task to select which tests to include, which tests to exclude, and whether to run with debugging enabled.
-3. Probably more - see use cases above.
+- Change the `help` task:
+    - add `--task` commandline property
+    - change displayHelp implementation to print task details when `--task` is set
+    - lookup project tasks and implicit tasks using the task selector
+    - throw decent error message when requested task cannot be found
+    - task details (task name, task type, path)
+    - the default message informs the user about using `gradle help --task n`
+
+- Update the 'using Gradle from the command-line' user guide chapter to mention the help task.
+
+## Help task shows command-line options for a task
+
+Commandline options of the task passed to help are listed including a description. The legal values for each property are not shown - this
+is added in a later story.
+
+### User visible changes
+
+The usage message of running `gradle help --task <task>` lists commandline options of the selected tasks.
+
+### Test coverage
+
+* integration tests
+    * `gradle help` on task with no commandline properties
+    * `gradle help` on task with commandline properties
+    * `gradle help` on implicit task no commandline properties
+    * `gradle help` on implicit task with no commandline properties
+    * `gradle help --tassk help` (should print hint to `gradle help --task help`)
+
+### Implementation approach
+
+- Change configuration error message in `CommandLineTaskConfigurer` to suggest that the user run `gradle help --task <broken-task>`.
+- Update the 'using Gradle from the command-line' user guide chapter.
+
+## Help task shows legal values for each command-line option
+
+### User visible changes
+
+The usage message of running `gradle help --task init` includes the available values for the task command line options (e.g --type)
+
+### Test coverage
+
+* integration tests
+    * `gradle help` on task with enum property type mapped to commandline option
+    * `gradle help` on task with boolean property type mapped to commandline option
+    * `gradle help` on task with String property mapped to commandline option
+    * `gradle help --task init` shows all available init types
+
+- A reasonable error message is provided when user specified an illegal value for an enum property from the command-line.
+- A reasonable error message is provided when user specified an illegal value for an string property from the command-line.
+
+### Implementation approach
+
+- Introduce marker annotation `Option("optionName")` to mark a task property mapped to a commandline option.
+- `@Option` with not provided "optionName" is mapped to option with same name as the annotated field
+- `@Option("optionName")` annotated on Enums includes enum values as possible option values
+- `@Option("optionName")` annotated on boolean includes true/false as possible option values
+- `@Option("optionName")` annotated on a setter method evaluates the available options from the parameter type)
+- Introduce marker annotation `OptionValues("optionName")` to to allow a dynamic value lookup in the task implementation itself.
+- Adapt InitBuild task to use `@OptionValues` to map values for the `--type` command line option.
+- Update the 'using Gradle from the command-line' user guide chapter.
+
+## Add task validator for task options
+
+### User visible changes
+
+When task options that have unsupported option values, will throw an Exception pointing to the wrong assigned option value and hints
+what values are supported.
+
+### Implementation approach
+- Add a task validator that validates a string property has a legal value at execution time.
+
+## Support camel-case matching for task commandline property values
+
+### Test coverage
+- A reasonable error message is provided when a string property is configured with an illegal value in the build script.
+
+### User visible changes
+
+The user can run `gradle init --type java-lib` instead of `gradle init --type java-library`
+
+### Test coverage
+
+- Use camel-case matching for a commandline property that accepts an enum type
+- Use camel-case matching for a commandline property that accepts an string type
+- Error message for illegal enum value includes candidate matches
+- Error message for illegal string value includes candidate matches
+
+### Implementation approach
+
+- Use NameMatcher in commandline configuration.
+
+## Add command-line options to more tasks
+
+### User visible changes
+
+- Add `@OptionValues` annotations for the options on `DependencyInsightReportTask`
+- Add `@OptionValues` annotations for the options on `DependencyReportTask`
+- Add `@OptionValues` annotations for the options on `Help`
+- Probably more - see use cases above.
 
 ## Include the command-line options in the generated DSL reference
 
 The reference page for a task type should show which command-line options are available for the type.
 
-### User visible changes
-
-TBD
-
-### Test coverage
-
-TBD
-
-### Implementation approach
-
-TBD
-
 ## Add an API to allow command-line options for a task to be declared programmatically
 
 TBD
+
+## Support additional property types
+
+- Collection of any supported scalar type
+- Conversion to `File`
+- Conversion to `Number` or subclass
 
 # Open issues
 
@@ -182,6 +224,6 @@ TBD
 For example, 'foo' option that requires a string value in one task type but is a boolean flag in some other task type.
 This is not a blocker because we have very little command line options, yet.
 1. Decide on precedence order if task is configured from the command line and in the build script. Add coverage, etc.
-1. If a method marked with `@CommandLineOption` accepts varargs or a Collection type as parameter, allow the command-line option to be specified multiple
+1. If a method marked with `@Option` accepts varargs or a Collection type as parameter, allow the command-line option to be specified multiple
    time on the command-line.
-1. Add support for more types in the conversion from command-line option value to property value, in particular File.
+1. Output of `gradle help --task x` provides link to task documentation.

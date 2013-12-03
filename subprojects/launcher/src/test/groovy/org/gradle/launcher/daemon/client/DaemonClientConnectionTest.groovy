@@ -16,28 +16,29 @@
 
 package org.gradle.launcher.daemon.client
 
-import org.gradle.api.GradleException
 import org.gradle.messaging.remote.internal.Connection
 import spock.lang.Specification
 
 class DaemonClientConnectionTest extends Specification {
 
     final delegate = Mock(Connection)
-    final onFailure = Mock(Runnable)
-    final connection = new DaemonClientConnection(delegate, 'id', onFailure)
+    final staleAddressDetector = Mock(DaemonClientConnection.StaleAddressDetector)
+    final connection = new DaemonClientConnection(delegate, 'id', staleAddressDetector)
 
     def "stops"() {
         when:
         connection.stop()
+
         then:
         1 * delegate.stop()
-        0 * onFailure.run()
+        0 * staleAddressDetector._
 
         when:
         connection.requestStop()
+
         then:
         1 * delegate.requestStop()
-        0 * onFailure.run()
+        0 * staleAddressDetector._
     }
 
     def "dispatches messages"() {
@@ -46,7 +47,7 @@ class DaemonClientConnectionTest extends Specification {
 
         then:
         1 * delegate.dispatch("foo")
-        0 * onFailure.run()
+        0 * staleAddressDetector._
     }
 
     def "receives messages"() {
@@ -58,33 +59,75 @@ class DaemonClientConnectionTest extends Specification {
 
         then:
         "bar" == out
-        0 * onFailure.run()
+        0 * staleAddressDetector._
     }
 
-    def "handles failed dispatch"() {
+    def "treats failure to dispatch before receiving as a stale address"() {
+        def failure = new FooException()
+
         given:
-        delegate.dispatch("foo") >> { throw new FooException() }
+        delegate.dispatch("foo") >> { throw failure }
 
         when:
         connection.dispatch("foo")
 
         then:
-        def ex = thrown(GradleException)
-        ex.cause instanceof FooException
-        1 * onFailure.run()
+        def ex = thrown(StaleDaemonAddressException)
+        ex.cause == failure
+        1 * staleAddressDetector.maybeStaleAddress(failure) >> true
+        0 * staleAddressDetector._
     }
 
-    def "handles failed receive"() {
+    def "handles failed dispatch"() {
+        def failure = new FooException()
+
         given:
-        delegate.receive() >> { throw new FooException() }
+        delegate.receive() >> "result"
+        delegate.dispatch("broken") >> { throw failure }
+
+        when:
+        connection.receive()
+        connection.dispatch("broken")
+
+        then:
+        def ex = thrown(DaemonConnectionException)
+        ex.class == DaemonConnectionException
+        ex.cause == failure
+        0 * staleAddressDetector._
+    }
+
+    def "treats failure to receive first message as a stale address"() {
+        def failure = new FooException()
+
+        given:
+        delegate.receive() >> { throw failure }
 
         when:
         connection.receive()
 
         then:
-        def ex = thrown(GradleException)
-        ex.cause instanceof FooException
-        1 * onFailure.run()
+        def ex = thrown(StaleDaemonAddressException)
+        ex.cause == failure
+        1 * staleAddressDetector.maybeStaleAddress(failure) >> true
+        0 * staleAddressDetector._
+    }
+
+    def "handles failed receive"() {
+        def failure = new FooException()
+
+        given:
+        1 * delegate.receive() >> "first"
+        delegate.receive() >> { throw failure }
+
+        when:
+        connection.receive()
+        connection.receive()
+
+        then:
+        def ex = thrown(DaemonConnectionException)
+        ex.class == DaemonConnectionException
+        ex.cause == failure
+        0 * staleAddressDetector._
     }
 
     class FooException extends RuntimeException {}

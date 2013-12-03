@@ -20,9 +20,9 @@ import org.gradle.api.reporting.ReportContainer;
 import org.gradle.api.reporting.SingleFileReport;
 
 /**
- * The reporting configuration for the the {@link FindBugs} task.
+ * The reporting configuration for the {@link FindBugs} task.
  *
- * Only one of the XML or HTML reports can be enabled when the task executes. If more than one is enabled, an {@link org.gradle.api.InvalidUserDataException}
+ * Only one of the reports can be enabled when the task executes. If more than one is enabled, an {@link org.gradle.api.InvalidUserDataException}
  * will be thrown.
  */
 public interface FindBugsReports extends ReportContainer<SingleFileReport> {
@@ -32,7 +32,7 @@ public interface FindBugsReports extends ReportContainer<SingleFileReport> {
      *
      * @return The findbugs XML report
      */
-    SingleFileReport getXml();
+    FindBugsXmlReport getXml();
 
     /**
      * The findbugs HTML report
@@ -41,4 +41,17 @@ public interface FindBugsReports extends ReportContainer<SingleFileReport> {
      */
     SingleFileReport getHtml();
     
+    /**
+     * The findbugs Text report
+     *
+     * @return The findbugs Text report
+     */
+    SingleFileReport getText();
+    
+    /**
+     * The findbugs Emacs report
+     *
+     * @return The findbugs Emacs report
+     */
+    SingleFileReport getEmacs();
 }

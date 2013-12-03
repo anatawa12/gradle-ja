@@ -15,13 +15,17 @@
  */
 package org.gradle.tooling.internal.consumer.connection
 
+import org.gradle.tooling.BuildAction
 import org.gradle.tooling.UnknownModelException
+import org.gradle.tooling.UnsupportedVersionException
 import org.gradle.tooling.exceptions.UnsupportedOperationConfigurationException
 import org.gradle.tooling.internal.adapter.ProtocolToModelAdapter
 import org.gradle.tooling.internal.build.VersionOnlyBuildEnvironment
 import org.gradle.tooling.internal.consumer.parameters.ConsumerOperationParameters
 import org.gradle.tooling.internal.consumer.versioning.CustomModel
 import org.gradle.tooling.internal.consumer.versioning.ModelMapping
+import org.gradle.tooling.internal.gradle.DefaultGradleBuild
+import org.gradle.tooling.internal.gradle.PartialGradleProject
 import org.gradle.tooling.internal.protocol.ConnectionMetaDataVersion1
 import org.gradle.tooling.internal.protocol.ConnectionVersion4
 import org.gradle.tooling.internal.protocol.ProjectVersion3
@@ -30,6 +34,7 @@ import org.gradle.tooling.model.GradleProject
 import org.gradle.tooling.model.build.BuildEnvironment
 import org.gradle.tooling.model.eclipse.EclipseProject
 import org.gradle.tooling.model.eclipse.HierarchicalEclipseProject
+import org.gradle.tooling.model.gradle.GradleBuild
 import org.gradle.tooling.model.idea.BasicIdeaProject
 import org.gradle.tooling.model.idea.IdeaProject
 import org.gradle.tooling.model.internal.outcomes.ProjectOutcomes
@@ -52,7 +57,6 @@ class ConnectionVersion4BackedConsumerConnectionTest extends Specification {
 
         expect:
         !details.supportsGradleProjectModel()
-        !details.supportsRunningTasksWhenBuildingModel()
 
         and:
         details.isModelSupported(HierarchicalEclipseProject)
@@ -66,6 +70,7 @@ class ConnectionVersion4BackedConsumerConnectionTest extends Specification {
         !details.isModelSupported(BuildEnvironment)
         !details.isModelSupported(ProjectOutcomes)
         !details.isModelSupported(CustomModel)
+        !details.isModelSupported(GradleBuild)
     }
 
     def "describes capabilities of a 1.0-m5 provider"() {
@@ -76,9 +81,6 @@ class ConnectionVersion4BackedConsumerConnectionTest extends Specification {
 
         expect:
         details.supportsGradleProjectModel()
-
-        and:
-        !details.supportsRunningTasksWhenBuildingModel()
 
         and:
         details.isModelSupported(HierarchicalEclipseProject)
@@ -92,6 +94,7 @@ class ConnectionVersion4BackedConsumerConnectionTest extends Specification {
         !details.isModelSupported(BuildEnvironment)
         !details.isModelSupported(ProjectOutcomes)
         !details.isModelSupported(CustomModel)
+        !details.isModelSupported(GradleBuild)
     }
 
     def "builds model using connection's getModel() method"() {
@@ -154,8 +157,33 @@ class ConnectionVersion4BackedConsumerConnectionTest extends Specification {
         result == model
 
         and:
+        _ * modelMapping.getProtocolType(EclipseProjectVersion3) >> EclipseProjectVersion3.class
         1 * target.getModel(EclipseProjectVersion3.class, parameters) >> protocolModel
+        1 * adapter.adapt(EclipseProjectVersion3.class, _, _) >> protocolModel
         1 * adapter.adapt(GradleProject.class, _, _) >> model
+        0 * target._
+    }
+
+    def "builds partial GradleBuild model using the Eclipse model for a 1.0-m3 provider"() {
+        metaData.version >> "1.0-milestone-3"
+        def connection = new ConnectionVersion4BackedConsumerConnection(target, modelMapping, adapter)
+        EclipseProjectVersion3 protocolModel = Stub()
+        GradleProject gradleProject = Stub()
+        GradleBuild model = Stub()
+
+        when:
+        def result = connection.run(GradleBuild.class, parameters)
+
+        then:
+        result == model
+
+        and:
+        _ * modelMapping.getProtocolType(EclipseProjectVersion3) >> EclipseProjectVersion3.class
+        1 * target.getModel(EclipseProjectVersion3.class, parameters) >> protocolModel
+        1 * adapter.adapt(EclipseProjectVersion3.class, _, _) >> protocolModel
+        1 * adapter.adapt(GradleProject.class, { it instanceof PartialGradleProject }, _) >> gradleProject
+        1 * adapter.adapt(GradleBuild.class, { it instanceof DefaultGradleBuild }) >> model
+        0 * adapter._
         0 * target._
     }
 
@@ -168,7 +196,19 @@ class ConnectionVersion4BackedConsumerConnectionTest extends Specification {
 
         then:
         UnknownModelException e = thrown()
-        e.message == /The version of Gradle you are using (1.0-milestone-5) does not support building a model of type 'CustomModel'./
+        e.message == /The version of Gradle you are using (1.0-milestone-5) does not support building a model of type 'CustomModel'. Support for building custom tooling models was added in Gradle 1.6 and is available in all later versions./
+    }
+
+    def "fails when unsupported model is requested"() {
+        metaData.version >> "1.0-milestone-5"
+        def connection = new ConnectionVersion4BackedConsumerConnection(target, modelMapping, adapter)
+
+        when:
+        connection.run(ProjectOutcomes.class, parameters)
+
+        then:
+        UnknownModelException e = thrown()
+        e.message == /The version of Gradle you are using (1.0-milestone-5) does not support building a model of type 'ProjectOutcomes'. Support for building 'ProjectOutcomes' models was added in Gradle 1.2 and is available in all later versions./
     }
 
     def "fails when both tasks and model requested"() {
@@ -184,6 +224,21 @@ class ConnectionVersion4BackedConsumerConnectionTest extends Specification {
         then:
         UnsupportedOperationConfigurationException e = thrown()
         e.message.startsWith("Unsupported configuration: modelBuilder.forTasks()")
+    }
+
+    def "fails when build action requested"() {
+        metaData.version >> "1.0-milestone-5"
+        def connection = new ConnectionVersion4BackedConsumerConnection(target, modelMapping, adapter)
+
+        given:
+        parameters.tasks >> ['a']
+
+        when:
+        connection.run(Stub(BuildAction), parameters)
+
+        then:
+        UnsupportedVersionException e = thrown()
+        e.message == /The version of Gradle you are using (1.0-milestone-5) does not support execution of build actions provided by the tooling API client. Support for this was added in Gradle 1.8 and is available in all later versions./
     }
 
     def "fails when stdin provided"() {

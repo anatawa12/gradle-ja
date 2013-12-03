@@ -17,8 +17,8 @@
 package org.gradle.test.fixtures.ivy
 
 import org.gradle.test.fixtures.file.TestFile
+import org.gradle.test.fixtures.maven.HttpArtifact
 import org.gradle.test.fixtures.server.http.HttpServer
-import org.mortbay.jetty.HttpStatus
 
 class IvyHttpModule implements IvyModule {
     private final IvyFileModule backingModule
@@ -31,8 +31,8 @@ class IvyHttpModule implements IvyModule {
         this.backingModule = backingModule
     }
 
-    IvyDescriptor getIvy() {
-        return backingModule.ivy
+    IvyDescriptor getParsedIvy() {
+        return backingModule.parsedIvy
     }
 
     IvyHttpModule publish() {
@@ -60,7 +60,7 @@ class IvyHttpModule implements IvyModule {
         return this
     }
 
-    IvyHttpModule dependsOn(Map<String, String> attributes) {
+    IvyHttpModule dependsOn(Map<String, ?> attributes) {
         backingModule.dependsOn(attributes)
         return this
     }
@@ -70,16 +70,18 @@ class IvyHttpModule implements IvyModule {
         return this
     }
 
-    String getIvyFileUri() {
-        return "http://localhost:${server.port}$prefix/$ivyFile.name"
+    IvyHttpModule extendsFrom(Map<String, ?> attributes) {
+        backingModule.extendsFrom(attributes)
+        return this
+    }
+
+    IvyHttpModule withXml(Closure action) {
+        backingModule.withXml(action)
+        return this
     }
 
     TestFile getIvyFile() {
         return backingModule.ivyFile
-    }
-
-    String getJarFileUri() {
-        return "http://localhost:${server.port}$prefix/$jarFile.name"
     }
 
     TestFile getJarFile() {
@@ -90,88 +92,24 @@ class IvyHttpModule implements IvyModule {
         server.allowGetOrHead(prefix, backingModule.moduleDir)
     }
 
-    void expectIvyGet() {
-        server.expectGet("$prefix/$ivyFile.name", ivyFile)
+    HttpArtifact getIvy() {
+        return new IvyModuleHttpArtifact(server, prefix, ivyFile)
     }
 
-    void expectIvyGetMissing() {
-        server.expectGetMissing("$prefix/$ivyFile.name")
-    }
-
-    void expectIvyGetBroken() {
-        server.expectGetBroken("$prefix/$ivyFile.name")
-    }
-
-    void expectIvyHead() {
-        server.expectHead("$prefix/$ivyFile.name", ivyFile)
-    }
-
-    void expectIvyHeadBroken() {
-        server.expectHeadBroken("$prefix/$ivyFile.name")
-    }
-
-    void expectIvyPut(int status = HttpStatus.ORDINAL_200_OK) {
-        server.expectPut("$prefix/$ivyFile.name", ivyFile, status)
+    HttpArtifact getJar() {
+        return new IvyModuleHttpArtifact(server, prefix, jarFile)
     }
 
     void expectIvyPut(String userName, String password) {
         server.expectPut("$prefix/$ivyFile.name", userName, password, ivyFile)
     }
 
-    void expectIvySha1Get() {
-        server.expectGet("$prefix/${ivyFile.name}.sha1", backingModule.sha1File(ivyFile))
-    }
-
-    void expectIvySha1GetMissing() {
-        server.expectGetMissing("$prefix/${ivyFile.name}.sha1")
-    }
-
-    void expectIvySha1Put(int status = HttpStatus.ORDINAL_200_OK) {
-        server.expectPut("$prefix/${ivyFile.name}.sha1", backingModule.getSha1File(ivyFile), status)
-    }
-
     void expectIvySha1Put(String userName, String password) {
         server.expectPut("$prefix/${ivyFile.name}.sha1", userName, password, backingModule.getSha1File(ivyFile))
     }
 
-    void expectJarGet() {
-        server.expectGet("$prefix/$jarFile.name", jarFile)
-    }
-
-    void expectJarGetMissing() {
-        server.expectGetMissing("$prefix/$jarFile.name")
-    }
-
-    void expectJarGetBroken() {
-        server.expectGetBroken("$prefix/$jarFile.name")
-    }
-
-    void expectJarHead() {
-        server.expectHead("$prefix/$jarFile.name", jarFile)
-    }
-
-    void expectJarHeadMissing() {
-        server.expectHeadMissing("$prefix/$jarFile.name")
-    }
-
-    void expectJarPut(int status = HttpStatus.ORDINAL_200_OK) {
-        server.expectPut("$prefix/$jarFile.name", jarFile, status)
-    }
-
     void expectJarPut(String userName, String password) {
         server.expectPut("$prefix/$jarFile.name", userName, password, jarFile)
-    }
-
-    void expectJarSha1Get() {
-        server.expectGet("$prefix/${jarFile.name}.sha1", backingModule.sha1File(jarFile))
-    }
-
-    void expectJarSha1GetMissing() {
-        server.expectGetMissing("$prefix/${jarFile.name}.sha1")
-    }
-
-    void expectJarSha1Put() {
-        server.expectPut("$prefix/${jarFile.name}.sha1", backingModule.getSha1File(jarFile))
     }
 
     void expectJarSha1Put(String userName, String password) {
@@ -209,6 +147,30 @@ class IvyHttpModule implements IvyModule {
 
     void assertIvyAndJarFilePublished() {
         backingModule.assertIvyAndJarFilePublished()
+    }
+
+    private class IvyModuleHttpArtifact extends HttpArtifact {
+        final TestFile backingFile
+
+        IvyModuleHttpArtifact(HttpServer server, String modulePath, TestFile backingFile) {
+            super(server, modulePath)
+            this.backingFile = backingFile
+        }
+
+        @Override
+        TestFile getFile() {
+            return backingFile
+        }
+
+        @Override
+        protected TestFile getSha1File() {
+            return backingModule.getSha1File(backingFile)
+        }
+
+        @Override
+        protected TestFile getMd5File() {
+            return backingModule.getMd5File(backingFile)
+        }
     }
 }
 

@@ -15,7 +15,7 @@
  */
 package org.gradle.internal.resource.local;
 
-import org.gradle.util.hash.HashValue;
+import org.gradle.internal.hash.HashValue;
 
 import java.io.File;
 
@@ -29,6 +29,11 @@ public class DefaultLocallyAvailableResource extends AbstractLocallyAvailableRes
     public DefaultLocallyAvailableResource(File origin, HashValue sha1) {
         super(sha1);
         this.origin = origin;
+    }
+
+    @Override
+    public String toString() {
+        return origin.toString();
     }
 
     public File getFile() {

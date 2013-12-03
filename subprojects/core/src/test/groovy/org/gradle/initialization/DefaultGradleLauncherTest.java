@@ -24,14 +24,15 @@ import org.gradle.api.initialization.ProjectDescriptor;
 import org.gradle.api.internal.ExceptionAnalyser;
 import org.gradle.api.internal.GradleInternal;
 import org.gradle.api.internal.SettingsInternal;
+import org.gradle.api.internal.file.TestFiles;
 import org.gradle.api.internal.project.DefaultProject;
 import org.gradle.configuration.BuildConfigurer;
 import org.gradle.execution.BuildExecuter;
 import org.gradle.execution.TaskGraphExecuter;
 import org.gradle.logging.LoggingManagerInternal;
 import org.gradle.test.fixtures.file.TestNameTestDirectoryProvider;
-import org.gradle.util.HelperUtil;
 import org.gradle.util.JUnit4GroovyMockery;
+import org.gradle.util.TestUtil;
 import org.hamcrest.BaseMatcher;
 import org.hamcrest.Description;
 import org.hamcrest.Matcher;
@@ -93,9 +94,10 @@ public class DefaultGradleLauncherTest {
         File expectedRootDir = tmpDir.file("rootDir");
         File expectedCurrentDir = new File(expectedRootDir, "currentDir");
 
-        expectedRootProjectDescriptor = new DefaultProjectDescriptor(null, "someName", new File("somedir"), new DefaultProjectDescriptorRegistry());
-        expectedRootProject = HelperUtil.createRootProject(expectedRootDir);
-        expectedCurrentProject = HelperUtil.createRootProject(expectedCurrentDir);
+        expectedRootProjectDescriptor = new DefaultProjectDescriptor(null, "someName", new File("somedir"), new DefaultProjectDescriptorRegistry(),
+                TestFiles.resolver(expectedRootDir));
+        expectedRootProject = TestUtil.createRootProject(expectedRootDir);
+        expectedCurrentProject = TestUtil.createRootProject(expectedCurrentDir);
 
         expectedStartParams = new StartParameter();
         expectedStartParams.setCurrentDir(expectedCurrentDir);

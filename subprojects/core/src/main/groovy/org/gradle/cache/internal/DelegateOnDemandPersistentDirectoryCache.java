@@ -19,7 +19,6 @@ package org.gradle.cache.internal;
 import org.gradle.cache.CacheOpenException;
 import org.gradle.cache.PersistentIndexedCache;
 import org.gradle.internal.Factory;
-import org.gradle.messaging.serialize.Serializer;
 
 import java.io.File;
 
@@ -96,15 +95,7 @@ public class DelegateOnDemandPersistentDirectoryCache implements ReferencablePer
         return delegateCache.getBaseDir();
     }
 
-    public <K, V> PersistentIndexedCache<K, V> createCache(File cacheFile, Class<K> keyType, Class<V> valueType) {
-        throw new UnsupportedOperationException();
-    }
-
-    public <K, V> PersistentIndexedCache<K, V> createCache(File cacheFile, Class<K> keyType, Serializer<V> valueSerializer) {
-        throw new UnsupportedOperationException();
-    }
-
-    public <K, V> PersistentIndexedCache<K, V> createCache(File cacheFile, Serializer<K> keySerializer, Serializer<V> valueSerializer) {
+    public <K, V> PersistentIndexedCache<K, V> createCache(PersistentIndexedCacheParameters<K, V> parameters) {
         throw new UnsupportedOperationException();
     }
 

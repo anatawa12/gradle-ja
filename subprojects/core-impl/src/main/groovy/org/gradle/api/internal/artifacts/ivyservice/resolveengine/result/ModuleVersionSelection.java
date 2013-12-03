@@ -17,11 +17,14 @@
 package org.gradle.api.internal.artifacts.ivyservice.resolveengine.result;
 
 import org.gradle.api.artifacts.ModuleVersionIdentifier;
-import org.gradle.api.artifacts.result.ModuleVersionSelectionReason;
+import org.gradle.api.artifacts.component.ComponentIdentifier;
+import org.gradle.api.artifacts.result.ComponentSelectionReason;
 
 public interface ModuleVersionSelection {
 
     ModuleVersionIdentifier getSelectedId();
 
-    ModuleVersionSelectionReason getSelectionReason();
+    ComponentSelectionReason getSelectionReason();
+
+    ComponentIdentifier getComponentId();
 }

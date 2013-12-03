@@ -22,8 +22,8 @@ import org.gradle.api.UncheckedIOException;
 import org.gradle.api.file.FileCollection;
 import org.gradle.api.file.FileTree;
 import org.gradle.api.internal.file.collections.DefaultConfigurableFileCollection;
-import org.gradle.api.internal.notations.api.NotationParser;
-import org.gradle.api.internal.notations.api.UnsupportedNotationException;
+import org.gradle.internal.typeconversion.NotationParser;
+import org.gradle.internal.typeconversion.UnsupportedNotationException;
 import org.gradle.api.resources.ReadableResource;
 import org.gradle.internal.Factory;
 import org.gradle.internal.nativeplatform.filesystem.FileSystem;
@@ -52,12 +52,16 @@ public abstract class AbstractFileResolver implements FileResolver {
         return new BaseDirFileResolver(fileSystem, resolve(path));
     }
 
+    public FileResolver withNoBaseDir() {
+        return new IdentityFileResolver(fileSystem);
+    }
+
     public File resolve(Object path) {
         return resolve(path, PathValidation.NONE);
     }
 
-    public NotationParser<File> asNotationParser() {
-        return new NotationParser<File>() {
+    public NotationParser<Object, File> asNotationParser() {
+        return new NotationParser<Object, File>() {
             public File parseNotation(Object notation) throws UnsupportedNotationException {
                 // TODO Further differentiate between unsupported notation errors and others (particularly when we remove the deprecated 'notation.toString()' resolution)
                 return resolve(notation, PathValidation.NONE);
@@ -242,6 +246,10 @@ public abstract class AbstractFileResolver implements FileResolver {
 
     public FileTree resolveFilesAsTree(Object... paths) {
         return resolveFiles(paths).getAsFileTree();
+    }
+
+    public FileTree compositeFileTree(List<FileTree> fileTrees) {
+        return new DefaultCompositeFileTree(fileTrees);
     }
 
     public ReadableResource resolveResource(Object path) {

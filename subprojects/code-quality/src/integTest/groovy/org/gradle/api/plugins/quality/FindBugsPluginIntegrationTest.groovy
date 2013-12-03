@@ -146,6 +146,28 @@ class FindBugsPluginIntegrationTest extends WellBehavedPluginTest {
         then:
         file("build/reports/findbugs/main.html").exists()
     }
+    
+    def "can generate xml with messages reports"() {
+        given:
+        buildFile << """
+            findbugsMain.reports {
+                xml.enabled true
+                xml.withMessages true
+                html.enabled false
+            }
+            findbugsMain.ignoreFailures true
+        """
+
+        and:
+        badCode()
+
+        when:
+        run "findbugsMain"
+
+        then:
+        file("build/reports/findbugs/main.xml").exists()
+        containsXmlMessages(file("build/reports/findbugs/main.xml"))
+    }
 
     def "can generate no reports"() {
         given:
@@ -175,6 +197,146 @@ class FindBugsPluginIntegrationTest extends WellBehavedPluginTest {
         file("build/reports/findbugs/main.xml").assertContents(containsClass("org.gradle.Class800"))
         file("build/reports/findbugs/test.xml").assertContents(containsClass("org.gradle.Class1Test"))
         file("build/reports/findbugs/test.xml").assertContents(containsClass("org.gradle.Class800Test"))
+    }
+
+    def "is incremental for reporting settings"() {
+        given:
+        buildFile << """
+            findbugsMain.reports {
+                xml.enabled true
+            }
+        """
+
+        and:
+        goodCode()
+
+        when:
+        succeeds "findbugsMain"
+
+        then:
+        file("build/reports/findbugs/main.xml").exists()
+        ":findbugsMain" in nonSkippedTasks
+        !(":findbugsMain" in skippedTasks)
+
+        when:
+        succeeds "findbugsMain"
+
+        then:
+        file("build/reports/findbugs/main.xml").exists()
+        !(":findbugsMain" in nonSkippedTasks)
+        ":findbugsMain" in skippedTasks
+
+        when:
+        buildFile << """
+            findbugsMain.reports {
+                xml.enabled false
+            }
+        """
+
+        succeeds "findbugsMain"
+
+        then:
+        file("build/reports/findbugs/main.xml").exists()
+        ":findbugsMain" in nonSkippedTasks
+        !(":findbugsMain" in skippedTasks)
+    }
+
+    def "is incremental for withMessage"() {
+        given:
+        buildFile << """
+            findbugsMain {
+                reports {
+                    xml.enabled true
+                    xml.withMessages true
+                }
+
+                ignoreFailures true
+            }
+        """
+
+        and:
+        badCode()
+
+        when:
+        succeeds "findbugsMain"
+
+        then:
+        file("build/reports/findbugs/main.xml").exists()
+        containsXmlMessages(file("build/reports/findbugs/main.xml"))
+        ":findbugsMain" in nonSkippedTasks
+        !(":findbugsMain" in skippedTasks)
+
+        when:
+        succeeds "findbugsMain"
+
+        then:
+        file("build/reports/findbugs/main.xml").exists()
+        containsXmlMessages(file("build/reports/findbugs/main.xml"))
+        !(":findbugsMain" in nonSkippedTasks)
+        ":findbugsMain" in skippedTasks
+
+        when:
+        buildFile << """
+            findbugsMain {
+                reports {
+                    xml.enabled true
+                    xml.withMessages false
+                }
+
+                ignoreFailures true
+            }
+        """
+
+        succeeds "findbugsMain"
+
+        then:
+        file("build/reports/findbugs/main.xml").exists()
+        !containsXmlMessages(file("build/reports/findbugs/main.xml"))
+        ":findbugsMain" in nonSkippedTasks
+        !(":findbugsMain" in skippedTasks)
+    }
+
+    def "is withMessage ignored for non-XML report setting"() {
+        given:
+        buildFile << """
+            findbugsMain {
+                reports {
+                    xml.enabled false
+                    xml.withMessages true
+                    html.enabled true
+                }
+            }
+        """
+
+        and:
+        goodCode()
+
+        when:
+        succeeds "findbugsMain"
+
+        then:
+        !file("build/reports/findbugs/main.xml").exists()
+        file("build/reports/findbugs/main.html").exists()
+
+        when:
+        buildFile << """
+            findbugsMain.reports {
+                xml.withMessages false
+            }
+        """
+
+        and:
+        succeeds "findbugsMain"
+
+        then:
+        !file("build/reports/findbugs/main.xml").exists()
+        file("build/reports/findbugs/main.html").exists()
+        !(":findbugsMain" in nonSkippedTasks)
+        ":findbugsMain" in skippedTasks
+    }
+
+    private boolean containsXmlMessages(File xmlReportFile) {
+        new XmlSlurper().parseText(xmlReportFile.text).BugInstance.children().collect { it.name() }.containsAll(['ShortMessage', 'LongMessage'])
     }
 
     private goodCode(int numberOfClasses = 1) {

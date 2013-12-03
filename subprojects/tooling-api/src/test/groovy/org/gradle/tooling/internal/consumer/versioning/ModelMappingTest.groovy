@@ -19,6 +19,7 @@ package org.gradle.tooling.internal.consumer.versioning
 import org.gradle.tooling.internal.protocol.*
 import org.gradle.tooling.internal.protocol.eclipse.EclipseProjectVersion3
 import org.gradle.tooling.internal.protocol.eclipse.HierarchicalEclipseProjectVersion1
+import org.gradle.tooling.model.gradle.GradleBuild
 import org.gradle.tooling.model.GradleProject
 import org.gradle.tooling.model.build.BuildEnvironment
 import org.gradle.tooling.model.eclipse.EclipseProject
@@ -63,9 +64,51 @@ class ModelMappingTest extends Specification {
         ]
     }
 
-    def "returns null for unknown model type"() {
+    def "uses null protocol type for custom model type"() {
         expect:
         mapping.getProtocolType(CustomModel) == null
+    }
+
+    def "uses null protocol type for model types added after 1.6"() {
+        expect:
+        mapping.getProtocolType(GradleBuild) == null
+    }
+
+    def "maps model type to model identifier"() {
+        expect:
+        def id = mapping.getModelIdentifierFromModelType(modelType)
+        id.name == modelName
+
+        where:
+        modelType                  | modelName
+        Void                       | ModelIdentifier.NULL_MODEL
+        HierarchicalEclipseProject | "org.gradle.tooling.model.eclipse.HierarchicalEclipseProject"
+        EclipseProject             | "org.gradle.tooling.model.eclipse.EclipseProject"
+        IdeaProject                | "org.gradle.tooling.model.idea.IdeaProject"
+        GradleProject              | "org.gradle.tooling.model.GradleProject"
+        BasicIdeaProject           | "org.gradle.tooling.model.idea.BasicIdeaProject"
+        BuildEnvironment           | "org.gradle.tooling.model.build.BuildEnvironment"
+        ProjectOutcomes            | "org.gradle.tooling.model.outcomes.ProjectOutcomes"
+        GradleBuild                | "org.gradle.tooling.model.gradle.GradleBuild"
+        CustomModel                | CustomModel.name
+    }
+
+    def "maps model type to version it was added in"() {
+        expect:
+        mapping.getVersionAdded(modelType) == since
+
+        where:
+        modelType                  | since
+        Void                       | "1.0-milestone-3"
+        HierarchicalEclipseProject | "1.0-milestone-3"
+        EclipseProject             | "1.0-milestone-3"
+        IdeaProject                | "1.0-milestone-5"
+        GradleProject              | "1.0-milestone-5"
+        BasicIdeaProject           | "1.0-milestone-5"
+        BuildEnvironment           | "1.0-milestone-8"
+        ProjectOutcomes            | "1.2"
+        GradleBuild                | "1.8"
+        CustomModel                | null
     }
 }
 

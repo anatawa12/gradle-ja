@@ -54,24 +54,20 @@ task check << {
         succeeds "check"
     }
 
-    def "merges values from included descriptor file"() {
+    def "merges values from parent descriptor file that is available locally"() {
         given:
-        final parentModule = ivyRepo.module("org.gradle.parent", "parent_module", "1.1").dependsOn("org.gradle.dep", "dep_module", "1.1").publish()
-        ivyRepo.module("org.gradle.dep", "dep_module", "1.1").publish()
+        server.start()
+        def parentModule = ivyHttpRepo.module("org.gradle.parent", "parent_module", "1.1").dependsOn("org.gradle.dep", "dep_module", "1.1").publish()
+        def depModule = ivyHttpRepo.module("org.gradle.dep", "dep_module", "1.1").publish()
 
-        final module = ivyRepo.module("org.gradle", "test", "1.45")
-        final extendAttributes = ["organisation": "org.gradle.parent", "module": "parent_module", "revision": "1.1"]
-        if (includeLocation) {
-            extendAttributes["location"] = parentModule.ivyFile.absolutePath
-        }
-        module.withXml {
-            asNode().info[0].appendNode("extends", extendAttributes)
-        }
+        def module = ivyHttpRepo.module("org.gradle", "test", "1.45")
+        module.extendsFrom(organisation: "org.gradle.parent", module: "parent_module", revision: "1.1", location: parentModule.ivyFile.toURI().toURL())
+        parentModule.publish()
         module.publish()
 
-        and:
+        when:
         buildFile << """
-repositories { ivy { url "${ivyRepo.uri}" } }
+repositories { ivy { url "${ivyHttpRepo.uri}" } }
 configurations { compile }
 dependencies {
     compile "org.gradle:test:1.45"
@@ -82,13 +78,62 @@ task check << {
 }
 """
 
-        expect:
+        and:
+        module.ivy.expectGet()
+        depModule.ivy.expectGet()
+        module.jar.expectGet()
+        depModule.jar.expectGet()
+
+        then:
         succeeds "check"
 
-        where:
-        name                        | includeLocation
-        "with explicit location"    | true
-        "without explicit location" | false
+        when:
+        server.resetExpectations()
+
+        then:
+        succeeds "check"
+    }
+
+    def "merges values from parent descriptor file"() {
+        given:
+        server.start()
+        final parentModule = ivyHttpRepo.module("org.gradle.parent", "parent_module", "1.1").dependsOn("org.gradle.dep", "dep_module", "1.1").publish()
+        final depModule = ivyHttpRepo.module("org.gradle.dep", "dep_module", "1.1").publish()
+
+        final module = ivyHttpRepo.module("org.gradle", "test", "1.45")
+        final extendAttributes = [organisation: "org.gradle.parent", module: "parent_module", revision: "1.1"]
+        module.extendsFrom(extendAttributes)
+        parentModule.publish()
+        module.publish()
+
+        when:
+        buildFile << """
+repositories { ivy { url "${ivyHttpRepo.uri}" } }
+configurations { compile }
+dependencies {
+    compile "org.gradle:test:1.45"
+}
+
+task check << {
+    assert configurations.compile.collect { it.name } == ['test-1.45.jar', 'dep_module-1.1.jar']
+}
+"""
+
+        and:
+        module.ivy.expectGet()
+        parentModule.ivy.expectGet()
+        depModule.ivy.expectGet()
+        module.jar.expectGet()
+        depModule.jar.expectGet()
+
+        then:
+        succeeds "check"
+
+        when:
+        server.resetExpectations()
+
+        then:
+        succeeds "check"
     }
 
     @Unroll

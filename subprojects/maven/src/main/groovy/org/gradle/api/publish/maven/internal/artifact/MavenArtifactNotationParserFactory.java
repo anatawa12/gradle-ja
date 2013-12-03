@@ -19,12 +19,12 @@ package org.gradle.api.publish.maven.internal.artifact;
 import org.apache.commons.lang.StringUtils;
 import org.gradle.api.artifacts.PublishArtifact;
 import org.gradle.api.internal.file.FileResolver;
-import org.gradle.api.internal.notations.NotationParserBuilder;
-import org.gradle.api.internal.notations.api.NotationParser;
-import org.gradle.api.internal.notations.api.UnsupportedNotationException;
-import org.gradle.api.internal.notations.parsers.MapKey;
-import org.gradle.api.internal.notations.parsers.MapNotationParser;
-import org.gradle.api.internal.notations.parsers.TypedNotationParser;
+import org.gradle.internal.typeconversion.NotationParserBuilder;
+import org.gradle.internal.typeconversion.NotationParser;
+import org.gradle.internal.typeconversion.UnsupportedNotationException;
+import org.gradle.internal.typeconversion.MapKey;
+import org.gradle.internal.typeconversion.MapNotationParser;
+import org.gradle.internal.typeconversion.TypedNotationParser;
 import org.gradle.api.publish.maven.MavenArtifact;
 import org.gradle.api.tasks.bundling.AbstractArchiveTask;
 import org.gradle.internal.Factory;
@@ -33,7 +33,7 @@ import org.gradle.internal.reflect.Instantiator;
 import java.io.File;
 import java.util.Collection;
 
-public class MavenArtifactNotationParserFactory implements Factory<NotationParser<MavenArtifact>> {
+public class MavenArtifactNotationParserFactory implements Factory<NotationParser<Object, MavenArtifact>> {
     private final Instantiator instantiator;
     private final FileResolver fileResolver;
 
@@ -42,12 +42,12 @@ public class MavenArtifactNotationParserFactory implements Factory<NotationParse
         this.fileResolver = fileResolver;
     }
 
-    public NotationParser<MavenArtifact> create() {
+    public NotationParser<Object, MavenArtifact> create() {
         FileNotationParser fileNotationParser = new FileNotationParser(fileResolver);
         ArchiveTaskNotationParser archiveTaskNotationParser = new ArchiveTaskNotationParser();
         PublishArtifactNotationParser publishArtifactNotationParser = new PublishArtifactNotationParser();
 
-        NotationParser<MavenArtifact> sourceNotationParser = new NotationParserBuilder<MavenArtifact>()
+        NotationParser<Object, MavenArtifact> sourceNotationParser = new NotationParserBuilder<MavenArtifact>()
                 .resultingType(MavenArtifact.class)
                 .parser(archiveTaskNotationParser)
                 .parser(publishArtifactNotationParser)
@@ -96,8 +96,8 @@ public class MavenArtifactNotationParserFactory implements Factory<NotationParse
         }
     }
 
-    private class FileNotationParser implements NotationParser<MavenArtifact> {
-        private final NotationParser<File> fileResolverNotationParser;
+    private class FileNotationParser implements NotationParser<Object, MavenArtifact> {
+        private final NotationParser<Object, File> fileResolverNotationParser;
 
         private FileNotationParser(FileResolver fileResolver) {
             this.fileResolverNotationParser = fileResolver.asNotationParser();
@@ -119,9 +119,9 @@ public class MavenArtifactNotationParserFactory implements Factory<NotationParse
     }
 
     private class MavenArtifactMapNotationParser extends MapNotationParser<MavenArtifact> {
-        private final NotationParser<MavenArtifact> sourceNotationParser;
+        private final NotationParser<Object, MavenArtifact> sourceNotationParser;
 
-        private MavenArtifactMapNotationParser(NotationParser<MavenArtifact> sourceNotationParser) {
+        private MavenArtifactMapNotationParser(NotationParser<Object, MavenArtifact> sourceNotationParser) {
             this.sourceNotationParser = sourceNotationParser;
         }
 

@@ -107,7 +107,10 @@ project(':tool') {
         mavenRepo.module("org", "foo", '1.3.3').publish()
         mavenRepo.module("org", "foo", '1.4.4').publish()
 
-        settingsFile << "include 'api', 'impl', 'tool'"
+        settingsFile << """
+rootProject.name = 'test'
+include 'api', 'impl', 'tool'
+"""
 
         buildFile << """
 allprojects {
@@ -134,19 +137,33 @@ project(':tool') {
 		compile project(':api')
 		compile project(':impl')
 	}
-    task checkDeps(dependsOn: configurations.compile) << {
-        assert configurations.compile*.name == ['api.jar', 'impl.jar', 'foo-1.4.4.jar']
-    }
 }
 """
 
-        expect:
+        def resolve = new ResolveTestFixture(buildFile)
+        resolve.prepare()
+
+        when:
         run("tool:checkDeps")
+
+        then:
+        resolve.expectGraph {
+            root("test:tool:") {
+                project(":api", "test:api:") {
+                    edge("org:foo:1.3.3", "org:foo:1.4.4")
+                }
+                project(":impl", "test:impl:") {
+                    module("org:foo:1.4.4").byConflictResolution()
+                }
+            }
+        }
     }
 
     void "does not attempt to resolve an evicted dependency"() {
         mavenRepo.module("org", "external", "1.2").publish()
         mavenRepo.module("org", "dep", "2.2").dependsOn("org", "external", "1.0").publish()
+
+        settingsFile << "rootProject.name = 'test'"
 
         buildFile << """
 repositories {
@@ -159,9 +176,49 @@ dependencies {
     compile 'org:external:1.2'
     compile 'org:dep:2.2'
 }
+"""
 
-task checkDeps << {
-    assert configurations.compile*.name == ['external-1.2.jar', 'dep-2.2.jar']
+        def resolve = new ResolveTestFixture(buildFile)
+        resolve.prepare()
+
+        when:
+        run("checkDeps")
+
+        then:
+        resolve.expectGraph {
+            root(":test:") {
+                module("org:external:1.2").byConflictResolution()
+                module("org:dep:2.2") {
+                    edge("org:external:1.0", "org:external:1.2")
+                }
+            }
+        }
+    }
+
+    @Issue("GRADLE-2890")
+    void "selects latest from multiple conflicts"() {
+        mavenRepo.module("org", "child", '1').publish()
+        mavenRepo.module("org", "child", '2').publish()
+        mavenRepo.module("org", "parent", '1').dependsOn("org", "child", "1").publish()
+        mavenRepo.module("org", "parent", '2').dependsOn("org", "child", "2").publish()
+        mavenRepo.module("org", "dep", '2').dependsOn("org", "parent", "2").publish()
+
+        buildFile << """
+repositories {
+    maven { url "${mavenRepo.uri}" }
+}
+configurations {
+    compile
+}
+dependencies {
+    compile 'org:parent:1'
+    compile 'org:child:2'
+    compile 'org:dep:2'
+}
+task checkDeps(dependsOn: configurations.compile) << {
+    assert configurations.compile*.name == ['child-2.jar', 'dep-2.jar', 'parent-2.jar']
+    configurations.compile.resolvedConfiguration.firstLevelModuleDependencies*.name
+    configurations.compile.incoming.resolutionResult.allComponents*.id
 }
 """
 
@@ -389,12 +446,12 @@ task checkDeps << {
             task checkDeps << {
                 assert configurations.conf*.name == ['a-2.0.jar', 'b-2.0.jar']
                 def result = configurations.conf.incoming.resolutionResult
-                assert result.allModuleVersions.size() == 3
+                assert result.allComponents.size() == 3
                 def root = result.root
                 assert root.dependencies*.toString() == ['org:a:1.0 -> org:a:2.0', 'org:a:2.0']
-                def a = result.allModuleVersions.find { it.id.name == 'a' }
+                def a = result.allComponents.find { it.id.module == 'a' }
                 assert a.dependencies*.toString() == ['org:b:2.0']
-                def b = result.allModuleVersions.find { it.id.name == 'b' }
+                def b = result.allComponents.find { it.id.module == 'b' }
                 assert b.dependencies*.toString() == ['org:a:1.0 -> org:a:2.0']
             }
         """
@@ -444,12 +501,12 @@ task checkDeps << {
         task checkDeps << {
             assert configurations.conf*.name == ['a-1.0.jar', 'b-1.0.jar', 'b-child-1.0.jar', 'target-1.0.jar', 'in-conflict-2.0.jar', 'target-child-1.0.jar']
             def result = configurations.conf.incoming.resolutionResult
-            assert result.allModuleVersions.size() == 7
-            def a = result.allModuleVersions.find { it.id.name == 'a' }
+            assert result.allComponents.size() == 7
+            def a = result.allComponents.find { it.id.module == 'a' }
             assert a.dependencies*.toString() == ['org:in-conflict:1.0 -> org:in-conflict:2.0']
-            def bChild = result.allModuleVersions.find { it.id.name == 'b-child' }
+            def bChild = result.allComponents.find { it.id.module == 'b-child' }
             assert bChild.dependencies*.toString() == ['org:in-conflict:2.0']
-            def target = result.allModuleVersions.find { it.id.name == 'target' }
+            def target = result.allComponents.find { it.id.module == 'target' }
             assert target.dependents*.from*.toString() == ['org:in-conflict:2.0']
         }
         """
@@ -528,7 +585,7 @@ parentFirst
     }
 
     @Issue("GRADLE-2752")
-    void "does not replace root module when earlier version of root module is requested"() {
+    void "selects root module when earlier version of module requested"() {
         mavenRepo.module("org", "test", "1.2").publish()
         mavenRepo.module("org", "other", "1.7").dependsOn("org", "test", "1.2").publish()
 
@@ -547,22 +604,92 @@ repositories {
 dependencies {
     compile "org:other:1.7"
 }
+"""
+
+        def resolve = new ResolveTestFixture(buildFile)
+        resolve.prepare()
+
+        when:
+        run("checkDeps")
+
+        then:
+        resolve.expectGraph {
+            root("org:test:1.3") {
+                module("org:other:1.7") {
+                    edge("org:test:1.2", "org:test:1.3")
+                }
+            }
+        }
+    }
+
+    @Issue("GRADLE-2920")
+    void "selects later version of root module when requested"() {
+        mavenRepo.module("org", "test", "2.1").publish()
+        mavenRepo.module("org", "other", "1.7").dependsOn("org", "test", "2.1").publish()
+
+        settingsFile << "rootProject.name = 'test'"
+
+        buildFile << """
+apply plugin: 'java'
+
+group "org"
+version "1.3"
+
+repositories {
+    maven { url "${mavenRepo.uri}" }
+}
+
+dependencies {
+    compile "org:other:1.7"
+}
+"""
+
+        def resolve = new ResolveTestFixture(buildFile)
+        resolve.prepare()
+
+        when:
+        run("checkDeps")
+
+        then:
+        resolve.expectGraph {
+            root("org:test:1.3") {
+                module("org:other:1.7") {
+                    module("org:test:2.1").byConflictResolution()
+                }
+            }
+        }
+    }
+
+    void "module is required only by selected conflicting version and in turn requires evicted conflicting version"() {
+        /*
+            a2 -> b1 -> c1
+            a1
+            c2
+         */
+        mavenRepo.module("org", "a", "1").publish()
+        mavenRepo.module("org", "a", "2").dependsOn("org", "b", "1").publish()
+        mavenRepo.module("org", "b", "1").dependsOn("org", "c", "1").publish()
+        mavenRepo.module("org", "c", "1").publish()
+        mavenRepo.module("org", "c", "2").publish()
+
+        settingsFile << "rootProject.name= 'test'"
+
+        buildFile << """
+repositories {
+    maven { url "${mavenRepo.uri}" }
+}
+configurations {
+    compile
+}
+dependencies {
+    compile "org:a:2"
+    compile "org:a:1"
+    compile "org:c:2"
+}
 
 task checkDeps(dependsOn: configurations.compile) << {
-    assert configurations.compile*.name == ['other-1.7.jar', 'test-1.3.jar']
-
-    def result = configurations.compile.incoming.resolutionResult
-    assert result.allModuleVersions.size() == 2
-
-    def root = result.root
-    assert root.id.version == '1.3'
-    assert root.selectionReason.description == 'root'
-    assert !root.selectionReason.conflictResolution //current behavior, feels incorrect
-
-    def other = result.allModuleVersions.find { it.id.name == 'other' }
-
-    assert root.dependencies*.selected == [other]
-    assert other.dependencies*.selected == [root]
+    assert configurations.compile*.name == ['a-2.jar', 'c-2.jar', 'b-1.jar']
+    assert configurations.compile.incoming.resolutionResult.allComponents.find { it.id.module == 'b' }.dependencies.size() == 1
 }
 """
 

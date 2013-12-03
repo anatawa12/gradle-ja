@@ -15,11 +15,14 @@
  */
 package org.gradle.api.internal.tasks.testing.junit.report;
 
-import org.gradle.api.internal.ErroringAction;
+import org.gradle.internal.ErroringAction;
 import org.gradle.api.internal.html.SimpleHtmlWriter;
+import org.gradle.api.internal.tasks.testing.junit.result.TestFailure;
 import org.gradle.api.internal.tasks.testing.junit.result.TestResultsProvider;
 import org.gradle.api.tasks.testing.TestOutputEvent;
+import org.gradle.internal.SystemProperties;
 import org.gradle.reporting.CodePanelRenderer;
+import org.gradle.util.GUtil;
 
 import java.io.IOException;
 
@@ -36,9 +39,9 @@ class ClassPageRenderer extends PageRenderer<ClassTestResults> {
     @Override
     protected void renderBreadcrumbs(SimpleHtmlWriter htmlWriter) throws IOException {
         htmlWriter.startElement("div").attribute("class", "breadcrumbs")
-            .startElement("a").attribute("href", "index.html").characters("all").endElement()
+            .startElement("a").attribute("href", getResults().getUrlTo(getResults().getParent().getParent())).characters("all").endElement()
             .characters(" > ")
-            .startElement("a").attribute("href", String.format("%s.html", getResults().getPackageResults().getName())).characters(getResults().getPackageResults().getName()).endElement()
+            .startElement("a").attribute("href", getResults().getUrlTo(getResults().getPackageResults())).characters(getResults().getPackageResults().getName()).endElement()
             .characters(String.format(" > %s", getResults().getSimpleName()))
         .endElement();
     }
@@ -70,7 +73,13 @@ class ClassPageRenderer extends PageRenderer<ClassTestResults> {
                 .startElement("a").attribute("name", test.getId().toString()).characters("").endElement() //browsers dont understand <a name="..."/>
                 .startElement("h3").attribute("class", test.getStatusClass()).characters(test.getName()).endElement();
             for (TestFailure failure : test.getFailures()) {
-                codePanelRenderer.render(failure.getStackTrace(), htmlWriter);
+                String message;
+                if (GUtil.isTrue(failure.getMessage()) && !failure.getStackTrace().contains(failure.getMessage())) {
+                    message = failure.getMessage() + SystemProperties.getLineSeparator() + SystemProperties.getLineSeparator() + failure.getStackTrace();
+                } else {
+                    message = failure.getStackTrace();
+                }
+                codePanelRenderer.render(message, htmlWriter);
             }
             htmlWriter.endElement();
         }

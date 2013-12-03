@@ -35,7 +35,7 @@
         </sample>
         <para role="original">You can also use strings for the task names:</para>
         <para>タスク名に文字列を使うこともできます。</para>
-        <sample id="defineUsingStringTaskNames" dir="userguide/tasks/defineUsingStringTaskNames" title="タスクを定義する - 文字列を使用 / Defining tasks - using strings">
+        <sample id="defineUsingStringTaskNames" dir="userguide/tasks/defineUsingStringTaskNames" title="タスクを定義する - タスク名に文字列を使用 / Defining tasks - using strings for task names">
             <sourcefile file="build.gradle"/>
         </sample>
         <para role="original">There is an alternative syntax for defining tasks, which you may prefer to use:</para>
@@ -96,19 +96,7 @@
             nice to read.
         </para>
         <para>これは、普段私たちがJavaオブジェクトを設定するのと同じ方法で設定する方法です。この方法では、設定処理を呼び出すたびに同じコンテキスト(<literal>myCopy</literal>)を何度も書く必要があります。これは冗長だし、あまり可読性もよくありません。</para>
-        <para role="original">There is a more convenient way of doing this.
-        </para>
-        <para>もっと便利な方法があります。</para>
-        <sample id="configureUsingLiterateStyle" dir="userguide/tasks/configureUsingLiterateStyle" title="タスクの設定 - 流れるインターフェース / Configuring a task - fluent interface">
-            <sourcefile file="build.gradle"/>
-        </sample>
-        <para role="original">You might know this approach from the Hibernates Criteria Query API or JMock. Of course the API of a task
-            has to support this. The <literal>from</literal>, <literal>to</literal> and <literal>include</literal>
-            methods all return an object that may be used to chain to additional configuration methods. Gradle's built-in tasks usually
-            support this configuration style.
-        </para>
-        <para>Hibernateのクライテリアクエリや、JMockでこの種のインターフェースに触れたことがあるかもしれません。タスクのAPIでも、当然このインターフェースをサポートする必要があるでしょう。<literal>from</literal>, <literal>to</literal> and <literal>include</literal>の各設定メソッドはすべて、設定メソッドを呼び出せるオブジェクトを返します。そのため、設定メソッドを追加してつなげていくことができるのです。Gradleの組み込みタスクは、大抵このスタイルの設定方法をサポートしています。</para>
-        <para role="original">But there is yet another way of configuring a task. It also preserves the context and it is arguably the
+        <para>There is another way of configuring a task. It also preserves the context and it is arguably the
             most readable. It is usually our favorite.
         </para>
         <para>しかし、まだ別の設定方法があります。この方法もやはりコンテキストを保持するもので、おそらく最も可読性の高い方法でしょう。私たちは、普段この方法を好んで使っています。</para>
@@ -117,16 +105,8 @@
         </sample>
         <para role="original">This works for <emphasis>any</emphasis> task. Line 3 of the example is just a shortcut for the
             <literal>tasks.getByName()</literal> method. It is important to note that if you pass a closure to the
-            <literal>getByName()</literal> method, this closure is applied to <emphasis>configure</emphasis> the task.
-        </para>
-        <para>この方法は、<emphasis>あらゆる</emphasis>タスクで使用できます。3行目のコードは、<literal>tasks.getByName()</literal>の単なるショートカットに過ぎません。大事なことは、<literal>getByName()</literal>メソッドにクロージャを渡すと、そのクロージャがタスクを設定するために使われるという点です。</para>
-        <para role="original">There is a slightly different ways of doing this.</para>
-        <para>少しだけ違う書き方もあります。</para>
-        <sample id="configureUsingConfigure" dir="userguide/tasks/configureUsingConfigure" title="タスクの設定 - configure()メソッド / Configuring a task - with configure() method">
-            <sourcefile file="build.gradle"/>
-        </sample>
-        <para role="original">Every task has a <literal>configure()</literal> method, which you can pass a closure for configuring the task.
-            Gradle uses this style for configuring objects in many places, not just for tasks.
+            <literal>getByName()</literal> method, this closure is applied to <emphasis>configure</emphasis> the task, not when
+            the task executes.
         </para>
         <para>すべてのタスクは<literal>configure()</literal>メソッドを持っており、このメソッドにタスクを設定するためのクロージャを渡すことができます。Gradleでは、このスタイルでオブジェクトを設定することが(タスクに限らず)よくあります。</para>
         <para role="original">You can also use a configuration closure when you define a task.</para>
@@ -196,35 +176,41 @@
             <listitem>A task that aggregates the results of all tasks of a particular type: eg. test report task combines the outputs of all executed test tasks.</listitem>
         </itemizedlist>
         <para>
-            Presently, the only task ordering rule available is "<emphasis>must run after</emphasis>", which allows you to specify that <literal>taskB</literal> must always run after <literal>taskA</literal>,
-            whenever both <literal>taskA</literal> and <literal>taskB</literal> are scheduled for execution. This is expressed as <literal>taskB.mustRunAfter(taskA)</literal>.
-            With this rule present it is still possible to execute <literal>taskA</literal> without <literal>taskB</literal> and vice-versa.
+            There are two ordering rules available: "<emphasis>must run after</emphasis>" and "<emphasis>should run after</emphasis>".
         </para>
-        <note>
-            <para>
-                While 'must-run-after' is useful in many cases, there are times when your ordering requirements are slightly different.
-                An example is an ordering preference for faster feedback, where the ordering is helpful but not strictly required.
-                We plan to add different types of task ordering in the future, to better support the full gamut of ordering use cases.
-            </para>
-        </note>
+        <para>By using 'must run after" ordering rule you can specify that <literal>taskB</literal> must always run after <literal>taskA</literal>,
+            whenever both <literal>taskA</literal> and <literal>taskB</literal> are scheduled for execution. This is expressed as <literal>taskB.mustRunAfter(taskA)</literal>. The 'should run after' ordering rule is similar but less strict as it will be ignored in two situations. Firstly if using that rule introduces an ordering cycle. Secondly when using parallel execution and all dependencies of a task have been satisfied apart from should run after then this task will be run regardless of weather its 'should run after' dependencies have been run or not. You would use 'should run after' rule when ordering preference for faster feedback, where the ordering is helpful but not strictly required.
+        </para>
+        <para>
+            With these rules present it is still possible to execute <literal>taskA</literal> without <literal>taskB</literal> and vice-versa.
+        </para>
         <sample id="mustRunAfter" dir="userguide/tasks/mustRunAfter" title="Adding a 'must run after' task ordering">
             <sourcefile file="build.gradle"/>
             <output args="-q taskY taskX"/>
         </sample>
-        <para>In the example, it is still possible to execute <literal>taskY</literal> without causing <literal>taskX</literal> to run:</para>
+        <sample id="shouldRunAfter" dir="userguide/tasks/shouldRunAfter" title="Adding a 'should run after' task ordering">
+            <sourcefile file="build.gradle"/>
+            <output args="-q taskY taskX"/>
+        </sample>
+        <para>In the examples above, it is still possible to execute <literal>taskY</literal> without causing <literal>taskX</literal> to run:</para>
         <sample id="mustRunAfterSingleTask" dir="userguide/tasks/mustRunAfter" title="Task ordering does not imply task execution">
             <output args="-q taskY"/>
         </sample>
-        <para>To specify a "must run after" ordering between 2 tasks, you use the <apilink class="org.gradle.api.Task" method="mustRunAfter"/> method.
-            This method accepts a task instance, a task name or any other input accepted by <apilink class="org.gradle.api.Task" method="dependsOn"/>.
+        <para>To specify a "must run after" or "should run after" ordering between 2 tasks, you use the <apilink class="org.gradle.api.Task" method="mustRunAfter"/> and <apilink class="org.gradle.api.Task" method="shouldRunAfter"/> methods.
+            These method accept a task instance, a task name or any other input accepted by <apilink class="org.gradle.api.Task" method="dependsOn"/>.
         </para>
         <para>
-            Note that "<literal>B.mustRunAfter(A)</literal>" does not imply any execution dependency between the tasks:
+            Note that "<literal>B.mustRunAfter(A)</literal>" or "<literal>B.shouldRunAfter(A)</literal>" does not imply any execution dependency between the tasks:
         </para>
         <itemizedlist>
             <listitem>It is possible to execute tasks <literal>A</literal> and <literal>B</literal> independently. The ordering rule only has an effect when both tasks are scheduled for execution.</listitem>
             <listitem>When run with <literal>--continue</literal>, it is possible for <literal>B</literal> to execute in the event that <literal>A</literal> fails.</listitem>
         </itemizedlist>
+        <para>As mentioned before 'should run after' ordering rule will be ignored if it introduces an ordering cycle:</para>
+        <sample id="shouldRunAfterWithCycle" dir="userguide/tasks/shouldRunAfterWithCycle" title="A 'should run after' task ordering is ignored if it introduces an ordering cycle">
+            <sourcefile file="build.gradle"/>
+            <output args="-q taskX"/>
+        </sample>
     </section>
     <section>
         <title>タスクに説明書きを追加する<phrase role="original">Adding a description to a task</phrase></title>

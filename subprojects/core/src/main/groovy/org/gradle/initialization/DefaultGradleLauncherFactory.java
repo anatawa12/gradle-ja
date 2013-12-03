@@ -19,7 +19,9 @@ package org.gradle.initialization;
 import org.gradle.*;
 import org.gradle.api.internal.ExceptionAnalyser;
 import org.gradle.api.internal.GradleInternal;
-import org.gradle.api.internal.project.TopLevelBuildServiceRegistry;
+import org.gradle.internal.progress.BuildProgressFilter;
+import org.gradle.internal.progress.BuildProgressLogger;
+import org.gradle.internal.service.scopes.BuildScopeServices;
 import org.gradle.api.logging.Logging;
 import org.gradle.api.logging.StandardOutputListener;
 import org.gradle.cache.CacheRepository;
@@ -53,7 +55,7 @@ public class DefaultGradleLauncherFactory implements GradleLauncherFactory {
 
         // Register default loggers 
         ListenerManager listenerManager = sharedServices.get(ListenerManager.class);
-        listenerManager.addListener(new BuildProgressLogger(sharedServices.get(ProgressLoggerFactory.class)));
+        listenerManager.addListener(new BuildProgressFilter(new BuildProgressLogger(sharedServices.get(ProgressLoggerFactory.class))));
         listenerManager.useLogger(new DependencyResolutionLogger(sharedServices.get(ProgressLoggerFactory.class)));
 
         GradleLauncher.injectCustomFactory(this);
@@ -91,7 +93,7 @@ public class DefaultGradleLauncherFactory implements GradleLauncherFactory {
     }
 
     private DefaultGradleLauncher doNewInstance(StartParameter startParameter, BuildRequestMetaData requestMetaData) {
-        final TopLevelBuildServiceRegistry serviceRegistry = new TopLevelBuildServiceRegistry(sharedServices, startParameter);
+        final BuildScopeServices serviceRegistry = new BuildScopeServices(sharedServices, startParameter);
         serviceRegistry.add(BuildRequestMetaData.class, requestMetaData);
         serviceRegistry.add(BuildClientMetaData.class, requestMetaData.getClient());
         ListenerManager listenerManager = serviceRegistry.get(ListenerManager.class);
@@ -145,9 +147,9 @@ public class DefaultGradleLauncherFactory implements GradleLauncherFactory {
     }
 
     private static class BuildCleanupListener extends BuildAdapter {
-        private final TopLevelBuildServiceRegistry services;
+        private final BuildScopeServices services;
 
-        private BuildCleanupListener(TopLevelBuildServiceRegistry services) {
+        private BuildCleanupListener(BuildScopeServices services) {
             this.services = services;
         }
 

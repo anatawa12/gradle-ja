@@ -21,6 +21,7 @@ import org.gradle.api.DefaultTask
 import org.gradle.api.internal.TaskInternal
 import org.gradle.api.internal.changedetection.TaskArtifactState
 import org.gradle.api.internal.changedetection.state.*
+import org.gradle.api.internal.hash.DefaultHasher
 import org.gradle.api.tasks.incremental.InputFileDetails
 import org.gradle.cache.CacheRepository
 import org.gradle.cache.internal.DefaultCacheRepository
@@ -29,7 +30,7 @@ import org.gradle.internal.reflect.DirectInstantiator
 import org.gradle.test.fixtures.file.TestFile
 import org.gradle.test.fixtures.file.TestNameTestDirectoryProvider
 import org.gradle.testfixtures.internal.InMemoryCacheFactory
-import org.gradle.util.HelperUtil
+import org.gradle.util.TestUtil
 import org.junit.Rule
 import spock.lang.Specification
 
@@ -40,7 +41,7 @@ public class DefaultTaskArtifactStateRepositoryTest extends Specification {
     
     @Rule
     public TestNameTestDirectoryProvider tmpDir = new TestNameTestDirectoryProvider()
-    final project = HelperUtil.createRootProject()
+    final project = TestUtil.createRootProject()
     final gradle = project.getGradle()
     final outputFile = tmpDir.file("output-file")
     final outputDir = tmpDir.file("output-dir")
@@ -58,10 +59,9 @@ public class DefaultTaskArtifactStateRepositoryTest extends Specification {
     TaskInternal task = builder.task()
     DefaultTaskArtifactStateRepository repository
 
-
     def setup() {
         CacheRepository cacheRepository = new DefaultCacheRepository(tmpDir.createDir("user-home"), null, CacheUsage.ON, new InMemoryCacheFactory())
-        TaskArtifactStateCacheAccess cacheAccess = new DefaultTaskArtifactStateCacheAccess(gradle, cacheRepository)
+        TaskArtifactStateCacheAccess cacheAccess = new DefaultTaskArtifactStateCacheAccess(gradle, cacheRepository, new NoOpInMemoryPersistentCacheDecoratorFactory())
         FileSnapshotter inputFilesSnapshotter = new DefaultFileSnapshotter(new DefaultHasher(), cacheAccess)
         FileSnapshotter outputFilesSnapshotter = new OutputFilesSnapshotter(inputFilesSnapshotter, new RandomLongIdGenerator(), cacheAccess)
         TaskHistoryRepository taskHistoryRepository = new CacheBackedTaskHistoryRepository(cacheAccess, new CacheBackedFileSnapshotRepository(cacheAccess, new RandomLongIdGenerator()))
@@ -655,7 +655,7 @@ public class DefaultTaskArtifactStateRepositoryTest extends Specification {
         }
 
         TaskInternal task() {
-            final TaskInternal task = HelperUtil.createTask(type, project, path)
+            final TaskInternal task = TestUtil.createTask(type, project, path)
             if (inputs != null) {
                 task.getInputs().files(inputs)
             }

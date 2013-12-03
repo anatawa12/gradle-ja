@@ -15,23 +15,33 @@
  */
 package org.gradle.api.internal.artifacts.ivyservice.resolveengine
 
-import org.apache.ivy.core.module.descriptor.*
+import org.apache.ivy.core.module.descriptor.Configuration
+import org.apache.ivy.core.module.descriptor.DefaultArtifact
+import org.apache.ivy.core.module.descriptor.DefaultExcludeRule
+import org.apache.ivy.core.module.descriptor.DefaultModuleDescriptor
+import org.apache.ivy.core.module.descriptor.DependencyDescriptor
 import org.apache.ivy.core.module.id.ArtifactId
 import org.apache.ivy.core.module.id.ModuleId
 import org.apache.ivy.core.module.id.ModuleRevisionId
 import org.apache.ivy.plugins.matcher.ExactPatternMatcher
 import org.apache.ivy.plugins.matcher.PatternMatcher
-import org.gradle.api.artifacts.*
+import org.gradle.api.artifacts.LenientConfiguration
+import org.gradle.api.artifacts.ModuleDependency
+import org.gradle.api.artifacts.ModuleVersionIdentifier
+import org.gradle.api.artifacts.ResolveException
+import org.gradle.api.artifacts.ResolvedDependency
 import org.gradle.api.internal.artifacts.DefaultModuleVersionSelector
 import org.gradle.api.internal.artifacts.configurations.ConfigurationInternal
 import org.gradle.api.internal.artifacts.ivyservice.*
-import org.gradle.api.internal.artifacts.ivyservice.ivyresolve.DefaultBuildableModuleVersionMetaDataResolveResult
-import org.gradle.api.internal.artifacts.ivyservice.ivyresolve.ModuleVersionMetaData
+import org.gradle.api.internal.artifacts.metadata.ModuleVersionMetaData
+import org.gradle.api.internal.artifacts.metadata.ModuleDescriptorAdapter
 import org.gradle.api.internal.artifacts.ivyservice.moduleconverter.dependencies.EnhancedDependencyDescriptor
 import org.gradle.api.internal.artifacts.ivyservice.resolveengine.oldresult.DefaultResolvedConfigurationBuilder
-import org.gradle.api.internal.artifacts.ivyservice.resolveengine.result.ResolvedConfigurationListener
+import org.gradle.api.internal.artifacts.ivyservice.resolveengine.oldresult.TransientConfigurationResultsBuilder
+import org.gradle.api.internal.artifacts.ivyservice.resolveengine.result.DummyBinaryStore
+import org.gradle.api.internal.artifacts.ivyservice.resolveengine.result.DummyStore
+import org.gradle.api.internal.artifacts.ivyservice.resolveengine.result.ResolutionResultBuilder
 import org.gradle.api.internal.artifacts.ivyservice.resolveengine.result.VersionSelectionReasons
-import org.gradle.api.internal.file.TmpDirTemporaryFileProvider
 import org.gradle.api.specs.Spec
 import spock.lang.Specification
 
@@ -42,13 +52,11 @@ class DependencyGraphBuilderTest extends Specification {
     final ConfigurationInternal configuration = Mock()
     final ModuleConflictResolver conflictResolver = Mock()
     final DependencyToModuleVersionIdResolver dependencyResolver = Mock()
-    final ResolvedConfigurationListener listener = Mock()
+    final ResolutionResultBuilder resultBuilder = Mock()
     final ModuleVersionMetaData root = revision('root')
     final ModuleToModuleVersionResolver moduleResolver = Mock()
     final DependencyToConfigurationResolver dependencyToConfigurationResolver = new DefaultDependencyToConfigurationResolver()
     final DependencyGraphBuilder builder = new DependencyGraphBuilder(dependencyResolver, moduleResolver, conflictResolver, dependencyToConfigurationResolver)
-    //TODO SF should not use real impl or at least use the test name temp dir provider
-    final ResolutionResultsStoreFactory storeFactory = new ResolutionResultsStoreFactory(new TmpDirTemporaryFileProvider())
 
     def setup() {
         config(root, 'root', 'default')
@@ -76,12 +84,13 @@ class DependencyGraphBuilderTest extends Specification {
     }
 
     private DefaultLenientConfiguration resolve() {
-        def results = new DefaultResolvedConfigurationBuilder(Stub(ResolvedArtifactFactory), storeFactory.createStore(configuration))
-        builder.resolve(configuration, listener, results)
+        def results = new DefaultResolvedConfigurationBuilder(Stub(ResolvedArtifactFactory),
+                new TransientConfigurationResultsBuilder(new DummyBinaryStore(), new DummyStore()))
+        builder.resolve(configuration, resultBuilder, results)
         new DefaultLenientConfiguration(configuration, results, Stub(CacheLockingManager))
     }
 
-    def "correctly notifies the resolved configuration listener"() {
+    def "correctly notifies the resolution result builder"() {
         given:
         def a = revision("a")
         def b = revision("b")
@@ -96,11 +105,11 @@ class DependencyGraphBuilderTest extends Specification {
         resolve()
 
         then:
-        1 * listener.start(newId("group", "root", "1.0"))
+        1 * resultBuilder.start(newId("group", "root", "1.0"))
         then:
-        1 * listener.resolvedConfiguration({ it.name == 'root' }, { it*.requested.name == ['a', 'b'] })
+        1 * resultBuilder.resolvedConfiguration({ it.name == 'root' }, { it*.requested.name == ['a', 'b'] })
         then:
-        1 * listener.resolvedConfiguration({ it.name == 'a' }, { it*.requested.name == ['c', 'd'] && it*.failure.count { it != null } == 1 })
+        1 * resultBuilder.resolvedConfiguration({ it.name == 'a' }, { it*.requested.name == ['c', 'd'] && it*.failure.count { it != null } == 1 })
     }
 
     def "does not resolve a given dynamic module selector more than once"() {
@@ -146,8 +155,8 @@ class DependencyGraphBuilderTest extends Specification {
         then:
         1 * conflictResolver.select(!null) >> {
             Collection<ModuleRevisionResolveState> candidates = it[0]
-            assert candidates*.revision == ['1.2', '1.1']
-            return candidates.find { it.revision == '1.2' }
+            assert candidates*.version == ['1.2', '1.1']
+            return candidates.find { it.version == '1.2' }
         }
         0 * conflictResolver._
 
@@ -177,8 +186,8 @@ class DependencyGraphBuilderTest extends Specification {
         then:
         1 * conflictResolver.select(!null) >> {
             Collection<ModuleRevisionResolveState> candidates = it[0]
-            assert candidates*.revision == ['1.1', '1.2']
-            return candidates.find { it.revision == '1.2' }
+            assert candidates*.version == ['1.1', '1.2']
+            return candidates.find { it.version == '1.2' }
         }
         0 * conflictResolver._
 
@@ -208,8 +217,8 @@ class DependencyGraphBuilderTest extends Specification {
         then:
         1 * conflictResolver.select(!null) >> {
             Collection<ModuleRevisionResolveState> candidates = it[0]
-            assert candidates*.revision == ['1.1', '1.2']
-            return candidates.find { it.revision == '1.2' }
+            assert candidates*.version == ['1.1', '1.2']
+            return candidates.find { it.version == '1.2' }
         }
         0 * conflictResolver._
 
@@ -235,8 +244,8 @@ class DependencyGraphBuilderTest extends Specification {
         then:
         1 * conflictResolver.select(!null) >> {
             Collection<ModuleRevisionResolveState> candidates = it[0]
-            assert candidates*.revision == ['1.2', '1.1']
-            return candidates.find { it.revision == '1.2' }
+            assert candidates*.version == ['1.2', '1.1']
+            return candidates.find { it.version == '1.2' }
         }
         0 * conflictResolver._
 
@@ -265,8 +274,8 @@ class DependencyGraphBuilderTest extends Specification {
         then:
         1 * conflictResolver.select(!null) >> {
             Collection<ModuleRevisionResolveState> candidates = it[0]
-            assert candidates*.revision == ['1.1', '1.2']
-            return candidates.find { it.revision == '1.2' }
+            assert candidates*.version == ['1.1', '1.2']
+            return candidates.find { it.version == '1.2' }
         }
         0 * conflictResolver._
 
@@ -294,17 +303,17 @@ class DependencyGraphBuilderTest extends Specification {
         result.rethrowFailure()
 
         then:
-        1 * conflictResolver.select({ it*.revision == ['1.1', '1.2'] }) >> {
+        1 * conflictResolver.select({ it*.version == ['1.1', '1.2'] }) >> {
             Collection<ModuleRevisionResolveState> candidates = it[0]
-            return candidates.find { it.revision == '1.2' }
+            return candidates.find { it.version == '1.2' }
         }
-        1 * conflictResolver.select({ it*.revision == ['2.1', '2.2'] }) >> {
+        1 * conflictResolver.select({ it*.version == ['2.1', '2.2'] }) >> {
             Collection<ModuleRevisionResolveState> candidates = it[0]
-            return candidates.find { it.revision == '2.2' }
+            return candidates.find { it.version == '2.2' }
         }
-        1 * conflictResolver.select({ it*.revision == ['1.1', '1.2', '1.0'] }) >> {
+        1 * conflictResolver.select({ it*.version == ['1.1', '1.2', '1.0'] }) >> {
             Collection<ModuleRevisionResolveState> candidates = it[0]
-            return candidates.find { it.revision == '1.2' }
+            return candidates.find { it.version == '1.2' }
         }
         0 * conflictResolver._
 
@@ -333,9 +342,9 @@ class DependencyGraphBuilderTest extends Specification {
         result.rethrowFailure()
 
         then:
-        1 * conflictResolver.select({ it*.revision == ['1', '2'] }) >> {
+        1 * conflictResolver.select({ it*.version == ['1', '2'] }) >> {
             Collection<ModuleRevisionResolveState> candidates = it[0]
-            return candidates.find { it.revision == '2' }
+            return candidates.find { it.version == '2' }
         }
         0 * conflictResolver._
 
@@ -364,9 +373,9 @@ class DependencyGraphBuilderTest extends Specification {
         result.rethrowFailure()
 
         then:
-        1 * conflictResolver.select({ it*.revision == ['1', '2'] }) >> {
+        1 * conflictResolver.select({ it*.version == ['1', '2'] }) >> {
             Collection<ModuleRevisionResolveState> candidates = it[0]
-            return candidates.find { it.revision == '2' }
+            return candidates.find { it.version == '2' }
         }
         0 * conflictResolver._
 
@@ -405,7 +414,7 @@ class DependencyGraphBuilderTest extends Specification {
         then:
         1 * conflictResolver.select(!null) >> {
             Collection<ModuleRevisionResolveState> candidates = it[0]
-            return candidates.find { it.revision == '1.2' }
+            return candidates.find { it.version == '1.2' }
         }
 
         and:
@@ -732,7 +741,7 @@ class DependencyGraphBuilderTest extends Specification {
         then:
         1 * conflictResolver.select(!null) >> {
             Collection<ModuleRevisionResolveState> candidates = it[0]
-            return candidates.find { it.revision == '1.2' }
+            return candidates.find { it.version == '1.2' }
         }
 
         when:
@@ -764,7 +773,7 @@ class DependencyGraphBuilderTest extends Specification {
         then:
         1 * conflictResolver.select(!null) >> {
             Collection<ModuleRevisionResolveState> candidates = it[0]
-            return candidates.find { it.revision == '1.2' }
+            return candidates.find { it.version == '1.2' }
         }
 
         and:
@@ -789,7 +798,7 @@ class DependencyGraphBuilderTest extends Specification {
         then:
         1 * conflictResolver.select(!null) >> {
             Collection<ModuleRevisionResolveState> candidates = it[0]
-            return candidates.find { it.revision == '1.2' }
+            return candidates.find { it.version == '1.2' }
         }
 
         and:
@@ -814,7 +823,7 @@ class DependencyGraphBuilderTest extends Specification {
         then:
         1 * conflictResolver.select(!null) >> {
             Collection<ModuleRevisionResolveState> candidates = it[0]
-            return candidates.find { it.revision == '1.2' }
+            return candidates.find { it.version == '1.2' }
         }
 
         and:
@@ -840,8 +849,7 @@ class DependencyGraphBuilderTest extends Specification {
 
     def revision(String name, String revision = '1.0') {
         DefaultModuleDescriptor descriptor = new DefaultModuleDescriptor(new ModuleRevisionId(new ModuleId("group", name), revision), "release", new Date())
-        DefaultBuildableModuleVersionMetaDataResolveResult metaData = new DefaultBuildableModuleVersionMetaDataResolveResult()
-        metaData.resolved(descriptor, false, null)
+        ModuleVersionMetaData metaData = new ModuleDescriptorAdapter(descriptor)
         config(metaData, 'default')
         descriptor.addArtifact('default', new DefaultArtifact(descriptor.moduleRevisionId, new Date(), "art1", "art", "zip"))
         return metaData

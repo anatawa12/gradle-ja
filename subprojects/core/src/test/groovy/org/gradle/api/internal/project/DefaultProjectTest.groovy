@@ -43,11 +43,15 @@ import org.gradle.groovy.scripts.ScriptSource
 import org.gradle.internal.Factory
 import org.gradle.internal.reflect.Instantiator
 import org.gradle.internal.service.ServiceRegistry
+import org.gradle.internal.service.scopes.ServiceRegistryFactory
 import org.gradle.logging.LoggingManagerInternal
 import org.gradle.logging.StandardOutputCapture
-import org.gradle.util.HelperUtil
+import org.gradle.model.ModelRules
+import org.gradle.model.internal.ModelRegistry
+import org.gradle.model.internal.ModelRegistryBackedModelRules
 import org.gradle.util.JUnit4GroovyMockery
 import org.gradle.util.TestClosure
+import org.gradle.util.TestUtil
 import org.jmock.integration.junit4.JMock
 import org.junit.Before
 import org.junit.Test
@@ -114,7 +118,7 @@ class DefaultProjectTest {
 
         testScript = new EmptyScript()
 
-        testTask = HelperUtil.createTask(DefaultTask)
+        testTask = TestUtil.createTask(DefaultTask)
 
         projectRegistry = new DefaultProjectRegistry()
 
@@ -125,6 +129,8 @@ class DefaultProjectTest {
             allowing(projectServiceRegistryFactoryMock).createFor(withParam(notNullValue())); will(returnValue(serviceRegistryMock))
             allowing(serviceRegistryMock).newInstance(TaskContainerInternal); will(returnValue(taskContainerMock))
             allowing(taskContainerMock).getTasksAsDynamicObject(); will(returnValue(new BeanDynamicObject(new TaskContainerDynamicObject(someTask: testTask))))
+            allowing(taskContainerMock).all(withParam(notNullValue()))
+            allowing(taskContainerMock).whenObjectRemoved(withParam(notNullValue()))
             allowing(serviceRegistryMock).get(RepositoryHandler); will(returnValue(repositoryHandlerMock))
             allowing(serviceRegistryMock).get(ConfigurationContainerInternal); will(returnValue(configurationContainerMock))
             allowing(serviceRegistryMock).get(ArtifactHandler); will(returnValue(context.mock(ArtifactHandler)))
@@ -146,6 +152,10 @@ class DefaultProjectTest {
             allowing(serviceRegistryMock).get(ProcessOperations); will(returnValue(processOperationsMock))
             allowing(serviceRegistryMock).get(ScriptPluginFactory); will(returnValue([toString: { -> "script plugin factory" }] as ScriptPluginFactory))
             allowing(serviceRegistryMock).get(ProjectConfigurationActionContainer); will(returnValue(configureActions))
+            ModelRegistry modelRegistry = context.mock(ModelRegistry)
+            ignoring(modelRegistry)
+            allowing(serviceRegistryMock).get(ModelRegistry); will(returnValue(modelRegistry))
+            allowing(serviceRegistryMock).get(ModelRules); will(returnValue(new ModelRegistryBackedModelRules(modelRegistry)))
             Object listener = context.mock(ProjectEvaluationListener)
             ignoring(listener)
             allowing(build).getProjectEvaluationBroadcaster();
@@ -251,7 +261,7 @@ class DefaultProjectTest {
             one(listener).call(project)
         }
 
-        project.beforeEvaluate(HelperUtil.toClosure(listener))
+        project.beforeEvaluate(TestUtil.toClosure(listener))
         project.projectEvaluationBroadcaster.beforeEvaluate(project)
     }
 
@@ -261,7 +271,7 @@ class DefaultProjectTest {
             one(listener).call(project)
         }
 
-        project.afterEvaluate(HelperUtil.toClosure(listener))
+        project.afterEvaluate(TestUtil.toClosure(listener))
         project.projectEvaluationBroadcaster.afterEvaluate(project, null)
     }
 
@@ -547,9 +557,9 @@ class DefaultProjectTest {
     }
 
     @Test void testGetAllTasksRecursive() {
-        Task projectTask = HelperUtil.createTask(DefaultTask.class)
-        Task child1Task = HelperUtil.createTask(DefaultTask.class)
-        Task child2Task = HelperUtil.createTask(DefaultTask.class)
+        Task projectTask = TestUtil.createTask(DefaultTask.class)
+        Task child1Task = TestUtil.createTask(DefaultTask.class)
+        Task child2Task = TestUtil.createTask(DefaultTask.class)
 
         Map expectedMap = new TreeMap()
         expectedMap[project] = [projectTask] as TreeSet
@@ -572,7 +582,7 @@ class DefaultProjectTest {
     }
 
     @Test void testGetAllTasksNonRecursive() {
-        Task projectTask = HelperUtil.createTask(DefaultTask.class)
+        Task projectTask = TestUtil.createTask(DefaultTask.class)
 
         Map expectedMap = new TreeMap()
         expectedMap[project] = [projectTask] as TreeSet
@@ -586,8 +596,8 @@ class DefaultProjectTest {
     }
 
     @Test void testGetTasksByNameRecursive() {
-        Task projectTask = HelperUtil.createTask(DefaultTask.class)
-        Task child1Task = HelperUtil.createTask(DefaultTask.class)
+        Task projectTask = TestUtil.createTask(DefaultTask.class)
+        Task child1Task = TestUtil.createTask(DefaultTask.class)
 
         context.checking {
             one(taskContainerMock).findByName('task'); will(returnValue(projectTask))
@@ -600,7 +610,7 @@ class DefaultProjectTest {
     }
 
     @Test void testGetTasksByNameNonRecursive() {
-        Task projectTask = HelperUtil.createTask(DefaultTask.class)
+        Task projectTask = TestUtil.createTask(DefaultTask.class)
 
         context.checking {
             one(taskContainerMock).findByName('task'); will(returnValue(projectTask))
@@ -657,7 +667,7 @@ def scriptMethod(Closure closure) {
     "$returnValue"
 }
 """
-        HelperUtil.createScript(code)
+        TestUtil.createScript(code)
     }
 
     @Test void testSetPropertyAndPropertyMissingWithProjectProperty() {
@@ -785,9 +795,9 @@ def scriptMethod(Closure closure) {
     }
 
     @Test public void testDir() {
-        Task dirTask1 = HelperUtil.createTask(Directory.class)
-        Task dirTask12 = HelperUtil.createTask(Directory.class)
-        Task dirTask123 = HelperUtil.createTask(Directory.class)
+        Task dirTask1 = TestUtil.createTask(Directory.class)
+        Task dirTask12 = TestUtil.createTask(Directory.class)
+        Task dirTask123 = TestUtil.createTask(Directory.class)
         context.checking {
             one(taskContainerMock).findByName('dir1'); will(returnValue(null))
             one(taskContainerMock).create('dir1', Directory); will(returnValue(dirTask1))
@@ -800,14 +810,14 @@ def scriptMethod(Closure closure) {
     }
 
     @Test public void testDirWithExistingParentDirTask() {
-        Task dirTask1 = HelperUtil.createTask(Directory.class)
+        Task dirTask1 = TestUtil.createTask(Directory.class)
         context.checking {
             one(taskContainerMock).findByName('dir1'); will(returnValue(null))
             one(taskContainerMock).create('dir1', Directory); will(returnValue(dirTask1))
         }
         project.dir('dir1')
 
-        Task dirTask14 = HelperUtil.createTask(Directory.class)
+        Task dirTask14 = TestUtil.createTask(Directory.class)
         context.checking {
             one(taskContainerMock).findByName('dir1'); will(returnValue(dirTask1))
             one(taskContainerMock).findByName('dir1/dir4'); will(returnValue(null))
@@ -817,9 +827,9 @@ def scriptMethod(Closure closure) {
     }
 
     @Test public void testDirWithConflictingNonDirTask() {
-        Task dirTask14 = HelperUtil.createTask(DefaultTask.class)
+        Task dirTask14 = TestUtil.createTask(DefaultTask.class)
 
-        Task dirTask1 = HelperUtil.createTask(Directory.class)
+        Task dirTask1 = TestUtil.createTask(Directory.class)
         context.checking {
             one(taskContainerMock).findByName('dir1'); will(returnValue(null))
             one(taskContainerMock).create('dir1', Directory); will(returnValue(dirTask1))

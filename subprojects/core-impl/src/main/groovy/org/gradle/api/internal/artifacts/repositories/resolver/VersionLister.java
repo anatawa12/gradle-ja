@@ -16,11 +16,11 @@
 
 package org.gradle.api.internal.artifacts.repositories.resolver;
 
-import org.apache.ivy.core.module.id.ModuleRevisionId;
+import org.gradle.api.artifacts.ModuleIdentifier;
 
 public interface VersionLister {
     /**
-     * Creates an empty version list for the given module version. Call {@link VersionList#visit(ResourcePattern, org.apache.ivy.core.module.descriptor.Artifact)} to search for versions.
+     * Creates an empty version list for the given module. Call {@link VersionList#visit(ResourcePattern, org.apache.ivy.core.module.descriptor.Artifact)} to search for versions.
      */
-    VersionList getVersionList(ModuleRevisionId moduleRevisionId);
+    VersionList getVersionList(ModuleIdentifier module);
 }

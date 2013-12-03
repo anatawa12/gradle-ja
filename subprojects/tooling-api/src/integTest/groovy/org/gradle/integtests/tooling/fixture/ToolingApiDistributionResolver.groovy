@@ -20,13 +20,17 @@ import org.gradle.StartParameter
 import org.gradle.api.artifacts.Configuration
 import org.gradle.api.artifacts.Dependency
 import org.gradle.api.internal.artifacts.DependencyResolutionServices
-import org.gradle.api.internal.project.GlobalServicesRegistry
-import org.gradle.api.internal.project.ProjectInternalServiceRegistry
-import org.gradle.api.internal.project.TopLevelBuildServiceRegistry
 import org.gradle.integtests.fixtures.executer.GradleContextualExecuter
 import org.gradle.integtests.fixtures.executer.IntegrationTestBuildContext
-import org.gradle.internal.CompositeStoppable
-import org.gradle.util.HelperUtil
+import org.gradle.internal.concurrent.CompositeStoppable
+import org.gradle.internal.nativeplatform.services.NativeServices
+import org.gradle.internal.service.ServiceRegistry
+import org.gradle.internal.service.ServiceRegistryBuilder
+import org.gradle.internal.service.scopes.BuildScopeServices
+import org.gradle.internal.service.scopes.GlobalScopeServices
+import org.gradle.internal.service.scopes.ProjectScopeServices
+import org.gradle.logging.LoggingServiceRegistry
+import org.gradle.util.TestUtil
 
 class ToolingApiDistributionResolver {
     private final DependencyResolutionServices resolutionServices
@@ -69,15 +73,21 @@ class ToolingApiDistributionResolver {
     }
 
     private DependencyResolutionServices createResolutionServices() {
-        GlobalServicesRegistry globalRegistry = new GlobalServicesRegistry()
-        stopLater.add(globalRegistry)
+        ServiceRegistry globalRegistry = ServiceRegistryBuilder.builder()
+                .parent(LoggingServiceRegistry.newEmbeddableLogging())
+                .parent(NativeServices.getInstance())
+                .provider(new GlobalScopeServices())
+                .build()
         StartParameter startParameter = new StartParameter()
         startParameter.gradleUserHomeDir = new IntegrationTestBuildContext().gradleUserHomeDir
-        TopLevelBuildServiceRegistry topLevelRegistry = new TopLevelBuildServiceRegistry(globalRegistry, startParameter)
-        stopLater.add(topLevelRegistry)
-        ProjectInternalServiceRegistry projectRegistry = new ProjectInternalServiceRegistry(topLevelRegistry, HelperUtil.createRootProject())
+        BuildScopeServices topLevelRegistry = new BuildScopeServices(globalRegistry, startParameter)
+        ProjectScopeServices projectRegistry = new ProjectScopeServices(topLevelRegistry, TestUtil.createRootProject())
+
         stopLater.add(projectRegistry)
-        projectRegistry.get(DependencyResolutionServices)
+        stopLater.add(topLevelRegistry)
+        stopLater.add(globalRegistry)
+
+        return projectRegistry.get(DependencyResolutionServices)
     }
 
     ToolingApiDistributionResolver withExternalToolingApiDistribution() {

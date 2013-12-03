@@ -18,15 +18,15 @@ package org.gradle.api.internal.artifacts.repositories
 import org.gradle.api.InvalidUserDataException
 import org.gradle.api.artifacts.repositories.PasswordCredentials
 import org.gradle.api.internal.artifacts.ModuleMetadataProcessor
-import org.gradle.api.internal.artifacts.ivyservice.ivyresolve.ExternalResourceResolverAdapter
-import org.gradle.api.internal.artifacts.ivyservice.ivyresolve.parser.MetaDataParser
+import org.gradle.api.internal.artifacts.ivyservice.ivyresolve.strategy.LatestStrategy
+import org.gradle.api.internal.artifacts.ivyservice.ivyresolve.strategy.ResolverStrategy
+import org.gradle.api.internal.artifacts.ivyservice.ivyresolve.strategy.VersionMatcher
 import org.gradle.api.internal.artifacts.repositories.resolver.MavenResolver
 import org.gradle.api.internal.artifacts.repositories.transport.RepositoryTransport
 import org.gradle.api.internal.artifacts.repositories.transport.RepositoryTransportFactory
 import org.gradle.api.internal.externalresource.local.LocallyAvailableResourceFinder
 import org.gradle.api.internal.externalresource.transport.ExternalResourceRepository
 import org.gradle.api.internal.file.FileResolver
-import org.gradle.logging.ProgressLoggerFactory
 import spock.lang.Specification
 
 class DefaultMavenArtifactRepositoryTest extends Specification {
@@ -35,12 +35,13 @@ class DefaultMavenArtifactRepositoryTest extends Specification {
     final RepositoryTransportFactory transportFactory = Mock()
     final LocallyAvailableResourceFinder locallyAvailableResourceFinder = Mock()
     final ExternalResourceRepository resourceRepository = Mock()
-    final MetaDataParser metaDataParser = Mock()
     final ModuleMetadataProcessor metadataProcessor = Mock()
+    final VersionMatcher versionMatcher = Stub()
+    final LatestStrategy latestStrategy = Stub()
+    final ResolverStrategy resolverStrategy = Stub()
 
     final DefaultMavenArtifactRepository repository = new DefaultMavenArtifactRepository(
-            resolver, credentials, transportFactory, locallyAvailableResourceFinder, metaDataParser, metadataProcessor)
-    final ProgressLoggerFactory progressLoggerFactory = Mock();
+            resolver, credentials, transportFactory, locallyAvailableResourceFinder, metadataProcessor, versionMatcher, latestStrategy, resolverStrategy)
 
     def "creates local repository"() {
         given:
@@ -103,8 +104,7 @@ class DefaultMavenArtifactRepositoryTest extends Specification {
         def repo = resolver.createResolver()
 
         then:
-        repo instanceof ExternalResourceResolverAdapter
-        repo.resolver.is(resolver.resolver)
+        repo.is(resolver.resolver)
     }
 
     def "creates repository with additional artifact URLs"() {

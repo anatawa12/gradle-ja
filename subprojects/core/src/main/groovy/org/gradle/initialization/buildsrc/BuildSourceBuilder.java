@@ -18,9 +18,10 @@ package org.gradle.initialization.buildsrc;
 
 import org.gradle.GradleLauncher;
 import org.gradle.StartParameter;
-import org.gradle.cache.CacheBuilder;
+import org.gradle.cache.CacheLayout;
 import org.gradle.cache.CacheRepository;
 import org.gradle.cache.PersistentCache;
+import org.gradle.cache.internal.CacheLayoutBuilder;
 import org.gradle.cache.internal.FileLockManager;
 import org.gradle.initialization.ClassLoaderRegistry;
 import org.gradle.initialization.GradleLauncherFactory;
@@ -30,6 +31,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.net.URLClassLoader;
+
+import static org.gradle.cache.internal.filelock.LockOptionsBuilder.mode;
 
 public class BuildSourceBuilder {
     private static final Logger LOGGER = LoggerFactory.getLogger(BuildSourceBuilder.class);
@@ -46,7 +49,7 @@ public class BuildSourceBuilder {
 
     public ClassLoader buildAndCreateClassLoader(StartParameter startParameter) {
         ClassPath classpath = createBuildSourceClasspath(startParameter);
-        return new URLClassLoader(classpath.getAsURLArray(), classLoaderRegistry.getRootClassLoader());
+        return new URLClassLoader(classpath.getAsURLArray(), classLoaderRegistry.getGradleApiClassLoader());
     }
 
     ClassPath createBuildSourceClasspath(StartParameter startParameter) {
@@ -68,12 +71,15 @@ public class BuildSourceBuilder {
     }
 
     PersistentCache createCache(StartParameter startParameter) {
+        CacheLayout layout = new CacheLayoutBuilder()
+                .withScope(startParameter.getCurrentDir())
+                .withSharedCacheThatInvalidatesOnVersionChange()
+                .build();
         return cacheRepository.
-                    cache("buildSrc").
-                    withLockMode(FileLockManager.LockMode.None).
-                    forObject(startParameter.getCurrentDir()).
-                    withVersionStrategy(CacheBuilder.VersionStrategy.SharedCacheInvalidateOnVersionChange).
-                    open();
+                cache("buildSrc").
+                withLockOptions(mode(FileLockManager.LockMode.None).useCrossVersionImplementation()).
+                withLayout(layout).
+                open();
     }
 
     private GradleLauncher buildGradleLauncher(StartParameter startParameter) {

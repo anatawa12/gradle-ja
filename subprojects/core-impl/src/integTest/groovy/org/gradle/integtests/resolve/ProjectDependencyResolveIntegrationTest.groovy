@@ -16,6 +16,7 @@
 package org.gradle.integtests.resolve
 
 import org.gradle.integtests.fixtures.AbstractIntegrationSpec
+import spock.lang.Issue
 
 class ProjectDependencyResolveIntegrationTest extends AbstractIntegrationSpec {
     public void "project dependency includes artifacts and transitive dependencies of default configuration in target project"() {
@@ -50,8 +51,43 @@ project(":b") {
     dependencies {
         compile project(':a')
     }
+
     task check(dependsOn: configurations.compile) << {
         assert configurations.compile.collect { it.name } == ['a.jar', 'externalA-1.2.jar', 'externalB-2.1.jar']
+        def result = configurations.compile.incoming.resolutionResult
+
+         // Check root component
+        def rootId = result.root.id
+        assert rootId instanceof ModuleComponentIdentifier
+        def rootPublishedAs = result.root.publishedAs
+        assert rootPublishedAs instanceof ModuleComponentIdentifier
+        assert rootPublishedAs.group == rootId.group
+        assert rootPublishedAs.module == rootId.module
+        assert rootPublishedAs.version == rootId.version
+
+        // Check project components
+        def projectDependencies = result.root.dependencies.selected.findAll { it.id instanceof BuildComponentIdentifier }
+        assert projectDependencies.size() == 1
+        def projectA = projectDependencies[0]
+        assert projectA.id.projectPath == ':a'
+        assert projectA.publishedAs instanceof ModuleComponentIdentifier
+        assert projectA.publishedAs.group != null
+        assert projectA.publishedAs.module == 'a'
+        assert projectA.publishedAs.version == 'unspecified'
+
+        // Check external module components
+        def externalComponents = result.allDependencies.selected.findAll { it.id instanceof ModuleComponentIdentifier }
+        assert externalComponents.size() == 2
+        def externalA = externalComponents[0]
+        assert externalA.id.group == 'org.other'
+        assert externalA.id.module == 'externalA'
+        assert externalA.id.version == '1.2'
+        assert externalA.id == externalA.publishedAs
+        def externalB = externalComponents[1]
+        assert externalB.id.group == 'org.other'
+        assert externalB.id.module == 'externalB'
+        assert externalB.id.version == '2.1'
+        assert externalB.id == externalB.publishedAs
     }
 }
 """
@@ -92,6 +128,50 @@ project(":b") {
     }
     task check(dependsOn: configurations.compile) << {
         assert configurations.compile.collect { it.name } == ['a.jar', 'externalA-1.2.jar']
+    }
+}
+"""
+
+        expect:
+        succeeds "check"
+    }
+
+    @Issue("GRADLE-2899")
+    public void "consuming project can refer to multiple configurations of target project"() {
+        given:
+        file('settings.gradle') << "include 'a', 'b'"
+
+        and:
+        buildFile << """
+project(':a') {
+    configurations {
+        configA1
+        configA2
+    }
+    task A1jar(type: Jar) {
+        archiveName = 'A1.jar'
+    }
+    task A2jar(type: Jar) {
+        archiveName = 'A2.jar'
+    }
+    artifacts {
+        configA1 A1jar
+        configA2 A2jar
+    }
+}
+
+project(':b') {
+    configurations {
+        configB1
+        configB2
+    }
+    dependencies {
+        configB1 project(path:':a', configuration:'configA1')
+        configB2 project(path:':a', configuration:'configA2')
+    }
+    task check << {
+        assert configurations.configB1.collect { it.name } == ['A1.jar']
+        assert configurations.configB2.collect { it.name } == ['A2.jar']
     }
 }
 """
@@ -198,7 +278,7 @@ project(":b") {
         fails 'test'
 
         and:
-        failure.assertResolutionFailure(":b:compile").assertHasCause("Artifact 'test:a:unspecified@jar' not found.")
+        failure.assertResolutionFailure(":b:compile").assertHasCause("Artifact 'test:a:unspecified:b.jar' not found.")
     }
 
     public void "non-transitive project dependency includes only the artifacts of the target configuration"() {

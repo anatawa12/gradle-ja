@@ -18,8 +18,10 @@ package org.gradle.api.internal.tasks.testing.junit;
 
 import org.gradle.api.InvalidUserDataException;
 import org.gradle.api.Transformer;
+import org.gradle.api.internal.tasks.testing.selection.TestSelectionMatcher;
 import org.gradle.internal.concurrent.ThreadSafe;
 import org.gradle.util.CollectionUtils;
+import org.junit.runner.Description;
 import org.junit.runner.Request;
 import org.junit.runner.Runner;
 import org.junit.runner.notification.RunListener;
@@ -71,6 +73,10 @@ public class JUnitTestClassExecuter {
             ));
         }
 
+        if (!options.getIncludedTests().isEmpty()) {
+            request = request.filterWith(new MethodNameFilter(options.getIncludedTests()));
+        }
+
         Runner runner = request.getRunner();
         //In case of no matching methods junit will return a ErrorReportingRunner for org.junit.runner.manipulation.Filter.class.
         //Will be fixed with adding class filters
@@ -81,5 +87,21 @@ public class JUnitTestClassExecuter {
         }
     }
 
+    private static class MethodNameFilter extends org.junit.runner.manipulation.Filter {
 
+        private final TestSelectionMatcher matcher;
+
+        public MethodNameFilter(Iterable<String> includedTests) {
+            matcher = new TestSelectionMatcher(includedTests);
+        }
+
+        @Override
+        public boolean shouldRun(Description description) {
+            return matcher.matchesTest(description.getClassName(), description.getMethodName());
+        }
+
+        public String describe() {
+            return "Includes matching test methods";
+        }
+    }
 }

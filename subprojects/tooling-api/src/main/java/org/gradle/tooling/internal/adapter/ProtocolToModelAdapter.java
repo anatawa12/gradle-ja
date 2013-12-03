@@ -30,7 +30,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 /**
- * Adapts some source object to some target type.
+ * Adapts some source object to some target view type.
  */
 public class ProtocolToModelAdapter implements Serializable {
     private static final MethodInvoker NO_OP_HANDLER = new NoOpMethodInvoker();
@@ -55,12 +55,15 @@ public class ProtocolToModelAdapter implements Serializable {
         this.targetTypeProvider = targetTypeProvider;
     }
 
+    /**
+     * Adapts the source object to a view object.
+     */
     public <T, S> T adapt(Class<T> targetType, S sourceObject) {
         return adapt(targetType, sourceObject, NO_OP_MAPPER);
     }
 
     /**
-     * Adapts the source object.
+     * Adapts the source object to a view object.
      *
      * @param mixInClass A bean that provides implementations for methods of the target type. If this bean implements the given method, it is preferred over the source object's implementation.
      */
@@ -75,7 +78,7 @@ public class ProtocolToModelAdapter implements Serializable {
     }
 
     /**
-     * Adapts the source object.
+     * Adapts the source object to a view object.
      *
      * @param mapper An action that is invoked for each source object in the graph that is to be adapted. The action can influence how the source object is adapted via the provided
      * {@link SourceObjectMapping}.
@@ -94,7 +97,7 @@ public class ProtocolToModelAdapter implements Serializable {
         MethodInvoker overrideMethodInvoker = mapping.overrideInvoker;
         MixInMethodInvoker mixInMethodInvoker = null;
         if (mapping.mixInType != null) {
-            mixInMethodInvoker = new MixInMethodInvoker(mapping.mixInType, new ReflectionMethodInvoker(mapper));
+            mixInMethodInvoker = new MixInMethodInvoker(mapping.mixInType, new AdaptingMethodInvoker(mapper, new ReflectionMethodInvoker()));
             overrideMethodInvoker = mixInMethodInvoker;
         }
         Object proxy = Proxy.newProxyInstance(wrapperType.getClassLoader(), new Class<?>[]{wrapperType}, new InvocationHandlerImpl(sourceObject, overrideMethodInvoker, mapper));
@@ -102,6 +105,17 @@ public class ProtocolToModelAdapter implements Serializable {
             mixInMethodInvoker.setProxy(proxy);
         }
         return wrapperType.cast(proxy);
+    }
+
+    /**
+     * Unpacks the source object from a given view object.
+     */
+    public Object unpack(Object viewObject) {
+        if (!Proxy.isProxyClass(viewObject.getClass()) || !(Proxy.getInvocationHandler(viewObject) instanceof InvocationHandlerImpl)) {
+            throw new IllegalArgumentException("The given object is not a view object");
+        }
+        InvocationHandlerImpl handler = (InvocationHandlerImpl) Proxy.getInvocationHandler(viewObject);
+        return handler.delegate;
     }
 
     private static class DefaultSourceObjectMapping implements SourceObjectMapping {
@@ -177,9 +191,10 @@ public class ProtocolToModelAdapter implements Serializable {
             invoker = new SupportedPropertyInvoker(
                     new SafeMethodInvoker(
                             new PropertyCachingMethodInvoker(
-                                    new ChainedMethodInvoker(
-                                            overrideMethodInvoker,
-                                            new ReflectionMethodInvoker(mapper)))));
+                                    new AdaptingMethodInvoker(mapper,
+                                            new ChainedMethodInvoker(
+                                                    overrideMethodInvoker,
+                                                    new ReflectionMethodInvoker())))));
             try {
                 equalsMethod = Object.class.getMethod("equals", Object.class);
                 hashCodeMethod = Object.class.getMethod("hashCode");
@@ -243,62 +258,20 @@ public class ProtocolToModelAdapter implements Serializable {
         }
     }
 
-    private class ReflectionMethodInvoker implements MethodInvoker {
+    private class AdaptingMethodInvoker implements MethodInvoker {
         private final Action<? super SourceObjectMapping> mapping;
+        private final MethodInvoker next;
 
-        private ReflectionMethodInvoker(Action<? super SourceObjectMapping> mapping) {
+        private AdaptingMethodInvoker(Action<? super SourceObjectMapping> mapping, MethodInvoker next) {
             this.mapping = mapping;
+            this.next = next;
         }
 
         public void invoke(MethodInvocation invocation) throws Throwable {
-            // TODO - cache method lookup
-            Method targetMethod = locateMethod(invocation);
-            if (targetMethod == null) {
-                return;
+            next.invoke(invocation);
+            if (invocation.found() && invocation.getResult() != null) {
+                invocation.setResult(convert(invocation.getResult(), invocation.getGenericReturnType()));
             }
-
-            Object returnValue;
-            try {
-                returnValue = targetMethod.invoke(invocation.getDelegate(), invocation.getParameters());
-            } catch (InvocationTargetException e) {
-                throw e.getCause();
-            }
-
-            if (returnValue == null) {
-                invocation.setResult(returnValue);
-                return;
-            }
-
-            invocation.setResult(convert(returnValue, invocation.getGenericReturnType()));
-        }
-
-        private Method locateMethod(MethodInvocation invocation) {
-            Class<?> sourceClass = invocation.getDelegate().getClass();
-            Method match;
-            try {
-                match = sourceClass.getMethod(invocation.getName(), invocation.getParameterTypes());
-            } catch (NoSuchMethodException e) {
-                return null;
-            }
-
-            LinkedList<Class<?>> queue = new LinkedList<Class<?>>();
-            queue.add(sourceClass);
-            while (!queue.isEmpty()) {
-                Class<?> c = queue.removeFirst();
-                try {
-                    match = c.getMethod(invocation.getName(), invocation.getParameterTypes());
-                } catch (NoSuchMethodException e) {
-                    // ignore
-                }
-                for (Class<?> interfaceType : c.getInterfaces()) {
-                    queue.addFirst(interfaceType);
-                }
-                if (c.getSuperclass() != null) {
-                    queue.addFirst(c.getSuperclass());
-                }
-            }
-            match.setAccessible(true);
-            return match;
         }
 
         private Object convert(Object value, Type targetType) {
@@ -345,6 +318,54 @@ public class ProtocolToModelAdapter implements Serializable {
                 return wildcardType.getUpperBounds()[0];
             }
             return elementType;
+        }
+    }
+
+    private class ReflectionMethodInvoker implements MethodInvoker {
+        public void invoke(MethodInvocation invocation) throws Throwable {
+            // TODO - cache method lookup
+            Method targetMethod = locateMethod(invocation);
+            if (targetMethod == null) {
+                return;
+            }
+
+            Object returnValue;
+            try {
+                returnValue = targetMethod.invoke(invocation.getDelegate(), invocation.getParameters());
+            } catch (InvocationTargetException e) {
+                throw e.getCause();
+            }
+
+            invocation.setResult(returnValue);
+        }
+
+        private Method locateMethod(MethodInvocation invocation) {
+            Class<?> sourceClass = invocation.getDelegate().getClass();
+            Method match;
+            try {
+                match = sourceClass.getMethod(invocation.getName(), invocation.getParameterTypes());
+            } catch (NoSuchMethodException e) {
+                return null;
+            }
+
+            LinkedList<Class<?>> queue = new LinkedList<Class<?>>();
+            queue.add(sourceClass);
+            while (!queue.isEmpty()) {
+                Class<?> c = queue.removeFirst();
+                try {
+                    match = c.getMethod(invocation.getName(), invocation.getParameterTypes());
+                } catch (NoSuchMethodException e) {
+                    // ignore
+                }
+                for (Class<?> interfaceType : c.getInterfaces()) {
+                    queue.addFirst(interfaceType);
+                }
+                if (c.getSuperclass() != null) {
+                    queue.addFirst(c.getSuperclass());
+                }
+            }
+            match.setAccessible(true);
+            return match;
         }
     }
 

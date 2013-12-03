@@ -53,7 +53,7 @@
                     <para>ビルドのリスナーを登録する。Gradleのイベントをリスンしたい外部ツールにとって便利かもしれません。</para>
                 </listitem>
                 <listitem>
-                    <para role="original">Register build loggers.  You might wish to customise how Gradle logs the events that it generates.
+                    <para role="original">Register build loggers.  You might wish to customize how Gradle logs the events that it generates.
                     </para>
                     <para>ビルドのロガーを登録する。Gradleがイベントを記録する方法をカスタマイズしたいことがあるかもしれません。</para>
                 </listitem>

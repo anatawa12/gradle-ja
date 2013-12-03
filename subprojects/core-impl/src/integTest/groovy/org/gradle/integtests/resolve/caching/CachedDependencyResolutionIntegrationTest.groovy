@@ -20,6 +20,7 @@ import org.gradle.integtests.fixtures.AbstractDependencyResolutionTest
 import org.gradle.test.fixtures.file.TestFile
 import org.gradle.test.fixtures.ivy.IvyHttpModule
 import org.gradle.test.fixtures.server.http.HttpServer
+import spock.lang.Issue
 
 /**
  * We are using Ivy here, but the strategy is the same for any kind of repository.
@@ -59,9 +60,8 @@ task retrieve(type: Sync) {
     }
 
     void initialResolve() {
-        module.expectIvyGet()
-        module.expectJarGet()
-
+        module.ivy.expectGet()
+        module.jar.expectGet()
         resolve()
     }
 
@@ -74,47 +74,47 @@ task retrieve(type: Sync) {
     }
 
     void headOnlyRequests() {
-        module.expectIvyHead()
-        module.expectJarHead()
+        module.ivy.expectHead()
+        module.jar.expectHead()
     }
 
     void headSha1ThenGetRequests() {
-        module.expectIvyHead()
-        module.expectIvySha1Get()
-        module.expectIvyGet()
+        module.ivy.expectHead()
+        module.ivy.sha1.expectGet()
+        module.ivy.expectGet()
 
-        module.expectJarHead()
-        module.expectJarSha1Get()
-        module.expectJarGet()
+        module.jar.expectHead()
+        module.jar.sha1.expectGet()
+        module.jar.expectGet()
     }
 
     void sha1OnlyRequests() {
-        module.expectIvySha1Get()
-        module.expectJarSha1Get()
+        module.ivy.sha1.expectGet()
+        module.jar.sha1.expectGet()
     }
 
     void sha1ThenGetRequests() {
-        module.expectIvySha1Get()
-        module.expectIvyGet()
+        module.ivy.sha1.expectGet()
+        module.ivy.expectGet()
 
-        module.expectJarSha1Get()
-        module.expectJarGet()
+        module.jar.sha1.expectGet()
+        module.jar.expectGet()
     }
 
     void headThenSha1Requests() {
-        module.expectIvyHead()
-        module.expectIvySha1Get()
+        module.ivy.expectHead()
+        module.ivy.sha1.expectGet()
 
-        module.expectJarHead()
-        module.expectJarSha1Get()
+        module.jar.expectHead()
+        module.jar.sha1.expectGet()
     }
 
     void headThenGetRequests() {
-        module.expectIvyHead()
-        module.expectIvyGet()
+        module.ivy.expectHead()
+        module.ivy.expectGet()
 
-        module.expectJarHead()
-        module.expectJarGet()
+        module.jar.expectHead()
+        module.jar.expectGet()
     }
 
     void unchangedResolve() {
@@ -216,5 +216,24 @@ task retrieve(type: Sync) {
         then:
         headThenGetRequests()
         changedResolve()
+    }
+
+    @Issue("GRADLE-2781")
+    def "no leading zeros in sha1 checksums supported"() {
+        given:
+        server.etags = null
+        server.sendLastModified = false
+        byte[] jarBytes = [0, 0, 0, 5]
+        module.jarFile.bytes = jarBytes
+        initialResolve()
+        expect:
+        headThenSha1Requests()
+        trimLeadingZerosFromSHA1()
+        unchangedResolve()
+    }
+
+    def trimLeadingZerosFromSHA1() {
+        //remove leading zeros from sha1 checksum
+        new File("${module.jarFile.absolutePath}.sha1").text = "e14c6ef59816760e2c9b5a57157e8ac9de4012"
     }
 }

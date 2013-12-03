@@ -20,8 +20,8 @@ import org.gradle.StartParameter;
 import org.gradle.api.logging.LogLevel;
 import org.gradle.initialization.BuildAction;
 import org.gradle.initialization.BuildLayoutParameters;
+import org.gradle.initialization.GradleLauncherFactory;
 import org.gradle.internal.Factory;
-import org.gradle.internal.UncheckedException;
 import org.gradle.launcher.cli.converter.LayoutToPropertiesConverter;
 import org.gradle.launcher.cli.converter.PropertiesToDaemonParametersConverter;
 import org.gradle.launcher.daemon.client.DaemonClient;
@@ -29,15 +29,15 @@ import org.gradle.launcher.daemon.client.DaemonClientServices;
 import org.gradle.launcher.daemon.configuration.DaemonParameters;
 import org.gradle.launcher.exec.BuildActionExecuter;
 import org.gradle.launcher.exec.BuildActionParameters;
+import org.gradle.launcher.exec.InProcessBuildActionExecuter;
 import org.gradle.logging.LoggingManagerInternal;
 import org.gradle.logging.LoggingServiceRegistry;
 import org.gradle.logging.internal.OutputEventRenderer;
-import org.gradle.messaging.remote.internal.Message;
 import org.gradle.process.internal.streams.SafeStreams;
 import org.gradle.tooling.internal.build.DefaultBuildEnvironment;
 import org.gradle.tooling.internal.consumer.versioning.ModelMapping;
+import org.gradle.tooling.internal.protocol.InternalBuildAction;
 import org.gradle.tooling.internal.protocol.InternalBuildEnvironment;
-import org.gradle.tooling.internal.protocol.InternalUnsupportedModelException;
 import org.gradle.tooling.internal.protocol.ModelIdentifier;
 import org.gradle.tooling.internal.provider.connection.ProviderConnectionParameters;
 import org.gradle.tooling.internal.provider.connection.ProviderOperationParameters;
@@ -46,7 +46,6 @@ import org.gradle.util.GradleVersion;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.util.HashMap;
 import java.util.List;
@@ -54,20 +53,20 @@ import java.util.Map;
 
 public class ProviderConnection {
     private static final Logger LOGGER = LoggerFactory.getLogger(ProviderConnection.class);
-    private final EmbeddedExecuterSupport embeddedExecuterSupport;
-    private final ModelClassLoaderRegistry classLoaderRegistry;
+    private final PayloadSerializer payloadSerializer;
+    private final LoggingServiceRegistry loggingServices;
+    private final GradleLauncherFactory gradleLauncherFactory;
 
-    public ProviderConnection() {
-        //embedded use of the tooling api is not supported publicly so we don't care about its thread safety
-        //we can still keep this state:
-        embeddedExecuterSupport = new EmbeddedExecuterSupport();
-        classLoaderRegistry = new ModelClassLoaderRegistry();
+    public ProviderConnection(LoggingServiceRegistry loggingServices, GradleLauncherFactory gradleLauncherFactory, PayloadSerializer payloadSerializer) {
+        this.loggingServices = loggingServices;
+        this.gradleLauncherFactory = gradleLauncherFactory;
+        this.payloadSerializer = payloadSerializer;
     }
 
     public void configure(ProviderConnectionParameters parameters) {
         LogLevel providerLogLevel = parameters.getVerboseLogging() ? LogLevel.DEBUG : LogLevel.INFO;
         LOGGER.debug("Configuring logging to level: {}", providerLogLevel);
-        LoggingManagerInternal loggingManager = embeddedExecuterSupport.getLoggingServices().newInstance(LoggingManagerInternal.class);
+        LoggingManagerInternal loggingManager = loggingServices.newInstance(LoggingManagerInternal.class);
         loggingManager.setLevel(providerLogLevel);
         loggingManager.start();
     }
@@ -90,35 +89,25 @@ public class ProviderConnection {
                     params.daemonParams.getEffectiveJvmArgs());
         }
 
-        BuildAction<ToolingModel> action = new BuildModelAction(modelName, tasks != null);
-
-        // TODO:ADAM - need to clean up error handling here
-
-        ToolingModel model;
-        try {
-            model = run(action, providerParameters, params.properties);
-        } catch (RuntimeException e) {
-            for (Throwable t = e; t != null; t = t.getCause()) {
-                // TODO:ADAM - This is not right, it's just to get an initial implementation going
-                if (t instanceof UnsupportedOperationException) {
-                    throw new InternalUnsupportedModelException();
-                }
-            }
-            throw e;
-        }
-
-        ClassLoader classLoader = classLoaderRegistry.getClassLoaderFor(model.getClassPath());
-        try {
-            return Message.receive(new ByteArrayInputStream(model.getSerializedModel()), classLoader);
-        } catch (Exception e) {
-            throw UncheckedException.throwAsUncheckedException(e);
-        }
+        BuildAction<BuildActionResult> action = new BuildModelAction(modelName, tasks != null);
+        return run(action, providerParameters, params.properties);
     }
 
-    private <T> T run(BuildAction<T> action, ProviderOperationParameters operationParameters, Map<String, String> properties) {
+    public Object run(InternalBuildAction<?> clientAction, ProviderOperationParameters providerParameters) {
+        SerializedPayload serializedAction = payloadSerializer.serialize(clientAction);
+        Parameters params = initParams(providerParameters);
+        BuildAction<BuildActionResult> action = new ClientProvidedBuildAction(serializedAction);
+        return run(action, providerParameters, params.properties);
+    }
+
+    private Object run(BuildAction<? extends BuildActionResult> action, ProviderOperationParameters operationParameters, Map<String, String> properties) {
         BuildActionExecuter<ProviderOperationParameters> executer = createExecuter(operationParameters);
-        ConfiguringBuildAction<T> configuringAction = new ConfiguringBuildAction<T>(operationParameters, action, properties);
-        return executer.execute(configuringAction, operationParameters);
+        ConfiguringBuildAction<BuildActionResult> configuringAction = new ConfiguringBuildAction<BuildActionResult>(operationParameters, action, properties);
+        BuildActionResult result = executer.execute(configuringAction, operationParameters);
+        if (result.failure != null) {
+            throw (RuntimeException) payloadSerializer.deserialize(result.failure);
+        }
+        return payloadSerializer.deserialize(result.result);
     }
 
     private BuildActionExecuter<ProviderOperationParameters> createExecuter(ProviderOperationParameters operationParameters) {
@@ -126,10 +115,10 @@ public class ProviderConnection {
         Parameters params = initParams(operationParameters);
         BuildActionExecuter<BuildActionParameters> executer;
         if (Boolean.TRUE.equals(operationParameters.isEmbedded())) {
-            loggingServices = embeddedExecuterSupport.getLoggingServices();
-            executer = embeddedExecuterSupport.getExecuter();
+            loggingServices = this.loggingServices;
+            executer = new InProcessBuildActionExecuter(gradleLauncherFactory);
         } else {
-            loggingServices = embeddedExecuterSupport.getLoggingServices().newLogging();
+            loggingServices = this.loggingServices.newLogging();
             loggingServices.get(OutputEventRenderer.class).configure(operationParameters.getBuildLogLevel());
             DaemonClientServices clientServices = new DaemonClientServices(loggingServices, params.daemonParams, operationParameters.getStandardInput(SafeStreams.emptyInput()));
             executer = clientServices.get(DaemonClient.class);
@@ -172,4 +161,5 @@ public class ProviderConnection {
             this.properties = properties;
         }
     }
+
 }

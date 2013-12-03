@@ -24,6 +24,7 @@ import org.gradle.api.file.FileTree;
 import org.gradle.api.file.FileTreeElement;
 import org.gradle.api.internal.ConventionTask;
 import org.gradle.api.internal.file.FileResolver;
+import org.gradle.api.internal.tasks.options.Option;
 import org.gradle.api.internal.tasks.testing.DefaultTestTaskReports;
 import org.gradle.api.internal.tasks.testing.TestFramework;
 import org.gradle.api.internal.tasks.testing.TestResultProcessor;
@@ -35,6 +36,7 @@ import org.gradle.api.internal.tasks.testing.junit.report.TestReporter;
 import org.gradle.api.internal.tasks.testing.junit.result.*;
 import org.gradle.api.internal.tasks.testing.logging.*;
 import org.gradle.api.internal.tasks.testing.results.TestListenerAdapter;
+import org.gradle.api.internal.tasks.testing.selection.DefaultTestSelection;
 import org.gradle.api.internal.tasks.testing.testng.TestNGTestFramework;
 import org.gradle.api.logging.LogLevel;
 import org.gradle.api.reporting.DirectoryReport;
@@ -45,8 +47,8 @@ import org.gradle.api.tasks.testing.logging.TestLogging;
 import org.gradle.api.tasks.testing.logging.TestLoggingContainer;
 import org.gradle.api.tasks.util.PatternFilterable;
 import org.gradle.api.tasks.util.PatternSet;
-import org.gradle.internal.CompositeStoppable;
 import org.gradle.internal.Factory;
+import org.gradle.internal.concurrent.CompositeStoppable;
 import org.gradle.internal.reflect.Instantiator;
 import org.gradle.listener.ClosureBackedMethodInvocationDispatch;
 import org.gradle.listener.ListenerBroadcast;
@@ -116,6 +118,7 @@ public class Test extends ConventionTask implements JavaForkOptions, PatternFilt
     private final ProgressLoggerFactory progressLoggerFactory;
     private final TestLoggingContainer testLogging;
     private final DefaultJavaForkOptions forkOptions;
+    private final DefaultTestSelection selection;
 
     private TestExecuter testExecuter;
     private List<File> testSrcDirs = new ArrayList<File>();
@@ -150,6 +153,8 @@ public class Test extends ConventionTask implements JavaForkOptions, PatternFilt
         reports = instantiator.newInstance(DefaultTestTaskReports.class, this);
         reports.getJunitXml().setEnabled(true);
         reports.getHtml().setEnabled(true);
+
+        selection = instantiator.newInstance(DefaultTestSelection.class);
     }
 
     /**
@@ -667,6 +672,17 @@ public class Test extends ConventionTask implements JavaForkOptions, PatternFilt
         return this;
     }
 
+    @Option(option = "only", description = "Sets test names to be included.")
+    /**
+     * Sets the test names to be included in execution.
+     * Wildcard '*' is supported. Test method names are supported.
+     * See more {@link TestSelection}
+     */
+    public Test only(String testNames) {
+        selection.getInclude().setNames(testNames.split(","));
+        return this;
+    }
+
     /**
      * Returns the root folder for the compiled test sources.
      *
@@ -874,7 +890,7 @@ public class Test extends ConventionTask implements JavaForkOptions, PatternFilt
      * @param testFrameworkConfigure A closure used to configure the JUnit options.
      */
     public void useJUnit(Closure testFrameworkConfigure) {
-        useTestFramework(new JUnitTestFramework(this), testFrameworkConfigure);
+        useTestFramework(new JUnitTestFramework(this, selection), testFrameworkConfigure);
     }
 
     /**
@@ -891,7 +907,7 @@ public class Test extends ConventionTask implements JavaForkOptions, PatternFilt
      * @param testFrameworkConfigure A closure used to configure the TestNG options.
      */
     public void useTestNG(Closure testFrameworkConfigure) {
-        useTestFramework(new TestNGTestFramework(this), testFrameworkConfigure);
+        useTestFramework(new TestNGTestFramework(this, this.selection), testFrameworkConfigure);
     }
 
     /**
@@ -1074,6 +1090,31 @@ public class Test extends ConventionTask implements JavaForkOptions, PatternFilt
     public TestTaskReports reports(Closure closure) {
         reports.configure(closure);
         return reports;
+    }
+
+    /**
+     * Allows selecting tests for execution
+     *
+     * @return selection object
+     * @since 1.10
+     */
+    @Incubating
+    @Nested
+    public TestSelection getSelection() {
+        return selection;
+    }
+
+    /**
+     * Allows selecting tests for execution
+     *
+     * @param closure to configure the test selection
+     * @return selection object
+     * @since 1.10
+     */
+    @Incubating
+    public TestSelection selection(Closure closure) {
+        ConfigureUtil.configure(closure, selection);
+        return selection;
     }
 
     // only way I know of to determine current log level

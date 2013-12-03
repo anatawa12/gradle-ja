@@ -40,7 +40,7 @@ Gradleプロジェクト全体をビルドするには、チェックアウト�
 
 ### サブプロジェクトで作業する
 
-本プロジェクトは、Gradleの機能を利用してマルチプロジェクトの論理的な構造をカスタマイズしています。物理的にはビルド上のサブプロジェクトは全て`subprojects/`サブディレクトリに配置されていますが、ビルド実行時には[settings.gradle](https://github.com/gradle/gradle/blob/master/settings.gradle)の設定によりトップレベルの子プロジェクトとして扱われます。
+The Gradle build uses Gradle's ability to customize the logical structure of a multiproject build. All of the build's subprojects are in the `subprojects/` directory and are mapped to top level children in [settings.gradle](https://github.com/gradle/gradle/blob/master/settings.gradle).
 
 このため、例えば`core`サブプロジェクトは`subprojects/core`にありますが、次のようにしてビルドできます。
 
@@ -80,6 +80,8 @@ Gradleプロジェクトに協力したい、またパッチやプルリクエ�
     ./gradlew idea
 
 このコマンドは、IDEAがプロジェクトを認識できるように適切なIDEAメタデータを生成します。
+
+Note that due to an IDEA glitch, the first build of Gradle from IDEA will fail. Launching a second build fixes the compilation error.
 
 ### Eclipse
 

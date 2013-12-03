@@ -17,9 +17,8 @@
 package org.gradle.api.internal.file;
 
 import org.gradle.api.UncheckedIOException;
-import org.gradle.api.internal.notations.api.NotationParser;
-import org.gradle.api.internal.notations.api.UnsupportedNotationException;
 import org.gradle.internal.nativeplatform.filesystem.FileSystem;
+import org.gradle.internal.typeconversion.NotationParser;
 import org.gradle.util.DeprecationLogger;
 
 import java.io.File;
@@ -31,7 +30,7 @@ import java.util.Collection;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-public class FileOrUriNotationParser<T extends Serializable> implements NotationParser<T> {
+public class FileOrUriNotationParser<T extends Serializable> implements NotationParser<Object, T> {
 
     private static final Pattern URI_SCHEME = Pattern.compile("[a-zA-Z][a-zA-Z0-9+-\\.]*:.+");
     private static final Pattern ENCODED_URI = Pattern.compile("%([0-9a-fA-F]{2})");
@@ -45,7 +44,7 @@ public class FileOrUriNotationParser<T extends Serializable> implements Notation
         candidateFormats.add("File, URI, URL or CharSequence is supported");
     }
 
-    public T parseNotation(Object notation) throws UnsupportedNotationException {
+    public T parseNotation(Object notation) {
         if (notation instanceof File) {
             return (T) notation;
         }

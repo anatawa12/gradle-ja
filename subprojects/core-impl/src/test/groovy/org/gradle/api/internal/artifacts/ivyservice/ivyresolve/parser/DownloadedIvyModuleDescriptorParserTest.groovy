@@ -16,15 +16,15 @@
 
 package org.gradle.api.internal.artifacts.ivyservice.ivyresolve.parser
 
-import org.apache.ivy.core.settings.IvySettings
-import org.apache.ivy.plugins.parser.ParserSettings
+import org.gradle.api.internal.artifacts.ivyservice.ivyresolve.strategy.ResolverStrategy
 import org.gradle.test.fixtures.file.TestNameTestDirectoryProvider
 import org.junit.Rule
 import spock.lang.Specification
 
 class DownloadedIvyModuleDescriptorParserTest extends Specification {
     @Rule TestNameTestDirectoryProvider tmpDir
-    final DownloadedIvyModuleDescriptorParser parser = new DownloadedIvyModuleDescriptorParser()
+    final DownloadedIvyModuleDescriptorParser parser = new DownloadedIvyModuleDescriptorParser(Stub(ResolverStrategy))
+    final parserSettings = Mock(DescriptorParseContext)
 
     def "discards the default attribute"() {
         def ivyFile = tmpDir.createFile("ivy.xml")
@@ -33,10 +33,9 @@ class DownloadedIvyModuleDescriptorParserTest extends Specification {
     <info organisation="org" module="someModule" revision="1.2" default="true"/>
 </ivy-module>
 """
-        ParserSettings settings = new IvySettings()
-
         when:
-        def descriptor = parser.parseDescriptor(settings, ivyFile, true)
+        parserSettings.substitute(_ as String) >> {String value -> value}
+        def descriptor = parser.parseMetaData(parserSettings, ivyFile, true).descriptor
 
         then:
         !descriptor.default

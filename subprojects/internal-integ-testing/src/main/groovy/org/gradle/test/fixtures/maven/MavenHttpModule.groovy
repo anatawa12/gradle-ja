@@ -54,6 +54,11 @@ class MavenHttpModule implements MavenModule {
         return this
     }
 
+    MavenHttpModule publishPom() {
+        backingModule.publishPom()
+        return this
+    }
+
     MavenHttpModule publishWithChangedContent() {
         backingModule.publishWithChangedContent()
         return this
@@ -64,7 +69,7 @@ class MavenHttpModule implements MavenModule {
         return this
     }
 
-    MavenModule parent(String group, String artifactId, String version) {
+    MavenHttpModule parent(String group, String artifactId, String version) {
         backingModule.parent(group, artifactId, version)
         return this
     }
@@ -74,8 +79,13 @@ class MavenHttpModule implements MavenModule {
         return this
     }
 
-    MavenModule hasPackaging(String packaging) {
+    MavenHttpModule hasPackaging(String packaging) {
         backingModule.hasPackaging(packaging)
+        return this
+    }
+
+    MavenHttpModule hasType(String type) {
+        backingModule.hasType(type)
         return this
     }
 

@@ -118,12 +118,9 @@ class CopyTaskIntegrationSpec extends AbstractIntegrationSpec {
 
         then:
         ":copyTask" in nonSkippedTasks
-        with(file("out")) {
-            file("a.txt").exists()
-            file("b.txt").exists()
-            file("dirA").exists()
-            !file("dirB").exists()
-        }
+        def destinationDir = file("out")
+        destinationDir.assertHasDescendants("a.txt", "b.txt")
+        destinationDir.listFiles().findAll { it.directory }*.name.toSet() == ["dirA"].toSet()
     }
 
     def "include empty dirs is overridden by subsequent"() {
@@ -132,6 +129,7 @@ class CopyTaskIntegrationSpec extends AbstractIntegrationSpec {
         file("a/dirA").createDir()
         file("b/b.txt") << "foo"
         file("b/dirB").createDir()
+
 
         buildScript """
             task copyTask(type: Copy) {
@@ -152,12 +150,42 @@ class CopyTaskIntegrationSpec extends AbstractIntegrationSpec {
 
         then:
         ":copyTask" in nonSkippedTasks
-        with(file("out")) {
-            file("a.txt").exists()
-            file("b.txt").exists()
-            file("dirA").exists()
-            file("dirB").exists()
-        }
+
+        def destinationDir = file("out")
+        destinationDir.assertHasDescendants("a.txt", "b.txt")
+        destinationDir.listFiles().findAll { it.directory }*.name.toSet() == ["dirA", "dirB"].toSet()
+    }
+
+    @Issue("http://issues.gradle.org/browse/GRADLE-2902")
+    def "internal copy spec methods are not visible to users"() {
+        when:
+        file("res/foo.txt") << "bar"
+
+        buildScript """
+            task copyAction {
+                ext.source = 'res'
+                doLast {
+                    copy {
+                        from source
+                        into 'action'
+                    }
+                }
+            }
+            task copyTask(type: Copy) {
+                ext.children = 'res'
+                into "task"
+                into "dir", {
+                    from children
+                }
+            }
+        """
+
+        then:
+        succeeds "copyAction", "copyTask"
+
+        and:
+        file("action/foo.txt").exists()
+        file("task/dir/foo.txt").exists()
     }
 
 }

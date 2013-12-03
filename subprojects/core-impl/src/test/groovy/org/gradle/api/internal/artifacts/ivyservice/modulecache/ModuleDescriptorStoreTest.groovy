@@ -19,6 +19,7 @@ package org.gradle.api.internal.artifacts.ivyservice.modulecache
 import org.apache.ivy.core.module.descriptor.ModuleDescriptor
 import org.apache.ivy.core.module.id.ModuleRevisionId
 import org.gradle.api.artifacts.ModuleVersionIdentifier
+import org.gradle.api.internal.artifacts.ivyservice.DependencyToModuleVersionResolver
 import org.gradle.api.internal.artifacts.ivyservice.IvyModuleDescriptorWriter
 import org.gradle.api.internal.artifacts.ivyservice.ivyresolve.ModuleVersionRepository
 import org.gradle.api.internal.artifacts.ivyservice.ivyresolve.parser.IvyXmlModuleDescriptorParser
@@ -40,6 +41,7 @@ class ModuleDescriptorStoreTest extends Specification {
     IvyModuleDescriptorWriter ivyModuleDescriptorWriter = Mock()
     IvyXmlModuleDescriptorParser ivyXmlModuleDescriptorParser = Mock()
     ModuleVersionIdentifier moduleVersionIdentifier = Mock()
+    def resolver = Mock(DependencyToModuleVersionResolver)
 
     def setup() {
         store = new ModuleDescriptorStore(pathKeyFileStore, ivyModuleDescriptorWriter, ivyXmlModuleDescriptorParser);
@@ -52,7 +54,7 @@ class ModuleDescriptorStoreTest extends Specification {
 
     def "getModuleDescriptorFile returns null for not cached descriptors"() {
         when:
-        pathKeyFileStore.get("module-metadata/org.test/testArtifact/1.0/repositoryId/ivy.xml") >> null
+        pathKeyFileStore.get("org.test/testArtifact/1.0/repositoryId/ivy.xml") >> null
         then:
         null == store.getModuleDescriptor(repository, moduleVersionIdentifier)
     }
@@ -61,7 +63,7 @@ class ModuleDescriptorStoreTest extends Specification {
         when:
         store.getModuleDescriptor(repository, moduleVersionIdentifier);
         then:
-        1 * pathKeyFileStore.get("module-metadata/org.test/testArtifact/1.0/repositoryId/ivy.xml") >> null
+        1 * pathKeyFileStore.get("org.test/testArtifact/1.0/repositoryId/ivy.xml") >> null
     }
 
     def "putModuleDescriptor uses PathKeyFileStore to write file"() {
@@ -73,7 +75,7 @@ class ModuleDescriptorStoreTest extends Specification {
         when:
         store.putModuleDescriptor(repository, moduleDescriptor);
         then:
-        1 * pathKeyFileStore.add("module-metadata/org.test/testArtifact/1.0/repositoryId/ivy.xml", _) >> { path, action ->
+        1 * pathKeyFileStore.add("org.test/testArtifact/1.0/repositoryId/ivy.xml", _) >> { path, action ->
             action.execute(descriptorFile); fileStoreEntry
         };
         1 * ivyModuleDescriptorWriter.write(moduleDescriptor, descriptorFile)

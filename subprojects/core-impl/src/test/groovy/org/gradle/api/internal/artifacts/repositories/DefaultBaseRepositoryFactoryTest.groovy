@@ -16,15 +16,17 @@
 
 package org.gradle.api.internal.artifacts.repositories
 
-import org.apache.ivy.core.cache.RepositoryCacheManager
 import org.apache.ivy.plugins.resolver.DependencyResolver
 import org.gradle.api.InvalidUserDataException
 import org.gradle.api.artifacts.dsl.RepositoryHandler
 import org.gradle.api.artifacts.repositories.ArtifactRepository
 import org.gradle.api.internal.artifacts.ModuleMetadataProcessor
-import org.gradle.api.internal.artifacts.ivyservice.ivyresolve.parser.MetaDataParser
 import org.gradle.api.internal.artifacts.dsl.DefaultRepositoryHandler
+import org.gradle.api.internal.artifacts.ivyservice.ivyresolve.strategy.LatestStrategy
+import org.gradle.api.internal.artifacts.ivyservice.ivyresolve.strategy.ResolverStrategy
+import org.gradle.api.internal.artifacts.ivyservice.ivyresolve.strategy.VersionMatcher
 import org.gradle.api.internal.artifacts.mvnsettings.LocalMavenRepositoryLocator
+import org.gradle.api.internal.artifacts.repositories.legacy.LegacyDependencyResolverRepositoryFactory
 import org.gradle.api.internal.artifacts.repositories.transport.RepositoryTransportFactory
 import org.gradle.api.internal.externalresource.local.LocallyAvailableResourceFinder
 import org.gradle.api.internal.file.FileResolver
@@ -34,32 +36,22 @@ import spock.lang.Specification
 
 class DefaultBaseRepositoryFactoryTest extends Specification {
     static final URI RESOLVER_URL = new URI('http://a.b.c/')
-    static final String TEST_REPO = 'http://www.gradle.org'
-    static final URI TEST_REPO_URL = new URI('http://www.gradle.org/')
-    static final URI TEST_REPO2_URL = new URI('http://www.gradleware.com/')
 
     final LocalMavenRepositoryLocator localMavenRepoLocator = Mock()
     final FileResolver fileResolver = Mock()
     final RepositoryTransportFactory transportFactory = Mock()
     final LocallyAvailableResourceFinder locallyAvailableResourceFinder = Mock()
-    final RepositoryCacheManager localCacheManager = Mock()
-    final RepositoryCacheManager downloadingCacheManager = Mock()
     final ProgressLoggerFactory progressLoggerFactory = Mock()
-    final MetaDataParser metaDataParser = Mock()
     final ModuleMetadataProcessor metadataProcessor = Mock()
+    final LegacyDependencyResolverRepositoryFactory legacyDependencyResolverRepositoryFactory = Mock()
+    final VersionMatcher versionMatcher = Mock()
+    final LatestStrategy latestStrategy = Mock()
+    final ResolverStrategy resolverStrategy = Mock()
 
     final DefaultBaseRepositoryFactory factory = new DefaultBaseRepositoryFactory(
-            localMavenRepoLocator, fileResolver, new DirectInstantiator(), transportFactory, locallyAvailableResourceFinder,
-            progressLoggerFactory, localCacheManager, downloadingCacheManager, metaDataParser, metadataProcessor
+            localMavenRepoLocator, fileResolver, new DirectInstantiator(), transportFactory, locallyAvailableResourceFinder
+            , metadataProcessor, legacyDependencyResolverRepositoryFactory, versionMatcher, latestStrategy, resolverStrategy
     )
-
-//    @Before public void setup() {
-//        fileResolver = Stub(FileResolver) {
-//            resolveUri('uri') >> RESOLVER_URL
-//            resolveUri(TEST_REPO) >> TEST_REPO_URL
-//            resolveUri('uri2') >> TEST_REPO2_URL
-//        }
-//    }
 
     def testCreateResolverWithStringDescription() {
         when:
@@ -88,14 +80,14 @@ class DefaultBaseRepositoryFactoryTest extends Specification {
     }
 
     def testCreateResolverWithResolverDescription() {
-        when:
+        def repository = Mock(ArtifactRepository)
         def resolver = Mock(DependencyResolver)
 
-        then:
-        ArtifactRepository repository = factory.createRepository(resolver)
+        when:
+        legacyDependencyResolverRepositoryFactory.createRepository(resolver) >> repository
 
-        repository instanceof FixedResolverArtifactRepository
-        repository.resolver == resolver
+        then:
+        factory.createRepository(resolver) == repository
     }
 
     def testCreateResolverWithArtifactRepositoryDescription() {
@@ -132,7 +124,7 @@ class DefaultBaseRepositoryFactoryTest extends Specification {
 
         then:
         def repo = factory.createMavenLocalRepository()
-        repo instanceof DefaultMavenArtifactRepository
+        repo instanceof DefaultMavenLocalArtifactRepository
         repo.url == repoDir.toURI()
     }
 

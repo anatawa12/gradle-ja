@@ -24,10 +24,12 @@ public class JUnitSpec implements Serializable {
 
     private final Set<String> includeCategories;
     private final Set<String> excludeCategories;
+    private final Set<String> includedTests;
 
-    public JUnitSpec(final JUnitOptions options){
+    public JUnitSpec(final JUnitOptions options, Set<String> includedTests) {
         this.includeCategories = options.getIncludeCategories();
         this.excludeCategories = options.getExcludeCategories();
+        this.includedTests = includedTests;
     }
 
     public Set<String> getIncludeCategories() {
@@ -40,6 +42,9 @@ public class JUnitSpec implements Serializable {
 
     public boolean hasCategoryConfiguration() {
         return !(excludeCategories.isEmpty() && includeCategories.isEmpty());
+    }
 
+    public Set<String> getIncludedTests() {
+        return includedTests;
     }
 }

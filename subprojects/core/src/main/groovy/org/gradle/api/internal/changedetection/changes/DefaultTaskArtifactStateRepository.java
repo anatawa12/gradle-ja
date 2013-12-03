@@ -118,8 +118,7 @@ public class DefaultTaskArtifactStateRepository implements TaskArtifactStateRepo
             history.update();
         }
 
-        public void finished() {
-        }
+        public void finished() {}
 
         private TaskUpToDateState getStates() {
             if (states == null) {

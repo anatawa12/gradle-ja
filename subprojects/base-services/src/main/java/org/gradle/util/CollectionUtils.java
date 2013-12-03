@@ -17,13 +17,13 @@ package org.gradle.util;
 
 import org.gradle.api.Action;
 import org.gradle.api.Transformer;
-import org.gradle.api.internal.Transformers;
+import org.gradle.internal.Transformers;
 import org.gradle.api.specs.Spec;
 
 import java.lang.reflect.Array;
 import java.util.*;
 
-import static org.gradle.api.internal.Cast.cast;
+import static org.gradle.internal.Cast.cast;
 
 public abstract class CollectionUtils {
 
@@ -37,7 +37,21 @@ public abstract class CollectionUtils {
         return null;
     }
 
+    public static <T> T findFirst(T[] source, Spec<? super T> filter) {
+        for (T thing : source) {
+            if (filter.isSatisfiedBy(thing)) {
+                return thing;
+            }
+        }
+
+        return null;
+    }
+
     public static <T> boolean any(Iterable<? extends T> source, Spec<? super T> filter) {
+        return findFirst(source, filter) != null;
+    }
+
+    public static <T> boolean any(T[] source, Spec<? super T> filter) {
         return findFirst(source, filter) != null;
     }
 
@@ -49,15 +63,21 @@ public abstract class CollectionUtils {
         return filter(list, new LinkedList<T>(), filter);
     }
 
+    /**
+     * Returns a sorted copy of the provided collection of things. Uses the provided comparator to sort.
+     */
     public static <T> List<T> sort(Iterable<? extends T> things, Comparator<? super T> comparator) {
-        List<T> copy;
-        if (things instanceof Collection) {
-            //noinspection unchecked
-            copy = new ArrayList<T>((Collection<? extends T>) things);
-        } else {
-            copy = toList(things);
-        }
+        List<T> copy = toMutableList(things);
         Collections.sort(copy, comparator);
+        return copy;
+    }
+
+    /**
+     * Returns a sorted copy of the provided collection of things. Uses the natural ordering of the things.
+     */
+    public static <T extends Comparable> List<T> sort(Iterable<T> things) {
+        List<T> copy = toMutableList(things);
+        Collections.sort(copy);
         return copy;
     }
 
@@ -85,7 +105,8 @@ public abstract class CollectionUtils {
     }
 
     public static <R, I> R[] collectArray(I[] list, Class<R> newType, Transformer<? extends R, ? super I> transformer) {
-        return collectArray(list, (R[]) Array.newInstance(newType, list.length), transformer);
+        @SuppressWarnings("unchecked") R[] destination = (R[]) Array.newInstance(newType, list.length);
+        return collectArray(list, destination, transformer);
     }
 
     public static <R, I> R[] collectArray(I[] list, R[] destination, Transformer<? extends R, ? super I> transformer) {
@@ -131,8 +152,8 @@ public abstract class CollectionUtils {
      * @param things The things to flatten
      * @return A flattened list of the given things
      */
-    public static List<?> flattenToList(Object... things) {
-        return flattenToList(Object.class, things);
+    public static List<?> flattenCollections(Object... things) {
+        return flattenCollections(Object.class, things);
     }
 
     /**
@@ -146,7 +167,7 @@ public abstract class CollectionUtils {
      * @param <T> The target type in the flattened list
      * @return A flattened list of the given things
      */
-    public static <T> List<T> flattenToList(Class<T> type, Object... things) {
+    public static <T> List<T> flattenCollections(Class<T> type, Object... things) {
         if (things == null) {
             return Collections.singletonList(null);
         } else if (things.length == 0) {
@@ -162,16 +183,16 @@ public abstract class CollectionUtils {
                 Object[] thingArray = (Object[]) thing;
                 List<T> list = new ArrayList<T>(thingArray.length);
                 for (Object thingThing : thingArray) {
-                    list.addAll(flattenToList(type, thingThing));
+                    list.addAll(flattenCollections(type, thingThing));
                 }
                 return list;
             }
 
-            if (thing instanceof Iterable) {
-                Iterable<?> iterableThing = (Iterable<?>) thing;
+            if (thing instanceof Collection) {
+                Collection<?> collection = (Collection<?>) thing;
                 List<T> list = new ArrayList<T>();
-                for (Object thingThing : iterableThing) {
-                    list.addAll(flattenToList(type, thingThing));
+                for (Object element : collection) {
+                    list.addAll(flattenCollections(type, element));
                 }
                 return list;
             }
@@ -180,7 +201,7 @@ public abstract class CollectionUtils {
         } else {
             List<T> list = new ArrayList<T>();
             for (Object thing : things) {
-                list.addAll(flattenToList(type, thing));
+                list.addAll(flattenCollections(type, thing));
             }
             return list;
         }
@@ -191,10 +212,56 @@ public abstract class CollectionUtils {
             return new ArrayList<T>(0);
         }
         if (things instanceof List) {
-            return (List<T>) things;
+            @SuppressWarnings("unchecked") List<T> castThings = (List<T>) things;
+            return castThings;
+        }
+        if (things instanceof Collection) {
+            return new ArrayList<T>((Collection) things);
+        }
+        List<T> list = new ArrayList<T>();
+        for (T thing : things) {
+            list.add(thing);
+        }
+        return list;
+    }
+
+    private static <T> List<T> toMutableList(Iterable<? extends T> things) {
+        if (things == null) {
+            return new ArrayList<T>(0);
+        }
+        List<T> list = new ArrayList<T>();
+        for (T thing : things) {
+            list.add(thing);
+        }
+        return list;
+    }
+
+
+    public static <T> List<T> intersection(Collection<? extends Collection<T>> availableValuesByDescriptor) {
+        List<T> result = new ArrayList<T>();
+        Iterator<? extends Collection<T>> iterator = availableValuesByDescriptor.iterator();
+        if(iterator.hasNext()){
+            Collection<T> firstSet = iterator.next();
+            result.addAll(firstSet);
+            while(iterator.hasNext()){
+                Collection<T> next = iterator.next();
+                result.retainAll(next);
+            }
+        }
+        return result;
+        
+    }
+
+    public static <T> List<T> withoutDuplicates(List<T> things){
+        return toList(toSet(things));
+    }
+
+    public static <T> List<T> toList(T[] things) {
+        if (things == null || things.length == 0) {
+            return new ArrayList<T>(0);
         }
 
-        List<T> list = new ArrayList<T>();
+        List<T> list = new ArrayList<T>(things.length);
         for (T thing : things) {
             list.add(thing);
         }
@@ -206,7 +273,8 @@ public abstract class CollectionUtils {
             return new HashSet<T>(0);
         }
         if (things instanceof Set) {
-            return (Set<T>) things;
+            @SuppressWarnings("unchecked") Set<T> castThings = (Set<T>) things;
+            return castThings;
         }
 
         Set<T> set = new LinkedHashSet<T>();
@@ -450,63 +518,4 @@ public abstract class CollectionUtils {
         return target;
     }
 
-    public static class ScoredItem<T, S> {
-        private final T item;
-        private final S score;
-
-        public ScoredItem(T item, S score) {
-            this.item = item;
-            this.score = score;
-        }
-
-        public T getItem() {
-            return item;
-        }
-
-        public S getScore() {
-            return score;
-        }
-
-        @Override
-        public boolean equals(Object o) {
-            if (this == o) {
-                return true;
-            }
-            if (o == null || getClass() != o.getClass()) {
-                return false;
-            }
-
-            ScoredItem that = (ScoredItem) o;
-
-            if (!item.equals(that.item)) {
-                return false;
-            }
-            if (score != null ? !score.equals(that.score) : that.score != null) {
-                return false;
-            }
-
-            return true;
-        }
-
-        @Override
-        public int hashCode() {
-            int result = item.hashCode();
-            result = 31 * result + (score != null ? score.hashCode() : 0);
-            return result;
-        }
-    }
-
-    public static <T, S> List<ScoredItem<T, S>> score(Iterable<? extends T> things, Transformer<? extends S, ? super T> scorer) {
-        return score(new LinkedList<ScoredItem<T, S>>(), things, scorer);
-    }
-
-    public static <T, S, C extends Collection<ScoredItem<T, S>>> C score(C destination, Iterable<? extends T> things, final Transformer<? extends S, ? super T> scorer) {
-        return inject(destination, things, new Action<InjectionStep<C, T>>() {
-            public void execute(InjectionStep<C, T> injectionStep) {
-                T item = injectionStep.getItem();
-                S score = scorer.transform(item);
-                injectionStep.getTarget().add(new ScoredItem<T, S>(item, score));
-            }
-        });
-    }
 }

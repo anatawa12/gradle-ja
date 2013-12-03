@@ -16,9 +16,12 @@
 
 package org.gradle.tooling.internal.consumer.connection;
 
+import org.gradle.api.Action;
 import org.gradle.tooling.internal.adapter.ProtocolToModelAdapter;
+import org.gradle.tooling.internal.adapter.SourceObjectMapping;
 import org.gradle.tooling.internal.build.VersionOnlyBuildEnvironment;
 import org.gradle.tooling.internal.consumer.converters.GradleProjectConverter;
+import org.gradle.tooling.internal.consumer.converters.PropertyHandlerFactory;
 import org.gradle.tooling.internal.consumer.parameters.ConsumerOperationParameters;
 import org.gradle.tooling.internal.consumer.versioning.ModelMapping;
 import org.gradle.tooling.internal.consumer.versioning.VersionDetails;
@@ -38,11 +41,13 @@ import org.gradle.util.GradleVersion;
  * An adapter that wraps a {@link ConnectionVersion4} based provider.
  */
 public class ConnectionVersion4BackedConsumerConnection extends AbstractPre12ConsumerConnection {
-    private final ModelMapping modelMapping;
+    private final ModelProducer modelProducer;
 
     public ConnectionVersion4BackedConsumerConnection(ConnectionVersion4 delegate, ModelMapping modelMapping, ProtocolToModelAdapter adapter) {
         super(delegate, getMetaData(delegate), adapter);
-        this.modelMapping = modelMapping;
+        ModelProducer consumerConnectionBackedModelProducer = new ConnectionVersion4BackedModelProducer(adapter, getVersionDetails(), modelMapping, delegate);
+        ModelProducer gradleProjectAdapterProducer = new GradleProjectAdapterProducer(adapter, getVersionDetails(), modelMapping, consumerConnectionBackedModelProducer);
+        modelProducer = new GradleBuildAdapterProducer(adapter, getVersionDetails(), modelMapping, gradleProjectAdapterProducer);
     }
 
     private static VersionDetails getMetaData(final ConnectionVersion4 delegate) {
@@ -70,25 +75,8 @@ public class ConnectionVersion4BackedConsumerConnection extends AbstractPre12Con
     }
 
     @Override
-    protected Object doGetModel(Class<?> modelType, ConsumerOperationParameters operationParameters) {
-        VersionDetails versionDetails = getVersionDetails();
-        if (modelType == BuildEnvironment.class && !versionDetails.isModelSupported(BuildEnvironment.class)) {
-            //early versions of provider do not support BuildEnvironment model
-            //since we know the gradle version at least we can give back some result
-            return new VersionOnlyBuildEnvironment(versionDetails.getVersion());
-        }
-        if (modelType == GradleProject.class && !versionDetails.isModelSupported(GradleProject.class)) {
-            //we broke compatibility around M9 wrt getting the tasks of a project (issue GRADLE-1875)
-            //this patch enables getting gradle tasks for target gradle version pre M5
-            EclipseProjectVersion3 project = (EclipseProjectVersion3) getDelegate().getModel(EclipseProjectVersion3.class, operationParameters);
-            return new GradleProjectConverter().convert(project);
-        }
-        if (!versionDetails.isModelSupported(modelType)) {
-            //don't bother asking the provider for this model
-            throw Exceptions.unknownModel(modelType, versionDetails.getVersion());
-        }
-        Class<? extends ProjectVersion3> protocolType = modelMapping.getProtocolType(modelType).asSubclass(ProjectVersion3.class);
-        return getDelegate().getModel(protocolType, operationParameters);
+    protected <T> T doGetModel(Class<T> modelType, ConsumerOperationParameters operationParameters) {
+        return modelProducer.produceModel(modelType, operationParameters);
     }
 
     private static class R10M3VersionDetails extends VersionDetails {
@@ -98,7 +86,7 @@ public class ConnectionVersion4BackedConsumerConnection extends AbstractPre12Con
 
         @Override
         public boolean isModelSupported(Class<?> modelType) {
-            return modelType.equals(HierarchicalEclipseProject.class) || modelType.equals(EclipseProject.class) || modelType.equals(Void.class);
+            return modelType.equals(HierarchicalEclipseProject.class) || modelType.equals(EclipseProjectVersion3.class) || modelType.equals(EclipseProject.class) || modelType.equals(Void.class);
         }
     }
 
@@ -120,6 +108,52 @@ public class ConnectionVersion4BackedConsumerConnection extends AbstractPre12Con
                     || modelType.equals(BasicIdeaProject.class)
                     || modelType.equals(GradleProject.class)
                     || modelType.equals(Void.class);
+        }
+    }
+
+    private class ConnectionVersion4BackedModelProducer extends AbstractModelProducer {
+        private final ConnectionVersion4 delegate;
+        private final Action<SourceObjectMapping> mapper;
+
+        public ConnectionVersion4BackedModelProducer(ProtocolToModelAdapter adapter, VersionDetails versionDetails, ModelMapping modelMapping, ConnectionVersion4 delegate) {
+            super(adapter, versionDetails, modelMapping);
+            this.delegate = delegate;
+            mapper = new PropertyHandlerFactory().forVersion(versionDetails);
+        }
+
+        public <T> T produceModel(Class<T> modelType, ConsumerOperationParameters operationParameters) {
+            if (modelType == BuildEnvironment.class && !versionDetails.isModelSupported(BuildEnvironment.class)) {
+                //early versions of provider do not support BuildEnvironment model
+                //since we know the gradle version at least we can give back some result
+                return adapter.adapt(modelType, new VersionOnlyBuildEnvironment(versionDetails.getVersion()), mapper);
+            }
+            if (!versionDetails.isModelSupported(modelType)) {
+                //don't bother asking the provider for this model
+                throw Exceptions.unsupportedModel(modelType, versionDetails.getVersion());
+            }
+            Class<? extends ProjectVersion3> protocolType = modelMapping.getProtocolType(modelType).asSubclass(ProjectVersion3.class);
+            final ProjectVersion3 model = delegate.getModel(protocolType, operationParameters);
+            return adapter.adapt(modelType, model, mapper);
+        }
+    }
+
+    private class GradleProjectAdapterProducer extends AbstractModelProducer {
+        private final ModelProducer delegate;
+
+        public GradleProjectAdapterProducer(ProtocolToModelAdapter adapter, VersionDetails versionDetails, ModelMapping modelMapping, ModelProducer delegate) {
+            super(adapter, versionDetails, modelMapping);
+            this.delegate = delegate;
+        }
+
+        public <T> T produceModel(Class<T> modelType, ConsumerOperationParameters operationParameters) {
+            final Action<SourceObjectMapping> mapper = new PropertyHandlerFactory().forVersion(versionDetails);
+            if (modelType == GradleProject.class && !versionDetails.isModelSupported(GradleProject.class)) {
+                //we broke compatibility around M9 wrt getting the tasks of a project (issue GRADLE-1875)
+                //this patch enables getting gradle tasks for target gradle version pre M5
+                EclipseProjectVersion3 project = delegate.produceModel(EclipseProjectVersion3.class, operationParameters);
+                return adapter.adapt(modelType, new GradleProjectConverter().convert(project), mapper);
+            }
+            return delegate.produceModel(modelType, operationParameters);
         }
     }
 }

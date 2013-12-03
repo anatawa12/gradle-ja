@@ -16,27 +16,29 @@
 
 package org.gradle.api.internal.externalresource.ivy;
 
-import org.gradle.api.artifacts.ArtifactIdentifier;
 import org.gradle.api.artifacts.ModuleVersionIdentifier;
-import org.gradle.api.internal.artifacts.DefaultArtifactIdentifier;
 import org.gradle.api.internal.artifacts.ModuleVersionIdentifierSerializer;
 import org.gradle.api.internal.artifacts.ivyservice.CacheLockingManager;
+import org.gradle.api.internal.artifacts.metadata.DefaultModuleVersionArtifactIdentifier;
+import org.gradle.api.internal.artifacts.metadata.IvyArtifactName;
 import org.gradle.api.internal.externalresource.cached.CachedArtifact;
 import org.gradle.api.internal.externalresource.cached.CachedArtifactIndex;
 import org.gradle.api.internal.externalresource.cached.DefaultCachedArtifact;
-import org.gradle.internal.TimeProvider;
-import org.gradle.messaging.serialize.DataStreamBackedSerializer;
+import org.gradle.messaging.serialize.Decoder;
+import org.gradle.messaging.serialize.Encoder;
+import org.gradle.messaging.serialize.Serializer;
+import org.gradle.util.BuildCommencedTimeProvider;
 
-import java.io.DataInput;
-import java.io.DataOutput;
 import java.io.File;
-import java.io.IOException;
 import java.math.BigInteger;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
 
 public class ArtifactAtRepositoryCachedArtifactIndex extends AbstractCachedIndex<ArtifactAtRepositoryKey, CachedArtifact> implements CachedArtifactIndex {
-    private final TimeProvider timeProvider;
+    private final BuildCommencedTimeProvider timeProvider;
 
-    public ArtifactAtRepositoryCachedArtifactIndex(File persistentCacheFile, TimeProvider timeProvider, CacheLockingManager cacheLockingManager) {
+    public ArtifactAtRepositoryCachedArtifactIndex(String persistentCacheFile, BuildCommencedTimeProvider timeProvider, CacheLockingManager cacheLockingManager) {
         super(persistentCacheFile, new ArtifactAtRepositoryKeySerializer(), new CachedArtifactSerializer(), cacheLockingManager);
         this.timeProvider = timeProvider;
     }
@@ -59,75 +61,68 @@ public class ArtifactAtRepositoryCachedArtifactIndex extends AbstractCachedIndex
         return new DefaultCachedArtifact(timeProvider.getCurrentTime(), descriptorHash);
     }
 
-    private static class ArtifactAtRepositoryKeySerializer extends DataStreamBackedSerializer<ArtifactAtRepositoryKey> {
+    private static class ArtifactAtRepositoryKeySerializer implements Serializer<ArtifactAtRepositoryKey> {
         private final ModuleVersionIdentifierSerializer modIdSerializer = new ModuleVersionIdentifierSerializer();
 
-        @Override
-        public void write(DataOutput dataOutput, ArtifactAtRepositoryKey value) throws IOException {
-            dataOutput.writeUTF(value.getRepositoryId());
-            ArtifactIdentifier artifact = value.getArtifactId();
-            modIdSerializer.write(dataOutput, artifact.getModuleVersionIdentifier());
-            dataOutput.writeUTF(artifact.getName());
-            writeNullable(dataOutput, artifact.getExtension());
-            writeNullable(dataOutput, artifact.getClassifier());
-            writeNullable(dataOutput, artifact.getType());
-        }
-
-        @Override
-        public ArtifactAtRepositoryKey read(DataInput dataInput) throws IOException {
-            String repositoryId = dataInput.readUTF();
-            ModuleVersionIdentifier moduleVersionIdentifier = modIdSerializer.read(dataInput);
-            String artifactName = dataInput.readUTF();
-            String extension = readNullable(dataInput);
-            String classifier = readNullable(dataInput);
-            String type = readNullable(dataInput);
-            return new ArtifactAtRepositoryKey(repositoryId, new DefaultArtifactIdentifier(moduleVersionIdentifier, artifactName, type, extension, classifier));
-        }
-
-        String readNullable(DataInput dataInput) throws IOException {
-            if (dataInput.readBoolean()) {
-                return dataInput.readUTF();
-            } else {
-                return null;
+        public void write(Encoder encoder, ArtifactAtRepositoryKey value) throws Exception {
+            encoder.writeString(value.getRepositoryId());
+            DefaultModuleVersionArtifactIdentifier artifact = (DefaultModuleVersionArtifactIdentifier) value.getArtifactId();
+            modIdSerializer.write(encoder, artifact.getModuleVersionIdentifier());
+            IvyArtifactName ivyArtifactName = artifact.getName();
+            encoder.writeString(ivyArtifactName.getName());
+            encoder.writeString(ivyArtifactName.getType());
+            encoder.writeNullableString(ivyArtifactName.getExtension());
+            Map<String, String> attributes = ivyArtifactName.getAttributes();
+            encoder.writeSmallInt(attributes.size());
+            for (Map.Entry<String, String> entry : attributes.entrySet()) {
+                encoder.writeString(entry.getKey());
+                encoder.writeString(entry.getValue());
             }
         }
 
-        void writeNullable(DataOutput dataOutput, String value) throws IOException {
-            if (value == null) {
-                dataOutput.writeBoolean(false);
+        public ArtifactAtRepositoryKey read(Decoder decoder) throws Exception {
+            String repositoryId = decoder.readString();
+            ModuleVersionIdentifier moduleVersionIdentifier = modIdSerializer.read(decoder);
+            String artifactName = decoder.readString();
+            String type = decoder.readString();
+            String extension = decoder.readNullableString();
+            int attrCount = decoder.readSmallInt();
+            Map<String, String> attributes;
+            if (attrCount == 0) {
+                attributes = Collections.emptyMap();
             } else {
-                dataOutput.writeBoolean(true);
-                dataOutput.writeUTF(value);
+                attributes = new HashMap<String, String>(attrCount);
+                for (int i = 0; i < attrCount; i++) {
+                    String key = decoder.readString();
+                    String value = decoder.readString();
+                    attributes.put(key, value);
+                }
             }
+            return new ArtifactAtRepositoryKey(repositoryId, new DefaultModuleVersionArtifactIdentifier(moduleVersionIdentifier, artifactName, type, extension, attributes));
         }
     }
 
-    private static class CachedArtifactSerializer extends DataStreamBackedSerializer<CachedArtifact> {
-        @Override
-        public void write(DataOutput dataOutput, CachedArtifact value) throws IOException {
-            dataOutput.writeBoolean(value.isMissing());
+    private static class CachedArtifactSerializer implements Serializer<CachedArtifact> {
+        public void write(Encoder encoder, CachedArtifact value) throws Exception {
+            encoder.writeBoolean(value.isMissing());
             if (!value.isMissing()) {
-                dataOutput.writeUTF(value.getCachedFile().getPath());
+                encoder.writeString(value.getCachedFile().getPath());
             }
-            dataOutput.writeLong(value.getCachedAt());
+            encoder.writeLong(value.getCachedAt());
             byte[] hash = value.getDescriptorHash().toByteArray();
-            dataOutput.writeInt(hash.length);
-            dataOutput.write(hash);
+            encoder.writeBinary(hash);
         }
 
-        @Override
-        public CachedArtifact read(DataInput dataInput) throws Exception {
-            boolean isMissing = dataInput.readBoolean();
+        public CachedArtifact read(Decoder decoder) throws Exception {
+            boolean isMissing = decoder.readBoolean();
             File file;
             if (!isMissing) {
-                file = new File(dataInput.readUTF());
+                file = new File(decoder.readString());
             } else {
                 file = null;
             }
-            long createTimestamp = dataInput.readLong();
-            int count = dataInput.readInt();
-            byte[] encodedHash = new byte[count];
-            dataInput.readFully(encodedHash);
+            long createTimestamp = decoder.readLong();
+            byte[] encodedHash = decoder.readBinary();
             BigInteger hash = new BigInteger(encodedHash);
             return new DefaultCachedArtifact(file, createTimestamp, hash);
         }

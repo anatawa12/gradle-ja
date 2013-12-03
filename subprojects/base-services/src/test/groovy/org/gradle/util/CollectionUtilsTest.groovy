@@ -168,33 +168,43 @@ class CollectionUtilsTest extends Specification {
         every([], spec { false })
     }
 
+    def "intersection"() {
+        expect:
+        intersection([collA, collB]) == collC
+        where:
+        collA              | collB            | collC
+        []                 | ["a", "b", "c"]  | []
+        ['a', 'b', 'c']    | ["a", "b", "c"]  | ['a', 'b', 'c']
+        ['a', 'b', 'c']    | ["b", "c"]       | ['b', 'c']
+    }
+
     def "flattenToList"() {
         given:
         def integers = [1, 2, 3]
 
         expect:
-        flattenToList([1, 2, 3] as Set) == [1, 2, 3]
-        flattenToList("asdfa") == ["asdfa"]
-        flattenToList(null) == [null]
-        flattenToList([null, [null, null]]) == [null, null, null]
-        flattenToList(integers) == integers
-        flattenToList([1, 2, 3] as Set) == [1, 2, 3]
-        flattenToList([] as Set) == []
+        flattenCollections([1, 2, 3] as Set) == [1, 2, 3]
+        flattenCollections("asdfa") == ["asdfa"]
+        flattenCollections(null) == [null]
+        flattenCollections([null, [null, null]]) == [null, null, null]
+        flattenCollections(integers) == integers
+        flattenCollections([1, 2, 3] as Set) == [1, 2, 3]
+        flattenCollections([] as Set) == []
 
         when:
-        flattenToList(Map, "foo")
+        flattenCollections(Map, "foo")
 
         then:
         thrown(ClassCastException)
 
         when:
-        flattenToList(Map, [[a: 1], "foo"])
+        flattenCollections(Map, [[a: 1], "foo"])
 
         then:
         thrown(ClassCastException)
 
         and:
-        flattenToList(Number, 1, [2, 3]) == [1, 2, 3]
+        flattenCollections(Number, 1, [2, 3]) == [1, 2, 3]
     }
 
     def "joining"() {
@@ -273,9 +283,9 @@ class CollectionUtilsTest extends Specification {
         toSet([]).empty
     }
 
-    def "sorting"() {
+    def "sorting with comparator"() {
         given:
-        def naturalComparator = { a, b -> a <=> b } as Comparator
+        def naturalComparator = { a, b -> a<=>b } as Comparator
 
         expect:
         def l = [1, 2, 3]
@@ -288,16 +298,25 @@ class CollectionUtilsTest extends Specification {
         sort([] as Set, naturalComparator) == []
     }
 
-    def "scoring"() {
+    def "sorting"() {
         expect:
-        score([1,2,3], transformer { it.toString() }) == [
-                new ScoredItem(1, "1"),
-                new ScoredItem(2, "2"),
-                new ScoredItem(3, "3")
-        ]
+        def l = [1, 2, 3]
+        !sort(l).is(l)
 
-        score([], transformer {}) == []
+        and:
+        sort([2, 1, 3]) == [1, 2, 3]
+        sort([2, 1, 3] as Set) == [1, 2, 3]
+        sort([]) == []
+        sort([] as Set) == []
     }
+
+    def "without duplicates"(){
+        given:
+        def l = [1, 2, 2, 3, 3]
+        expect:
+        withoutDuplicates(l) == [1, 2, 3]
+    }
+
 
     Spec<?> spec(Closure c) {
         Specs.convertClosureToSpec(c)

@@ -17,6 +17,7 @@ package org.gradle.api.internal;
 
 import groovy.lang.Closure;
 import groovy.lang.GroovyObject;
+import groovy.lang.MissingMethodException;
 import org.gradle.api.Action;
 import org.gradle.api.GradleException;
 import org.gradle.api.JavaVersion;
@@ -35,8 +36,8 @@ import java.lang.reflect.*;
 import java.util.*;
 import java.util.concurrent.Callable;
 
-import static org.gradle.util.HelperUtil.TEST_CLOSURE;
-import static org.gradle.util.HelperUtil.call;
+import static org.gradle.util.TestUtil.TEST_CLOSURE;
+import static org.gradle.util.TestUtil.call;
 import static org.gradle.util.Matchers.isEmpty;
 import static org.gradle.util.WrapUtil.toList;
 import static org.hamcrest.Matchers.*;
@@ -645,6 +646,21 @@ public class AsmBackedClassGeneratorTest {
     }
 
     @Test
+    public void addsInsteadOfOverridesSetValueMethodIfOnlyMultiArgMethods() throws Exception {
+        BeanWithMultiArgDslMethods bean = generator.generate(BeanWithMultiArgDslMethods.class).newInstance();
+        // this method should have been added to the class
+        call("{ it.prop 'value'}", bean);
+        assertThat(bean.getProp(), equalTo("value"));
+    }
+
+    @Test
+    public void doesNotOverrideSetValueMethodForPropertyThatIsNotConventionMappingAware() throws Exception {
+        BeanWithMultiArgDslMethodsAndNoConventionMapping bean = generator.generate(BeanWithMultiArgDslMethodsAndNoConventionMapping.class).newInstance();
+        call("{ it.prop 'value'}", bean);
+        assertThat(bean.getProp(), equalTo("(value)"));
+    }
+
+    @Test
     public void mixesInClosureOverloadForActionMethod() throws Exception {
         Bean bean = generator.generate(Bean.class).newInstance();
         bean.prop = "value";
@@ -785,6 +801,53 @@ public class AsmBackedClassGeneratorTest {
 
         public void doStuff(Closure cl) {
             cl.call(String.format("[%s]", getProp()));
+        }
+    }
+
+    public static class BeanWithMultiArgDslMethods extends Bean {
+        private String prop;
+
+        public String getProp() {
+            return prop;
+        }
+
+        public void setProp(String prop) {
+            this.prop = prop;
+        }
+
+        public BeanWithMultiArgDslMethods prop(String part1, String part2) {
+            this.prop = String.format("<%s%s>", part1, part2);
+            return this;
+        }
+
+        public BeanWithMultiArgDslMethods prop(String part1, String part2, String part3) {
+            this.prop = String.format("[%s%s%s]", part1, part2, part3);
+            return this;
+        }
+    }
+
+    @NoConventionMapping
+    public static class BeanWithMultiArgDslMethodsAndNoConventionMapping extends Bean {
+        private String prop;
+
+        public String getProp() {
+            return prop;
+        }
+
+        public void setProp(String prop) {
+            this.prop = prop;
+        }
+
+        public void prop(String value) {
+            this.prop = String.format("(%s)", value);
+        }
+
+        public void prop(String part1, String part2) {
+            this.prop = String.format("<%s%s>", part1, part2);
+        }
+
+        public void prop(String part1, String part2, String part3) {
+            this.prop = String.format("[%s%s%s]", part1, part2, part3);
         }
     }
 

@@ -23,9 +23,4 @@ public interface IvyAwareModuleVersionRepository extends ModuleVersionRepository
     void setSettings(IvySettings settings);
 
     void setResolveData(ResolveData resolveData);
-
-    // TODO - move this
-    boolean isDynamicResolveMode();
-
-    boolean isLocal();
 }

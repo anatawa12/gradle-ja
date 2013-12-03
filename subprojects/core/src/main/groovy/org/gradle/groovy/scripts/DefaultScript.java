@@ -17,6 +17,7 @@
 package org.gradle.groovy.scripts;
 
 import groovy.lang.Closure;
+import org.gradle.api.Action;
 import org.gradle.api.PathValidation;
 import org.gradle.api.Script;
 import org.gradle.api.file.ConfigurableFileCollection;
@@ -24,8 +25,10 @@ import org.gradle.api.file.ConfigurableFileTree;
 import org.gradle.api.file.CopySpec;
 import org.gradle.api.file.FileTree;
 import org.gradle.api.initialization.dsl.ScriptHandler;
+import org.gradle.api.internal.ClosureBackedAction;
 import org.gradle.api.internal.ProcessOperations;
 import org.gradle.api.internal.file.*;
+import org.gradle.api.internal.file.copy.CopySpecInternal;
 import org.gradle.api.internal.plugins.DefaultObjectConfigurationAction;
 import org.gradle.api.logging.Logger;
 import org.gradle.api.logging.Logging;
@@ -36,6 +39,7 @@ import org.gradle.configuration.ScriptPluginFactory;
 import org.gradle.internal.nativeplatform.filesystem.FileSystems;
 import org.gradle.internal.reflect.Instantiator;
 import org.gradle.internal.service.ServiceRegistry;
+import org.gradle.plugin.PluginHandler;
 import org.gradle.process.ExecResult;
 import org.gradle.util.ConfigureUtil;
 import org.gradle.util.DeprecationLogger;
@@ -51,7 +55,8 @@ public abstract class DefaultScript extends BasicScript {
     private ProcessOperations processOperations;
     private LoggingManager loggingManager;
 
-    public void init(Object target, ServiceRegistry services) {
+
+    public void init(final Object target, ServiceRegistry services) {
         super.init(target, services);
         this.services = services;
         loggingManager = services.get(LoggingManager.class);
@@ -155,8 +160,16 @@ public abstract class DefaultScript extends BasicScript {
         return fileOperations.copy(closure);
     }
 
+    public WorkResult sync(Action<? super CopySpec> action) {
+        return fileOperations.sync(action);
+    }
+
     public CopySpec copySpec(Closure closure) {
         return fileOperations.copySpec(closure);
+    }
+
+    public CopySpecInternal copySpec(Action<? super CopySpec> action) {
+        return fileOperations.copySpec(action);
     }
 
     public File mkdir(Object path) {
@@ -183,7 +196,13 @@ public abstract class DefaultScript extends BasicScript {
         return LOGGER;
     }
 
+    public void plugins(Closure closure) {
+        new ClosureBackedAction<PluginHandler>(closure, Closure.DELEGATE_ONLY).execute(services.get(PluginHandler.class));
+    }
+
     public String toString() {
         return "script";
     }
+
+
 }

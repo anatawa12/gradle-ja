@@ -18,12 +18,13 @@ package org.gradle.api.internal.file;
 import org.gradle.api.PathValidation;
 import org.gradle.api.file.FileCollection;
 import org.gradle.api.file.FileTree;
-import org.gradle.api.internal.notations.api.NotationParser;
+import org.gradle.internal.typeconversion.NotationParser;
 import org.gradle.api.resources.ReadableResource;
 import org.gradle.internal.Factory;
 
 import java.io.File;
 import java.net.URI;
+import java.util.List;
 
 public interface FileResolver {
     File resolve(Object path);
@@ -38,6 +39,8 @@ public interface FileResolver {
 
     FileTree resolveFilesAsTree(Object... paths);
 
+    FileTree compositeFileTree(List<FileTree> fileTrees);
+
     URI resolveUri(Object path);
 
     String resolveAsRelativePath(Object path);
@@ -48,5 +51,10 @@ public interface FileResolver {
      */
     FileResolver withBaseDir(Object path);
 
-    NotationParser<File> asNotationParser();
+    /**
+     * Creates a new resolver with no base directory.
+     */
+    FileResolver withNoBaseDir();
+
+    NotationParser<Object, File> asNotationParser();
 }

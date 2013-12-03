@@ -16,30 +16,27 @@
 package org.gradle.api.internal.artifacts.ivyservice.projectmodule
 
 import org.apache.ivy.core.module.descriptor.DependencyDescriptor
-import org.apache.ivy.core.module.descriptor.ModuleDescriptor
-import org.gradle.api.artifacts.ModuleVersionIdentifier
-import org.gradle.api.internal.artifacts.ModuleVersionPublishMetaData
 import org.gradle.api.internal.artifacts.ivyservice.BuildableModuleVersionResolveResult
 import org.gradle.api.internal.artifacts.ivyservice.DependencyToModuleVersionResolver
-import org.gradle.api.internal.artifacts.ivyservice.ModuleDescriptorConverter
-import org.gradle.api.internal.artifacts.ivyservice.ivyresolve.DependencyMetaData
+import org.gradle.api.internal.artifacts.ivyservice.LocalComponentFactory
 import org.gradle.api.internal.artifacts.ivyservice.moduleconverter.dependencies.ProjectDependencyDescriptor
+import org.gradle.api.internal.artifacts.metadata.DependencyMetaData
+import org.gradle.api.internal.artifacts.metadata.ModuleVersionMetaData
+import org.gradle.api.internal.artifacts.metadata.MutableLocalComponentMetaData
 import org.gradle.api.internal.project.ProjectInternal
 import spock.lang.Specification
 
 class ProjectDependencyResolverTest extends Specification {
     final ProjectModuleRegistry registry = Mock()
     final DependencyToModuleVersionResolver target = Mock()
-    final ModuleDescriptorConverter converter = Mock()
+    final LocalComponentFactory converter = Mock()
     final ProjectDependencyResolver resolver = new ProjectDependencyResolver(registry, target, converter)
 
     def "resolves project dependency"() {
         setup:
-        def ModuleVersionIdentifier moduleId = Stub(ModuleVersionIdentifier)
-        def moduleDescriptor = Stub(ModuleDescriptor)
-        def publishMetaData = Stub(ModuleVersionPublishMetaData) {
-            getId() >> moduleId
-            getModuleDescriptor() >> moduleDescriptor
+        def resolveMetaData = Stub(ModuleVersionMetaData)
+        def componentMetaData = Stub(MutableLocalComponentMetaData) {
+            toResolveMetaData() >> resolveMetaData
         }
         def result = Mock(BuildableModuleVersionResolveResult)
         def dependencyProject = Stub(ProjectInternal)
@@ -54,8 +51,8 @@ class ProjectDependencyResolverTest extends Specification {
         resolver.resolve(dependencyMetaData, result)
 
         then:
-        1 * registry.findProject(dependencyDescriptor) >> publishMetaData
-        1 * result.resolved(moduleId, moduleDescriptor, _)
+        1 * registry.findProject(dependencyDescriptor) >> componentMetaData
+        1 * result.resolved(resolveMetaData, _)
         0 * result._
     }
 

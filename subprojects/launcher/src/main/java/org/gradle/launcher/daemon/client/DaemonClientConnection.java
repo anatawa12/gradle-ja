@@ -15,7 +15,7 @@
  */
 package org.gradle.launcher.daemon.client;
 
-import org.gradle.api.GradleException;
+import org.gradle.api.Nullable;
 import org.gradle.api.logging.Logger;
 import org.gradle.api.logging.Logging;
 import org.gradle.messaging.remote.internal.Connection;
@@ -24,15 +24,16 @@ import org.gradle.messaging.remote.internal.Connection;
  * A simple wrapper for the connection to a daemon plus its password.
  */
 public class DaemonClientConnection implements Connection<Object> {
-    final Connection<Object> connection;
-    private final String uid;
-    final Runnable onFailure;
     private final static Logger LOG = Logging.getLogger(DaemonClientConnection.class);
+    private final Connection<Object> connection;
+    private final String uid;
+    private final StaleAddressDetector staleAddressDetector;
+    private boolean hasReceived;
 
-    public DaemonClientConnection(Connection<Object> connection, String uid, Runnable onFailure) {
+    public DaemonClientConnection(Connection<Object> connection, String uid, StaleAddressDetector staleAddressDetector) {
         this.connection = connection;
         this.uid = uid;
-        this.onFailure = onFailure;
+        this.staleAddressDetector = staleAddressDetector;
     }
 
     public void requestStop() {
@@ -44,30 +45,43 @@ public class DaemonClientConnection implements Connection<Object> {
         return uid;
     }
 
-    public void dispatch(Object message) {
+    public void dispatch(Object message) throws DaemonConnectionException {
         LOG.debug("thread {}: dispatching {}", Thread.currentThread().getId(), message.getClass());
         try {
             connection.dispatch(message);
         } catch (Exception e) {
             LOG.debug("Problem dispatching message to the daemon. Performing 'on failure' operation...");
-            onFailure.run();
-            throw new GradleException("Unable to dispatch the message to the daemon.", e);
+            if (!hasReceived && staleAddressDetector.maybeStaleAddress(e)) {
+                throw new StaleDaemonAddressException("Could not dispatch a message to the daemon.", e);
+            }
+            throw new DaemonConnectionException("Could not dispatch a message to the daemon.", e);
         }
     }
 
-    public Object receive() {
+    @Nullable
+    public Object receive() throws DaemonConnectionException {
         try {
-            Object result = connection.receive();
-            return result;
+            return connection.receive();
         } catch (Exception e) {
             LOG.debug("Problem receiving message to the daemon. Performing 'on failure' operation...");
-            onFailure.run();
-            throw new GradleException("Unable to receive a message from the daemon.", e);
+            if (!hasReceived && staleAddressDetector.maybeStaleAddress(e)) {
+                throw new StaleDaemonAddressException("Could not receive a message from the daemon.", e);
+            }
+            throw new DaemonConnectionException("Could not receive a message from the daemon.", e);
+        } finally {
+            hasReceived = true;
         }
     }
 
     public void stop() {
         LOG.debug("thread {}: connection stop", Thread.currentThread().getId());
         connection.stop();
+    }
+
+    interface StaleAddressDetector {
+        /**
+         * @return true if the failure should be considered due to a stale address.
+         */
+        boolean maybeStaleAddress(Exception failure);
     }
 }

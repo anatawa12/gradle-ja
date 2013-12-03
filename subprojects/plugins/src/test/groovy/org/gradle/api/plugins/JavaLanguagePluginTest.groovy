@@ -20,12 +20,12 @@ import org.gradle.language.java.JavaSourceSet
 import org.gradle.api.tasks.compile.JavaCompile
 import org.gradle.language.jvm.ClassDirectoryBinary
 import org.gradle.language.jvm.plugins.JvmLanguagePlugin
-import org.gradle.util.HelperUtil
+import org.gradle.util.TestUtil
 
 import spock.lang.Specification
 
 class JavaLanguagePluginTest extends Specification {
-    Project project = HelperUtil.createRootProject()
+    Project project = TestUtil.createRootProject()
 
     def setup() {
         project.plugins.apply(JavaLanguagePlugin)
@@ -45,6 +45,6 @@ class JavaLanguagePluginTest extends Specification {
         then:
         def task = project.tasks.findByName("compileIntegTestJava")
         task instanceof JavaCompile
-        task.description == "Compiles source set 'model:java'."
+        task.description == "Compiles Java source 'model:java'."
     }
 }

@@ -23,6 +23,7 @@ import org.gradle.api.internal.DomainObjectContext;
 import org.gradle.api.internal.DynamicObject;
 import org.gradle.api.internal.GradleInternal;
 import org.gradle.api.internal.ProcessOperations;
+import org.gradle.api.internal.artifacts.ModuleInternal;
 import org.gradle.api.internal.artifacts.configurations.ConfigurationContainerInternal;
 import org.gradle.api.internal.artifacts.configurations.DependencyMetaDataProvider;
 import org.gradle.api.internal.file.FileOperations;
@@ -32,7 +33,9 @@ import org.gradle.api.internal.tasks.TaskContainerInternal;
 import org.gradle.configuration.project.ProjectConfigurationActionContainer;
 import org.gradle.groovy.scripts.ScriptAware;
 import org.gradle.groovy.scripts.ScriptSource;
+import org.gradle.internal.service.scopes.ServiceRegistryFactory;
 import org.gradle.logging.StandardOutputCapture;
+import org.gradle.model.internal.ModelRegistry;
 
 public interface ProjectInternal extends Project, ProjectIdentifier, ScriptAware, FileOperations, ProcessOperations, DomainObjectContext, DependencyMetaDataProvider {
     ProjectInternal getParent();
@@ -74,4 +77,8 @@ public interface ProjectInternal extends Project, ProjectIdentifier, ScriptAware
     ExtensionContainerInternal getExtensions();
 
     ProjectConfigurationActionContainer getConfigurationActions();
+
+    ModelRegistry getModelRegistry();
+
+    ModuleInternal getModuleInternal();
 }

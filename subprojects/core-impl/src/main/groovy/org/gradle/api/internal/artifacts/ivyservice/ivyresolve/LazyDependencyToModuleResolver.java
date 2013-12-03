@@ -15,16 +15,18 @@
  */
 package org.gradle.api.internal.artifacts.ivyservice.ivyresolve;
 
-import org.apache.ivy.core.module.descriptor.Artifact;
 import org.apache.ivy.core.module.descriptor.Configuration;
 import org.apache.ivy.core.module.descriptor.ModuleDescriptor;
-import org.apache.ivy.plugins.version.VersionMatcher;
 import org.gradle.api.artifacts.ModuleVersionIdentifier;
 import org.gradle.api.artifacts.ModuleVersionSelector;
-import org.gradle.api.artifacts.result.ModuleVersionSelectionReason;
+import org.gradle.api.artifacts.result.ComponentSelectionReason;
 import org.gradle.api.internal.artifacts.DefaultModuleVersionIdentifier;
 import org.gradle.api.internal.artifacts.ivyservice.*;
+import org.gradle.api.internal.artifacts.ivyservice.ivyresolve.strategy.VersionMatcher;
 import org.gradle.api.internal.artifacts.ivyservice.resolveengine.result.VersionSelectionReasons;
+import org.gradle.api.internal.artifacts.metadata.DependencyMetaData;
+import org.gradle.api.internal.artifacts.metadata.ModuleVersionArtifactMetaData;
+import org.gradle.api.internal.artifacts.metadata.ModuleVersionMetaData;
 
 /**
  * A {@link org.gradle.api.internal.artifacts.ivyservice.DependencyToModuleVersionIdResolver} implementation which returns lazy resolvers that don't actually retrieve module descriptors until
@@ -40,7 +42,7 @@ public class LazyDependencyToModuleResolver implements DependencyToModuleVersion
     }
 
     public ModuleVersionIdResolveResult resolve(DependencyMetaData dependency) {
-        if (versionMatcher.isDynamic(dependency.getDescriptor().getDependencyRevisionId())) {
+        if (versionMatcher.isDynamic(dependency.getRequested().getVersion())) {
             DynamicVersionResolveResult result = new DynamicVersionResolveResult(dependency);
             result.resolve();
             return result;
@@ -55,11 +57,11 @@ public class LazyDependencyToModuleResolver implements DependencyToModuleVersion
             this.resolver = resolver;
         }
 
-        public void resolve(Artifact artifact, BuildableArtifactResolveResult result) {
+        public void resolve(ModuleVersionArtifactMetaData artifact, BuildableArtifactResolveResult result) {
             try {
                 resolver.resolve(artifact, result);
             } catch (Throwable t) {
-                result.failed(new ArtifactResolveException(artifact, t));
+                result.failed(new ArtifactResolveException(artifact.getId(), t));
             }
         }
     }
@@ -101,7 +103,7 @@ public class LazyDependencyToModuleResolver implements DependencyToModuleVersion
             return resolveResult;
         }
 
-        public ModuleVersionSelectionReason getSelectionReason() {
+        public ComponentSelectionReason getSelectionReason() {
             return VersionSelectionReasons.REQUESTED;
         }
 
@@ -132,7 +134,7 @@ public class LazyDependencyToModuleResolver implements DependencyToModuleVersion
             return id;
         }
 
-        public ModuleVersionSelectionReason getSelectionReason() {
+        public ComponentSelectionReason getSelectionReason() {
             return VersionSelectionReasons.REQUESTED;
         }
 

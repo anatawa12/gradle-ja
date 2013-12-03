@@ -16,6 +16,8 @@
 
 package org.gradle.cache.internal;
 
+import org.gradle.messaging.remote.internal.inet.InetAddressFactory;
+
 import java.io.*;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
@@ -25,10 +27,13 @@ import java.net.SocketException;
 import static org.gradle.internal.UncheckedException.throwAsUncheckedException;
 
 public class FileLockCommunicator {
+    private static final byte PROTOCOL_VERSION = 1;
     private final DatagramSocket socket;
+    private final InetAddressFactory addressFactory;
     private boolean stopped;
 
-    public FileLockCommunicator() {
+    public FileLockCommunicator(InetAddressFactory addressFactory) {
+        this.addressFactory = addressFactory;
         try {
             socket = new DatagramSocket();
         } catch (SocketException e) {
@@ -36,24 +41,21 @@ public class FileLockCommunicator {
         }
     }
 
-    public static void pingOwner(int ownerPort, long lockId) {
-        DatagramSocket datagramSocket = null;
+    public void pingOwner(int ownerPort, long lockId, String displayName) {
         try {
-            datagramSocket = new DatagramSocket();
             byte[] bytesToSend = encode(lockId);
-            datagramSocket.send(new DatagramPacket(bytesToSend, bytesToSend.length, InetAddress.getLocalHost(), ownerPort));
-        } catch (IOException e) {
-            throw new RuntimeException("Problems pinging owner of lock '" + lockId + "' at port: " + ownerPort);
-        } finally {
-            if (datagramSocket != null) {
-                datagramSocket.close();
+            // Ping the owner via all available local addresses
+            for (InetAddress address : addressFactory.findLocalAddresses()) {
+                socket.send(new DatagramPacket(bytesToSend, bytesToSend.length, address, ownerPort));
             }
+        } catch (IOException e) {
+            throw new RuntimeException(String.format("Failed to ping owner of lock for %s (lock id: %s, port: %s)", displayName, lockId, ownerPort), e);
         }
     }
 
     public long receive() throws GracefullyStoppedException {
         try {
-            byte[] bytes = new byte[8];
+            byte[] bytes = new byte[9];
             DatagramPacket packet = new DatagramPacket(bytes, bytes.length);
             socket.receive(packet);
             return decode(bytes);
@@ -72,12 +74,20 @@ public class FileLockCommunicator {
 
     private static byte[] encode(long lockId) throws IOException {
         ByteArrayOutputStream packet = new ByteArrayOutputStream();
-        new DataOutputStream(packet).writeLong(lockId);
+        DataOutputStream dataOutput = new DataOutputStream(packet);
+        dataOutput.writeByte(PROTOCOL_VERSION);
+        dataOutput.writeLong(lockId);
+        dataOutput.flush();
         return packet.toByteArray();
     }
 
     private static long decode(byte[] bytes) throws IOException {
-        return new DataInputStream(new ByteArrayInputStream(bytes)).readLong();
+        DataInputStream dataInput = new DataInputStream(new ByteArrayInputStream(bytes));
+        byte version = dataInput.readByte();
+        if (version != PROTOCOL_VERSION) {
+            throw new IllegalArgumentException(String.format("Unexpected protocol version %s received in lock contention notification message", version));
+        }
+        return dataInput.readLong();
     }
 
     public int getPort() {

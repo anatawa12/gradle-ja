@@ -35,27 +35,16 @@ import org.gradle.tooling.model.internal.outcomes.ProjectOutcomes;
  * An adapter for a {@link BuildActionRunner} based provider.
  */
 public class BuildActionRunnerBackedConsumerConnection extends AbstractPost12ConsumerConnection {
-    private final BuildActionRunner buildActionRunner;
-    private final ModelMapping modelMapping;
-    private final ProtocolToModelAdapter adapter;
+    private final ModelProducer modelProducer;
 
     public BuildActionRunnerBackedConsumerConnection(ConnectionVersion4 delegate, ModelMapping modelMapping, ProtocolToModelAdapter adapter) {
         super(delegate, new R12VersionDetails(delegate.getMetaData().getVersion()));
-        this.modelMapping = modelMapping;
-        this.adapter = adapter;
-        buildActionRunner = (BuildActionRunner) delegate;
+        ModelProducer consumerConnectionBackedModelProducer = new BuildActionRunnerBackedModelProducer(adapter, getVersionDetails(), modelMapping,  (BuildActionRunner) delegate);
+        modelProducer = new GradleBuildAdapterProducer(adapter, getVersionDetails(), modelMapping, consumerConnectionBackedModelProducer);
     }
 
     public <T> T run(Class<T> type, ConsumerOperationParameters operationParameters) throws UnsupportedOperationException, IllegalStateException {
-        VersionDetails versionDetails = getVersionDetails();
-        if (!versionDetails.isModelSupported(type)) {
-            //don't bother asking the provider for this model
-            Exceptions.unknownModel(type, versionDetails.getVersion());
-        }
-
-        Class<?> protocolType = modelMapping.getProtocolType(type);
-        Object model = buildActionRunner.run(protocolType, operationParameters).getModel();
-        return adapter.adapt(type, model);
+        return modelProducer.produceModel(type, operationParameters);
     }
 
     private static class R12VersionDetails extends VersionDetails {
@@ -69,11 +58,6 @@ public class BuildActionRunnerBackedConsumerConnection extends AbstractPost12Con
         }
 
         @Override
-        public boolean supportsRunningTasksWhenBuildingModel() {
-            return true;
-        }
-
-        @Override
         public boolean isModelSupported(Class<?> modelType) {
             return modelType.equals(ProjectOutcomes.class)
                     || modelType.equals(HierarchicalEclipseProject.class)
@@ -83,6 +67,26 @@ public class BuildActionRunnerBackedConsumerConnection extends AbstractPost12Con
                     || modelType.equals(BuildEnvironment.class)
                     || modelType.equals(GradleProject.class)
                     || modelType.equals(Void.class);
+        }
+    }
+
+    private class BuildActionRunnerBackedModelProducer extends AbstractModelProducer {
+        private final BuildActionRunner buildActionRunner;
+
+        public BuildActionRunnerBackedModelProducer(ProtocolToModelAdapter adapter, VersionDetails versionDetails, ModelMapping modelMapping, BuildActionRunner buildActionRunner) {
+            super(adapter, versionDetails, modelMapping);
+            this.buildActionRunner = buildActionRunner;
+        }
+
+        public <T> T produceModel(Class<T> type, ConsumerOperationParameters operationParameters) {
+            if (!versionDetails.isModelSupported(type)) {
+                //don't bother asking the provider for this model
+                throw Exceptions.unsupportedModel(type, versionDetails.getVersion());
+
+            }
+            Class<?> protocolType = modelMapping.getProtocolType(type);
+            Object model = buildActionRunner.run(protocolType, operationParameters).getModel();
+            return adapter.adapt(type, model);
         }
     }
 }

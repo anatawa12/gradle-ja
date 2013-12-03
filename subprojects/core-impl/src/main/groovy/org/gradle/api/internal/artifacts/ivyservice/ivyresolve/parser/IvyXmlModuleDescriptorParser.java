@@ -17,30 +17,29 @@
 package org.gradle.api.internal.artifacts.ivyservice.ivyresolve.parser;
 
 import com.google.common.base.Joiner;
-import org.apache.ivy.core.IvyContext;
+import org.apache.ivy.core.IvyPatternHelper;
 import org.apache.ivy.core.NormalRelativeUrlResolver;
 import org.apache.ivy.core.RelativeUrlResolver;
 import org.apache.ivy.core.module.descriptor.*;
 import org.apache.ivy.core.module.id.ArtifactId;
 import org.apache.ivy.core.module.id.ModuleId;
 import org.apache.ivy.core.module.id.ModuleRevisionId;
-import org.apache.ivy.core.resolve.ResolveData;
-import org.apache.ivy.core.resolve.ResolveEngine;
-import org.apache.ivy.core.resolve.ResolveOptions;
-import org.apache.ivy.core.resolve.ResolvedModuleRevision;
 import org.apache.ivy.plugins.matcher.PatternMatcher;
-import org.apache.ivy.plugins.namespace.NameSpaceHelper;
 import org.apache.ivy.plugins.namespace.Namespace;
-import org.apache.ivy.plugins.parser.ParserSettings;
 import org.apache.ivy.plugins.parser.xml.XmlModuleDescriptorParser;
-import org.apache.ivy.plugins.resolver.DependencyResolver;
 import org.apache.ivy.util.XMLHelper;
 import org.apache.ivy.util.extendable.DefaultExtendableItem;
-import org.apache.ivy.util.extendable.ExtendableItemHelper;
 import org.gradle.api.Action;
+import org.gradle.api.Transformer;
+import org.gradle.api.internal.artifacts.ivyservice.ivyresolve.strategy.ResolverStrategy;
+import org.gradle.api.internal.artifacts.metadata.DefaultModuleVersionArtifactMetaData;
+import org.gradle.api.internal.artifacts.metadata.ModuleDescriptorAdapter;
+import org.gradle.api.internal.artifacts.metadata.ModuleVersionArtifactMetaData;
+import org.gradle.api.internal.artifacts.metadata.MutableModuleVersionMetaData;
 import org.gradle.api.internal.externalresource.ExternalResource;
 import org.gradle.api.internal.externalresource.LocallyAvailableExternalResource;
 import org.gradle.api.internal.externalresource.UrlExternalResource;
+import org.gradle.util.CollectionUtils;
 import org.gradle.util.DeprecationLogger;
 import org.gradle.util.TextUtil;
 import org.slf4j.Logger;
@@ -52,6 +51,7 @@ import org.xml.sax.SAXParseException;
 import org.xml.sax.helpers.DefaultHandler;
 
 import javax.xml.parsers.ParserConfigurationException;
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.MalformedURLException;
@@ -70,12 +70,30 @@ public class IvyXmlModuleDescriptorParser extends AbstractModuleDescriptorParser
     public static final String IVY_DATE_FORMAT_PATTERN = "yyyyMMddHHmmss";
 
     private static final Logger LOGGER = LoggerFactory.getLogger(IvyXmlModuleDescriptorParser.class);
+    private final ResolverStrategy resolverStrategy;
 
-    protected DefaultModuleDescriptor doParseDescriptor(ParserSettings ivySettings, LocallyAvailableExternalResource resource, boolean validate) throws IOException, ParseException {
-        Parser parser = new Parser(this, ivySettings, resource, resource.getLocalResource().getFile().toURI().toURL());
+    public IvyXmlModuleDescriptorParser(ResolverStrategy resolverStrategy) {
+        this.resolverStrategy = resolverStrategy;
+    }
+
+    protected MutableModuleVersionMetaData doParseDescriptor(DescriptorParseContext parseContext, LocallyAvailableExternalResource resource, boolean validate) throws IOException, ParseException {
+        Parser parser = createParser(parseContext, resource, populateProperties(), resolverStrategy);
+        return doParseDescriptorWithProvidedParser(parser, validate);
+    }
+
+    protected Parser createParser(DescriptorParseContext parseContext, LocallyAvailableExternalResource resource, Map<String, String> properties, ResolverStrategy resolverStrategy) throws MalformedURLException {
+        return new Parser(parseContext, resource, resource.getLocalResource().getFile().toURI().toURL(), properties, resolverStrategy);
+    }
+
+    private MutableModuleVersionMetaData doParseDescriptorWithProvidedParser(Parser parser, boolean validate) throws IOException, ParseException {
         parser.setValidate(validate);
         parser.parse();
-        return parser.getModuleDescriptor();
+        DefaultModuleDescriptor moduleDescriptor = parser.getModuleDescriptor();
+        postProcess(moduleDescriptor);
+        return new ModuleDescriptorAdapter(moduleDescriptor);
+    }
+
+    protected void postProcess(DefaultModuleDescriptor moduleDescriptor) {
     }
 
     @Override
@@ -83,8 +101,22 @@ public class IvyXmlModuleDescriptorParser extends AbstractModuleDescriptorParser
         return "Ivy file";
     }
 
-    public boolean accept(ExternalResource res) {
-        return true; // this the default parser, it thus accepts all resources
+    private Map<String, String> populateProperties() {
+        HashMap<String, String> properties = new HashMap<String, String>();
+        String baseDir = new File(".").getAbsolutePath();
+        properties.put("ivy.default.settings.dir", baseDir);
+        properties.put("ivy.basedir", baseDir);
+
+        Set<String> propertyNames = CollectionUtils.collect(System.getProperties().entrySet(), new Transformer<String, Map.Entry<Object, Object>>() {
+            public String transform(Map.Entry<Object, Object> entry) {
+                return entry.getKey().toString();
+            }
+        });
+
+        for (String property : propertyNames) {
+            properties.put(property, System.getProperty(property));
+        }
+        return properties;
     }
 
     protected abstract static class AbstractParser extends DefaultHandler {
@@ -104,17 +136,10 @@ public class IvyXmlModuleDescriptorParser extends AbstractModuleDescriptorParser
 
         private final DefaultModuleDescriptor md;
 
-        private final IvyXmlModuleDescriptorParser parser;
-
-        protected AbstractParser(IvyXmlModuleDescriptorParser parser, ExternalResource resource) {
-            this.parser = parser;
+        protected AbstractParser(ExternalResource resource) {
             this.res = resource; // used for log and date only
             md = new DefaultModuleDescriptor(XmlModuleDescriptorParser.getInstance(), null);
             md.setLastModified(res.getLastModified());
-        }
-
-        public IvyXmlModuleDescriptorParser getModuleDescriptorParser() {
-            return parser;
         }
 
         protected void checkErrors() throws ParseException {
@@ -417,7 +442,7 @@ public class IvyXmlModuleDescriptorParser extends AbstractModuleDescriptorParser
         private static final List ALLOWED_VERSIONS = Arrays.asList("1.0", "1.1", "1.2", "1.3", "1.4", "2.0", "2.1", "2.2");
 
         /* how and what do we have to parse */
-        private final ParserSettings parserSettings;
+        private final DescriptorParseContext parseContext;
         private final RelativeUrlResolver relativeUrlResolver = new NormalRelativeUrlResolver();
         private final URL descriptorURL;
         private boolean validate = true;
@@ -433,21 +458,33 @@ public class IvyXmlModuleDescriptorParser extends AbstractModuleDescriptorParser
         private StringBuffer buffer;
         private String descriptorVersion;
         private String[] publicationsDefaultConf;
+        final Map<String, String> properties;
+        final ResolverStrategy resolverStrategy;
 
-        public Parser(IvyXmlModuleDescriptorParser moduleDescriptorParser, ParserSettings ivySettings, ExternalResource res, URL descriptorURL) {
-            super(moduleDescriptorParser, res);
-            parserSettings = ivySettings;
+        public Parser(DescriptorParseContext parseContext, ExternalResource res, URL descriptorURL, Map<String, String> properties, ResolverStrategy resolverStrategy) {
+            super(res);
+            this.parseContext = parseContext;
             this.descriptorURL = descriptorURL;
+            this.properties = properties;
+            this.resolverStrategy = resolverStrategy;
         }
-        
+
         public Parser newParser(ExternalResource res, URL descriptorURL) {
-            Parser parser = new Parser(getModuleDescriptorParser(), parserSettings, res, descriptorURL);
+            Parser parser = new Parser(parseContext, res, descriptorURL, properties, resolverStrategy);
             parser.setValidate(validate);
             return parser;
         }
 
         public void setValidate(boolean validate) {
             this.validate = validate;
+        }
+
+        public boolean isValidate() {
+            return validate;
+        }
+
+        public DescriptorParseContext getParseContext() {
+            return parseContext;
         }
 
         public void parse() throws ParseException, IOException {
@@ -491,11 +528,13 @@ public class IvyXmlModuleDescriptorParser extends AbstractModuleDescriptorParser
                     extendsStarted(attributes);
                 } else if (state == State.INFO && "license".equals(qName)) {
                     getMd().addLicense(new License(substitute(attributes.getValue("name")), substitute(attributes.getValue("url"))));
-                } /* CHECKSTYLE:OFF */ else if (state == State.INFO && "ivyauthor".equals(qName)) {
+                } else if (state == State.INFO && "ivyauthor".equals(qName)) {
                     // nothing to do, we don't store this
+                    return;
                 } else if (state == State.INFO && "repository".equals(qName)) {
                     // nothing to do, we don't store this
-                } /* CHECKSTYLE:ON */ else if (state == State.INFO && "description".equals(qName)) {
+                    return;
+                } else if (state == State.INFO && "description".equals(qName)) {
                     getMd().setHomePage(substitute(attributes.getValue("homepage")));
                     state = State.DESCRIPTION;
                     buffer = new StringBuffer();
@@ -589,7 +628,11 @@ public class IvyXmlModuleDescriptorParser extends AbstractModuleDescriptorParser
                                             + ";"
                                             + parentRevision);
                     parent = parseOtherIvyFile(parentOrganisation, parentModule, parentRevision);
+                } catch(IOException e) {
+                    LOGGER.warn("Unable to access included ivy file for " + parentOrganisation + "#" + parentModule + ";" + parentRevision);
                 } catch (ParseException e) {
+                    LOGGER.warn("Unable to parse included ivy file for " + parentOrganisation + "#" + parentModule + ";" + parentRevision);
+                } catch(SAXException e) {
                     LOGGER.warn("Unable to parse included ivy file for " + parentOrganisation + "#" + parentModule + ";" + parentRevision);
                 }
             }
@@ -597,13 +640,6 @@ public class IvyXmlModuleDescriptorParser extends AbstractModuleDescriptorParser
             if (parent == null) {
                 throw new ParseException("Unable to parse included ivy file for " + parentOrganisation + "#" + parentModule + ";" + parentRevision, 0);
             }
-
-            DefaultExtendsDescriptor ed = new DefaultExtendsDescriptor(
-                    parent.getModuleRevisionId(),
-                    parent.getResolvedModuleRevisionId(),
-                    attributes.getValue("location"),
-                    extendTypes.toArray(new String[extendTypes.size()]));
-            getMd().addInheritedDescriptor(ed);
 
             mergeWithOtherModuleDescriptor(extendTypes, parent);
         }
@@ -702,37 +738,23 @@ public class IvyXmlModuleDescriptorParser extends AbstractModuleDescriptorParser
                 throws ParseException, IOException {
             URL url = relativeUrlResolver.getURL(descriptorURL, location);
             LOGGER.debug("Trying to load included ivy file from " + url.toString());
-            Parser parser = newParser(new UrlExternalResource(url), url);
-            parser.parse();
-            return parser.getModuleDescriptor();
+            return parseModuleDescriptor(new UrlExternalResource(url), url);
         }
 
-        private ModuleDescriptor parseOtherIvyFile(String parentOrganisation,
-                String parentModule, String parentRevision) throws ParseException {
+        protected ModuleDescriptor parseOtherIvyFile(String parentOrganisation,
+                String parentModule, String parentRevision) throws IOException, ParseException, SAXException {
             ModuleId parentModuleId = new ModuleId(parentOrganisation, parentModule);
             ModuleRevisionId parentMrid = new ModuleRevisionId(parentModuleId, parentRevision);
+            Artifact pomArtifact = DefaultArtifact.newIvyArtifact(parentMrid, new Date());
+            ModuleVersionArtifactMetaData artifactIdentifier = new DefaultModuleVersionArtifactMetaData(pomArtifact);
+            LocallyAvailableExternalResource externalResource = parseContext.getArtifact(artifactIdentifier);
+            return parseModuleDescriptor(externalResource, externalResource.getLocalResource().getFile().toURI().toURL());
+        }
 
-            DependencyDescriptor dd = new DefaultDependencyDescriptor(parentMrid, true);
-            ResolveData data = IvyContext.getContext().getResolveData();
-            if (data == null) {
-                ResolveEngine engine = IvyContext.getContext().getIvy().getResolveEngine();
-                ResolveOptions options = new ResolveOptions();
-                options.setDownload(false);
-                data = new ResolveData(engine, options);
-            }
-
-            DependencyResolver resolver = parserSettings.getResolver(parentMrid);
-            if (resolver == null) {
-                // TODO: Throw exception here?
-                return null;
-            } else {
-                dd = NameSpaceHelper.toSystem(dd, parserSettings.getContextNamespace());
-                ResolvedModuleRevision otherModule = resolver.getDependency(dd, data);
-                if (otherModule == null) {
-                    throw new ParseException("Unable to find " + parentMrid.toString(), 0);
-                }
-                return otherModule.getDescriptor();
-            }
+        private ModuleDescriptor parseModuleDescriptor(ExternalResource externalResource, URL descriptorURL) throws IOException, ParseException {
+            Parser parser = newParser(externalResource, descriptorURL);
+            parser.parse();
+            return parser.getModuleDescriptor();
         }
 
         private void publicationsStarted(Attributes attributes) {
@@ -941,17 +963,7 @@ public class IvyXmlModuleDescriptorParser extends AbstractModuleDescriptorParser
             Map extraAttributes = getExtraAttributes(attributes, new String[]{"organisation", "module", "revision", "status", "publication", "branch", "namespace", "default", "resolver"});
             getMd().setModuleRevisionId(ModuleRevisionId.newInstance(org, module, branch, revision, extraAttributes));
 
-            String namespace = substitute(attributes.getValue("namespace"));
-            if (namespace != null) {
-                Namespace ns = parserSettings.getNamespace(namespace);
-                if (ns == null) {
-                    LOGGER.warn("namespace not found for " + getMd().getModuleRevisionId() + ": " + namespace);
-                } else {
-                    getMd().setNamespace(ns);
-                }
-            }
-
-            getMd().setStatus(elvis(substitute(attributes.getValue("status")), parserSettings.getStatusManager().getDefaultStatus()));
+            getMd().setStatus(elvis(substitute(attributes.getValue("status")), "integration"));
             getMd().setDefault(Boolean.valueOf(substitute(attributes.getValue("default"))));
             String pubDate = substitute(attributes.getValue("publication"));
             if (pubDate != null && pubDate.length() > 0) {
@@ -1182,11 +1194,18 @@ public class IvyXmlModuleDescriptorParser extends AbstractModuleDescriptorParser
         }
 
         private String substitute(String name) {
-            return parserSettings.substitute(name);
+            return IvyPatternHelper.substituteVariables(name, properties);
         }
 
         private Map getExtraAttributes(Attributes attributes, String[] ignoredAttributeNames) {
-            return ExtendableItemHelper.getExtraAttributes(parserSettings, attributes, ignoredAttributeNames);
+            Map ret = new HashMap();
+            Collection ignored = Arrays.asList(ignoredAttributeNames);
+            for (int i = 0; i < attributes.getLength(); i++) {
+                if (!ignored.contains(attributes.getQName(i))) {
+                    ret.put(attributes.getQName(i), substitute(attributes.getValue(i)));
+                }
+            }
+            return ret;
         }
 
         private void fillExtraAttributes(DefaultExtendableItem item, Attributes attributes, String[] ignoredAttNames) {
@@ -1197,9 +1216,8 @@ public class IvyXmlModuleDescriptorParser extends AbstractModuleDescriptorParser
         }
 
         private PatternMatcher getMatcher(String matcherName) {
-            return parserSettings.getMatcher(matcherName);
+            return resolverStrategy.getPatternMatcher(matcherName);
         }
-
     }
 
     public String toString() {

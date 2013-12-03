@@ -16,27 +16,31 @@
 
 package org.gradle.api.internal.artifacts.ivyservice.ivyresolve
 
-import org.gradle.api.artifacts.ArtifactIdentifier
 import org.gradle.api.internal.artifacts.configurations.dynamicversion.CachePolicy
 import org.gradle.api.internal.artifacts.ivyservice.BuildableArtifactResolveResult
+import org.gradle.api.internal.artifacts.ivyservice.DependencyToModuleVersionResolver
 import org.gradle.api.internal.artifacts.ivyservice.dynamicversions.ModuleResolutionCache
-import org.gradle.api.internal.artifacts.ivyservice.modulecache.ModuleDescriptorCache
+import org.gradle.api.internal.artifacts.ivyservice.modulecache.ModuleMetaDataCache
+import org.gradle.api.internal.artifacts.metadata.ModuleVersionArtifactIdentifier
+import org.gradle.api.internal.artifacts.metadata.ModuleVersionArtifactMetaData
 import org.gradle.api.internal.externalresource.cached.CachedArtifactIndex
 import org.gradle.api.internal.externalresource.ivy.ArtifactAtRepositoryKey
 import org.gradle.api.internal.externalresource.metadata.DefaultExternalResourceMetaData
 import org.gradle.api.internal.externalresource.metadata.ExternalResourceMetaData
-import org.gradle.internal.TrueTimeProvider
+import org.gradle.util.BuildCommencedTimeProvider
 import spock.lang.Specification
 import spock.lang.Unroll
 
 class CachingModuleVersionRepositoryTest extends Specification {
 
-    ModuleVersionRepository realRepo = Mock()
-    ModuleResolutionCache moduleResolutionCache = Mock()
-    ModuleDescriptorCache moduleDescriptorCache = Mock()
-    CachedArtifactIndex artifactAtRepositoryCache = Mock()
-    CachePolicy cachePolicy = Mock()
-    CachingModuleVersionRepository repo = new CachingModuleVersionRepository(realRepo, moduleResolutionCache, moduleDescriptorCache, artifactAtRepositoryCache, cachePolicy, new TrueTimeProvider())
+    final realRepo = Mock(ModuleVersionRepository)
+    final moduleResolutionCache = Mock(ModuleResolutionCache)
+    final moduleDescriptorCache = Mock(ModuleMetaDataCache)
+    final artifactAtRepositoryCache = Mock(CachedArtifactIndex)
+    final resolver = Mock(DependencyToModuleVersionResolver)
+    final cachePolicy = Mock(CachePolicy)
+    CachingModuleVersionRepository repo = new CachingModuleVersionRepository(realRepo, moduleResolutionCache, moduleDescriptorCache, artifactAtRepositoryCache,
+            resolver, cachePolicy, new BuildCommencedTimeProvider())
     int descriptorHash = 1234
     CachingModuleVersionRepository.CachingModuleSource moduleSource = Mock()
 
@@ -46,8 +50,11 @@ class CachingModuleVersionRepositoryTest extends Specification {
         ExternalResourceMetaData externalResourceMetaData = new DefaultExternalResourceMetaData("remote url", lastModified, -1, null, null)
         File file = new File("local")
         BuildableArtifactResolveResult result = Mock()
-        ArtifactIdentifier artifact = Stub()
-        ArtifactAtRepositoryKey atRepositoryKey = new ArtifactAtRepositoryKey("repo-id", artifact)
+        def artifactId = Stub(ModuleVersionArtifactIdentifier)
+        def artifact = Stub(ModuleVersionArtifactMetaData) {
+            getId() >> artifactId
+        }
+        ArtifactAtRepositoryKey atRepositoryKey = new ArtifactAtRepositoryKey("repo-id", artifactId)
 
         and:
         _ * realRepo.id >> "repo-id"

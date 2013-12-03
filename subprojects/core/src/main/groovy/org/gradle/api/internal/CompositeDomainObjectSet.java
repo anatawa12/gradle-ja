@@ -19,6 +19,7 @@ import org.apache.commons.collections.collection.CompositeCollection;
 import org.gradle.api.Action;
 import org.gradle.api.DomainObjectCollection;
 import org.gradle.api.specs.Spec;
+import org.gradle.internal.Actions;
 
 import java.util.Collection;
 import java.util.Iterator;
@@ -81,9 +82,11 @@ public class CompositeDomainObjectSet<T> extends DefaultDomainObjectSet<T> {
     }
     
     public void addCollection(DomainObjectCollection<? extends T> collection) {
-        getStore().addComposited(collection);
-        collection.all(getEventRegister().getAddAction());
-        collection.whenObjectRemoved(getEventRegister().getRemoveAction());
+        if (!getStore().getCollections().contains(collection)) {
+            getStore().addComposited(collection);
+            collection.all(getEventRegister().getAddAction());
+            collection.whenObjectRemoved(getEventRegister().getRemoveAction());
+        }
     }
 
     public void removeCollection(DomainObjectCollection<? extends T> collection) {

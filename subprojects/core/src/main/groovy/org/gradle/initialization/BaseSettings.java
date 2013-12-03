@@ -24,7 +24,7 @@ import org.gradle.api.internal.SettingsInternal;
 import org.gradle.api.internal.file.FileResolver;
 import org.gradle.api.internal.project.AbstractPluginAware;
 import org.gradle.api.internal.project.ProjectRegistry;
-import org.gradle.api.internal.project.ServiceRegistryFactory;
+import org.gradle.internal.service.scopes.ServiceRegistryFactory;
 import org.gradle.api.plugins.PluginContainer;
 import org.gradle.configuration.ScriptPluginFactory;
 import org.gradle.groovy.scripts.ScriptSource;
@@ -86,7 +86,7 @@ public class BaseSettings extends AbstractPluginAware implements SettingsInterna
     }
 
     public DefaultProjectDescriptor createProjectDescriptor(DefaultProjectDescriptor parent, String name, File dir) {
-        return new DefaultProjectDescriptor(parent, name, dir, projectDescriptorRegistry);
+        return new DefaultProjectDescriptor(parent, name, dir, projectDescriptorRegistry, fileResolver);
     }
 
     public DefaultProjectDescriptor findProject(String path) {

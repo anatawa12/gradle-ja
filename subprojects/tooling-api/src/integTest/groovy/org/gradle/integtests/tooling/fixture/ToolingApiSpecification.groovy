@@ -71,6 +71,10 @@ abstract class ToolingApiSpecification extends Specification {
         }
     }
 
+    public void withConnector(Closure cl) {
+        toolingApi.withConnector(cl)
+    }
+
     public <T> T withConnection(Closure<T> cl) {
         toolingApi.withConnection(cl)
     }
@@ -99,10 +103,6 @@ abstract class ToolingApiSpecification extends Specification {
 
     def connector() {
         toolingApi.connector()
-    }
-
-    void maybeFailWithConnection(Closure cl) {
-        toolingApi.maybeFailWithConnection(cl)
     }
 
     TestFile getProjectDir() {

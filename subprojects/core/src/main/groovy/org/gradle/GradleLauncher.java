@@ -15,9 +15,12 @@
  */
 package org.gradle;
 
-import org.gradle.api.internal.project.GlobalServicesRegistry;
 import org.gradle.api.logging.StandardOutputListener;
 import org.gradle.initialization.GradleLauncherFactory;
+import org.gradle.internal.nativeplatform.services.NativeServices;
+import org.gradle.internal.service.ServiceRegistryBuilder;
+import org.gradle.internal.service.scopes.GlobalScopeServices;
+import org.gradle.logging.LoggingServiceRegistry;
 import org.gradle.util.DeprecationLogger;
 
 /**
@@ -102,7 +105,13 @@ public abstract class GradleLauncher {
 
     private static synchronized GradleLauncherFactory doGetFactory() {
         if (factory == null) {
-            factory = new GlobalServicesRegistry().get(GradleLauncherFactory.class);
+            factory = ServiceRegistryBuilder.builder()
+                    .displayName("Global services")
+                    .parent(LoggingServiceRegistry.newProcessLogging())
+                    .parent(NativeServices.getInstance())
+                    .provider(new GlobalScopeServices())
+                    .build()
+                    .get(GradleLauncherFactory.class);
         }
         return factory;
     }

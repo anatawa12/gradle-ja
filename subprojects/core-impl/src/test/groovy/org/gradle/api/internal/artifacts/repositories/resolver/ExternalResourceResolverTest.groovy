@@ -15,14 +15,17 @@
  */
 
 package org.gradle.api.internal.artifacts.repositories.resolver
+
 import org.apache.ivy.core.module.id.ArtifactRevisionId
-import org.gradle.api.artifacts.ArtifactIdentifier
-import org.gradle.api.internal.artifacts.DefaultArtifactIdentifier
-import org.gradle.api.internal.artifacts.DefaultModuleVersionIdentifier
 import org.gradle.api.internal.artifacts.ModuleMetadataProcessor
 import org.gradle.api.internal.artifacts.ivyservice.BuildableArtifactResolveResult
 import org.gradle.api.internal.artifacts.ivyservice.ivyresolve.ArtifactResolveException
 import org.gradle.api.internal.artifacts.ivyservice.ivyresolve.parser.MetaDataParser
+import org.gradle.api.internal.artifacts.ivyservice.ivyresolve.strategy.LatestStrategy
+import org.gradle.api.internal.artifacts.ivyservice.ivyresolve.strategy.ResolverStrategy
+import org.gradle.api.internal.artifacts.ivyservice.ivyresolve.strategy.VersionMatcher
+import org.gradle.api.internal.artifacts.metadata.ModuleVersionArtifactIdentifier
+import org.gradle.api.internal.artifacts.metadata.ModuleVersionArtifactMetaData
 import org.gradle.api.internal.externalresource.local.LocallyAvailableResourceFinder
 import org.gradle.api.internal.externalresource.transport.ExternalResourceRepository
 import spock.lang.Specification
@@ -35,14 +38,22 @@ class ExternalResourceResolverTest extends Specification {
     BuildableArtifactResolveResult result = Mock()
     MetaDataParser parser = Mock()
     ModuleMetadataProcessor metadataProcessor = Mock()
-    ArtifactIdentifier artifact = new DefaultArtifactIdentifier(DefaultModuleVersionIdentifier.newId("group", "module", "version"), "name", "type", "ext", "classifier")
+    VersionMatcher versionMatcher = Mock()
+    LatestStrategy latestStrategy = Mock()
+    final ResolverStrategy resolverStrategy = Mock()
+    ModuleVersionArtifactIdentifier artifactIdentifier = Stub() {
+        getDisplayName() >> 'some-artifact'
+    }
+    ModuleVersionArtifactMetaData artifact = Stub() {
+        getId() >> artifactIdentifier
+    }
     MavenResolver.TimestampedModuleSource moduleSource = Mock()
     File downloadedFile = Mock(File)
     ExternalResourceResolver resolver
 
     def setup() {
         //We use a spy here to avoid dealing with all the overhead ivys basicresolver brings in here.
-        resolver = Spy(ExternalResourceResolver, constructorArgs: [name, repository, versionLister, locallyAvailableResourceFinder, parser, metadataProcessor])
+        resolver = Spy(ExternalResourceResolver, constructorArgs: [name, repository, versionLister, locallyAvailableResourceFinder, parser, metadataProcessor, resolverStrategy, versionMatcher, latestStrategy])
     }
 
     def reportsNotFoundArtifactResolveResult() {
@@ -53,7 +64,7 @@ class ExternalResourceResolverTest extends Specification {
         resolver.resolve(artifact, result, moduleSource)
 
         then:
-        1 * result.notFound(artifact)
+        1 * result.notFound(artifactIdentifier)
         0 * result._
     }
 
@@ -66,7 +77,7 @@ class ExternalResourceResolverTest extends Specification {
 
         then:
         1 * result.failed(_) >> { ArtifactResolveException exception ->
-            assert exception.message == "Could not download artifact 'group:module:version:classifier@ext'"
+            assert exception.message == "Could not download artifact 'some-artifact'"
             assert exception.cause.message == "DOWNLOAD FAILURE"
         }
         0 * result._

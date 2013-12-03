@@ -15,9 +15,16 @@
  */
 package org.gradle.api.internal.artifacts.repositories.resolver;
 
+import org.apache.ivy.core.module.descriptor.Artifact;
+import org.apache.ivy.core.module.descriptor.DefaultArtifact;
 import org.apache.ivy.core.module.id.ArtifactRevisionId;
+import org.apache.ivy.core.module.id.ModuleRevisionId;
+import org.gradle.api.Nullable;
 import org.gradle.api.internal.artifacts.ModuleMetadataProcessor;
-import org.gradle.api.internal.artifacts.ivyservice.ivyresolve.parser.MetaDataParser;
+import org.gradle.api.internal.artifacts.ivyservice.ivyresolve.parser.DownloadedIvyModuleDescriptorParser;
+import org.gradle.api.internal.artifacts.ivyservice.ivyresolve.strategy.LatestStrategy;
+import org.gradle.api.internal.artifacts.ivyservice.ivyresolve.strategy.ResolverStrategy;
+import org.gradle.api.internal.artifacts.ivyservice.ivyresolve.strategy.VersionMatcher;
 import org.gradle.api.internal.artifacts.repositories.transport.RepositoryTransport;
 import org.gradle.api.internal.externalresource.local.LocallyAvailableResourceFinder;
 
@@ -26,14 +33,28 @@ import java.net.URI;
 public class IvyResolver extends ExternalResourceResolver implements PatternBasedResolver {
 
     private final RepositoryTransport transport;
+    private final boolean dynamicResolve;
 
     public IvyResolver(String name, RepositoryTransport transport,
                        LocallyAvailableResourceFinder<ArtifactRevisionId> locallyAvailableResourceFinder,
-                       MetaDataParser metaDataParser, ModuleMetadataProcessor metadataProcessor
-    ) {
-        super(name, transport.getRepository(), new ResourceVersionLister(transport.getRepository()), locallyAvailableResourceFinder, metaDataParser, metadataProcessor);
+                       ModuleMetadataProcessor metadataProcessor, VersionMatcher versionMatcher,
+                       LatestStrategy latestStrategy, boolean dynamicResolve, ResolverStrategy resolverStrategy) {
+        super(name, transport.getRepository(), new ResourceVersionLister(transport.getRepository()),
+                locallyAvailableResourceFinder, new DownloadedIvyModuleDescriptorParser(resolverStrategy), metadataProcessor,
+                resolverStrategy, versionMatcher, latestStrategy);
         this.transport = transport;
         this.transport.configureCacheManager(this);
+        this.dynamicResolve = dynamicResolve;
+    }
+
+    @Override
+    public boolean isDynamicResolveMode() {
+        return dynamicResolve;
+    }
+
+    @Nullable
+    protected Artifact getMetaDataArtifactFor(ModuleRevisionId mrid) {
+        return DefaultArtifact.newIvyArtifact(mrid, null);
     }
 
     public void addArtifactLocation(URI baseUri, String pattern) {

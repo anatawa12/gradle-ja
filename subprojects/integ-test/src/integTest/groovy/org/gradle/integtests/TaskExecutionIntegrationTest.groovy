@@ -15,6 +15,7 @@
  */
 
 package org.gradle.integtests
+
 import org.gradle.integtests.fixtures.AbstractIntegrationSpec
 import org.gradle.util.TextUtil
 import org.junit.Test
@@ -75,7 +76,7 @@ public class TaskExecutionIntegrationTest extends AbstractIntegrationSpec {
     }
 
     def executesMultiProjectsTasksInASingleBuildAndEachTaskAtMostOnce() {
-        settingsFile << "include 'child1', 'child2'"
+        settingsFile << "include 'child1', 'child2', 'child1-2', 'child1-2-2'"
         buildFile << """
     task a
     allprojects {
@@ -85,8 +86,8 @@ public class TaskExecutionIntegrationTest extends AbstractIntegrationSpec {
 """
         
         expect:
-        run("a", "c").assertTasksExecuted(":a", ":b", ":c", ":child1:b", ":child1:c", ":child2:b", ":child2:c");
-        run("b", ":child2:c").assertTasksExecuted(":b", ":child1:b", ":child2:b", ":a", ":child2:c");
+        run("a", "c").assertTasksExecuted(":a", ":b", ":c", ":child1:b", ":child1:c", ":child1-2:b", ":child1-2:c", ":child1-2-2:b", ":child1-2-2:c", ":child2:b", ":child2:c");
+        run("b", ":child2:c").assertTasksExecuted(":b", ":child1:b", ":child1-2:b", ":child1-2-2:b", ":child2:b", ":a", ":child2:c");
     }
 
     @Test
@@ -213,6 +214,42 @@ public class TaskExecutionIntegrationTest extends AbstractIntegrationSpec {
 (*) - details omitted (listed previously)""")
     }
 
+    def "placeolder actions not triggered when not requested"() {
+        when:
+        buildFile << """
+        task a
+        tasks.addPlaceholderAction("b") {
+            throw new RuntimeException()
+        }
+"""
+        then:
+        succeeds 'a'
+    }
+
+    def "explicit tasks are preferred over placeholder actions"() {
+        buildFile << """
+        task someTask << {println "explicit sometask"}
+        tasks.addPlaceholderAction("someTask"){
+            println  "placeholder action triggered"
+            task someTask << {println "placeholder sometask"}
+        }
+"""
+        when:
+        succeeds 'sometask'
+
+        then:
+        output.contains("explicit sometask")
+        !output.contains("placeholder action triggered")
+
+        when:
+        succeeds 'someT'
+
+        then:
+        output.contains("explicit sometask")
+        !output.contains("placeholder action triggered")
+    }
+
+
     def "honours mustRunAfter task ordering"() {
         buildFile << """
     task a {
@@ -298,5 +335,82 @@ public class TaskExecutionIntegrationTest extends AbstractIntegrationSpec {
      \\--- :a (*)
 
 (*) - details omitted (listed previously)""")
+    }
+
+    def "checked exceptions thrown by tasks are reported correctly"() {
+        buildFile << """
+            class SomeTask extends DefaultTask {
+
+                @TaskAction
+                void explode() {
+                    throw new Exception("I am the checked exception")
+                }
+            }
+
+            task explode(type: SomeTask) {
+
+            }
+        """
+
+        when:
+        fails "explode"
+
+        then:
+        failure.assertHasCause "java.lang.Exception: I am the checked exception"
+    }
+
+    def "honours shouldRunAfter task ordering"() {
+        buildFile << """
+    task a {
+        dependsOn 'b'
+    }
+    task b {
+        shouldRunAfter 'c'
+    }
+    task c
+    task d {
+        dependsOn 'c'
+    }
+"""
+        when:
+        succeeds 'a', 'd'
+
+        then:
+        executedTasks == [':c', ':b', ':a', ':d']
+    }
+
+    def "multiple should run after ordering can be ignored for one execution plan"() {
+        buildFile << """
+    task a {
+        dependsOn 'b', 'h'
+    }
+    task b {
+        dependsOn 'c'
+    }
+    task c {
+        dependsOn 'g'
+        shouldRunAfter 'd'
+    }
+    task d {
+        finalizedBy 'e'
+        dependsOn 'f'
+    }
+    task e
+    task f {
+        dependsOn 'c'
+    }
+    task g {
+        shouldRunAfter 'h'
+    }
+    task h {
+        dependsOn 'b'
+    }
+"""
+
+        when:
+        succeeds 'a', 'd'
+
+        then:
+        executedTasks == [':g', ':c', ':b', ':h', ':a', ':f', ':d', ':e']
     }
 }

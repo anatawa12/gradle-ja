@@ -3,19 +3,20 @@
 Gradle 2.0 is the next major Gradle release that offers the opportunity to make breaking changes to the public interface of Gradle. This document captures a laundry
 list of ideas to consider before shipping Gradle 2.0.
 
-Note: for the change listed below, the old behaviour or feature to be removed should be deprecated in a Gradle 1.x release, probably no later than Gradle 1.8. Similarly
+Note: for the change listed below, the old behaviour or feature to be removed should be deprecated in a Gradle 1.x release, probably no later than Gradle 1.9. Similarly
 for changes to behaviour.
 
 # Planned
 
 The following stories are to be included in Gradle 2.0.
 
-## Remove all features deprecated as at Gradle 1.8
+## Remove all features deprecated as at Gradle 1.9
 
-In the Gradle 2.0-rc-1 release, remove all features that are deprecated as at Gradle 1.8 or earlier:
+In the Gradle 2.0-rc-1 release, remove all features that are deprecated as at Gradle 1.9 or earlier:
 
 * Search for usages of `DeprecationLogger`, `@Deprecated`, `@deprecated` and remove the associated feature.
 * Review usages of `DeprecationLogger.whileDisabled()`.
+* Remove `JavaPluginGoodBehaviourTest#changing debug flag does not produce deprecation warning`
 
 ## Remove Ivy types from the Gradle repository API
 
@@ -53,7 +54,19 @@ The public API for launching Gradle is now the tooling API. The `GradleBuild` ta
 
 # Candidates
 
-The following stories are candidates to be included in Gradle 2.0.
+The following stories are candidates to be included in Gradle 2.0. They have not been scheduled yet:
+
+## Remove `group` and `status` from project
+
+Alternatively, default the group to `null` and status to `integration`.
+
+## Remove the Ant-task based Scala compiler
+
+* Change the default for `useAnt` to `false` and deprecate the `useAnt` property.
+
+## Don't inject tools.jar into the system ClassLoader
+
+Currently required for in-process Ant-based compilation on Java 5. Dropping support for one of (in-process, ant-based, java 5) would allow us to remove this.
 
 ## Decouple publishing DSL from Maven Ant tasks
 
@@ -66,7 +79,7 @@ The following stories are candidates to be included in Gradle 2.0.
 
 ## Copy tasks
 
-There are serveral inconsitencies and confusing behaviours in the copy tasks and copy spec:
+There are several inconsistencies and confusing behaviours in the copy tasks and copy spec:
 
 * Change copy tasks so that they no longer implement `CopySpec`. Instead, they should have a `content` property which is a `CopySpec` that contains the main content.
   Leave behind some methods which operate on the file tree as a whole, eg `eachFile()`, `duplicatesStrategy`, `matching()`.
@@ -162,6 +175,8 @@ Extension objects have been available for over 2 years and are now an establishe
 * Remove `equals()` implementations from `Dependency` subclasses.
 * Remove `ExternalDependency.force`. Use resolution strategy instead.
 * Remove `SelfResolvingDependency.resolve()` methods. These should be internal and invoked only as part of resolution.
+* Remove `ClientModule` and replace with consumer-side component meta-data rules.
+* Remove `ExternalModuleDependency.changing`. Use component meta-data rules instead.
 
 ## Misc API tidy-ups
 
@@ -196,7 +211,7 @@ at load time we can support expressions such as `new MyDslType()`, rather than r
 Switching to decoration at load time should generally be transparent to most things, except for clients of `ProjectBuilder` that refer to types
 which are not loaded by Gradle, such as the classes under test.
 
-## Restructure plugin package heirarchy
+## Restructure plugin package hierarchy
 
 ## buildNeeded and buildDependents
 

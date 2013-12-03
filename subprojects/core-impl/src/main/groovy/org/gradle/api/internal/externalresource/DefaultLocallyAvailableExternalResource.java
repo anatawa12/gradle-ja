@@ -18,7 +18,7 @@ package org.gradle.api.internal.externalresource;
 
 import org.gradle.api.internal.externalresource.metadata.ExternalResourceMetaData;
 import org.gradle.internal.resource.local.LocallyAvailableResource;
-import org.gradle.util.hash.HashValue;
+import org.gradle.internal.hash.HashValue;
 
 public class DefaultLocallyAvailableExternalResource extends LocalFileStandInExternalResource implements LocallyAvailableExternalResource {
     private final LocallyAvailableResource locallyAvailableResource;
@@ -30,6 +30,11 @@ public class DefaultLocallyAvailableExternalResource extends LocalFileStandInExt
     public DefaultLocallyAvailableExternalResource(String source, LocallyAvailableResource locallyAvailableResource, ExternalResourceMetaData metaData) {
         super(source, locallyAvailableResource.getFile(), metaData);
         this.locallyAvailableResource = locallyAvailableResource;
+    }
+
+    @Override
+    public String toString() {
+        return locallyAvailableResource.toString();
     }
 
     public LocallyAvailableResource getLocalResource() {

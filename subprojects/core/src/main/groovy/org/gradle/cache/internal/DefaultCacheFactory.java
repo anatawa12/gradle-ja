@@ -17,28 +17,32 @@ package org.gradle.cache.internal;
 
 import org.gradle.CacheUsage;
 import org.gradle.api.Action;
-import org.gradle.internal.Factory;
 import org.gradle.cache.*;
 import org.gradle.cache.internal.btree.BTreePersistentIndexedCache;
+import org.gradle.cache.internal.filelock.LockOptions;
+import org.gradle.internal.Factory;
 import org.gradle.messaging.serialize.DefaultSerializer;
 import org.gradle.messaging.serialize.Serializer;
 import org.gradle.util.GFileUtils;
 
 import java.io.File;
 import java.util.*;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 
 import static org.gradle.cache.internal.FileLockManager.LockMode;
 
 public class DefaultCacheFactory implements Factory<CacheFactory> {
     private final Map<File, DirCacheReference> dirCaches = new HashMap<File, DirCacheReference>();
     private final FileLockManager lockManager;
+    private final Lock lock = new ReentrantLock();
 
     public DefaultCacheFactory(FileLockManager fileLockManager) {
         this.lockManager = fileLockManager;
     }
 
     public CacheFactory create() {
-        return new CacheFactoryImpl();
+        return new LockingCacheFactory(new CacheFactoryImpl());
     }
 
     void onOpen(Object cache) {
@@ -48,37 +52,95 @@ public class DefaultCacheFactory implements Factory<CacheFactory> {
     }
 
     public void close() {
-        for (DirCacheReference dirCacheReference : dirCaches.values()) {
-            dirCacheReference.close();
+        lock.lock();
+        try {
+            for (DirCacheReference dirCacheReference : dirCaches.values()) {
+                dirCacheReference.close();
+            }
+        } finally {
+            lock.unlock();
+        }
+    }
+
+    private class LockingCacheFactory implements CacheFactory {
+        private final CacheFactoryImpl delegate;
+
+        private LockingCacheFactory(CacheFactoryImpl delegate) {
+            this.delegate = delegate;
+        }
+
+        public PersistentCache open(File cacheDir, String displayName, CacheUsage usage, CacheValidator cacheValidator, Map<String, ?> properties, LockOptions lockOptions, Action<? super PersistentCache> initializer) throws CacheOpenException {
+            lock.lock();
+            try {
+                return delegate.open(cacheDir, displayName, usage, cacheValidator, properties, lockOptions, initializer);
+            } finally {
+                lock.unlock();
+            }
+        }
+
+        public <K, V> PersistentIndexedCache<K, V> openIndexedCache(File cacheDir, CacheUsage usage, CacheValidator validator, Map<String, ?> properties, LockOptions lockOptions, Serializer<V> serializer) {
+            lock.lock();
+            try {
+                return delegate.openIndexedCache(cacheDir, usage, validator, properties, lockOptions, serializer);
+            } finally {
+                lock.unlock();
+            }
+        }
+
+        public <E> PersistentStateCache<E> openStateCache(File cacheDir, CacheUsage usage, CacheValidator validator, Map<String, ?> properties, LockOptions lockOptions, Serializer<E> serializer) {
+            lock.lock();
+            try {
+                return delegate.openStateCache(cacheDir, usage, validator, properties, lockOptions, serializer);
+            } finally {
+                lock.unlock();
+            }
+        }
+
+        public PersistentCache openStore(File storeDir, String displayName, LockOptions lockOptions, Action<? super PersistentCache> initializer) throws CacheOpenException {
+            lock.lock();
+            try {
+                return delegate.openStore(storeDir, displayName, lockOptions, initializer);
+            } finally {
+                lock.unlock();
+            }
+        }
+
+        public void close() {
+            lock.lock();
+            try {
+                delegate.close();
+            } finally {
+                lock.unlock();
+            }
         }
     }
 
     private class CacheFactoryImpl implements CacheFactory {
         private final Set<BasicCacheReference<?>> caches = new LinkedHashSet<BasicCacheReference<?>>();
 
-        private DirCacheReference doOpenDir(File cacheDir, String displayName, CacheUsage usage, CacheValidator validator, Map<String, ?> properties, FileLockManager.LockMode lockMode, Action<? super PersistentCache> action) {
+        private DirCacheReference doOpenDir(File cacheDir, String displayName, CacheUsage usage, CacheValidator validator, Map<String, ?> properties, LockOptions lockOptions, Action<? super PersistentCache> action) {
             File canonicalDir = GFileUtils.canonicalise(cacheDir);
             DirCacheReference dirCacheReference = dirCaches.get(canonicalDir);
             if (dirCacheReference == null) {
-                if (lockMode.equals(LockMode.None)) {
+                if (lockOptions.getMode().equals(LockMode.None)) {
                     // Create nested cache with LockMode#Exclusive (tb discussed) that is opened and closed on Demand in the DelegateOnDemandPersistentDirectoryCache.
-                    DefaultPersistentDirectoryCache nestedCache = new DefaultPersistentDirectoryCache(canonicalDir, displayName, usage, validator, properties, LockMode.Exclusive, action, lockManager);
+                    DefaultPersistentDirectoryCache nestedCache = new DefaultPersistentDirectoryCache(canonicalDir, displayName, usage, validator, properties, lockOptions.withMode(LockMode.Exclusive), action, lockManager);
                     DelegateOnDemandPersistentDirectoryCache onDemandDache = new DelegateOnDemandPersistentDirectoryCache(nestedCache);
                     onDemandDache.open();
-                    dirCacheReference = new DirCacheReference(onDemandDache, properties, lockMode);
+                    dirCacheReference = new DirCacheReference(onDemandDache, properties, lockOptions);
                     dirCaches.put(canonicalDir, dirCacheReference);
                 } else {
-                    ReferencablePersistentCache cache = new DefaultPersistentDirectoryCache(canonicalDir, displayName, usage, validator, properties, lockMode, action, lockManager);
+                    ReferencablePersistentCache cache = new DefaultPersistentDirectoryCache(canonicalDir, displayName, usage, validator, properties, lockOptions, action, lockManager);
                     cache.open();
-                    dirCacheReference = new DirCacheReference(cache, properties, lockMode);
+                    dirCacheReference = new DirCacheReference(cache, properties, lockOptions);
                     dirCaches.put(canonicalDir, dirCacheReference);
                 }
             } else {
                 if (usage == CacheUsage.REBUILD && dirCacheReference.rebuiltBy != this) {
                     throw new IllegalStateException(String.format("Cannot rebuild cache '%s' as it is already open.", cacheDir));
                 }
-                if (lockMode != dirCacheReference.lockMode) {
-                    throw new IllegalStateException(String.format("Cannot open cache '%s' with %s lock mode as it is already open with %s lock mode.", cacheDir, lockMode.toString().toLowerCase(), dirCacheReference.lockMode.toString().toLowerCase()));
+                if (!lockOptions.equals(dirCacheReference.lockOptions)) {
+                    throw new IllegalStateException(String.format("Cache '%s' is already open with different options.", cacheDir));
                 }
                 if (!properties.equals(dirCacheReference.properties)) {
                     throw new IllegalStateException(String.format("Cache '%s' is already open with different state.", cacheDir));
@@ -91,38 +153,38 @@ public class DefaultCacheFactory implements Factory<CacheFactory> {
             return dirCacheReference;
         }
 
-        public PersistentCache openStore(File storeDir, String displayName, LockMode lockMode, Action<? super PersistentCache> initializer) throws CacheOpenException {
+        public PersistentCache openStore(File storeDir, String displayName, LockOptions lockOptions, Action<? super PersistentCache> initializer) throws CacheOpenException {
             if (initializer != null) {
                 throw new UnsupportedOperationException("Initializer actions are not currently supported by the directory store implementation.");
             }
             File canonicalDir = GFileUtils.canonicalise(storeDir);
             DirCacheReference dirCacheReference = dirCaches.get(canonicalDir);
             if (dirCacheReference == null) {
-                ReferencablePersistentCache cache = new DefaultPersistentDirectoryStore(canonicalDir, displayName, lockMode, lockManager);
+                ReferencablePersistentCache cache = new DefaultPersistentDirectoryStore(canonicalDir, displayName, lockOptions, lockManager);
                 cache.open();
-                dirCacheReference = new DirCacheReference(cache, Collections.<String, Object>emptyMap(), lockMode);
+                dirCacheReference = new DirCacheReference(cache, Collections.<String, Object>emptyMap(), lockOptions);
                 dirCaches.put(canonicalDir, dirCacheReference);
             }
             dirCacheReference.addReference(this);
             return dirCacheReference.getCache();
         }
 
-        public PersistentCache open(File cacheDir, String displayName, CacheUsage usage, CacheValidator cacheValidator, Map<String, ?> properties, LockMode lockMode, Action<? super PersistentCache> initializer) {
-            DirCacheReference dirCacheReference = doOpenDir(cacheDir, displayName, usage, cacheValidator, properties, lockMode, initializer);
+        public PersistentCache open(File cacheDir, String displayName, CacheUsage usage, CacheValidator cacheValidator, Map<String, ?> properties, LockOptions lockOptions, Action<? super PersistentCache> initializer) {
+            DirCacheReference dirCacheReference = doOpenDir(cacheDir, displayName, usage, cacheValidator, properties, lockOptions, initializer);
             return dirCacheReference.getCache();
         }
 
-        public <E> PersistentStateCache<E> openStateCache(File cacheDir, CacheUsage usage, CacheValidator validator, Map<String, ?> properties, LockMode lockMode, Serializer<E> serializer) {
-            StateCacheReference<E> cacheReference = doOpenDir(cacheDir, null, usage, validator, properties, lockMode, null).getStateCache(serializer);
+        public <E> PersistentStateCache<E> openStateCache(File cacheDir, CacheUsage usage, CacheValidator validator, Map<String, ?> properties, LockOptions lockOptions, Serializer<E> serializer) {
+            StateCacheReference<E> cacheReference = doOpenDir(cacheDir, null, usage, validator, properties, lockOptions, null).getStateCache(serializer);
             cacheReference.addReference(this);
             return cacheReference.getCache();
         }
 
-        public <K, V> PersistentIndexedCache<K, V> openIndexedCache(File cacheDir, CacheUsage usage, CacheValidator validator, Map<String, ?> properties, LockMode lockMode, Serializer<V> serializer) {
-            if (lockMode != LockMode.Exclusive) {
-                throw new UnsupportedOperationException(String.format("No %s mode indexed cache implementation is available.", lockMode));
+        public <K, V> PersistentIndexedCache<K, V> openIndexedCache(File cacheDir, CacheUsage usage, CacheValidator validator, Map<String, ?> properties, LockOptions lockOptions, Serializer<V> serializer) {
+            if (lockOptions.getMode() != LockMode.Exclusive) {
+                throw new UnsupportedOperationException(String.format("No %s mode indexed cache implementation is available.", lockOptions));
             }
-            IndexedCacheReference<K, V> cacheReference = doOpenDir(cacheDir, null, usage, validator, properties, LockMode.Exclusive, null).getIndexedCache(serializer);
+            IndexedCacheReference<K, V> cacheReference = doOpenDir(cacheDir, null, usage, validator, properties, lockOptions, null).getIndexedCache(serializer);
             cacheReference.addReference(this);
             return cacheReference.getCache();
         }
@@ -173,15 +235,15 @@ public class DefaultCacheFactory implements Factory<CacheFactory> {
 
     private class DirCacheReference extends BasicCacheReference<ReferencablePersistentCache> {
         private final Map<String, ?> properties;
-        private final FileLockManager.LockMode lockMode;
+        private final LockOptions lockOptions;
         IndexedCacheReference indexedCache;
         StateCacheReference stateCache;
         CacheFactoryImpl rebuiltBy;
 
-        public DirCacheReference(ReferencablePersistentCache cache, Map<String, ?> properties, FileLockManager.LockMode lockMode) {
+        public DirCacheReference(ReferencablePersistentCache cache, Map<String, ?> properties, LockOptions lockOptions) {
             super(cache);
             this.properties = properties;
-            this.lockMode = lockMode;
+            this.lockOptions = lockOptions;
         }
 
         public <E> StateCacheReference<E> getStateCache(Serializer<E> serializer) {
@@ -202,7 +264,7 @@ public class DefaultCacheFactory implements Factory<CacheFactory> {
                         return indexedCache;
                     }
                 };
-                MultiProcessSafePersistentIndexedCache<K, V> safeCache = new MultiProcessSafePersistentIndexedCache<K, V>(cacheFactory, getCache().getLock());
+                MultiProcessSafePersistentIndexedCache<K, V> safeCache = new DefaultMultiProcessSafePersistentIndexedCache<K, V>(cacheFactory, getCache().getLock());
                 this.indexedCache = new IndexedCacheReference<K, V>(safeCache, this);
             }
             return indexedCache;

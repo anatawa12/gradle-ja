@@ -23,6 +23,7 @@ import org.gradle.tooling.model.UnsupportedMethodException
 import org.gradle.util.Matchers
 import spock.lang.Specification
 
+import java.lang.reflect.InvocationHandler
 import java.nio.channels.ByteChannel
 import java.nio.channels.Channel
 
@@ -218,7 +219,7 @@ class ProtocolToModelAdapterTest extends Specification {
         model.getConfig("default") == "default"
     }
 
-    def "mapper can override getter method"() {
+    def "mapper can register method invoker to override getter method"() {
         MethodInvoker methodInvoker = Mock()
         Action mapper = Mock()
         TestProtocolModel protocolModel = Mock()
@@ -240,7 +241,7 @@ class ProtocolToModelAdapterTest extends Specification {
         0 * protocolModel._
     }
 
-    def "mapper can provider getter method implementation"() {
+    def "mapper can register method invoker to provide getter method implementation"() {
         MethodInvoker methodInvoker = Mock()
         Action mapper = Mock()
         PartialTestProtocolModel protocolModel = Mock()
@@ -262,7 +263,24 @@ class ProtocolToModelAdapterTest extends Specification {
         0 * protocolModel._
     }
 
-    def methodInvokerPropertiesAreCached() {
+    def "adapts values returned by method invoker"() {
+        MethodInvoker methodInvoker = Mock()
+        Action mapper = Mock()
+
+        given:
+        mapper.execute(_) >> { SourceObjectMapping mapping ->
+            mapping.mixIn(methodInvoker)
+        }
+        methodInvoker.invoke({ it.name == 'getProject' }) >> { MethodInvocation method -> method.result = new Object() }
+
+        when:
+        def model = adapter.adapt(TestModel.class, new Object(), mapper)
+
+        then:
+        model.project
+    }
+
+    def "method invoker properties are cached"() {
         MethodInvoker methodInvoker = Mock()
         Action mapper = Mock()
         PartialTestProtocolModel protocolModel = Mock()
@@ -296,6 +314,19 @@ class ProtocolToModelAdapterTest extends Specification {
         then:
         model.name == "[name]"
         model.getConfig('default') == "[default]"
+    }
+
+    def "adapts values returned from mix in beans"() {
+        PartialTestProtocolModel protocolModel = Mock()
+
+        given:
+        protocolModel.name >> 'name'
+
+        when:
+        def model = adapter.adapt(TestModel.class, protocolModel, ConfigMixin)
+
+        then:
+        model.project != null
     }
 
     def "mapper can mix in methods from another bean"() {
@@ -360,7 +391,7 @@ class ProtocolToModelAdapterTest extends Specification {
         }
     }
 
-    def "wrapper objects can be serialized"() {
+    def "view objects can be serialized"() {
         def protocolModel = new TestProtocolProjectImpl()
 
         given:
@@ -373,6 +404,30 @@ class ProtocolToModelAdapterTest extends Specification {
         copiedModel instanceof TestProject
         copiedModel != model
         copiedModel.name == "name"
+    }
+
+    def "unpacks source object from view"() {
+        def source = new Object()
+
+        given:
+        def view = adapter.adapt(TestProject.class, source)
+
+        expect:
+        adapter.unpack(view).is(source)
+    }
+
+    def "fails when source object is not a view object"() {
+        when:
+        adapter.unpack("not a view")
+
+        then:
+        thrown(IllegalArgumentException)
+
+        when:
+        adapter.unpack(java.lang.reflect.Proxy.newProxyInstance(getClass().classLoader, [Runnable] as Class[], Stub(InvocationHandler)))
+
+        then:
+        thrown(IllegalArgumentException)
     }
 }
 
@@ -430,6 +485,10 @@ class ConfigMixin {
 
     ConfigMixin(TestModel model) {
         this.model = model
+    }
+
+    Object getProject() {
+        return new Object()
     }
 
     String getConfig(String value) {

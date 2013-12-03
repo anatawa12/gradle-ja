@@ -26,11 +26,11 @@ import org.gradle.api.internal.TaskInternal;
 import org.gradle.api.internal.project.DefaultProject;
 import org.gradle.api.tasks.*;
 import org.gradle.api.tasks.incremental.IncrementalTaskInputs;
+import org.gradle.internal.UncheckedException;
 import org.gradle.test.fixtures.file.TestFile;
 import org.gradle.test.fixtures.file.TestNameTestDirectoryProvider;
 import org.gradle.util.GFileUtils;
-import org.gradle.util.HelperUtil;
-import org.gradle.util.ReflectionUtil;
+import org.gradle.util.TestUtil;
 import org.jmock.Expectations;
 import org.jmock.integration.junit4.JMock;
 import org.jmock.integration.junit4.JUnit4Mockery;
@@ -41,6 +41,7 @@ import org.junit.runner.RunWith;
 import spock.lang.Issue;
 
 import java.io.File;
+import java.lang.reflect.Field;
 import java.util.*;
 import java.util.concurrent.Callable;
 
@@ -80,7 +81,7 @@ public class AnnotationProcessingTaskFactoryTest {
     }
 
     private <T extends Task> T expectTaskCreated(final Class<T> type, final Object... params) {
-        DefaultProject project = HelperUtil.createRootProject();
+        DefaultProject project = TestUtil.createRootProject();
         T task = AbstractTask.injectIntoNewInstance(project, "task", new Callable<T>() {
             public T call() throws Exception {
                 if (params.length > 0) {
@@ -164,7 +165,7 @@ public class AnnotationProcessingTaskFactoryTest {
         TaskWithInputFile task = expectTaskCreated(TaskWithInputFile.class, existingFile);
         TaskWithInputFile task2 = expectTaskCreated(TaskWithInputFile.class, missingFile);
 
-        assertThat(ReflectionUtil.getProperty(task.getActions().get(0), "action"), sameInstance(ReflectionUtil.getProperty(task2.getActions().get(0), "action")));
+        assertThat(readField(task.getActions().get(0), Action.class, "action"), sameInstance(readField(task2.getActions().get(0), Action.class, "action")));
     }
     
     @Test
@@ -697,6 +698,26 @@ public class AnnotationProcessingTaskFactoryTest {
             assertThat(actualMessages, equalTo(new HashSet<String>(Arrays.asList(expectedErrorMessages))));
         }
     }
+
+    public static <T> T readField(Object target, Class<T> type, String name) {
+        Class<?> objectType = target.getClass();
+        while (objectType != null) {
+            try {
+                Field field = objectType.getDeclaredField(name);
+                field.setAccessible(true);
+                return (T) field.get(target);
+            } catch (NoSuchFieldException ignore) {
+                // ignore
+            } catch (Exception e) {
+                throw UncheckedException.throwAsUncheckedException(e);
+            }
+
+            objectType = objectType.getSuperclass();
+        }
+
+        throw new RuntimeException("Could not find field '" + name + "' with type '" + type.getClass() + "' on class '" + target.getClass() + "'");
+    }
+
 
     public static class TestTask extends DefaultTask {
         final Runnable action;

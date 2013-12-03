@@ -28,7 +28,6 @@ class TarTest extends AbstractArchiveTaskTest {
     @Before public void setUp()  {
         tar = createTask(Tar)
         configure(tar)
-        tar.from tmpDir.createFile('file.txt')
     }
 
     AbstractArchiveTask getArchiveTask() {

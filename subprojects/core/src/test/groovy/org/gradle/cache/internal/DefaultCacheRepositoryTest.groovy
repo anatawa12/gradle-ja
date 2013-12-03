@@ -14,22 +14,20 @@
  * limitations under the License.
  */
 package org.gradle.cache.internal
-
 import org.gradle.CacheUsage
 import org.gradle.api.Action
 import org.gradle.api.Project
 import org.gradle.api.invocation.Gradle
-import org.gradle.cache.CacheBuilder.VersionStrategy
-import org.gradle.cache.CacheValidator
-import org.gradle.cache.PersistentCache
-import org.gradle.cache.PersistentIndexedCache
-import org.gradle.cache.PersistentStateCache
+import org.gradle.cache.*
 import org.gradle.messaging.serialize.DefaultSerializer
 import org.gradle.test.fixtures.file.TestFile
 import org.gradle.test.fixtures.file.TestNameTestDirectoryProvider
 import org.gradle.util.GradleVersion
 import org.junit.Rule
 import spock.lang.Specification
+
+import static org.gradle.cache.internal.FileLockManager.LockMode.*
+import static org.gradle.cache.internal.filelock.LockOptionsBuilder.mode
 
 class DefaultCacheRepositoryTest extends Specification {
     @Rule
@@ -57,7 +55,7 @@ class DefaultCacheRepositoryTest extends Specification {
 
         then:
         result == cache
-        1 * cacheFactory.openStore(sharedCacheDir.file(version, "a/b/c"), null, FileLockManager.LockMode.Shared, null) >> cache
+        1 * cacheFactory.openStore(sharedCacheDir.file(version, "a/b/c"), null, mode(Shared), null) >> cache
         0 * cacheFactory._
     }
 
@@ -67,7 +65,7 @@ class DefaultCacheRepositoryTest extends Specification {
 
         then:
         result == cache
-        1 * cacheFactory.open(sharedCacheDir.file(version, "a/b/c"), null, CacheUsage.ON, null, [:], FileLockManager.LockMode.Shared, null) >> cache
+        1 * cacheFactory.open(sharedCacheDir.file(version, "a/b/c"), null, CacheUsage.ON, null, [:], mode(Shared), null) >> cache
         0 * cacheFactory._
     }
 
@@ -80,7 +78,7 @@ class DefaultCacheRepositoryTest extends Specification {
 
         then:
         result == indexedCache
-        1 * cacheFactory.openIndexedCache(sharedCacheDir.file(version, "key"), CacheUsage.ON, null, [:], FileLockManager.LockMode.Exclusive, {it instanceof DefaultSerializer}) >> indexedCache
+        1 * cacheFactory.openIndexedCache(sharedCacheDir.file(version, "key"), CacheUsage.ON, null, [:], mode(Exclusive), {it instanceof DefaultSerializer}) >> indexedCache
         0 * cacheFactory._
     }
 
@@ -93,7 +91,7 @@ class DefaultCacheRepositoryTest extends Specification {
 
         then:
         result == stateCache
-        1 * cacheFactory.openStateCache(sharedCacheDir.file(version, "key"), CacheUsage.ON, null, [:], FileLockManager.LockMode.Exclusive, {it instanceof DefaultSerializer}) >> stateCache
+        1 * cacheFactory.openStateCache(sharedCacheDir.file(version, "key"), CacheUsage.ON, null, [:], mode(Exclusive), {it instanceof DefaultSerializer}) >> stateCache
         0 * cacheFactory._
     }
 
@@ -102,41 +100,19 @@ class DefaultCacheRepositoryTest extends Specification {
         repository.cache("a/b/c").withProperties(properties).open()
 
         then:
-        1 * cacheFactory.open(sharedCacheDir.file(version, "a/b/c"), null, CacheUsage.ON, null, properties, FileLockManager.LockMode.Shared, null) >> cache
+        1 * cacheFactory.open(sharedCacheDir.file(version, "a/b/c"), null, CacheUsage.ON, null, properties, mode(Shared), null) >> cache
     }
 
-    public void createsCacheForAGradleInstance() {
+    public void createsCacheWithLayout() {
+        def layout = Mock(CacheLayout)
+        def cacheDir = tmpDir.createDir("cache")
         when:
-        repository.cache("a/b/c").forObject(gradle).open()
+        repository.cache("a/b/c").withProperties(properties).withLayout(layout).open()
 
         then:
-        1 * cacheFactory.open(buildRootDir.file(".gradle", version, "a/b/c"), null, CacheUsage.ON, null, [:], FileLockManager.LockMode.Shared, null) >> cache
-    }
-
-    public void createsCacheForAFile() {
-        final TestFile dir = tmpDir.createDir("otherDir");
-
-        when:
-        repository.cache("a/b/c").forObject(dir).open()
-
-        then:
-        1 * cacheFactory.open(dir.file(".gradle", version, "a/b/c"), null, CacheUsage.ON, null, [:], FileLockManager.LockMode.Shared, null) >> cache
-    }
-
-    public void createsCrossVersionCacheThatIsInvalidatedOnVersionChange() {
-        when:
-        repository.cache("a/b/c").withVersionStrategy(VersionStrategy.SharedCacheInvalidateOnVersionChange).open()
-
-        then:
-        1 * cacheFactory.open(sharedCacheDir.file("noVersion", "a/b/c"), null, CacheUsage.ON, null, ["gradle.version": version], FileLockManager.LockMode.Shared, null) >> cache
-    }
-
-    public void createsCrossVersionCacheForAGradleInstanceThatIsInvalidatedOnVersionChange() {
-        when:
-        repository.cache("a/b/c").withVersionStrategy(VersionStrategy.SharedCacheInvalidateOnVersionChange).forObject(gradle).open()
-
-        then:
-        1 * cacheFactory.open(buildRootDir.file(".gradle", "noVersion", "a/b/c"), null, CacheUsage.ON, null, ["gradle.version": version], FileLockManager.LockMode.Shared, null) >> cache
+        1 * layout.getCacheDir(sharedCacheDir, null, "a/b/c") >> cacheDir
+        1 * layout.applyLayoutProperties(properties) >> [version: "foo"]
+        1 * cacheFactory.open(cacheDir, null, CacheUsage.ON, null, [version: "foo"], mode(Shared), null) >> cache
     }
 
     public void canSpecifyInitializerActionForDirectoryCache() {
@@ -146,15 +122,15 @@ class DefaultCacheRepositoryTest extends Specification {
         repository.cache("a").withInitializer(action).open()
 
         then:
-        1 * cacheFactory.open(sharedCacheDir.file(version, "a"), null, CacheUsage.ON, null, [:], FileLockManager.LockMode.Shared, action) >> cache
+        1 * cacheFactory.open(sharedCacheDir.file(version, "a"), null, CacheUsage.ON, null, [:], mode(Shared), action) >> cache
     }
 
     public void canSpecifyLockModeForDirectoryCache() {
         when:
-        repository.cache("a").withLockMode(FileLockManager.LockMode.None).open()
+        repository.cache("a").withLockOptions(mode(None)).open()
 
         then:
-        1 * cacheFactory.open(sharedCacheDir.file(version, "a"), null, CacheUsage.ON, null, [:], FileLockManager.LockMode.None, null) >> cache
+        1 * cacheFactory.open(sharedCacheDir.file(version, "a"), null, CacheUsage.ON, null, [:], mode(None), null) >> cache
     }
 
     public void canSpecifyDisplayNameForDirectoryCache() {
@@ -162,7 +138,7 @@ class DefaultCacheRepositoryTest extends Specification {
         repository.cache("a").withDisplayName("<cache>").open()
 
         then:
-        1 * cacheFactory.open(sharedCacheDir.file(version, "a"), "<cache>", CacheUsage.ON, null, [:], FileLockManager.LockMode.Shared, null) >> cache
+        1 * cacheFactory.open(sharedCacheDir.file(version, "a"), "<cache>", CacheUsage.ON, null, [:], mode(Shared), null) >> cache
     }
 
     public void canSpecifyCacheValidatorForDirectoryCache() {
@@ -171,6 +147,6 @@ class DefaultCacheRepositoryTest extends Specification {
         repository.cache("a").withValidator(validator).open()
 
         then:
-        1 * cacheFactory.open(sharedCacheDir.file(version, "a"), null, CacheUsage.ON, validator, [:], FileLockManager.LockMode.Shared, null) >> cache
+        1 * cacheFactory.open(sharedCacheDir.file(version, "a"), null, CacheUsage.ON, validator, [:], mode(Shared), null) >> cache
     }
 }

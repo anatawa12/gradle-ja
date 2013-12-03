@@ -16,6 +16,9 @@
 package org.gradle.tooling.internal.consumer.loader;
 
 import org.gradle.internal.Factory;
+import org.gradle.internal.classloader.FilteringClassLoader;
+import org.gradle.internal.classloader.MultiParentClassLoader;
+import org.gradle.internal.classloader.MutableURLClassLoader;
 import org.gradle.internal.classpath.ClassPath;
 import org.gradle.internal.service.ServiceLocator;
 import org.gradle.logging.ProgressLoggerFactory;
@@ -27,19 +30,9 @@ import org.gradle.tooling.internal.consumer.connection.*;
 import org.gradle.tooling.internal.consumer.converters.ConsumerTargetTypeProvider;
 import org.gradle.tooling.internal.consumer.parameters.ConsumerConnectionParameters;
 import org.gradle.tooling.internal.consumer.versioning.ModelMapping;
-import org.gradle.tooling.internal.protocol.BuildActionRunner;
-import org.gradle.tooling.internal.protocol.ConnectionVersion4;
-import org.gradle.tooling.internal.protocol.InternalConnection;
-import org.gradle.tooling.internal.protocol.ModelBuilder;
-import org.gradle.util.FilteringClassLoader;
-import org.gradle.util.GradleVersion;
-import org.gradle.util.MultiParentClassLoader;
-import org.gradle.internal.classloader.MutableURLClassLoader;
+import org.gradle.tooling.internal.protocol.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 public class DefaultToolingImplementationLoader implements ToolingImplementationLoader {
     private static final Logger LOGGER = LoggerFactory.getLogger(DefaultToolingImplementationLoader.class);
@@ -60,10 +53,7 @@ public class DefaultToolingImplementationLoader implements ToolingImplementation
         try {
             Factory<ConnectionVersion4> factory = serviceLocator.findFactory(ConnectionVersion4.class);
             if (factory == null) {
-                Matcher m = Pattern.compile("\\w+Version(\\d+)").matcher(ConnectionVersion4.class.getSimpleName());
-                m.matches();
-                String protocolVersion = m.group(1);
-                throw new UnsupportedVersionException(String.format("The specified %s is not supported by this tooling API version (%s, protocol version %s)", distribution.getDisplayName(), GradleVersion.current().getVersion(), protocolVersion));
+                return new NoToolingApiConnection(distribution);
             }
             // ConnectionVersion4 is a part of the protocol and cannot be easily changed.
             ConnectionVersion4 connection = factory.create();
@@ -73,8 +63,10 @@ public class DefaultToolingImplementationLoader implements ToolingImplementation
 
             // Adopting the connection to a refactoring friendly type that the consumer owns
             AbstractConsumerConnection adaptedConnection;
-            if (connection instanceof ModelBuilder) {
-                adaptedConnection = new ModelBuilderBackedConsumerConnection(connection, adapter);
+            if (connection instanceof ModelBuilder && connection instanceof InternalBuildActionExecutor) {
+                adaptedConnection = new ActionAwareConsumerConnection(connection, modelMapping, adapter);
+            } else if (connection instanceof ModelBuilder) {
+                adaptedConnection = new ModelBuilderBackedConsumerConnection(connection, modelMapping, adapter);
             } else if (connection instanceof BuildActionRunner) {
                 adaptedConnection = new BuildActionRunnerBackedConsumerConnection(connection, modelMapping, adapter);
             } else if (connection instanceof InternalConnection) {
@@ -100,6 +92,15 @@ public class DefaultToolingImplementationLoader implements ToolingImplementation
         MultiParentClassLoader parentObfuscatingClassLoader = new MultiParentClassLoader(classLoader);
         FilteringClassLoader filteringClassLoader = new FilteringClassLoader(parentObfuscatingClassLoader);
         filteringClassLoader.allowPackage("org.gradle.tooling.internal.protocol");
-        return new MutableURLClassLoader(filteringClassLoader, implementationClasspath.getAsURLArray());
+        return new MutableURLClassLoader(filteringClassLoader, implementationClasspath.getAsURLArray()) {
+            @Override
+            public Class<?> loadClass(String name, boolean resolve) throws ClassNotFoundException {
+                //TODO:ADAM - remove this.
+                if (name.startsWith("com.sun.jdi.")) {
+                    System.out.println(String.format("=> Loading JDI class %s in provider ClassLoader. Should not be.", name));
+                }
+                return super.loadClass(name, resolve);
+            }
+        };
     }
 }

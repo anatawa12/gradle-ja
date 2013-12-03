@@ -19,11 +19,11 @@ import org.gradle.language.jvm.ResourceSet
 import org.gradle.language.jvm.internal.DefaultClassDirectoryBinary
 import org.gradle.language.jvm.plugins.JvmLanguagePlugin
 import org.gradle.language.jvm.tasks.ProcessResources
-import org.gradle.util.HelperUtil
+import org.gradle.util.TestUtil
 import spock.lang.Specification
 
 class JvmLanguagePluginTest extends Specification {
-    def project = HelperUtil.createRootProject()
+    def project = TestUtil.createRootProject()
     def jvmLanguagePlugin = project.plugins.apply(JvmLanguagePlugin)
 
     def "registers the 'ResourceSet' type for each functional source set added to the 'sources' container"() {
@@ -66,7 +66,7 @@ class JvmLanguagePluginTest extends Specification {
         project.tasks.size() == old(project.tasks.size()) + 1
         def task = project.tasks.findByName("processProdResources")
         task instanceof ProcessResources
-        task.description == "Processes source set 'main:resources'."
+        task.description == "Processes resources 'main:resources'."
     }
 
     def "adds tasks based on short name when ClassDirectoryBinary has name ending in Classes"() {
@@ -84,6 +84,6 @@ class JvmLanguagePluginTest extends Specification {
         and:
         def resourcesTask = project.tasks.findByName("processFooResources")
         resourcesTask instanceof ProcessResources
-        resourcesTask.description == "Processes source set 'main:resources'."
+        resourcesTask.description == "Processes resources 'main:resources'."
     }
 }

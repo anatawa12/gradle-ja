@@ -158,7 +158,7 @@
         </section>
 
         <section>
-            <title>プロジェクトのカスタマイズ<phrase role="original">Customising the project</phrase></title>
+            <title>プロジェクトのカスタマイズ<phrase role="original">Customizing the project</phrase></title>
             <para role="original">The Java plugin adds a number of properties to your project. These properties have default values
                 which are usually sufficient to get started. It's easy to change these values if they don't suit. Let's
                 look at this for our sample. Here we will specify the version number for our Java project, along
@@ -167,7 +167,7 @@
             <para>Javaプラグインは多くのプロパティをプロジェクトに追加します。こういったプロパティには普通、十分適切なデフォルト値が設定されています。不適切な場合、これらの値を変更するのは簡単です。では、実例を見てみましょう。ここでは、ソースの書かれたJavaバージョンとともに、Javaプロジェクトのバージョン番号を指定しています。また、JAR manifestにいくつか属性を追加しています。
             </para>
             <sample id="javaQuickstart" dir="java/quickstart" title="MANIFEST.MFのカスタマイズ / Customization of MANIFEST.MF">
-                <sourcefile file="build.gradle" snippet="customisation"/>
+                <sourcefile file="build.gradle" snippet="customization"/>
             </sample>
             <tip>
                 <title>どんなプロパティが利用可能？<phrase role="original">What properties are available?</phrase></title>
@@ -175,7 +175,7 @@
                 you to see the properties added by the Java plugin, and their default values.</para>
                 <para><userinput>gradle properties</userinput>を使えば、プロジェクトのプロパティを一覧することができます。これによって、Javaプラグインが追加したプロパティとそのデフォルト値を見ることができるでしょう。</para></tip>
             <para role="original">The tasks which the Java plugin adds are regular tasks, exactly the same as if they were declared in
-                the build file. This means you can use any of the mechanisms shown in earlier chapters to customise
+                the build file. This means you can use any of the mechanisms shown in earlier chapters to customize
                 these tasks. For example, you can set the properties of a task, add behaviour to a task, change the
                 dependencies of a task, or replace a task entirely. In our sample, we will configure the
                 <literal>test</literal> task, which is of type <apilink class="org.gradle.api.tasks.testing.Test"/>, to
@@ -183,7 +183,7 @@
             <para>Javaプラグインが追加するタスクはごく普通のタスクで、ビルドファイルで宣言されるものとまったく同等のものです。つまり、これらのタスクは、ここまでの章で説明したあらゆるメカニズムを使ってカスタマイズすることが可能だということです。例えば、タスクのプロパティを設定したり、タスクに振る舞いを追加したり、タスクの依存関係を変更したり、あるはタスク全体を完全に置き換えることすら可能です。以下の例では、<apilink class="org.gradle.api.tasks.testing.Test"/>型である<literal>test</literal>タスクを設定して、テスト実行時のシステムプロパティを追加しています：
             </para>
             <sample id="javaQuickstart" dir="java/quickstart" title="テスト用システムプロパティの追加 / Adding a test system property">
-                <sourcefile file="build.gradle" snippet="task-customisation"/>
+                <sourcefile file="build.gradle" snippet="task-customization"/>
             </sample>
         </section>
 

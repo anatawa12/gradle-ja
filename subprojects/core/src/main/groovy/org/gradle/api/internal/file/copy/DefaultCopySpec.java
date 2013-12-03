@@ -22,9 +22,7 @@ import org.gradle.api.NonExtensible;
 import org.gradle.api.file.*;
 import org.gradle.api.internal.ChainingTransformer;
 import org.gradle.api.internal.ClosureBackedAction;
-import org.gradle.api.internal.file.CompositeFileTree;
 import org.gradle.api.internal.file.FileResolver;
-import org.gradle.api.internal.file.collections.FileCollectionResolveContext;
 import org.gradle.api.internal.file.pattern.PatternMatcherFactory;
 import org.gradle.api.specs.NotSpec;
 import org.gradle.api.specs.Spec;
@@ -101,14 +99,18 @@ public class DefaultCopySpec implements CopySpecInternal {
         } else {
             DefaultCopySpec child = addChild();
             child.from(sourcePath);
-            ConfigureUtil.configure(c, child);
+            ConfigureUtil.configure(c, instantiator.newInstance(CopySpecWrapper.class, child));
             return child;
         }
     }
 
     public DefaultCopySpec addFirst() {
+        return addChildAtPosition(0);
+    }
+
+    private DefaultCopySpec addChildAtPosition(int position) {
         DefaultCopySpec child = instantiator.newInstance(DefaultCopySpec.class, resolver, instantiator, this);
-        childSpecs.add(0, child);
+        childSpecs.add(position, child);
         return child;
     }
 
@@ -116,6 +118,11 @@ public class DefaultCopySpec implements CopySpecInternal {
         DefaultCopySpec child = instantiator.newInstance(DefaultCopySpec.class, resolver, instantiator, this);
         childSpecs.add(child);
         return child;
+    }
+
+    public DefaultCopySpec addChildBeforeSpec(CopySpecInternal childSpec) {
+        int position = childSpecs.indexOf(childSpec);
+        return position != -1 ? addChildAtPosition(position) : addChild();
     }
 
     public Set<Object> getSourcePaths() {
@@ -134,25 +141,7 @@ public class DefaultCopySpec implements CopySpecInternal {
             }
         });
 
-        return new ImmutableCompositeFileTree(builder.build());
-    }
-
-    private static class ImmutableCompositeFileTree extends CompositeFileTree {
-        private final ImmutableList<FileTree> fileTrees;
-
-        private ImmutableCompositeFileTree(ImmutableList<FileTree> fileTrees) {
-            this.fileTrees = fileTrees;
-        }
-
-        @Override
-        public void resolve(FileCollectionResolveContext context) {
-            context.add(fileTrees);
-        }
-
-        @Override
-        public String getDisplayName() {
-            return "file tree";
-        }
+        return resolver.compositeFileTree(builder.build());
     }
 
     public DefaultCopySpec into(Object destDir) {
@@ -167,7 +156,7 @@ public class DefaultCopySpec implements CopySpecInternal {
         } else {
             DefaultCopySpec child = addChild();
             child.into(destPath);
-            ConfigureUtil.configure(configureClosure, child);
+            ConfigureUtil.configure(configureClosure, instantiator.newInstance(CopySpecWrapper.class, child));
             return child;
         }
     }

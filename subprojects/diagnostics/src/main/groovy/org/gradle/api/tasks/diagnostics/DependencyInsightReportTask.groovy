@@ -14,8 +14,7 @@
  * limitations under the License.
  */
 
-package org.gradle.api.tasks.diagnostics;
-
+package org.gradle.api.tasks.diagnostics
 
 import org.gradle.api.Action
 import org.gradle.api.DefaultTask
@@ -24,24 +23,22 @@ import org.gradle.api.InvalidUserDataException
 import org.gradle.api.artifacts.Configuration
 import org.gradle.api.artifacts.result.DependencyResult
 import org.gradle.api.artifacts.result.ResolutionResult
-import org.gradle.api.internal.tasks.CommandLineOption
+import org.gradle.api.internal.artifacts.ivyservice.ivyresolve.strategy.VersionMatcher
+import org.gradle.api.internal.tasks.options.Option
 import org.gradle.api.specs.Spec
 import org.gradle.api.tasks.TaskAction
-import org.gradle.internal.graph.GraphRenderer
 import org.gradle.api.tasks.diagnostics.internal.dsl.DependencyResultSpecNotationParser
 import org.gradle.api.tasks.diagnostics.internal.graph.DependencyGraphRenderer
 import org.gradle.api.tasks.diagnostics.internal.graph.NodeRenderer
 import org.gradle.api.tasks.diagnostics.internal.graph.nodes.RenderableDependency
 import org.gradle.api.tasks.diagnostics.internal.insight.DependencyInsightReporter
+import org.gradle.internal.graph.GraphRenderer
 import org.gradle.logging.StyledTextOutput
 import org.gradle.logging.StyledTextOutputFactory
 
 import javax.inject.Inject
 
-import static org.gradle.logging.StyledTextOutput.Style.Info
-import static org.gradle.logging.StyledTextOutput.Style.Failure
-import static org.gradle.logging.StyledTextOutput.Style.Identifier
-import static org.gradle.logging.StyledTextOutput.Style.Description
+import static org.gradle.logging.StyledTextOutput.Style.*
 
 /**
  * Generates a report that attempts to answer questions like:
@@ -85,11 +82,13 @@ public class DependencyInsightReportTask extends DefaultTask {
 
     private final StyledTextOutput output;
     private final GraphRenderer renderer;
+    private final VersionMatcher versionMatcher;
 
     @Inject
-    DependencyInsightReportTask(StyledTextOutputFactory outputFactory) {
+    DependencyInsightReportTask(StyledTextOutputFactory outputFactory, VersionMatcher versionMatcher) {
         output = outputFactory.create(getClass());
-        renderer = new GraphRenderer(output);
+        renderer = new GraphRenderer(output)
+        this.versionMatcher = versionMatcher
     }
 
     /**
@@ -115,7 +114,7 @@ public class DependencyInsightReportTask extends DefaultTask {
      *
      * @param dependencyInsightNotation
      */
-    @CommandLineOption(options = "dependency", description = "Shows the details of given dependency.")
+    @Option(option = "dependency", description = "Shows the details of given dependency.")
     public void setDependencySpec(Object dependencyInsightNotation) {
         def parser = DependencyResultSpecNotationParser.create()
         this.dependencySpec = parser.parseNotation(dependencyInsightNotation)
@@ -138,7 +137,7 @@ public class DependencyInsightReportTask extends DefaultTask {
      *
      * @param configurationName
      */
-    @CommandLineOption(options = "configuration", description = "Looks for the dependency in given configuration.")
+    @Option(option = "configuration", description = "Looks for the dependency in given configuration.")
     public void setConfiguration(String configurationName) {
         this.configuration = project.configurations.getByName(configurationName)
     }
@@ -168,7 +167,7 @@ public class DependencyInsightReportTask extends DefaultTask {
             return
         }
 
-        def sortedDeps = new DependencyInsightReporter().prepare(selectedDependencies)
+        def sortedDeps = new DependencyInsightReporter().prepare(selectedDependencies, versionMatcher)
 
         def nodeRenderer = new NodeRenderer() {
             void renderNode(StyledTextOutput output, RenderableDependency node, boolean alreadyRendered) {

@@ -29,7 +29,7 @@ import org.gradle.api.internal.initialization.ScriptClassLoaderProvider;
 import org.gradle.api.internal.plugins.PluginRegistry;
 import org.gradle.api.internal.project.ProjectRegistry;
 import org.gradle.api.internal.project.ProjectInternal;
-import org.gradle.api.internal.project.ServiceRegistryFactory;
+import org.gradle.internal.service.scopes.ServiceRegistryFactory;
 import org.gradle.api.invocation.Gradle;
 import org.gradle.api.plugins.PluginContainer;
 import org.gradle.configuration.ScriptPluginFactory;
@@ -38,9 +38,9 @@ import org.gradle.listener.ClosureBackedMethodInvocationDispatch;
 import org.gradle.listener.ListenerBroadcast;
 import org.gradle.listener.ListenerManager;
 import org.gradle.util.GradleVersion;
-import org.gradle.util.HelperUtil;
+import org.gradle.util.TestUtil;
 import org.gradle.util.JUnit4GroovyMockery;
-import org.gradle.util.MultiParentClassLoader;
+import org.gradle.internal.classloader.MultiParentClassLoader;
 import org.jmock.Expectations;
 import org.jmock.integration.junit4.JMock;
 import org.jmock.integration.junit4.JUnit4Mockery;
@@ -158,7 +158,7 @@ public class DefaultGradleTest {
 
     @Test
     public void broadcastsBeforeProjectEvaluateEventsToClosures() {
-        final Closure closure = HelperUtil.TEST_CLOSURE;
+        final Closure closure = TestUtil.TEST_CLOSURE;
         context.checking(new Expectations() {{
             one(projectEvaluationListenerBroadcast).add(new ClosureBackedMethodInvocationDispatch("beforeEvaluate", closure));
         }});
@@ -168,7 +168,7 @@ public class DefaultGradleTest {
 
     @Test
     public void broadcastsAfterProjectEvaluateEventsToClosures() {
-        final Closure closure = HelperUtil.TEST_CLOSURE;
+        final Closure closure = TestUtil.TEST_CLOSURE;
         context.checking(new Expectations() {{
             one(projectEvaluationListenerBroadcast).add(new ClosureBackedMethodInvocationDispatch("afterEvaluate", closure));
         }});

@@ -22,11 +22,11 @@ import org.gradle.api.artifacts.PublishArtifact;
 import org.gradle.api.internal.artifacts.configurations.DependencyMetaDataProvider;
 import org.gradle.api.internal.artifacts.publish.ArchivePublishArtifact;
 import org.gradle.api.internal.artifacts.publish.DefaultPublishArtifact;
-import org.gradle.api.internal.notations.NotationParserBuilder;
-import org.gradle.api.internal.notations.api.NotationParser;
-import org.gradle.api.internal.notations.parsers.MapKey;
-import org.gradle.api.internal.notations.parsers.MapNotationParser;
-import org.gradle.api.internal.notations.parsers.TypedNotationParser;
+import org.gradle.internal.typeconversion.NotationParserBuilder;
+import org.gradle.internal.typeconversion.NotationParser;
+import org.gradle.internal.typeconversion.MapKey;
+import org.gradle.internal.typeconversion.MapNotationParser;
+import org.gradle.internal.typeconversion.TypedNotationParser;
 import org.gradle.api.tasks.bundling.AbstractArchiveTask;
 import org.gradle.internal.Factory;
 import org.gradle.internal.reflect.Instantiator;
@@ -34,7 +34,7 @@ import org.gradle.internal.reflect.Instantiator;
 import java.io.File;
 import java.util.Collection;
 
-public class PublishArtifactNotationParserFactory implements Factory<NotationParser<PublishArtifact>> {
+public class PublishArtifactNotationParserFactory implements Factory<NotationParser<Object, PublishArtifact>> {
     private final Instantiator instantiator;
     private final DependencyMetaDataProvider metaDataProvider;
 
@@ -43,7 +43,7 @@ public class PublishArtifactNotationParserFactory implements Factory<NotationPar
         this.metaDataProvider = metaDataProvider;
     }
 
-    public NotationParser<PublishArtifact> create() {
+    public NotationParser<Object, PublishArtifact> create() {
         FileNotationParser fileParser = new FileNotationParser();
         return new NotationParserBuilder<PublishArtifact>()
                 .resultingType(PublishArtifact.class)

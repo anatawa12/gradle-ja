@@ -16,6 +16,13 @@
 package org.gradle.launcher.daemon.client;
 
 import org.gradle.api.internal.DocumentationRegistry;
+import org.gradle.cache.internal.DefaultFileLockManager;
+import org.gradle.cache.internal.DefaultProcessMetaDataProvider;
+import org.gradle.cache.internal.FileLockManager;
+import org.gradle.cache.internal.locklistener.NoOpFileLockContentionHandler;
+import org.gradle.internal.concurrent.DefaultExecutorFactory;
+import org.gradle.internal.concurrent.ExecutorFactory;
+import org.gradle.internal.nativeplatform.*;
 import org.gradle.internal.service.ServiceRegistry;
 import org.gradle.launcher.daemon.bootstrap.DaemonGreeter;
 import org.gradle.launcher.daemon.configuration.DaemonParameters;
@@ -34,7 +41,19 @@ public class DaemonClientServices extends DaemonClientServicesSupport {
     public DaemonClientServices(ServiceRegistry loggingServices, DaemonParameters daemonParameters, InputStream buildStandardInput) {
         super(loggingServices, buildStandardInput);
         this.daemonParameters = daemonParameters;
-        add(new DaemonRegistryServices(daemonParameters.getBaseDir()));
+        addProvider(new DaemonRegistryServices(daemonParameters.getBaseDir()));
+    }
+
+    protected FileLockManager createFileLockManager(ProcessEnvironment processEnvironment) {
+        return new DefaultFileLockManager(new DefaultProcessMetaDataProvider(processEnvironment), new NoOpFileLockContentionHandler());
+    }
+
+    protected ExecutorFactory createExecutorFactory() {
+        return new DefaultExecutorFactory();
+    }
+
+    protected DocumentationRegistry createDocumentationRegistry() {
+        return new DocumentationRegistry();
     }
 
     public DaemonStarter createDaemonStarter() {

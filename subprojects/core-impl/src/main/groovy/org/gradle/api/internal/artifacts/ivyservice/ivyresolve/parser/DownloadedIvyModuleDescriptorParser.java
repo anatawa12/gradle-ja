@@ -17,14 +17,15 @@
 package org.gradle.api.internal.artifacts.ivyservice.ivyresolve.parser;
 
 import org.apache.ivy.core.module.descriptor.DefaultModuleDescriptor;
-import org.apache.ivy.plugins.parser.ParserSettings;
-import org.gradle.api.internal.externalresource.LocallyAvailableExternalResource;
+import org.gradle.api.internal.artifacts.ivyservice.ivyresolve.strategy.ResolverStrategy;
 
 public class DownloadedIvyModuleDescriptorParser extends IvyXmlModuleDescriptorParser {
+    public DownloadedIvyModuleDescriptorParser(ResolverStrategy resolverStrategy) {
+        super(resolverStrategy);
+    }
+
     @Override
-    public DefaultModuleDescriptor parseDescriptor(ParserSettings ivySettings, LocallyAvailableExternalResource resource, boolean validate) throws MetaDataParseException {
-        DefaultModuleDescriptor descriptor = super.parseDescriptor(ivySettings, resource, validate);
-        descriptor.setDefault(false);
-        return descriptor;
+    protected void postProcess(DefaultModuleDescriptor moduleDescriptor) {
+        moduleDescriptor.setDefault(false);
     }
 }

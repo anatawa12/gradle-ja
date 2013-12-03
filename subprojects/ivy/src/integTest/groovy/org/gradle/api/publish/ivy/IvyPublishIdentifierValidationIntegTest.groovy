@@ -59,7 +59,7 @@ class IvyPublishIdentifierValidationIntegTest extends AbstractIvyPublishIntegTes
 
         then:
         module.assertPublished()
-        module.ivy.description == description.toString()
+        module.parsedIvy.description == description.toString()
 
         and:
         resolveArtifacts(module) == [moduleName + '-' + version + '.jar']
@@ -95,6 +95,11 @@ class IvyPublishIdentifierValidationIntegTest extends AbstractIvyPublishIntegTes
 
             group = '${sq(organisation)}'
             version = '${sq(version)}'
+
+            println "test build vm: file.encoding=" + System.getProperty("file.encoding")
+            println "test build vm: LANG=" + System.getenv("LANG")
+            println "test build vm: LC_ALL=" + System.getenv("LC_ALL")
+            println "test build vm: LC_CTYPE=" + System.getenv("LC_CTYPE")
 
             publishing {
                 repositories {

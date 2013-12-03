@@ -15,9 +15,6 @@
  */
 package org.gradle.launcher.daemon.client;
 
-import org.gradle.api.internal.DocumentationRegistry;
-import org.gradle.api.internal.classpath.DefaultModuleRegistry;
-import org.gradle.internal.concurrent.DefaultExecutorFactory;
 import org.gradle.internal.concurrent.ExecutorFactory;
 import org.gradle.internal.id.CompositeIdGenerator;
 import org.gradle.internal.id.IdGenerator;
@@ -44,18 +41,11 @@ import java.io.InputStream;
  * @see EmbeddedDaemonClientServices
  */
 abstract public class DaemonClientServicesSupport extends DefaultServiceRegistry {
-
-    private final ServiceRegistry loggingServices;
     private final InputStream buildStandardInput;
 
     public DaemonClientServicesSupport(ServiceRegistry loggingServices, InputStream buildStandardInput) {
-        this.loggingServices = loggingServices;
+        super(NativeServices.getInstance(), loggingServices);
         this.buildStandardInput = buildStandardInput;
-        add(NativeServices.getInstance());
-    }
-
-    public ServiceRegistry getLoggingServices() {
-        return loggingServices;
     }
 
     protected InputStream getBuildStandardInput() {
@@ -84,14 +74,6 @@ abstract public class DaemonClientServicesSupport extends DefaultServiceRegistry
         
     }
 
-    protected OutputEventListener createOutputEventListener() {
-        return getLoggingServices().get(OutputEventListener.class);
-    }
-
-    protected ExecutorFactory createExecuterFactory() {
-        return new DefaultExecutorFactory();
-    }
-
     protected IdGenerator<?> createIdGenerator() {
         return new CompositeIdGenerator(new UUIDGenerator().generateId(), new LongIdGenerator());
     }
@@ -102,13 +84,5 @@ abstract public class DaemonClientServicesSupport extends DefaultServiceRegistry
 
     protected DaemonConnector createDaemonConnector() {
         return new DefaultDaemonConnector(get(DaemonRegistry.class), get(OutgoingConnector.class), get(DaemonStarter.class));
-    }
-
-    protected DocumentationRegistry createDocumentationRegistry() {
-        return new DocumentationRegistry();
-    }
-
-    protected DefaultModuleRegistry createModuleRegistry() {
-        return new DefaultModuleRegistry();
     }
 }

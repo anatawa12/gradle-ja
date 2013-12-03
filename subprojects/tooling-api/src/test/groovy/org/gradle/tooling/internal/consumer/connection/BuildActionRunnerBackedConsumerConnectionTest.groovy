@@ -16,7 +16,9 @@
 
 package org.gradle.tooling.internal.consumer.connection
 
+import org.gradle.tooling.BuildAction
 import org.gradle.tooling.UnknownModelException
+import org.gradle.tooling.UnsupportedVersionException
 import org.gradle.tooling.internal.adapter.ProtocolToModelAdapter
 import org.gradle.tooling.internal.consumer.parameters.ConsumerConnectionParameters
 import org.gradle.tooling.internal.consumer.parameters.ConsumerOperationParameters
@@ -27,6 +29,7 @@ import org.gradle.tooling.model.GradleProject
 import org.gradle.tooling.model.build.BuildEnvironment
 import org.gradle.tooling.model.eclipse.EclipseProject
 import org.gradle.tooling.model.eclipse.HierarchicalEclipseProject
+import org.gradle.tooling.model.gradle.GradleBuild
 import org.gradle.tooling.model.idea.BasicIdeaProject
 import org.gradle.tooling.model.idea.IdeaProject
 import org.gradle.tooling.model.internal.outcomes.ProjectOutcomes
@@ -50,7 +53,6 @@ class BuildActionRunnerBackedConsumerConnectionTest extends Specification {
 
         expect:
         details.supportsGradleProjectModel()
-        details.supportsRunningTasksWhenBuildingModel()
 
         and:
         details.isModelSupported(HierarchicalEclipseProject)
@@ -95,13 +97,44 @@ class BuildActionRunnerBackedConsumerConnectionTest extends Specification {
         0 * target._
     }
 
+    def "builds GradleBuild model by converting GradleProject"() {
+        BuildResult<GradleProject> result = Stub()
+        GradleProject adapted = Stub()
+        GradleBuild adaptedGradleBuild = Stub()
+
+        when:
+        def model = connection.run(GradleBuild.class, parameters)
+        then:
+        model == adaptedGradleBuild
+
+        and:
+        _ * modelMapping.getProtocolType(GradleProject.class) >> GradleProject.class
+        1 * target.run(GradleProject.class, parameters) >> result
+        _ * result.model >> Stub(GradleProject.class)
+        1 * adapter.adapt(GradleProject.class, _) >> adapted
+        1 * adapter.adapt(GradleBuild.class, _) >> adaptedGradleBuild
+        0 * target._
+    }
+
     def "fails when unknown model is requested"() {
         when:
         connection.run(CustomModel.class, parameters)
 
         then:
         UnknownModelException e = thrown()
-        e.message == /The version of Gradle you are using (1.2) does not support building a model of type 'CustomModel'./
+        e.message == /The version of Gradle you are using (1.2) does not support building a model of type 'CustomModel'. Support for building custom tooling models was added in Gradle 1.6 and is available in all later versions./
+    }
+
+    def "fails when build action requested"() {
+        given:
+        parameters.tasks >> ['a']
+
+        when:
+        connection.run(Stub(BuildAction), parameters)
+
+        then:
+        UnsupportedVersionException e = thrown()
+        e.message == /The version of Gradle you are using (1.2) does not support execution of build actions provided by the tooling API client. Support for this was added in Gradle 1.8 and is available in all later versions./
     }
 
     interface TestBuildActionRunner extends ConnectionVersion4, BuildActionRunner, ConfigurableConnection {

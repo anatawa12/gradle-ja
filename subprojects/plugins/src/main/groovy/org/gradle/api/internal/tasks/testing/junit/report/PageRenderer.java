@@ -16,7 +16,7 @@
 package org.gradle.api.internal.tasks.testing.junit.report;
 
 import org.gradle.api.Action;
-import org.gradle.api.internal.ErroringAction;
+import org.gradle.internal.ErroringAction;
 import org.gradle.api.internal.html.SimpleHtmlWriter;
 import org.gradle.reporting.ReportRenderer;
 import org.gradle.reporting.TabbedPageRenderer;
@@ -63,9 +63,9 @@ abstract class PageRenderer<T extends CompositeTestResults> extends TabbedPageRe
         htmlWriter.startElement("ul").attribute("class", "linkList");
         for (TestResult test : results.getFailures()) {
             htmlWriter.startElement("li");
-            htmlWriter.startElement("a").attribute("href", String.format("%s.html", test.getClassResults().getName())).characters(test.getClassResults().getSimpleName()).endElement();
+            htmlWriter.startElement("a").attribute("href", asHtmlLinkEncoded(getResults().getUrlTo(test.getClassResults()))).characters(test.getClassResults().getSimpleName()).endElement();
             htmlWriter.characters(".");
-            htmlWriter.startElement("a").attribute("href", String.format("%s.html#%s", test.getClassResults().getName(), test.getName())).characters(test.getName()).endElement();
+            htmlWriter.startElement("a").attribute("href", String.format("%s#%s", asHtmlLinkEncoded(getResults().getUrlTo(test.getClassResults())), test.getName())).characters(test.getName()).endElement();
             htmlWriter.endElement();
         }
         htmlWriter.endElement();
@@ -143,5 +143,9 @@ abstract class PageRenderer<T extends CompositeTestResults> extends TabbedPageRe
                 renderTabs(htmlWriter);
             }
         };
+    }
+
+    protected String asHtmlLinkEncoded(String rawLink) {
+        return rawLink.replaceAll("#", "%23");
     }
 }

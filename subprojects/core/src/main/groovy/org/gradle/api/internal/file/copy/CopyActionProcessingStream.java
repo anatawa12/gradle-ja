@@ -16,10 +16,10 @@
 
 package org.gradle.api.internal.file.copy;
 
-import org.gradle.api.Action;
+import org.gradle.api.internal.file.CopyActionProcessingStreamAction;
 
 public interface CopyActionProcessingStream {
 
-    void process(Action<? super FileCopyDetailsInternal> action);
+    void process(CopyActionProcessingStreamAction action);
 
 }

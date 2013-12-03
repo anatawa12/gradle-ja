@@ -48,18 +48,18 @@ task listJars << {
 }
 """
         when:
-        module.expectIvyHead()
-        module.expectIvyGet()
-        module.expectJarHead()
-        module.expectJarGet()
+        module.ivy.expectHead()
+        module.ivy.expectGet()
+        module.jar.expectHead()
+        module.jar.expectGet()
         executer.withDeprecationChecksDisabled()
 
         then:
         succeeds 'listJars'
 
         and:
-        progressLogging.downloadProgressLogged(module.ivyFileUri)
-        progressLogging.downloadProgressLogged(module.jarFileUri)
+        progressLogging.downloadProgressLogged(module.ivy.uri)
+        progressLogging.downloadProgressLogged(module.jar.uri)
 
         when:
         server.resetExpectations()
@@ -95,10 +95,10 @@ task retrieve(type: Sync) {
 }
 """
         when:
-        module.expectIvyHead()
-        module.expectIvyGet()
-        module.expectJarHead()
-        module.expectJarGet()
+        module.ivy.expectHead()
+        module.ivy.expectGet()
+        module.jar.expectHead()
+        module.jar.expectGet()
         executer.withDeprecationChecksDisabled()
 
         run 'retrieve'
@@ -113,10 +113,10 @@ task retrieve(type: Sync) {
 
         server.resetExpectations()
         // Server will be hit to get updated versions
-        module.expectIvyHead()
-        module.expectIvyGet()
-        module.expectJarHead()
-        module.expectJarGet()
+        module.ivy.expectHead()
+        module.ivy.expectGet()
+        module.jar.expectHead()
+        module.jar.expectGet()
         executer.withDeprecationChecksDisabled()
 
         run 'retrieve'

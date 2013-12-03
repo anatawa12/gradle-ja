@@ -15,10 +15,10 @@
  */
 package org.gradle.api.internal.file.copy;
 
-import org.gradle.api.Action;
 import org.gradle.api.file.FileVisitDetails;
 import org.gradle.api.file.FileVisitor;
 import org.gradle.api.file.RelativePath;
+import org.gradle.api.internal.file.CopyActionProcessingStreamAction;
 import org.gradle.api.internal.file.collections.DirectoryFileTree;
 import org.gradle.api.internal.file.collections.MinimalFileTree;
 import org.gradle.api.internal.tasks.SimpleWorkResult;
@@ -42,48 +42,51 @@ public class SyncCopyActionDecorator implements CopyAction {
         final Set<RelativePath> visited = new HashSet<RelativePath>();
 
         WorkResult didWork = delegate.execute(new CopyActionProcessingStream() {
-            public void process(final Action<? super FileCopyDetailsInternal> action) {
-                stream.process(new Action<FileCopyDetailsInternal>() {
-                    public void execute(FileCopyDetailsInternal details) {
+            public void process(final CopyActionProcessingStreamAction action) {
+                stream.process(new CopyActionProcessingStreamAction() {
+                    public void processFile(FileCopyDetailsInternal details) {
                         visited.add(details.getRelativePath());
-                        action.execute(details);
+                        action.processFile(details);
                     }
                 });
             }
         });
 
-        final BooleanHolder didDeleteHolder = new BooleanHolder();
-        FileVisitor fileVisitor = new FileVisitor() {
-            public void visitDir(FileVisitDetails dirDetails) {
-                maybeDelete(dirDetails, true);
-            }
-
-            public void visitFile(FileVisitDetails fileDetails) {
-                maybeDelete(fileDetails, false);
-            }
-
-            private void maybeDelete(FileVisitDetails fileDetails, boolean isDir) {
-                RelativePath path = fileDetails.getRelativePath();
-                if (!visited.contains(path)) {
-                    if (isDir) {
-                        GFileUtils.deleteDirectory(fileDetails.getFile());
-                    } else {
-                        GFileUtils.deleteQuietly(fileDetails.getFile());
-                    }
-                    didDeleteHolder.flag = true;
-                }
-            }
-        };
+        SyncCopyActionDecoratorFileVisitor fileVisitor = new SyncCopyActionDecoratorFileVisitor(visited);
 
         MinimalFileTree walker = new DirectoryFileTree(baseDestDir).postfix();
         walker.visit(fileVisitor);
         visited.clear();
 
-        return new SimpleWorkResult(didWork.getDidWork() || didDeleteHolder.flag);
+        return new SimpleWorkResult(didWork.getDidWork() || fileVisitor.didWork);
     }
 
-    private static class BooleanHolder {
-        boolean flag;
-    }
+    private static class SyncCopyActionDecoratorFileVisitor implements FileVisitor {
+        private final Set<RelativePath> visited;
+        private boolean didWork;
 
+        private SyncCopyActionDecoratorFileVisitor(Set<RelativePath> visited) {
+            this.visited = visited;
+        }
+
+        public void visitDir(FileVisitDetails dirDetails) {
+            maybeDelete(dirDetails, true);
+        }
+
+        public void visitFile(FileVisitDetails fileDetails) {
+            maybeDelete(fileDetails, false);
+        }
+
+        private void maybeDelete(FileVisitDetails fileDetails, boolean isDir) {
+            RelativePath path = fileDetails.getRelativePath();
+            if (!visited.contains(path)) {
+                if (isDir) {
+                    GFileUtils.deleteDirectory(fileDetails.getFile());
+                } else {
+                    GFileUtils.deleteQuietly(fileDetails.getFile());
+                }
+                didWork = true;
+            }
+        }
+    }
 }

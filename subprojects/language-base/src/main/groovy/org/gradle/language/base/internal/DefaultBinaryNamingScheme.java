@@ -16,29 +16,35 @@
 
 package org.gradle.language.base.internal;
 
-import org.apache.commons.lang.StringUtils;
 import org.gradle.api.Nullable;
+import org.gradle.util.GUtil;
 
 import java.util.ArrayList;
 import java.util.List;
 
 public class DefaultBinaryNamingScheme implements BinaryNamingScheme {
-    private final String baseName;
+    private final String parentName;
+    private final String typeString;
     private final String dimensionPrefix;
     private final List<String> dimensions;
-    private String collapsedName;
 
-    public DefaultBinaryNamingScheme(String baseName) {
-        this(baseName, baseName, new ArrayList<String>());
+    public DefaultBinaryNamingScheme(String parentName) {
+        this(parentName, "", new ArrayList<String>());
     }
 
-    public DefaultBinaryNamingScheme(String baseName, List<String> dimensions) {
-        this(baseName, baseName, dimensions);
+    public DefaultBinaryNamingScheme withTypeString(String newTypeString) {
+        return new DefaultBinaryNamingScheme(parentName, newTypeString, dimensions);
     }
 
-    private DefaultBinaryNamingScheme(String baseName, String collapsedName, List<String> dimensions) {
-        this.baseName = baseName;
-        this.collapsedName = collapsedName;
+    public DefaultBinaryNamingScheme withVariantDimension(String dimension) {
+        List<String> newDimensions = new ArrayList<String>(dimensions);
+        newDimensions.add(dimension);
+        return new DefaultBinaryNamingScheme(parentName, typeString, newDimensions);
+    }
+
+    private DefaultBinaryNamingScheme(String parentName, String typeString, List<String> dimensions) {
+        this.parentName = parentName;
+        this.typeString = typeString;
         this.dimensions = dimensions;
         this.dimensionPrefix = createPrefix(dimensions);
     }
@@ -50,20 +56,31 @@ public class DefaultBinaryNamingScheme implements BinaryNamingScheme {
         return makeName(dimensions.toArray(new String[dimensions.size()]));
     }
 
-    protected void collapseMain() {
-        collapsedName = baseName.equals("main") ? "" : baseName;
-    }
-
     public String getLifecycleTaskName() {
         return getTaskName(null, null);
     }
 
     public String getOutputDirectoryBase() {
-        StringBuilder builder = new StringBuilder(baseName);
-        for (String dimension : dimensions) {
+        StringBuilder builder = new StringBuilder(makeName(parentName, typeString));
+        if (dimensionPrefix.length() > 0) {
             builder.append('/');
-            builder.append(StringUtils.uncapitalize(dimension));
+            builder.append(dimensionPrefix);
         }
+        return builder.toString();
+    }
+
+    public String getDescription() {
+        StringBuilder builder = new StringBuilder();
+        builder.append(GUtil.toWords(typeString));
+        builder.append(" '");
+        builder.append(parentName);
+        for (String dimension : dimensions) {
+            builder.append(':');
+            builder.append(dimension);
+        }
+        builder.append(':');
+        appendUncapitalized(builder, typeString);
+        builder.append("'");
         return builder.toString();
     }
 
@@ -72,22 +89,13 @@ public class DefaultBinaryNamingScheme implements BinaryNamingScheme {
     }
 
     public String getTaskName(@Nullable String verb, @Nullable String target) {
-        if (verb == null && target == null) {
-            return makeName(dimensionPrefix, baseName);
-        }
-        if (verb == null) {
-            return makeName(dimensionPrefix, collapsedName, target);
-        }
-        if (target == null) {
-            return makeName(verb, dimensionPrefix, baseName);
-        }
-        return makeName(verb, dimensionPrefix, collapsedName, target);
+        return makeName(verb, dimensionPrefix, parentName, typeString, target);
     }
 
     public String makeName(String... words) {
         StringBuilder builder = new StringBuilder();
         for (String word : words) {
-            if (word.length() == 0) {
+            if (word == null || word.length() == 0) {
                 continue;
             }
             if (builder.length() == 0) {
@@ -100,10 +108,16 @@ public class DefaultBinaryNamingScheme implements BinaryNamingScheme {
     }
 
     private void appendCapitalized(StringBuilder builder, String word) {
+        if (word.length() == 0) {
+            return;
+        }
         builder.append(Character.toTitleCase(word.charAt(0))).append(word.substring(1));
     }
 
     private void appendUncapitalized(StringBuilder builder, String word) {
+        if (word.length() == 0) {
+            return;
+        }
         builder.append(Character.toLowerCase(word.charAt(0))).append(word.substring(1));
     }
 }

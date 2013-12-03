@@ -25,6 +25,7 @@ import static org.gradle.util.Clock.prettyTime;
 
 abstract class AbstractTaskPlanExecutor implements TaskPlanExecutor {
     private static final Logger LOGGER = Logging.getLogger(AbstractTaskPlanExecutor.class);
+    private final Object lock = new Object();
 
     protected Runnable taskWorker(TaskExecutionPlan taskExecutionPlan, TaskExecutionListener taskListener) {
         return new TaskExecutorWorker(taskExecutionPlan, taskListener);
@@ -33,7 +34,6 @@ abstract class AbstractTaskPlanExecutor implements TaskPlanExecutor {
     private class TaskExecutorWorker implements Runnable {
         private final TaskExecutionPlan taskExecutionPlan;
         private final TaskExecutionListener taskListener;
-        private long busyMs;
 
         private TaskExecutorWorker(TaskExecutionPlan taskExecutionPlan, TaskExecutionListener taskListener) {
             this.taskExecutionPlan = taskExecutionPlan;
@@ -41,24 +41,21 @@ abstract class AbstractTaskPlanExecutor implements TaskPlanExecutor {
         }
 
         public void run() {
+            long busy = 0;
             long start = System.currentTimeMillis();
             TaskInfo task;
             while ((task = taskExecutionPlan.getTaskToExecute()) != null) {
-                executeTaskWithCacheLock(task);
+                final String taskPath = task.getTask().getPath();
+                LOGGER.info("{} ({}) started.", taskPath, Thread.currentThread());
+                long startTask = System.currentTimeMillis();
+                processTask(task);
+                long taskDuration = System.currentTimeMillis() - startTask;
+                busy += taskDuration;
+                LOGGER.info("{} ({}) completed. Took {}.", taskPath, Thread.currentThread(), prettyTime(taskDuration));
             }
             long total = System.currentTimeMillis() - start;
             //TODO SF it would be nice to print one-line statement that concludes the utilisation of the worker threads
-            LOGGER.debug("Task worker [{}] finished, busy: {}, idle: {}", Thread.currentThread(), prettyTime(busyMs), prettyTime(total - busyMs));
-        }
-
-        private void executeTaskWithCacheLock(final TaskInfo taskInfo) {
-            final String taskPath = taskInfo.getTask().getPath();
-            LOGGER.info(taskPath + " (" + Thread.currentThread() + " - start");
-            final long start = System.currentTimeMillis();
-            processTask(taskInfo);
-            busyMs += System.currentTimeMillis() - start;
-
-            LOGGER.info(taskPath + " (" + Thread.currentThread() + ") - complete");
+            LOGGER.debug("Task worker [{}] finished, busy: {}, idle: {}", Thread.currentThread(), prettyTime(busy), prettyTime(total - busy));
         }
 
         protected void processTask(TaskInfo taskInfo) {
@@ -75,11 +72,15 @@ abstract class AbstractTaskPlanExecutor implements TaskPlanExecutor {
         // is wired to the various add/remove listener methods on TaskExecutionGraph
         private void executeTask(TaskInfo taskInfo) {
             TaskInternal task = taskInfo.getTask();
-            taskListener.beforeExecute(task);
+            synchronized (lock) {
+                taskListener.beforeExecute(task);
+            }
             try {
                 task.executeWithoutThrowingTaskFailure();
             } finally {
-                taskListener.afterExecute(task, task.getState());
+                synchronized (lock) {
+                    taskListener.afterExecute(task, task.getState());
+                }
             }
         }
     }

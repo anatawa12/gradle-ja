@@ -26,7 +26,7 @@ import static org.hamcrest.Matchers.*
 class TestReportIntegrationTest extends AbstractIntegrationSpec {
     @Rule Sample sample = new Sample(temporaryFolder)
 
-    def "report includes results of each invocation"() {
+    def "report includes results of most recent invocation"() {
         given:
         buildFile << """
 $junitSetup
@@ -75,9 +75,9 @@ public class LoggingTest {
         run "testReport"
 
         then:
-        def htmlReport = new HtmlTestExecutionResult(sample.dir, "allTests")
-        htmlReport.testClass("org.gradle.sample.CoreTest").assertTestCount(1, 0, 0).assertTestPassed("ok").assertStdout(contains("hello from CoreTest."))
-        htmlReport.testClass("org.gradle.sample.UtilTest").assertTestCount(1, 0, 0).assertTestPassed("ok").assertStdout(contains("hello from UtilTest."))
+        def htmlReport = new HtmlTestExecutionResult(sample.dir, "build/reports/allTests")
+        htmlReport.testClass("org.gradle.sample.CoreTest").assertTestCount(1, 0, 0).assertTestPassed("ok").assertStdout(equalTo("hello from CoreTest.\n"))
+        htmlReport.testClass("org.gradle.sample.UtilTest").assertTestCount(1, 0, 0).assertTestPassed("ok").assertStdout(equalTo("hello from UtilTest.\n"))
     }
 
     @Issue("http://issues.gradle.org//browse/GRADLE-2821")
@@ -109,7 +109,29 @@ public class LoggingTest {
         then:
         ":otherTests" in skippedTasks
         ":test" in nonSkippedTasks
-        new HtmlTestExecutionResult(testDirectory, "tr").assertTestClassesExecuted("Thing")
+        new HtmlTestExecutionResult(testDirectory, "build/reports/tr").assertTestClassesExecuted("Thing")
+    }
+
+    @Issue("http://issues.gradle.org//browse/GRADLE-2915")
+    def "test report task can handle tests tasks not having been executed"() {
+        when:
+        buildScript """
+            apply plugin: 'java'
+
+             $junitSetup
+
+            task testReport(type: TestReport) {
+                testResultDirs = [test.binResultsDir]
+                destinationDir reporting.file("tr")
+            }
+        """
+
+        and:
+        testClass("Thing")
+
+        then:
+        succeeds "testReport"
+        succeeds "testReport"
     }
 
     def "test report task is skipped when there are no results"() {

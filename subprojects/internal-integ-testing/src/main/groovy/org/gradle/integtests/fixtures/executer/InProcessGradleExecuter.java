@@ -18,13 +18,12 @@ package org.gradle.integtests.fixtures.executer;
 
 import org.gradle.BuildResult;
 import org.gradle.GradleLauncher;
-import org.gradle.StartParameter;
 import org.gradle.api.GradleException;
 import org.gradle.api.Task;
 import org.gradle.api.execution.TaskExecutionGraph;
 import org.gradle.api.execution.TaskExecutionGraphListener;
 import org.gradle.api.execution.TaskExecutionListener;
-import org.gradle.api.internal.LocationAwareException;
+import org.gradle.internal.exceptions.LocationAwareException;
 import org.gradle.api.internal.classpath.DefaultModuleRegistry;
 import org.gradle.api.internal.file.IdentityFileResolver;
 import org.gradle.api.logging.StandardOutputListener;
@@ -35,6 +34,7 @@ import org.gradle.execution.MultipleBuildFailures;
 import org.gradle.initialization.BuildLayoutParameters;
 import org.gradle.initialization.DefaultCommandLineConverter;
 import org.gradle.initialization.DefaultGradleLauncherFactory;
+import org.gradle.internal.DefaultStartParameter;
 import org.gradle.internal.Factory;
 import org.gradle.internal.jvm.Jvm;
 import org.gradle.internal.nativeplatform.ProcessEnvironment;
@@ -144,7 +144,7 @@ class InProcessGradleExecuter extends AbstractGradleExecuter {
         Map<String, String> implicitJvmSystemProperties = getImplicitJvmSystemProperties();
         System.getProperties().putAll(implicitJvmSystemProperties);
 
-        StartParameter parameter = new StartParameter();
+        DefaultStartParameter parameter = new DefaultStartParameter();
         parameter.setCurrentDir(getWorkingDir());
         parameter.setShowStacktrace(ShowStacktrace.ALWAYS);
 
@@ -374,6 +374,11 @@ class InProcessGradleExecuter extends AbstractGradleExecuter {
         public ExecutionFailure assertHasFileName(String filename) {
             assertThat(this.fileName, equalTo(filename));
             outputFailure.assertHasFileName(filename);
+            return this;
+        }
+
+        public ExecutionFailure assertHasResolution(String resolution) {
+            outputFailure.assertHasResolution(resolution);
             return this;
         }
 

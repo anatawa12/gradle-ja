@@ -16,7 +16,7 @@
 package org.gradle.integtests
 
 import org.gradle.integtests.fixtures.AbstractIntegrationTest
-import org.gradle.integtests.fixtures.JUnitXmlTestExecutionResult
+import org.gradle.integtests.fixtures.DefaultTestExecutionResult
 import org.gradle.integtests.fixtures.TestResources
 import org.gradle.test.fixtures.file.TestFile
 import org.junit.Rule
@@ -24,7 +24,8 @@ import org.junit.Test
 
 class ProjectLayoutIntegrationTest extends AbstractIntegrationTest {
 
-    @Rule public final TestResources resources = new TestResources(testDirectoryProvider)
+    @Rule
+    public final TestResources resources = new TestResources(testDirectoryProvider)
 
     @Test
     public void canHaveSomeSourceAndResourcesInSameDirectoryAndSomeInDifferentDirectories() {
@@ -164,12 +165,24 @@ sourceSets.main.java {
 
     @Test
     public void canUseANonStandardBuildDir() {
-        executer.withTasks('build').withArguments('-i').run()
+        executer.withTasks('build').run()
 
         file('build').assertDoesNotExist()
 
-        JUnitXmlTestExecutionResult results = new JUnitXmlTestExecutionResult(file(), 'target')
+        def results = new DefaultTestExecutionResult(file(), 'target')
         results.assertTestClassesExecuted('PersonTest')
         results.testClass('PersonTest').assertTestsExecuted('ok')
+    }
+
+    @Test
+    public void projectPathsResolvedRelativeToRoot() {
+        file('relative/a/build.gradle') << """
+            task someTask
+        """
+        file('settings.gradle') << '''
+        include ':a'
+        project(':a').projectDir = new File('relative/a')
+        '''
+        executer.inDirectory(file('relative/a')).withTasks(':a:someTask').run()
     }
 }

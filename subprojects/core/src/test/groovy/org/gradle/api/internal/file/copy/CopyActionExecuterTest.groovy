@@ -15,18 +15,17 @@
  */
 package org.gradle.api.internal.file.copy
 
-import org.gradle.api.Action
 import org.gradle.api.file.FileCopyDetails
-import org.gradle.api.internal.file.BaseDirFileResolver
+import org.gradle.api.internal.file.CopyActionProcessingStreamAction
+import org.gradle.api.internal.file.TestFiles
 import org.gradle.api.internal.tasks.SimpleWorkResult
 import org.gradle.api.tasks.WorkResult
-import org.gradle.internal.nativeplatform.filesystem.FileSystems
 import org.gradle.internal.reflect.DirectInstantiator
 import org.gradle.test.fixtures.file.WorkspaceTest
 
 class CopyActionExecuterTest extends WorkspaceTest {
 
-    def "can execute test"() {
+    def "correctly executes copy actions, normalising and handling excludes"() {
         given:
         file("a").with {
             createFile("a")
@@ -36,7 +35,7 @@ class CopyActionExecuterTest extends WorkspaceTest {
             createDir("b1").createFile("b1")
         }
 
-        def resolver = new BaseDirFileResolver(FileSystems.getDefault(), testDirectory)
+        def resolver = TestFiles.resolver(testDirectory)
         def copySpec = new DestinationRootCopySpec(resolver, new DefaultCopySpec(resolver, new DirectInstantiator()))
         copySpec.with {
             into "out"
@@ -49,7 +48,7 @@ class CopyActionExecuterTest extends WorkspaceTest {
             }
         }
 
-        Action<FileCopyDetailsInternal> action = Mock(Action)
+        def action = Mock(CopyActionProcessingStreamAction)
         def workResult = true
         def copyAction = new CopyAction() {
             WorkResult execute(CopyActionProcessingStream stream) {
@@ -57,14 +56,14 @@ class CopyActionExecuterTest extends WorkspaceTest {
                 new SimpleWorkResult(workResult)
             }
         }
-        def executer = new CopyActionExecuter(new DirectInstantiator(), FileSystems.getDefault())
+        def executer = new CopyActionExecuter(new DirectInstantiator(), TestFiles.fileSystem())
 
         when:
         executer.execute(copySpec, copyAction)
 
         then:
-        1 * action.execute({ it.relativePath.pathString == "a" })
-        0 * action.execute(_)
+        1 * action.processFile({ it.relativePath.pathString == "a" })
+        0 * action.processFile(_)
     }
 
     Closure path(path) {

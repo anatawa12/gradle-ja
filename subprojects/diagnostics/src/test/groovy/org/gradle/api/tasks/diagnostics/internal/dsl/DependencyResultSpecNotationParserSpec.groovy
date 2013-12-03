@@ -19,13 +19,13 @@ package org.gradle.api.tasks.diagnostics.internal.dsl
 import org.gradle.api.InvalidUserDataException
 import org.gradle.api.artifacts.result.DependencyResult
 import org.gradle.api.internal.artifacts.result.ResolutionResultDataBuilder
-import org.gradle.api.internal.notations.api.NotationParser
+import org.gradle.internal.typeconversion.NotationParser
 import org.gradle.api.specs.Spec
 import spock.lang.Specification
 
 class DependencyResultSpecNotationParserSpec extends Specification {
 
-    NotationParser<Spec<DependencyResult>> parser = DependencyResultSpecNotationParser.create()
+    NotationParser<Object, Spec<DependencyResult>> parser = DependencyResultSpecNotationParser.create()
 
     def "accepts closures"() {
         given:
@@ -33,7 +33,7 @@ class DependencyResultSpecNotationParserSpec extends Specification {
         def other = ResolutionResultDataBuilder.newDependency('org.mockito', 'other')
 
         when:
-        def spec = parser.parseNotation( { it.requested.name == 'mockito-core' } )
+        def spec = parser.parseNotation( { it.requested.module == 'mockito-core' } )
 
         then:
         spec.isSatisfiedBy(mockito)
@@ -61,7 +61,7 @@ class DependencyResultSpecNotationParserSpec extends Specification {
         when:
         def spec = parser.parseNotation(new Spec<DependencyResult>() {
             boolean isSatisfiedBy(DependencyResult element) {
-                return element.getRequested().getName().equals('mockito-core')
+                return element.requested.module == 'mockito-core'
             }
         })
 

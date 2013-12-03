@@ -16,6 +16,7 @@
 package org.gradle.api.internal.file;
 
 import groovy.lang.Closure;
+import org.gradle.api.Action;
 import org.gradle.api.InvalidUserDataException;
 import org.gradle.api.PathValidation;
 import org.gradle.api.file.*;
@@ -36,10 +37,7 @@ import org.gradle.api.resources.ReadableResource;
 import org.gradle.api.tasks.WorkResult;
 import org.gradle.internal.reflect.Instantiator;
 import org.gradle.process.ExecResult;
-import org.gradle.process.internal.DefaultExecAction;
-import org.gradle.process.internal.DefaultJavaExecAction;
-import org.gradle.process.internal.ExecAction;
-import org.gradle.process.internal.JavaExecAction;
+import org.gradle.process.internal.*;
 import org.gradle.util.ConfigureUtil;
 import org.gradle.util.GFileUtils;
 
@@ -50,7 +48,7 @@ import java.util.Map;
 
 import static org.gradle.util.ConfigureUtil.configure;
 
-public class DefaultFileOperations implements FileOperations, ProcessOperations {
+public class DefaultFileOperations implements FileOperations, ProcessOperations, ExecActionFactory {
     private final FileResolver fileResolver;
     private final TaskResolver taskResolver;
     private final TemporaryFileProvider temporaryFileProvider;
@@ -141,8 +139,19 @@ public class DefaultFileOperations implements FileOperations, ProcessOperations 
         return copyAction.copy(new ClosureBackedAction<CopySpec>(closure));
     }
 
+    public WorkResult sync(Action<? super CopySpec> action) {
+        FileCopier copyAction = new FileCopier(instantiator, fileResolver);
+        return copyAction.sync(action);
+    }
+
     public CopySpecInternal copySpec(Closure closure) {
-        return configure(closure, instantiator.newInstance(DefaultCopySpec.class, fileResolver, instantiator));
+        return copySpec(new ClosureBackedAction<CopySpec>(closure));
+    }
+
+    public CopySpecInternal copySpec(Action<? super CopySpec> action) {
+        DefaultCopySpec copySpec = instantiator.newInstance(DefaultCopySpec.class, fileResolver, instantiator);
+        action.execute(copySpec);
+        return copySpec;
     }
 
     public FileResolver getFileResolver() {
@@ -165,6 +174,10 @@ public class DefaultFileOperations implements FileOperations, ProcessOperations 
     public ExecResult exec(Closure cl) {
         ExecAction execAction = ConfigureUtil.configure(cl, instantiator.newInstance(DefaultExecAction.class, fileResolver));
         return execAction.execute();
+    }
+
+    public ExecAction newExecAction() {
+        return new DefaultExecAction(fileResolver);
     }
 
     public DefaultResourceHandler getResources() {

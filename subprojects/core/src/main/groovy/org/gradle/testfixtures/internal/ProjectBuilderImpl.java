@@ -20,15 +20,20 @@ import org.gradle.StartParameter;
 import org.gradle.api.Project;
 import org.gradle.api.internal.AsmBackedClassGenerator;
 import org.gradle.api.internal.GradleInternal;
+import org.gradle.api.internal.file.FileResolver;
 import org.gradle.api.internal.file.TemporaryFileProvider;
 import org.gradle.api.internal.file.TmpDirTemporaryFileProvider;
 import org.gradle.api.internal.project.DefaultProject;
 import org.gradle.api.internal.project.IProjectFactory;
 import org.gradle.api.internal.project.ProjectInternal;
-import org.gradle.api.internal.project.ServiceRegistryFactory;
 import org.gradle.groovy.scripts.StringScriptSource;
 import org.gradle.initialization.DefaultProjectDescriptor;
 import org.gradle.initialization.DefaultProjectDescriptorRegistry;
+import org.gradle.internal.nativeplatform.services.NativeServices;
+import org.gradle.internal.service.DefaultServiceRegistry;
+import org.gradle.internal.service.ServiceRegistry;
+import org.gradle.internal.service.scopes.GlobalScopeServices;
+import org.gradle.internal.service.scopes.ServiceRegistryFactory;
 import org.gradle.invocation.BuildClassLoaderRegistry;
 import org.gradle.invocation.DefaultGradle;
 import org.gradle.util.GFileUtils;
@@ -36,7 +41,7 @@ import org.gradle.util.GFileUtils;
 import java.io.File;
 
 public class ProjectBuilderImpl {
-    private static final GlobalTestServices GLOBAL_SERVICES = new GlobalTestServices();
+    private static final ServiceRegistry GLOBAL_SERVICES = new DefaultServiceRegistry(new TestGlobalScopeServices.TestLoggingServices(), NativeServices.getInstance()).addProvider(new GlobalScopeServices());
     private static final AsmBackedClassGenerator CLASS_GENERATOR = new AsmBackedClassGenerator();
 
     public Project createChildProject(String name, Project parent, File projectDir) {
@@ -63,10 +68,11 @@ public class ProjectBuilderImpl {
         StartParameter startParameter = new StartParameter();
         startParameter.setGradleUserHomeDir(new File(projectDir, "userHome"));
 
-        ServiceRegistryFactory topLevelRegistry = new TestTopLevelBuildServiceRegistry(GLOBAL_SERVICES, startParameter, homeDir);
+        ServiceRegistryFactory topLevelRegistry = new TestBuildScopeServices(GLOBAL_SERVICES, startParameter, homeDir);
         GradleInternal gradle = new DefaultGradle(null, startParameter, topLevelRegistry);
 
-        DefaultProjectDescriptor projectDescriptor = new DefaultProjectDescriptor(null, name, projectDir, new DefaultProjectDescriptorRegistry());
+        DefaultProjectDescriptor projectDescriptor = new DefaultProjectDescriptor(null, name, projectDir, new DefaultProjectDescriptorRegistry(),
+                topLevelRegistry.get(FileResolver.class));
         ProjectInternal project = topLevelRegistry.get(IProjectFactory.class).createProject(projectDescriptor, null, gradle);
 
         gradle.setRootProject(project);
