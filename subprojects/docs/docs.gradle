@@ -61,7 +61,7 @@ configurations {
 
 dependencies {
     userGuideTask 'xalan:xalan:2.7.1', libraries.xerces
-    userGuideTask module('org.xhtmlrenderer:xhtmlrenderer:8.3-atlassian') {
+    userGuideTask module('org.xhtmlrenderer:xhtmlrenderer:8.4-atlassian') {
         dependency 'itext:itext:2.0.8@jar'
     }
     userGuideTask 'xslthl:xslthl:2.0.1@jar'
