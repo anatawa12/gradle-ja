@@ -15,25 +15,52 @@
  */
 
 package org.gradle.ide.visualstudio.internal
+
+import org.gradle.api.Named
+import org.gradle.api.internal.file.FileResolver
 import org.gradle.language.base.internal.AbstractBuildableModelElement
+import org.gradle.nativebinaries.LibraryBinary
+import org.gradle.nativebinaries.NativeBinary
+import org.gradle.nativebinaries.NativeDependencySet
 import org.gradle.nativebinaries.internal.NativeBinaryInternal
+import org.gradle.nativebinaries.internal.resolve.LibraryNativeDependencySet
 
-class VisualStudioSolution extends AbstractBuildableModelElement {
+class VisualStudioSolution extends AbstractBuildableModelElement implements Named {
+    final String name
     private final NativeBinaryInternal rootBinary
-    List<VisualStudioProjectConfiguration> projectConfigurations = []
-    String name
+    private final FileResolver fileResolver
+    private final VisualStudioProjectResolver vsProjectResolver
 
-    VisualStudioSolution(String name, NativeBinaryInternal rootBinary) {
+    VisualStudioSolution(String name, NativeBinaryInternal rootBinary, FileResolver fileResolver, VisualStudioProjectResolver vsProjectResolver) {
         this.name = name
         this.rootBinary = rootBinary
+        this.fileResolver = fileResolver
+        this.vsProjectResolver = vsProjectResolver
     }
 
-    void addProjectConfiguration(VisualStudioProjectConfiguration projectConfiguration) {
-        this.projectConfigurations << projectConfiguration
-        builtBy projectConfiguration.project
+    String getComponentName() {
+        return rootBinary.component.baseName
     }
 
-    String getSolutionFile() {
-        return "${name}.sln"
+    Set<VisualStudioProjectConfiguration> getProjectConfigurations() {
+        def configurations = [] as Set
+        addNativeBinary(configurations, rootBinary)
+        return configurations
+    }
+
+    private void addNativeBinary(Set configurations, NativeBinary nativeBinary) {
+        VisualStudioProjectConfiguration projectConfiguration = vsProjectResolver.lookupProjectConfiguration(nativeBinary);
+        configurations.add(projectConfiguration)
+
+        for (NativeDependencySet dep : nativeBinary.getLibs()) {
+            if (dep instanceof LibraryNativeDependencySet) {
+                LibraryBinary dependencyBinary = ((LibraryNativeDependencySet) dep).getLibraryBinary();
+                addNativeBinary(configurations, dependencyBinary)
+            }
+        }
+    }
+
+    File getSolutionFile() {
+        return fileResolver.resolve("visualStudio/${name}.sln")
     }
 }

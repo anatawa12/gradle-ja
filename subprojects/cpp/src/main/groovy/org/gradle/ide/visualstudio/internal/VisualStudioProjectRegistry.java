@@ -17,66 +17,51 @@
 package org.gradle.ide.visualstudio.internal;
 
 import org.apache.commons.lang.StringUtils;
+import org.gradle.api.internal.DefaultNamedDomainObjectSet;
+import org.gradle.api.internal.file.FileResolver;
+import org.gradle.internal.reflect.Instantiator;
 import org.gradle.nativebinaries.*;
-import org.gradle.nativebinaries.internal.resolve.LibraryNativeDependencySet;
 import org.gradle.nativebinaries.internal.NativeComponentInternal;
-import org.gradle.util.CollectionUtils;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
-public class VisualStudioProjectRegistry {
-    private Map<String, VisualStudioProject> projects = new HashMap<String, VisualStudioProject>();
+public class VisualStudioProjectRegistry extends DefaultNamedDomainObjectSet<VisualStudioProject> {
+    private final FileResolver fileResolver;
     private final FlavorContainer allFlavors;
+    private final VisualStudioProjectResolver projectResolver;
 
-    public VisualStudioProjectRegistry(FlavorContainer allFlavors) {
+    public VisualStudioProjectRegistry(FileResolver fileResolver, VisualStudioProjectResolver projectResolver, FlavorContainer allFlavors, Instantiator instantiator) {
+        super(VisualStudioProject.class, instantiator);
+        this.fileResolver = fileResolver;
         this.allFlavors = allFlavors;
+        this.projectResolver = projectResolver;
+    }
+
+    public void addProjectConfiguration(NativeBinary nativeBinary) {
+        // TODO:DAZ Eagerly create all configurations for a component/project?
+        VisualStudioProject project = getOrCreateProject(nativeBinary);
+        project.addConfiguration(nativeBinary);
     }
 
     public VisualStudioProjectConfiguration getProjectConfiguration(NativeBinary nativeBinary) {
-        VisualStudioProject vsProject = getProject(nativeBinary);
-
-        for (NativeDependencySet dep : nativeBinary.getLibs()) {
-            if (dep instanceof LibraryNativeDependencySet) {
-                LibraryBinary dependencyBinary = ((LibraryNativeDependencySet) dep).getLibraryBinary();
-                vsProject.addProjectReference(projectName(dependencyBinary));
-            }
-        }
-        // TODO:DAZ Not sure if adding these on demand is sufficient
-        return vsProject.addConfiguration(nativeBinary);
+        String projectName = projectName(nativeBinary);
+        return getByName(projectName).getConfiguration(nativeBinary);
     }
 
-    private VisualStudioProject getProject(NativeBinary nativeBinary) {
+    private VisualStudioProject getOrCreateProject(NativeBinary nativeBinary) {
         String projectName = projectName(nativeBinary);
-        VisualStudioProject vsProject = projects.get(projectName);
+        VisualStudioProject vsProject = findByName(projectName);
         if (vsProject == null) {
-            vsProject = new VisualStudioProject(projectName, nativeBinary.getComponent());
-            projects.put(projectName, vsProject);
+            vsProject = new VisualStudioProject(projectName, nativeBinary.getComponent(), fileResolver, projectResolver);
+            add(vsProject);
         }
         return vsProject;
-    }
-
-    public VisualStudioProject getProject(String name) {
-        return projects.get(name);
-    }
-
-    public List<VisualStudioProject> getAllProjects() {
-        return CollectionUtils.toList(projects.values());
     }
 
     private String projectName(NativeBinary nativeBinary) {
         return projectBaseName(nativeBinary) + projectSuffix(nativeBinary);
     }
 
-    private static String projectSuffix(NativeBinary nativeBinary) {
-        return nativeBinary instanceof StaticLibraryBinary ? "Lib"
-                : nativeBinary instanceof SharedLibraryBinary ? "Dll"
-                : "Exe";
-    }
-
-    // TODO:DAZ This needs to be unique for multi-project
     private String projectBaseName(NativeBinary nativeBinary) {
         NativeComponent component = nativeBinary.getComponent();
         if (getFlavors(component).size() <=1) {
@@ -85,7 +70,12 @@ public class VisualStudioProjectRegistry {
         return nativeBinary.getFlavor().getName() + StringUtils.capitalize(component.getBaseName());
     }
 
-    // TODO:DAZ This needs to be a method on NativeComponentInternal
+    private String projectSuffix(NativeBinary nativeBinary) {
+        return nativeBinary instanceof StaticLibraryBinary ? "Lib"
+                : nativeBinary instanceof SharedLibraryBinary ? "Dll"
+                : "Exe";
+    }
+
     private Set<Flavor> getFlavors(final NativeComponent component) {
         return ((NativeComponentInternal) component).chooseFlavors(allFlavors);
     }
