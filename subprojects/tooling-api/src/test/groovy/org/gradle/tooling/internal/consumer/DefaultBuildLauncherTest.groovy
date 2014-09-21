@@ -15,16 +15,23 @@
  */
 package org.gradle.tooling.internal.consumer
 
+import com.google.common.collect.Sets
+import org.gradle.api.GradleException
 import org.gradle.test.fixtures.concurrent.ConcurrentSpec
 import org.gradle.tooling.GradleConnectionException
 import org.gradle.tooling.ResultHandler
+import org.gradle.tooling.internal.adapter.ProtocolToModelAdapter
 import org.gradle.tooling.internal.consumer.async.AsyncConsumerActionExecutor
 import org.gradle.tooling.internal.consumer.connection.ConsumerAction
 import org.gradle.tooling.internal.consumer.connection.ConsumerConnection
 import org.gradle.tooling.internal.consumer.parameters.ConsumerOperationParameters
+import org.gradle.tooling.internal.gradle.TaskListingLaunchable
+import org.gradle.tooling.internal.protocol.InternalLaunchable
 import org.gradle.tooling.internal.protocol.ResultHandlerVersion1
 import org.gradle.tooling.model.GradleProject
+import org.gradle.tooling.model.Launchable
 import org.gradle.tooling.model.Task
+import org.gradle.tooling.model.TaskSelector
 
 class DefaultBuildLauncherTest extends ConcurrentSpec {
     final AsyncConsumerActionExecutor asyncConnection = Mock()
@@ -56,6 +63,7 @@ class DefaultBuildLauncherTest extends ConcurrentSpec {
             assert params.jvmArguments == null
             assert params.arguments == null
             assert params.progressListener != null
+            assert params.cancellationToken != null
             return null
         }
         1 * handler.onComplete(null)
@@ -87,6 +95,113 @@ class DefaultBuildLauncherTest extends ConcurrentSpec {
         1 * connection.run(Void, _) >> {args ->
             ConsumerOperationParameters params = args[1]
             assert params.tasks == [':task1', ':task2']
+            assert params.standardOutput == stdout
+            assert params.standardError == stderr
+            return null
+        }
+        1 * handler.onComplete(null)
+        0 * asyncConnection._
+        0 * handler._
+    }
+
+    def "can configure task selector build operation for consumer generated selectors"() {
+        def ts = Mock(TaskListingLaunchable)
+        _ * ts.name >> 'myTask'
+        _ * ts.taskNames >> Sets.newTreeSet([':a:myTask', ':b:myTask'])
+        ResultHandlerVersion1<Void> adaptedHandler
+        ResultHandler<Void> handler = Mock()
+        OutputStream stdout = Stub()
+        OutputStream stderr = Stub()
+
+        when:
+        launcher.standardOutput = stdout
+        launcher.standardError = stderr
+        launcher.forLaunchables(selector(ts))
+        launcher.run(handler)
+
+        then:
+        1 * asyncConnection.run(!null, !null) >> { args ->
+            ConsumerAction<GradleProject> action = args[0]
+            action.run(connection)
+            adaptedHandler = args[1]
+            adaptedHandler.onComplete(null)
+        }
+        1 * connection.run(Void, _) >> {args ->
+            ConsumerOperationParameters params = args[1]
+            assert params.tasks == [':a:myTask', ':b:myTask']
+            assert params.standardOutput == stdout
+            assert params.standardError == stderr
+            return null
+        }
+        1 * handler.onComplete(null)
+        0 * asyncConnection._
+        0 * handler._
+    }
+
+    def "can configure task selector build operation"() {
+        def ts = Mock(InternalLaunchable)
+        _ * ts.name >> 'myTask'
+        ResultHandlerVersion1<Void> adaptedHandler
+        ResultHandler<Void> handler = Mock()
+        OutputStream stdout = Stub()
+        OutputStream stderr = Stub()
+
+        when:
+        launcher.standardOutput = stdout
+        launcher.standardError = stderr
+        launcher.forLaunchables(selector(ts))
+        launcher.run(handler)
+
+        then:
+        1 * asyncConnection.run(!null, !null) >> { args ->
+            ConsumerAction<GradleProject> action = args[0]
+            action.run(connection)
+            adaptedHandler = args[1]
+            adaptedHandler.onComplete(null)
+        }
+        1 * connection.run(Void, _) >> {args ->
+            ConsumerOperationParameters params = args[1]
+            assert params.launchables == [ts]
+            assert params.standardOutput == stdout
+            assert params.standardError == stderr
+            return null
+        }
+        1 * handler.onComplete(null)
+        0 * asyncConnection._
+        0 * handler._
+    }
+
+    def "preserves task selectors order in build operation"() {
+        def ts1 = Mock(TaskListingLaunchable)
+        _ * ts1.name >> 'firstTask'
+        _ * ts1.taskNames >> Sets.newTreeSet([':firstTask'])
+        def ts2 = Mock(TaskListingLaunchable)
+        _ * ts2.name >> 'secondTask'
+        _ * ts2.taskNames >> Sets.newTreeSet([':secondTask'])
+        def ts3 = Mock(TaskListingLaunchable)
+        _ * ts3.name >> 'thirdTask'
+        _ * ts3.taskNames >> Sets.newTreeSet([':thirdTask'])
+        ResultHandlerVersion1<Void> adaptedHandler
+        ResultHandler<Void> handler = Mock()
+        OutputStream stdout = Stub()
+        OutputStream stderr = Stub()
+
+        when:
+        launcher.standardOutput = stdout
+        launcher.standardError = stderr
+        launcher.forLaunchables(selector(ts1), selector(ts2), selector(ts3))
+        launcher.run(handler)
+
+        then:
+        1 * asyncConnection.run(!null, !null) >> { args ->
+            ConsumerAction<GradleProject> action = args[0]
+            action.run(connection)
+            adaptedHandler = args[1]
+            adaptedHandler.onComplete(null)
+        }
+        1 * connection.run(Void, _) >> {args ->
+            ConsumerOperationParameters params = args[1]
+            assert params.tasks == [':firstTask', ':secondTask', ':thirdTask']
             assert params.standardOutput == stdout
             assert params.standardError == stderr
             return null
@@ -195,10 +310,26 @@ class DefaultBuildLauncherTest extends ConcurrentSpec {
         operation.runBuild.end > instant.failureAvailable
     }
 
+    def "rejects unknown Launchable"() {
+        Launchable task = Mock(Launchable)
+
+        when:
+        launcher.forLaunchables(selector(task))
+
+        then:
+        def e = thrown(GradleException)
+        e != null
+    }
+
     def task(String path) {
-        Task task = Mock()
-        _ * task.path >> path
-        return task
+        def task = new Object() {
+            String getPath() { return path }
+        }
+        return new ProtocolToModelAdapter().adapt(Task, task)
+    }
+
+    def selector(def object) {
+        return new ProtocolToModelAdapter().adapt(TaskSelector, object)
     }
 }
 

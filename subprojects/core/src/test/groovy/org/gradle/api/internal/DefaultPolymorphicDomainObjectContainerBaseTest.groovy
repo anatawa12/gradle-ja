@@ -21,23 +21,27 @@ class DefaultPolymorphicDomainObjectContainerBaseTest extends AbstractNamedDomai
     def setup() {
         container = instantiator.newInstance(PolymorphicTestContainer.class, instantiator)
     }
+}
 
-    static class PolymorphicTestContainer extends AbstractPolymorphicDomainObjectContainer<TestObject> {
-        PolymorphicTestContainer(Instantiator instantiator) {
-            super(TestObject, instantiator, new DynamicPropertyNamer())
-        }
+class PolymorphicTestContainer extends AbstractPolymorphicDomainObjectContainer<TestObject> {
+    PolymorphicTestContainer(Instantiator instantiator) {
+        super(TestObject, instantiator, new DynamicPropertyNamer())
+    }
 
-        @Override
-        protected TestObject doCreate(String name) {
-            def testObject = new TestObject()
-            testObject.name = name
-            testObject.add(name)
-            testObject
-        }
+    @Override
+    protected TestObject doCreate(String name) {
+        def testObject = new TestObject(instantiator)
+        testObject.name = name
+        testObject
+    }
 
-        @Override
-        protected <U extends TestObject> U doCreate(String name, Class<U> type) {
-            throw new UnsupportedOperationException("doCreate")
-        }
+    @Override
+    protected <U extends TestObject> U doCreate(String name, Class<U> type) {
+        throw new UnsupportedOperationException("doCreate")
+    }
+
+    @Override
+    Set<? extends Class<? extends TestObject>> getCreateableTypes() {
+        Collections.singleton(TestObject)
     }
 }

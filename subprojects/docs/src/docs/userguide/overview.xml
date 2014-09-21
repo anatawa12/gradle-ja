@@ -1,4 +1,4 @@
-﻿<!--
+<!--
   ~ Copyright 2009 the original author or authors.
   ~
   ~ Licensed under the Apache License, Version 2.0 (the "License");
@@ -28,7 +28,7 @@
                         Gradle pushes declarative builds to the next level by providing declarative language elements
                         that you can assemble as you like. Those elements also provide build-by-convention support for
                         Java, Groovy, OSGi, Web and Scala projects. Even more, this declarative language is extensible.
-                        Add your own new language elements or enhance the existing ones. Thus providing concise,
+                        Add your own new language elements or enhance the existing ones, thus providing concise,
                         maintainable and comprehensible builds.
                     </para>
                     <para>Gradleの核となっているのは、拡張性豊富なGroovyベースのDSLです。
@@ -56,7 +56,7 @@
                     <para role="original">The suppleness and richness of Gradle finally allows you to apply common design principles to your build.
                         For example, it is very easy to compose your build from reusable
                         pieces of build logic. Inline stuff where unnecessary indirections would be inappropriate. Don't be
-                        forced to tear apart what belongs together (e.g. in your project hierarchy). Thus avoiding smells
+                        forced to tear apart what belongs together (e.g. in your project hierarchy). Avoid smells
                         like shotgun changes or divergent change that turn your build into a maintenance nightmare.
                         At last you can create a well structured, easily maintained, comprehensible build.</para>
                         <para>
@@ -109,7 +109,7 @@
                 <listitem>
                     <para role="original">Different teams prefer different ways to manage their external dependencies.
                         Gradle provides convenient support for any strategy. From transitive dependency 
-                        management with remote Maven and Ivy repositories to jars or dirs on the local file system.</para>
+                        management with remote Maven and Ivy repositories to jars or directories on the local file system.</para>
                     <para>外部ライブラリの解決には、チームごとにさまざまな方法があるものです。リモートのMavenやIvyのリポジトリを使った推移的な依存関係の管理から、ローカルファイルシステム上のjarやディレクトリまで、どのような方法をとるにせよGradleはそれらを強力にサポートします。</para>
                 </listitem>
             </varlistentry>
@@ -147,9 +147,9 @@
                         difficult to maintain build. The whole design of Gradle is oriented towards being used as a language,
                         not as a rigid framework. And Groovy is our glue that allows you to tell your individual story with
                         the abstractions Gradle (or you) provide. Gradle provides some standard stories but they are not
-                        privileged in any form. This is for us a major distinguishing features compared to other declarative
-                        build systems. Our Groovy support is also not just some simple coating sugar layer. The whole Gradle API
-                        is fully groovynized. Only by that using Groovy is the fun and productivity gain it can be.
+                        privileged in any form. This is for us a major distinguishing feature compared to other declarative
+                        build systems. Our Groovy support is not just sugar coating. The whole Gradle API
+                        is fully Groovy-ized. Adding Groovy results in an enjoyable and productive experience.
                     </para>
                     <para>GradleのビルドスクリプトはXMLではなくGroovyで記述します。しかし、それは単純に動的言語のスクリプト機能を生で使わせるということではありません。それではビルドのメンテナンスがむやみに難しくなるだけです。Gradleは、硬直したフレームワークとしてではなく、一つの言語として使用されることを想定してデザインされています。Groovyは、Gradle(またはあなた自身)が提供する抽象性と個々のビルドがもつ独自の筋書きとをくっつける接着剤となっているのです。Gradleでは、いくつかの標準的なビルドの筋書きを用意していますが、それら筋書きが何かの特別な扱いを受けているというわけではありません。別のビルドシステムと比較したとき、このことはGradleの主な特徴の一つになると考えています。GradleのGroovyサポートはただの構文糖衣ではありません。すべてのAPIは完全にGroovy化されていて、楽にGroovyを使うことができ、生産性を向上させています。</para>
                 </listitem>
@@ -178,17 +178,23 @@
     </section>
     <section id='sec:why_groovy'>
         <title>なぜGroovyなのか?<phrase role="original">Why Groovy?</phrase></title>
-        <para role="original">We think the advantages of an internal DSL (based on a dynamic language) over XML are tremendous in case
-            of <emphasis>build scripts</emphasis>. There are a couple of dynamic languages out there. Why Groovy? The
+        <para role="original">We think the advantages of an internal DSL (based on a dynamic language) over XML are tremendous when used
+            in <emphasis>build scripts</emphasis>. There are a couple of dynamic languages out there. Why Groovy? The
             answer lies in the context Gradle is operating in. Although Gradle is a general purpose build tool at its
             core, its main focus are Java projects.
-            In such projects obviously the team members know Java. We think a build
+            In such projects the team members will be very familiar with Java. We think a build
             should be as transparent as possible to <emphasis>all</emphasis> team members.
         </para>
-        <para><emphasis>ビルドスクリプト</emphasis>を記述するということを考えたとき、XMLに対する内部DSL(動的言語ベース)のアドバンテージというのは途方もなく大きいものです。ただ、動的な言語はいくつかあるのに、なぜGroovyなのでしょうか。その答えは、Gradleが想定しているシチュエーション、環境にあります。Gradleは本質的に言えば一般的な利用が可能な汎用のビルドツールですが、メインとしてフォーカスしているのはJavaのプロジェクトです。そのようなプロジェクトの場合、チームのメンバーがJavaに習熟しているのは明らかでしょう。私たちは、ビルドは<emphasis>すべての</emphasis>チームメンバーに対してできるだけ分かりやすいものであるべきだと考えています。</para>
-        <para role="original">You might argue why not using Java then as the language for build scripts. We think this is a valid
-            question. It would have the highest transparency for your team and the lowest learning curve. But due to
-            limitations of Java such a build language would not be as nice, expressive and powerful as it could be.
+        <para><emphasis>ビルドスクリプト</emphasis>を記述するということを考えたとき、XMLに対する内部DSL(動的言語ベース)のアドバンテージというのは途方もなく大きいものです。
+            ただ、動的な言語はいくつかあるのに、なぜGroovyなのでしょうか。
+            その答えは、Gradleが想定しているシチュエーション、環境にあります。
+            Gradleは本質的に言えば一般的な利用が可能な汎用のビルドツールですが、メインとしてフォーカスしているのはJavaのプロジェクトです。
+            そのようなプロジェクトの場合、チームのメンバーがJavaに習熟しているのは明らかでしょう。
+            私たちは、ビルドは<emphasis>すべての</emphasis>チームメンバーに対してできるだけ分かりやすいものであるべきだと考えています。
+        </para>
+        <para role="original">In that case, you might argue why we don't just use Java as the language for build scripts. We think this is a valid
+            question. It would have the highest transparency for your team and the lowest learning curve, but because of the
+            limitations of Java, such a build language would not be as nice, expressive and powerful as it could be.
             <footnote>
                 <para role="original">At
                     <ulink url='http://www.defmacro.org/ramblings/lisp.html'/>
@@ -198,18 +204,27 @@
             </footnote>
             Languages like Python, Groovy or Ruby do a much better job here. We have chosen Groovy as it offers by far
             the greatest transparency for Java people. Its base syntax is the same as Java's as well as its type system,
-            its package structure and other things. Groovy builds a lot on top of that. But on a common ground with Java.
+            its package structure and other things. Groovy provides much more on top of that, but with the common foundation
+            of Java.
         </para>
-        <para>それならGroovyでなくJavaを使えばいいのにと思われるかもしれません。それはもっともな疑問です。ビルド用の言語にJavaを使えば、開発チームにとって最高に分かりやすく、学習曲線が最小限緩やかなビルドとなるでしょう。しかし、Javaはビルド用の言語として使うには表現力や機能に限界があるのです。
+        <para>それならGroovyでなくJavaを使えばいいのにと思われるかもしれません。それはもっともな疑問です。
+            ビルド用の言語にJavaを使えば、開発チームにとって最高に分かりやすく、学習曲線が最小限緩やかなビルドとなるでしょう。
+            しかし、Javaはビルド用の言語として使うには表現力や機能に限界があるのです。
             <footnote>
-               <para><ulink url='http://www.defmacro.org/ramblings/lisp.html'/>に、AntとXML、Java、Lispを比較している興味深い記事が載っています。「もしJavaがこの文法を持っていたら」という前提で書かれている構文が、まさにGroovyの文法になっているのが面白いところです。</para>
+               <para><ulink url='http://www.defmacro.org/ramblings/lisp.html'/>に、AntとXML、Java、Lispを比較している興味深い記事が載っています。
+              「もしJavaがこの文法を持っていたら」という前提で書かれている構文が、まさにGroovyの文法になっているのが面白いところです。</para>
             </footnote>
-このような用途には、PythonやGroovy、Rubyのような言語の方が向いています。私たちは、Java世界の住人にとって断然飛び抜けた分かりやすさを提供するGroovyを選択しました。Groovyの文法は、型システム、パッケージ構造、その他諸々についてJavaをベースにしています。Groovyはその上に様々な機能を構築していますが、土台はJavaと同じなのです。</para>
-        <para role="original">For Java teams which share also Python or Ruby knowledge or are happy to learn it, the above arguments
+            このような用途には、PythonやGroovy、Rubyのような言語の方が向いています。
+            私たちは、Java世界の住人にとって断然飛び抜けた分かりやすさを提供するGroovyを選択しました。
+            Groovyの文法は、型システム、パッケージ構造、その他諸々についてJavaをベースにしています。Groovyはその上に様々な機能を構築していますが、土台はJavaと同じなのです。</para>
+        <para role="original">For Java developers with Python or Ruby knowledge or the desire to learn them, the above arguments
             don't apply. The Gradle design is well-suited for creating another build script engine in JRuby or Jython.
             It just doesn't have the highest priority for us at the moment. We happily support any community effort
             to create additional build script engines.
         </para>
-        <para>Javaの開発チームであっても、PythonやRubyの知識をチームで共有していたり、それらを楽しく学んでいるのなら上記の議論は当てはまりません。Gradleはビルドスクリプト・エンジンとしてJRubyやJythonを使えるよう適切にデザインされています。私たちは、そういった追加のビルドスクリプトエンジンを作っていただけるあらゆるコミュニティを喜んでサポートします。</para>
+        <para>Javaの開発者であっても、PythonやRubyの知識を持っていたり、それらを楽しく学んでいるのなら上記の議論は当てはまりません。
+            Gradleはビルドスクリプト・エンジンとしてJRubyやJythonを使えるよう適切にデザインされています。
+            私達にとって、目下のところはそれらの優先度は高くありませんが。
+            私たちは、そういった追加のビルドスクリプトエンジンを作っていただけるあらゆるコミュニティを喜んでサポートします。</para>
     </section>
 </chapter>

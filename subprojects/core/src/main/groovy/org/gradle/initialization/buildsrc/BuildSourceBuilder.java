@@ -16,21 +16,22 @@
 
 package org.gradle.initialization.buildsrc;
 
-import org.gradle.GradleLauncher;
 import org.gradle.StartParameter;
-import org.gradle.cache.CacheLayout;
+import org.gradle.api.internal.initialization.ClassLoaderScope;
 import org.gradle.cache.CacheRepository;
 import org.gradle.cache.PersistentCache;
-import org.gradle.cache.internal.CacheLayoutBuilder;
 import org.gradle.cache.internal.FileLockManager;
-import org.gradle.initialization.ClassLoaderRegistry;
+import org.gradle.initialization.BuildCancellationToken;
+import org.gradle.initialization.GradleLauncher;
 import org.gradle.initialization.GradleLauncherFactory;
 import org.gradle.internal.classpath.ClassPath;
 import org.gradle.internal.classpath.DefaultClassPath;
+import org.gradle.util.GradleVersion;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.net.URLClassLoader;
+import java.io.File;
+import java.util.Collections;
 
 import static org.gradle.cache.internal.filelock.LockOptionsBuilder.mode;
 
@@ -38,18 +39,24 @@ public class BuildSourceBuilder {
     private static final Logger LOGGER = LoggerFactory.getLogger(BuildSourceBuilder.class);
 
     private final GradleLauncherFactory gradleLauncherFactory;
-    private final ClassLoaderRegistry classLoaderRegistry;
+    private final BuildCancellationToken cancellationToken;
+    private final ClassLoaderScope classLoaderScope;
     private final CacheRepository cacheRepository;
 
-    public BuildSourceBuilder(GradleLauncherFactory gradleLauncherFactory, ClassLoaderRegistry classLoaderRegistry, CacheRepository cacheRepository) {
+    public BuildSourceBuilder(GradleLauncherFactory gradleLauncherFactory, BuildCancellationToken cancellationToken,
+                              ClassLoaderScope classLoaderScope, CacheRepository cacheRepository) {
         this.gradleLauncherFactory = gradleLauncherFactory;
-        this.classLoaderRegistry = classLoaderRegistry;
+        this.cancellationToken = cancellationToken;
+        this.classLoaderScope = classLoaderScope;
         this.cacheRepository = cacheRepository;
     }
 
-    public ClassLoader buildAndCreateClassLoader(StartParameter startParameter) {
+    public ClassLoaderScope buildAndCreateClassLoader(StartParameter startParameter) {
         ClassPath classpath = createBuildSourceClasspath(startParameter);
-        return new URLClassLoader(classpath.getAsURLArray(), classLoaderRegistry.getGradleApiClassLoader());
+        ClassLoaderScope childScope = classLoaderScope.createChild();
+        childScope.export(classpath);
+        childScope.lock();
+        return childScope;
     }
 
     ClassPath createBuildSourceClasspath(StartParameter startParameter) {
@@ -65,21 +72,27 @@ public class BuildSourceBuilder {
         // If we were not the most recent version of Gradle to build the buildSrc dir, then do a clean build
         // Otherwise, just to a regular build
         final PersistentCache buildSrcCache = createCache(startParameter);
-
-        GradleLauncher gradleLauncher = buildGradleLauncher(startParameter);
-        return buildSrcCache.useCache("rebuild buildSrc", new BuildSrcUpdateFactory(buildSrcCache, gradleLauncher, new BuildSrcBuildListenerFactory()));
+        try {
+            GradleLauncher gradleLauncher = buildGradleLauncher(startParameter);
+            try {
+                return buildSrcCache.useCache("rebuild buildSrc", new BuildSrcUpdateFactory(buildSrcCache, gradleLauncher, new BuildSrcBuildListenerFactory()));
+            } finally {
+                gradleLauncher.stop();
+            }
+        } finally {
+            // This isn't quite right. We should not unlock the classes until we're finished with them, and the classes may be used across multiple builds
+            buildSrcCache.close();
+        }
     }
 
     PersistentCache createCache(StartParameter startParameter) {
-        CacheLayout layout = new CacheLayoutBuilder()
-                .withScope(startParameter.getCurrentDir())
-                .withSharedCacheThatInvalidatesOnVersionChange()
-                .build();
-        return cacheRepository.
-                cache("buildSrc").
-                withLockOptions(mode(FileLockManager.LockMode.None).useCrossVersionImplementation()).
-                withLayout(layout).
-                open();
+        return cacheRepository
+                .cache(new File(startParameter.getCurrentDir(), ".gradle/noVersion/buildSrc"))
+                .withCrossVersionCache()
+                .withDisplayName("buildSrc state cache")
+                .withLockOptions(mode(FileLockManager.LockMode.None).useCrossVersionImplementation())
+                .withProperties(Collections.singletonMap("gradle.version", GradleVersion.current().getVersion()))
+                .open();
     }
 
     private GradleLauncher buildGradleLauncher(StartParameter startParameter) {
@@ -87,6 +100,6 @@ public class BuildSourceBuilder {
         startParameterArg.setProjectProperties(startParameter.getProjectProperties());
         startParameterArg.setSearchUpwards(false);
         startParameterArg.setProfile(startParameter.isProfile());
-        return gradleLauncherFactory.newInstance(startParameterArg);
+        return gradleLauncherFactory.newInstance(startParameterArg, cancellationToken);
     }
 }

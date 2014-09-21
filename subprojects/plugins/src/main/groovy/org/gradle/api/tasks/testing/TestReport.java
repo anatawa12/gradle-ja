@@ -129,6 +129,7 @@ public class TestReport extends DefaultTask {
                 DefaultTestReport testReport = new DefaultTestReport();
                 testReport.generateReport(resultsProvider, getDestinationDir());
             } else {
+                getLogger().info("{} - no binary test results found in dirs: {}.", getPath(), getTestResultDirs().getFiles());
                 setDidWork(false);
             }
         } finally {
@@ -139,11 +140,16 @@ public class TestReport extends DefaultTask {
     private TestResultsProvider createAggregateProvider() {
         List<TestResultsProvider> resultsProviders = new LinkedList<TestResultsProvider>();
         try {
-            return new AggregateTestResultsProvider(collect(getTestResultDirs(), resultsProviders, new Transformer<TestResultsProvider, File>() {
-                public TestResultsProvider transform(File dir) {
-                    return new BinaryResultBackedTestResultsProvider(dir);
-                }
-            }));
+            FileCollection resultDirs = getTestResultDirs();
+            if (resultDirs.getFiles().size() == 1) {
+                return new BinaryResultBackedTestResultsProvider(resultDirs.getSingleFile());
+            } else {
+                return new AggregateTestResultsProvider(collect(resultDirs, resultsProviders, new Transformer<TestResultsProvider, File>() {
+                    public TestResultsProvider transform(File dir) {
+                        return new BinaryResultBackedTestResultsProvider(dir);
+                    }
+                }));
+            }
         } catch (RuntimeException e) {
             stoppable(resultsProviders).stop();
             throw e;

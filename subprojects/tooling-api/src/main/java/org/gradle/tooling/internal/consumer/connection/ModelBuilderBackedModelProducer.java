@@ -16,7 +16,10 @@
 
 package org.gradle.tooling.internal.consumer.connection;
 
+import org.gradle.api.Action;
 import org.gradle.tooling.internal.adapter.ProtocolToModelAdapter;
+import org.gradle.tooling.internal.adapter.SourceObjectMapping;
+import org.gradle.tooling.internal.consumer.converters.TaskPropertyHandlerFactory;
 import org.gradle.tooling.internal.consumer.parameters.ConsumerOperationParameters;
 import org.gradle.tooling.internal.consumer.versioning.ModelMapping;
 import org.gradle.tooling.internal.consumer.versioning.VersionDetails;
@@ -26,16 +29,23 @@ import org.gradle.tooling.internal.protocol.ModelBuilder;
 import org.gradle.tooling.internal.protocol.ModelIdentifier;
 import org.gradle.tooling.model.internal.Exceptions;
 
-public class ModelBuilderBackedModelProducer extends AbstractModelProducer {
+public class ModelBuilderBackedModelProducer implements ModelProducer {
+    private final ProtocolToModelAdapter adapter;
+    private final VersionDetails versionDetails;
+    private final ModelMapping modelMapping;
     private final ModelBuilder builder;
+    private final Action<SourceObjectMapping> mapper;
 
     public ModelBuilderBackedModelProducer(ProtocolToModelAdapter adapter, VersionDetails versionDetails, ModelMapping modelMapping, ModelBuilder builder) {
-        super(adapter, versionDetails, modelMapping);
+        this.adapter = adapter;
+        this.versionDetails = versionDetails;
+        this.modelMapping = modelMapping;
         this.builder = builder;
+        mapper = new TaskPropertyHandlerFactory().forVersion(versionDetails);
     }
 
     public <T> T produceModel(Class<T> type, ConsumerOperationParameters operationParameters) {
-        if (!versionDetails.isModelSupported(type)) {
+        if (!versionDetails.maySupportModel(type)) {
             throw Exceptions.unsupportedModel(type, versionDetails.getVersion());
         }
         final ModelIdentifier modelIdentifier = modelMapping.getModelIdentifierFromModelType(type);
@@ -45,6 +55,6 @@ public class ModelBuilderBackedModelProducer extends AbstractModelProducer {
         } catch (InternalUnsupportedModelException e) {
             throw Exceptions.unknownModel(type, e);
         }
-        return adapter.adapt(type, result.getModel());
+        return adapter.adapt(type, result.getModel(), mapper);
     }
 }

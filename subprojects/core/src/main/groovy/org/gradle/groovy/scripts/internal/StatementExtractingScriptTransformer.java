@@ -35,18 +35,17 @@ import java.util.Iterator;
 import java.util.Map;
 
 /**
- * Excludes everything from a script except statements that are satisfied by a given predicate, and imports for accessible classes.
- * <p>
- * *All* other kinds of constructs are filtered, including: classes, methods etc.
+ * Excludes everything from a script except statements that are satisfied by a given predicate, and imports for accessible classes. <p> *All* other kinds of constructs are filtered, including:
+ * classes, methods etc.
  */
 public class StatementExtractingScriptTransformer extends AbstractScriptTransformer {
 
     private final String id;
-    private final Spec<? super Statement> statementSpec;
+    private final StatementTransformer transformer;
 
-    public StatementExtractingScriptTransformer(String id, Spec<? super Statement> statementSpec) {
+    public StatementExtractingScriptTransformer(String id, StatementTransformer transformer) {
         this.id = id;
-        this.statementSpec = statementSpec;
+        this.transformer = transformer;
     }
 
     public String getId() {
@@ -58,7 +57,7 @@ public class StatementExtractingScriptTransformer extends AbstractScriptTransfor
     }
 
     public void call(SourceUnit source) throws CompilationFailedException {
-        AstUtils.filterStatements(source, statementSpec);
+        AstUtils.filterAndTransformStatements(source, transformer);
 
         // Filter imported classes which are not available yet
 
@@ -117,16 +116,16 @@ public class StatementExtractingScriptTransformer extends AbstractScriptTransfor
     }
 
     public Transformer invert() {
-        return new Inverse("no_" + StatementExtractingScriptTransformer.this.getId(), statementSpec);
+        return new Inverse("no_" + StatementExtractingScriptTransformer.this.getId(), Specs.not(transformer.getSpec()));
     }
 
     private static class Inverse extends AbstractScriptTransformer {
         private final String id;
-        private final Spec<? super Statement> originalSpec;
+        private final Spec<? super Statement> spec;
 
-        private Inverse(String id, Spec<? super Statement> originalSpec) {
+        private Inverse(String id, Spec<? super Statement> spec) {
             this.id = id;
-            this.originalSpec = originalSpec;
+            this.spec = spec;
         }
 
         protected int getPhase() {
@@ -139,8 +138,8 @@ public class StatementExtractingScriptTransformer extends AbstractScriptTransfor
 
         @Override
         public void call(SourceUnit source) throws CompilationFailedException {
-            Spec<Statement> spec = Specs.not(originalSpec);
-            AstUtils.filterStatements(source, spec);
+            AstUtils.filterAndTransformStatements(source, new FilteringStatementTransformer(spec));
         }
     }
+
 }

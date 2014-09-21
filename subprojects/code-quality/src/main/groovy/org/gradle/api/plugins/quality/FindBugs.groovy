@@ -15,22 +15,19 @@
  */
 package org.gradle.api.plugins.quality
 
+import groovy.transform.PackageScope
 import org.gradle.api.GradleException
+import org.gradle.api.JavaVersion
 import org.gradle.api.file.FileCollection
+import org.gradle.api.logging.LogLevel
 import org.gradle.api.plugins.quality.internal.FindBugsReportsImpl
-import org.gradle.api.plugins.quality.internal.findbugs.FindBugsWorkerManager
-import org.gradle.api.plugins.quality.internal.findbugs.FindBugsResult
-import org.gradle.api.plugins.quality.internal.findbugs.FindBugsSpec
-import org.gradle.api.plugins.quality.internal.findbugs.FindBugsSpecBuilder
+import org.gradle.api.plugins.quality.internal.findbugs.*
 import org.gradle.api.reporting.Reporting
 import org.gradle.api.tasks.*
-import org.gradle.api.logging.LogLevel
 import org.gradle.internal.Factory
 import org.gradle.internal.reflect.Instantiator
 import org.gradle.logging.ConsoleRenderer
 import org.gradle.process.internal.WorkerProcessBuilder
-
-import groovy.transform.PackageScope
 
 import javax.inject.Inject
 
@@ -129,12 +126,18 @@ class FindBugs extends SourceTask implements VerificationTask, Reporting<FindBug
     @Nested
     private final FindBugsReportsImpl reports
 
-    private final Factory<WorkerProcessBuilder> workerFactory
+    FindBugs() {
+        reports = instantiator.newInstance(FindBugsReportsImpl, this)
+    }
 
     @Inject
-    FindBugs(Instantiator instantiator, Factory<WorkerProcessBuilder> workerFactory) {
-        reports = instantiator.newInstance(FindBugsReportsImpl, this)
-        this.workerFactory = workerFactory
+    Instantiator getInstantiator() {
+        throw new UnsupportedOperationException();
+    }
+
+    @Inject
+    Factory<WorkerProcessBuilder> getWorkerProcessBuilderFactory() {
+        throw new UnsupportedOperationException();
     }
 
     /**
@@ -170,13 +173,15 @@ class FindBugs extends SourceTask implements VerificationTask, Reporting<FindBug
 
     @TaskAction
     void run() {
+        new FindBugsClasspathValidator(JavaVersion.current()).validateClasspath(getFindbugsClasspath().files*.name)
+
         FindBugsSpec spec = generateSpec()
         FindBugsWorkerManager manager = new FindBugsWorkerManager()
 
         logging.captureStandardOutput(LogLevel.DEBUG)
         logging.captureStandardError(LogLevel.DEBUG)
 
-        FindBugsResult result = manager.runWorker(getProject().getProjectDir(), workerFactory, getFindbugsClasspath(), spec)
+        FindBugsResult result = manager.runWorker(getProject().getProjectDir(), workerProcessBuilderFactory, getFindbugsClasspath(), spec)
         evaluateResult(result);
     }
 

@@ -22,8 +22,8 @@ import org.junit.Rule
 import spock.lang.Specification
 
 class GradleProjectBuilderTest extends Specification {
-    @Rule TestNameTestDirectoryProvider tmpDir = new TestNameTestDirectoryProvider()
-    final def builder = new GradleProjectBuilder()
+    @Rule TestNameTestDirectoryProvider tmpDir
+    def builder = new GradleProjectBuilder()
 
     def "builds basics for project"() {
         def buildFile = tmpDir.file("build.gradle") << "//empty"
@@ -37,6 +37,7 @@ class GradleProjectBuilderTest extends Specification {
         model.path == ':'
         model.name == 'test'
         model.description == 'a test project'
+        model.buildDirectory == project.buildDir
         model.buildScript.sourceFile == buildFile
     }
 }

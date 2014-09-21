@@ -24,6 +24,7 @@ import org.jsoup.nodes.Element
 class HtmlTestResultsFixture {
     Document content
 
+
     HtmlTestResultsFixture(TestFile file) {
         file.assertIsFile()
         content = Jsoup.parse(file, null)
@@ -39,6 +40,14 @@ class HtmlTestResultsFixture {
 
     void assertHasFailures(int tests) {
         def testDiv = content.select("div#failures")
+        assert testDiv != null
+        def counter = testDiv.select("div.counter")
+        assert counter != null
+        assert counter.text() == tests as String
+    }
+
+    void assertHasIgnored(int tests) {
+        def testDiv = content.select("div#ignored")
         assert testDiv != null
         def counter = testDiv.select("div.counter")
         assert counter != null
@@ -70,12 +79,26 @@ class HtmlTestResultsFixture {
         assert counter.text() == "${rate}%"
     }
 
+    void assertHasOverallResult(String result) {
+        assert content.select("div#successRate").hasClass(result)
+    }
+
     void assertHasNoSuccessRate() {
         def testDiv = content.select("div#successRate")
         assert testDiv != null
         def counter = testDiv.select("div.percent")
         assert counter != null
         assert counter.text() == "-"
+    }
+
+    void assertHasNoFailedTests() {
+        def tab = findTab('Failed tests')
+        assert tab.isEmpty()
+    }
+
+    void assertHasNoIgnoredTests() {
+        def tab = findTab('Ignored tests')
+        assert tab.isEmpty()
     }
 
     void assertHasNoNavLinks() {
@@ -92,23 +115,43 @@ class HtmlTestResultsFixture {
         assert tab.select("a[href=${target}.html#$testName]").find { it.text() == testName }
     }
 
+    void assertHasIgnoredTest(String target, String testName) {
+        def tab = findTab('Ignored tests')
+        assert tab != null
+        assert tab.select("a[href=${target}.html#$testName]").find { it.text() == testName }
+    }
+
     void assertHasTest(String testName) {
         assert findTestDetails(testName)
     }
 
-    HtmlTestResultsFixture.PackageDetails packageDetails(String packageName) {
+    HtmlTestResultsFixture.AggregateDetails packageDetails(String packageName) {
         def packageElement = findPackageDetails(packageName)
-        new HtmlTestResultsFixture.PackageDetails(packageElement)
+        assert packageElement != null
+        new HtmlTestResultsFixture.AggregateDetails(packageElement)
     }
 
-    void assertTestIgnored(String testName) {
-        def row = findTestDetails(testName)
-        assert row.select("tr > td:eq(2)").text() == 'ignored'
+    HtmlTestResultsFixture.AggregateDetails classDetails(String className) {
+        def classElement = findClassDetails(className)
+        assert classElement != null
+        new HtmlTestResultsFixture.AggregateDetails(classElement)
+    }
+
+    HtmlTestResultsFixture.TestDetails testDetails(String testName) {
+        def testElement = findTestDetails(testName)
+        assert testElement != null
+        new HtmlTestResultsFixture.TestDetails(testElement)
+    }
+
+    List<HtmlTestResultsFixture.TestDetails> allTestDetails(String testName) {
+        def testElements = findAllTestDetails(testName)
+        assert testElements != null
+        testElements.collect { new HtmlTestResultsFixture.TestDetails(it) }
     }
 
     void assertHasFailure(String testName, String stackTrace) {
-        def detailsRow = findTestDetails(testName)
-        assert detailsRow.select("tr > td:eq(2)").text() == 'failed'
+        def detailsRows = findAllTestDetails(testName)
+        assert detailsRows.any { it.select("tr > td:eq(2)").text() == 'failed' }
         def tab = findTab('Failed tests')
         assert tab != null && !tab.isEmpty()
         assert tab.select("pre").find { it.text() == stackTrace.trim() }
@@ -120,9 +163,21 @@ class HtmlTestResultsFixture {
         return anchor?.parent()
     }
 
+    private def findAllTestDetails(String testName) {
+        def tab = findTab('Tests')
+        def anchors = tab.select("TD").findAll { it.text() == testName }
+        return anchors.collect { it?.parent() }
+    }
+
     private def findPackageDetails(String packageName) {
         def tab = findTab('Packages')
         def anchor = tab.select("TD").find { it.text() == packageName }
+        return anchor?.parent()
+    }
+
+    private def findClassDetails(String className) {
+        def tab = findTab('Classes')
+        def anchor = tab.select("TD").find { it.text() == className }
         return anchor?.parent()
     }
 
@@ -143,15 +198,88 @@ class HtmlTestResultsFixture {
         return tab
     }
 
-    class PackageDetails {
-        private final Element packageElement
 
-        PackageDetails(Element packageElement) {
-            this.packageElement = packageElement
+
+    class AggregateDetails {
+        private final Element tableElement
+
+        AggregateDetails(Element tabElement) {
+            this.tableElement = tabElement
         }
 
-        void assertSuccessRate(int expected) {
-            assert packageElement.select("tr > td:eq(4)").text() == "${expected}%"
+        void assertNumberOfTests(int expected) {
+            assert tableElement.select("tr > td:eq(1)").text() == "${expected}"
+        }
+
+        void assertNumberOfFailures(int expected) {
+            assert tableElement.select("tr > td:eq(2)").text() == "${expected}"
+        }
+
+        void assertNumberOfIgnored(int expected) {
+            assert tableElement.select("tr > td:eq(3)").text() == "${expected}"
+        }
+
+        void assertDuration(String expected) {
+            assert tableElement.select("tr > td:eq(4)").text() == expected
+        }
+
+        void assertSuccessRate(String expected) {
+            assert tableElement.select("tr > td:eq(5)").text() == expected
+        }
+
+        void assertPassed() {
+            assertOverallResult('success')
+        }
+
+        void assertIgnored() {
+            assertOverallResult('skipped')
+        }
+
+        void assertFailed() {
+            assertOverallResult('failures')
+        }
+
+        private void assertOverallResult(String expected) {
+            assert tableElement.select("tr > td:eq(0)").hasClass(expected)
+            assert tableElement.select("tr > td:eq(5)").hasClass(expected)
+        }
+
+        void assertLinksTo(String target) {
+            assert tableElement.select("a[href=${target}.html]") != null
+        }
+    }
+
+    class TestDetails {
+        private final Element tableElement
+
+        TestDetails(Element tabElement) {
+            this.tableElement = tabElement
+        }
+
+        void assertDuration(String expected) {
+            assert tableElement.select("tr > td:eq(1)").text() == expected
+        }
+
+        void assertPassed() {
+            assertResult('passed', 'success')
+        }
+
+        void assertIgnored() {
+            assertResult('ignored', 'skipped')
+        }
+
+        void assertFailed() {
+            assertResult('failed', 'failures')
+        }
+
+        private void assertResult(String expectedValue, String expectedClass) {
+            assert tableElement.select("tr > td:eq(2)").listIterator().any { Element it -> it.text() == expectedValue }
+            assert tableElement.select("tr > td:eq(2)").hasClass(expectedClass)
+        }
+
+        boolean failed() {
+            return tableElement.select("tr > td:eq(2)").listIterator().any { Element it -> it.text() == 'failed' } &&
+              tableElement.select("tr > td:eq(2)").hasClass('failures')
         }
     }
 }

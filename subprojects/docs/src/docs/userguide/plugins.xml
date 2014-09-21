@@ -1,4 +1,4 @@
-﻿<!--
+<!--
   ~ Copyright 2009 the original author or authors.
   ~
   ~ Licensed under the Apache License, Version 2.0 (the "License");
@@ -16,20 +16,32 @@
 <chapter id='plugins' xml:lang="ja">
     <title>Gradleのプラグインについて <phrase role="original">Gradle Plugins</phrase></title>
     <para role="original">
-        Gradle at its core intentionally provides little useful functionality for real world automation. All of the useful
-        features, such as the ability to compile Java code for example, are added by <emphasis>plugins</emphasis>.
+        Gradle at its core intentionally provides very little for real world automation. All of the useful
+        features, like the ability to compile Java code, are added by <emphasis>plugins</emphasis>.
         Plugins add new tasks (e.g. <apilink class='org.gradle.api.tasks.compile.JavaCompile'/>), domain objects (e.g.
-        <apilink class="org.gradle.api.tasks.SourceSet"/>), conventions (e.g. main Java source is located at
+        <apilink class="org.gradle.api.tasks.SourceSet"/>), conventions (e.g. Java source is located at
         <literal>src/main/java</literal>) as well as extending core objects and objects from other plugins.
     </para>
     <para>
-        Gradleのコア部分には、実際に役に立つような機能は含まれていません。これは意図的なもので、Javaのコードをコンパイルしたりといった便利な機能は、全て<emphasis>プラグイン</emphasis>により追加されます。
+        Gradleのコア部分には、実際の自動化に役に立つような機能は含まれていません。
+        これは意図的なもので、Javaのコードをコンパイルしたりといった便利な機能は、全て<emphasis>プラグイン</emphasis>により追加されます。
         プラグインは、コア部分のオブジェクトや他のプラグインのオブジェクトを拡張するだけでなく、新しいタスク(<apilink class='org.gradle.api.tasks.compile.JavaCompile'/>など)やドメインオブジェクト(<apilink class="org.gradle.api.tasks.SourceSet"/>など)、規約(Javaのコードは<literal>src/main/java</literal>に置く)、などをGradleに追加します。
     </para>
     <para role="original">
         In this chapter we will discuss how to use plugins and the terminology and concepts surrounding plugins.
     </para>
     <para>この章では、プラグインを使う方法、プラグインまわりの用語や概念について議論します。</para>
+    <section id="sec:types_of_plugins">
+        <title>Types of plugins</title>
+        <para>
+            There are two general types of plugins in Gradle, <emphasis>script</emphasis> plugins and <emphasis>binary</emphasis> plugins.
+            Script plugins are additional build scripts that further configure the build and usually implement a declarative approach to
+            manipulating the build.  They are typically used within a build although they can be externalized and accessed from a remote
+            location.  Binary plugins are classes that implement the <apilink class='org.gradle.api.Plugin'/> interface and adopt a programmatic
+            approach to manipulating the build.  Binary plugins can reside within a build script, within the project hierarchy or externally
+            in a plugin jar.
+        </para>
+    </section>
     <section id='sec:using_plugins'>
         <title>プラグインの適用 <phrase role="original">Applying plugins</phrase></title>
         <para role="original">
@@ -39,11 +51,79 @@
         <sample id="useJavaPlugin" dir="java/quickstart" title="プラグインの適用 / Applying a plugin">
             <sourcefile file="build.gradle" snippet="use-plugin"/>
         </sample>
-        <para role="original">
-            Plugins advertise a short name for themselves. In the above case, we are using the short name ‘<literal>java</literal>’ to apply
-            the <apilink class="org.gradle.api.plugins.JavaPlugin" />.
+        <section>
+            <title>Script plugins</title>
+            <sample id="configureProjectUsingScript" dir="userguide/tutorial/configureProjectUsingScript" title="Applying a script plugin">
+                <sourcefile file="build.gradle"/>
+            </sample>
+            <para>
+                Script plugins can be applied from a script on the local filesystem or at a remote location.  Filesystem
+                locations are relative to the project directory, while remote script locations are specified with an HTTP URL.
+                Multiple script plugins (of either form) can be applied to a given build.
+            </para>
+        </section>
+        <section>
+            <title>Binary plugins</title>
+            <sample id="useJavaPlugin" dir="java/quickstart" title="Applying a binary plugin">
+                <sourcefile file="build.gradle" snippet="use-plugin"/>
+            </sample>
+            <para>
+                Core plugins register a short name. In the above case, we are using the short name
+                ‘<literal>java</literal>’ to apply the <apilink class="org.gradle.api.plugins.JavaPlugin" />.
+                Plugins also have a <emphasis>plugin id</emphasis> that takes a fully qualified
+                form like <literal>com.github.foo.bar</literal>, although some legacy plugins may still utilize
+                the short, unqualified form.
+            </para>
+            <para>
+                This method can also accept a class to identify the plugin:
+            </para>
+            <sample id="pluginIntro" dir="userguide/tutorial/pluginIntro" title="Applying a binary plugin by type">
+                <sourcefile file="build.gradle" snippet="apply-by-type"/>
+            </sample>
+            <para>
+                The <literal>JavaPlugin</literal> symbol in the above sample refers to the the <apilink class="org.gradle.api.plugins.JavaPlugin"/>.
+                This class does not strictly need to be import as the <literal>org.gradle.api.plugins</literal> package is automatically imported in all build scripts
+                (see <xref linkend='ide_support'/>). Furthermore, it is not necessary to append <literal>.class</literal> to identify a class literal in Groovy as it is in Java.
+            </para>
+            <para>
+                The application of plugins is <emphasis>idempotent</emphasis>. That is, a plugin can be applied multiple times. If the plugin
+                has previously been applied, any further applications will have no effect.
+            </para>
+            <section>
+                <title>Locations of binary plugins</title>
+                <para>
+                    A plugin is simply any class that implements the <apilink class="org.gradle.api.Plugin" /> interface. Gradle provides
+                    the core plugins as part of its distribution so simply applying the plugin as above is all you need to do.
+                    However, non-core binary plugins need to be available to the build classpath before they can be applied.  This can
+                    be achieved in a number of ways, including:
+                </para>
+                <itemizedlist>
+                    <listitem>Defining the plugin as an inline class declaration inside a build script.</listitem>
+                    <listitem>Defining the plugin as a source file under the buildSrc directory in the project.</listitem>
+                    <listitem>Including the plugin from an external jar defined as a buildscript dependency (see <xref linkend="sec:external_dependencies" />).</listitem>
+                    <listitem>Including the plugin from the plugin portal using the plugins DSL (see <xref linkend="sec:plugins_block" />).</listitem>
+                </itemizedlist>
+                <para>
+                    For more on defining your own plugins, see <xref linkend="custom_plugins" />.
+                </para>
+            </section>
+        </section>
+    </section>
+    <section id="sec:plugins_block">
+        <title>Applying plugins with the plugins DSL</title>
+        <note>
+            <para>
+                The plugins DSL is currently <link linkend="feature_lifecycle">incubating</link>.
+                Please be aware that the DSL and other configuration may change in later Gradle versions.
+            </para>
+        </note>
+        <para>
+            The new plugins DSL provides a more succinct and convenient way to declare plugin dependencies.  It works with the
+            new <ulink url="http://plugins.gradle.org">Gradle plugin portal</ulink> to provide easy access to both core and community
+            plugins.  The plugins script block configures an instance of <apilink class="org.gradle.plugin.use.PluginDependenciesSpec" />.
         </para>
-        <para>プラグインは、自分自身を示す短縮名を保持、公開しています。上の例では、短縮名'<literal>java</literal>'を使って<apilink class="org.gradle.api.plugins.JavaPlugin" />を適用しています。</para>
+        <para>プラグインは、自分自身を示す短縮名を保持、公開しています。
+            上の例では、短縮名'<literal>java</literal>'を使って<apilink class="org.gradle.api.plugins.JavaPlugin" />を適用しています。</para>
         <para role="original">
             We could also have used the following syntax:
         </para>
@@ -52,31 +132,25 @@
             <sourcefile file="build.gradle" snippet="apply-by-type"/>
         </sample>
         <para role="original">
-            Thanks to Gradle's default imports (see <xref linkend='ide_support'/>) you could also write:
+            To apply a community plugin from the portal, the fully qualified plugin id must be used:
         </para>
-        <para>Gradleにはデフォルトインポート(<xref linkend='ide_support'/>参照)があるので、次のように書けます。</para>
-        <sample id="pluginIntro" dir="userguide/tutorial/pluginIntro" title="型でプラグインを適用する / Applying a plugin by type">
-            <sourcefile file="build.gradle" snippet="apply-by-type-with-import"/>
+        <sample id="useCommunityPluginDSL" dir="plugin-dsl" title="Applying a community plugin">
+            <sourcefile file="build.gradle" snippet="use-community-plugin"/>
         </sample>
-        <para role="original">
-            The application of plugins is <emphasis>idempotent</emphasis>. That is, a plugin can be applied multiple times. If the plugin
-            has previously been applied, any further applications will have no effect.
-        </para>
-        <para>プラグインの適用は<emphasis>べき等</emphasis>です。つまり、何度でも適用することができますし、既に適用していた場合、再度適用しても影響はありません。</para>
-        <para role="original">
-            A plugin is simply any class that implements the <apilink class="org.gradle.api.Plugin"/> interface. Gradle provides
-            the core plugins as part of its distribution so simply applying the plugin as above is all you need to do.
-            For 3rd party plugins however, you need to make the plugins available to the build classpath. For more information
-            on how to do this, see <xref linkend="sec:external_dependencies" />.
+        <para>
+            No further configuration is necessary.  Specifically, there is no need to configure the buildscript classpath.
+            Gradle will resolve the plugin in the plugin portal, locate it, and make it available to the build.
         </para>
         <para>
-        プラグインの実体は、<apilink class="org.gradle.api.Plugin"/>インターフェースを実装した普通のクラスです。
-        コアプラグインについては、Gradleは配布物に同梱しているので、上記の例で見てきたとおりにするだけで使うことができます。
-        しかし、サードパーティ製のプラグインを使うには、そのプラグインをビルドクラスパスに通しておかなくてはいけません。
-        やり方については、<xref linkend="sec:external_dependencies" />を参照してください。
+            See <apilink class="org.gradle.plugin.use.PluginDependenciesSpec" /> for more information on using the Plugin DSL.
         </para>
-        <para role="original">
-            For more on writing your own plugins, see <xref linkend="custom_plugins" />.
+    </section>
+    <section>
+        <title>Finding community plugins</title>
+        <para>
+            Gradle has a vibrant community of plugin developers who contribute plugins for a wide variety of capabilities.
+            The Gradle <ulink url="http://plugins.gradle.org">plugin portal</ulink> provides an interface for searching and
+            exploring community plugins.
         </para>
         <para>また、プラグインの作り方は<xref linkend="custom_plugins" />に詳しく記載されています。</para>
     </section>
@@ -136,13 +210,13 @@
             <output args="-q show"/>
         </sample>
         <para role="original">
-            However, the <literal>compileJava</literal> task is likely to not be the only task that needs to know where
+            However, it's likely that the <literal>compileJava</literal> task is not the only task that needs to know where
             the class files are. 
         </para>
         <para>ただ、クラスファイルの出力場所が関係するタスクは、おそらく<literal>compileJava</literal>タスクだけではないでしょう。</para>
         <para role="original">
             The Java plugin adds the concept of <emphasis>source sets</emphasis> (see <apilink class="org.gradle.api.tasks.SourceSet" />)
-            to describe the aspects of a set of source, one aspect being where the class files should be written to when it is compiled.
+            to describe the aspects of a set of source files, one aspect being where the class files should be written to when they are compiled.
             The Java plugin maps the <literal>destinationDir</literal> property of the <literal>compileJava</literal> task to this aspect of the source set.
         </para>
         <para>
@@ -159,7 +233,7 @@
             <output args="-q show"/>
         </sample>
         <para role="original">
-            In the above example, we applied the Java plugin which, among other things, did the following:
+            In the example above, we applied the Java plugin which, among other things, did the following:
         </para>
         <para>この例で、Javaプラグインは以下のようなことを含む様々な処理を行っています。</para>
         <itemizedlist>
@@ -168,7 +242,7 @@
             <listitem><phrase role="original">Configured supporting tasks to use these properties to perform work</phrase> タスクがこれらのプロパティを使って動作するように設定。</listitem>
         </itemizedlist>
         <para role="original">
-            All of this happened during the <literal>apply plugin: "java"</literal> step. In the example above we <emphasis>changed</emphasis>
+            All of this happened during the “<literal>apply plugin: "java"</literal>” step. In the example above, we <emphasis>changed</emphasis>
             the desired location of the class files after this conventional configuration had been performed. Notice by the output with the example
             that the value for <literal>compileJava.destinationDir</literal> also changed to reflect the configuration change.
         </para>
@@ -177,15 +251,15 @@
         <literal>compileJava.destinationDir</literal>の値が、設定の変更を反映して変わっていることに注目してください。
         </para>
         <para role="original">
-            Consider the case where another task is to consume the classes files. If this task is configured to use the value from
-            <literal>sourceSets.main.output.classesDir</literal>, then changing it in this location will update both the
-            <literal>compileJava</literal> task and this other consumer task whenever it is changed.
+            Consider the case where another task needs to consume the class files. If this task is configured to use the value from
+            <literal>sourceSets.main.output.classesDir</literal>, then changing it in this location will update this
+            new task in addition to the <literal>compileJava</literal> task whenever it is changed.
         </para>
         <para>別のタスクが、クラスファイルを使用するケースを考えてください。そのタスクが、クラスファイルの場所を<literal>sourceSets.main.output.classesDir</literal>を参照して取得するようになっていれば、ソースセットを変更するだけで<literal>compileJava</literal>とそのタスク、両方の設定が更新されます。</para>
         <para role="original">
             This ability to configure properties of objects to reflect the value of another object's task at all times (i.e. even when it changes) is
             known as “<emphasis>convention mapping</emphasis>”. It allows Gradle to provide conciseness through convention-over-configuration and
-            sensible defaults yet not require complete reconfiguration if a conventional default needs to be changed. Without this, in the above example
+            sensible defaults yet not require complete reconfiguration if a conventional default needs to be changed. Without this, in the example above,
             we would have had to reconfigure every object that needs to work with the class files.
         </para>
         <para>

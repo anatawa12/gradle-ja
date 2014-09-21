@@ -1,4 +1,4 @@
-﻿<appendix id='gradle_command_line' xmlns:xi="http://www.w3.org/2001/XInclude" xml:lang="ja">
+<appendix id='gradle_command_line' xmlns:xi="http://www.w3.org/2001/XInclude" xml:lang="ja">
     <title>Gradle コマンドライン<phrase role="original">Gradle Command Line</phrase></title>
     <para>The
         <command>gradle</command>
@@ -358,59 +358,6 @@
     <para><userinput>gradle -h</userinput>コマンドを実行するとき上記の情報は表示されます。
     </para>
 
-    <section>
-        <title>非推奨のコマンドラインオプション<phrase role="original">Deprecated command-line options</phrase></title>
-        <para role="original">The following options are deprecated and will be removed in a future version of Gradle:</para>
-        <para>T次のコマンドラインオプションは非推奨です。将来的には削除される予定です:</para>
-        <variablelist>
-            <varlistentry>
-                <term><option>-C</option>, <option>--cache</option>
-                </term>
-                <listitem>
-                    <para role="original">(deprecated) Specifies how compiled build scripts should be cached. Possible values are:
-                        <literal>rebuild</literal>
-                        or <literal>on</literal>. Default value is
-                        <literal>on</literal>. You should use
-                        <option>--recompile-scripts</option>
-                        instead.
-                    </para>
-                    <para>(非推奨) スクリプトコンパイル時のキャッシュの扱いの指定。
-                        利用可能な値は:
-                        <literal>rebuild</literal>
-                        または<literal>on</literal>. 
-                        デフォルト値は<literal>on</literal>になっています。 
-                        <option>--recompile-scripts</option>に変更しましょう。
-                    </para>
-                </listitem>
-            </varlistentry>
-            <varlistentry>
-                <term><option>--no-opt</option>
-                </term>
-                <listitem>
-                    <para role="original">(deprecated) Specifies to ignore all task optimization. You should use
-                        <option>--rerun-tasks</option>
-                        instead.
-                    </para>
-                    <para>(非推奨) タスクの最適化を無視する指定。
-                        <option>--rerun-tasks</option>に変更しましょう。
-                    </para>
-                </listitem>
-            </varlistentry>
-            <varlistentry>
-                <term><option>--refresh</option>
-                </term>
-                <listitem>
-                    <para role="original">(deprecated) Refresh the state of resources of the type(s) specified. Currently only <literal>dependencies</literal> is supported.
-                        You should use <option>--refresh-dependencies</option> instead.
-                    </para>
-                    <para>(非推奨) 指定されたリソースの状態をリフレッシュします。 現在は<literal>dependencies</literal> のみサポートされています。
-                        <option>--refresh-dependencies</option>に変更しましょう。
-                    </para>
-                </listitem>
-            </varlistentry>
-        </variablelist>
-    </section>
-
     <section id='daemon_cli'>
         <title>デーモン コマンドラインオプション:<phrase role="original">Daemon command-line options:</phrase></title>
         <para role="original">The
@@ -559,8 +506,16 @@
                     <literal>GRADLE_USER_HOME</literal>
                 </term>
                 <listitem>
-                    <para role="original">Specifies the Gradle user home directory.</para>
+                    <para role="original">Specifies the Gradle user home directory (which defaults to “<literal>USER_HOME/.gradle</literal>” if not set).</para>
                     <para>Gradleのユーザディレクトリを指定します</para>
+                </listitem>
+            </varlistentry>
+            <varlistentry>
+                <term>
+                    <literal>JAVA_HOME</literal>
+                </term>
+                <listitem>
+                    <para>Specifies the JDK installation directory to use.</para>
                 </listitem>
             </varlistentry>
         </variablelist>

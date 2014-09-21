@@ -13,15 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-
-
-
 package org.gradle.testing.testng
 
 import org.gradle.integtests.fixtures.AbstractIntegrationSpec
 import org.gradle.integtests.fixtures.JUnitXmlTestExecutionResult
 import org.gradle.integtests.fixtures.TestNGExecutionResult
+import spock.lang.Unroll
 
 public class TestNGProducesOldReportsIntegrationTest extends AbstractIntegrationSpec {
     def setup() {
@@ -62,7 +59,8 @@ test {
         new JUnitXmlTestExecutionResult(file(".")).hasJUnitXmlResults()
     }
 
-    def "can generate the old xml reports"() {
+    @Unroll
+    "can generate the old xml reports"() {
         given:
         file("src/test/java/org/SomeTest.java") << """package org;
 import org.testng.annotations.*;
@@ -78,9 +76,11 @@ repositories { mavenCentral() }
 dependencies { testCompile 'org.testng:testng:6.3.1' }
 test {
   reports.html.enabled = false
+  $preConfig
   useTestNG(){
     useDefaultListeners = true
   }
+  $postConfig
 }
 """
         when:
@@ -89,9 +89,17 @@ test {
         then:
         new JUnitXmlTestExecutionResult(file(".")).hasJUnitXmlResults()
 
-        def testNG = new TestNGExecutionResult(file("."))
+        def testNG = new TestNGExecutionResult(file("."), path)
         testNG.hasTestNGXmlResults()
         testNG.hasJUnitResultsGeneratedByTestNG()
         testNG.hasHtmlResults()
+
+        where:
+        preConfig                                | postConfig                                                                           | path
+        ""                                       | ""                                                                                   | TestNGExecutionResult.DEFAULT_TESTNG_REPORT
+        "reports.html.destination = file('xyz')" | "reports.html.destination = file('abc')"                                             | "abc"
+        ""                                       | "reports.html.destination = file('abc')"                                             | "abc"
+        "reports.html.destination = file('abc')" | "options.outputDirectory = file('xyz')"                                              | "xyz"
+        ""                                       | "options.outputDirectory = file('xyz');reports.html.destination = file('ignore me')" | "xyz"
     }
 }

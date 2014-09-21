@@ -1,4 +1,4 @@
-﻿<!--
+<!--
   ~ Copyright 2009 the original author or authors.
   ~
   ~ Licensed under the Apache License, Version 2.0 (the "License");
@@ -37,17 +37,17 @@
             extends the <literal>compile</literal> task to look for source files in directory
             <filename>src/main/groovy</filename>, and the <literal>compileTest</literal> task to look for test source
             files in directory <filename>src/test/groovy</filename>. The compile tasks use joint compilation for these
-            directories, which means they can contain a mixture of java and groovy source files.
+            directories, which means they can contain a mixture of Java and Groovy source files.
         </para>
         <para>これにより、（もしまだなら）プロジェクトにはJavaプラグインも適用されます。Groovyプラグインは<literal>compile</literal>タスクを拡張して<filename>src/main/groovy</filename>ディレクトリにあるソースファイルも参照するようにし、また<literal>compileTest</literal>タスクを拡張して<filename>src/test/groovy</filename>ディレクトリにあるテスト用ソースファイルも参照するようにします。compileタスクはこれらのディレクトリに対してジョイントコンパイルを使うので、javaとgroovyのソースファイルが混在していてもかまいません。
         </para>
-        <para role="original">To use the groovy compilation tasks, you must also declare the Groovy version to use and where to find the
+        <para role="original">To use the Groovy compilation tasks, you must also declare the Groovy version to use and where to find the
             Groovy libraries. You do this by adding a dependency to the <literal>groovy</literal> configuration.
-            The <literal>compile</literal> configuration inherits this dependency, so the groovy libraries will
+            The <literal>compile</literal> configuration inherits this dependency, so the Groovy libraries will
             be included in classpath when compiling Groovy and Java source.  For our sample, we will use Groovy 2.2.0
             from the public Maven repository:</para>
         <para>Groovy用のcompileタスクを使うには、GroovyのバージョンとGroovyライブラリを探してくる場所を宣言する必要があります。これは、<literal>compile</literal>コンフィギュレーションに依存関係を追加することによって行います。この例では、Groovy 2.2.0を使用します。</para>
-        <sample id="groovyQuickstart" dir="groovy/quickstart" title="Dependency on Groovy 2.2.0">
+        <sample id="groovyQuickstart" dir="groovy/quickstart" title="Dependency on Groovy">
             <sourcefile file="build.gradle" snippet="groovy-dependency"/>
         </sample>
         <para role="original">Here is our complete build file:</para>

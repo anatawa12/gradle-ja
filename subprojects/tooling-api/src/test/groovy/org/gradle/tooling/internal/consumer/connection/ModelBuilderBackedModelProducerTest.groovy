@@ -42,7 +42,7 @@ class ModelBuilderBackedModelProducerTest extends Specification {
 
     def "builder not triggered for unsupported Models"() {
         setup:
-        1 * versionDetails.isModelSupported(SomeModel.class) >> false
+        1 * versionDetails.maySupportModel(SomeModel.class) >> false
         when:
         modelProducer.produceModel(SomeModel.class, Mock(ConsumerOperationParameters))
         then:
@@ -54,7 +54,7 @@ class ModelBuilderBackedModelProducerTest extends Specification {
     def "builder triggered for supported Models"() {
         setup:
         SomeModel returnValue = new SomeModel()
-        1 * versionDetails.isModelSupported(SomeModel.class) >> true
+        1 * versionDetails.maySupportModel(SomeModel.class) >> true
         ModelIdentifier someModelIdentifier = Mock(ModelIdentifier)
         1 * mapping.getModelIdentifierFromModelType(SomeModel.class) >> someModelIdentifier
         BuildResult buildResult = Mock(BuildResult)
@@ -64,7 +64,7 @@ class ModelBuilderBackedModelProducerTest extends Specification {
         then:
         1 * builder.getModel(someModelIdentifier, operationParameters) >> buildResult
         1 * buildResult.model >> returnValue
-        1 * adapter.adapt(SomeModel.class, returnValue) >> returnValue
+        1 * adapter.adapt(SomeModel.class, returnValue, _) >> returnValue
         model != null
     }
 

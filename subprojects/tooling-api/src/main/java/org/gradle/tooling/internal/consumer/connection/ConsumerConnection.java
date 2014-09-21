@@ -28,7 +28,9 @@ public interface ConsumerConnection {
     
     String getDisplayName();
 
-    <T> T run(Class<T> type, ConsumerOperationParameters operationParameters) throws UnsupportedOperationException, IllegalStateException;
+    <T> T run(Class<T> type, ConsumerOperationParameters operationParameters)
+            throws UnsupportedOperationException, IllegalStateException;
 
-    <T> T run(BuildAction<T> action, ConsumerOperationParameters operationParameters) throws UnsupportedOperationException, IllegalStateException;
+    <T> T run(BuildAction<T> action, ConsumerOperationParameters operationParameters)
+            throws UnsupportedOperationException, IllegalStateException;
 }

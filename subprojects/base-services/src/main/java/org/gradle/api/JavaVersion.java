@@ -22,7 +22,7 @@ import java.util.regex.Pattern;
  * An enumeration of Java versions.
  */
 public enum JavaVersion {
-    VERSION_1_1(false), VERSION_1_2(false), VERSION_1_3(false), VERSION_1_4(false), VERSION_1_5(true), VERSION_1_6(true), VERSION_1_7(true), VERSION_1_8(true);
+    VERSION_1_1(false), VERSION_1_2(false), VERSION_1_3(false), VERSION_1_4(false), VERSION_1_5(true), VERSION_1_6(true), VERSION_1_7(true), VERSION_1_8(true), VERSION_1_9(true);
 
     private final boolean hasMajorVersion;
 
@@ -72,6 +72,14 @@ public enum JavaVersion {
         return toVersion(System.getProperty("java.version"));
     }
 
+    public static JavaVersion forClassVersion(int classVersion) {
+        int index = classVersion - 45; //class file versions: 1.1 == 45, 1.2 == 46...
+        if (index > 0 && index < values().length && values()[index].hasMajorVersion) {
+            return values()[index];
+        }
+        throw new IllegalArgumentException(String.format("Could not determine java version from '%d'.", classVersion));
+    }
+
     public boolean isJava5() {
         return this == VERSION_1_5;
     }
@@ -88,6 +96,10 @@ public enum JavaVersion {
         return this == VERSION_1_8;
     }
 
+    private boolean isJava9() {
+        return this == VERSION_1_9;
+    }
+
     public boolean isJava5Compatible() {
         return this.compareTo(VERSION_1_5) >= 0;
     }
@@ -102,6 +114,10 @@ public enum JavaVersion {
 
     public boolean isJava8Compatible() {
         return this.compareTo(VERSION_1_8) >= 0;
+    }
+
+    public boolean isJava9Compatible() {
+        return this.compareTo(VERSION_1_9) >= 0;
     }
 
     @Override

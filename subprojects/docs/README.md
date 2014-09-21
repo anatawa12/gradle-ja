@@ -50,6 +50,9 @@ To generate the userguide and see your changes, run:
 
 You can then view the built html in `build/docs/userguide` (open the `userguide.html`) to view the front page.
 
+Note that PNG files in the source are generated from ".graphml" files in the same directory.  You can edit these files
+with tools like [yEd](http://www.yworks.com/en/products_yed_about.html) and then generate the associated PNG.
+
 ### Useful docbook tags:
 
 See the [docbook reference](http://docbook.org/tdg/en/html/part2.html) for a list of all available tags.
@@ -90,7 +93,7 @@ This is a block element which adds some source code from one of the sample build
         <sourcefile file='build.gradle'/>
         <sourcefile file='water/build.gradle' snippet='some-snippet'/>
         <output args='-PsomeProp=1020 hello'/>
-        <output args='-q hello' outputFile='someSample.out' ignoreExtraLines="true" ignoreLineOrder="true"/>
+        <output args='-q hello' outputFile='someSample.out' ignoreExtraLines="true" ignoreLineOrder="true" expectFailure="false"/>
         <test args="-q someTask"/>
     </sample>
 

@@ -1,0 +1,109 @@
+import org.gradle.api.artifacts.ivy.IvyModuleDescriptor
+
+/*
+ * Copyright 2014 the original author or authors.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+repositories {
+    mavenCentral()
+}
+
+// START SNIPPET reject-version-1.1
+configurations {
+    rejectConfig {
+        resolutionStrategy {
+            componentSelection {
+                // Accept the highest version matching the requested version that isn't '1.1'
+                all { ComponentSelection selection ->
+                    if (selection.candidate.group == 'org.sample' && selection.candidate.module == 'api' && selection.candidate.version == '1.1') {
+                        selection.reject("version 1.1 is broken for 'org.sample:api'")
+                    }
+                }
+            }
+        }
+    }
+}
+// END SNIPPET reject-version-1.1
+
+// START SNIPPET component-selection-with-metadata
+configurations {
+    rejectConfig {
+        resolutionStrategy {
+            componentSelection {
+                // Reject any versions with a status of 'experimental'
+                all { ComponentSelection selection, ComponentMetadata metadata ->
+                    if (selection.candidate.group == 'org.sample' && selection.candidate.module == 'api') {
+                        if (metadata.status == 'experimental') {
+                            selection.reject("don't use experimental candidates of 'org.sample:api'")
+                        }
+                    }
+                }
+                // Accept the highest version with a branch of 'testing' or a status of 'milestone'
+                all { ComponentSelection selection, IvyModuleDescriptor descriptor, ComponentMetadata metadata ->
+                    if (selection.candidate.group == 'org.sample' && selection.candidate.module == 'api') {
+                        if (descriptor.branch != 'testing' && metadata.status != 'milestone') {
+                            selection.reject("'org.sample:api' must have testing branch or milestone status")
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+// END SNIPPET component-selection-with-metadata
+
+// START SNIPPET targeted-component-selection
+configurations {
+    targetConfig {
+        resolutionStrategy {
+            componentSelection {
+                module("org.sample:api") { ComponentSelection selection ->
+                    if (selection.candidate.version == "1.1") {
+                        selection.reject("known bad version")
+                    }
+                }
+            }
+        }
+    }
+}
+// END SNIPPET targeted-component-selection
+
+configurations {
+    sampleConfig {
+        resolutionStrategy {
+            componentSelection {
+                module("com.google.guava:guava") { ComponentSelection selection ->
+                    // Veto everything except patch releases
+                    if (selection.candidate.version.matches('\\d+.\\d+\\.\\d+')) {
+                        logger.lifecycle("** Accepted version: ${selection.candidate.version} **")
+                    } else {
+                        logger.lifecycle("Rejected version: ${selection.candidate.version}")
+                        selection.reject("Version is broken")
+                    }
+                }
+            }
+        }
+    }
+}
+
+dependencies {
+    sampleConfig group: 'com.google.guava', name: 'guava', version: '1+'
+}
+
+task resolveConfiguration {
+    doLast {
+        configurations.sampleConfig.files.each { println it }
+    }
+}

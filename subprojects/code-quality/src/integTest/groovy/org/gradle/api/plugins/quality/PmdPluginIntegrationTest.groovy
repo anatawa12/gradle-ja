@@ -32,6 +32,24 @@ class PmdPluginIntegrationTest extends WellBehavedPluginTest {
         return "check"
     }
 
+    def "allows configuring tool dependencies explicitly"() {
+        expect: //defaults exist and can be inspected
+        succeeds("dependencies", "--configuration", "pmd")
+        output.contains "pmd:pmd:"
+
+        when:
+        buildFile << """
+            dependencies {
+                //downgrade version:
+                pmd "pmd:pmd:4.2"
+            }
+        """
+
+        then:
+        succeeds("dependencies", "--configuration", "pmd")
+        output.contains "pmd:pmd:4.2"
+    }
+
     def "analyze good code"() {
         goodCode()
 
@@ -118,6 +136,21 @@ class PmdPluginIntegrationTest extends WellBehavedPluginTest {
         file("build/reports/pmd/main.xml").assertContents(containsClass("org.gradle.Class2"))
     }
 
+    def "can enable console output"() {
+        buildFile << """
+            pmd {
+                consoleOutput = true
+            }
+        """
+        badCode()
+
+        expect:
+        fails("check")
+        failure.assertHasDescription("Execution failed for task ':pmdTest'.")
+        failure.assertThatCause(containsString("2 PMD rule violations were found. See the report at:"))
+        output.contains "Class1Test.java:1:\tEmpty initializer was found"
+    }
+
     private void writeBuildFile() {
         file("build.gradle") << """
             apply plugin: "java"
@@ -157,7 +190,7 @@ class PmdPluginIntegrationTest extends WellBehavedPluginTest {
     }
 
     private customRuleSet() {
-        file ("customRuleSet.xml") << """
+        file("customRuleSet.xml") << """
             <ruleset name="custom"
                 xmlns="http://pmd.sf.net/ruleset/1.0.0"
                 xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
@@ -166,7 +199,7 @@ class PmdPluginIntegrationTest extends WellBehavedPluginTest {
 
                 <description>Custom rule set</description>
 
-                <rule ref="rulesets/braces.xml"/>
+                <rule ref="rulesets/java/braces.xml"/>
             </ruleset>
         """
     }

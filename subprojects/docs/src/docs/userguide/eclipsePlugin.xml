@@ -1,4 +1,4 @@
-﻿<!--
+<!--
   ~ Copyright 2010 the original author or authors.
   ~
   ~ Licensed under the Apache License, Version 2.0 (the "License");
@@ -16,19 +16,19 @@
 
 <chapter id="eclipse_plugin" xml:lang="ja">
     <title>Eclipse プラグイン<phrase role="original">The Eclipse Plugin</phrase></title>
-    
+
     <para role="original">The Eclipse plugin generates files that are used by the <ulink url="http://eclipse.org">Eclipse IDE</ulink>, thus
         making it possible to import the project into Eclipse (<guimenuitem>File</guimenuitem> - <guimenuitem>Import...</guimenuitem> - <guimenuitem>Existing Projects into Workspace</guimenuitem>).
-        Both external dependencies (including associated source and javadoc files) and project dependencies are considered.</para>
+        Both external dependencies (including associated source and Javadoc files) and project dependencies are considered.</para>
     <para>Eclipse プラグインは <ulink url="http://eclipse.org">Eclipse IDE</ulink> が利用するファイルを生成し、
         (<guimenuitem>ファイル</guimenuitem> - <guimenuitem>インポート...</guimenuitem> - <guimenuitem>既存プロジェクトをワークスペースへ</guimenuitem> で)
         Eclipse 内にプロジェクトをインポートできるようにします。
         外部依存関係 (ソースと Javadoc も含む) とプロジェクト依存関係の両方が考慮されます。</para>
 
-    <para role="original">Since 1.0-milestone-4 WTP-generating code was refactored into a separate plugin called <literal>eclipse-wtp</literal>.
-        So if you are interested in WTP integration then only apply the <literal>eclipse-wtp</literal> plugin. Otherwise applying <literal>eclipse</literal> plugin is enough.
-        This change was requested by Eclipse users who take advantage of <literal>war</literal> or <literal>ear</literal> plugin
-        but they don't use Eclipse WTP. Internally, <literal>eclipse-wtp</literal> also applies the <literal>eclipse</literal> plugin so you don't need to apply both of those plugins.
+    <para role="original">Since version 1.0-milestone-4 of Gradle, the WTP-generating code was refactored into a separate plugin called <literal>eclipse-wtp</literal>.
+        So if you are interested in WTP integration then only apply the <literal>eclipse-wtp</literal> plugin. Otherwise applying the <literal>eclipse</literal> plugin is enough.
+        This change was requested by Eclipse users who take advantage of the <literal>war</literal> or <literal>ear</literal> plugins,
+        but who don't use Eclipse WTP. Internally, the <literal>eclipse-wtp</literal> plugin also applies the <literal>eclipse</literal> plugin so you don't need to apply both of those plugins.
     </para>
     <para>1.0-milestone-4 以降、WTP生成コードはリファクタリングされ、<literal>eclipse-wtp</literal> プラグインに分離されました。
         もしWTP が必要であれば、<literal>eclipse-wtp</literal> プラグインを適用するだけです。必要でなければ、<literal>eclipse</literal> プラグインを適用するだけでよいです。
@@ -212,7 +212,7 @@
                     <literal>-</literal>
                 </td>
                 <td><apilink class="org.gradle.plugins.ide.eclipse.GenerateEclipseClasspath"/></td>
-                <td><filename>.classpath</filename>ファイルを生成します。 
+                <td><filename>.classpath</filename>ファイルを生成します。
                     <phrase role="original">Generates the <filename>.classpath</filename> file.</phrase></td>
             </tr>
             <tr>
@@ -269,7 +269,7 @@
                     <apilink class="org.gradle.plugins.ide.eclipse.model.EclipseModel"/>
                 </td>
                 <td><literal>eclipse</literal></td>
-                <td>DSLにあったやり方でEclipseプラグインの設定が可能なトップレベル要素 
+                <td>DSLにあったやり方でEclipseプラグインの設定が可能なトップレベル要素
                     <phrase role="original">Top level element that enables configuration of the Eclipse plugin in a DSL-friendly fashion</phrase></td>
             </tr>
             <tr>
@@ -294,7 +294,7 @@
                 </td>
                 <td><literal>eclipse.jdt</literal></td>
                 <td>JDT の情報を設定できます。(source/target java互換)
-                    <phrase role="original">Allows configuring jdt information (source/target java compatibility)</phrase></td>
+                    <phrase role="original">Allows configuring jdt information (source/target Java compatibility)</phrase></td>
             </tr>
             <tr>
                 <td>
@@ -319,8 +319,8 @@
         <para role="original">
             The Eclipse plugin allows you to customize the generated metadata files. The plugin provides a DSL for configuring model objects
             that model the Eclipse view of the project. These model objects are then merged with the existing Eclipse XML metadata to ultimately
-            generate new metadata. The model objects provide lower level hooks for working with domain objects representing the file content 
-            before and after merging with the model configuration. They also provide a very low level hook for working directly with the raw 
+            generate new metadata. The model objects provide lower level hooks for working with domain objects representing the file content
+            before and after merging with the model configuration. They also provide a very low level hook for working directly with the raw
             XML for adjustment before it is persisted, for fine tuning and configuration that the Eclipse plugin does not model.
         </para>
         <para>Eclipseプラグインは、生成されるメタデータファイルをカスタマイズできるようになっています。
@@ -336,16 +336,19 @@
                  depending on the particular section. The remaining sections will be left as-is.</para>
             <para>既存のEclipseファイルの、対象のセクションだけを生成された内容で変更、もしくは上書きし、それ以外はそのまま残します。</para>
             <section id="sec:complete-overwrite">
-                <title>マージせずに完全に上書きする<phrase role="original">Disabling merging with a complete overwrite</phrase></title>
-                <para role="original">To completely overwrite existing Eclipse files, execute a clean task together with its corresponding generation task,
-                    for example <userinput>gradle cleanEclipse eclipse</userinput> (in that order). If you want to make this
-                    the default behavior, add <code>tasks.eclipse.dependsOn(cleanEclipse)</code> to your build script. This makes it
+                <title>マージせずに完全に上書きする<phrase role="original">Disabling merging with a rewrite</phrase></title>
+                <para role="original">To completely rewrite existing Eclipse files, execute a clean task together with its corresponding generation task,
+                    like “<userinput>gradle cleanEclipse eclipse</userinput>” (in that order). If you want to make this
+                    the default behavior, add “<code>tasks.eclipse.dependsOn(cleanEclipse)</code>” to your build script. This makes it
                     unnecessary to execute the clean task explicitly.
                 </para>
                 <para>既存の Eclipse ファイルを完全に上書きしたい場合は、対応する生成タスクと一緒に clean タスクも実行します。
                     例えば <userinput>gradle cleanEclipse eclipse</userinput> のように... (もちろん この順番で...)
                     もし、この動きをデフォルトにしたい場合は、ビルドスクリプトに <code>eclipse.dependsOn(cleanEclipse)</code> を追加します。
                     そうすれば 明示的に clean タスクを実行する必要はありません。
+                </para>
+                <para>This strategy can also be used for individual files that the plugin would generate.  For instance,
+                this can be done for the “<literal>.classpath</literal>” file with “<userinput>gradle cleanEclipseClasspath eclipseClasspath</userinput>”.
                 </para>
                 <para role="original">Complete overwrite works equally well for individual files, for example by executing <userinput> gradle cleanEclipseClasspath eclipseClasspath</userinput>.
                 </para>

@@ -1,4 +1,4 @@
-﻿<!--
+<!--
   ~ Copyright 2009 the original author or authors.
   ~
   ~ Licensed under the Apache License, Version 2.0 (the "License");
@@ -191,8 +191,9 @@
         <para role="original">You can replace much of Gradle's logging UI with your own. You might do this, for example, if you want to
             customize the UI in some way - to log more or less information, or to change the formatting. You replace
             the logging using the <apilink class="org.gradle.api.invocation.Gradle" method="useLogger"/> method. This
-            is accessible from a build script, or an init script, or via the embedding API. Below is an example
-            init script which changes how task execution and build completion is logged.
+            is accessible from a build script, or an init script, or via the embedding API.
+            Note that this completely disables Gradle's default output.
+            Below is an example init script which changes how task execution and build completion is logged.
         </para>
         <para>GradleのロギングUIを、独自のものに差し替えることができます。もっと多くの情報を出したい場合、また、逆に出力される情報を減らしたい場合、さらにログフォーマットを変えたいときなどに検討してください。ロギングを差し替えるには、ビルドスクリプトや初期化スクリプト、組み込みAPIからアクセスできる<apilink class="org.gradle.api.invocation.Gradle" method="useLogger"/>メソッドを使います。次の例では、初期化スクリプトを使って、タスク実行、ビルドの完了をロギングする方法を変更しています。</para>
         <sample id="custom_logging_ui" dir="userguide/initScripts/customLogger" title="Gradleがロギングするものを変更する / Customizing what Gradle logs">

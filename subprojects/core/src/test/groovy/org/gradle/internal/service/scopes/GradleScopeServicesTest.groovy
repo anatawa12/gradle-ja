@@ -21,9 +21,7 @@ import org.gradle.api.internal.artifacts.DependencyManagementServices
 import org.gradle.api.internal.changedetection.state.InMemoryTaskArtifactCache
 import org.gradle.api.internal.plugins.DefaultPluginContainer
 import org.gradle.api.internal.plugins.PluginRegistry
-import org.gradle.api.internal.project.DefaultProjectRegistry
 import org.gradle.api.internal.project.ProjectInternal
-import org.gradle.api.internal.project.ProjectRegistry
 import org.gradle.api.internal.tasks.options.OptionReader
 import org.gradle.api.plugins.PluginContainer
 import org.gradle.cache.CacheRepository
@@ -32,9 +30,10 @@ import org.gradle.execution.DefaultBuildExecuter
 import org.gradle.execution.TaskGraphExecuter
 import org.gradle.execution.TaskSelector
 import org.gradle.execution.taskgraph.DefaultTaskGraphExecuter
+import org.gradle.initialization.BuildCancellationToken
 import org.gradle.internal.concurrent.ExecutorFactory
+import org.gradle.internal.environment.GradleBuildEnvironment
 import org.gradle.internal.service.ServiceRegistry
-import org.gradle.invocation.BuildClassLoaderRegistry
 import org.gradle.listener.ListenerManager
 import spock.lang.Specification
 
@@ -52,13 +51,14 @@ public class GradleScopeServicesTest extends Specification {
 
     public void setup() {
         parent.get(StartParameter) >> Stub(StartParameter)
+        parent.get(GradleBuildEnvironment) >> Stub(GradleBuildEnvironment)
         parent.get(InMemoryTaskArtifactCache) >> Stub(InMemoryTaskArtifactCache)
         parent.get(ListenerManager) >> listenerManager
         parent.get(CacheRepository) >> cacheRepository
         parent.get(PluginRegistry) >> pluginRegistryParent
-        parent.get(BuildClassLoaderRegistry) >> Stub(BuildClassLoaderRegistry)
         parent.get(DependencyManagementServices) >> Stub(DependencyManagementServices)
         parent.get(ExecutorFactory) >> Stub(ExecutorFactory)
+        parent.get(BuildCancellationToken) >> Stub(BuildCancellationToken)
         gradle.getStartParameter() >> startParameter
         pluginRegistryParent.createChild(_, _) >> pluginRegistryChild
     }
@@ -67,20 +67,30 @@ public class GradleScopeServicesTest extends Specification {
         ProjectInternal project = Mock()
 
         when:
-        ServiceRegistryFactory serviceRegistry = registry.createFor(project)
+        def serviceRegistry = registry.get(ServiceRegistryFactory).createFor(project)
 
         then:
         serviceRegistry instanceof ProjectScopeServices
     }
 
-    def "provides a project registry"() {
+    def "created project registries are closed on close"() {
+        ProjectInternal project1 = Mock()
+        ProjectInternal project2 = Mock()
+
         when:
-        def projectRegistry = registry.get(ProjectRegistry)
-        def secondRegistry = registry.get(ProjectRegistry)
+        def serviceRegistry1 = registry.get(ServiceRegistryFactory).createFor(project1)
+        def serviceRegistry2 = registry.get(ServiceRegistryFactory).createFor(project2)
 
         then:
-        projectRegistry instanceof DefaultProjectRegistry
-        projectRegistry sameInstance(secondRegistry)
+        !serviceRegistry1.closed
+        !serviceRegistry2.closed
+
+        when:
+        registry.close()
+
+        then:
+        serviceRegistry1.closed
+        serviceRegistry2.closed
     }
 
     def "provides a plugin registry"() {

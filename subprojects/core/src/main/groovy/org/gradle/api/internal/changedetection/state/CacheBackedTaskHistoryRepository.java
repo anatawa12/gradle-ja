@@ -18,10 +18,10 @@ package org.gradle.api.internal.changedetection.state;
 import org.gradle.api.internal.TaskInternal;
 import org.gradle.cache.PersistentIndexedCache;
 import org.gradle.internal.Factory;
-import org.gradle.messaging.serialize.*;
+import org.gradle.messaging.serialize.Decoder;
+import org.gradle.messaging.serialize.Encoder;
+import org.gradle.messaging.serialize.Serializer;
 
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.util.*;
 
@@ -228,10 +228,10 @@ public class CacheBackedTaskHistoryRepository implements TaskHistoryRepository {
         }
 
         static class TaskHistorySerializer implements Serializer<LazyTaskExecution> {
-            private ClassLoader classLoader;
+            private InputPropertiesSerializer inputPropertiesSerializer;
 
             public TaskHistorySerializer(ClassLoader classLoader) {
-                this.classLoader = classLoader;
+                this.inputPropertiesSerializer = new InputPropertiesSerializer(classLoader);
             }
 
             public LazyTaskExecution read(Decoder decoder) throws Exception {
@@ -246,12 +246,9 @@ public class CacheBackedTaskHistoryRepository implements TaskHistoryRepository {
                 }
                 execution.setOutputFiles(files);
 
-                int inputProperties = decoder.readInt();
-                if (inputProperties > 0) {
-                    byte[] serializedMap = new byte[inputProperties];
-                    decoder.readBytes(serializedMap);
-                    DefaultSerializer<Map> defaultSerializer = new DefaultSerializer<Map>(classLoader);
-                    Map<String, Object> map = defaultSerializer.read(new InputStreamBackedDecoder(new ByteArrayInputStream(serializedMap)));
+                boolean inputProperties = decoder.readBoolean();
+                if (inputProperties) {
+                    Map<String, Object> map = inputPropertiesSerializer.read(decoder);
                     execution.setInputProperties(map);
                 } else {
                     execution.setInputProperties(new HashMap<String, Object>());
@@ -267,17 +264,11 @@ public class CacheBackedTaskHistoryRepository implements TaskHistoryRepository {
                 for (String outputFile : execution.getOutputFiles()) {
                     encoder.writeString(outputFile);
                 }
-                if (execution.getInputProperties() == null) {
-                    encoder.writeInt(0);
+                if (execution.getInputProperties() == null || execution.getInputProperties().isEmpty()) {
+                    encoder.writeBoolean(false);
                 } else {
-                    DefaultSerializer<Map> defaultSerializer = new DefaultSerializer<Map>(classLoader);
-                    ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
-                    OutputStreamBackedEncoder propsEncoder = new OutputStreamBackedEncoder(outputStream);
-                    defaultSerializer.write(propsEncoder, execution.getInputProperties());
-                    propsEncoder.flush();
-                    byte[] serializedMap = outputStream.toByteArray();
-                    encoder.writeInt(serializedMap.length);
-                    encoder.writeBytes(serializedMap);
+                    encoder.writeBoolean(true);
+                    inputPropertiesSerializer.write(encoder, execution.getInputProperties());
                 }
             }
         }

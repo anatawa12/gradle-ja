@@ -20,6 +20,11 @@ import static org.hamcrest.Matchers.startsWith
 
 class CodeNarcPluginIntegrationTest extends WellBehavedPluginTest {
     @Override
+    String getPluginName() {
+        return "codenarc"
+    }
+
+    @Override
     String getMainTask() {
         return "check"
     }
@@ -27,6 +32,24 @@ class CodeNarcPluginIntegrationTest extends WellBehavedPluginTest {
     def setup() {
         writeBuildFile()
         writeConfigFile()
+    }
+
+    def "allows configuring tool dependencies explicitly"() {
+        expect: //defaults exist and can be inspected
+        succeeds("dependencies", "--configuration", "codenarc")
+        output.contains "org.codenarc:CodeNarc:"
+
+        when:
+        buildFile << """
+            dependencies {
+                //downgrade version:
+                codenarc "org.codenarc:CodeNarc:0.17"
+            }
+        """
+
+        then:
+        succeeds("dependencies", "--configuration", "codenarc")
+        output.contains "org.codenarc:CodeNarc:0.17"
     }
 
     def "analyze good code"() {

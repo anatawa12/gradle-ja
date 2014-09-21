@@ -16,11 +16,12 @@
 
 package org.gradle.tooling.internal.consumer.loader;
 
+import org.gradle.initialization.BuildCancellationToken;
 import org.gradle.logging.ProgressLogger;
 import org.gradle.logging.ProgressLoggerFactory;
+import org.gradle.tooling.internal.consumer.ConnectionParameters;
 import org.gradle.tooling.internal.consumer.Distribution;
 import org.gradle.tooling.internal.consumer.connection.ConsumerConnection;
-import org.gradle.tooling.internal.consumer.parameters.ConsumerConnectionParameters;
 
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
@@ -34,10 +35,10 @@ public class SynchronizedToolingImplementationLoader implements ToolingImplement
         this.delegate = delegate;
     }
 
-    public ConsumerConnection create(Distribution distribution, ProgressLoggerFactory progressLoggerFactory, ConsumerConnectionParameters connectionParameters) {
+    public ConsumerConnection create(Distribution distribution, ProgressLoggerFactory progressLoggerFactory, ConnectionParameters connectionParameters, BuildCancellationToken cancellationToken) {
         if (lock.tryLock()) {
             try {
-                return delegate.create(distribution, progressLoggerFactory, connectionParameters);
+                return delegate.create(distribution, progressLoggerFactory, connectionParameters, cancellationToken);
             } finally {
                 lock.unlock();
             }
@@ -47,7 +48,7 @@ public class SynchronizedToolingImplementationLoader implements ToolingImplement
         logger.started();
         lock.lock();
         try {
-            return delegate.create(distribution, progressLoggerFactory, connectionParameters);
+            return delegate.create(distribution, progressLoggerFactory, connectionParameters, cancellationToken);
         } finally {
             lock.unlock();
             logger.completed();

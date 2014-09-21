@@ -17,11 +17,12 @@ package org.gradle.testfixtures.internal;
 
 import org.gradle.StartParameter;
 import org.gradle.api.internal.GradleDistributionLocator;
-import org.gradle.internal.service.scopes.BuildScopeServices;
-import org.gradle.cache.internal.CacheFactory;
 import org.gradle.configuration.GradleLauncherMetaData;
+import org.gradle.initialization.BuildCancellationToken;
 import org.gradle.initialization.BuildClientMetaData;
+import org.gradle.initialization.FixedBuildCancellationToken;
 import org.gradle.internal.service.ServiceRegistry;
+import org.gradle.internal.service.scopes.BuildScopeServices;
 
 import java.io.File;
 
@@ -33,13 +34,12 @@ public class TestBuildScopeServices extends BuildScopeServices {
         this.homeDir = homeDir;
     }
 
-    protected BuildClientMetaData createClientMetaData() {
-        return new GradleLauncherMetaData();
+    protected BuildCancellationToken createBuildCancellationToken() {
+        return new FixedBuildCancellationToken();
     }
 
-    @Override
-    protected CacheFactory createCacheFactory() {
-        return new InMemoryCacheFactory();
+    protected BuildClientMetaData createClientMetaData() {
+        return new GradleLauncherMetaData();
     }
 
     protected GradleDistributionLocator createGradleDistributionLocator() {

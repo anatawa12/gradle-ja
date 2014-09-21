@@ -33,6 +33,24 @@ class CheckstylePluginIntegrationTest extends WellBehavedPluginTest {
         writeConfigFile()
     }
 
+    def "allows configuring tool dependencies explicitly"() {
+        expect: //defaults exist and can be inspected
+        succeeds("dependencies", "--configuration", "checkstyle")
+        output.contains "com.puppycrawl.tools:checkstyle:"
+
+        when:
+        buildFile << """
+            dependencies {
+                //downgrade version:
+                checkstyle "com.puppycrawl.tools:checkstyle:5.5"
+            }
+        """
+
+        then:
+        succeeds("dependencies", "--configuration", "checkstyle")
+        output.contains "com.puppycrawl.tools:checkstyle:5.5"
+    }
+
     def "analyze good code"() {
         goodCode()
 
@@ -45,6 +63,7 @@ class CheckstylePluginIntegrationTest extends WellBehavedPluginTest {
     }
 
     def "analyze bad code"() {
+        defaultLanguage('en')
         badCode()
 
         expect:
@@ -58,6 +77,7 @@ class CheckstylePluginIntegrationTest extends WellBehavedPluginTest {
 
     def "can suppress console output"() {
         given:
+        defaultLanguage('en')
         badCode()
 
         when:
@@ -93,7 +113,8 @@ class CheckstylePluginIntegrationTest extends WellBehavedPluginTest {
 
         expect:
         succeeds("checkstyleMain") && ":checkstyleMain" in nonSkippedTasks
-        succeeds(":checkstyleMain") && ":checkstyleMain" in skippedTasks
+        executer.withArgument("-i")
+        succeeds("checkstyleMain") && ":checkstyleMain" in skippedTasks
 
         when:
         file("build/reports/checkstyle/main.xml").delete()
@@ -119,8 +140,8 @@ class CheckstylePluginIntegrationTest extends WellBehavedPluginTest {
     private goodCode() {
         file('src/main/java/org/gradle/Class1.java') << 'package org.gradle; class Class1 { }'
         file('src/test/java/org/gradle/TestClass1.java') << 'package org.gradle; class TestClass1 { }'
-        file('src/main/groovy/org/gradle/Class2.java') << 'package org.gradle; class Class1 { }'
-        file('src/test/groovy/org/gradle/TestClass2.java') << 'package org.gradle; class TestClass1 { }'
+        file('src/main/groovy/org/gradle/Class2.java') << 'package org.gradle; class Class2 { }'
+        file('src/test/groovy/org/gradle/TestClass2.java') << 'package org.gradle; class TestClass2 { }'
     }
 
     private badCode() {
@@ -160,5 +181,9 @@ dependencies {
     </module>
 </module>
         """
+    }
+
+    private void defaultLanguage(String defaultLanguage) {
+        executer.withDefaultLocale(new Locale(defaultLanguage))
     }
 }

@@ -17,8 +17,8 @@
 package org.gradle.cache.internal.filelock;
 
 import org.gradle.api.Nullable;
-import org.gradle.cache.internal.stream.RandomAccessFileInputStream;
-import org.gradle.cache.internal.stream.RandomAccessFileOutputStream;
+import org.gradle.internal.io.RandomAccessFileInputStream;
+import org.gradle.internal.io.RandomAccessFileOutputStream;
 
 import java.io.*;
 import java.nio.channels.FileLock;
@@ -60,7 +60,7 @@ public class LockInfoAccess {
     }
 
     public void clearLockInfo(RandomAccessFile lockFileAccess) throws IOException {
-        lockFileAccess.setLength(infoRegionPos);
+        lockFileAccess.setLength(Math.min(lockFileAccess.length(), infoRegionPos));
     }
 
     @Nullable

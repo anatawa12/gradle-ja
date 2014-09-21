@@ -53,15 +53,14 @@ public class JavaExecHandleBuilderTest extends Specification {
         List jvmArgs = builder.getAllJvmArgs()
 
         then:
-        jvmArgs == ['-Dprop=value', 'jvm1', 'jvm2', '-Xms64m', '-Xmx1g', fileEncodingProperty(expectedEncoding), '-cp', "$jar1$File.pathSeparator$jar2"]
+        jvmArgs == ['-Dprop=value', 'jvm1', 'jvm2', '-Xms64m', '-Xmx1g', fileEncodingProperty(expectedEncoding), *localeProperties(), '-cp', "$jar1$File.pathSeparator$jar2"]
 
         when:
         List commandLine = builder.getCommandLine()
 
         then:
         String executable = Jvm.current().getJavaExecutable().getAbsolutePath()
-        commandLine == [executable,  '-Dprop=value', 'jvm1', 'jvm2', '-Xms64m', '-Xmx1g', fileEncodingProperty(expectedEncoding),
-                '-cp', "$jar1$File.pathSeparator$jar2", 'mainClass', 'arg1', 'arg2']
+        commandLine == [executable,  '-Dprop=value', 'jvm1', 'jvm2', '-Xms64m', '-Xmx1g', fileEncodingProperty(expectedEncoding), *localeProperties(), '-cp', "$jar1$File.pathSeparator$jar2", 'mainClass', 'arg1', 'arg2']
         
         where:
         inputEncoding | expectedEncoding
@@ -69,7 +68,21 @@ public class JavaExecHandleBuilderTest extends Specification {
         "UTF-16"      | "UTF-16"
     }
 
+    def "detects null entries early"() {
+        when: builder.args(1, null)
+        then: thrown(IllegalArgumentException)
+    }
+
     private String fileEncodingProperty(String encoding = Charset.defaultCharset().name()) {
         return "-Dfile.encoding=$encoding"
     }
+
+    private static List<String> localeProperties(Locale locale = Locale.default) {
+        ["country", "language", "variant"].sort().collectEntries {
+            ["user.$it", locale."$it"]
+        }.collect {
+            it.value ? "-D$it.key=$it.value" : "-D$it.key"
+        }
+    }
+
 }

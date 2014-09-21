@@ -20,7 +20,6 @@ import org.gradle.api.artifacts.Configuration
 import org.gradle.api.internal.file.collections.LazilyInitializedFileCollection
 import org.gradle.api.plugins.scala.ScalaBasePlugin
 import org.gradle.util.TestUtil
-
 import spock.lang.Specification
 
 class ScalaRuntimeTest extends Specification {
@@ -52,18 +51,6 @@ class ScalaRuntimeTest extends Specification {
         }
     }
 
-    def "inferred Scala class path falls back to 'scalaTools' configuration if the latter is non-empty"() {
-        project.dependencies {
-            scalaTools "org.scala-lang:scala-compiler:2.10.1"
-        }
-
-        when:
-        def classpath = project.scalaRuntime.inferScalaClasspath([new File("other.jar"), new File("scala-library-2.10.1.jar")])
-
-        then:
-        classpath == project.configurations.scalaTools
-    }
-
     def "inference fails if 'scalaTools' configuration is empty and no repository declared"() {
         when:
         def scalaClasspath = project.scalaRuntime.inferScalaClasspath([new File("other.jar"), new File("scala-library-2.10.1.jar")])
@@ -71,7 +58,7 @@ class ScalaRuntimeTest extends Specification {
 
         then:
         GradleException e = thrown()
-        e.message == "Cannot infer Scala class path because no repository is declared for the project."
+        e.message == "Cannot infer Scala class path because no repository is declared in $project"
     }
 
     def "inference fails if 'scalaTools' configuration is empty and no Scala library Jar is found on class path"() {
@@ -85,7 +72,7 @@ class ScalaRuntimeTest extends Specification {
 
         then:
         GradleException e = thrown()
-        e.message.startsWith("Cannot infer Scala class path because no Scala library Jar was found on class path:")
+        e.message.startsWith("Cannot infer Scala class path because no Scala library Jar was found. Does root project 'test' declare dependency to scala-library? Searched classpath:")
     }
 
     def "allows to find Scala Jar on class path"() {

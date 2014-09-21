@@ -19,11 +19,14 @@ package org.gradle.api.internal.artifacts.dsl.dependencies;
 import groovy.lang.Closure;
 import groovy.lang.GroovyObjectSupport;
 import groovy.lang.MissingMethodException;
+import org.gradle.api.Action;
 import org.gradle.api.artifacts.Configuration;
 import org.gradle.api.artifacts.ConfigurationContainer;
 import org.gradle.api.artifacts.Dependency;
 import org.gradle.api.artifacts.dsl.ComponentMetadataHandler;
 import org.gradle.api.artifacts.dsl.DependencyHandler;
+import org.gradle.api.artifacts.query.ArtifactResolutionQuery;
+import org.gradle.api.internal.artifacts.query.ArtifactResolutionQueryFactory;
 import org.gradle.util.CollectionUtils;
 import org.gradle.util.ConfigureUtil;
 
@@ -35,13 +38,16 @@ public class DefaultDependencyHandler extends GroovyObjectSupport implements Dep
     private final DependencyFactory dependencyFactory;
     private final ProjectFinder projectFinder;
     private final ComponentMetadataHandler metadataHandler;
+    private final ArtifactResolutionQueryFactory resolutionQueryFactory;
 
     public DefaultDependencyHandler(ConfigurationContainer configurationContainer, DependencyFactory dependencyFactory,
-                                    ProjectFinder projectFinder, ComponentMetadataHandler metadataHandler) {
+                                    ProjectFinder projectFinder, ComponentMetadataHandler metadataHandler,
+                                    ArtifactResolutionQueryFactory resolutionQueryFactory) {
         this.configurationContainer = configurationContainer;
         this.dependencyFactory = dependencyFactory;
         this.projectFinder = projectFinder;
         this.metadataHandler = metadataHandler;
+        this.resolutionQueryFactory = resolutionQueryFactory;
     }
 
     public Dependency add(String configurationName, Object dependencyNotation) {
@@ -116,12 +122,15 @@ public class DefaultDependencyHandler extends GroovyObjectSupport implements Dep
         }
     }
 
-    public void components(Closure configureClosure) {
-        ConfigureUtil.configure(configureClosure, getComponents());
+    public void components(Action<? super ComponentMetadataHandler> configureAction) {
+        configureAction.execute(getComponents());
     }
 
     public ComponentMetadataHandler getComponents() {
         return metadataHandler;
     }
 
+    public ArtifactResolutionQuery createArtifactResolutionQuery() {
+        return resolutionQueryFactory.createArtifactResolutionQuery();
+    }
 }

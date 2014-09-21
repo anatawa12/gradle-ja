@@ -1,4 +1,4 @@
-﻿<!--
+<!--
   ~ Copyright 2011 the original author or authors.
   ~
   ~ Licensed under the Apache License, Version 2.0 (the "License");
@@ -37,13 +37,13 @@
                 <listitem><phrase role="original">When developing a web application, where the application is assembled many times.</phrase> Webアプリケーション開発にて、アプリケーションを何度も構築する場合</listitem>
                 <listitem><phrase role="original">When discovering what a build can do, where <userinput>gradle tasks</userinput> is executed a number of times.</phrase> ビルドの挙動を調べるために、<userinput>gradle tasks</userinput>を何度も実行する場合</listitem>
             </itemizedlist>
-            <phrase role="original">For above sorts of workflows, it is important that the startup cost of invoking Gradle is as small as possible.</phrase>
+            <phrase role="original">For these workflows, it is important that the startup cost of invoking Gradle is as small as possible.</phrase>
             これらの場合、Gradleを起動・実行するための時間は出来る限り短いことが重要でしょう。
         </para>
         <para>
             <phrase role="original">
             In addition, user interfaces can provide some interesting features if the Gradle model can be built relatively quickly.
-            For example, the daemon might be useful for following scenarios:
+            For example, the daemon might be useful for the following scenarios:
             </phrase>
             さらに、Gradleモデルがより素早く構築されるようになれば、ユーザーインターフェースが面白い機能を実装できる可能性があります。
             例えば、次のようなケースでデーモンが役に立つかもしれません。
@@ -55,8 +55,7 @@
         </para>
         <para role="original">
             In general, snappy behavior of the build tool is always handy.
-            If you try using the daemon for your local builds it's going to be hard
-            for you to go back to regular use of Gradle.
+            If you try using the daemon for your local builds, you won't want to go back.
         </para>
         <para>
             一般的にいって、ビルドツールが軽快に動作して困るということはありません。
@@ -72,7 +71,7 @@
             ツールAPI (参照 <xref linkend="embedding"/>)は常にデーモンを使用します。つまり、通常、デーモンなしでツールAPIは使えません。
             したがって、EclipseのSTS GradleプラグインやIntelliJ IDEAのGradleサポートを使っているときは、常にデーモンが背後で起動しています。
         </para>
-        <para><phrase role="original">In future the daemon will offer more features:</phrase>
+        <para><phrase role="original">In future, there are plans for more features in the daemon:</phrase>
             今後は下記の機能が追加される予定です。
             <itemizedlist>
                 <listitem><phrase role="original">Snappy up-to-date checks: use native file system change notifications (e.g. via jdk7 nio.2)
@@ -96,11 +95,11 @@
 
     <section id='reusing_daemons'>
         <title>デーモンの再利用と期限切れ <phrase role="original">Reusing and expiration of daemons</phrase></title>
-        <para role="original">The basic idea is that the gradle command forks a daemon process, which performs the actual build.
-            Subsequent invocations of the gradle command will reuse the daemon, avoiding the startup costs.
-            Sometimes we cannot use an existing daemon because it is busy or its java version or jvm arguments are different.
-            For exact details on when exactly new daemon process is forked read the dedicated section below.
-            The daemon process automatically expire after 3 hours of idle time.
+        <para role="original">The basic idea is that the Gradle command forks a daemon process, which performs the actual build.
+            Subsequent invocations of the Gradle command will reuse the daemon, avoiding the startup costs.
+            Sometimes we cannot use an existing daemon because it is busy or its Java version or jvm arguments are different.
+            For exact details on when exactly a new daemon process is forked read the dedicated section below.
+            The daemon process automatically expires after 3 hours of idle time.
         </para>
         <para>
         デーモン実行の基本にある考え方は、gradleコマンドがデーモンプロセスを起動して、そのデーモンが実際のビルドを実行するというものです。
@@ -110,39 +109,39 @@
         デーモンプロセスは、アイドル状態で3時間経過すると自動的に期限切れになります。
         </para>
         <para>
-            <phrase role="original">Here're all situations in which we fork a new daemon process:</phrase>
+            <phrase role="original">Here are all situations in which we fork a new daemon process:</phrase>
             デーモンプロセスが新しく起動される場面を全て列挙すると、
             <itemizedlist>
                 <listitem><phrase role="original">If the daemon process is currently busy running some job, a brand new daemon process will be started.</phrase> 既存のデーモンがある処理を実行中の場合、新たなデーモンが起動されます。</listitem>
-                <listitem><phrase role="original">We fork a separate daemon process per java home. So even if there is some idle daemon waiting
-                    for build requests but you happen to run build with a different java home then a brand new daemon will be forked.</phrase> デーモンプロセスは、java homeごとに起動されます。アイドル状態のデーモンがビルドリクエストを待機していたとしても、別のjava homeからビルドを実行した場合デーモンプロセスが新しく起動されます。</listitem>
+                <listitem><phrase role="original">We fork a separate daemon process per Java home. So even if there is some idle daemon waiting
+                    for build requests but you happen to run a build with a different Java home then a brand new daemon will be forked.</phrase> デーモンプロセスは、java homeごとに起動されます。アイドル状態のデーモンがビルドリクエストを待機していたとしても、別のjava homeからビルドを実行した場合デーモンプロセスが新しく起動されます。</listitem>
                 <listitem><phrase role="original">We fork a separate daemon process if the jvm arguments for the build are sufficiently different.
                     For example we will not fork a new daemon if a some system property has changed.
-                    However if -Xmx memory setting change or some fundamental immutable system property changes (e.g. file.encoding)
-                    then new daemon will be forked.</phrase>
+                    However if the -Xmx memory setting changed or some fundamental immutable system property changed (e.g. file.encoding)
+                    then a new daemon will be forked.</phrase>
                     ビルドのJVM引数が大きく異なる場合、デーモンプロセスが新しく起動されます。いくつかのシステムプロパティに関しては、変更されても新プロセスを立ち上げないこともあります。しかし、-Xmxメモリ設定や、その他の基本的で変更できないシステムプロパティ(file.encodingなど)が変更された場合、プロセスが新しく起動されます。
                 </listitem>
-                <listitem><phrase role="original">At the moment daemon is coupled with particular version of Gradle.
+                <listitem><phrase role="original">At the moment the daemon is coupled with a particular version of Gradle.
                     This means that even if some daemon is idle but you are running the build
                     with a different version of Gradle, a new daemon will be started.
                     This also has a consequence for the <literal>--stop</literal> command line instruction:
-                    You can only stop daemons that were started with the Gradle version you use when running <literal>--stop</literal>.
+                    this command will only stop daemons that were started with Gradle version that is executing <literal>--stop</literal>.
                 </phrase>起動されているデーモンは、特定のバージョンのGradleと関連づいています。
                     そのため、アイドル状態のデーモンが存在したとしても、それと別のバージョンのGradleでビルドを実行すると新しいデーモンが起動されます。
                     これは、<literal>--stop</literal>コマンドについてあることを教唆しています――つまり、<literal>--stop</literal>で停止できるデーモンは、その<literal>--stop</literal>を実行しているGradleと同じバージョンのGradleで起動されたデーモンだけだということです。
                 </listitem>
             </itemizedlist>
-            <phrase role="original">We plan to improve the ways of managing / pooling the daemons in future.</phrase>
+            <phrase role="original">We plan to improve the functionality of managing and pooling the daemons in the future.</phrase>
             今後、デーモンの管理方法、プール方法の改善を行う予定です。
         </para>
     </section>
 
     <section id='daemon_usage_and_troubleshooting'>
         <title>使い方とトラブルシューティング <phrase role="original">Usage and troubleshooting</phrase></title>
-        <para role="original">For command line usage take a look dedicated section in <xref linkend="gradle_command_line"/>.
+        <para role="original">For command line usage, look at the dedicated section in <xref linkend="gradle_command_line"/>.
             If you are tired of using the same command line options again and again, take a look at
             <xref linkend="sec:gradle_configuration_properties"/>.
-            The section contains information on how to configure certain behavior of the daemon
+            This section contains information on how to configure certain behavior of the daemon
             (including turning on the daemon by default) in a more 'persistent' way.
         </para>
         <para>コマンドラインの利用方法については別節<xref linkend="gradle_command_line"/>を参照してください。

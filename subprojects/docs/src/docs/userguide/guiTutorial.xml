@@ -1,4 +1,4 @@
-﻿<!--
+<!--
   ~ Copyright 2009 the original author or authors.
   ~
   ~ Licensed under the Apache License, Version 2.0 (the "License");
@@ -78,17 +78,17 @@ gradle --gui
     <section>
         <title>Favorites（お気に入り）<phrase role="original">Favorites</phrase></title>
         <para role="original">
-            The Favorites tab is place to store commonly-executed commands. These can be complex commands
+            The Favorites tab is a good place to store commonly-executed commands. These can be complex commands
             (anything that's legal to Gradle) and you can provide them with a display name. This is useful for creating,
             say, a custom build command that explicitly skips tests, documentation, and samples that you could call
-            &quot;fast build&quot;.
+            “fast build”.
         </para>
         <para>Favoriteタブでは、よく実行するコマンドをお気に入りとして保存できます。保存するコマンドは複雑なもの（Gradleにとって正しいものならなんでもかまいません）でもよく、わかりやすい表示名をつけることもできます。お気に入りは、テストやドキュメンテーション、サンプル作成などを明示的にスキップする、&quot;急速なビルド&quot;と呼べるようなカスタムビルドを作成するのに便利だと言えます。
         </para>
         <para role="original">
             You can reorder favorites to your liking and even export them to disk so they can imported by others.
-            If you edit them, you are given options to &quot;Always Show Live Output.&quot;
-            This only applies if you have 'Only Show Output When Errors Occur'.
+            If you edit them, you are given options to “Always Show Live Output”.
+            This only applies if you have “Only Show Output When Errors Occur”.
             This override always forces the output to be shown.
         </para>
         お気に入りは、好きなように並び替えることができます。また、お気に入りをディスクにエクスポートしたり、そこから逆にインポートしたりすることも可能です。
@@ -99,7 +99,7 @@ gradle --gui
     <section>
         <title>Command Line（コマンドライン）<phrase role="original">Command Line</phrase></title>
         <para role="original">
-            The Command Line tab is place to execute a single Gradle command directly.
+            The Command Line tab is where you can to execute a single Gradle command directly.
             Just enter whatever you would normally enter after 'gradle' on the command line.  This also provides
             a place to try out commands before adding them to favorites.
         </para>
@@ -126,8 +126,8 @@ gradle --gui
             <listitem>
                 <para>Stack Trace Output</para>
                 <para role="original">
-                    This determines how much information to write out stack traces when errors occur.
-                    Note: if you specify a stack trace level on either  the Command Line or Favorites tab, it will override
+                    This determines how much information to write out in stack traces when errors occur.
+                    Note: if you specify a stack trace level on either the Command Line or Favorites tab, it will override
                     this stack trace level.
                 </para>
                 <para>ここでは、エラーが発生したとき、どれだけの情報をスタックトレースに書き出すかを設定します。注意: スタックトレースレベルをCommand LineタブやFavoritesタブで指定している場合、ここで設定したスタックトレースレベルは上書きされます。</para>

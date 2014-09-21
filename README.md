@@ -85,10 +85,18 @@ Gradleプロジェクトに協力したい、またパッチやプルリクエ�
 
 ### Eclipse
 
-このプロジェクトは、現在Eclipseではビルドできません。将来できるようになったときはこの節を参考にしてください。
+#### Gradle Integration for Eclipse (by Pivotal)
+
+The Gradle project is not currently buildable in Eclipse. This is something that will be rectified in the future.
 
 次のコマンドを実行します。
 
     ./gradlew eclipse
 
-このコマンドはEclipseのメタデータを生成し、Eclipseプロジェクトとしてインポートできるようにします。しかし、ちゃんと動くようにするには、さらに手でいくつかのセットアップ作業が必要になるはずです。
+This command generates Eclipse metadata that allows importing the project into Eclipse. However, you will have to do some manual fixes to the project's setup to make it work.
+
+#### Gradle for Eclipse (by Nodeclipse/Enide)
+
+With [Gradle(Enide) Eclipse plugin](http://marketplace.eclipse.org/content/gradle), you can import as general plugin or prepare before with `./gradlew eclipse`. 
+
+Build is run via right-click on `build.gradle` <kbd>Run As -> gradle build Gradle Build</kbd>

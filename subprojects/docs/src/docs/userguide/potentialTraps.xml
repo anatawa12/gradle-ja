@@ -18,7 +18,7 @@
     <section id='sec:groovy_script_variables'>
         <title>Groovyスクリプトの変数 <phrase role="original">Groovy script variables</phrase></title>
         <para role="original">For Gradle users it is important to understand how Groovy deals with script variables. Groovy has two types
-            of script variables. One with a local scope and one with a script wide scope.
+            of script variables. One with a local scope and one with a script-wide scope.
         </para>
         <para>
         Gradleユーザーにとって、Groovyがスクリプトの変数をどう扱うか理解しておくことは大事なことです。

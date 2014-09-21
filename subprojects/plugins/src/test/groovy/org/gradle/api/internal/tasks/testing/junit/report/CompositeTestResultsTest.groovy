@@ -17,6 +17,8 @@ package org.gradle.api.internal.tasks.testing.junit.report
 
 import spock.lang.Specification
 
+import static org.gradle.api.tasks.testing.TestResult.ResultType.*
+
 class CompositeTestResultsTest extends Specification {
     final CompositeTestResults results = new CompositeTestResults(null) {
         @Override
@@ -55,6 +57,38 @@ class CompositeTestResultsTest extends Specification {
         results.formattedSuccessRate == '66%'
     }
 
+    def formatsSuccessRateWhenSomeTestsFailAndSomeTestsAreIgnored() {
+        def failed = results.addTest(test())
+        results.failed(failed)
+        results.addTest(test())
+        results.addTest(test())
+        results.ignored(test());
+
+        expect:
+        results.successRate == 50
+        results.formattedSuccessRate == '50%'
+    }
+
+    def formatsSuccessRateWhenAllTestsFail() {
+        def failed = results.addTest(test())
+        results.failed(failed)
+
+        expect:
+        results.successRate == 0
+        results.formattedSuccessRate == '0%'
+    }
+
+    def formatsSuccessRateWhenAllTestsAreIgnored() {
+        results.addTest(test())
+        results.addTest(test())
+        results.ignored(test());
+        results.ignored(test());
+
+        expect:
+        results.successRate == null
+        results.formattedSuccessRate == '-'
+    }
+
     def formatsDurationWhenNoTests() {
         expect:
         results.formattedDuration == '-'
@@ -65,6 +99,33 @@ class CompositeTestResultsTest extends Specification {
 
         expect:
         results.formattedDuration == '0.045s'
+    }
+
+    def computesResultTypeWhenOnlySuccess() {
+        results.addTest(test())
+
+        expect:
+        results.resultType == SUCCESS;
+    }
+
+    def computesResultTypeWhenSuccessAndIgnored() {
+        results.addTest(test())
+        results.addTest(test())
+        results.ignored(test())
+
+        expect:
+        results.resultType == SKIPPED;
+    }
+
+    def computesResultTypeWhenSuccessAndIgnoredAndFailed() {
+        results.addTest(test())
+        results.addTest(test())
+        results.ignored(test())
+        def failed = results.addTest(test())
+        results.failed(failed)
+
+        expect:
+        results.resultType == FAILURE;
     }
 
     def calculatesRelativePath() {

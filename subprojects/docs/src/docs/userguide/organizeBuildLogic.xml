@@ -1,4 +1,4 @@
-﻿<!--
+<!--
   ~ Copyright 2009 the original author or authors.
   ~
   ~ Licensed under the Apache License, Version 2.0 (the "License");
@@ -18,8 +18,8 @@
     <para role="original">Gradle offers a variety of ways to organize your build logic. First of all you can put your build logic
         directly in the action closure of a task. If a couple of tasks share the same logic you can extract this logic
         into a method. If multiple projects of a multi-project build share some logic you can define this method in the
-        parent project. If the build logic gets too complex for being properly modeled by methods you want have an OO
-        Model.
+        parent project. If the build logic gets too complex for being properly modeled by methods then you likely should
+        implement your logic with classes to encapsulate your logic.
         <footnote>
             <para role="original">Which might range from a single class to something very complex.
             </para>
@@ -143,7 +143,7 @@
             <programlisting><xi:include href='../../../../../subprojects/core/src/main/resources/org/gradle/initialization/buildsrc/defaultBuildSourceScript.txt' parse='text'/></programlisting>
         </figure>
         <para role="original">
-            This means that you can just put you build source code in this directory and stick to the layout convention for a 
+            This means that you can just put your build source code in this directory and stick to the layout convention for a 
             Java/Groovy project (see <xref linkend='javalayout'/>).
         </para>
         <para>つまり、Java/Groovyプロジェクトのレイアウト規約(<xref linkend='javalayout'/>参照)に従って、このディレクトリにソースコードを置くだけでいいということです。</para>
@@ -158,8 +158,8 @@
             <sourcefile file="buildSrc/build.gradle"/>
         </sample>
         <para role="original">
-            The <filename>buildSrc</filename> project can be a multi-project build. This works like any other regular Gradle multi-project build. However,
-            you need to make all of the projects that you wish be on the classpath of the actual build <literal>runtime</literal> dependencies of the root project in 
+            The <filename>buildSrc</filename> project can be a multi-project build, just like any other regular multi-project build. However,
+            all of the projects that should be on the classpath of the actual build must be <literal>runtime</literal> dependencies of the root project in
             <filename>buildSrc</filename>. You can do this by adding this to the configuration of each project you wish to export:
         </para>
         <filename>buildSrc</filename>プロジェクトは、マルチプロジェクトにすることができます。このプロジェクトは、普通のGradleマルチプロジェクトと同じように動作します。
@@ -219,10 +219,10 @@
         <para role="original">For reasons we don't fully understand yet, external dependencies are not picked up by Ant's optional
             tasks. But you can easily do it in another way.
             <footnote>
-                <para role="original">In fact, we think this is anyway the nicer solution. Only if your buildscript and Ant's optional
-                    task need the <emphasis>same</emphasis> library you would have to define it two times. In such a
-                    case it would be nice, if Ant's optional task would automatically pickup the classpath defined
-                    in the <literal>gradesettings</literal>.
+                <para role="original">In fact, we think this is a better solution. Only if your buildscript and Ant's optional
+                    task need the <emphasis>same</emphasis> library would you have to define it twice. In such a
+                    case it would be nice if Ant's optional task would automatically pick up the classpath defined
+                    in the “<filename>gradle.settings</filename>” file.
                 </para>
             </footnote>
         </para>
@@ -230,7 +230,7 @@
         <sample id="buildLogic" dir="userguide/organizeBuildLogic" title="Ant optional dependencies">
             <sourcefile file="build.gradle"/>
         </sample>
-        <para>This is also nice example for the usage of client modules. The POM file in Maven Central for the
+        <para>This is also a good example for the usage of client modules. The POM file in Maven Central for the
         ant-commons-net task does not provide the right information for this use case.</para>
         <para>これはクライアントモジュールのいい使用例でもあります。mavenのセントラルリポジトリにあるant-commons-netタスクの<filename>pom.xml</filename>は、このユースケースのための正しい情報を提供していません。</para>
     </section>

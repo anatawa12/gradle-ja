@@ -36,7 +36,7 @@ class CheckstylePlugin extends AbstractCodeQualityPlugin<Checkstyle> {
         extension = project.extensions.create("checkstyle", CheckstyleExtension)
 
         extension.with {
-            toolVersion = "5.6"
+            toolVersion = "5.7"
             configFile = project.file("config/checkstyle/checkstyle.xml")
         }
 
@@ -45,16 +45,15 @@ class CheckstylePlugin extends AbstractCodeQualityPlugin<Checkstyle> {
 
     @Override
     protected void configureTaskDefaults(Checkstyle task, String baseName) {
-        task.conventionMapping.with {
-            checkstyleClasspath = {
-                def config = project.configurations['checkstyle']
-                if (config.dependencies.empty) {
-                    project.dependencies {
-                        checkstyle "com.puppycrawl.tools:checkstyle:$extension.toolVersion"
-                    }
-                }
-                config
+        def conf = project.configurations['checkstyle']
+        conf.incoming.beforeResolve {
+            if (conf.dependencies.empty) {
+                conf.dependencies.add(project.dependencies.create("com.puppycrawl.tools:checkstyle:$extension.toolVersion"))
             }
+        }
+
+        task.conventionMapping.with {
+            checkstyleClasspath = { conf }
             configFile = { extension.configFile }
             configProperties = { extension.configProperties }
             ignoreFailures = { extension.ignoreFailures }

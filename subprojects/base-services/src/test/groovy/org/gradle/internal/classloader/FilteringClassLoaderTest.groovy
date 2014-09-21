@@ -181,7 +181,7 @@ class FilteringClassLoaderTest extends Specification {
         classLoader.visit(visitor)
 
         then:
-        1 * visitor.visitSpec({it instanceof FilteringClassLoader.Spec}) >> { FilteringClassLoader.Spec spec ->
+        1 * visitor.visitSpec({ it instanceof FilteringClassLoader.Spec }) >> { FilteringClassLoader.Spec spec ->
             spec.classNames == [Test.name]
             spec.disallowedClassNames == [Before.name]
             spec.packageNames == ["org.junit"]
@@ -231,5 +231,31 @@ class FilteringClassLoaderTest extends Specification {
             classLoader.loadClass(clazz.name)
             fail()
         } catch (ClassNotFoundException expected) {}
+    }
+
+    def "does not attempt to load not allowed class"() {
+        given:
+        def parent = Mock(ClassLoader, useObjenesis: false)
+        def loader = new FilteringClassLoader(parent)
+
+        and:
+        loader.allowPackage("good")
+
+        when:
+        loader.loadClass("good.Clazz")
+
+        //noinspection GroovyAccessibility
+        then:
+        1 * parent.loadClass("good.Clazz", false) >> String
+        0 * parent._
+
+        when:
+        loader.loadClass("bad.Clazz")
+
+        then:
+        thrown(ClassNotFoundException)
+
+        and:
+        0 * parent._
     }
 }

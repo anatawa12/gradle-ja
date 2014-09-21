@@ -34,4 +34,14 @@ public class DocumentationRegistry {
     public String getDocumentationFor(String id) {
         return String.format("http://gradle.org/docs/%s/userguide/%s.html", gradleVersion.getVersion(), id);
     }
+
+    public String getDocumentationFor(String id, String section) {
+        return String.format("http://gradle.org/docs/%s/userguide/%s.html#%s", gradleVersion.getVersion(), id, section);
+    }
+
+    public String getDslRefForProperty(Class<?> clazz, String property) {
+        String className = clazz.getName();
+        return String.format("http://gradle.org/docs/%s/dsl/%s.html#%s:%s", gradleVersion.getVersion(), className, className, property);
+    }
+
 }

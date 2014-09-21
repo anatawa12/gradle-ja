@@ -1,4 +1,4 @@
-﻿<!--
+<!--
   ~ Copyright 2010 the original author or authors.
   ~
   ~ Licensed under the Apache License, Version 2.0 (the "License");
@@ -27,12 +27,17 @@
         Gradleは、ビルドシステムを記述するための<firstterm>ドメイン特化言語</firstterm>(DSL)を提供します。
         このビルド用言語は、Groovyをベースに、ビルドシステムの記述を簡単にするための機能をいくつか追加したものです。
         </para>
+        <para>
+            A build script can contain any Groovy language element.
+            <footnote><para>Any language element except for statement labels.</para></footnote>
+            Gradle assumes that each build script is encoded using UTF-8.
+        </para>
     </section>
     <section id='sec:project_api'>
         <title>プロジェクトAPI<phrase role="original">The Project API</phrase></title>
         <para role="original">In the tutorial in <xref linkend='tutorial_java_projects'/> we used, for example, the
             <literal>apply()</literal> method. Where does this method come from? We said earlier that the build script
-            defines a project in Gradle. For each project in the build, Gradle creates an instance of type
+            defines a project in Gradle. For each project in the build, Gradle creates an object of type
             <apilink class='org.gradle.api.Project'/> and associates this <classname>Project</classname> object with
             the build script. As the build script executes, it configures this <classname>Project</classname> object:
         </para>
@@ -49,7 +54,7 @@
         </tip>
         <itemizedlist>
             <listitem>
-                <para role="original">Any method you call in your build script, which <emphasis>is not defined</emphasis>
+                <para role="original">Any method you call in your build script which <emphasis>is not defined</emphasis>
                     in the build script, is delegated to the <classname>Project</classname> object.
                 </para>
                 <para>ビルドスクリプトで呼び出されたメソッドのうち、そのスクリプトで<emphasis>定義されていない</emphasis>ものは<classname>Project</classname>オブジェクトに委譲されます。</para>
@@ -73,7 +78,7 @@
             the <classname>Project</classname> object, for properties not defined in the build script. The other
             statement uses the <literal>project</literal> property available to any build script, which returns the
             associated <classname>Project</classname> object. Only if you define a property or a method which has the
-            same name as a member of the <classname>Project</classname> object, you need to use the <literal>project</literal>
+            same name as a member of the <classname>Project</classname> object, would you need to use the <literal>project</literal>
             property.
         </para>
         <para>どちらの<literal>println</literal>も出力結果は同じです。最初のprintlnは、ビルドスクリプトで定義されていないプロパティへのアクセスを、暗黙のうちにプロジェクトオブジェクトに委譲しています。もう一方の例では、プロジェクトオブジェクトを返す<literal>project</literal>プロパティを使って、<literal>name</literal>にアクセスしています。<literal>project</literal>プロパティには、ビルドスクリプトのどこからでもアクセスできます。プロジェクトオブジェクトのプロパティやメソッドと同名のものをビルドスクリプトに定義している場合は、<literal>project</literal>プロパティからアクセスすることになるでしょう。</para>
@@ -194,26 +199,10 @@
             </para>
             <para role="original">By requiring special syntax for adding a property, Gradle can fail fast when an attempt is made to set a (predefined or extra) property
                 but the property is misspelled or does not exist.
-                <footnote>
-                    <para role="original">As of Gradle 1.0-milestone-9, using <literal>ext</literal> to add extra properties is strongly encouraged but not yet enforced.
-                        Therefore, Gradle will not fail when an unknown property is set. However, it will print a warning.
-                    </para>
-                </footnote>
                 Extra properties can be accessed from anywhere their owning object can be accessed, giving them a wider scope than local variables.
-                Extra properties on a parent project are visible from subprojects.
+                Extra properties on a project are visible from its subprojects.
             </para>
-            <para>
-                プロパティを追加する際に特別な記法を要求することで、（定義済みのものであれ、拡張プロパティであれ）存在しないプロパティにアクセスしようとしたり、間違ったプロパティ名を使用しようとしたときのフェイルファストを実現できます。
-                <footnote>
-                    <para>Gradle 1.0 milestone 9より、拡張プロパティを追加する際には<literal>ext</literal>を使用することが強く推奨されるようになっていますが、まだ強制はされません。
-                        そのため存在しないプロパティに値を設定してもGradleの実行は失敗せず、警告が表示されます。
-                    </para>
-                </footnote>
-                拡張プロパティは、プロパティを追加したオブジェクトが参照できる場所であればどこからでもアクセスできるので、ローカル変数より広いスコープを持っていると言えます。
-                また、親プロジェクトの拡張プロパティは、サブプロジェクトからアクセスすることができます。
-            </para>
-            <para role="original">For further details on extra properties and their API, see <apilink class="org.gradle.api.plugins.ExtraPropertiesExtension"/>.</para>
-            <para>拡張プロパティに関してもっと詳しく知りたい場合、また、そのAPIについては、<apilink class="org.gradle.api.plugins.ExtraPropertiesExtension"/>を参照してください。</para>
+            <para>For further details on extra properties and their API, see the <apilink class="org.gradle.api.plugins.ExtraPropertiesExtension"/> class in the API documentation.</para>
         </section>
     </section>
     <section>
@@ -226,7 +215,7 @@
         <section>
             <title>Groovy JDK</title>
             <para role="original">
-                Groovy adds lots of useful methods to JVM classes. For example, <classname>Iterable</classname> gets
+                Groovy adds lots of useful methods to the standard Java classes. For example, <classname>Iterable</classname> gets
                 an <literal>each</literal> method, which iterates over the elements of the <classname>Iterable</classname>:
             </para>
             <para>Groovyは、たくさんの便利なメソッドをJavaの標準クラスに追加しています。たとえば、<classname>Iterable</classname>には<literal>each</literal>というメソッドが追加されていて、要素を走査するときに次のように書くことができます。</para>
@@ -260,9 +249,14 @@
             <title>リストリテラル、マップリテラル<phrase role="original">List and map literals</phrase></title>
             <para role="original">
                 Groovy provides some shortcuts for defining <classname>List</classname> and <classname>Map</classname>
-                instances.
+                instances.  Both kinds of literals are straightforward, but map literals have some interesting twists.
             </para>
             <para>Groovyでは、<classname>List</classname>や<classname>Map</classname>のインスタンスを作るときにショートカット記法が使えます。</para>
+            <para>For instance, the “<literal>apply</literal>” method (where you typically apply plugins) actually
+            takes a map parameter.  However, when you have a line like “<literal>apply plugin:'java'</literal>”, you
+            aren't actually using a map literal, you're actually using “named parameters”, which have almost exactly
+            the same syntax as a map literal (without the wrapping brackets). That named parameter list gets converted
+            to a map when the method is called, but it doesn't start out as a map.</para>
             <sample id="groovyBasics" dir="userguide/tutorial/groovy" title="マップリテラル、リストリテラル / List and map literals">
                 <sourcefile file="build.gradle" snippet="listAndMapLiterals"/>
             </sample>

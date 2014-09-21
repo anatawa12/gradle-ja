@@ -24,9 +24,9 @@ import org.gradle.performance.fixture.PerformanceResults;
 import org.gradle.performance.measure.DataAmount;
 import org.gradle.performance.measure.Duration;
 import org.gradle.performance.measure.MeasuredOperation;
+import org.gradle.util.GradleVersion;
 
 import java.io.File;
-import java.math.BigDecimal;
 import java.sql.*;
 import java.text.DateFormat;
 import java.text.ParseException;
@@ -82,7 +82,7 @@ public class ResultsStore implements DataReporter {
                     } finally {
                         statement.close();
                     }
-                    statement = connection.prepareStatement("insert into testOperation(testExecution, version, executionTimeMs, heapUsageBytes) values (?, ?, ?, ?)");
+                    statement = connection.prepareStatement("insert into testOperation(testExecution, version, executionTimeMs, heapUsageBytes, totalHeapUsageBytes, maxHeapUsageBytes, maxUncollectedHeapBytes, maxCommittedHeapBytes) values (?, ?, ?, ?, ?, ?, ?, ?)");
                     try {
                         addOperations(statement, testId, null, results.getCurrent());
                         for (BaselineVersion baselineVersion : results.getBaselineVersions()) {
@@ -105,6 +105,10 @@ public class ResultsStore implements DataReporter {
             statement.setString(2, version);
             statement.setBigDecimal(3, operation.getExecutionTime().toUnits(Duration.MILLI_SECONDS).getValue());
             statement.setBigDecimal(4, operation.getTotalMemoryUsed().toUnits(DataAmount.BYTES).getValue());
+            statement.setBigDecimal(5, operation.getTotalHeapUsage().toUnits(DataAmount.BYTES).getValue());
+            statement.setBigDecimal(6, operation.getMaxHeapUsage().toUnits(DataAmount.BYTES).getValue());
+            statement.setBigDecimal(7, operation.getMaxUncollectedHeap().toUnits(DataAmount.BYTES).getValue());
+            statement.setBigDecimal(8, operation.getMaxCommittedHeap().toUnits(DataAmount.BYTES).getValue());
             statement.execute();
         }
     }
@@ -126,14 +130,61 @@ public class ResultsStore implements DataReporter {
         }
     }
 
+    public List<String> getVersions() {
+        try {
+            return withConnection(new ConnectionAction<List<String>>() {
+                public List<String> execute(Connection connection) throws Exception {
+                    Set<String> allVersions = new TreeSet<String>(new Comparator<String>() {
+                        public int compare(String o1, String o2) {
+                            return GradleVersion.version(o1).compareTo(GradleVersion.version(o2));
+                        }
+                    });
+                    PreparedStatement uniqueVersions = connection.prepareStatement("select distinct version from testOperation");
+                    ResultSet versions = uniqueVersions.executeQuery();
+                    while (versions.next()) {
+                        String version = versions.getString(1);
+                        if (version != null) {
+                            allVersions.add(version);
+                        }
+                    }
+                    versions.close();
+                    uniqueVersions.close();
+
+                    ArrayList<String> result = new ArrayList<String>();
+                    result.addAll(allVersions);
+
+                    PreparedStatement uniqueBranches = connection.prepareStatement("select distinct vcsBranch from testExecution");
+                    ResultSet branches = uniqueBranches.executeQuery();
+                    Set<String> allBranches = new TreeSet<String>();
+                    while (branches.next()) {
+                        allBranches.add(branches.getString(1).trim());
+                    }
+                    branches.close();
+                    uniqueBranches.close();
+
+                    result.addAll(allBranches);
+
+                    return result;
+                }
+            });
+        } catch (Exception e) {
+            throw new RuntimeException(String.format("Could not load version list from datastore '%s'.", dbFile), e);
+        }
+    }
+
     public TestExecutionHistory getTestResults(final String testName) {
         try {
             return withConnection(new ConnectionAction<TestExecutionHistory>() {
                 public TestExecutionHistory execute(Connection connection) throws Exception {
                     List<PerformanceResults> results = new ArrayList<PerformanceResults>();
-                    Set<String> allVersions = new TreeSet<String>();
+                    Set<String> allVersions = new TreeSet<String>(new Comparator<String>() {
+                        public int compare(String o1, String o2) {
+                            return GradleVersion.version(o1).compareTo(GradleVersion.version(o2));
+                        }
+                    });
+                    Set<String> allBranches = new TreeSet<String>();
                     PreparedStatement executionsForName = connection.prepareStatement("select id, executionTime, targetVersion, testProject, tasks, args, operatingSystem, jvm, vcsBranch, vcsCommit from testExecution where testId = ? order by executionTime desc");
-                    PreparedStatement buildsForTest = connection.prepareStatement("select version, executionTimeMs, heapUsageBytes from testOperation where testExecution = ?");
+                    PreparedStatement operationsForExecution = connection.prepareStatement("select version, executionTimeMs, heapUsageBytes, totalHeapUsageBytes, maxHeapUsageBytes, maxUncollectedHeapBytes, maxCommittedHeapBytes from testOperation where testExecution = ?");
                     executionsForName.setString(1, testName);
                     ResultSet testExecutions = executionsForName.executeQuery();
                     while (testExecutions.next()) {
@@ -147,24 +198,27 @@ public class ResultsStore implements DataReporter {
                         performanceResults.setArgs(toArray(testExecutions.getObject(6)));
                         performanceResults.setOperatingSystem(testExecutions.getString(7));
                         performanceResults.setJvm(testExecutions.getString(8));
-                        performanceResults.setVcsBranch(testExecutions.getString(9));
+                        performanceResults.setVcsBranch(testExecutions.getString(9).trim());
                         performanceResults.setVcsCommit(testExecutions.getString(10));
 
                         results.add(performanceResults);
+                        allBranches.add(performanceResults.getVcsBranch());
 
-                        buildsForTest.setLong(1, id);
-                        ResultSet builds = buildsForTest.executeQuery();
+                        operationsForExecution.setLong(1, id);
+                        ResultSet builds = operationsForExecution.executeQuery();
                         while (builds.next()) {
                             String version = builds.getString(1);
                             if ("1.7".equals(version) && performanceResults.getTestTime() <= ignoreV17Before) {
                                 // Ignore some broken samples
                                 continue;
                             }
-                            BigDecimal executionTimeMs = builds.getBigDecimal(2);
-                            BigDecimal heapUsageBytes = builds.getBigDecimal(3);
                             MeasuredOperation operation = new MeasuredOperation();
-                            operation.setExecutionTime(Duration.millis(executionTimeMs));
-                            operation.setTotalMemoryUsed(DataAmount.bytes(heapUsageBytes));
+                            operation.setExecutionTime(Duration.millis(builds.getBigDecimal(2)));
+                            operation.setTotalMemoryUsed(DataAmount.bytes(builds.getBigDecimal(3)));
+                            operation.setTotalHeapUsage(DataAmount.bytes(builds.getBigDecimal(4)));
+                            operation.setMaxHeapUsage(DataAmount.bytes(builds.getBigDecimal(5)));
+                            operation.setMaxUncollectedHeap(DataAmount.bytes(builds.getBigDecimal(6)));
+                            operation.setMaxCommittedHeap(DataAmount.bytes(builds.getBigDecimal(7)));
 
                             if (version == null) {
                                 performanceResults.getCurrent().add(operation);
@@ -176,10 +230,10 @@ public class ResultsStore implements DataReporter {
                         }
                     }
                     testExecutions.close();
-                    buildsForTest.close();
+                    operationsForExecution.close();
                     executionsForName.close();
 
-                    return new TestExecutionHistory(testName, new ArrayList<String>(allVersions), results);
+                    return new TestExecutionHistory(testName, new ArrayList<String>(allVersions), new ArrayList<String>(allBranches), results);
                 }
             });
         } catch (Exception e) {
@@ -230,6 +284,10 @@ public class ResultsStore implements DataReporter {
         statement.execute("create table if not exists testOperation (testExecution bigint not null, version varchar, executionTimeMs decimal not null, heapUsageBytes decimal not null, foreign key(testExecution) references testExecution(id))");
         statement.execute("alter table testExecution add column if not exists vcsBranch varchar not null default 'master'");
         statement.execute("alter table testExecution add column if not exists vcsCommit varchar");
+        statement.execute("alter table testOperation add column if not exists totalHeapUsageBytes decimal");
+        statement.execute("alter table testOperation add column if not exists maxHeapUsageBytes decimal");
+        statement.execute("alter table testOperation add column if not exists maxUncollectedHeapBytes decimal");
+        statement.execute("alter table testOperation add column if not exists maxCommittedHeapBytes decimal");
         statement.close();
     }
 

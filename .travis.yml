@@ -1,4 +1,10 @@
 language: java
 jdk:
   - oraclejdk7
-script: "./gradlew quickCheck -q"
+script:
+  - ./gradlew pullRequestValidation
+env:
+  - TERM=dumb
+branches:
+  only:
+    - master

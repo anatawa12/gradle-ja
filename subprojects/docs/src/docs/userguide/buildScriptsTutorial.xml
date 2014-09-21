@@ -1,4 +1,4 @@
-﻿<!--
+<!--
   ~ Copyright 2009 the original author or authors.
   ~
   ~ Licensed under the Apache License, Version 2.0 (the "License");
@@ -19,9 +19,9 @@
     <para role="original">Everything in Gradle sits on top of two basic concepts: <firstterm>projects</firstterm> and <firstterm>tasks</firstterm>.</para>
     <para>Gradleの根本にあるのは、<firstterm>プロジェクト</firstterm>と<firstterm>タスク</firstterm>という二つの基本的な概念です。</para>
     <para role="original">
-        Every Gradle build is made up of one or more <firstterm>projects</firstterm>. A project represents
-        some component of your software which can be built. What this means exactly depends on what it is that you are
-        building. For example, a project might represent a library JAR or a web application. It might represent a
+        Every Gradle build is made up of one or more <firstterm>projects</firstterm>.
+        What a project represents depends on what it is that you are doing with Gradle.
+        For example, a project might represent a library JAR or a web application. It might represent a
         distribution ZIP assembled from the JARs produced by other projects. A project does not necessarily represent
         a thing to be built. It might represent a thing to be done, such as deploying your application to staging or
         production environments. Don't worry if this seems a little vague for now. Gradle's build-by-convention support adds
@@ -29,9 +29,9 @@
     </para>
     <para>Gradleによるビルドは、一つ以上の<firstterm>プロジェクト</firstterm>から構成されます。プロジェクトとは、ビルドされるソフトウェアを構成するコンポーネントのことですが、正確な意味は何をビルドするかによって変わります。たとえば、あるプロジェクトはライブラリjarやWebアプリケーションをビルドするものかもしれません。または、別のプロジェクトによってビルドされたjarを集めて配布用のzipファイルを作成するものかもしれません。何か具体的なものを組み立てるのではなく、処理を行うだけというプロジェクトもありえます。アプリケーションを本番環境にステージするというプロジェクトがその一例です。今は少しあいまいな印象を受けられるかもしれませんが、心配する必要はありません。Gradleは規約によるビルドをサポートしており、プロジェクトの定義については明確に規定されています。</para>
     <para role="original">Each project is made up of one or more <firstterm>tasks</firstterm>. A task represents some atomic piece
-        of work which a build performs. This might be compiling some classes, creating a JAR, generating javadoc,
+        of work which a build performs. This might be compiling some classes, creating a JAR, generating Javadoc,
         or publishing some archives to a repository.</para>
-    <para>それぞれのプロジェクトは、一つ以上の<firstterm>タスク</firstterm>から構成されます。タスクとは、分割不能な何らかの作業単位を表す概念です。たとえば、クラスをコンパイルしたり、JARファイルを作成したり、アーカイブをリポジトリに公開したりするタスクが考えられます。</para>
+    <para>それぞれのプロジェクトは、一つ以上の<firstterm>タスク</firstterm>から構成されます。タスクとは、分割不能な何らかの作業単位を表す概念です。たとえば、クラスをコンパイルしたり、JARファイルを作成したり、Javadocを生成したり、アーカイブをリポジトリに公開したりするタスクが考えられます。</para>
 
     <para role="original">For now, we will look at defining some simple tasks in a build with one project. Later chapters will look at
         working with multiple projects and more about working with projects and tasks.</para>
@@ -52,7 +52,7 @@
         <sample id="hello" dir="userguide/tutorial/hello" title="初めてのビルドスクリプト / The first build script">
             <sourcefile file="build.gradle"/>
         </sample>
-        <para role="original">In a command-line shell, enter into the containing directory and execute the build script by running
+        <para role="original">In a command-line shell, move to the containing directory and execute the build script with
             <userinput>gradle -q hello</userinput>:
         </para>
         <para>コンソールを開いてこの<filename>build.gradle</filename>のあるディレクトリに移動して、<userinput>gradle -q hello</userinput>と打ち込んでください。ビルドスクリプトが実行され、以下のように出力されるはずです。</para>
@@ -60,7 +60,7 @@
             <title><option>-q</option>オプションって何?<phrase role="original">What does <option>-q</option> do?</phrase></title>
             <para role="original">Most of the examples in this user guide are run with the <option>-q</option> command-line option.
                 This suppresses Gradle's log messages, so that only the output of the tasks is shown. This keeps the example
-                output in this user guide a little clearer. You don't need to use this option if you don't want.
+                output in this user guide a little clearer. You don't need to use this option if you don't want to.
                 See <xref linkend="logging"/> for more details about the command-line options which affect Gradle's output.
             </para>
             <para>このユーザーガイドでは、ほぼすべての例で<option>-q</option>をつけてコマンドを実行しています。このオプションはGradleのログメッセージを抑制するもので、タスクによる出力のみが表示されるようになります。おかげでユーザーガイドの出力例はちょっとすっきりしていますが、もちろん使いたくなければこのオプションを使う必要はありません。Gradleの出力に関係するオプションについては、<xref linkend="logging"/>にもっと詳しく記載されています。</para>
@@ -74,13 +74,13 @@
             closure containing some Groovy code to execute.
         </para>
         <para>何が起こったのでしょう。ビルドスクリプトは、<literal>hello</literal>というタスクを一つ定義していて、このタスクにアクションを一つ追加しています。<userinput>gradle hello</userinput>と実行することで、Gradleがこの<literal>hello</literal>を実行し、<literal>hello</literal>に追加したアクションが実行されたのです。アクションはGroovyコードを含む単なるクロージャです。</para>
-        <para role="original">If you think this looks similar to Ant's targets, well, you are right. Gradle tasks are the equivalent to
-            Ant targets. But as you will see, they are much more powerful. We have used a different terminology than Ant
+        <para role="original">If you think this looks similar to Ant's targets, well, you would be right. Gradle tasks are the equivalent to
+            Ant targets, but as you will see, they are much more powerful. We have used a different terminology than Ant
             as we think the word <emphasis>task</emphasis> is more expressive than the word <emphasis>target</emphasis>.
             Unfortunately this introduces a terminology clash with Ant, as Ant calls its commands, such as
             <literal>javac</literal> or <literal>copy</literal>, tasks. So when we talk about tasks,
             we <emphasis>always</emphasis> mean Gradle tasks, which are the equivalent to Ant's targets. If we talk
-            about Ant tasks (Ant commands), we explicitly say <emphasis>ant task</emphasis>.
+            about Ant tasks (Ant commands), we explicitly say <emphasis>Ant task</emphasis>.
         </para>
         <para>Antのtargetに似ているなと思われたかもしれません。実際、GradleのtaskはAntでいえばtargetに相当するものです。ただ、これから見ていきますがGradleのtaskはAntのtargetよりもずっと強力なものです。Gradleではtaskという、Antとは異なる用語を採用しました。これは<emphasis>task</emphasis>という言葉が、<emphasis>target</emphasis>という言葉よりも実態に合った表現だと考えたためです。しかし、残念ながら<emphasis>task</emphasis>という用語はAntでも<literal>copy</literal>や<literal>javac</literal>といったコマンドを示すものとして使われており、Gradleのtaskと競合してしまいます。このため、Antのtaskについて述べるときには常に<emphasis>ant task</emphasis>と明示的にいい、単にtaskとしたときはGradleのタスクのことを示すものとします。</para>
     </section>
@@ -98,7 +98,7 @@
     </section>
     <section>
         <title>ビルドスクリプトはコードです<phrase role="original">Build scripts are code</phrase></title>
-        <para role="original">Gradle's build scripts expose to you the full power of Groovy. As an appetizer, have a look at this:
+        <para role="original">Gradle's build scripts give you the full power of Groovy. As an appetizer, have a look at this:
         </para>
         <para>GradleのビルドスクリプトではGroovyの機能をすべて使うことができます。手始めに次の例をご覧ください。</para>
         <sample id="upper" dir="userguide/tutorial/upper" title="GradleタスクでGroovyを使う / Using Groovy in Gradle's tasks">
@@ -114,7 +114,7 @@
     </section>
     <section id='sec:task_dependencies'>
         <title>タスクの依存関係<phrase role="original">Task dependencies</phrase></title>
-        <para role="original">As you probably have guessed, you can declare dependencies between your tasks.
+        <para role="original">As you probably have guessed, you can declare tasks that depend on other tasks.
         </para>
         <para>ご想像の通り、タスク間の依存関係を宣言できます。</para>
         <sample id="intro" dir="userguide/tutorial/intro" title="タスク間の依存関係を宣言する / Declaration of dependencies between tasks">
@@ -132,7 +132,8 @@
             discussed in more detail in <xref linkend='sec:adding_dependencies_to_tasks'/>.
         </para>
         <para><literal>taskX</literal>が<literal>taskY</literal>に依存していることが宣言されていますが、宣言した時点では<literal>taskY</literal>の定義文はありません。このことは、マルチプロジェクトのビルドで非常に重要になってきます。タスク間の依存関係については、<xref linkend='sec:adding_dependencies_to_tasks'/>でさらに詳しく述べられています。</para>
-        <para role="original">Please notice, that you can't use a shortcut notation (see <xref linkend='sec:shortcut_notations' />) when referring to task, which is not defined yet.</para>
+        <para role="original">Please notice, that you can't use a shortcut notation (see <xref linkend='sec:shortcut_notations' />)
+        when referring to a task that is not yet defined.</para>
         <para>なお、未定義のタスクを参照する場合、略記法(<xref linkend='sec:shortcut_notations' />参照)は使えませんので注意してください。</para>
     </section>
     <section>
@@ -148,8 +149,8 @@
     </section>
     <section>
         <title>既存のタスクを操作する<phrase role="original">Manipulating existing tasks</phrase></title>
-        <para role="original">Once tasks are created they can be accessed via an <emphasis>API</emphasis>. This is different to Ant. For
-            example you can create additional dependencies.
+        <para role="original">Once tasks are created they can be accessed via an <emphasis>API</emphasis>. For instance, you could use this to
+        dynamically add dependencies to a task, at runtime.  Ant doesn't allow anything like this.
         </para>
         <para>タスクが公開しているAPIを使えば、既存のタスクにアクセスして定義内容を操作することができます。これはAntと異なるGradleの特長の一つです。たとえば、次のように後からタスクの依存関係を追加することができます。</para>
         <sample id="dynamicDepends" dir="userguide/tutorial/dynamicDepends" title="APIからタスクにアクセスする - 依存関係の追加 / Accessing a task via API - adding a dependency">
@@ -179,8 +180,9 @@
             <sourcefile file="build.gradle"/>
             <output args="-q hello"/>
         </sample>
-        <para role="original">This enables very readable code, especially when using the out of the box tasks provided by the plugins
-            (e.g. <literal>compile</literal>).</para>
+        <para role="original">This enables very readable code, especially when using the tasks provided by the plugins,
+             like the <literal>compile</literal> task.
+        </para>
         <para>この略記法は、コードをとても読みやすいものにします。特に、プラグインなどで外部から提供されるタスク(たとえば<literal>compile</literal>)にアクセスするときには威力を発揮します。</para>
     </section>
     <section id='sec:extra_task_properties'>
@@ -202,10 +204,10 @@
     </section>
     <section>
         <title>Antタスクの使用<phrase role="original">Using Ant Tasks</phrase></title>
-        <para role="original">Ant tasks are first-class citizens in Gradle. Gradle provides excellent integration for Ant tasks simply
+        <para role="original">Ant tasks are first-class citizens in Gradle. Gradle provides excellent integration for Ant tasks by simply
             by relying on Groovy. Groovy is shipped with the fantastic <literal>AntBuilder</literal>. Using Ant tasks
             from Gradle is as convenient and more powerful than using Ant tasks from a <filename>build.xml</filename>
-            file. From below example you can learn how to execute ant tasks and how to access ant properties:
+            file. From the example below, you can learn how to execute Ant tasks and how to access Ant properties:
         </para>
         <para>AntのタスクはGradleのファーストクラス・オブジェクトであり、デフォルトで使用できるようになっています。Groovyの持つ機能のおかげで、GradleはAntを非常に高いレベルで統合しています。Groovyには素晴らしき<literal>AntBuilder</literal>が組み込まれているのです。Antのタスクは、<filename>build.xml</filename>で使うよりGradleで使ったほうが便利で強力です。次の例を見てください。Antのタスクを実行する方法やAntのプロパティにアクセスする方法を示しています。</para>
         <sample id="antLoadfile" dir="userguide/tutorial/antLoadfile" title="AntBuilderを使ってant.loadfileターゲットを実行する / Using AntBuilder to execute ant.loadfile target">
@@ -249,23 +251,22 @@
     </section>
     <section id="configure-by-dag">
         <title>DAGによる設定<phrase role="original">Configure by DAG</phrase></title>
-        <para role="original">As we describe in full detail later (See <xref linkend='build_lifecycle'/>) Gradle has a
-            configuration phase and an execution phase. After the configuration phase Gradle knows all tasks that should
+        <para role="original">As we later describe in full detail (See <xref linkend='build_lifecycle'/>) Gradle has a
+            configuration phase and an execution phase. After the configuration phase, Gradle knows all tasks that should
             be executed. Gradle offers you a hook to make use of this information. A use-case for this would be to check
-            if the release task is part of the tasks to be executed. Depending on this you can assign different values
+            if the release task is among the tasks to be executed. Depending on this, you can assign different values
             to some variables.
         </para>
         <para>詳しくは<xref linkend='build_lifecycle'/>で説明しますが、Gradleのビルドはいくつかのフェーズに分かれて実行されます。Gradleはどのタスクを実行するのかを設定フェーズで決定しますが、この情報を使うためのフックが提供されています。実行タスクにあるタスクが含まれるかどうかによって、変数に別の値を割り当てたりできるわけです。ユースケースとしては、releaseタスクが実行されるタスクに入っているかどうかチェックするといったものが考えられるでしょう。</para>
-        <para role="original">In the following example, execution of <literal>distribution</literal> and <literal>release</literal> tasks results in different value of <literal>version</literal> variable.</para>
+        <para role="original">In the following example, execution of the <literal>distribution</literal> and <literal>release</literal> tasks results in different value of the <literal>version</literal> variable.</para>
         <para>次の例では、<literal>distribution</literal>タスクを実行するか<literal>release</literal>タスクを実行するかで<literal>version</literal>変数に違う値を割り当てています。</para>
         <sample id="configByDagNoRelease" dir="userguide/tutorial/configByDag" title="選択したタスクによって異なる結果を得る / Different outcomes of build depending on chosen tasks">
             <sourcefile file="build.gradle"/>
             <output args="-q distribution"/>
             <output args="-q release" outputFile="configByDag.out"/>
         </sample>
-        <para role="original">The important thing is, that the fact that the release task has been chosen, has an effect
-            <emphasis>before</emphasis> the release task gets executed. Nor has the release task to be the
-            <emphasis>primary</emphasis> task (i.e. the task passed to the <command>gradle</command> command).
+        <para role="original">The important thing is that <literal>whenReady</literal> affects the release task <emphasis>before</emphasis> the release task is executed.
+        This works even when the release task is not the <emphasis>primary</emphasis> task (i.e., the task passed to the <command>gradle</command> command).
         </para>
         <para>ここで大事なことは、releaseタスクが実行予定にあるという事実を、releaseタスクが実行される前に利用できる点です。releaseタスクが<emphasis>プライマリ</emphasis>タスク、つまりgradleコマンドに引き渡されているタスクでなくてもかまいません。</para>
     </section>

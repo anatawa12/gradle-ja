@@ -16,7 +16,6 @@
 
 import org.gradle.build.Install
 import org.gradle.build.BuildTypes
-import org.gradle.build.TestReportAggregator
 
 defaultTasks 'assemble'
 apply plugin: 'java-base'
@@ -30,6 +29,9 @@ buildTypes {
     // The minimum to be run before check-in
     preCommitBuild "doc:checkstyleApi", "docs:check", "codeQuality", "classes", "test"
     quickCheck "doc:checkstyleApi", "docs:check", "codeQuality", "classes", "test"
+
+    // For testing pull requests
+    pullRequestValidation "doc:checkstyleApi", "docs:check", "codeQuality", "classes"
 
     // A full (in-process) test
     developerBuild "check"
@@ -56,7 +58,7 @@ buildTypes {
     localPerformanceTest "performance:integTest"
 
     // Used for cross version tests on CI
-    crossVersionTest "runtimeIntegTests", crossVersionTestsOnly: "", testAllVersions: "", useIncomingDistributions: true, defaultIntegTestExecuter: "forking"
+    crossVersionTest "crossVersionIntegTest", useIncomingDistributions: true
 
     // Used to build production distros and smoke test them
     packageBuild "verifyIsProductionBuildEnvironment", "clean", "buildDists", "distributions:integTest"
@@ -86,14 +88,25 @@ ext {
     internalProjects = subprojects.findAll { it.name.startsWith("internal") || it.name in ["integTest", "distributions"] }
     groovyProjects = subprojects
     publicGroovyProjects = groovyProjects - internalProjects
-    publishedProjects = [project(':core'), project(':toolingApi'), project(':wrapper'), project(':baseServices'), project(':messaging')]
     pluginProjects = [
         'plugins', 'codeQuality', 'jetty', 'antlr', 'wrapper', 'osgi', 'maven',
-        'ide', 'announce', 'scala', 'sonar', 'signing', 'cpp', 'ear', 'javascript', 'buildComparison',
-        'diagnostics', 'reporting', 'publish', 'ivy', 'jacoco', 'buildInit', 'languageJvm', 'languageBase'
+        'ide', 'announce', 'scala', 'sonar', 'signing', 'ear', 'javascript', 'buildComparison',
+        'diagnostics', 'reporting', 'publish', 'ivy', 'jacoco', 'buildInit', 'platformBase',
+        'platformJvm', 'languageJvm', 'languageJava', 'languageGroovy',
+        'platformNative', 'languageNative', 'ideNative', 'cunit',
+        'pluginDevelopment', 'pluginUse'
     ].collect {
         project(it)
     }
+    publishedProjects = [
+            project(':core'),
+            project(':toolingApi'),
+            project(':wrapper'),
+            project(':baseServices'),
+            project(':baseServicesGroovy'),
+            project(':messaging'),
+            project(':resources')
+    ]
 }
 
 apply from: "gradle/buildReceipt.gradle"
@@ -104,14 +117,17 @@ apply from: "gradle/wrapper.gradle"
 apply from: "gradle/idea.gradle"
 apply from: "gradle/eclipse.gradle"
 apply from: "gradle/classycle.gradle"
+apply from: "gradle/strictCompile.gradle"
 apply from: "gradle/noDependencyResolutionDuringConfiguration.gradle"
+apply from: "gradle/testSetup.gradle"
 apply from: "gradle/testGroupings.gradle"
+apply from: "gradle/analytics.gradle"
 
 allprojects {
     group = 'org.gradle'
 
     repositories {
-        maven { url 'http://repo.gradle.org/gradle/libs' }
+        maven { url 'https://repo.gradle.org/gradle/libs' }
     }
 }
 
@@ -140,20 +156,20 @@ configurations {
     runtime {
         visible = false
     }
-    plugins {
+    gradlePlugins {
         visible = false
     }
     testRuntime {
         extendsFrom runtime
-        extendsFrom plugins
+        extendsFrom gradlePlugins
     }
 }
 
 dependencies {
     runtime project(':launcher')
     runtime project(':wrapper')
-    plugins pluginProjects
-    plugins project(':coreImpl')
+    gradlePlugins pluginProjects
+    gradlePlugins project(':dependencyManagement')
 }
 
 task verifyIsProductionBuildEnvironment << {
@@ -164,7 +180,7 @@ task verifyIsProductionBuildEnvironment << {
 
 task waitForDaemonsToDie {
     if (!project.hasProperty("noWaitForDaemonsToDie")) {
-        if (isWindows && isCiServer) {
+        if (isWindows && isCiServer && buildTypes.activeNames.contains("crossVersionTest")) {
             gradle.startParameter.taskNames.add(0, it.path)
         }
         doLast {
@@ -173,12 +189,6 @@ task waitForDaemonsToDie {
             sleep mins * 60 * 1000
         }
     }
-}
-
-task aggregateTestReports(type: TestReportAggregator) {
-    testReportDir = reporting.file("tests")
-    testResultsDir = file("${buildDir}/test-results")
-    projects = subprojects
 }
 
 evaluationDependsOn ":distributions"

@@ -1,4 +1,4 @@
-﻿<chapter id='announce_plugin'>
+<chapter id='announce_plugin'>
     <title>通知プラグイン <phrase role="original">The Announce Plugin</phrase></title>
     <para><phrase role="original">The Gradle announce allows to send custom announcements during a build. The following notification systems are supported:</phrase>
         通知プラグインを使うと、ビルド実行中に通知を送信することができます。以下の通知システムがサポートされています。

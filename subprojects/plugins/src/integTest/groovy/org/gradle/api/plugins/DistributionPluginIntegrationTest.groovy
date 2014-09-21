@@ -21,12 +21,7 @@ import org.gradle.integtests.fixtures.WellBehavedPluginTest
 import static org.hamcrest.Matchers.containsString
 
 class DistributionPluginIntegrationTest extends WellBehavedPluginTest {
-
     @Override
-    String getPluginId() {
-        "distribution"
-    }
-
     String getMainTask() {
         return "distZip"
     }
@@ -326,6 +321,29 @@ class DistributionPluginIntegrationTest extends WellBehavedPluginTest {
                 'dir/file2.txt',
                 'docs/file3.txt',
                 'docs/dir2/file4.txt')
+    }
+
+    def installDistCanBeRerun() {
+        when:
+        buildFile << """
+            apply plugin:'distribution'
+
+            distributions {
+                custom{
+                    contents {
+                        from { "someFile" }
+                    }
+                }
+            }
+
+            """
+        succeeds('installCustomDist')
+        // update the file so that when it re-runs it is not UP-TO-DATE
+        file("someFile") << "updated"
+        then:
+        succeeds('installCustomDist')
+        and:
+        file('build/install/TestProject-custom/someFile').assertIsCopyOf(file("someFile"))
     }
 
     def createTarTaskForCustomDistribution() {

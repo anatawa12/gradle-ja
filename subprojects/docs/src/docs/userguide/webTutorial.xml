@@ -1,4 +1,4 @@
-﻿<!--
+<!--
   ~ Copyright 2009 the original author or authors.
   ~
   ~ Licensed under the Apache License, Version 2.0 (the "License");
@@ -21,7 +21,7 @@
         <para>この章は執筆途中です。</para>
     </note>
 
-    <para role="original">This chapter introduces some of the Gradle's support for web applications. Gradle provides two plugins for web
+    <para role="original">This chapter introduces the Gradle support for web applications. Gradle provides two plugins for web
         application development: the War plugin and the Jetty plugin. The War plugin extends the Java plugin to build a
         WAR file for your project. The Jetty plugin extends the War plugin to allow you to deploy your web application
         to an embedded Jetty web container.
@@ -41,8 +41,9 @@
         </sample>
         <para role="original">This also applies the Java plugin to your project. Running <userinput>gradle build</userinput> will compile,
             test and WAR your project. Gradle will look for the source files to include in the WAR file in
-            <filename>src/main/webapp</filename>. Your compiled classes, and their runtime dependencies are also
-            included in the WAR file.
+            <filename>src/main/webapp</filename>. Your compiled classes and their runtime dependencies are also
+            included in the WAR file, in the <literal>WEB-INF/classes</literal> and <literal>WEB-INF/lib</literal>
+            directories, respectively.
         </para>
         <para>これにより、プロジェクトにはJavaプラグインも適用されます。
             <userinput>gradle build</userinput>を実行すれば、プロジェクトがコンパイル、テストされ、WARが生成されます。
@@ -51,7 +52,7 @@
         </para>
         <tip><title>Groovy Webアプリケーション<phrase role="original">Groovy web applications</phrase></title>
             <para role="original">You can combine multiple plugins in a single project, so you
-            can use the War and Groovy plugins together to build a Groovy based web application. The appropriate groovy
+            can use the War and Groovy plugins together to build a Groovy based web application. The appropriate Groovy
             libraries will be added to the WAR file for you.</para>
             <para>単一のプロジェクト内で複数のプラグインを組み合わせることができるので、
             GroovyベースのWebアプリケーションをビルドするためにWarプラグインとGroovyプラグインを同時に使えます。

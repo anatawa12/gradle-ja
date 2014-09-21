@@ -27,6 +27,9 @@ import org.gradle.internal.id.LongIdGenerator
 import org.gradle.logging.StandardOutputRedirector
 import org.gradle.test.fixtures.file.TestNameTestDirectoryProvider
 import org.junit.Rule
+import org.testng.ITestContext
+import org.testng.ITestListener
+import org.testng.ITestResult
 import org.testng.annotations.*
 import spock.lang.Ignore
 import spock.lang.Specification
@@ -199,32 +202,64 @@ class TestNGTestClassProcessorTest extends Specification {
         def ex = thrown(GradleException)
         ex.message == "Could not load test class \'unknown\'."
     }
+
+    void "before and after methods are not triggered when all tests from a class are filtered"() {
+        options.getIncludedTests() >> [ATestNGClass.name]
+
+        when:
+        process(ATestNGClass, ATestNGClassWithBeforeAndAfter) //the latter is not matched
+
+        then:
+        then: 1 * processor.started({ it.id == 1 && it.name == 'Gradle test' && it.className == null }, _)
+        then: 1 * processor.started({ it.id == 2 && it.name == 'ok' && it.className == ATestNGClass.name }, _)
+        then: 1 * processor.completed(2, _)
+        then: 1 * processor.completed(1, _)
+        0 * processor._
+    }
+
+    void "custom test listeners can change test status"() {
+        options.listeners << FailSkippedTestsListener.class.name
+
+        when: process(ATestNGClassWithSkippedTest)
+
+        then: 1 * processor.completed(_, { it.resultType == ResultType.FAILURE})
+    }
+}
+
+public class FailSkippedTestsListener implements ITestListener {
+    void onTestStart(ITestResult result) {}
+    void onTestSuccess(ITestResult result) {
+        result.setStatus(ITestResult.FAILURE)
+    }
+    void onTestFailure(ITestResult result) {}
+    void onTestSkipped(ITestResult result) {
+
+    }
+    void onTestFailedButWithinSuccessPercentage(ITestResult result) {}
+    void onStart(ITestContext context) {}
+    void onFinish(ITestContext context) {}
+}
+
+public class ATestNGClassWithSkippedTest {
+    @org.testng.annotations.Test
+    public void skipMe() {}
 }
 
 public class ATestNGClass {
-    @BeforeClass
-    public void beforeClass() {
-    }
+    @BeforeClass public void beforeClass() {}
+    @AfterClass public void afterClass() {}
+    @BeforeMethod public void beforeMethod() {}
+    @AfterMethod public void afterMethod() {}
+    @org.testng.annotations.Test public void ok() {}
+    @org.testng.annotations.Test(enabled = false) public void skipped() {}
+}
 
-    @AfterClass
-    public void afterClass() {
-    }
-
-    @BeforeMethod
-    public void beforeMethod() {
-    }
-
-    @AfterMethod
-    public void afterMethod() {
-    }
-
-    @org.testng.annotations.Test
-    public void ok() {
-    }
-
-    @org.testng.annotations.Test(enabled = false)
-    public void skipped() {
-    }
+public class ATestNGClassWithBeforeAndAfter {
+    @BeforeClass public void beforeClass() { assert false }
+    @AfterClass public void afterClass() { assert false }
+    @BeforeMethod public void beforeMethod() { assert false }
+    @AfterMethod public void afterMethod() { assert false }
+    @org.testng.annotations.Test public void ok() {}
 }
 
 public class ATestNGClassWithExpectedException {
@@ -242,21 +277,10 @@ public class ATestNGClassWithManyMethods {
 }
 
 public class ATestNGClassWithGroups {
-    @org.testng.annotations.Test(groups="group1")
-    public void group1() {
-    }
-
-    @org.testng.annotations.Test(groups="group2")
-    public void group2() {
-    }
-
-    @org.testng.annotations.Test(groups="group2,group3")
-    public void excluded() {
-    }
-
-    @org.testng.annotations.Test(groups="group4")
-    public void ignored() {
-    }
+    @org.testng.annotations.Test(groups="group1") public void group1() {}
+    @org.testng.annotations.Test(groups="group2") public void group2() {}
+    @org.testng.annotations.Test(groups="group2,group3") public void excluded() {}
+    @org.testng.annotations.Test(groups="group4") public void ignored() {}
 }
 
 public class ATestNGFactoryClass {
@@ -268,38 +292,18 @@ public class ATestNGFactoryClass {
 
 public class ATestNGClassWithBrokenConstructor {
     static RuntimeException failure = new RuntimeException()
-
-    def ATestNGClassWithBrokenConstructor() {
-        throw failure
-    }
-
-    @org.testng.annotations.Test
-    public void test() {
-    }
+    def ATestNGClassWithBrokenConstructor() { throw failure }
+    @org.testng.annotations.Test public void test() {}
 }
 
 public class ATestNGClassWithBrokenSetupMethod {
     static RuntimeException failure = new RuntimeException()
-
-    @BeforeMethod
-    public void beforeMethod() {
-        throw failure
-    }
-
-    @org.testng.annotations.Test
-    public void test() {
-    }
+    @BeforeMethod public void beforeMethod() { throw failure }
+    @org.testng.annotations.Test public void test() {}
 }
 
 public class ATestNGClassWithBrokenDependencyMethod {
     static RuntimeException failure = new RuntimeException()
-
-    @org.testng.annotations.Test
-    public void beforeMethod() {
-        throw failure
-    }
-
-    @org.testng.annotations.Test(dependsOnMethods = 'beforeMethod')
-    public void test() {
-    }
+    @org.testng.annotations.Test public void beforeMethod() { throw failure }
+    @org.testng.annotations.Test(dependsOnMethods = 'beforeMethod') public void test() {}
 }

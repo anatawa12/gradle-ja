@@ -30,7 +30,7 @@ import java.io.*;
 import java.util.Collection;
 
 public class TestResultSerializer {
-    private static final int RESULT_VERSION = 2;
+    private static final int RESULT_VERSION = 3;
 
     private final File resultsFile;
 

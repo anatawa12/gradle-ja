@@ -9,7 +9,7 @@
 
     <section>
         <title>使用方法<phrase role="original">Usage</phrase></title>
-        <para role="original">To use the PMD plugin, include in your build script:</para>
+        <para role="original">To use the PMD plugin, include  the following in your build script:</para>
         <para>PMDプラグインを使うためには、ビルドスクリプトに下記を含めます：</para>
         <sample id="usePmdPlugin" dir="codeQuality" title="PMDプラグインの使用 / Using the PMD plugin">
             <sourcefile file="build.gradle" snippet="use-pmd-plugin"/>
@@ -96,7 +96,7 @@
 
     <section>
         <title>設定<para role="original">Configuration</para></title>
-        <para role="original">See <apilink class="org.gradle.api.plugins.quality.PmdExtension"/>.</para>
+        <para role="original">See the <apilink class="org.gradle.api.plugins.quality.PmdExtension"/> class in the API documentation.</para>
         <para><apilink class="org.gradle.api.plugins.quality.PmdExtension"/>を参照。</para>
     </section>
 

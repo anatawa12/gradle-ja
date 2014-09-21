@@ -15,11 +15,13 @@
  */
 package org.gradle.tooling.internal.consumer.connection;
 
+import org.gradle.initialization.BuildCancellationToken;
 import org.gradle.internal.UncheckedException;
+import org.gradle.tooling.BuildCancelledException;
+import org.gradle.tooling.internal.consumer.ConnectionParameters;
 import org.gradle.tooling.internal.consumer.Distribution;
 import org.gradle.tooling.internal.consumer.LoggingProvider;
 import org.gradle.tooling.internal.consumer.loader.ToolingImplementationLoader;
-import org.gradle.tooling.internal.consumer.parameters.ConsumerConnectionParameters;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -37,17 +39,17 @@ public class LazyConsumerActionExecutor implements ConsumerActionExecutor {
 
     private final Lock lock = new ReentrantLock();
     private final Condition condition = lock.newCondition();
-    private Set<Thread> executing = new HashSet<Thread>();
+    private final Set<Thread> executing = new HashSet<Thread>();
     private boolean stopped;
     private ConsumerConnection connection;
 
-    ConsumerConnectionParameters connectionParameters;
+    private final ConnectionParameters connectionParameters;
 
-    public LazyConsumerActionExecutor(Distribution distribution, ToolingImplementationLoader implementationLoader, LoggingProvider loggingProvider, boolean verboseLogging) {
+    public LazyConsumerActionExecutor(Distribution distribution, ToolingImplementationLoader implementationLoader, LoggingProvider loggingProvider, ConnectionParameters connectionParameters) {
         this.distribution = distribution;
         this.implementationLoader = implementationLoader;
         this.loggingProvider = loggingProvider;
-        this.connectionParameters = new ConsumerConnectionParameters(verboseLogging);
+        this.connectionParameters = connectionParameters;
     }
 
     public void stop() {
@@ -78,14 +80,18 @@ public class LazyConsumerActionExecutor implements ConsumerActionExecutor {
 
     public <T> T run(ConsumerAction<T> action) throws UnsupportedOperationException, IllegalStateException {
         try {
-            ConsumerConnection connection = onStartAction();
+            BuildCancellationToken cancellationToken = action.getParameters().getCancellationToken();
+            if (cancellationToken.isCancellationRequested()) {
+                throw new BuildCancelledException("Build cancelled");
+            }
+            ConsumerConnection connection = onStartAction(cancellationToken);
             return action.run(connection);
         } finally {
             onEndAction();
         }
     }
 
-    private ConsumerConnection onStartAction() {
+    private ConsumerConnection onStartAction(BuildCancellationToken cancellationToken) {
         lock.lock();
         try {
             if (stopped) {
@@ -95,7 +101,7 @@ public class LazyConsumerActionExecutor implements ConsumerActionExecutor {
             if (connection == null) {
                 // Hold the lock while creating the connection. Not generally good form.
                 // In this instance, blocks other threads from creating the connection at the same time
-                connection = implementationLoader.create(distribution, loggingProvider.getProgressLoggerFactory(), connectionParameters);
+                connection = implementationLoader.create(distribution, loggingProvider.getProgressLoggerFactory(), connectionParameters, cancellationToken);
             }
             return connection;
         } finally {

@@ -34,12 +34,7 @@ import java.util.concurrent.CopyOnWriteArraySet;
 import static org.gradle.internal.UncheckedException.throwAsUncheckedException;
 
 /**
- * Uses file system locks on a lock file per target file. Each lock file is made up of 2 regions:
- *
- * <ul>
- *     <li>State region: 1 byte version field, 4 bytes previous owner id (int value).</li>
- *     <li>Owner information region: 1 byte version field, bunch of other fields, see the code below for more info</li>
- * </ul>
+ * Uses file system locks on a lock file per target file.
  */
 public class DefaultFileLockManager implements FileLockManager {
     private static final Logger LOGGER = Logging.getLogger(DefaultFileLockManager.class);
@@ -327,8 +322,7 @@ public class DefaultFileLockManager implements FileLockManager {
                         LOGGER.debug("The file lock is held by a different Gradle process. I was unable to read on which port the owner listens for lock access requests.");
                     }
                 }
-                //TODO SF it would really nice to print some message to the user after say 2 seconds of waiting
-                //saying what gradle is doing, and why we're waiting.
+                //TODO SF we should inform on the progress/status bar that we're waiting
                 Thread.sleep(200L);
             } while (System.currentTimeMillis() < waitUntil);
             return null;

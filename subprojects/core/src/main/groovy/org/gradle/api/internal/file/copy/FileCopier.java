@@ -17,26 +17,27 @@ package org.gradle.api.internal.file.copy;
 
 import org.gradle.api.Action;
 import org.gradle.api.file.CopySpec;
+import org.gradle.api.internal.file.FileLookup;
 import org.gradle.api.internal.file.FileResolver;
 import org.gradle.api.tasks.WorkResult;
-import org.gradle.internal.nativeplatform.filesystem.FileSystems;
 import org.gradle.internal.reflect.Instantiator;
 
 import java.io.File;
 
 public class FileCopier {
-
     private final Instantiator instantiator;
     private final FileResolver fileResolver;
+    private final FileLookup fileLookup;
 
-    public FileCopier(Instantiator instantiator, FileResolver fileResolver) {
+    public FileCopier(Instantiator instantiator, FileResolver fileResolver, FileLookup fileLookup) {
         this.instantiator = instantiator;
         this.fileResolver = fileResolver;
+        this.fileLookup = fileLookup;
     }
 
     private DestinationRootCopySpec createCopySpec(Action<? super CopySpec> action) {
-        DefaultCopySpec copySpec = instantiator.newInstance(DefaultCopySpec.class, this.fileResolver, instantiator);
-        DestinationRootCopySpec destinationRootCopySpec = instantiator.newInstance(DestinationRootCopySpec.class, fileResolver, copySpec);
+        DefaultCopySpec copySpec = new DefaultCopySpec(this.fileResolver, instantiator);
+        DestinationRootCopySpec destinationRootCopySpec = new DestinationRootCopySpec(fileResolver, copySpec);
         CopySpec wrapped = instantiator.newInstance(CopySpecWrapper.class, destinationRootCopySpec);
         action.execute(wrapped);
         return destinationRootCopySpec;
@@ -55,11 +56,11 @@ public class FileCopier {
     }
 
     private FileCopyAction getCopyVisitor(File destination) {
-        return new FileCopyAction(fileResolver.withBaseDir(destination));
+        return new FileCopyAction(fileLookup.getFileResolver(destination));
     }
 
     private WorkResult doCopy(CopySpecInternal copySpec, CopyAction visitor) {
-        CopyActionExecuter visitorDriver = new CopyActionExecuter(instantiator, FileSystems.getDefault());
+        CopyActionExecuter visitorDriver = new CopyActionExecuter(instantiator, fileLookup.getFileSystem());
         return visitorDriver.execute(copySpec, visitor);
     }
 

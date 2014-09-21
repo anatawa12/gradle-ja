@@ -25,7 +25,7 @@
 
     <section>
         <title>使用方法<phrase role="original">Usage</phrase></title>
-        <para role="original">To use the Ear plugin, include in your build script:</para>
+        <para role="original">To use the Ear plugin, include the following in your build script:</para>
         <para>Earプラグインを使うには、ビルドスクリプトに以下を含めてください:</para>
         <sample id="earWithWar" dir="ear/earWithWar" title="Earプラグインの利用 / Using the Ear plugin">
             <sourcefile file="build.gradle" snippet="use-ear-plugin"/>
@@ -151,7 +151,7 @@
                     <literal>deploymentDescriptor</literal>
                 </td>
                 <td>
-                    <classname>org.gradle.plugins.ear.descriptor.DeploymentDescriptor</classname>
+                    <classname>org.gradle.plugins.</classname><classname>ear.descriptor.</classname><classname>DeploymentDescriptor</classname>
                 </td>
                 <td>
                      デプロイメントディスクリプター、デフォルトは通常<literal>application.xml</literal>
@@ -184,7 +184,7 @@
         <para>Earタスクのデフォルトのふるまいは、<literal>src/main/application</literal>の内容をアーカイブのルートにコピーすることです。
             <literal>application</literal>ディレクトリがデプロイメントディスクリプタ<literal>META-INF/application.xml</literal>を含まない場合は、生成してくれます。
 		</para>
-        <para role="original">Also have a look at <apilink class="org.gradle.plugins.ear.Ear"/>.</para>
+        <para role="original">The <apilink class="org.gradle.plugins.ear.Ear"/> class in the API documentation has additional useful information.</para>
         <para><apilink class="org.gradle.plugins.ear.Ear"/>も参照してみてください。</para>
     </section>
     <section id='sec:customizing'>
@@ -198,7 +198,7 @@
             <test args="assemble"/>
         </sample>
         <para role="original">You can also use customization options that the <apilink class="org.gradle.plugins.ear.Ear"/>
-        	task provides, such as <literal>from</literal> and <literal>metaInf</literal>.
+            task provides, such as <literal>from</literal> and <literal>metaInf</literal>.
         </para>
         <para><literal>from</literal>や<literal>metaInf</literal>といった、<apilink class="org.gradle.plugins.ear.Ear"/>タスクが提供するカスタマイズオプションも利用できます。
         </para>
@@ -206,9 +206,11 @@
     <section id='sec:using_custom_app_xml'>
         <title>カスタムのディスクリプタファイルを使う<phrase role="original">Using custom descriptor file</phrase></title>
         <para role="original">
-            Let's say you already have the <literal>application.xml</literal> and want to use it instead of configuring the <literal>ear.deploymentDescriptor</literal> section.
-            To accommodate that place the <literal>META-INF/application.xml</literal> in the right place inside your source folders (see the <literal>appDirName</literal> property).
-            The existing file contents will be used and the explicit configuration in the <literal>ear.deploymentDescriptor</literal> will be ignored.
+            You may already have appropriate settings in a <literal>application.xml</literal> file and want
+            to use that instead of configuring the <literal>ear.deploymentDescriptor</literal> section of the
+            build script. To accommodate that goal, place the <literal>META-INF/application.xml</literal> in
+            the right place inside your source folders (see the <literal>appDirName</literal> property). The
+            file contents will be used and the explicit configuration in the <literal>ear.deploymentDescriptor</literal> will be ignored.
         </para>
         <para>
             <literal>ear.deploymentDescriptor</literal>セクションで設定するかわりに、既に<literal>application.xml</literal>があって、それを使いたいとしましょう。

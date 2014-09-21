@@ -16,12 +16,26 @@
 package org.gradle.api.tasks.testing.testng
 
 import groovy.xml.MarkupBuilder
+import org.gradle.api.Incubating
 import org.gradle.api.JavaVersion
+import org.gradle.api.tasks.OutputDirectory
 import org.gradle.api.tasks.testing.TestFrameworkOptions
 
-public class TestNGOptions extends TestFrameworkOptions{
+class TestNGOptions extends TestFrameworkOptions {
+
     static final String JDK_ANNOTATIONS = 'JDK'
     static final String JAVADOC_ANNOTATIONS = 'Javadoc'
+
+    /**
+     * The location to write TestNG's output.
+     * <p>
+     * Defaults to the owning test task's location for writing the HTML report.
+     *
+     * @since 1.11
+     */
+    @Incubating
+    @OutputDirectory
+    File outputDirectory
 
     /**
      * When true, Javadoc annotations are used for these tests. When false, JDK annotations are used. If you use
@@ -71,7 +85,7 @@ public class TestNGOptions extends TestFrameworkOptions{
     Set<String> listeners = new LinkedHashSet<String>()
 
     /**
-     * The parallel mode to use for running the tests - either methods or tests.
+     * The parallel mode to use for running the tests - one of the following modes: methods, tests, classes or instances.
      *
      * Not required.
      *
@@ -158,8 +172,13 @@ public class TestNGOptions extends TestFrameworkOptions{
      */
     void suites(String... suiteFiles) {
         suiteFiles.each {
-            suiteXmlFiles.add(new File(projectDir, it))
+            suiteXmlFiles.add(new File(this.getProjectDir(), it))
         }
+    }
+
+    //needed otherwise GRADLE-3020
+    protected File getProjectDir() {
+        return projectDir;
     }
 
     /**

@@ -21,13 +21,13 @@ import org.gradle.tooling.UnknownModelException
 import org.gradle.tooling.UnsupportedVersionException
 import org.gradle.tooling.internal.adapter.ProtocolToModelAdapter
 import org.gradle.tooling.internal.consumer.parameters.ConsumerOperationParameters
-import org.gradle.tooling.internal.consumer.versioning.CustomModel
 import org.gradle.tooling.internal.consumer.versioning.ModelMapping
 import org.gradle.tooling.internal.protocol.*
 import org.gradle.tooling.model.GradleProject
 import org.gradle.tooling.model.build.BuildEnvironment
 import org.gradle.tooling.model.eclipse.EclipseProject
 import org.gradle.tooling.model.eclipse.HierarchicalEclipseProject
+import org.gradle.tooling.model.gradle.BuildInvocations
 import org.gradle.tooling.model.gradle.GradleBuild
 import org.gradle.tooling.model.idea.BasicIdeaProject
 import org.gradle.tooling.model.idea.IdeaProject
@@ -35,66 +35,43 @@ import org.gradle.tooling.model.internal.outcomes.ProjectOutcomes
 import spock.lang.Specification
 
 class ModelBuilderBackedConsumerConnectionTest extends Specification {
-    final metaData = Stub(ConnectionMetaDataVersion1)
+    final metaData = Stub(ConnectionMetaDataVersion1) {
+        getVersion() >> "1.6"
+    }
     final parameters = Stub(ConsumerOperationParameters)
     final target = Mock(TestModelBuilder) {
         getMetaData() >> metaData
     }
     final adapter = Mock(ProtocolToModelAdapter)
     final modelMapping = Mock(ModelMapping)
+    def connection = new ModelBuilderBackedConsumerConnection(target, modelMapping, adapter)
 
-    def "describes capabilities of a pre 1.8-rc-1 provider"() {
+    def "describes capabilities of the provider"() {
         given:
-        metaData.version >> "1.2"
-        def connection = new ModelBuilderBackedConsumerConnection(target, modelMapping, adapter)
         def details = connection.versionDetails
 
         expect:
-        details.supportsGradleProjectModel()
+        !details.supportsTaskDisplayName()
+        !details.supportsCancellation()
 
         and:
-        details.isModelSupported(HierarchicalEclipseProject)
-        details.isModelSupported(EclipseProject)
-        details.isModelSupported(IdeaProject)
-        details.isModelSupported(BasicIdeaProject)
-        details.isModelSupported(GradleProject)
-        details.isModelSupported(BuildEnvironment)
-        details.isModelSupported(ProjectOutcomes)
-        details.isModelSupported(Void)
-        details.isModelSupported(CustomModel)
+        details.maySupportModel(HierarchicalEclipseProject)
+        details.maySupportModel(EclipseProject)
+        details.maySupportModel(IdeaProject)
+        details.maySupportModel(BasicIdeaProject)
+        details.maySupportModel(GradleProject)
+        details.maySupportModel(BuildEnvironment)
+        details.maySupportModel(ProjectOutcomes)
+        details.maySupportModel(Void)
+        details.maySupportModel(CustomModel)
 
         and:
-        !details.isModelSupported(GradleBuild)
-    }
-
-    def "describes capabilities of a post 1.8-rc-1 provider"() {
-        given:
-        metaData.version >> "1.8-rc-1"
-        def connection = new ModelBuilderBackedConsumerConnection(target, modelMapping, adapter)
-        def details = connection.versionDetails
-
-        expect:
-        details.supportsGradleProjectModel()
-
-        and:
-        details.isModelSupported(HierarchicalEclipseProject)
-        details.isModelSupported(EclipseProject)
-        details.isModelSupported(IdeaProject)
-        details.isModelSupported(BasicIdeaProject)
-        details.isModelSupported(GradleProject)
-        details.isModelSupported(BuildEnvironment)
-        details.isModelSupported(ProjectOutcomes)
-        details.isModelSupported(Void)
-        details.isModelSupported(CustomModel)
-        details.isModelSupported(GradleBuild)
+        !details.maySupportModel(GradleBuild)
+        !details.maySupportModel(BuildInvocations)
     }
 
     def "maps model type to model identifier"() {
         def modelIdentifier = Stub(ModelIdentifier)
-
-        given:
-        metaData.version >> "1.2"
-        def connection = new ModelBuilderBackedConsumerConnection(target, modelMapping, adapter)
 
         when:
         connection.run(GradleProject, parameters)
@@ -110,8 +87,6 @@ class ModelBuilderBackedConsumerConnectionTest extends Specification {
         given:
         _ * modelMapping.getModelIdentifierFromModelType(GradleProject) >> modelIdentifier
         _ * target.getModel(modelIdentifier, parameters) >> { throw new InternalUnsupportedModelException() }
-        _ * metaData.version >> "1.2"
-        def connection = new ModelBuilderBackedConsumerConnection(target, modelMapping, adapter)
 
         when:
         connection.run(GradleProject, parameters)
@@ -127,9 +102,7 @@ class ModelBuilderBackedConsumerConnectionTest extends Specification {
         def gradleProject = Stub(GradleProject.class)
 
         given:
-        _ * metaData.version >> "1.2"
         _ * modelMapping.getModelIdentifierFromModelType(GradleProject) >> modelIdentifier
-        def connection = new ModelBuilderBackedConsumerConnection(target, modelMapping, adapter)
 
         when:
         def result = connection.run(GradleBuild.class, parameters)
@@ -139,7 +112,7 @@ class ModelBuilderBackedConsumerConnectionTest extends Specification {
 
         and:
         1 * target.getModel(modelIdentifier, parameters) >> Stub(BuildResult) { getModel() >> gradleProject }
-        1 * adapter.adapt(GradleProject.class, gradleProject) >> gradleProject
+        1 * adapter.adapt(GradleProject.class, gradleProject, _) >> gradleProject
         1 * adapter.adapt(GradleBuild.class, _) >> model
         0 * target._
     }
@@ -147,17 +120,19 @@ class ModelBuilderBackedConsumerConnectionTest extends Specification {
     def "fails when build action requested"() {
         given:
         parameters.tasks >> ['a']
-        metaData.version >> "1.2"
-        def connection = new ModelBuilderBackedConsumerConnection(target, modelMapping, adapter)
 
         when:
         connection.run(Stub(BuildAction), parameters)
 
         then:
         UnsupportedVersionException e = thrown()
-        e.message == /The version of Gradle you are using (1.2) does not support execution of build actions provided by the tooling API client. Support for this was added in Gradle 1.8 and is available in all later versions./
+        e.message == /The version of Gradle you are using (1.6) does not support execution of build actions provided by the tooling API client. Support for this was added in Gradle 1.8 and is available in all later versions./
     }
 
     interface TestModelBuilder extends ModelBuilder, ConnectionVersion4, ConfigurableConnection {
+    }
+
+    static class CustomModel {
+
     }
 }

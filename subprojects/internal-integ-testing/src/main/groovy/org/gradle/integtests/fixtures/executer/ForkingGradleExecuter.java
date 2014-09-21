@@ -19,7 +19,6 @@ package org.gradle.integtests.fixtures.executer;
 import org.gradle.api.Action;
 import org.gradle.initialization.BuildLayoutParameters;
 import org.gradle.internal.Factory;
-import org.gradle.internal.nativeplatform.jna.WindowsHandlesManipulator;
 import org.gradle.internal.os.OperatingSystem;
 import org.gradle.launcher.daemon.client.DaemonClientServices;
 import org.gradle.launcher.daemon.configuration.DaemonParameters;
@@ -178,11 +177,10 @@ class ForkingGradleExecuter extends AbstractGradleExecuter {
             if (path == null) {
                 path = builder.getEnvironment().get("Path");
             }
-            builder.environment("Path", String.format("%s\\bin;%s", gradleHome, path));
+            path = String.format("%s\\bin;%s", gradleHome, path);
+            builder.environment("PATH", path);
+            builder.environment("Path", path);
             builder.environment("GRADLE_EXIT_CONSOLE", "true");
-
-            getLogger().info("Initializing windows process so that child process will be fully detached...");
-            new WindowsHandlesManipulator().uninheritStandardStreams();
         }
     }
 

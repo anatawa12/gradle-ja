@@ -23,6 +23,7 @@ import org.gradle.test.fixtures.file.TestNameTestDirectoryProvider
 import org.gradle.test.fixtures.ivy.IvyFileRepository
 import org.gradle.test.fixtures.maven.MavenFileRepository
 import org.gradle.test.fixtures.maven.MavenLocalRepository
+import org.hamcrest.CoreMatchers
 import org.junit.Rule
 import spock.lang.Specification
 
@@ -61,6 +62,9 @@ class AbstractIntegrationSpec extends Specification implements TestDirectoryProv
     }
 
     protected TestFile file(Object... path) {
+        if (path.length == 1 && path[0] instanceof TestFile) {
+            return path[0] as TestFile
+        }
         getTestDirectory().file(path);
     }
 
@@ -97,7 +101,7 @@ class AbstractIntegrationSpec extends Specification implements TestDirectoryProv
     }
 
     protected GradleExecuter withDebugLogging() {
-        executer.withArguments("-d")
+        executer.withArgument("-d")
     }
 
     protected ExecutionResult succeeds(String... tasks) {
@@ -141,8 +145,28 @@ class AbstractIntegrationSpec extends Specification implements TestDirectoryProv
         }
     }
 
+    protected void notExecuted(String... tasks) {
+        tasks.each {
+            assert !(it in executedTasks)
+        }
+    }
+
+    protected void executed(String... tasks) {
+        tasks.each {
+            assert (it in executedTasks)
+        }
+    }
+
     protected void failureHasCause(String cause) {
         failure.assertHasCause(cause)
+    }
+
+    protected void failureDescriptionStartsWith(String description) {
+        failure.assertThatDescription(CoreMatchers.startsWith(description))
+    }
+
+    protected void failureDescriptionContains(String description) {
+        failure.assertThatDescription(CoreMatchers.containsString(description))
     }
     
     private assertHasResult() {
@@ -180,6 +204,19 @@ class AbstractIntegrationSpec extends Specification implements TestDirectoryProv
             mavenRepo = new MavenFileRepository(file("maven-repo"))
         }
         return mavenRepo
+    }
+
+    public MavenFileRepository publishedMavenModules(String ... modulesToPublish) {
+        modulesToPublish.each { String notation ->
+            def modules = notation.split("->").reverse()
+            def current
+            modules.each { String module ->
+                def s = new TestDependency(module)
+                def m = mavenRepo.module(s.group, s.name, s.version)
+                current = current? m.dependsOn(current.groupId, current.artifactId, current.version).publish() : m.publish()
+            }
+        }
+        mavenRepo
     }
 
     public IvyFileRepository ivy(TestFile repo) {

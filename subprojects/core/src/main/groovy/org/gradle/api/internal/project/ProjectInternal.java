@@ -23,20 +23,29 @@ import org.gradle.api.internal.DomainObjectContext;
 import org.gradle.api.internal.DynamicObject;
 import org.gradle.api.internal.GradleInternal;
 import org.gradle.api.internal.ProcessOperations;
-import org.gradle.api.internal.artifacts.configurations.ConfigurationContainerInternal;
 import org.gradle.api.internal.artifacts.configurations.DependencyMetaDataProvider;
 import org.gradle.api.internal.file.FileOperations;
 import org.gradle.api.internal.file.FileResolver;
+import org.gradle.api.internal.initialization.ClassLoaderScope;
 import org.gradle.api.internal.plugins.ExtensionContainerInternal;
 import org.gradle.api.internal.tasks.TaskContainerInternal;
 import org.gradle.configuration.project.ProjectConfigurationActionContainer;
 import org.gradle.groovy.scripts.ScriptAware;
 import org.gradle.groovy.scripts.ScriptSource;
+import org.gradle.internal.service.ServiceRegistry;
 import org.gradle.internal.service.scopes.ServiceRegistryFactory;
 import org.gradle.logging.StandardOutputCapture;
-import org.gradle.model.internal.ModelRegistry;
+import org.gradle.model.internal.registry.ModelRegistry;
+import org.gradle.model.internal.registry.ModelRegistryScope;
 
-public interface ProjectInternal extends Project, ProjectIdentifier, ScriptAware, FileOperations, ProcessOperations, DomainObjectContext, DependencyMetaDataProvider {
+public interface ProjectInternal extends Project, ProjectIdentifier, ScriptAware, FileOperations, ProcessOperations, DomainObjectContext, DependencyMetaDataProvider, ModelRegistryScope {
+
+    // These constants are defined here and not with the rest of their kind in HelpTasksPlugin because they are referenced
+    // in the ‘core’ and ‘ui’ modules, which don't depend on ‘plugins’ where HelpTasksPlugin is defined.
+    String HELP_TASK = "help";
+    String TASKS_TASK = "tasks";
+    String PROJECTS_TASK = "projects";
+
     ProjectInternal getParent();
 
     ProjectInternal getRootProject();
@@ -44,10 +53,6 @@ public interface ProjectInternal extends Project, ProjectIdentifier, ScriptAware
     Project evaluate();
 
     TaskContainerInternal getTasks();
-
-    TaskContainerInternal getImplicitTasks();
-
-    ConfigurationContainerInternal getConfigurations();
 
     ScriptSource getBuildScriptSource();
 
@@ -67,7 +72,9 @@ public interface ProjectInternal extends Project, ProjectIdentifier, ScriptAware
 
     FileResolver getFileResolver();
 
-    ServiceRegistryFactory getServices();
+    ServiceRegistry getServices();
+
+    ServiceRegistryFactory getServiceRegistryFactory();
 
     StandardOutputCapture getStandardOutputCapture();
 
@@ -78,4 +85,9 @@ public interface ProjectInternal extends Project, ProjectIdentifier, ScriptAware
     ProjectConfigurationActionContainer getConfigurationActions();
 
     ModelRegistry getModelRegistry();
+
+    ClassLoaderScope getClassLoaderScope();
+
+    ClassLoaderScope getBaseClassLoaderScope();
+
 }

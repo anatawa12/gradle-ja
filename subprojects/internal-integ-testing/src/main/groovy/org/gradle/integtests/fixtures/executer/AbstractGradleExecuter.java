@@ -18,6 +18,7 @@ package org.gradle.integtests.fixtures.executer;
 import groovy.lang.Closure;
 import org.gradle.api.Action;
 import org.gradle.api.internal.ClosureBackedAction;
+import org.gradle.api.internal.initialization.DefaultClassLoaderScope;
 import org.gradle.api.logging.Logger;
 import org.gradle.api.logging.Logging;
 import org.gradle.internal.jvm.Jvm;
@@ -36,13 +37,14 @@ import java.nio.charset.Charset;
 import java.util.*;
 
 import static java.util.Arrays.asList;
-import static org.gradle.util.Matchers.*;
+import static org.gradle.util.Matchers.containsLine;
+import static org.gradle.util.Matchers.matchesRegexp;
 
 public abstract class AbstractGradleExecuter implements GradleExecuter {
 
     private final Logger logger;
 
-    private final IntegrationTestBuildContext buildContext = new IntegrationTestBuildContext();
+    protected final IntegrationTestBuildContext buildContext = new IntegrationTestBuildContext();
 
     private final List<String> args = new ArrayList<String>();
     private final List<String> tasks = new ArrayList<String>();
@@ -54,7 +56,6 @@ public abstract class AbstractGradleExecuter implements GradleExecuter {
     private boolean searchUpwards;
     private Map<String, String> environmentVars = new HashMap<String, String>();
     private List<File> initScripts = new ArrayList<File>();
-    private File stickyInitScript;
     private String executable;
     private TestFile gradleUserHomeDir = buildContext.getGradleUserHomeDir();
     private File userHomeDir;
@@ -64,6 +65,7 @@ public abstract class AbstractGradleExecuter implements GradleExecuter {
     private File settingsFile;
     private InputStream stdin;
     private String defaultCharacterEncoding;
+    private Locale defaultLocale;
     private int daemonIdleTimeoutSecs = 60;
     private File daemonBaseDir = buildContext.getDaemonBaseDir();
     private final List<String> gradleOpts = new ArrayList<String>();
@@ -71,6 +73,7 @@ public abstract class AbstractGradleExecuter implements GradleExecuter {
     private boolean requireGradleHome;
 
     private boolean deprecationChecksOn = true;
+    private boolean eagerClassLoaderCreationChecksOn = true;
     private boolean stackTraceChecksOn = true;
 
     private final ActionBroadcast<GradleExecuter> beforeExecute = new ActionBroadcast<GradleExecuter>();
@@ -93,9 +96,6 @@ public abstract class AbstractGradleExecuter implements GradleExecuter {
         args.clear();
         tasks.clear();
         initScripts.clear();
-        if (stickyInitScript != null) {
-            initScripts.add(stickyInitScript);
-        }
         workingDir = null;
         projectDir = null;
         buildScript = null;
@@ -109,6 +109,7 @@ public abstract class AbstractGradleExecuter implements GradleExecuter {
         environmentVars.clear();
         stdin = null;
         defaultCharacterEncoding = null;
+        defaultLocale = null;
         noDefaultJvmArgs = false;
         deprecationChecksOn = true;
         stackTraceChecksOn = true;
@@ -195,6 +196,9 @@ public abstract class AbstractGradleExecuter implements GradleExecuter {
         if (defaultCharacterEncoding != null) {
             executer.withDefaultCharacterEncoding(defaultCharacterEncoding);
         }
+        if (defaultLocale != null) {
+            executer.withDefaultLocale(defaultLocale);
+        }
         executer.withGradleOpts(gradleOpts.toArray(new String[gradleOpts.size()]));
         if (noDefaultJvmArgs) {
             executer.withNoDefaultJvmArgs();
@@ -203,6 +207,9 @@ public abstract class AbstractGradleExecuter implements GradleExecuter {
 
         if (!deprecationChecksOn) {
             executer.withDeprecationChecksDisabled();
+        }
+        if (!eagerClassLoaderCreationChecksOn) {
+            executer.withEagerClassLoaderCreationCheckDisabled();
         }
         if (!stackTraceChecksOn) {
             executer.withStackTraceChecksDisabled();
@@ -231,12 +238,6 @@ public abstract class AbstractGradleExecuter implements GradleExecuter {
 
     public GradleExecuter usingInitScript(File initScript) {
         initScripts.add(initScript);
-        return this;
-    }
-
-    public GradleExecuter alwaysUsingInitScript(File initScript) {
-        stickyInitScript = initScript;
-        initScripts.add(0, initScript);
         return this;
     }
 
@@ -310,6 +311,15 @@ public abstract class AbstractGradleExecuter implements GradleExecuter {
         return defaultCharacterEncoding == null ? Charset.defaultCharset().name() : defaultCharacterEncoding;
     }
 
+    public GradleExecuter withDefaultLocale(Locale defaultLocale) {
+        this.defaultLocale = defaultLocale;
+        return this;
+    }
+
+    public Locale getDefaultLocale() {
+        return defaultLocale;
+    }
+
     public GradleExecuter withSearchUpwards() {
         searchUpwards = true;
         return this;
@@ -378,7 +388,7 @@ public abstract class AbstractGradleExecuter implements GradleExecuter {
                 result.append(" ");
             }
             if (jvmArg.contains(" ")) {
-                assert !jvmArg.contains("\"");
+                assert !jvmArg.contains("\"") : "jvmArg '" + jvmArg + "' contains '\"'";
                 result.append('"');
                 result.append(jvmArg);
                 result.append('"');
@@ -508,7 +518,7 @@ public abstract class AbstractGradleExecuter implements GradleExecuter {
         }
 
         properties.put(GradleProperties.IDLE_TIMEOUT_PROPERTY, "" + (daemonIdleTimeoutSecs * 1000));
-        properties.put(GradleProperties.BASE_DIR_PROPERTY, daemonBaseDir.getAbsolutePath());
+        properties.put(GradleProperties.DAEMON_BASE_DIR_PROPERTY, daemonBaseDir.getAbsolutePath());
         properties.put(DeprecationLogger.ORG_GRADLE_DEPRECATION_TRACE_PROPERTY_NAME, "true");
 
         String tmpDirPath = getTmpDir().createDir().getAbsolutePath();
@@ -517,6 +527,16 @@ public abstract class AbstractGradleExecuter implements GradleExecuter {
         }
 
         properties.put("file.encoding", getDefaultCharacterEncoding());
+        Locale locale = getDefaultLocale();
+        if (locale != null) {
+            properties.put("user.language", locale.getLanguage());
+            properties.put("user.country", locale.getCountry());
+            properties.put("user.variant", locale.getVariant());
+        }
+
+        if (eagerClassLoaderCreationChecksOn) {
+            properties.put(DefaultClassLoaderScope.STRICT_MODE_PROPERTY, "true");
+        }
 
         return properties;
     }
@@ -631,6 +651,11 @@ public abstract class AbstractGradleExecuter implements GradleExecuter {
         deprecationChecksOn = false;
         // turn off stack traces too
         stackTraceChecksOn = false;
+        return this;
+    }
+
+    public GradleExecuter withEagerClassLoaderCreationCheckDisabled() {
+        eagerClassLoaderCreationChecksOn = false;
         return this;
     }
 

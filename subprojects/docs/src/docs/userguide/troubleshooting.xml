@@ -44,7 +44,7 @@
         <para>何かトラブルが起こったとき、まず試すことができるのは、最新版のGradleを使ってみることです。Gradleの新バージョンはバグフィックスや新機能追加のため頻繁にリリースされています。その問題は、新しいバージョンでは修正されているかもしれません。</para>
         <para role="original">
             If you are using the Gradle Daemon, try temporarily disabling the daemon (you can pass the command line switch <literal>--no-daemon</literal>).
-            More information about troubleshooting daemon is located in <xref linkend="gradle_daemon"/>.
+            More information about troubleshooting the daemon process is located in <xref linkend="gradle_daemon"/>.
         </para>
         <para>
             Gradleデーモンを使っているなら、一時的にデーモンを停止してみてください（<literal>--no--daemon</literal>オプションをつけて実行）。
@@ -55,7 +55,7 @@
         <title>ヘルプを求めるには <phrase role="original">Getting help</phrase></title>
         <para role="original">
             The place to go for help with Gradle is <ulink url="http://forums.gradle.org">http://forums.gradle.org</ulink>.
-            The Gradle Forums is the place where you can report problems and ask questions to the Gradle 
+            The Gradle Forums is the place where you can report problems and ask questions of the Gradle 
             developers and other community members.
         </para>
         <para>

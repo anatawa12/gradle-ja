@@ -9,7 +9,7 @@
 
     <section>
         <title>使用方法<phrase role="original">Usage</phrase></title>
-        <para role="original">To use the FindBugs plugin, include in your build script:</para>
+        <para role="original">To use the FindBugs plugin, include in the following your build script:</para>
         <para>FindBugsプラグインを使うためには、ビルドスクリプトに下記を含めます：</para>
         <sample id="useFindBugsPlugin" dir="codeQuality" title="FindBugsプラグインの使用 / Using the FindBugs plugin">
             <sourcefile file="build.gradle" snippet="use-findbugs-plugin"/>
@@ -98,7 +98,7 @@
 
     <section>
         <title>設定<para role="original">Configuration</para></title>
-        <para role="original">See <apilink class="org.gradle.api.plugins.quality.FindBugsExtension"/>.</para>
+        <para role="original">See the <apilink class="org.gradle.api.plugins.quality.FindBugsExtension"/> class in the API documentation.</para>
         <para><apilink class="org.gradle.api.plugins.quality.FindBugsExtension"/>を参照。</para>
     </section>
 </chapter>

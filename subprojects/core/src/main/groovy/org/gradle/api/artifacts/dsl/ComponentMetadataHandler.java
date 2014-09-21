@@ -15,9 +15,11 @@
  */
 package org.gradle.api.artifacts.dsl;
 
+import groovy.lang.Closure;
 import org.gradle.api.Action;
 import org.gradle.api.Incubating;
 import org.gradle.api.artifacts.ComponentMetadataDetails;
+import org.gradle.api.artifacts.ComponentModuleMetadataDetails;
 
 /**
  * Allows to modify the metadata of depended-on software components.
@@ -26,6 +28,7 @@ import org.gradle.api.artifacts.ComponentMetadataDetails;
  * <pre autoTested=''>
  * dependencies {
  *     components {
+ *         //triggered during dependency resolution, for each component:
  *         eachComponent { ComponentMetadataDetails details ->
  *             if (details.id.group == "org.foo") {
  *                 def version = details.id.version
@@ -34,6 +37,12 @@ import org.gradle.api.artifacts.ComponentMetadataDetails;
  *                 details.statusScheme = ["bronze", "silver", "gold", "platinum"]
  *             }
  *         }
+ *
+ *         //Configuring component module metadata for the entire "google-collections" module,
+ *         // declaring that legacy library was replaced with "guava".
+ *         //This way, Gradle's conflict resolution can use this information and use "guava"
+ *         // in case both libraries appear in the same dependency tree.
+ *         module("com.google.collections:google-collections").replacedBy("com.google.guava:guava")
  *     }
  * }
  * </pre>
@@ -51,4 +60,44 @@ public interface ComponentMetadataHandler {
      * @param rule the rule to be added
      */
     void eachComponent(Action<? super ComponentMetadataDetails> rule);
+
+    /**
+     * Adds a rule to modify the metadata of depended-on software components.
+     * For example, this allows to set a component's status and status scheme
+     * from within the build script, overriding any value specified in the
+     * component descriptor.
+     *
+     * <p>The rule must declare a {@link ComponentMetadataDetails} as it's first parameter,
+     * allowing the component metadata to be modified.
+     *
+     * <p>In addition, the rule can declare additional (read-only) parameters, which may provide extra details
+     * about the component. The order of these additional parameters is irrelevant.
+     *
+     * <p>Presently, the following additional parameter types are supported:
+     * <ul>
+     *     <li>{@link org.gradle.api.artifacts.ivy.IvyModuleDescriptor} Additional Ivy-specific
+     *     metadata. Rules declaring this parameter will only be invoked for components packaged as an Ivy module.</li>
+     * </ul>
+     *
+     * @param rule the rule to be added
+     */
+    void eachComponent(Closure<?> rule);
+
+    /**
+     * Enables configuring component module metadata.
+     * This metadata applies to the entire component module (e.g. "group:name", like "org.gradle:gradle-core") regardless of the component version.
+     *
+     * <pre autoTested=''>
+     * //declaring that google collections are replaced by guava
+     * //so that conflict resolution can take advantage of this information:
+     * dependencies.components.module('com.google.collections:google-collections').replacedBy('com.google.guava:guava')
+     * </pre>
+     *
+     * @param moduleNotation an identifier of the module. String "group:name", e.g. 'org.gradle:gradle-core'
+     * or an instance of {@link org.gradle.api.artifacts.ModuleIdentifier}
+     *
+     * @return an object that allows querying and configuring metadata of given component module
+     * @since 2.2
+     */
+    public ComponentModuleMetadataDetails module(Object moduleNotation);
 }

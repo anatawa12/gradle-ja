@@ -9,7 +9,7 @@
 
     <section>
         <title>使用方法<phrase role="original">Usage</phrase></title>
-        <para role="original">To use the JDepend plugin, include in your build script:</para>
+        <para role="original">To use the JDepend plugin, include the following in your build script:</para>
         <para>JDependプラグインを使うためには、ビルドスクリプトに下記を含めます：</para>
         <sample id="useJDependPlugin" dir="codeQuality" title="JDependプラグインの使用 / Using the JDepend plugin">
             <sourcefile file="build.gradle" snippet="use-jdepend-plugin"/>
@@ -98,7 +98,7 @@
 
     <section>
         <title>設定<para role="original">Configuration</para></title>
-        <para role="original">See <apilink class="org.gradle.api.plugins.quality.JDependExtension"/>.</para>
+        <para role="original">See the <apilink class="org.gradle.api.plugins.quality.JDependExtension"/> class in the API documentation.</para>
         <para><apilink class="org.gradle.api.plugins.quality.JDependExtension"/>を参照。</para>
     </section>
 </chapter>

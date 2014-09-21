@@ -1,197 +1,153 @@
-This release adds some nice command-line usability features, with the ability to run a single test method and view task help from the command-line.
-
-Another usability feature is a new 'should run after' task ordering.
-
-This release also brings more features for C and C++ development, with the introduction of incremental compilation for C and C++, plus better integration
-with the Visual Studio and GCC tool chains.
-
 ## New and noteworthy
 
 Here are the new features introduced in this Gradle release.
 
-### Single test method execution (and more)
+### Component Selection Rules (i)
+Fine tuning the dependency resolution process is even more powerful now with the use of component selection rules.  These allow custom rules to be applied whenever
+multiple versions of a component are being evaluated.  Using such rules, one can explicitly reject a version that might otherwise be accepted by the default version matching
+strategy.  This allows Gradle to customize component selection without knowing what versions might be available at build time.
 
-tbd.
+    configurations {
+        conf {
+            resolutionStrategy {
+                componentSelection {
+                    // Accept the newest version that matches the dynamic selector
+                    // but does not end with "-experimental".
+                    all { ComponentSelection selection ->
+                        if (selection.candidate.group == 'org.sample'
+                                && selection.candidate.name == 'api'
+                                && selection.candidate.version.endsWith('-experimental')) {
+                            selection.reject("rejecting experimental")
+                        }
+                    }
 
-### `shouldRunAfter` task ordering
+                    // Rules can consider component metadata as well
+                    // Accept the highest version with a branch of 'testing' or a status of 'milestone'
+                    all { ComponentSelection selection, IvyModuleDescriptor descriptor, ComponentMetadata metadata ->
+                        if (selection.candidate.group == 'org.sample'
+                                && selection.candidate.name == 'api'
+                                && (descriptor.branch != 'testing' && metadata.status != 'milestone')) {
+                            selection.reject("does not match branch or status")
+                        }
+                    }
 
-Gradle 1.6 introduced task ordering by way of the `mustRunAfter` method(s) added to tasks.
-This release brings a new ordering mechanism: `shouldRunAfter`.
-This feature was contributed by [Marcin Erdmann](https://github.com/erdi).
-
-If it is specified that…
-
-    task a {}
-    task b { 
-        mustRunAfter a 
-    }
-
-Then under all circumstances Gradle will ensure that `b` is only executed after `a` has executed. 
-However it does not imply that task `b` _depends on_ task `a`.
-It is only used to order the execution if both `a` and `b` are to be executed in a given build.
-
-The new `shouldRunAfter` ordering works much the same way, except that it specifies an ordering preference and not a requirement.
-If it is specified that…
-
-    task a {}
-    task b { 
-        shouldRunAfter a 
-    }
-
-Then Gradle will execute `b` after `a` if there is not a good reason to do otherwise.
-This means that use of `shouldRunAfter` can not create a dependency cycle and it also does not prevent parallel execution of tasks.
-
-For more examples please see [Ordering tasks](userguide/more_about_tasks.html#sec:ordering_tasks) in the User Guide.
-
-### Show task usage details via help task
-
-You can run the help task now with a commandline option '--task' to get detailed usage information for a specific task. The usage information
-includes task type, path, description and available commandline options. To get details about the incubating `init` task you can run
-`gradle help --task init` which will give you the following output
-
-    Detailed task information for init
-
-    Path
-         :init
-
-    Type
-         InitBuild (org.gradle.buildinit.tasks.InitBuild)
-
-    Options
-         --type     Set type of build to create.
-
-    Description
-         Initializes a new Gradle build. [incubating]
-
-### Incremental compile for C++ and C sources (i)
-
-Gradle 1.10 introduces support for incremental compile of C++ and C source files. After an initial build, the only sources that will be
-recompiled in subsequent builds are those where:
-
-- The source file has changed
-- One of the header files that is included by that source file has changed (directly or transitively)
-
-No action is required to enable incremental compile. Gradle will always compile incrementally for a non-clean build.
-
-Support for incremental compilation takes Gradle one step closer to the goal of providing a production-scale build tool for
-C++ and C sources. Further performance testing and tuning will be required to attain the rapid speeds that C++ developers are
-used to, but this new feature provides the infrastructure required to make this possible.
-
-### Use Visual Studio to compile Windows Resources (i)
-
-When building native binaries with the `VisualCpp` tool chain, Gradle can now compile Windows Resource (.rc) files and link them
-into the binary. This functionality is made available by the `windows-resources` plugin.
-
-    apply plugin: 'cpp'
-    apply plugin: 'windows-resources'
-
-    libraries {
-        hello {}
-    }
-
-By default, Gradle creates a single `WindowsResourceSet` for each component, which will includes any sources found under `src/$component.name/rc`.
-The windows resource source directories can be configured via the associated `WindowsResourceSet`.
-
-    sources {
-        hello {
-            rc {
-                source {
-                    srcDirs "src/main/rc", "src/common/resources"
-                    include "**/*.rc", "**/*.res"
+                    // Rules can target specific modules
+                    // Reject the 1.1 version of org.sample:api
+                    module("org.sample:api") { ComponentSelection selection ->
+                        if (selection.candidate.version == "1.1") {
+                            selection.reject("known bad version")
+                        }
+                    }
                 }
             }
         }
     }
+    dependencies {
+        conf "org.sample:api:1.+"
+    }
 
-For more details please see the [Windows Resources](userguide/nativeBinaries.html#native_binaries:windows-resources) section in the User Guide.
+See the [userguide section](userguide/dependency_management.html#component_selection_rules) on component selection rules for further information.
 
-### Support for GCC cross-compilers (i)
+### Declaring module replacements (i)
 
-Due to the wide array of Gcc cross-compilers that may be used, Gradle require the build author to supply specific configuration
-to use a cross-compiler. The build author must define any specific command-line arguments that are required,
-as well as define the target platform of any generated binaries.
+It is now possible to declare that certain module is replaced by some other. For example "com.google.collections:google-collections" is replaced by "com.google.guava:guava".
+Such declaration enables Gradle's conflict resolution to be smarter and avoid having both conflicting modules (e.g. "google-collections" + "guava") in the same classpath / dependency tree.
+This feature makes Gradle much better tool in handling scenarios when "group":"name" coordinates of a library change. There are many examples of such migrations, e.g.
+org.jboss.netty->io.netty, spring->spring-core, etc. Module replacement declarations can ship with corporate Gradle plugins and enable stronger and smarter
+dependency resolution in all Gradle-powered projects in the enterprise. This new incubating feature is described in detail in the [User Guide](userguide/dependency_management.html#sec:module_replacement).
 
-Configuring a GCC tool chain as a cross-compiler involves providing a `TargetPlatformConfiguration` to the tool chain.
-Each Gcc tool chain has a set of such configurations, which are queried in turn when attempting to build a binary targeting
-a particular platform. If the configuration indicates that the target platform is supported, then the specified arguments will
-be passed to the compiler, linker or other tool.
-
-    model {
-        toolChains {
-            crossCompiler(Gcc) {
-                addPlatformConfiguration(new ArmSupport())
-            }
+    dependencies {
+        components {
+            module("com.google.collections:google-collections").replacedBy("com.google.guava:guava")
         }
     }
 
-    class ArmSupport implements TargetPlatformConfiguration {
-        boolean supportsPlatform(Platform element) {
-            return element.getArchitecture().name == "arm"
-        }
+### Sonar Runner plugin improvements
 
-        List<String> getCppCompilerArgs() {
-            ["-mcpu=arm"]
-        }
+The [Sonar Runner Plugin](userguide/sonar_runner_plugin.html) has been improved to fork the Sonar Runner process.
+In previous Gradle versions the runner was executed within the build process.
+This was problematic is it made controlling the environment (e.g. JVM memory settings) for the runner difficult and mean the runner could destabilize the build process.
+Importantly, because the Sonar Runner process is now forked, the version of Sonar Runner to use can now be configured in the build.
 
-        List<String> getCCompilerArgs() {
-            ["-mcpu=arm"]
-        }
+The `sonar-runner` plugin defaults to using version 2.3 of the runner.
+Upgrading to a later version is now simple:
 
-        List<String> getAssemblerArgs() {
-            []
-        }
-
-        List<String> getLinkerArgs() {
-            ["-arch", "arm"]
-        }
-
-        List<String> getStaticLibraryArchiverArgs() {
-            []
-        }
+    apply plugin: "sonar-runner"
+    
+    sonarRunner {
+      toolVersion = "2.4"
+      
+      // Fine grained control over the runner process
+      forkOptions {
+        maxHeapSize = '1024m'
+      }
     }
 
-Note that the current DSL is experimental, and will be simplified in upcoming releases of Gradle.
+This feature was contributed by [Andrea Panattoni](https://github.com/zeeke).
 
-### Fine-grained control of command line arguments for GCC (i)
+### Native language cross-compilation improvements (i)
 
-While the goal is to provide a set of tool chain implementations that 'just work', there may be times when the way that Gradle
-drives the underlying command-line tools does not suit your purpose. For these cases it is now possible to tweak the generated
-command-line arguments immediately prior to them being provided to the underlying tool.
+- Uses the file naming scheme of the target platform, rather than then host platform.
+- Uses compiler and linker arguments based on the target platform, rather than the host platform.
+- Added `eachPlatform()` method to each `ToolChain` type, to allow fine-grained customization of a particular tool chain on a per-platform basis.
+- Added `TargetedPlatformToolChain.getPlatform()` to allow tool chain customization logic access to the target platform.
 
-The command-line arguments of a tool can be modified via a `withArguments` closure, which is provided with the full set of
-generated arguments as a list. The list can be changed directly, by adding, removing and replacing entries. This modified list
-is the used to actually drive the underlying tool.
+### Support for building x64 binaries on Windows using GCC (i)
 
-    model {
-        toolChains {
-            gcc(Gcc) {
-                cppCompiler.withArguments { args ->
-                    Collections.replaceAll(args, "OPTIMISE", "-O3")
-                    args << "extra_arg"
-                }
-            }
-        }
+Previous versions of Gradle have supported building x86 binaries using GCC on Windows. This Gradle release adds initial support for building
+x64 binaries using GCC on Windows.
+
+### Specify VCS integration with IDEA support
+
+When using the `idea` plugin, it is now possible to specify the version control system to configure IDEA to use when importing the project.
+
+    apply plugin: "idea"
+
+    idea {
+      project {
+        vcs = "Git"
+      }
     }
 
-Note that the current DSL is experimental, and will be simplified in upcoming releases of Gradle.
+Note: This setting is only respected when the project is opened in IDEA using the `.ipr` (and associated) files generated by the `./gradlew idea` task.
+It is not respected when the project is imported into IDEA using IDEA's import feature.
 
-### Better auto-detection of Visual Studio and Windows SDK (i)
+This feature was contributed by [Kallin Nagelberg](https://github.com/Kallin).
 
-Gradle will now automatically locate and use more versions of Visual Studio and the Windows SDK for the `VisualCpp` tool chain.
+### Specify location of local maven repository independently
 
-- Visual Studio 2012 & Visual Studio 2013
-- Windows SDK versions 7.1A, 8.0 & 8.1
+The location of the local Maven repository can now be controlled by setting the system property `maven.repo.local` to the absolute path to the repo.
+This has been added for parity with Maven itself.
+This can be used to isolate the maven local repository for a particular build, without changing the location of the `~/.m2/settings.xml` which may 
+contain information to be shared by all builds.
 
-Support for Visual Studio remains experimental.
-Please let us know via the Gradle forums if you experience problems with Gradle using your Visual Studio installation.
+This feature was contributed by [Christoph Gritschenberger](https://github.com/ChristophGr).
 
-### Dependency resolution result API provides information about project dependencies (i)
+### Compatibility with OpenShift
 
-The `ResolutionResult` API is used to provide information about about a resolved graph of dependencies. Previously, this API did not
-provide any way to determine which of the dependencies in the graph are produced by a project in the build and which dependencies
-originated outside the current build, such as from a binary repository.
+The [OpenShift PaaS](https://www.openshift.com) environment uses a proprietary mechanism for discovering the binding address of the network interface.
+Gradle requires this information for inter process communication.
+Support has been added for this environment which now makes it possible to use Gradle with OpenShift.
+  
+This feature was contributed by [Colin Findlay](https://github.com/silver2k).
 
-The API has been extended so you can now query whether a given dependency originated from a project in the build or not.
+### Support for renaming imported Ant targets
+
+When [importing an Ant build](userguide/ant.html#N11485) it is now possible to specify an alternative name for tasks that corresponds to the targets of the imported Ant build.
+This can be used to resolve naming collisions between Ant targets and existing Gradle tasks (GRADLE-771).
+
+To do so, supply a transformer to the [`ant.importBuild()`] method that supplies the alternative name.
+
+    apply plugin: "java" // adds 'clean' task
+    
+    ant.importBuild("build.xml") {
+        it == "clean" ? "ant-clean" : it
+    }
+
+The above example avoids a name collision with the clean task.
+See the [section on importing Ant builds in the Gradle Userguide](userguide/ant.html#N11485) for more information.
+
+This feature was contributed by [Paul Watson](https://github.com/w4tson).
 
 ## Promoted features
 
@@ -200,19 +156,16 @@ See the User guide section on the “[Feature Lifecycle](userguide/feature_lifec
 
 The following are the features that have been promoted in this Gradle release.
 
-### Promoted methods
-
-The following methods have been promoted and are no longer incubating:
-
-- `NamedDomainObjectContainer.maybeCreate()`
-- `RepositoryHandler.jcenter()`
+<!--
+### Example promoted
+-->
 
 ## Fixed issues
 
 ## Deprecations
 
 Features that have become superseded or irrelevant due to the natural evolution of Gradle become *deprecated*, and scheduled to be removed
-in the next major Gradle version (Gradle 2.0). See the User guide section on the “[Feature Lifecycle](userguide/feature_lifecycle.html)” for more information.
+in the next major Gradle version (Gradle 3.0). See the User guide section on the “[Feature Lifecycle](userguide/feature_lifecycle.html)” for more information.
 
 The following are the newly deprecated items in this Gradle release. If you have concerns about a deprecation, please raise it via the [Gradle Forums](http://forums.gradle.org).
 
@@ -222,67 +175,112 @@ The following are the newly deprecated items in this Gradle release. If you have
 
 ## Potential breaking changes
 
-### Dependency resolution result produces a graph of components instead of a graph of module versions (i)
+### filesMatching used in CopySpec now matches against source path rather than destination path
 
-As part of some initial work to support more powerful dependency management, such as dependency management for native binaries, Android libraries, or
-Scala libraries built for multiple Scala versions, the dependency resolution result API has been changed.
+In the example below, both `filesMatching` blocks will now match against the source path of the files under `from`. In
+previous versions of Gradle, the second `filesMatching` block would match against the destination path that was set by
+executing the first block.
 
-#### What does this change mean?
+    task copy(type: Copy) {
+        from 'from'
+        into 'dest'
+        filesMatching ('**/*.txt') {
+            path = path + '.template'
+        }
+        filesMatching ('**/*.template') { // will not match the files from the first block anymore
+            path = path.replace('template', 'concrete')
+        }
+    }
 
-The model is now that dependency resolution produces a graph of _components_ instead of _module versions_. A component represents things such as a
-Java library, or native executable, and so on. This is a higher level and more general concept than a module version, which simply represents something
-published to a binary repository.
+### Native language support
 
-The main change in this release is to model the fact that not all components included in the result of a dependency resolution are necessarily published to
-a binary repository. For example, a component might be built by some other project in the build, or may be prebuilt and installed on the local machine
-somewhere, or might be built by some other build tool.
+- Replaced `TargetedPlatformToolChain` with `GccPlatformToolChain` and `VisualCppPlatformToolChain`.
+- Renamed `PlatformConfigurableToolChain` to `GccCompatibleToolChain`.
+- Removed tool properties from tool chains. `target()` or `eachPlatform()` should be used instead.
+- Removed deprecated `ExecutableBinary`: use `NativeExecutableBinary` instead.
 
-#### Changes to the `ResolutionResult` API
+### JVM language support
 
-* The following interfaces were renamed:
-    * `ResolvedModuleVersionResult` is now called `ResolvedComponentResult`
-    * `ModuleVersionSelectionReason` is now called `ComponentSelectionReason`
-* The following interfaces were replaced:
-    * `ComponentSelector` is now used instead of `ModuleVersionSelector`
-    * `ComponentIdentifier` is now used instead of `ModuleVersionIdentifier`
-* The following methods on `ResolutionResult` where renamed:
-    * `getAllModuleVersions()` is now called `getAllComponents()`
-    * `allModuleVersions()` is now called `allComponents()`
-* Method signatures were changed on the following types to reflect these changes:
-    * `ResolutionResult`
-    * `DependencyResult`
-    * `ResolvedComponentResult`
-    * `UnresolvedDependencyResult`
+- Moved `org.gradle.language.jvm.artifact.JavadocArtifact` to `org.gradle.language.java.artifact.JavadocArtifact`.
 
-### Dependency resolution prefers the latest version of a module regardless of whether it has meta-data or not
+### Manually added AntTarget tasks no longer respect target dependencies
 
-In this release, the way that Gradle selects a matching version for a dynamic version, such as `1.2+` or `latest.integration` has changed. We expect that for
-the large majority of cases, the result will continue to be the same as previous releases. However, there may be cases where this change will produce a different
-result.
+The `org.gradle.api.tasks.ant.AntTarget` task implementation adapts a target from an Ant build to a Gradle task 
+and is used when Gradle [imports an Ant build](userguide/ant.html#N11485).
 
-#### Selecting a match for dynamic version criteria
+In previous Gradle versions, it was somewhat possible to manually add tasks of this type and wire them to Ant targets manually.
+However, this was not recommended and can produce surprising and incorrect behaviour.
+Instead, the `ant.importBuild()` method should be used to import Ant build and to run Ant targets.
 
-Previous versions of Gradle would select a match for a dynamic version by first searching for versions that include a meta-data file, such as a `pom.xml` or
-an `ivy.xml` file. If any such versions were found, Gradle would select the highest version that meet the criteria. If no versions were found with a meta-data file,
-then Gradle would search again, this time for versions without a meta-data file. Gradle would then select the highest version.
+As of Gradle 2.2, manually added `AntTarget` tasks no longer honor target dependencies.
+Tasks created as a result of `ant.importBuild()` (i.e. the recommended practice) are unaffected and will continue to work.
 
-There are several problems with this approach: Firstly, it requires two separate repository searches, which can be a performance or stability problem, in
-particular when multiple repositories need to be searched. Secondly, this can give unexpected results when the module, for whatever reason, is sometimes published
-with meta-data and sometimes without meta-data.
+### Sonar Runner Plugin changes
 
-In the 1.10 release, Gradle will now search once for all versions of the module and select the highest version that meets the criteria, regardless of whether the version
-includes a meta-data file or not.
+The sonar runner plugin now forks a new jvm to analyze the project. 
+Projects using the [Sonar Runner Plugin](userguide/sonar_runner_plugin.html) should consider setting explicitly the memory settings for the runner process. 
+
+Existing users of the `sonar-runner` plugin may have increased the memory allocation to the Gradle process to facilitate the Sonar Runner.
+This can now be reduced.
+    
+The Sonar Runner version is now configurable.
+Previously the plugin enforced the use of version 2.0.
+The default version is now 2.3.
+If you require the previous default of 2.0, you can specify this version via the project extension.
+    
+    sonarRunner {
+      toolVersion = '2.0'
+    }
+
+### Publishing plugins and Native Language Support plugins changes
+
+In previous Gradle versions it was possible to use `afterEvaluate {}` blocks to configure tasks added to the project 
+by `"maven-publish"`, `"ivy-publish"` and Native Language Support plugins.
+These tasks are now created after execution of `afterEvaluate {}` blocks. 
+This change was necessary to continue improving the new model configuration. 
+Please use `model {}` blocks instead for that purpose, e.g.:
+
+    model { 
+        tasks.generatePomFileForMavenJavaPublication { 
+            dependsOn 'someOtherTask' 
+        } 
+    }
+
+### CodeNarc plugin Groovy version changes
+
+The version of Groovy that the [CodeNarc plugin](userguide/codenarc_plugin.html) uses while analyzing Groovy source code has changed in this Gradle release.
+Previously, the version of Groovy that Gradle ships with was used.
+Now, the version of Groovy that the CodeNarc tool declares as a dependency is used. 
+
+This should have no impact on users of the CodeNarc plugin.
+Upon first use of the CodeNarc plugin with Gradle 2.1, you may see Gradle downloading a Groovy implementation for use with the CodeNarc plugin.
 
 ## External contributions
 
 We would like to thank the following community members for making contributions to this release of Gradle.
 
-* [Christo Zietsman](https://github.com/czietsman) - added support for locating the Visual Studio 2012 tool set
-* [Michael Putters](https://github.com/mputters) - added support the Visual Studio 2013 tool set and Windows 8 SDK
-* [Andrew Oberstar](https://github.com/ajoberstar) - fixed GRADLE-2695: ClassFormatError introduced in 1.3
-* [Bobby Warner](https://github.com/ajoberstar) - updated Groovy samples to Groovy 2.2.0
-* [Marcin Erdmann](https://github.com/erdi) - `shouldRunAfter` task ordering rule
-* [Ramon Nogueira](https://github.com/ramonza) - fixed issues serializing test failures
+* [Jake Wharton](https://github.com/JakeWharton) - clarification of hashing used for Gradle Wrapper downloads
+* [Baron Roberts](https://github.com/baron1405) - fixes to JDepend plugin
+* [Dinio Dinev](https://github.com/diniodinev) - various spelling corrections
+* [Alex Selesse](https://github.com/selesse) - documentation improvements
+* [Raymond Chiu](https://github.com/rschiu) - improve handling of install name in GCC tool chain
+* [Kallin Nagelberg](https://github.com/Kallin) - support for specifying VCS with IDEA plugin
+* [Christoph Gritschenberger](https://github.com/ChristophGr) - support for `maven.repo.local` system property
+* [Colin Findlay](https://github.com/silver2k) - OpenShift compatibility [GRADLE-2871]
+* [Paul Watson](https://github.com/w4tson) - Support for renaming Ant targets on import [GRADLE-771]
+* [Andrea Panattoni](https://github.com/zeeke) - Provide option to fork Sonar analysis [GRADLE-2587]
+* [Lóránt Pintér](https://github.com/lptr) 
+    - `Action` overloads project `project.exec()` and `project.javaexec()`
+    - DefaultResolutionStrategy.copy() should copy componentSelectionRules, too
+* [Clark Brewer](https://github.com/brewerc) - spelling corrections
+* [Guilherme Espada](https://github.com/GUIpsp) - allow to use OpenJDK with Gradle
+* [Harald Schmitt](https://github.com/surfing) 
+    - handle German-localised `readelf` when parsing output in integration tests
+    - fix performance tests for Locale settings using not `.` as decimal separator
+* [Derek Eskens](https://github.com/snekse) - documentation improvements.
+* [Justin Ryan](https://github.com/quidryan) - documentation fixes.
+* [Alexander Shutyaev](https://github.com/shutyaev) - log4j-over-slf4j version upgrade. [GRADLE-3167]
+* [Schalk Cronjé](https://github.com/ysb33r) - DSL documentation improvements
 
 We love getting contributions from the Gradle community. For information on contributing, please see [gradle.org/contribute](http://gradle.org/contribute).
 

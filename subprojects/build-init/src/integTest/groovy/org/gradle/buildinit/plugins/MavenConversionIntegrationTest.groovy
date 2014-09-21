@@ -22,9 +22,9 @@ import org.gradle.integtests.fixtures.DefaultTestExecutionResult
 import org.gradle.integtests.fixtures.TestResources
 import org.gradle.test.fixtures.file.TestFile
 import org.gradle.test.fixtures.maven.M2Installation
-import org.gradle.test.fixtures.maven.MavenHttpModule
-import org.gradle.test.fixtures.maven.MavenHttpRepository
-import org.gradle.test.fixtures.maven.PomHttpArtifact
+import org.gradle.test.fixtures.server.http.MavenHttpModule
+import org.gradle.test.fixtures.server.http.MavenHttpRepository
+import org.gradle.test.fixtures.server.http.PomHttpArtifact
 import org.gradle.test.fixtures.server.http.HttpServer
 import org.gradle.util.SetSystemProperties
 import org.junit.Rule
@@ -42,6 +42,10 @@ class MavenConversionIntegrationTest extends AbstractIntegrationSpec {
 
     @Rule
     public final HttpServer server = new HttpServer()
+
+    def setup() {
+        withLocalM2Installation()
+    }
 
     def "multiModule"() {
         when:
@@ -221,7 +225,6 @@ it.exclude group: '*', module: 'badArtifact'
         file("pom.xml").text = file("pom.xml").text.replaceAll('LOCAL_MAVEN_REPO_URL', repo.getUri().toString())
 
         expectParentPomRequest(repo)
-        withLocalM2Installation()
 
         when:
         run 'init'
@@ -242,7 +245,7 @@ it.exclude group: '*', module: 'badArtifact'
         setup:
         withSharedResources()
         executer.withArgument("-DCOMMONS_LANG_VERSION=2.6")
-        withLocalM2Installation()
+
         when:
         run 'init'
         then:
@@ -264,7 +267,6 @@ it.exclude group: '*', module: 'badArtifact'
         file("pom.xml").text = file("pom.xml").text.replaceAll('LOCAL_MAVEN_REPO_URL', repo.getUri().toString())
 
         expectParentPomRequest(repo)
-        withLocalM2Installation()
 
         when:
         run 'init'

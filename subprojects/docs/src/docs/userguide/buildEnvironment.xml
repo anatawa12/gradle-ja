@@ -1,4 +1,4 @@
-﻿<!--
+<!--
   ~ Copyright 2012 the original author or authors.
   ~
   ~ Licensed under the Apache License, Version 2.0 (the "License");
@@ -21,10 +21,11 @@
         <para><phrase role="original">Gradle provides several options that make it easy to configure the Java process that will be used to execute your build.
             While it's possible to configure these in your local environment via GRADLE_OPTS or JAVA_OPTS,
             certain settings like JVM memory settings, Java home, daemon on/off
-            can be more useful if they can versioned with the project in your VCS so that
-            the entire team can work with consistent environment.
-            Setting up a consistent environment for your build is as simple as placing those settings into a <filename>gradle.properties</filename> file.
+            can be more useful if they can be versioned with the project in your VCS so that
+            the entire team can work with a consistent environment.
+            Setting up a consistent environment for your build is as simple as placing these settings into a <filename>gradle.properties</filename> file.
             The configuration is applied in following order
+            (if an option is configured in multiple locations the last one wins):
             (in case an option is configured in multiple locations the last one wins):</phrase>
             Gradleでは、ビルドを実行するJavaプロセスの設定を簡単に変更するための方法が複数用意されています。
             ローカルの環境変数でGRADLE_OPTSやJAVA_OPTSを使って設定することもできますが、一部の設定値、JVMメモリ設定やJava home、デーモンのオンオフなどについてはプロジェクトのVCSに格納してバージョン管理しておけば、チームメンバー全員が一貫した環境で作業することができるので便利です。
@@ -41,7 +42,7 @@
             以下のプロパティがGradleのビルド環境を設定するために使用されます。
             <varlistentry>
                 <term><literal>org.gradle.daemon</literal></term>
-                <listitem><para role="original">When set to <literal>true</literal> the Gradle daemon is to run the build.
+                <listitem><para role="original">When set to <literal>true</literal> the Gradle daemon is used to run the build.
                     For local developer builds this is our favorite property. The developer environment is optimized for speed and feedback
                     so we nearly always run Gradle jobs with the daemon.
                     We don't run CI builds with the daemon (i.e. a long running process)
@@ -56,10 +57,10 @@
             </varlistentry>
             <varlistentry>
                 <term><literal>org.gradle.java.home</literal></term>
-                <listitem><para role="original">Specifies the java home for the Gradle build process.
-                    The value can be set to either <literal>jdk</literal> or <literal>jre</literal> location,
-                    however, depending on what does your build do, <literal>jdk</literal> is safer.
-                    Reasonable default is used if the setting is unspecified.</para>
+                <listitem><para role="original">Specifies the Java home for the Gradle build process.
+                    The value can be set to either a <literal>jdk</literal> or <literal>jre</literal> location,
+                    however, depending on what your build does, <literal>jdk</literal> is safer.
+                    A reasonable default is used if the setting is unspecified.</para>
                     <para>
                     Gradleのビルドシステムで使用するJava homeを指定します。
                     設定するのは<literal>jdk</literal>でも<literal>jre</literal>構いませんが、プロジェクトによってはjdkを指定した方が安全かもしれません。
@@ -98,8 +99,8 @@
             </varlistentry>
         </para>
         <section>
-            <title>javaプロセスのフォーク<phrase role="original">Forked java processes</phrase></title>
-            <para role="original">Many settings (like the java version and maximum heap size) can only be specified when launching a new JVM for the build process. This means that Gradle
+            <title>Javaプロセスのフォーク<phrase role="original">Forked Java processes</phrase></title>
+            <para role="original">Many settings (like the Java version and maximum heap size) can only be specified when launching a new JVM for the build process. This means that Gradle
                 must launch a separate JVM process to execute the build after parsing the various <filename>gradle.properties</filename> files.
                 When running with the daemon, a JVM with the correct parameters is started once and reused for each daemon build execution.
                 When Gradle is executed without the daemon, then a new JVM must be launched for every build execution,
@@ -112,8 +113,9 @@
                 デーモンを使用せずにビルドを実行したときは、Gradleのスタートスクリプトが起動したJVMとたまたま同じパラメーターでビルドするのでない限り、ビルドの度に新しくJVMを起動しなければなりません。
             </para>
             <para role="original">
-            This launching of an extra JVM on every build execution is quite expensive, which is why we highly recommend that you use the Gradle Daemon if you are
-            specifying <literal>org.gradle.java.home</literal> or <literal>org.gradle.jvmargs</literal>. See <xref linkend="gradle_daemon"/> for more details.</para>
+            This launching of an extra JVM on every build execution is quite expensive, which is why if you are
+            setting either <literal>org.gradle.java.home</literal> or <literal>org.gradle.jvmargs</literal>
+            we highly recommend that you use the Gradle Daemon. See <xref linkend="gradle_daemon"/> for more details.</para>
             <para>
                 ビルドを実行する度にJVMを余分に起動しなければならないというのは、とても大きなコストになります。なので、<literal>org.gradle.java.home</literal>や<literal>org.gradle.jvmargs</literal>を設定しているのであればGradleデーモンを使ってビルドすることを強く推奨します。詳細については<xref linkend="gradle_daemon"/>を参照してください。</para>
         </section>
@@ -121,8 +123,8 @@
 
     <section id='sec:accessing_the_web_via_a_proxy'>
         <title>プロクシ経由のWebアクセス<phrase role="original">Accessing the web via a proxy</phrase></title>
-        <para role="original">Configuring an HTTP proxy (for example for downloading dependencies) is done via standard JVM system properties. These properties can be set directly in the build script; for example <literal>
-                System.setProperty('http.proxyHost', 'www.somehost.org')</literal> for the proxy host. Alternatively, the properties can be specified in a gradle.properties file,
+        <para role="original">Configuring an HTTP proxy (for downloading dependencies, for example) is done via standard JVM system properties. These properties can be set directly in the build script; for example, setting the proxy host
+        would be done with <literal>System.setProperty('http.proxyHost', 'www.somehost.org')</literal>. Alternatively, the properties can be specified in a gradle.properties file,
             either in the build's root directory or in the Gradle home directory.
         </para>
         <para>(例えば依存関係のダウンロードするための)HTTPプロクシの設定は 標準的なJVMのシステムプロパティを使って行います。これらの設定は、直接ビルドスクリプト上で設定することが可能です。
@@ -155,13 +157,13 @@ systemProp.https.nonProxyHosts=*.nonproxyrepos.com|localhost
 ]]></programlisting>
         </example>
         <para role="original">We could not find a good overview for all possible proxy settings. One place to look are the constants
-            in a file from the Ant project. Here a
+            in a file from the Ant project. Here's a
             <ulink url='http://svn.apache.org/viewvc/ant/core/trunk/src/main/org/apache/tools/ant/util/ProxySetup.java?view=markup&amp;pathrev=556977'>
                 link
             </ulink> to the Subversion view. The other is a
             <ulink url='http://download.oracle.com/javase/6/docs/technotes/guides/net/properties.html'>
                 Networking Properties page
-            </ulink> from the JDK docs. If anyone knows a better overview, please let us know via the mailing list.
+            </ulink> from the JDK docs. If anyone knows of a better overview, please let us know via the mailing list.
         </para>
         <para>使用可能な全てのプロクシ設定を概観できる良い資料については残念ながら発見することができませんでした。一つの情報源は、Antプロジェクトのファイルに定義された定数です。
             <ulink url='http://svn.apache.org/viewvc/ant/core/trunk/src/main/org/apache/tools/ant/util/ProxySetup.java?view=markup&amp;pathrev=556977'>

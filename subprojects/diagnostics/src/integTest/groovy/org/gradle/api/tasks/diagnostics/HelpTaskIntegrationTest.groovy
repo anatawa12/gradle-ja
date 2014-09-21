@@ -17,6 +17,7 @@ package org.gradle.api.tasks.diagnostics
 
 import org.gradle.integtests.fixtures.AbstractIntegrationSpec
 import org.gradle.integtests.fixtures.TestResources
+import org.gradle.util.GradleVersion
 import org.junit.Rule
 
 import static org.gradle.util.TextUtil.toPlatformLineSeparators
@@ -25,6 +26,28 @@ class HelpTaskIntegrationTest extends AbstractIntegrationSpec {
 
     @Rule
     public final TestResources resources = new TestResources(temporaryFolder)
+
+    def "shows basic welcome message for current project only"() {
+        given:
+        settingsFile << "include 'a', 'b', 'c'"
+
+        when:
+        run "help"
+
+        then:
+        output.startsWith(toPlatformLineSeparators(""":help
+
+Welcome to Gradle ${GradleVersion.current().version}.
+
+To run a build, run gradle <task> ...
+
+To see a list of available tasks, run gradle tasks
+
+To see a list of command-line options, run gradle --help
+
+BUILD SUCCESSFUL
+"""))
+    }
 
     def "can print help for implicit tasks"() {
         when:
@@ -44,10 +67,8 @@ Options
 Description
      Displays all dependencies declared in root project '${testDirectory.getName()}'.
 
-
 BUILD SUCCESSFUL"""))
     }
-
 
     def "can print help for placeholder added tasks"() {
         when:
@@ -62,15 +83,13 @@ Type
      Help (org.gradle.configuration.Help)
 
 Options
-     --task     The task, detailed help is requested for.
+     --task     The task to show help for.
 
 Description
-     Displays a help message
-
+     Displays a help message.
 
 BUILD SUCCESSFUL"""))
     }
-
 
     def "help for tasks same type different descriptions"() {
         setup:
@@ -104,7 +123,6 @@ Descriptions
      (:someproj:hello) hello task from someproj"""))
     }
 
-
     def "matchingTasksOfSameType"() {
         setup:
         settingsFile << "include ':subproj1'"
@@ -123,7 +141,6 @@ Type
 Description
      Assembles a jar archive containing the main classes.
 
-
 BUILD SUCCESSFUL"""))
 
         when:
@@ -140,7 +157,6 @@ Type
 
 Description
      Assembles a jar archive containing the main classes.
-
 
 BUILD SUCCESSFUL"""))
 
@@ -220,7 +236,7 @@ Description
 
     }
 
-    def "prints hint when using invalid commandlineoptions"() {
+    def "prints hint when using invalid command line options"() {
         when:
         fails "help", "--tasssk", "help"
 

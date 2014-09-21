@@ -16,22 +16,30 @@
 
 package org.gradle.tooling.internal.provider
 
+import org.gradle.api.BuildCancelledException
 import org.gradle.api.internal.GradleInternal
 import org.gradle.api.internal.project.ProjectInternal
-import org.gradle.internal.service.scopes.ServiceRegistryFactory
+import org.gradle.initialization.BuildCancellationToken
+import org.gradle.internal.service.ServiceRegistry
 import org.gradle.tooling.internal.gradle.GradleProjectIdentity
 import org.gradle.tooling.internal.protocol.InternalUnsupportedModelException
 import org.gradle.tooling.internal.protocol.ModelIdentifier
+import org.gradle.tooling.model.internal.ProjectSensitiveToolingModelBuilder
 import org.gradle.tooling.provider.model.ToolingModelBuilder
 import org.gradle.tooling.provider.model.ToolingModelBuilderRegistry
 import org.gradle.tooling.provider.model.UnknownModelException
 import spock.lang.Specification
 
 class DefaultBuildControllerTest extends Specification {
-    def gradle = Stub(GradleInternal)
+    def cancellationToken = Stub(BuildCancellationToken)
+    def gradle = Stub(GradleInternal) {
+        getServices() >> Stub(ServiceRegistry) {
+            get(BuildCancellationToken) >> cancellationToken
+        }
+    }
     def registry = Stub(ToolingModelBuilderRegistry)
     def project = Stub(ProjectInternal) {
-        getServices() >> Stub(ServiceRegistryFactory) {
+        getServices() >> Stub(ServiceRegistry) {
             get(ToolingModelBuilderRegistry) >> registry
         }
     }
@@ -88,5 +96,53 @@ class DefaultBuildControllerTest extends Specification {
 
         then:
         result.getModel() == model
+    }
+
+    def "passes information about default project when context sensitive builder is used"() {
+        def contextModelBuilder = Stub(ProjectSensitiveToolingModelBuilder)
+        def model = new Object()
+
+        given:
+        _ * gradle.defaultProject >> project
+        _ * registry.getBuilder("some.model") >> contextModelBuilder
+        _ * contextModelBuilder.buildAll("some.model", project, true) >> model
+
+        when:
+        def result = controller.getModel(null, modelId)
+
+        then:
+        result.getModel() == model
+    }
+
+    def "passes information about specified project when context sensitive builder is used"() {
+        def contextModelBuilder = Stub(ProjectSensitiveToolingModelBuilder)
+        def model = new Object()
+        def target = Stub(GradleProjectIdentity)
+        def rootProject = Stub(ProjectInternal)
+
+        given:
+        _ * target.path >> ":some:path"
+        _ * gradle.rootProject >> rootProject
+        _ * rootProject.project(":some:path") >> project
+        _ * registry.getBuilder("some.model") >> contextModelBuilder
+        _ * contextModelBuilder.buildAll("some.model", project, false) >> model
+
+        when:
+        def result = controller.getModel(target, modelId)
+
+        then:
+        result.getModel() == model
+    }
+
+    def "throws an exception when cancel was requested"() {
+        given:
+        _ * cancellationToken.cancellationRequested >> true
+        def target = Stub(GradleProjectIdentity)
+
+        when:
+        def result = controller.getModel(target, modelId)
+
+        then:
+        thrown(BuildCancelledException)
     }
 }

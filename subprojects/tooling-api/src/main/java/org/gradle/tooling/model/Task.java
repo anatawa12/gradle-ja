@@ -20,9 +20,11 @@ import org.gradle.api.Nullable;
 /**
  * Represents a task which is executable by Gradle.
  *
+ * <p>Note: {@code Task} extends {@code Launchable} since 1.12.</p>
+ *
  * @since 1.0-milestone-3
  */
-public interface Task {
+public interface Task extends Launchable {
     /**
      * Returns the path of this task. This is a fully qualified unique name for this task.
      *
@@ -51,8 +53,11 @@ public interface Task {
     /**
      * Returns the element which this task belongs to.
      *
+     * @deprecated Do not use this method. It is assumed that the caller already has a reference to owning project.
      * @return The element which this task belongs to.
+     * @throws org.gradle.tooling.model.UnsupportedMethodException From 1.12 for implementations that do not also implement {@link org.gradle.tooling.model.GradleTask}.
      * @since 1.0-milestone-3
      */
+    @Deprecated
     Element getProject();
 }

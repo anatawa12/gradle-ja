@@ -15,10 +15,12 @@
  */
 package org.gradle.initialization.buildsrc
 
+import org.gradle.initialization.BuildCancellationToken
+import org.gradle.initialization.GradleLauncher
 import org.gradle.StartParameter
+import org.gradle.api.internal.initialization.ClassLoaderScope
 import org.gradle.cache.CacheRepository
 import org.gradle.cache.PersistentCache
-import org.gradle.initialization.ClassLoaderRegistry
 import org.gradle.initialization.GradleLauncherFactory
 import org.gradle.internal.classpath.ClassPath
 import org.gradle.test.fixtures.file.TestNameTestDirectoryProvider
@@ -30,9 +32,10 @@ class BuildSourceBuilderTest extends Specification {
     @Rule TestNameTestDirectoryProvider tmpDir = new TestNameTestDirectoryProvider()
 
     GradleLauncherFactory launcherFactory = Mock()
-    ClassLoaderRegistry loaderRegistry = Mock()
+    BuildCancellationToken cancellationToken = Mock()
+    ClassLoaderScope classLoaderScope = Mock()
     CacheRepository cacheRepository = Mock()
-    BuildSourceBuilder buildSourceBuilder = Spy(BuildSourceBuilder, constructorArgs: [launcherFactory, loaderRegistry,  cacheRepository])
+    BuildSourceBuilder buildSourceBuilder = Spy(BuildSourceBuilder, constructorArgs: [launcherFactory, cancellationToken, classLoaderScope,  cacheRepository])
 
     StartParameter parameter = new StartParameter()
 
@@ -46,6 +49,8 @@ class BuildSourceBuilderTest extends Specification {
     void "creates classpath when build src exists"() {
         def cache = Mock(PersistentCache)
         def classpath = Mock(ClassPath)
+        def launcher = Mock(GradleLauncher)
+        launcherFactory.newInstance(_, cancellationToken) >> launcher
         buildSourceBuilder.createCache(parameter) >> cache
         cache.useCache(_ as String, _ as BuildSrcUpdateFactory) >> classpath
 

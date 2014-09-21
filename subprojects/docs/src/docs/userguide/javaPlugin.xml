@@ -1,4 +1,4 @@
-﻿<!--
+<!--
   ~ Copyright 2010 the original author or authors.
   ~
   ~ Licensed under the Apache License, Version 2.0 (the "License");
@@ -17,7 +17,7 @@
 <chapter id='java_plugin' xmlns:xi="http://www.w3.org/2001/XInclude" xml:lang="ja">
     <title>Javaプラグイン<phrase role="original">The Java Plugin</phrase></title>
 
-    <para role="original">The Java plugin adds Java compilation, testing and bundling capabilities to a project. It serves as the basis
+    <para role="original">The Java plugin adds Java compilation along with testing and bundling capabilities to a project. It serves as the basis
         for many of the other Gradle plugins.
     </para>
     <para>Javaプラグインは、プロジェクトにJavaのコンパイル、テスト、そしてビルド能力を与えます。このプラグインは、他の多くのGradleプラグインの基礎となっています。
@@ -25,7 +25,7 @@
 
     <section>
         <title>使用方法<phrase role="original">Usage</phrase></title>
-        <para role="original">To use the Java plugin, include in your build script:</para>
+        <para role="original">To use the Java plugin, include the following in your build script:</para>
         <para>Javaプラグインを使うためには、ビルドスクリプトに下記を含めます：</para>
         <sample id="useJavaPlugin" dir="java/quickstart" title="Javaプラグインの使用 / Using the Java plugin">
             <sourcefile file="build.gradle" snippet="use-plugin"/>
@@ -50,8 +50,9 @@
         </para>
         <para role="original">The Java plugin defines two standard source sets, called <literal>main</literal> and <literal>test</literal>.
             The <literal>main</literal> source set contains your production source code, which is compiled and assembled
-            into a JAR file. The <literal>test</literal> source set contains your unit test source code, which is
-            compiled and executed using JUnit or TestNG.
+            into a JAR file. The <literal>test</literal> source set contains your test source code, which is
+            compiled and executed using JUnit or TestNG.  These can be unit tests, integration tests, acceptance tests,
+            or any combination that is useful to you.
         </para>
         <para>Javaプラグインは、<literal>main</literal>と<literal>test</literal>という二つの標準ソースセットを定義します。<literal>main</literal>ソースセットは、コンパイルされJARファイルを構成する製品ソースコードを含みます。<literal>test</literal>ソースセットは、コンパイルされJUnitやTestNGで実行されるユニットテストコードを含みます。
         </para>
@@ -102,7 +103,7 @@
                 <td>
                     <literal>compileJava</literal> と <literal>processResources</literal>。
                     一部のプラグインはさらにコンパイルタスクを追加する
-                    <phrase role="original"><literal>compileJava</literal> and <literal>processResources</literal>.
+                    <phrase role="original">The <literal>compileJava</literal> task and the <literal>processResources</literal> task.
                     Some plugins add additional compilation tasks.</phrase>
                 </td>
                 <td><apilink class="org.gradle.api.Task"/></td>
@@ -136,7 +137,7 @@
                 </td>
                 <td>
                     <literal>compileTestJava</literal> と <literal>processTestResources</literal>。一部のプラグインはさらにテストコンパイルタスクを追加する
-                    <phrase role="original"><literal>compileTestJava</literal> and <literal>processTestResources</literal>.
+                    <phrase role="original"><literal>compileTestJava</literal> task and <literal>processTestResources</literal> task.
                     Some plugins add additional test compilation tasks.</phrase>
                 </td>
                 <td><apilink class="org.gradle.api.Task"/></td>
@@ -189,7 +190,7 @@
                 </td>
                 <td><apilink class="org.gradle.api.tasks.Upload"/></td>
                 <td><literal>archives</literal> コンフィギュレーションのアーティファクト（JARファイルを含む）をアップロードする
-                <phrase role="original">Uploads the artifacts in the <literal>archives</literal> configuration, including the JAR file.</phrase></td>
+                <phrase role="original">Uploads artifacts in the <literal>archives</literal> configuration, including the JAR file.</phrase></td>
             </tr>
             <tr>
                 <td>
@@ -205,9 +206,9 @@
                 </td>
                 <td>-</td>
                 <td><apilink class="org.gradle.api.tasks.Delete"/></td>
-                <td>指定したタスクが生成する出力ファイルを削除する。
+                <td>指定したタスクが生成したファイルを削除する。
                 例えば<literal>cleanJar</literal>は<literal>jar</literal>タスクが作ったJARファイルを削除し、<literal>cleanTest</literal>は<literal>test</literal>タスクが作ったテスト結果を削除する。
-                <phrase role="original">Deletes the output files produced by the specified task. For example <literal>cleanJar</literal>
+                <phrase role="original">Deletes files created by specified task.  <literal>cleanJar</literal>
                     will delete the JAR file created by the <literal>jar</literal> task, and
                     <literal>cleanTest</literal> will delete the test results created by the <literal>test</literal> task.</phrase>
                 </td>
@@ -254,8 +255,8 @@
                 <td>
                     <literal>compile<replaceable>SourceSet</replaceable>Java</literal> と
                     <literal>process<replaceable>SourceSet</replaceable>Resources</literal>。一部のプラグインはさらにこのソースセットのコンパイルタスクを追加する
-                    <phrase role="original"><literal>compile<replaceable>SourceSet</replaceable>Java</literal> and
-                    <literal>process<replaceable>SourceSet</replaceable>Resources</literal>.
+                    <phrase role="original">The <literal>compile<replaceable>SourceSet</replaceable>Java</literal> task and
+                    the <literal>process<replaceable>SourceSet</replaceable>Resources</literal> task.
                     Some plugins add additional compilation tasks for the source set.</phrase>
                 </td>
                 <td><apilink class="org.gradle.api.Task"/></td>
@@ -323,8 +324,8 @@
                 </td>
                 <td>
                     <literal>build</literal> と、<literal>testRuntime</literal>コンフィギュレーションのプロジェクトライブラリ依存先すべての
-                    <literal>build</literal>タスク                   
-                    <phrase role="original"><literal>build</literal> and <literal>build</literal> tasks in all project lib dependencies of the
+                    <literal>buildNeeded</literal>タスク                   
+                    <phrase role="original"><literal>build</literal> and <literal>buildNeeded</literal> tasks in all project lib dependencies of the
                     <literal>testRuntime</literal> configuration.</phrase>
                 </td>
                 <td><apilink class="org.gradle.api.Task"/></td>
@@ -337,8 +338,8 @@
                 </td>
                 <td>
                     <literal>build</literal> と、<literal>testRuntime</literal>コンフィギュレーションのプロジェクトライブラリ依存先がこのプロジェクトであるすべてのプロジェクトの
-                    <literal>build</literal>タスク 
-                    <phrase role="original"><literal>build</literal> and <literal>build</literal> tasks in all projects with a project lib
+                    <literal>buildDependents</literal>タスク 
+                    <phrase role="original"><literal>build</literal> and <literal>buildDependents</literal> tasks in all projects with a project lib
                     dependency on this project in a <literal>testRuntime</literal> configuration.</phrase>
                 </td>
                 <td><apilink class="org.gradle.api.Task"/></td>
@@ -347,11 +348,11 @@
             </tr>
             <tr>
                 <td>
-                    <literal>build<replaceable>ConfigurationName</replaceable></literal>
+                    <literal>build<replaceable>ConfigName</replaceable></literal>
                 </td>
                 <td>
-                    <replaceable>ConfigurationName</replaceable>コンフィギュレーションのアーティファクトを作り出すタスク
-                    <phrase role="original">The tasks which produce the artifacts in configuration <replaceable>ConfigurationName</replaceable>.</phrase>
+                    <replaceable>ConfigName</replaceable>コンフィギュレーションのアーティファクトを作り出すタスク
+                    <phrase role="original">The tasks which produce the artifacts in configuration <replaceable>ConfigName</replaceable>.</phrase>
                 </td>
                 <td><apilink class="org.gradle.api.Task"/></td>
                 <td>指定されたコンフィギュレーションのアーティファクトを構築する。
@@ -362,11 +363,11 @@
             </tr>
             <tr>
                 <td>
-                    <literal>upload<replaceable>ConfigurationName</replaceable></literal>
+                    <literal>upload<replaceable>ConfigName</replaceable></literal>
                 </td>
                 <td>
-                    <replaceable>ConfigurationName</replaceable>コンフィギュレーションのアーティファクトをアップロードするタスク
-                    <phrase role="original">The tasks which uploads the artifacts in configuration <replaceable>ConfigurationName</replaceable>.</phrase>
+                    <replaceable>ConfigName</replaceable>コンフィギュレーションのアーティファクトをアップロードするタスク
+                    <phrase role="original">The tasks which uploads the artifacts in configuration <replaceable>ConfigName</replaceable>.</phrase>
                 </td>
                 <td><apilink class="org.gradle.api.tasks.Upload"/></td>
                 <td>指定されたコンフィギュレーションのアーティファクトを構築しアップロードする。
@@ -401,6 +402,7 @@
             <thead>
                 <tr>
                     <td>ディレクトリ<phrase role="original">Directory</phrase></td>
+                    <td></td>
                     <td>意味<phrase role="original">Meaning</phrase></td>
                 </tr>
             </thead>
@@ -505,14 +507,14 @@
                 </tr>
             </thead>
             <tr>
-                <td><replaceable>sourceSet</replaceable>Compile</td>
+                <td><literal><replaceable>sourceSet</replaceable>Compile</literal></td>
                 <td>-</td>
                 <td>compile<replaceable>SourceSet</replaceable>Java</td>
                 <td>対象ソースセットのコンパイル時依存関係<phrase role="original">Compile time dependencies for the given source set</phrase></td>
             </tr>
             <tr>
-                <td><replaceable>sourceSet</replaceable>Runtime</td>
-                <td><replaceable>sourceSet</replaceable>Compile</td>
+                <td><literal><replaceable>sourceSet</replaceable>Runtime</literal></td>
+                <td><literal><replaceable>sourceSet</replaceable>Compile</literal></td>
                 <td>-</td>
                 <td>対象ソースセットの実行時依存関係<phrase role="original">Runtime time dependencies for the given source set</phrase></td>
             </tr>
@@ -795,8 +797,7 @@
 
         <para role="original">
             These properties are provided by convention objects of type <apilink class="org.gradle.api.plugins.JavaPluginConvention"/>,
-            <apilink class="org.gradle.api.plugins.BasePluginConvention"/> and
-            <apilink class="org.gradle.api.plugins.ReportingBasePluginConvention"/>.
+            and <apilink class="org.gradle.api.plugins.BasePluginConvention"/>.
         </para>
         <para>
             これらのプロパティは、<apilink class="org.gradle.api.plugins.JavaPluginConvention"/>、
@@ -1069,8 +1070,8 @@
             <para role="original">
                 The Java plugin also adds a number of tasks which assemble the classes for the
                 source set, as shown in <xref linkend="java_source_set_tasks"/>. For example, for a source set called
-                <literal>intTest</literal>, you can run <userinput>gradle intTestClasses</userinput> to compile the
-                int test classes.
+                <literal>intTest</literal>, compiling the classes for this source set is done by
+                running <userinput>gradle intTestClasses</userinput>.
             </para>
             <para>
                 また、Javaプラグインは、<xref linkend="java_source_set_tasks"/>に示したような、 そのソースセットのクラスを構築するためのタスクを追加します。 例えば、intTestというソースセットを追加すると、<userinput>gradle intTestClasses</userinput>と実行することでそのソースセットのクラスをコンパイルできるようになります。
@@ -1103,7 +1104,7 @@
     <section id='sec:javadoc'>
         <title>Javadoc<phrase role="original">Javadoc</phrase></title>
         <para role="original">The <literal>javadoc</literal> task is an instance of <apilink class="org.gradle.api.tasks.javadoc.Javadoc"/>.
-            It supports the core javadoc options and the options of the standard doclet described in the
+            It supports the core Javadoc options and the options of the standard doclet described in the
             <ulink url='http://download.oracle.com/javase/1.5.0/docs/tooldocs/windows/javadoc.html#referenceguide'>reference documentation</ulink>
             of the Javadoc executable.
             For a complete list of supported Javadoc options consult the API documentation of the following classes:
@@ -1128,7 +1129,7 @@
                     <literal>classpath</literal>
                 </td>
                 <td><apilink class="org.gradle.api.file.FileCollection"/></td>
-                <td><literal>sourceSets.main.output + sourceSets.main.compileClasspath</literal></td>
+                <td><literal>sourceSets.main.output</literal> + <literal>sourceSets.main.compileClasspath</literal></td>
             </tr>
             <tr>
                 <td><literal>source</literal></td>
@@ -1266,13 +1267,6 @@
             </tr>
         </table>
 
-        <para role="original">The compile task delegates to Ant's javac task. Setting <literal>options.useAnt</literal> to <literal>false</literal>
-            activates Gradle's direct compiler integration, bypassing the Ant task. In a future Gradle release, this will become the default.
-        </para>
-        <para>コンパイルタスクは、AntのJavacタスクに処理を投げます。 設定を <literal>options.useAnt</literal> を <literal>false</literal>にすると、
-            Antタスクを回避して、Gradleのダイレクトコンパイラーの利用を有効にします。 将来リリースされるGradleでは, その徹底がデフォルトになるでしょう。
-        </para>
-        
         <para role="original">By default, the Java compiler runs in the Gradle process. Setting <literal>options.fork</literal> to <literal>true</literal>
             causes compilation to occur in a separate process. In the case of the Ant javac task, this means that a new process will be
             forked for each compile task, which can slow down compilation. Conversely, Gradle's direct compiler integration (see above) will
@@ -1284,6 +1278,32 @@
             遅延実行させることも可能です。反対に、Gradleのダイレクトコンパイラの利用を有効にした場合 (上記参照) 出来るだけ
             同一のプロセスでコンパイルを実行しようとします. 両方利用するケースの場合は、全ての処理実行オプションは
             <literal>options.forkOptions</literal> によって指定されるでしょう。
+        </para>
+    </section>
+
+    <section id='sec:incremental_compile'>
+        <title>Incremental Java compilation</title>
+        <para>Starting with Gradle 2.1, it is possible to compile Java incrementally. This feature is still incubating.
+            See the <apilink class="org.gradle.api.tasks.compile.JavaCompile"/> task for information on how to enable it.</para>
+        <para>
+            Main goals for incremental compilations are:
+            <itemizedlist>
+                <listitem>Avoid wasting time compiling source classes that don't have to be compiled.
+                    This means faster builds, especially when a change to a source class or a jar does not incur recompilation of many source classes that depend on the changed input.</listitem>
+                <listitem>Change as few output classes as possible. Classes that don't need to be recompiled remain unchanged in the output directory.
+                    An example scenario when this is really useful is using JRebel - the fewer output classes are changed the quicker the jvm can use refreshed classes.</listitem>
+            </itemizedlist>
+            The incremental compilation at a high level:
+            <itemizedlist>
+                <listitem>The detection of the correct set of stale classes is reliable at some expense of speed.
+                    The algorithm uses bytecode analysis and deals gracefully with compiler optimizations (inlining of non-private constants), transitive class dependencies, etc.
+                    Example: When a class with a public constant changes, we eagerly compile everything to avoid problems with constants inlined by the compiler.
+                    Down the road we will tune the algorithm and caching so that incremental Java compilation can be a default setting for every compile task.
+                </listitem>
+                <listitem>To make incremental compilation fast, we cache class analysis results and jar snapshots.
+                    The initial incremental compilation can be slower due to the cold caches.
+                </listitem>
+            </itemizedlist>
         </para>
     </section>
 
@@ -1308,15 +1328,10 @@
             <para>テストの実行は別のJVMで行われ、メインのビルドプロセスからは分離されます。<apilink class="org.gradle.api.tasks.testing.Test"/>タスクのAPIを使って、テストの実行を制御できます。
             </para>
             <para role="original">There are a number of properties which control how the test process is launched. This includes
-                things such as system properties, JVM arguments, and the Java executable to use. The task also provides a
-                <literal>debug</literal> property, which when set to true, starts the test process in debug mode,
-                suspended and listening on port 5005. This makes it very easy to debug your tests.  You may also enable
-                this using a system property as specified below.
+                things such as system properties, JVM arguments, and the Java executable to use.
             </para>
             <para>テストプロセスの起動を制御するための多くのプロパティが用意されています。
-            これにはシステムプロパティや、JVMへの引数、Java実行コマンドなどが含まれます。            またこのタスクは<literal>debug</literal>プロパティを提供していて、これをtrueに設定すると、テストプロセスはデバッグモードで起動され、一時停止してポート5005でlistenした状態になります。
-            これにより、テストのデバッグがとても簡単になります。
-            このモードは、後述するシステムプロパティを使って有効にすることもできます。
+            これにはシステムプロパティや、JVMへの引数、Java実行コマンドなどが含まれます。
             </para>
             <para role="original">You can specify whether or not to execute your tests in parallel. Gradle provides parallel test execution 
                 by running multiple test processes concurrently. Each test process executes only a single test at a time, so you
@@ -1348,7 +1363,7 @@
             <literal>forkEvery</literal>プロパティは、一つのテストプロセス内で実行されるテストクラスの最大数を指定します。
             デフォルトでは各テストプロセスで無制限な数のテストを実行できます。</para>
             <para role="original">The task has an <literal>ignoreFailures</literal> property to control the behavior when tests fail.
-                Test always executes every test that it detects. It stops the build afterwards if <literal>ignoreFailures</literal>
+                The <literal>Test</literal> task always executes every test that it detects. It stops the build afterwards if <literal>ignoreFailures</literal>
                 is false and there are failing tests. The default value of <literal>ignoreFailures</literal> is false.
             </para>
             <para>このタスクは、テストが失敗したときの振る舞いを制御する<literal>ignoreFailures</literal>プロパティを持っています。
@@ -1356,7 +1371,7 @@
             <literal>ignoreFailures</literal>がfalseのとき、失敗したテストがあるとそれ以降のビルドは停止されます。
             <literal>ignoreFailures</literal>のデフォルト値はfalseです。
             </para>
-            <para role="original">The <literal>testLogging</literal> property allows to configure which test events are going to be logged and at
+            <para role="original">The <literal>testLogging</literal> property allows you to configure which test events are going to be logged and at
                 which detail level. By default, a concise message will be logged for every failed test. See
                 <apilink class="org.gradle.api.tasks.testing.logging.TestLoggingContainer"/> for how to tune test logging to your
                 preferences.
@@ -1368,20 +1383,99 @@
         </section>
 
         <section>
-            <title>システムプロパティ<phrase role="original">System properties</phrase></title>
-            <para role="original">There are two system properties that can affect test execution.  Both of these are based off
-                  of the name of the test task with a suffix.
+            <title>Debugging</title>
+            <para>
+                The test task provides a <apilink class="org.gradle.api.tasks.testing.Test" method="getDebug()" /> property that can be set to launch to make the JVM wait for a
+                debugger to attach to port 5005 before proceeding with test execution.
             </para>
-            <para>二つのシステムプロパティがテストの実行に影響を与えます。
-            これらは両方ともテストタスク名＋接尾辞という形式になっています。
+            <para>
+                This can also be enabled at invocation time via the <userinput>--debug-jvm</userinput> task option (since Gradle 1.12).
             </para>
-            <para role="original">Setting a system property of <replaceable>taskName.single</replaceable> = <replaceable>testNamePattern</replaceable>
+        </section>
+
+        <section id="test_filtering">
+
+            <title>Test filtering</title>
+
+            <para>Starting with Gradle 1.10, it is possible to include only specific tests, based on the test name pattern.
+                Filtering is a different mechanism than test class inclusion / exclusion that will be described in the next few paragraphs
+                (<literal>-Dtest.single</literal>, <literal>test.include</literal> and friends).
+                The latter is based on files, e.g. the physical location of the test implementation class.
+                File-level test selection does not support many interesting scenarios that are possible with test-level filtering.
+                Some of them Gradle handles now and some will be satisfied in future releases:
+                <itemizedlist>
+                    <listitem>Filtering at the level of specific test methods; executing a single test method</listitem>
+                    <listitem>Filtering based on custom annotations (future)</listitem>
+                    <listitem>Filtering based on test hierarchy; executing all tests that extend ceratain base class (future)</listitem>
+                    <listitem>Filtering based on some custom runtime rule, e.g. particular value of a system property or some static state (future)</listitem>
+                </itemizedlist>
+            </para>
+
+            <para>
+                Test filtering feature has following characteristic:
+                <itemizedlist>
+                    <listitem>Fully qualified class name or fully qualified method name is supported,
+                        e.g. “org.gradle.SomeTest”, “org.gradle.SomeTest.someMethod”</listitem>
+                    <listitem>Wildcard '*' is supported for matching any characters</listitem>
+                    <listitem>Command line option “--tests” is provided to conveniently set the test filter.
+                        Especially useful for the classic 'single test method execution' use case.
+                        When the command line option is used, the inclusion filters declared in the build script are ignored.
+                    </listitem>
+                    <listitem>Gradle tries to filter the tests given the limitations of the test framework API.
+                        Some advanced, synthetic tests may not be fully compatible with filtering.
+                        However, the vast majority of tests and use cases should be handled neatly.
+                    </listitem>
+                    <listitem>Test filtering supersedes the file-based test selection. The latter may be completely replaced in future.
+                        We will grow the the test filtering api and add more kinds of filters.
+                    </listitem>
+                </itemizedlist>
+            </para>
+
+            <para>
+                <sample id="testfiltering" dir="testing/filtering" title="Filtering tests in the build script">
+                    <sourcefile file="build.gradle" snippet="test-filtering"/>
+                </sample>
+                For more details and examples please see the <apilink class="org.gradle.api.tasks.testing.TestFilter"/> reference.
+            </para>
+
+            <para>
+                Some examples of using the command line option:
+
+                <itemizedlist>
+                    <listitem>
+                        <para><literal>gradle test --tests org.gradle.SomeTest.someSpecificFeature</literal></para>
+                    </listitem>
+                    <listitem>
+                        <para><literal>gradle test --tests *SomeTest.someSpecificFeature</literal></para>
+                    </listitem>
+                    <listitem>
+                        <para><literal>gradle test --tests *SomeSpecificTest</literal></para>
+                    </listitem>
+                    <listitem>
+                        <para><literal>gradle test --tests all.in.specific.package*</literal></para>
+                    </listitem>
+                    <listitem>
+                        <para><literal>gradle test --tests *IntegTest</literal></para>
+                    </listitem>
+                    <listitem>
+                        <para><literal>gradle test --tests *IntegTest*ui*</literal></para>
+                    </listitem>
+                    <listitem>
+                        <para><literal>gradle someTestTask --tests *UiTest someOtherTestTask --tests *WebTest*ui</literal></para>
+                    </listitem>
+                </itemizedlist>
+            </para>
+        </section>
+        <section>
+            <title>Single test execution via System Properties</title>
+            <note>This mechanism has been superseded by 'Test Filtering', described above.</note>
+            <para>Setting a system property of <replaceable>taskName.single</replaceable> = <replaceable>testNamePattern</replaceable>
                   will only execute tests that match the specified <replaceable>testNamePattern</replaceable>.
-                  The <replaceable>taskName</replaceable> can be a full multi-project path like &quot;:sub1:sub2:test&quot;
+                  The <replaceable>taskName</replaceable> can be a full multi-project path like “:sub1:sub2:test”
                   or just the task name.  The <replaceable>testNamePattern</replaceable> will be used to form an include
-                  pattern of &quot;**/testNamePattern*.class&quot;.
+                  pattern of “**/testNamePattern*.class”;.
                   If no tests with this pattern can be found an exception is thrown. This is to shield you from false security.
-                  If tests of more then one subproject are executed, the pattern is applied to each subproject. An exception
+                  If tests of more than one subproject are executed, the pattern is applied to each subproject. An exception
                   is thrown if no tests can be found for a particular subproject. In such a case you can use the path notation of the
                   pattern, so that the pattern is applied only to the test task of a specific subproject. Alternatively you can specify the fully
                   qualified task name to be executed. You can also specify multiple patterns. Examples:
@@ -1413,13 +1507,6 @@
                           <para><literal>gradle -DintegTest.single=c/d/ :proj1:integTest</literal></para>
                       </listitem>
                   </itemizedlist>
-            </para>
-            <para role="original">Setting a system property of <literal>taskName.debug</literal> will run the tests in debug mode,
-                  suspended and listening on port 5005.  For example:
-                  <literal>gradle test -Dtest.single=ThisUniquelyNamedTest -Dtest.debug</literal>
-            </para>
-            <para><literal>taskName.debug</literal>システムプロパティを設定すれば、テストはデバッグモードで実行され、一時停止してポート5005でlistenした状態になります。
-            実行例: <literal>gradle test -Dtest.single=ThisUniquelyNamedTest -Dtest.debug</literal>
             </para>
         </section>
 
@@ -1464,7 +1551,7 @@
                 TestNGを使っている場合は、<classname>@Test</classname>アノテーションが付いたメソッドをスキャンします。
             </para>
             <para role="original">
-                Note that abstract classes are not executed. Gradle also scan up the inheritance tree into jar files
+                Note that abstract classes are not executed. Gradle also scans up the inheritance tree into jar files
                 on the test classpath.
             </para>
             <para>
@@ -1472,20 +1559,22 @@
                 Gradleは、testクラスパス上のjarファイルに含まれる継承ツリーもスキャンします。
             </para>
             <para role="original">
-                In case you don't want to use the test class detection, you can disable it by setting
-                <literal>scanForTestClasses</literal> to false. This will make the test task only use the includes /
-                excludes to find test classes.
-
-                If <literal>scanForTestClasses</literal> is disabled and no include or exclude patterns are specified, the
-                respective defaults are used. For include this is <literal>"**/*Tests.class", "**/*Test.class"</literal>
-                and the for exclude it is <literal>"**/Abstract*.class"</literal>.
+                If you don't want to use test class detection, you can disable it by setting
+                <literal>scanForTestClasses</literal> to false. This will make the test task only use includes /
+                excludes to find test classes. If <literal>scanForTestClasses</literal> is false and no include
+                / exclude patterns are specified, the defaults are
+                “<literal>**/*Tests.class</literal>”, “<literal>**/*Test.class</literal>” and 
+                “<literal>**/Abstract*.class</literal>” for include and exclude, respectively.
             </para>
             <para>
                 上記のテストクラス検出を使いたくないときは、<literal>scanForTestClasses</literal>をfalseに設定することで、これを無効にすることができます。
                 この場合、testタスクがテストクラスを探すときにはincludes / excludesだけが使われます。
-                <literal>scanForTestClasses</literal>が無効になっていて、かつincludesやexcludesパターンが指定されていないときは、デフォルトとしてincludesには<literal>"**/*Tests.class", "**/*Test.class"</literal>、そしてexcludesには<literal>"**/Abstract*.class"</literal>が使われます。
+                <literal>scanForTestClasses</literal>が無効になっていて、かつincludesやexcludesパターンが指定されていないときは、
+                デフォルトとしてincludesには<literal>"**/*Tests.class", "**/*Test.class"</literal>、
+                そしてexcludesには<literal>"**/Abstract*.class"</literal>が使われます。
             </para>
         </section>
+
         <section id="test_grouping">
             <title>Test grouping</title>
             <para>JUnit and TestNG allows sophisticated groupings of test methods. </para>
@@ -1521,10 +1610,6 @@
                 <listitem><para>Results in an efficient binary format. The task generates the other results from these binary results.</para></listitem>
             </itemizedlist>
 
-            <para>You can disable the HTML test report using the <apilink class="org.gradle.api.tasks.testing.Test" method="setTestReport"/> method. The other
-                results currently cannot be disabled.
-            </para>
-
             <para>There is also a stand-alone <apilink class="org.gradle.api.tasks.testing.TestReport"/> task type which can generate the HTML test
                 report from the binary results generated by one or more <classname>Test</classname> task instances. To use this task type, you need
                 to define a <literal>destinationDir</literal> and the test results to include in the report. Here is a sample which generates a
@@ -1535,9 +1620,9 @@
             </sample>
 
             <para>You should note that the <literal>TestReport</literal> type combines the results from multiple test
-                tasks, but it does not aggregate the results of individual test classes. This means that if a given test class is executed by
-                multiple test tasks, then the test report will include only one execution of that class and discard the other executions of that
-                class. This will be addressed in a future Gradle version.
+                tasks and needs to aggregate the results of individual test classes. This means that if a given test class is executed by
+                multiple test tasks, then the test report will include executions of that class, but it can be hard to distinguish individual
+                executions of that class and their output.
             </para>
             <section id="testNgParameterizedReporting">
                 <title>TestNG parameterized methods and reporting</title>
@@ -1547,8 +1632,8 @@
                     in its reporting of the test method execution.
                 </para>
                 <para>
-                    Given a parameterized test method named <literal>aParameterizedTestMethod</literal> that takes two parameters, it will be reported with the name:
-                    <literal>aParameterizedTestMethod(toStringValueOfParam1, toStringValueOfParam2)</literal>. This makes identifying the parameter values for a
+                    Given a parameterized test method named <literal>aTestMethod</literal> that takes two parameters, it will be reported with the name:
+                    <literal>aTestMethod(toStringValueOfParam1, toStringValueOfParam2)</literal>. This makes identifying the parameter values for a
                     particular iteration easy.
                 </para>
             </section>
@@ -1641,8 +1726,8 @@
             <sample id="manifest" dir="userguide/tutorial/manifest" title="特定のアーカイブ用にMANIFEST.MFを分離 / Separate MANIFEST.MF for a particular archive">
                 <sourcefile file="build.gradle" snippet="merge"/>
             </sample>
-            <para role="original">Manifest are merged in the order they are declared by the <literal>from</literal> statement. If
-            the based manifest and the merged manifest both define values for the same key, the merged manifest wins by default.
+            <para role="original">Manifests are merged in the order they are declared by the <literal>from</literal> statement. If
+            the base manifest and the merged manifest both define values for the same key, the merged manifest wins by default.
             You can fully customize the merge behavior by adding <literal>eachEntry</literal> actions in which
                 you have access to a <apilink class="org.gradle.api.java.archives.ManifestMergeDetails"/> instance for each entry
                 of the resulting manifest. The merge is not immediately triggered by the from statement. It is done lazily,

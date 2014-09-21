@@ -68,6 +68,10 @@ class ConfigurationOnDemandIntegrationTest extends AbstractIntegrationSpec {
     }
 
     def "evaluates only project referenced in the task list"() {
+        // The util project's classloaders will be created eagerly because util:impl
+        // will be evaluated before it
+        executer.withEagerClassLoaderCreationCheckDisabled()
+
         settingsFile << "include 'api', 'impl', 'util', 'util:impl'"
         buildFile << "allprojects { task foo }"
 
@@ -326,5 +330,42 @@ project(':api') {
 
         then:
         fixture.assertProjectsConfigured(":", ":a", ":b")
+    }
+
+    def "handles buildNeeded"() {
+        settingsFile << "include 'a', 'b', 'c'"
+        file("a/build.gradle") << """ apply plugin: 'java' """
+        file("b/build.gradle") << """
+            apply plugin: 'java'
+            project(':b') {
+                dependencies { compile project(':a') }
+            }
+        """
+
+        when:
+        run(":b:buildNeeded")
+
+        then:
+        result.executedTasks.containsAll ':b:buildNeeded', ':a:buildNeeded'
+        fixture.assertProjectsConfigured(":", ":b", ":a")
+    }
+
+    def "handles buildDependents"() {
+        settingsFile << "include 'a', 'b', 'c'"
+        file("a/build.gradle") << """ apply plugin: 'java' """
+        file("b/build.gradle") << """
+            apply plugin: 'java'
+            project(':b') {
+                dependencies { compile project(':a') }
+            }
+        """
+
+        when:
+        run(":a:buildDependents")
+
+        then:
+        result.executedTasks.containsAll ':b:buildDependents', ':a:buildDependents'
+        //unfortunately buildDependents requires all projects to be configured
+        fixture.assertProjectsConfigured(":", ":a", ":b", ":c")
     }
 }

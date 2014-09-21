@@ -17,36 +17,34 @@
 package org.gradle.api.internal.file.copy;
 
 import groovy.lang.Closure;
-import org.gradle.api.GradleException;
 import org.gradle.api.file.ContentFilterable;
 import org.gradle.api.file.DuplicatesStrategy;
 import org.gradle.api.file.FileVisitDetails;
 import org.gradle.api.file.RelativePath;
 import org.gradle.api.internal.file.AbstractFileTreeElement;
-import org.gradle.internal.nativeplatform.filesystem.FileSystem;
+import org.gradle.internal.nativeintegration.filesystem.Chmod;
 
 import java.io.*;
 import java.util.Map;
 
 public class DefaultFileCopyDetails extends AbstractFileTreeElement implements FileVisitDetails, FileCopyDetailsInternal {
     private final FileVisitDetails fileDetails;
-    private final CopySpecInternal spec;
-    private FileSystem fileSystem;
+    private final CopySpecResolver specResolver;
     private final FilterChain filterChain = new FilterChain();
     private RelativePath relativePath;
     private boolean excluded;
     private Integer mode;
     private DuplicatesStrategy duplicatesStrategy;
 
-    public DefaultFileCopyDetails(FileVisitDetails fileDetails, CopySpecInternal spec, FileSystem fileSystem) {
+    public DefaultFileCopyDetails(FileVisitDetails fileDetails, CopySpecResolver specResolver, Chmod chmod) {
+        super(chmod);
         this.fileDetails = fileDetails;
-        this.spec = spec;
-        this.fileSystem = fileSystem;
-        this.duplicatesStrategy = spec.getDuplicatesStrategy();
+        this.specResolver = specResolver;
+        this.duplicatesStrategy = specResolver.getDuplicatesStrategy();
     }
 
     public boolean isIncludeEmptyDirs() {
-        return spec.getIncludeEmptyDirs();
+        return specResolver.getIncludeEmptyDirs();
     }
 
     public String getDisplayName() {
@@ -110,20 +108,14 @@ public class DefaultFileCopyDetails extends AbstractFileTreeElement implements F
     }
 
     private void adaptPermissions(File target) {
-        final Integer specMode = getMode();
-        if(specMode !=null){
-            try {
-                fileSystem.chmod(target, specMode);
-            } catch (IOException e) {
-                throw new GradleException(String.format("Could not set permission %s on '%s'.", specMode, target), e);
-            }
-        }
+        int specMode = getMode();
+        getChmod().chmod(target, specMode);
     }
 
     public RelativePath getRelativePath() {
         if (relativePath == null) {
             RelativePath path = fileDetails.getRelativePath();
-            relativePath = spec.getDestPath().append(path.isFile(), path.getSegments());
+            relativePath = specResolver.getDestPath().append(path.isFile(), path.getSegments());
         }
         return relativePath;
     }
@@ -142,7 +134,7 @@ public class DefaultFileCopyDetails extends AbstractFileTreeElement implements F
     }
 
     private Integer getSpecMode() {
-        return fileDetails.isDirectory() ? spec.getDirMode() : spec.getFileMode();
+        return fileDetails.isDirectory() ? specResolver.getDirMode() : specResolver.getFileMode();
     }
 
     public void setRelativePath(RelativePath path) {
@@ -195,6 +187,18 @@ public class DefaultFileCopyDetails extends AbstractFileTreeElement implements F
 
     public DuplicatesStrategy getDuplicatesStrategy() {
         return this.duplicatesStrategy;
+    }
+
+    public String getSourceName() {
+        return this.fileDetails.getName();
+    }
+
+    public String getSourcePath() {
+        return this.fileDetails.getPath();
+    }
+
+    public RelativePath getRelativeSourcePath() {
+        return this.fileDetails.getRelativePath();
     }
 
     private static class ByteCountingOutputStream extends OutputStream {

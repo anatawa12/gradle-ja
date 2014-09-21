@@ -32,7 +32,7 @@ binaries.all {
     // Define toolchain-specific compiler and linker options
     if (toolChain in Gcc) {
         cppCompiler.args "-O2", "-fno-access-control"
-        linker.args "-S"
+        linker.args "-Xlinker", "-S"
     }
     if (toolChain in VisualCpp) {
         cppCompiler.args "/Zi"
@@ -42,7 +42,7 @@ binaries.all {
 // END SNIPPET all-binaries
 
 // For any shared library binaries built with Visual C++, define the DLL_EXPORT macro
-binaries.withType(SharedLibraryBinary) {
+binaries.withType(SharedLibraryBinarySpec) {
     if (toolChain in VisualCpp) {
         cppCompiler.define "DLL_EXPORT"
     }

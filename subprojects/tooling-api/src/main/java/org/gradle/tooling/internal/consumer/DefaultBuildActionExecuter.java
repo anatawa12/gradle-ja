@@ -16,7 +16,10 @@
 
 package org.gradle.tooling.internal.consumer;
 
-import org.gradle.tooling.*;
+import org.gradle.tooling.BuildAction;
+import org.gradle.tooling.BuildActionExecuter;
+import org.gradle.tooling.GradleConnectionException;
+import org.gradle.tooling.ResultHandler;
 import org.gradle.tooling.internal.consumer.async.AsyncConsumerActionExecutor;
 import org.gradle.tooling.internal.consumer.connection.ConsumerAction;
 import org.gradle.tooling.internal.consumer.connection.ConsumerConnection;
@@ -27,7 +30,7 @@ class DefaultBuildActionExecuter<T> extends AbstractLongRunningOperation<Default
     private final AsyncConsumerActionExecutor connection;
 
     public DefaultBuildActionExecuter(BuildAction<T> buildAction, AsyncConsumerActionExecutor connection, ConnectionParameters parameters) {
-        super(new ConsumerOperationParameters(parameters));
+        super(parameters);
         this.buildAction = buildAction;
         this.connection = connection;
     }
@@ -44,6 +47,7 @@ class DefaultBuildActionExecuter<T> extends AbstractLongRunningOperation<Default
     }
 
     public void run(ResultHandler<? super T> handler) throws IllegalStateException {
+        final ConsumerOperationParameters operationParameters = getConsumerOperationParameters();
         connection.run(new ConsumerAction<T>() {
                            public ConsumerOperationParameters getParameters() {
                                return operationParameters;

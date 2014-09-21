@@ -34,13 +34,13 @@ public class Sync extends AbstractCopyTask {
         if (destinationDir == null) {
             throw new InvalidUserDataException("No copy destination directory has been specified, use 'into' to specify a target directory.");
         }
-        return new SyncCopyActionDecorator(destinationDir, new FileCopyAction(getServices().get(FileResolver.class).withBaseDir(destinationDir)));
+        return new SyncCopyActionDecorator(destinationDir, new FileCopyAction(getFileLookup().getFileResolver(destinationDir)));
     }
 
     @Override
     protected CopySpecInternal createRootSpec() {
-        Instantiator instantiator = getServices().get(Instantiator.class);
-        FileResolver fileResolver = getServices().get(FileResolver.class);
+        Instantiator instantiator = getInstantiator();
+        FileResolver fileResolver = getFileResolver();
 
         return instantiator.newInstance(DestinationRootCopySpec.class, fileResolver, super.createRootSpec());
     }

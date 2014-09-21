@@ -1,4 +1,4 @@
-﻿<!--
+<!--
   ~ Copyright 2009 the original author or authors.
   ~
   ~ Licensed under the Apache License, Version 2.0 (the "License");
@@ -24,7 +24,7 @@
             the command <userinput>gradle compile test</userinput> will execute the <literal>compile</literal> and
             <literal>test</literal> tasks. Gradle will execute the tasks in the order that they are listed on the
             command-line, and will also execute the dependencies for each task. Each task is executed once only,
-            regardless of how it came to be included in the build: whether it was specified on the command-line, or it a
+            regardless of how it came to be included in the build: whether it was specified on the command-line, or as a
             dependency of another task, or both. Let's look at an example.</para>
         <para>
         一回のビルドで、複数のタスクを実行することができます。ビルドを実行するときに、タスクを並べて指定してください。たとえば、<userinput>gradle compile test</userinput>というコマンドを実行すれば、<literal>compile</literal>タスクと<literal>test</literal>タスクが実行されます。Gradleはタスクを列挙された順に実行するほか、それらが依存しているタスクも実行します。また、タスクが実行されるのはそれぞれ一度だけです。コマンドラインで明示的に指定されたタスクも、それらに依存して実行されるタスクも、またその両方に含まれるタスクも同様です。次の例を見てください。
@@ -47,8 +47,8 @@
             <output args="dist test"/>
         </sample>
         <para role="original">
-            Because each task is executed once only, executing <userinput>gradle test test</userinput> is exactly the same
-            as executing <userinput>gradle test</userinput>.</para>
+            Each task is executed only once only, so <userinput>gradle test test</userinput> is exactly the same
+            as <userinput>gradle test</userinput>.</para>
         <para>タスクが一度だけ実行されるということは、<userinput>gradle test test</userinput>と打ち込んでも<userinput>gradle test</userinput>と打ち込んでも、実行される処理は全く同じだということです。</para>
     </section>
 
@@ -192,7 +192,7 @@
         <section id="sec:show_task_details">
             <title>タスクの使い方を詳しく表示する <phrase role="original">Show task usage details</phrase></title>
             <para role="original">Running <userinput>gradle help --task someTask</userinput> gives you detailed information about a specific task or multiple
-                tasks matching the given task name in your multiproject build <!--TODO RG ref multiproject-->
+                tasks matching the given task name in your multiproject build.
                 Below is an example of this detailed information:
             </para>
             <para>
@@ -243,7 +243,7 @@
             <para role="original">
                 This task is extremely useful for investigating the dependency resolution,
                 finding out where certain dependencies are coming from and why certain versions are selected.
-                For more information please see <apilink class="org.gradle.api.tasks.diagnostics.DependencyInsightReportTask"/>.
+                For more information please see the <apilink class="org.gradle.api.tasks.diagnostics.DependencyInsightReportTask"/> class in the API documentation.
             </para>
             <para>
                 dependencyInsightは、依存関係がどのように解決されているか調査するときにとても便利なタスクです。ある依存関係がどこから来て、なぜそのバージョンが選択されているのか調べることができます。
@@ -253,10 +253,10 @@
                 The built-in dependencyInsight task is a part of the 'Help' tasks group.
                 The task needs to configured with the dependency and the configuration.
                 The report looks for the dependencies that match the specified dependency spec in the specified configuration.
-                If java related plugin is applied, the dependencyInsight task is pre-configured with 'compile' configuration because typically it's the compile dependencies we are interested in.
+                If Java related plugin is applied, the dependencyInsight task is pre-configured with 'compile' configuration because typically it's the compile dependencies we are interested in.
                 You should specify the dependency you are interested in via the command line '--dependency' option.
                 If you don't like the defaults you may select the configuration via '--configuration' option.
-                For more information see <apilink class="org.gradle.api.tasks.diagnostics.DependencyInsightReportTask"/>.
+                For more information see the <apilink class="org.gradle.api.tasks.diagnostics.DependencyInsightReportTask"/> class in the API documentation.
             </para>
             <para>
                 組み込みのdependencyInsightタスクは、Helpグループに属しています。
@@ -306,8 +306,8 @@
         <title>空実行<phrase role="original">Dry Run</phrase></title>
         <para role="original">Sometimes you are interested in which tasks are executed in which order for a given set of tasks specified on the
             command line, but you don't want the tasks to be executed. You can use the <option>-m</option> option for this.
-            For example <userinput>gradle -m clean compile</userinput> shows you all tasks to be executed as
-            part of the <literal>clean</literal> and <literal>compile</literal> tasks.
+            For example, if you run “<userinput>gradle -m clean compile</userinput>”, you'll see all the tasks that would be
+            executed as part of the <literal>clean</literal> and <literal>compile</literal> tasks.
             This is complementary to the <option>tasks</option> task, which shows you the tasks which are available for
             execution.
         </para>

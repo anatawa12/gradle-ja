@@ -109,6 +109,28 @@ dependencies {
     }
 
     @Test
+    void "uses content from application xml located in root folder"() {
+        def applicationXml = """<?xml version="1.0"?>
+<application xmlns="http://java.sun.com/xml/ns/javaee" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://java.sun.com/xml/ns/javaee http://java.sun.com/xml/ns/javaee/application_6.xsd" version="6">
+  <application-name>customear</application-name>
+</application>
+"""
+
+        file('META-INF/application.xml').createFile().write(applicationXml)
+        file("build.gradle").write("""
+apply plugin: 'ear'
+""")
+
+        //when
+        executer.withTasks('assemble').run()
+
+        //then
+        def ear = new JarTestFixture(file('build/libs/root.ear'))
+        ear.assertContainsFile("META-INF/application.xml")
+        ear.assertFileContent("META-INF/application.xml", Matchers.containsString("<application-name>customear</application-name>"))
+    }
+
+    @Test
     void "uses content found in specified app folder"() {
         def applicationXml = """<?xml version="1.0"?>
 <application xmlns="http://java.sun.com/xml/ns/javaee" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://java.sun.com/xml/ns/javaee http://java.sun.com/xml/ns/javaee/application_6.xsd" version="6">
@@ -167,7 +189,36 @@ ear {
         ear.assertFileContent("META-INF/application.xml", applicationXml)
     }
 
-    @Test @Ignore
+
+    @Test
+    void "works with existing descriptor containing a doctype declaration"() {
+        // We serve the DTD locally because the the parser actually pulls on this URL,
+        // and we don't want it reaching out to the Internet in our tests
+        def dtdResource = getClass().getResource("application_1_3.dtd")
+        assert dtdResource != null
+
+        def applicationXml = """<?xml version="1.0"?>
+<!DOCTYPE application PUBLIC "-//Sun Microsystems, Inc.//DTD J2EE Application 1.3//EN" "$dtdResource">
+<application xmlns="http://java.sun.com/xml/ns/javaee" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://java.sun.com/xml/ns/javaee http://java.sun.com/xml/ns/javaee/application_6.xsd" version="6">
+  <application-name>customear</application-name>
+</application>
+"""
+
+        file('src/main/application/META-INF/application.xml').createFile().write(applicationXml)
+        file("build.gradle").write("""
+apply plugin: 'ear'
+""")
+
+        //when
+        executer.withTasks('assemble').run()
+
+        //then
+        def ear = new JarTestFixture(file('build/libs/root.ear'))
+        ear.assertFileContent("META-INF/application.xml", applicationXml)
+    }
+
+    @Test
+    @Ignore
     void "exclude duplicates: deploymentDescriptor has priority over metaInf"() {
         file('bad-meta-inf/application.xml').createFile().write('bad descriptor')
         file('build.gradle').write('''
@@ -213,6 +264,43 @@ ear {
         // then
         def ear = new JarTestFixture(file('build/libs/root.ear'))
         ear.assertFileContent("lib/file.txt", "good")
+    }
+
+    @Test
+    void "use security role closure"() {
+        file('bad-lib/file.txt').createFile().write('bad')
+        file('good-lib/file.txt').createFile().write('good')
+
+        file('build.gradle').write('''
+apply plugin: 'ear'
+ear {
+  deploymentDescriptor {
+
+    securityRole {
+      roleName="superman"
+      description="This is the SUPERMAN role"
+     }
+
+    securityRole {
+      roleName="supergirl"
+      description="This is the SUPERGIRL role"
+    }
+  }
+}''')
+
+        // when
+        executer.withTasks('assemble').run();
+
+        file("build/libs/root.ear").unzipTo(file("unzipped"))
+
+        //then
+        def appXml = new XmlSlurper().parse(
+                file('unzipped/META-INF/application.xml'))
+        def roles = appXml."security-role"
+        assertEquals(roles[0]."role-name".text(), 'superman')
+        assertEquals(roles[0].description.text(), 'This is the SUPERMAN role')
+        assertEquals(roles[1]."role-name".text(), 'supergirl')
+        assertEquals(roles[1].description.text(), 'This is the SUPERGIRL role')
     }
 
 }

@@ -1,4 +1,4 @@
-﻿<chapter id="artifact_dependencies_tutorial" xml:lang="ja">
+<chapter id="artifact_dependencies_tutorial" xml:lang="ja">
     <title>依存関係管理の基本 <phrase role="original">Dependency Management Basics</phrase></title>
     <para role="original">
         This chapter introduces some of the basics of dependency management in Gradle.
@@ -40,6 +40,12 @@
         依存ファイルは、リモートのMavenやIvyのリポジトリからダウンロードされるかもしれませんし、ローカルのディレクトリにあるかもしれません。また、マルチプロジェクトの場合、別のプロジェクトにビルドさせる必要があることもあります。
         </para>
         <para role="original">
+        	Note that this feature provides a major advantage over Ant. With Ant, you only have the ability to
+        	specify absolute or relative paths to specific jars to load. With Gradle, you simply declare the “names”
+        	of your dependencies, and other layers determine where to get those dependencies from. You can get
+        	similar behavior from Ant by adding Apache Ivy, but Gradle does it better.
+        </para>
+        <para>
             Often, the dependencies of a project will themselves have dependencies. For example, Hibernate core requires
             several other libraries to be present on the classpath with it runs. So, when Gradle runs the tests for your
             project, it also needs to find these dependencies and make them available. We call these <firstterm>transitive dependencies</firstterm>.
@@ -47,7 +53,7 @@
         <para>また、依存しているファイルが、それ自身の依存関係を持っていることが多々あります。例えば、Hibernateコアは、実行時にいくつかの別のライブラリをクラスパスに含めなければなりません。なので、Gradleがあなたのプロジェクトのテストを走らせるときには、それらの依存関係も見つけてきて、使用できるようにしなければならないのです。これを、<firstterm>推移的な依存関係</firstterm>と呼びます。</para>
         <para role="original">
             The main purpose of most projects is to build some files that are to be used outside the project.
-            For example, if your project produces a java library, you need to build a jar, and maybe a source jar and
+            For example, if your project produces a Java library, you need to build a jar, and maybe a source jar and
             some documentation, and publish them somewhere.
         </para>
         <para>
@@ -56,7 +62,7 @@
         </para>
         <para role="original">These outgoing files form the publications of the project. Gradle also takes care of this important work for you. You declare the
             publications of your project, and Gradle take care of building them and publishing them somewhere.
-            Exactly what "publishing" means depends on what you want to do. You might want to copy the files to a local directory,
+            Exactly what “publishing” means depends on what you want to do. You might want to copy the files to a local directory,
             or upload them to a remote Maven or Ivy repository. Or you might use the files in another project in the same
             multi-project build.
             We call this process <firstterm>publication</firstterm>.
@@ -187,6 +193,8 @@
             外部依存関係は、<literal>group</literal>属性、<literal>name</literal>属性、そして<literal>version</literal>属性を用いて定義します。
             使用しているリポジトリの種類によっては、<literal>group</literal>属性と<literal>version</literal>属性はオプショナルになるかもしれません。
         </para>
+        <para>The shortcut form for declaring external dependencies looks like “<literal><replaceable>group</replaceable>:<replaceable>name</replaceable>:<replaceable>version</replaceable></literal>”.
+        </para>
         <para role="original">There is a shortcut form for declaring external dependencies, which uses a string of the form <literal>"<replaceable>group</replaceable>:<replaceable>name</replaceable>:<replaceable>version</replaceable>"</literal>.
         </para>
         <para>外部依存関係を定義するときは、ショートカット形式を使うこともできます。<literal>"<replaceable>group</replaceable>:<replaceable>name</replaceable>:<replaceable>version</replaceable>"</literal>という文字列を使う形式です。
@@ -274,7 +282,7 @@
             You can also publish to Maven repositories. The syntax is slightly different.<footnote>
                 <para role="original">We are working to make the syntax consistent for resolving from and publishing to Maven repositories.</para>
             </footnote>
-            Note that you also need to apply the Maven plugin in order to publish to a Maven repository. In this instance, Gradle
+            Note that you also need to apply the Maven plugin in order to publish to a Maven repository. when this is in place, Gradle
             will generate and upload a <filename>pom.xml</filename>.
         </para>
         <para>

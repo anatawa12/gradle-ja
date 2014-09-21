@@ -19,10 +19,11 @@ package org.gradle.launcher.daemon
 import org.gradle.integtests.fixtures.AvailableJavaHomes
 import org.gradle.integtests.fixtures.executer.GradleHandle
 import org.gradle.internal.jvm.Jvm
-import org.gradle.internal.os.OperatingSystem
 import org.gradle.launcher.daemon.client.DaemonDisappearedException
 import org.gradle.launcher.daemon.testing.DaemonContextParser
 import org.gradle.launcher.daemon.testing.DaemonEventSequenceBuilder
+import org.gradle.util.Requires
+import org.gradle.util.TestPrecondition
 import spock.lang.IgnoreIf
 
 import static org.gradle.test.fixtures.ConcurrentTestUtil.poll
@@ -128,7 +129,7 @@ class DaemonLifecycleSpec extends DaemonIntegrationSpec {
 
     void startForegroundDaemonWithAlternateJavaHome() {
         run {
-            javaHome = AvailableJavaHomes.bestAlternative
+            javaHome = AvailableJavaHomes.differentJdk.javaHome
             startForegroundDaemonNow()
             javaHome = null
         }
@@ -169,8 +170,8 @@ class DaemonLifecycleSpec extends DaemonIntegrationSpec {
         run { failed builds[num] }
     }
 
-    void foregroundDaemonFailed(int num = 0) {
-        run { failed foregroundDaemons[num] }
+    void foregroundDaemonCompleted(int num = 0) {
+        run { foregroundDaemons[num].waitForFinish() }
     }
 
     void failed(GradleHandle handle) {
@@ -328,10 +329,10 @@ class DaemonLifecycleSpec extends DaemonIntegrationSpec {
         buildFailedWithDaemonDisappearedMessage()
 
         and:
-        foregroundDaemonFailed()
+        foregroundDaemonCompleted()
     }
 
-    @IgnoreIf({OperatingSystem.current().windows})
+    @Requires(TestPrecondition.NOT_WINDOWS)
     //(SF) On windows at the moment, we cannot reliably kill the client without waiting for the daemon to complete
     //It's because of the way windows handles pipes for child processes.
     //basically, process.waitFor() completes and you can get hold of the exit value,
@@ -354,7 +355,7 @@ class DaemonLifecycleSpec extends DaemonIntegrationSpec {
         stopped()
     }
 
-    @IgnoreIf({OperatingSystem.current().windows})
+    @Requires(TestPrecondition.NOT_WINDOWS)
     //See the comment in the previous test
     def "tearing down client while daemon is building tears down daemon _process_"() {
         when:
@@ -377,7 +378,7 @@ class DaemonLifecycleSpec extends DaemonIntegrationSpec {
         stopped() // just means the daemon has disappeared from the registry
 
         and:
-        foregroundDaemonFailed()
+        foregroundDaemonCompleted()
     }
 
     def "tearing down daemon process produces nice error message for client"() {
@@ -404,7 +405,7 @@ class DaemonLifecycleSpec extends DaemonIntegrationSpec {
         run { assert executer.daemonRegistry.all.empty }
     }
 
-    @IgnoreIf({ AvailableJavaHomes.bestAlternative == null})
+    @IgnoreIf({ AvailableJavaHomes.differentJdk == null})
     def "if a daemon exists but is using a different java home, a new compatible daemon will be created and used"() {
         when:
         startForegroundDaemonWithAlternateJavaHome()
@@ -414,7 +415,7 @@ class DaemonLifecycleSpec extends DaemonIntegrationSpec {
 
         and:
         foregroundDaemonContext {
-            assert javaHome == AvailableJavaHomes.bestAlternative
+            assert javaHome == AvailableJavaHomes.differentJdk.javaHome
         }
 
         when:
@@ -434,7 +435,7 @@ class DaemonLifecycleSpec extends DaemonIntegrationSpec {
         }
     }
 
-    @IgnoreIf({ AvailableJavaHomes.bestAlternative == null})
+    @IgnoreIf({ AvailableJavaHomes.differentJdk == null})
     def "can stop a daemon that is using a different java home"() {
         when:
         startForegroundDaemonWithAlternateJavaHome()

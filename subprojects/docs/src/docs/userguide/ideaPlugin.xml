@@ -1,4 +1,4 @@
-﻿<!--
+<!--
   ~ Copyright 2010 the original author or authors.
   ~
   ~ Licensed under the Apache License, Version 2.0 (the "License");
@@ -19,7 +19,7 @@
 
     <para role="original">The IDEA plugin generates files that are used by <ulink url="http://www.jetbrains.com/idea/">IntelliJ IDEA</ulink>, thus
         making it possible to open the project from IDEA (<guimenuitem>File</guimenuitem> - <guimenuitem>Open Project</guimenuitem>).
-        Both external dependencies (including associated source and javadoc files) and project dependencies are considered.</para>
+        Both external dependencies (including associated source and Javadoc files) and project dependencies are considered.</para>
     <para>
     IDEAプラグインは、<ulink url="http://www.jetbrains.com/idea/">IntelliJ IDEA</ulink>が使用するファイルを生成し、プロジェクトをIDEA(<guimenuitem>File</guimenuitem> - <guimenuitem>Open Project</guimenuitem>)で開けるようにします。
     外部依存関係(関連するソースやjavadocファイルを含む)とプロジェクト依存関係についても考慮されています。
@@ -67,12 +67,12 @@
         <title>タスク <phrase role="original">Tasks</phrase></title>
 
         <para role="original">The IDEA plugin adds the tasks shown below to a project.
-            Notice that <literal>clean</literal> does not depend on <literal>cleanIdeaWorkspace</literal>.
-            It's because workspace contains a lot of user specific temporary data and typically it is not desirable to manipulate it outside IDEA.
+            Notice that the <literal>clean</literal> task does not depend on the <literal>cleanIdeaWorkspace</literal> task.
+            This is because the workspace typically contains a lot of user specific temporary data and it is not desirable to manipulate it outside IDEA.
         </para>
         <para>
         IDEAプラグインはプロジェクトに以下のタスクを追加します。
-        <literal>cleanIdea</literal>が<literal>cleanIdeaWorkspace</literal>に依存していないことに注意してください。
+        <literal>clean</literal>タスクが<literal>cleanIdeaWorkspace</literal>タスクに依存していないことに注意してください。
         ワークスペースにはユーザーごとの一時データが多く含まれており、一般的にはIDEAの外からは操作されたくないものだからです。
         </para>
 
@@ -216,7 +216,7 @@
 
     <section>
         <title>生成するファイルのカスタマイズ <phrase role="original">Customizing the generated files</phrase></title>
-        <para role="original">IDEA plugin provides hooks and behavior for customizing the generated content.
+        <para role="original">The IDEA plugin provides hooks and behavior for customizing the generated content.
             The workspace file can effectively only be manipulated via the <code>withXml</code> hook
             because its corresponding domain object is essentially empty.</para>
         <para>
@@ -233,19 +233,22 @@
             既存のIDEAファイルのセクションのうち、生成される内容の対象になっているものは、セクションごとに修正、または上書きされます。
             それ以外のセクションはそのまま残されます。
             </para>
-            <section id="sec:complete-overwrite-i">
+            <section id="sec:complete-overwrite">
                 <title>マージを無効にして、完全に上書きする <phrase role="original">Disabling merging with a complete overwrite</phrase></title>
-                <para role="original">To completely overwrite existing IDEA files, execute a clean task together with its corresponding generation task,
-                    for example <userinput>gradle cleanIdea idea</userinput> (in that order). If you want to make this
-                    the default behavior, add <code>tasks.idea.dependsOn(cleanIdea)</code> to your build script. This makes it
+                <para role="original">To completely rewrite existing IDEA files, execute a clean task together with its corresponding generation task,
+                    like "<userinput>gradle cleanIdea idea</userinput>" (in that order). If you want to make this
+                    the default behavior, add "<code>tasks.idea.dependsOn(cleanIdea)</code>" to your build script. This makes it
                     unnecessary to execute the clean task explicitly.
                 </para>
                 <para>
                 既存のIDEAファイルを完全に上書きするには、クリーンタスクを、対応する生成タスクと一緒に使用してください。例えば、<userinput>gradle cleanIdea idea</userinput>をこの順序で使用します。
                 デフォルトでそのように動作させたいのであれば、<code>tasks.idea.dependsOn(cleanIdea)</code>というコードをビルドスクリプトに追加してください。明示的にクリーンタスクを実行する必要がなくなります。
                 </para>
-                <para role="original">Complete overwrite works equally well for individual files, for example by executing <userinput> gradle cleanIdeaModule ideaModule</userinput>.</para>
-                <para>個々のファイルに対しても同様で、例えば<userinput> gradle cleanIdeaModule ideaModule</userinput>とすることで、完全に上書きすることができます。</para>
+                <para role="original">This strategy can also be used for individual files that the plugin would generate.  For instance,
+                this can be done for the “<literal>.iml</literal>” file with “<userinput>gradle cleanIdeaModule ideaModule</userinput>”.
+                </para>
+                <para>この戦略はプラグインが生成する個々のファイルに対しても適用可能で、例えば
+                “<literal>.iml</literal>”ファイルに対して"<userinput> gradle cleanIdeaModule ideaModule</userinput>"のようにできます。</para>
             </section>
         </section>
         <section>
@@ -305,14 +308,15 @@
             </table>
             <section id="sec:partial-overwrite">
                 <title>既存の内容を部分的に上書きする <phrase role="original">Partial overwrite of existing content</phrase></title>
-                <para><phrase role="original">A <link linkend="sec:complete-overwrite">complete overwrite</link> causes all existing content to be discarded,
+                <para><phrase role="original">A <link linkend="sec:complete-rewrite">complete rewrite</link> causes all existing content to be discarded,
                     thereby losing any changes made directly in the IDE. The <code>beforeMerged</code> hook makes it possible
                     to overwrite just certain parts of the existing content. The following example removes all existing dependencies
                     from the <literal>Module</literal> domain object:</phrase>
-                    <link linkend="sec:complete-overwrite-i">完全な上書き</link>は、既存の内容を全て破棄するので、IDEで直接行った変更も失われてしまいます。<code>beforeMerged</code>フックを使うと、既存の内容のうち特定の部分だけを上書きすることができます。
+                    <link linkend="sec:complete-rewrite">完全な上書き</link>は、既存の内容を全て破棄するので、IDEで直接行った変更も失われてしまいます。
+                    <code>beforeMerged</code>フックを使うと、既存の内容のうち特定の部分だけを上書きすることができます。
                     次の例では、<code>Module</code>ドメインオブジェクトから、既存の依存関係を全て削除しています。
-                    <sample id="partialOverwrites" dir="idea"
-                            title="モジュールの部分的な上書き / Partial Overwrite for Module">
+                    <sample id="partialRewrites" dir="idea"
+                            title="モジュールの部分的な上書き / Partial Rewrite for Module">
                         <sourcefile file="build.gradle" snippet="module-before-merged"/>
                     </sample>
                     <phrase role="original">
@@ -324,15 +328,15 @@
                     結果として生成されるモジュールファイルには、Gradleが生成した依存関係のエントリのみが含まれており、元のファイルにあった他のエントリは含まれていません(依存関係エントリの場合、これがデフォルトの動作でもあります)。
                     そして、モジュールファイルの別のセクションはそのまま、またはマージされた状態で残されます。
                     同じことはプロジェクトファイルのモジュールパスを使用しても実現可能です。
-                    <sample id="partialOverwritesProject" dir="idea"
-                            title="プロジェクトの部分的な上書き / Partial Overwrite for Project">
+                    <sample id="partialRewritesProject" dir="idea"
+                            title="プロジェクトの部分的な上書き / Partial Rewrite for Project">
                         <sourcefile file="build.gradle" snippet="project-before-merged"/>
                     </sample>
                 </para>
             </section>
             <section>
                 <title>読み込まれた全ドメインオブジェクトを編集する <phrase role="original">Modifying the fully populated domain objects</phrase></title>
-                <para><phrase role="original">The <code>whenMerged</code> hook allows to manipulate the fully populated domain objects. Often this is the
+                <para><phrase role="original">The <code>whenMerged</code> hook allows you to manipulate the fully populated domain objects. Often this is the
                     preferred way to customize IDEA files. Here is how you would export all the dependencies of an IDEA module:</phrase>
                 <code>whenMerged</code>フックを使うと、読み込まれた全てのドメインオブジェクトを操作できます。
                 IDEAファイルをカスタマイズするときは、多くの場合このフックを使うのが好ましい方法です。例えば、IDEAモジュールの全ての依存関係をエクスポートするには、以下のようにします。
@@ -345,7 +349,7 @@
             </section>
             <section>
                 <title>XMLデータを編集する <phrase role="original">Modifying the XML representation</phrase></title>
-                <para><phrase role="original">The <code>withXml</code>hook allows to manipulate the in-memory XML representation just before the file gets written to disk.
+                <para><phrase role="original">The <code>withXml</code>hook allows you to manipulate the in-memory XML representation just before the file gets written to disk.
                     Although Groovy's XML support makes up for a lot, this approach is less convenient than manipulating the domain objects.
                     In return, you get total control over the generated file, including sections not modeled by the domain objects.</phrase>
                     <code>withXml</code>フックを使うと、メモリ内のXMLデータを、ファイルに書き出される直前に操作できます。
@@ -364,7 +368,7 @@
         <title>その他の注意事項 <phrase role="original">Further things to consider</phrase></title>
         <para role="original">The paths of the dependencies in the generated IDEA files are absolute. If you manually define a path variable
             pointing to the Gradle dependency cache, IDEA will automatically replace the absolute dependency paths with
-            this path variable. If you use such a path variable, you need to configure this path variable via <literal>idea.pathVariables</literal>,
+            this path variable. you can configure this path variable via the “<literal>idea.pathVariables</literal>” property,
             so that it can do a proper merge without creating duplicates.</para>
         <para>
         生成されるIDEAファイルでは、依存関係が絶対パスで保存されます。

@@ -15,8 +15,8 @@
  */
 package org.gradle.tooling;
 
-import org.gradle.tooling.exceptions.UnsupportedBuildArgumentException;
-import org.gradle.tooling.exceptions.UnsupportedOperationConfigurationException;
+import org.gradle.api.Incubating;
+import org.gradle.tooling.model.Launchable;
 import org.gradle.tooling.model.Task;
 
 import java.io.File;
@@ -105,6 +105,26 @@ public interface BuildLauncher extends LongRunningOperation {
     BuildLauncher forTasks(Iterable<? extends Task> tasks);
 
     /**
+     * Sets the launchables to execute. If no entries are specified, the project's default tasks are executed.
+     *
+     * @param launchables The launchables for this build.
+     * @return this
+     * @since 1.12
+     */
+    @Incubating
+    BuildLauncher forLaunchables(Launchable... launchables);
+
+    /**
+     * Sets the launchables to execute. If no entries are specified, the project's default tasks are executed.
+     *
+     * @param launchables The launchables for this build.
+     * @return this
+     * @since 1.12
+     */
+    @Incubating
+    BuildLauncher forLaunchables(Iterable<? extends Launchable> launchables);
+
+    /**
      * {@inheritDoc}
      * @since 1.0
      */
@@ -150,18 +170,18 @@ public interface BuildLauncher extends LongRunningOperation {
      * Executes the build, blocking until it is complete.
      *
      * @throws UnsupportedVersionException When the target Gradle version does not support build execution.
-     * @throws UnsupportedOperationConfigurationException
+     * @throws org.gradle.tooling.exceptions.UnsupportedOperationConfigurationException
      *          When the target Gradle version does not support some requested configuration option such as
      *          {@link #setStandardInput(java.io.InputStream)}, {@link #setJavaHome(java.io.File)},
      *          {@link #setJvmArguments(String...)}.
-     * @throws UnsupportedBuildArgumentException When there is a problem with build arguments provided by {@link #withArguments(String...)}.
+     * @throws org.gradle.tooling.exceptions.UnsupportedBuildArgumentException When there is a problem with build arguments provided by {@link #withArguments(String...)}.
      * @throws BuildException On some failure executing the Gradle build.
+     * @throws BuildCancelledException When the operation was cancelled before it completed successfully.
      * @throws GradleConnectionException On some other failure using the connection.
      * @throws IllegalStateException When the connection has been closed or is closing.
      * @since 1.0-milestone-3
      */
-    void run() throws GradleConnectionException, UnsupportedBuildArgumentException, IllegalStateException,
-            BuildException, UnsupportedVersionException, UnsupportedOperationConfigurationException;
+    void run() throws GradleConnectionException, IllegalStateException;
 
     /**
      * Launches the build. This method returns immediately, and the result is later passed to the given handler.

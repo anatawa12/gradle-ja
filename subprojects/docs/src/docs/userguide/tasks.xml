@@ -15,14 +15,20 @@
   -->
 <chapter id='more_about_tasks' xml:lang="ja">
     <title>タスク詳解<phrase role="original">More about Tasks</phrase></title>
-    <para role="original">In the introductory tutorial (<xref linkend='tutorial_using_tasks'/>) you have learned how to
-        create simple tasks. You have also learned how to add additional behavior to these tasks later on. And you have
-        learned how to create dependencies between tasks. This was all about simple tasks. But Gradle takes the concept
-        of tasks further. Gradle supports <firstterm>enhanced tasks</firstterm>, that is, tasks which have their own
-        properties and methods. This is really different to what you are used to with Ant targets. Such enhanced tasks are
-        either provided by you or are provided by Gradle.
+    <para role="original">In the introductory tutorial (<xref linkend='tutorial_using_tasks'/>) you learned how to
+        create simple tasks. You also learned how to add additional behavior to these tasks later on, and you
+        learned how to create dependencies between tasks. This was all about simple tasks, but Gradle takes the concept
+        of tasks further. Gradle supports <firstterm>enhanced tasks</firstterm>, which are tasks that have their own
+        properties and methods. This is really different from what you are used to with Ant targets. Such enhanced tasks are
+        either provided by you or built into Gradle.
     </para>
-    <para>「<xref linkend='tutorial_using_tasks'/>」の入門的なチュートリアルでは、簡単なタスクの作り方や、後からタスクにアクションを追加する方法について学びました。さらに、タスク間の依存関係を定義する方法についても学びました。単純なタスクについてはこんなところですが、Gradleはタスクという概念をもっと進化させています。<firstterm>拡張タスク</firstterm>、つまり自身のプロパティやメソッドを持ったタスクを使うことができるのです。これは、今まで使われてきたAntのターゲットとは全く異なる概念です。拡張タスクは、Gradleがデフォルトで用意しているものもありますし、自分自身で新たに作成することもできます。</para>
+    <para>「<xref linkend='tutorial_using_tasks'/>」の入門的なチュートリアルでは、簡単なタスクの作り方や、後からタスクにアクションを追加する方法について学びました。
+        さらに、タスク間の依存関係を定義する方法についても学びました。
+        単純なタスクについてはこんなところですが、Gradleはタスクという概念をもっと進化させています。
+        <firstterm>拡張タスク</firstterm>、つまり自身のプロパティやメソッドを持ったタスクを使うことができるのです。
+        これは、今まで使われてきたAntのターゲットとは全く異なる概念です。
+        拡張タスクは、Gradleがデフォルトで用意しているものもありますし、自分自身で新たに作成することもできます。
+    </para>
     <section>
         <title>タスクの定義<phrase role="original">Defining tasks</phrase></title>
         <para role="original">We have already seen how to define tasks using a keyword style in <xref linkend="tutorial_using_tasks"/>.
@@ -49,9 +55,9 @@
         <para>この例では、<literal>tasks</literal>コレクションにタスクを追加しています。<literal>create()</literal>メソッドのバリエーションについては<apilink class="org.gradle.api.tasks.TaskContainer"/>をご参照ください。</para>
     </section>
     <section>
-        <title>タスクを参照する<phrase role="original">Locating tasks</phrase></title>
+        <title>タスクを配置する<phrase role="original">Locating tasks</phrase></title>
         <para role="original">You often need to locate the tasks that you have defined in the build file, for example, to configure them
-            or use them for dependencies. There are a number of ways you can do this. Firstly, each task is available as
+            or use them for dependencies. There are a number of ways of doing this. Firstly, each task is available as
             a property of the project, using the task name as the property name:
         </para>
         <para>ビルドファイルから、定義済みのタスクを探して取得したい、というケースがよくあります。例えば、既存のタスクの設定を変更したり、依存関係を定義するために参照したいといった場面です。タスクを取得する方法はたくさんありますが、まずはプロジェクトのプロパティとしてアクセスする方法を見てみましょう。タスク名がプロパティ名として使用できます。</para>
@@ -87,11 +93,19 @@
             The task can be configured using its API (see <apilink class="org.gradle.api.tasks.Copy"/>).
 			The following examples show several different ways to achieve the same configuration.
         </para>
-        <para>作成されたコピータスクには、デフォルトでは何の動作も設定されていません。タスクは、タスクのAPI(<apilink class="org.gradle.api.tasks.Copy"/>参照)を使って設定することができます。次のいくつかの例は、どれも同じ設定を行うものです。</para>
+        <para>作成されたコピータスクには、デフォルトでは何の動作も設定されていません。
+            タスクは、タスクのAPI(<apilink class="org.gradle.api.tasks.Copy"/>参照)を使って設定することができます。
+            次のいくつかの例は、どれも同じ設定を行うものです。
+        </para>
+        <para>Just to be clear, realize that the name of this task is “<literal>myCopy</literal>”, but it is of
+        <emphasis>type</emphasis> “<literal>Copy</literal>”.  You can have multiple tasks of the same
+        <emphasis>type</emphasis>, but with different names. You'll find this gives you a lot of power to implement
+        cross-cutting concerns across all tasks of a particular type.
+        </para>
         <sample id="configureUsingVar" dir="userguide/tasks/configureUsingVar" title="タスクの設定 - 様々な方法 / Configuring a task - various ways">
             <sourcefile file="build.gradle"/>
         </sample>
-        <para role="original">This is similar to the way we would normally configure objects in Java. You have to repeat the context
+        <para role="original">This is similar to the way we would configure objects in Java. You have to repeat the context
             (<literal>myCopy</literal>) in the configuration statement every time. This is a redundancy and not very
             nice to read.
         </para>
@@ -114,6 +128,14 @@
         <sample id="defineAndConfigure" dir="userguide/tasks/defineAndConfigure" title="クロージャを伴うタスク定義 / Defining a task with closure">
             <sourcefile file="build.gradle" snippet="no-description"/>
         </sample>
+        <tip>
+            <title>Don't forget about the build phases</title>
+            <para>A task has both configuration and actions.
+                When using the <literal>&lt;&lt;</literal>, you are simply using a shortcut to define an action.
+                Code defined in the configuration section of your task will get executed during the configuration phase of the build regardless of what task was targeted.
+                See <xref linkend="build_lifecycle"/> for more details about the build lifecycle.
+            </para>
+        </tip>
     </section>
     <section id='sec:adding_dependencies_to_tasks'>
         <title>タスクに依存関係を追加する<phrase role="original">Adding dependencies to a task</phrase></title>
@@ -121,7 +143,7 @@
             <xref linkend='sec:task_dependencies'/>
             you were introduced to defining dependencies using task names. Task names can refer to tasks in the same
             project as the task, or to tasks in other projects. To refer to a task in another project, you prefix the
-            name of the task with the path of the project it belongs to. Below is an example which adds a dependency
+            name of the task with the path of the project it belongs to. The following is an example which adds a dependency
             from
             <literal>projectA:taskX</literal>
             to
@@ -176,10 +198,16 @@
             <listitem>A task that aggregates the results of all tasks of a particular type: eg. test report task combines the outputs of all executed test tasks.</listitem>
         </itemizedlist>
         <para>
-            There are two ordering rules available: "<emphasis>must run after</emphasis>" and "<emphasis>should run after</emphasis>".
+            There are two ordering rules available: “<emphasis>must run after</emphasis>” and “<emphasis>should run after</emphasis>”.
         </para>
-        <para>By using 'must run after" ordering rule you can specify that <literal>taskB</literal> must always run after <literal>taskA</literal>,
-            whenever both <literal>taskA</literal> and <literal>taskB</literal> are scheduled for execution. This is expressed as <literal>taskB.mustRunAfter(taskA)</literal>. The 'should run after' ordering rule is similar but less strict as it will be ignored in two situations. Firstly if using that rule introduces an ordering cycle. Secondly when using parallel execution and all dependencies of a task have been satisfied apart from should run after then this task will be run regardless of weather its 'should run after' dependencies have been run or not. You would use 'should run after' rule when ordering preference for faster feedback, where the ordering is helpful but not strictly required.
+        <para>When you use the “must run after” ordering rule you specify that <literal>taskB</literal> must always
+        run after <literal>taskA</literal>, whenever both <literal>taskA</literal> and <literal>taskB</literal> will
+        be run. This is expressed as <literal>taskB.mustRunAfter(taskA)</literal>. The “should run
+        after” ordering rule is similar but less strict as it will be ignored in two situations. Firstly if using
+        that rule introduces an ordering cycle. Secondly when using parallel execution and all dependencies of a
+        task have been satisfied apart from the “should run after” task, then this task will be run regardless of
+        whether its “should run after” dependencies have been run or not. You should use “should run after”
+        where the ordering is helpful but not strictly required.
         </para>
         <para>
             With these rules present it is still possible to execute <literal>taskA</literal> without <literal>taskB</literal> and vice-versa.
@@ -196,17 +224,17 @@
         <sample id="mustRunAfterSingleTask" dir="userguide/tasks/mustRunAfter" title="Task ordering does not imply task execution">
             <output args="-q taskY"/>
         </sample>
-        <para>To specify a "must run after" or "should run after" ordering between 2 tasks, you use the <apilink class="org.gradle.api.Task" method="mustRunAfter"/> and <apilink class="org.gradle.api.Task" method="shouldRunAfter"/> methods.
-            These method accept a task instance, a task name or any other input accepted by <apilink class="org.gradle.api.Task" method="dependsOn"/>.
+        <para>To specify a “must run after” or “should run after” ordering between 2 tasks, you use the <apilink class="org.gradle.api.Task" method="mustRunAfter"/> and <apilink class="org.gradle.api.Task" method="shouldRunAfter"/> methods.
+            These methods accept a task instance, a task name or any other input accepted by <apilink class="org.gradle.api.Task" method="dependsOn"/>.
         </para>
         <para>
-            Note that "<literal>B.mustRunAfter(A)</literal>" or "<literal>B.shouldRunAfter(A)</literal>" does not imply any execution dependency between the tasks:
+            Note that “<literal>B.mustRunAfter(A)</literal>” or “<literal>B.shouldRunAfter(A)</literal>” does not imply any execution dependency between the tasks:
         </para>
         <itemizedlist>
             <listitem>It is possible to execute tasks <literal>A</literal> and <literal>B</literal> independently. The ordering rule only has an effect when both tasks are scheduled for execution.</listitem>
             <listitem>When run with <literal>--continue</literal>, it is possible for <literal>B</literal> to execute in the event that <literal>A</literal> fails.</listitem>
         </itemizedlist>
-        <para>As mentioned before 'should run after' ordering rule will be ignored if it introduces an ordering cycle:</para>
+        <para>As mentioned before, the “should run after” ordering rule will be ignored if it introduces an ordering cycle:</para>
         <sample id="shouldRunAfterWithCycle" dir="userguide/tasks/shouldRunAfterWithCycle" title="A 'should run after' task ordering is ignored if it introduces an ordering cycle">
             <sourcefile file="build.gradle"/>
             <output args="-q taskX"/>
@@ -214,7 +242,7 @@
     </section>
     <section>
         <title>タスクに説明書きを追加する<phrase role="original">Adding a description to a task</phrase></title>
-        <para role="original">You can add a description to your task. This description is for example displayed when executing
+        <para role="original">You can add a description to your task. This description is displayed when executing
             <userinput>gradle tasks</userinput>.
         </para>
         <para>定義したタスクに、説明書きを追加できます。追加した説明は、たとえば<userinput>gradle tasks</userinput>を実行したときなどに表示されます。</para>
@@ -224,7 +252,7 @@
     </section>
     <section>
         <title>タスクの置き換え<phrase role="original">Replacing tasks</phrase></title>
-        <para role="original">Sometimes you want to replace a task. For example if you want to exchange a task added by the Java plugin
+        <para role="original">Sometimes you want to replace a task. For example, if you want to exchange a task added by the Java plugin
             with a custom task of a different type. You can achieve this with:
         </para>
         <para>ときには、タスクを置き換えたくなることがあります。例えば、Javaプラグインによって追加されたタスクを、別のタイプのカスタムタスクに入れ替えたいといった場合です。これは、次のようにして実現できます。</para>
@@ -232,9 +260,9 @@
             <sourcefile file="build.gradle"/>
             <output args="-q copy"/>
         </sample>
-        <para role="original">Here we replace a task of type <literal>Copy</literal> with a simple task. When creating the simple
-            task, you have to set the <literal>overwrite</literal> property to true. Otherwise Gradle throws an
-            exception, saying that a task with such a name already exists.
+        <para role="original">This will replace a task of type <literal>Copy</literal> with the task you've defined, because it
+        uses the same name. When you define the new task, you have to set the <literal>overwrite</literal> property
+        to true. Otherwise Gradle throws an exception, saying that a task with that name already exists.
         </para>
         <para>ここでは、<literal>Copy</literal>タイプのタスクを、シンプルな別のタスクに置き換えています。タスクを作成するときに、<literal>overwrite</literal>プロパティをtrueにセットしなければなりません。そうしないと、Gradleは例外を投げ、すでに同名のタスクが定義済みだと警告してきます。</para>
     </section>
@@ -259,7 +287,7 @@
 
         <section>
         <title>StopExecutionExceptionを使う<phrase role="original">Using StopExecutionException</phrase></title>
-        <para role="original">If the rules for skipping a task can't be expressed with predicate, you can use the
+        <para role="original">If the logic for skipping a task can't be expressed with predicate, you can use the
             <apilink class="org.gradle.api.tasks.StopExecutionException"/>. If this exception is thrown by an action,
             the further execution of this action as well as the execution of
             any following action of this task is skipped. The build continues with executing the next task.
@@ -290,7 +318,7 @@
 
         <section>
         <title>タスクの有効化と無効化<phrase role="original">Enabling and disabling tasks</phrase></title>
-        <para role="original">Every task has also an <literal>enabled</literal>
+        <para role="original">Every task has an <literal>enabled</literal>
             flag which defaults to <literal>true</literal>. Setting it to <literal>false</literal> prevents the
             execution of any of the task's actions.
         </para>
@@ -345,6 +373,16 @@
                 The task's <literal>outputs</literal> property is of type <apilink class="org.gradle.api.tasks.TaskOutputs"/>.
             </para>
             <para>タスクのinputsプロパティは<apilink class="org.gradle.api.tasks.TaskInputs"/>型、outputsプロパティは<apilink class="org.gradle.api.tasks.TaskOutputs"/>型です。</para>
+            <para>
+                A task with no defined outputs will <emphasis>never</emphasis> be considered up-to-date.
+                For scenarios where the outputs of a task are not files, or for more complex scenarios, the
+                <apilink class="org.gradle.api.tasks.TaskOutputs" method="upToDateWhen(groovy.lang.Closure)" /> method allows you to calculate programmatically if
+                the tasks outputs should be considered up to date.
+            </para>
+            <para>
+                A task with only outputs defined will be considered up-to-date if those outputs are unchanged since the previous build.
+            </para>
+
         </section>
         <section>
             <title>どのように動作するのか？<phrase role="original">How does it work?</phrase></title>
@@ -352,8 +390,7 @@
                 Before a task is executed for the first time, Gradle takes a snapshot of the inputs. This snapshot contains
                 the set of input files and a hash of the contents of each file. Gradle then executes the task. If the
                 task completes successfully, Gradle takes a snapshot of the outputs. This snapshot contains the set of
-                output files and a hash of the contents of each file. Gradle takes note of any files created, changed or
-                deleted in the output directories of the task. Gradle persists both snapshots for next time the task
+                output files and a hash of the contents of each file. Gradle persists both snapshots for the next time the task
                 is executed.
             </para>
             <para>タスクが初回に実行されるとき、実行前にGradleは入力物のスナップショットをとります。このスナップショットには、入力ファイルのセットと、それぞれのファイル内容のハッシュが含まれています。Gradleは、その後、タスクを実行します。もしタスクが正常に終了すれば、Gradleは出力物のスナップショットを保存します。このスナップショットには、やはり出力ファイルのセットと、それぞれのファイル内容のハッシュが含まれていて、Gradleが、出力ディレクトリ内でファイルが作成または変更、削除されたことを検知するために使用されます。Gradleは、次回そのタスクが実行されたときのために、双方のスナップショットを保管します。</para>
@@ -361,15 +398,23 @@
                 Each time after that, before the task is executed, Gradle takes a new snapshot of the inputs and outputs.
                 If the new snapshots are the same as the previous snapshots, Gradle assumes that the outputs are up to
                 date and skips the task. If they are not the same, Gradle executes the task. Gradle persists both snapshots
-                for next time the task is executed.
+                for the next time the task is executed.
             </para>
-            <para>この後は、タスクが実行される前に毎回、入力物と出力物のスナップショットを新しく作成します。もし、新しいスナップショットが、前回のスナップショットと同じなら、Gradleは出力がUP-TO-DATEだと見なし、タスクをスキップします。スナップショットが異なっていれば、Gradleはタスクを実行し、次回実行されるときのためにスナップショットを保存しなおします。</para>
+            <para>この後は、タスクが実行される前に毎回、入力物と出力物のスナップショットを新しく作成します。
+               もし、新しいスナップショットが、前回のスナップショットと同じなら、Gradleは出力がUP-TO-DATEだと見なし、タスクをスキップします。
+               スナップショットが異なっていれば、Gradleはタスクを実行し、次回実行されるときのためにスナップショットを保存しなおします。
+            </para>
+            <para>
+                Note that if a task has an output directory specified, any files added to that directory since the last time it was executed
+                are ignored and will NOT cause the task to be out of date. This is so unrelated tasks may share an output directory without interfering with each other.
+                If this is not the behaviour you want for some reason, consider using <apilink class="org.gradle.api.tasks.TaskOutputs" method="upToDateWhen(groovy.lang.Closure)" />
+            </para>
         </section>
     </section>
 
     <section>
         <title>タスクルール<phrase role="original">Task rules</phrase></title>
-        <para role="original">Sometimes you want to have a task which behavior depends on a large or infinite number value range
+        <para role="original">Sometimes you want to have a task whose behavior depends on a large or infinite number value range
             of parameters. A very nice and expressive way to provide such tasks are task rules:
         </para>
         <para>ときには、広範囲、または無限大な範囲のパラメータに応じた動作を行うタスクを定義したくなることがあります。このようなタスクを定義するための、表現力のあるよい方法がタスクルールです。</para>
@@ -377,11 +422,10 @@
             <sourcefile file="build.gradle" snippet="task-rule"/>
             <output args="-q pingServer1"/>
         </sample>
-        <para role="original">The String parameter is used as a description for the rule. This description is shown when running
-            for example <userinput>gradle tasks</userinput>.
+        <para role="original">The String parameter is used as a description for the rule, which is shown with <userinput>gradle tasks</userinput>.
         </para>
         <para>文字列が引数に渡されていますが、これはルールの説明として使用されます。例えば、<userinput>gradle tasks</userinput>を実行したときなどに表示されます。</para>
-        <para role="original">Rules not just work for calling tasks from the command line. You can also create dependsOn relations
+        <para role="original">Rules not only used when calling tasks from the command line. You can also create dependsOn relations
             on rule based tasks:
         </para>
         <para>ルールは、ただコマンドラインからのタスク呼び出しにのみ使えるものではありません。dependsOnによる依存関係定義のときも、ルールベースのタスクを使うことができます。</para>
@@ -389,6 +433,9 @@
             <sourcefile file="build.gradle"/>
             <output args="-q groupPing"/>
         </sample>
+        <para>If you run “<literal>gradle -q tasks</literal>” you won't find a task named
+        “<literal>pingServer1</literal>” or “<literal>pingServer2</literal>”, but this script is executing logic
+        based on the request to run those tasks.</para>
     </section>
 
     <section>
@@ -403,30 +450,36 @@
             <sourcefile file="build.gradle"/>
             <output args="-q taskX"/>
         </sample>
-        <para>Finalizer task will be executed even if the finalized task fails.</para>
+        <para>Finalizer tasks will be executed even if the finalized task fails.</para>
         <sample id="taskFinalizersWithFailure" dir="userguide/tasks/finalizersWithFailure" title="Task finalizer for a failing task">
             <sourcefile file="build.gradle"/>
             <output args="-q taskX"/>
         </sample>
-        <para>On the other hand, finalizer tasks are not executed if the finalized task didn't do any work, for example due to failed
-            task dependency or if it's considered up to date.</para>
-        <para>Finalizer tasks are useful in situations where build creates a resource that has to be cleaned up regardless
-            of the build failing or succeeding. An example of such resource is a web container started before an integration test task
+        <para>On the other hand, finalizer tasks are not executed if the finalized task didn't do any work, for example if it
+        is considered up to date or if a dependent task fails.</para>
+        <para>Finalizer tasks are useful in situations where the build creates a resource that has to be cleaned up regardless
+            of the build failing or succeeding. An example of such a resource is a web container that is started before an integration test task
             and which should be always shut down, even if some of the tests fail.</para>
         <para>To specify a finalizer task you use the <apilink class="org.gradle.api.Task" method="finalizedBy"/> method.
-            This method accepts a task instance, a task name or any other input accepted by <apilink class="org.gradle.api.Task" method="dependsOn"/>.
+            This method accepts a task instance, a task name, or any other input accepted by <apilink class="org.gradle.api.Task" method="dependsOn"/>.
         </para>
     </section>
 
     <section id='sec:the_idea_behind_gradle_tasks'>
         <title>まとめ<phrase role="original">Summary</phrase></title>
-        <para role="original">If you are coming from Ant, such an enhanced Gradle task as <emphasis>Copy</emphasis> looks like a mixture
-            between an Ant target and an Ant task. And this is actually the case. The separation that Ant does between
-            tasks and targets is not done by Gradle. The simple Gradle tasks are like Ant's targets and the enhanced
-            Gradle tasks also include the Ant task aspects. All of Gradle's tasks share a common API and you can create
-            dependencies between them. Such a task might be nicer to configure than an Ant task.
-            It makes full use of the type system, is more expressive and easier to maintain.
+        <para role="original">If you are coming from Ant, an enhanced Gradle task like <emphasis>Copy</emphasis> seems like a cross
+            between an Ant target and an Ant task. Although Ant's tasks and targets are really different entities,
+            Gradle combines these notions into a single entity. Simple Gradle tasks are like Ant's targets, but enhanced
+            Gradle tasks also include aspects of Ant tasks. All of Gradle's tasks share a common API and you can create
+            dependencies between them. These tasks are much easier to configure than an Ant task.
+            They make full use of the type system, and are more expressive and easier to maintain.
         </para>
-        <para>以前にAntを使ったことがあれば、<emphasis>Copy</emphasis>のような拡張タスクは、Antのターゲットとタスクの間をとったようなものに見えるでしょう。その認識は実際、正しいものだと言えます。Antにあったタスクとターゲットの違いは、Gradleにはないということです。単純なGradleのタスクはAntのターゲットのようなものだし、拡張タスクはAntタスクの性質を含んでいます。すべてのGradleタスクは、同じのAPIを共有していて、タスク間の依存関係を定義することができます。このため、GradleのタスクはAntタスクに比べて、より設定しやすいものになっているでしょう。Gradleのタスクは、型システムをフル活用しており、より表現力豊かで、メンテナンス性もよくなっています。</para>
+        <para>以前にAntを使ったことがあれば、<emphasis>Copy</emphasis>のような拡張タスクは、Antのターゲットとタスクの間をとったようなものに見えるでしょう。
+            Antのタスクとターゲットは実際には異なるエンティティですが、Gradleはこれらの記法を1つのエンティティにまとめています。
+            単純なGradleのタスクはAntのターゲットのようなものだし、拡張タスクはAntタスクの性質を含んでいます。
+            すべてのGradleタスクは、同じのAPIを共有していて、タスク間の依存関係を定義することができます。
+            このため、GradleのタスクはAntタスクに比べて、より設定しやすいものになっているでしょう。
+            Gradleのタスクは、型システムをフル活用しており、より表現力豊かで、メンテナンス性もよくなっています。
+        </para>
     </section>
 </chapter>

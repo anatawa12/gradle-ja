@@ -16,14 +16,10 @@
 
 package org.gradle.integtests.tooling.m8
 
-import org.gradle.integtests.tooling.fixture.TargetGradleVersion
 import org.gradle.integtests.tooling.fixture.ToolingApiSpecification
-import org.gradle.integtests.tooling.fixture.ToolingApiVersion
 import org.gradle.tooling.internal.consumer.ConnectorServices
 import org.junit.Assume
 
-@ToolingApiVersion('>=1.0-milestone-8')
-@TargetGradleVersion('>=1.0-milestone-8')
 class ToolingApiLoggingCrossVersionSpec extends ToolingApiSpecification {
 
     def setup() {
@@ -99,7 +95,7 @@ project.logger.debug("debug logging");
         then:
         def out = op.standardOutput
         def err = op.standardError
-        normaliseOutput(out) == normaliseOutput(commandLineResult.output)
+        normaliseOutput(filterToolingApiSpecific(out)) == normaliseOutput(commandLineResult.output)
         err == commandLineResult.error
 
         and:
@@ -116,6 +112,10 @@ project.logger.debug("debug logging");
 
     String normaliseOutput(String output) {
         return output.replaceFirst("Total time: .+ secs", "Total time: 0 secs")
+    }
+
+    String filterToolingApiSpecific(String output) {
+        return output.replaceFirst("Connection from tooling API older than version 1.2 has been deprecated and is scheduled to be removed in Gradle 3.0" + System.getProperty("line.separator"), "")
     }
 
     void shouldNotContainProviderLogging(String output) {

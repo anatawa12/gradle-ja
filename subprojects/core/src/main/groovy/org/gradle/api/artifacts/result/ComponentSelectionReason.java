@@ -50,6 +50,13 @@ public interface ComponentSelectionReason {
     boolean isSelectedByRule();
 
     /**
+     * Informs whether the component is the requested selection of all dependency declarations, and was not replaced for some reason, such as conflict resolution.
+     *
+     * @since 1.11
+     */
+    boolean isExpected();
+
+    /**
      * Returns a human-consumable description of this selection reason.
      */
     String getDescription();

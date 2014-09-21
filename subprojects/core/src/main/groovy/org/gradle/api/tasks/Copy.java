@@ -40,6 +40,12 @@ import java.io.File;
  * //for Ant filter
  * import org.apache.tools.ant.filters.ReplaceTokens
  *
+ * //for including in the copy task
+ * def dataContent = copySpec {
+ *     from 'src/data'
+ *     include '*.data'
+ * }
+ *
  * task initConfig(type: Copy) {
  *     from('src/main/config') {
  *         include '**&#47;*.properties'
@@ -56,6 +62,8 @@ import java.io.File;
  *     exclude '**&#47;*.bak'
  *
  *     includeEmptyDirs = false
+ *
+ *     with dataContent
  * }
  * </pre>
  */
@@ -67,13 +75,13 @@ public class Copy extends AbstractCopyTask {
         if (destinationDir == null) {
             throw new InvalidUserDataException("No copy destination directory has been specified, use 'into' to specify a target directory.");
         }
-        return new FileCopyAction(getServices().get(FileResolver.class).withBaseDir(destinationDir));
+        return new FileCopyAction(getFileLookup().getFileResolver(destinationDir));
     }
 
     @Override
     protected CopySpecInternal createRootSpec() {
-        Instantiator instantiator = getServices().get(Instantiator.class);
-        FileResolver fileResolver = getServices().get(FileResolver.class);
+        Instantiator instantiator = getInstantiator();
+        FileResolver fileResolver = getFileResolver();
 
         return instantiator.newInstance(DestinationRootCopySpec.class, fileResolver, super.createRootSpec());
     }

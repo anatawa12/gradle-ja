@@ -138,6 +138,11 @@ class BuildableTestResultsProvider implements TestResultsProvider {
 
         void failure(String message, String stackTrace) {
             failures.add(new TestFailure(message, stackTrace, "ExceptionType"))
+            resultType = TestResult.ResultType.FAILURE
+        }
+        
+        void ignore() {
+            resultType = TestResult.ResultType.SKIPPED
         }
 
         def stderr(String output) {

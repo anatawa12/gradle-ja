@@ -24,32 +24,32 @@ import org.gradle.api.internal.IConventionAware;
 import org.gradle.api.internal.plugins.DslObject;
 import org.gradle.api.internal.project.ProjectInternal;
 import org.gradle.api.internal.tasks.SourceSetCompileClasspath;
+import org.gradle.api.internal.tasks.testing.NoMatchingTestsReporter;
+import org.gradle.api.jvm.ClassDirectoryBinarySpec;
 import org.gradle.api.reporting.ReportingExtension;
 import org.gradle.api.tasks.SourceSet;
 import org.gradle.api.tasks.compile.AbstractCompile;
 import org.gradle.api.tasks.compile.JavaCompile;
 import org.gradle.api.tasks.javadoc.Javadoc;
-import org.gradle.api.tasks.testing.*;
+import org.gradle.api.tasks.testing.Test;
 import org.gradle.internal.reflect.Instantiator;
-import org.gradle.language.base.BinaryContainer;
+import org.gradle.jvm.Classpath;
 import org.gradle.language.base.FunctionalSourceSet;
 import org.gradle.language.base.ProjectSourceSet;
 import org.gradle.language.java.internal.DefaultJavaSourceSet;
-import org.gradle.language.jvm.ClassDirectoryBinary;
-import org.gradle.language.jvm.Classpath;
 import org.gradle.language.jvm.ResourceSet;
 import org.gradle.language.jvm.internal.DefaultResourceSet;
+import org.gradle.platform.base.BinaryContainer;
 import org.gradle.util.WrapUtil;
 
 import javax.inject.Inject;
 import java.io.File;
-import java.util.Set;
 import java.util.concurrent.Callable;
 
 /**
  * <p>A {@link org.gradle.api.Plugin} which compiles and tests Java source, and assembles it into a JAR file.</p>
  */
-public class JavaBasePlugin implements Plugin<Project> {
+public class JavaBasePlugin implements Plugin<ProjectInternal> {
     public static final String CHECK_TASK_NAME = "check";
     public static final String BUILD_TASK_NAME = "build";
     public static final String BUILD_DEPENDENTS_TASK_NAME = "buildDependents";
@@ -64,12 +64,12 @@ public class JavaBasePlugin implements Plugin<Project> {
         this.instantiator = instantiator;
     }
 
-    public void apply(Project project) {
+    public void apply(ProjectInternal project) {
         project.getPlugins().apply(BasePlugin.class);
         project.getPlugins().apply(ReportingBasePlugin.class);
-        project.getPlugins().apply(JavaLanguagePlugin.class);
+        project.getPlugins().apply(LegacyJavaComponentPlugin.class);
 
-        JavaPluginConvention javaConvention = new JavaPluginConvention((ProjectInternal) project, instantiator);
+        JavaPluginConvention javaConvention = new JavaPluginConvention(project, instantiator);
         project.getConvention().getPlugins().put("java", javaConvention);
 
         configureCompileDefaults(project, javaConvention);
@@ -136,7 +136,7 @@ public class JavaBasePlugin implements Plugin<Project> {
                 functionalSourceSet.add(resourceSet);
 
                 BinaryContainer binaryContainer = project.getExtensions().getByType(BinaryContainer.class);
-                ClassDirectoryBinary binary = binaryContainer.create(String.format("%sClasses", sourceSet.getName()), ClassDirectoryBinary.class);
+                ClassDirectoryBinarySpec binary = binaryContainer.create(String.format("%sClasses", sourceSet.getName()), ClassDirectoryBinarySpec.class);
                 ConventionMapping conventionMapping = new DslObject(binary).getConventionMapping();
                 conventionMapping.map("classesDir", new Callable<File>() {
                     public File call() throws Exception {
@@ -258,7 +258,6 @@ public class JavaBasePlugin implements Plugin<Project> {
                 project.getTasks().withType(Test.class, new Action<Test>() {
                     public void execute(Test test) {
                         configureBasedOnSingleProperty(test);
-                        configureBasedOnIncludedMethods(test);
                         overwriteDebugIfDebugPropertyIsSet(test);
                     }
                 });
@@ -293,36 +292,7 @@ public class JavaBasePlugin implements Plugin<Project> {
             }
         });
         test.setIncludes(WrapUtil.toSet(String.format("**/%s*.class", singleTest)));
-        failIfNoTestIsExecuted(test, "Could not find matching test for pattern: " + singleTest);
-    }
-
-    private void configureBasedOnIncludedMethods(final Test test) {
-        Set included = test.getFilter().getIncludePatterns();
-        if (!included.isEmpty()) {
-            failIfNoTestIsExecuted(test, "No tests found for given includes: " + included);
-        }
-    }
-
-    private void failIfNoTestIsExecuted(Test test, final String message) {
-        test.addTestListener(new TestListener() {
-            public void beforeSuite(TestDescriptor suite) {
-                // do nothing
-            }
-
-            public void afterSuite(TestDescriptor suite, TestResult result) {
-                if (suite.getParent() == null && result.getTestCount() == 0) {
-                    throw new GradleException(message);
-                }
-            }
-
-            public void beforeTest(TestDescriptor testDescriptor) {
-                // do nothing
-            }
-
-            public void afterTest(TestDescriptor testDescriptor, TestResult result) {
-                // do nothing
-            }
-        });
+        test.addTestListener(new NoMatchingTestsReporter("Could not find matching test for pattern: " + singleTest));
     }
 
     private String getTaskPrefixedProperty(Task task, String propertyName) {
@@ -355,4 +325,5 @@ public class JavaBasePlugin implements Plugin<Project> {
         });
         test.workingDir(project.getProjectDir());
     }
+
 }

@@ -16,9 +16,12 @@
 
 package org.gradle.internal.service.scopes;
 
+import com.google.common.collect.Iterables;
 import org.gradle.api.Action;
 import org.gradle.api.AntBuilder;
+import org.gradle.api.Project;
 import org.gradle.api.component.SoftwareComponentContainer;
+import org.gradle.api.initialization.dsl.ScriptHandler;
 import org.gradle.api.internal.*;
 import org.gradle.api.internal.artifacts.DependencyManagementServices;
 import org.gradle.api.internal.artifacts.ModuleInternal;
@@ -27,8 +30,11 @@ import org.gradle.api.internal.artifacts.configurations.DependencyMetaDataProvid
 import org.gradle.api.internal.artifacts.dsl.dependencies.ProjectFinder;
 import org.gradle.api.internal.component.DefaultSoftwareComponentContainer;
 import org.gradle.api.internal.file.*;
-import org.gradle.api.internal.initialization.*;
+import org.gradle.api.internal.initialization.DefaultScriptHandlerFactory;
+import org.gradle.api.internal.initialization.ScriptHandlerFactory;
 import org.gradle.api.internal.plugins.DefaultPluginContainer;
+import org.gradle.api.internal.plugins.PluginApplicationAction;
+import org.gradle.api.internal.plugins.PluginModelRuleExtractor;
 import org.gradle.api.internal.plugins.PluginRegistry;
 import org.gradle.api.internal.project.DefaultAntBuilderFactory;
 import org.gradle.api.internal.project.ProjectInternal;
@@ -41,26 +47,26 @@ import org.gradle.configuration.project.DefaultProjectConfigurationActionContain
 import org.gradle.configuration.project.ProjectConfigurationActionContainer;
 import org.gradle.initialization.ProjectAccessListener;
 import org.gradle.internal.Factory;
-import org.gradle.internal.nativeplatform.filesystem.FileSystem;
+import org.gradle.internal.nativeintegration.filesystem.FileSystem;
 import org.gradle.internal.reflect.Instantiator;
 import org.gradle.internal.service.DefaultServiceRegistry;
 import org.gradle.internal.service.ServiceRegistration;
 import org.gradle.internal.service.ServiceRegistry;
-import org.gradle.invocation.BuildClassLoaderRegistry;
 import org.gradle.logging.LoggingManagerInternal;
-import org.gradle.model.ModelRules;
-import org.gradle.model.internal.DefaultModelRegistry;
-import org.gradle.model.internal.ModelRegistry;
-import org.gradle.model.internal.ModelRegistryBackedModelRules;
+import org.gradle.model.internal.inspect.MethodRuleDefinitionHandler;
+import org.gradle.model.internal.inspect.ModelRuleInspector;
+import org.gradle.model.internal.registry.DefaultModelRegistry;
+import org.gradle.model.internal.registry.ModelRegistry;
 import org.gradle.tooling.provider.model.ToolingModelBuilderRegistry;
 import org.gradle.tooling.provider.model.internal.DefaultToolingModelBuilderRegistry;
 
 import java.io.File;
+import java.util.List;
 
 /**
  * Contains the services for a given project.
  */
-public class ProjectScopeServices extends DefaultServiceRegistry implements ServiceRegistryFactory {
+public class ProjectScopeServices extends DefaultServiceRegistry {
     private final ProjectInternal project;
 
     public ProjectScopeServices(final ServiceRegistry parent, final ProjectInternal project) {
@@ -78,7 +84,7 @@ public class ProjectScopeServices extends DefaultServiceRegistry implements Serv
     }
 
     protected PluginRegistry createPluginRegistry(PluginRegistry parentRegistry) {
-        return parentRegistry.createChild(get(ScriptClassLoaderProvider.class), new DependencyInjectingInstantiator(this));
+        return parentRegistry.createChild(project.getClassLoaderScope().createChild().lock(), new DependencyInjectingInstantiator(this));
     }
 
     protected FileResolver createFileResolver() {
@@ -94,7 +100,7 @@ public class ProjectScopeServices extends DefaultServiceRegistry implements Serv
     }
 
     protected DefaultFileOperations createFileOperations() {
-        return new DefaultFileOperations(get(FileResolver.class), project.getTasks(), get(TemporaryFileProvider.class), get(Instantiator.class));
+        return new DefaultFileOperations(get(FileResolver.class), project.getTasks(), get(TemporaryFileProvider.class), get(Instantiator.class), get(FileLookup.class));
     }
 
     protected TemporaryFileProvider createTemporaryFileProvider() {
@@ -114,7 +120,14 @@ public class ProjectScopeServices extends DefaultServiceRegistry implements Serv
     }
 
     protected PluginContainer createPluginContainer() {
-        return new DefaultPluginContainer(get(PluginRegistry.class), project);
+        List<PluginApplicationAction> allPluginApplyActions = getAll(PluginApplicationAction.class);
+        return new DefaultPluginContainer<Project>(get(PluginRegistry.class), project, allPluginApplyActions);
+    }
+
+    protected PluginApplicationAction createPluginModelRuleExtractor() {
+        List<MethodRuleDefinitionHandler> handlers = getAll(MethodRuleDefinitionHandler.class);
+        ModelRuleInspector inspector = new ModelRuleInspector(Iterables.concat(MethodRuleDefinitionHandler.CORE_HANDLERS, handlers));
+        return new PluginModelRuleExtractor(inspector);
     }
 
     protected ITaskFactory createTaskFactory(ITaskFactory parentFactory) {
@@ -142,22 +155,12 @@ public class ProjectScopeServices extends DefaultServiceRegistry implements Serv
         return new DefaultModelRegistry();
     }
 
-    protected ModelRules createModelRules() {
-        return get(Instantiator.class).newInstance(ModelRegistryBackedModelRules.class, get(ModelRegistry.class));
-    }
-
-    protected ScriptHandlerInternal createScriptHandler() {
+    protected ScriptHandler createScriptHandler() {
         ScriptHandlerFactory factory = new DefaultScriptHandlerFactory(
                 get(DependencyManagementServices.class),
                 get(FileResolver.class),
                 get(DependencyMetaDataProvider.class));
-        ScriptCompileScope parentScope;
-        if (project.getParent() != null) {
-            parentScope = project.getParent().getServices().get(ScriptCompileScope.class);
-        } else {
-            parentScope = get(BuildClassLoaderRegistry.class).getRootCompileScope();
-        }
-        return factory.create(project.getBuildScriptSource(), parentScope, project);
+        return factory.create(project.getBuildScriptSource(), project.getClassLoaderScope(), project);
     }
 
     protected DependencyMetaDataProvider createDependencyMetaDataProvider() {
@@ -168,11 +171,14 @@ public class ProjectScopeServices extends DefaultServiceRegistry implements Serv
         };
     }
 
-    public ServiceRegistryFactory createFor(Object domainObject) {
-        if (domainObject instanceof TaskInternal) {
-            return new TaskScopeServices(this, project, (TaskInternal) domainObject);
-        }
-        throw new UnsupportedOperationException();
+    protected ServiceRegistryFactory createServiceRegistryFactory(final ServiceRegistry services) {
+        return new ServiceRegistryFactory() {
+            public ServiceRegistry createFor(Object domainObject) {
+                if (domainObject instanceof TaskInternal) {
+                    return new TaskScopeServices(services, project, (TaskInternal) domainObject);
+                }
+                throw new UnsupportedOperationException();
+            }
+        };
     }
-
 }

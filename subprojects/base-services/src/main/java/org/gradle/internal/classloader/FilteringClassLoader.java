@@ -16,13 +16,11 @@
 
 package org.gradle.internal.classloader;
 
-import org.gradle.internal.reflect.JavaReflectionUtil;
 import org.gradle.internal.reflect.JavaMethod;
+import org.gradle.internal.reflect.JavaReflectionUtil;
 
 import java.io.IOException;
 import java.net.URL;
-import java.security.AccessController;
-import java.security.PrivilegedAction;
 import java.util.*;
 
 /**
@@ -30,7 +28,6 @@ import java.util.*;
  * packages and resources are visible.
  */
 public class FilteringClassLoader extends ClassLoader implements ClassLoaderHierarchy {
-    private static final Set<ClassLoader> SYSTEM_CLASS_LOADERS = new HashSet<ClassLoader>();
     private static final ClassLoader EXT_CLASS_LOADER;
     private static final Set<String> SYSTEM_PACKAGES = new HashSet<String>();
     private final Set<String> packageNames = new HashSet<String>();
@@ -42,9 +39,6 @@ public class FilteringClassLoader extends ClassLoader implements ClassLoaderHier
 
     static {
         EXT_CLASS_LOADER = ClassLoader.getSystemClassLoader().getParent();
-        for (ClassLoader cl = EXT_CLASS_LOADER; cl != null; cl = cl.getParent()) {
-            SYSTEM_CLASS_LOADERS.add(cl);
-        }
         JavaMethod<ClassLoader, Package[]> method = JavaReflectionUtil.method(ClassLoader.class, Package[].class, "getPackages");
         Package[] systemPackages = method.invoke(EXT_CLASS_LOADER);
         for (Package p : systemPackages) {
@@ -73,20 +67,17 @@ public class FilteringClassLoader extends ClassLoader implements ClassLoaderHier
 
     @Override
     protected Class<?> loadClass(String name, boolean resolve) throws ClassNotFoundException {
-        Class<?> cl;
         try {
-            cl = super.loadClass(name, false);
-        } catch (NoClassDefFoundError e) {
-            if (classAllowed(name)) {
-                throw e;
-            }
-            // The class isn't visible
+            return EXT_CLASS_LOADER.loadClass(name);
+        } catch (ClassNotFoundException ignore) {
+            // ignore
+        }
+
+        if (!classAllowed(name)) {
             throw new ClassNotFoundException(String.format("%s not found.", name));
         }
 
-        if (!allowed(cl)) {
-            throw new ClassNotFoundException(String.format("%s not found.", cl.getName()));
-        }
+        Class<?> cl = super.loadClass(name, false);
         if (resolve) {
             resolveClass(cl);
         }
@@ -157,15 +148,6 @@ public class FilteringClassLoader extends ClassLoader implements ClassLoaderHier
         return false;
     }
 
-    private boolean allowed(final Class<?> clazz) {
-        boolean systemClass = AccessController.doPrivileged(new PrivilegedAction<Boolean>() {
-            public Boolean run() {
-                return clazz.getClassLoader() == null || SYSTEM_CLASS_LOADERS.contains(clazz.getClassLoader());
-            }
-        });
-        return systemClass || classAllowed(clazz.getName());
-    }
-
     private boolean classAllowed(String className) {
         if (disallowedClassNames.contains(className)) {
             return false;
@@ -229,6 +211,7 @@ public class FilteringClassLoader extends ClassLoader implements ClassLoaderHier
     }
 
     public static class Spec extends ClassLoaderSpec {
+
         final Set<String> packageNames;
         final Set<String> packagePrefixes;
         final Set<String> resourcePrefixes;
@@ -236,7 +219,7 @@ public class FilteringClassLoader extends ClassLoader implements ClassLoaderHier
         final Set<String> classNames;
         final Set<String> disallowedClassNames;
 
-        public Spec(Set<String> classNames, Set<String> packageNames, Set<String> packagePrefixes, Set<String> resourcePrefixes, Set<String> resourceNames, Set<String> disallowedClassNames) {
+        public Spec(Collection<String> classNames, Collection<String> packageNames, Collection<String> packagePrefixes, Collection<String> resourcePrefixes, Collection<String> resourceNames, Collection<String> disallowedClassNames) {
             this.classNames = new HashSet<String>(classNames);
             this.packageNames = new HashSet<String>(packageNames);
             this.packagePrefixes = new HashSet<String>(packagePrefixes);

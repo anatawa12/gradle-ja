@@ -15,12 +15,18 @@ dependencies {
     integTestRuntime project(':ide')
     integTestRuntime project(':buildInit')
     integTestRuntime project(':buildComparison')
+    integTestRuntime project(":ivy")
+    integTestRuntime project(":maven")
 }
 
 useTestFixtures()
 
 integTestTasks.all {
     dependsOn({ rootProject.getTasksByName('publishLocalArchives', true) }, ':distributions:binZip')
+
+    if (isCiServer) {
+        maxParallelForks = Math.min(2, rootProject.maxParallelForks)
+    }
 }
 
 daemonIntegTest {

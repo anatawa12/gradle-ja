@@ -17,10 +17,9 @@
 package org.gradle.integtests
 
 import org.gradle.integtests.fixtures.AbstractIntegrationSpec
-import org.gradle.util.TextUtil
-import org.junit.Test
 import spock.lang.Issue
 
+import static org.gradle.util.TextUtil.toPlatformLineSeparators
 import static org.hamcrest.Matchers.startsWith
 
 public class TaskExecutionIntegrationTest extends AbstractIntegrationSpec {
@@ -90,7 +89,6 @@ public class TaskExecutionIntegrationTest extends AbstractIntegrationSpec {
         run("b", ":child2:c").assertTasksExecuted(":b", ":child1:b", ":child1-2:b", ":child1-2-2:b", ":child2:b", ":a", ":child2:c");
     }
 
-    @Test
     def executesMultiProjectDefaultTasksInASingleBuildAndEachTaskAtMostOnce() {
         settingsFile << "include 'child1', 'child2'"
         buildFile << """
@@ -106,16 +104,6 @@ public class TaskExecutionIntegrationTest extends AbstractIntegrationSpec {
         run().assertTasksExecuted(":a", ":child1:a", ":child2:a", ":child1:b", ":child2:b");
     }
 
-    def executesProjectDefaultTasksWhenNoneSpecified() {
-        buildFile << """
-    task a
-    task b(dependsOn: a)
-    defaultTasks 'b'
-"""
-        expect:
-        run().assertTasksExecuted(":a", ":b");
-    }
-    
     def doesNotExecuteTaskActionsWhenDryRunSpecified() {
         buildFile << """
     task a << { fail() }
@@ -185,7 +173,26 @@ public class TaskExecutionIntegrationTest extends AbstractIntegrationSpec {
         executer.withTasks("d").withArguments("-x", "unknown").runWithFailure().assertThatDescription(startsWith("Task 'unknown' not found in root project"));
     }
 
-    @Issue("http://issues.gradle.org/browse/GRADLE-2022")
+    @Issue("https://issues.gradle.org/browse/GRADLE-2974")
+    @Issue("https://issues.gradle.org/browse/GRADLE-3031")
+    def 'excluding a task that is a dependency of multiple tasks'() {
+        settingsFile << "include 'sub'"
+        buildFile << """
+    task a
+    task b(dependsOn: a)
+    task c(dependsOn: a)
+    task d(dependsOn: [b, c])
+"""
+        file("sub/build.gradle") << """
+    task a
+"""
+
+        expect:
+        executer.withTasks("d").withArguments("-x", "a").run().assertTasksExecuted(":b", ":c", ":d");
+        executer.withTasks("b", "a").withArguments("-x", ":a").run().assertTasksExecuted(":b", ":sub:a");
+    }
+
+    @Issue("https://issues.gradle.org/browse/GRADLE-2022")
     def tryingToInstantiateTaskDirectlyFailsWithGoodErrorMessage() {
         buildFile << """
     new DefaultTask()
@@ -206,27 +213,31 @@ public class TaskExecutionIntegrationTest extends AbstractIntegrationSpec {
         fails 'b'
 
         then:
-        failure.assertHasDescription TextUtil.toPlatformLineSeparators("""Circular dependency between the following tasks:
+        failure.assertHasDescription """Circular dependency between the following tasks:
 :a
 \\--- :b
      \\--- :a (*)
 
-(*) - details omitted (listed previously)""")
+(*) - details omitted (listed previously)"""
     }
 
-    def "placeolder actions not triggered when not requested"() {
+    def "placeholder actions not triggered when not requested"() {
         when:
         buildFile << """
-        task a
+        task thing
         tasks.addPlaceholderAction("b") {
             throw new RuntimeException()
         }
+        task otherThing { dependsOn tasks.thing }
 """
         then:
-        succeeds 'a'
+        succeeds 'thing'
+        succeeds 'th'
+        succeeds 'otherThing'
+        succeeds 'oTh'
     }
 
-    def "explicit tasks are preferred over placeholder actions"() {
+    def "explicit tasks are preferred over placeholder tasks"() {
         buildFile << """
         task someTask << {println "explicit sometask"}
         tasks.addPlaceholderAction("someTask"){
@@ -238,17 +249,20 @@ public class TaskExecutionIntegrationTest extends AbstractIntegrationSpec {
         succeeds 'sometask'
 
         then:
-        output.contains("explicit sometask")
-        !output.contains("placeholder action triggered")
+        output.startsWith(toPlatformLineSeparators(""":someTask
+explicit sometask
+
+BUILD SUCCESSFUL"""))
 
         when:
         succeeds 'someT'
 
         then:
-        output.contains("explicit sometask")
-        !output.contains("placeholder action triggered")
-    }
+        output.startsWith(toPlatformLineSeparators(""":someTask
+explicit sometask
 
+BUILD SUCCESSFUL"""))
+    }
 
     def "honours mustRunAfter task ordering"() {
         buildFile << """
@@ -329,12 +343,12 @@ public class TaskExecutionIntegrationTest extends AbstractIntegrationSpec {
         fails 'b'
 
         then:
-        failure.assertHasDescription TextUtil.toPlatformLineSeparators("""Circular dependency between the following tasks:
+        failure.assertHasDescription """Circular dependency between the following tasks:
 :a
 \\--- :b
      \\--- :a (*)
 
-(*) - details omitted (listed previously)""")
+(*) - details omitted (listed previously)"""
     }
 
     def "checked exceptions thrown by tasks are reported correctly"() {

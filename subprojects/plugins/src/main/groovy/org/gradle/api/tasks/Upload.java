@@ -18,7 +18,6 @@ package org.gradle.api.tasks;
 
 import groovy.lang.Closure;
 import org.gradle.api.artifacts.Configuration;
-import org.gradle.api.artifacts.Module;
 import org.gradle.api.artifacts.PublishException;
 import org.gradle.api.artifacts.dsl.RepositoryHandler;
 import org.gradle.api.file.FileCollection;
@@ -47,25 +46,22 @@ public class Upload extends ConventionTask {
     private File descriptorDestination;
     private RepositoryHandler repositories;
 
-    private final ArtifactPublicationServices publicationServices;
-
     @Inject
-    public Upload(ArtifactPublicationServices publicationServices) {
-        this.publicationServices = publicationServices;
-        repositories = publicationServices.createRepositoryHandler();
+    protected ArtifactPublicationServices getPublicationServices() {
+        throw new UnsupportedOperationException();
     }
 
     @TaskAction
     protected void upload() {
         getLogger().info("Publishing configuration: " + configuration);
-        Module module = ((ConfigurationInternal) configuration).getModule();
+        ModuleInternal module = ((ConfigurationInternal) configuration).getModule();
 
-        ArtifactPublisher artifactPublisher = publicationServices.createArtifactPublisher();
+        ArtifactPublisher artifactPublisher = getPublicationServices().createArtifactPublisher();
         File descriptorDestination = isUploadDescriptor() ? getDescriptorDestination() : null;
-        List<PublicationAwareRepository> publishRepositories = collect(repositories, Transformers.cast(PublicationAwareRepository.class));
+        List<PublicationAwareRepository> publishRepositories = collect(getRepositories(), Transformers.cast(PublicationAwareRepository.class));
 
         try {
-            artifactPublisher.publish(publishRepositories, (ModuleInternal)module, configuration, descriptorDestination);
+            artifactPublisher.publish(publishRepositories, module, configuration, descriptorDestination);
         } catch (Exception e) {
             throw new PublishException(String.format("Could not publish configuration '%s'", configuration.getName()), e);
         }
@@ -98,6 +94,9 @@ public class Upload extends ConventionTask {
      * Returns the repositories to upload to.
      */
     public RepositoryHandler getRepositories() {
+        if (repositories == null) {
+            repositories = getPublicationServices().createRepositoryHandler();
+        }
         return repositories;
     }
 
@@ -116,7 +115,7 @@ public class Upload extends ConventionTask {
      * Configures the set of repositories to upload to.
      */
     public RepositoryHandler repositories(Closure configureClosure) {
-        return ConfigureUtil.configure(configureClosure, repositories);
+        return ConfigureUtil.configure(configureClosure, getRepositories());
     }
 
     /**

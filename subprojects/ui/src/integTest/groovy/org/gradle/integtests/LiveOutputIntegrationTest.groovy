@@ -21,10 +21,8 @@ import org.gradle.foundation.output.FileLink
 import org.gradle.foundation.output.FileLinkDefinitionLord
 import org.gradle.foundation.output.LiveOutputParser
 import org.gradle.gradleplugin.foundation.GradlePluginLord
-import org.gradle.gradleplugin.foundation.runner.GradleRunner
 import org.gradle.integtests.fixtures.AbstractIntegrationTest
 import org.gradle.integtests.fixtures.Sample
-import org.gradle.logging.ShowStacktrace
 import org.junit.Assert
 import org.junit.Before
 import org.junit.Rule
@@ -40,13 +38,6 @@ This tests the that live output is gathered while executing a task.
 */
 class LiveOutputIntegrationTest extends AbstractIntegrationTest {
 
-    static final String JAVA_PROJECT_NAME = 'javaproject'
-    static final String SHARED_NAME = 'shared'
-    static final String API_NAME = 'api'
-    static final String WEBAPP_NAME = 'webservice'
-    static final String SERVICES_NAME = 'services'
-    static final String WEBAPP_PATH = "$SERVICES_NAME/$WEBAPP_NAME" as String
-
     private File javaprojectDir
 
     @Rule public final Sample sample = new Sample(testDirectoryProvider, 'java/quickstart')
@@ -57,7 +48,7 @@ class LiveOutputIntegrationTest extends AbstractIntegrationTest {
     }
 
     /**
-This executes 'build' on the java multiproject sample. We want to make sure that
+This executes 'build' on the java quickstart sample. We want to make sure that
 we do get live output from gradle. We're not concerned with what it is, because
 that's likely to change over time. This version executes the command via GradlePlugin.
 */
@@ -72,8 +63,6 @@ that's likely to change over time. This version executes the command via GradleP
         gradlePluginLord.setGradleHomeDirectory(distribution.gradleHomeDir);
         gradlePluginLord.addCommandLineArgumentAlteringListener(new ExtraTestCommandLineOptionsListener(executer.gradleUserHomeDir))
 
-        gradlePluginLord.startExecutionQueue(); //for tests, we'll need to explicitly start the execution queue (unless we do a refresh via the TestUtility).
-
         TestExecutionInteraction executionInteraction = new TestExecutionInteraction();
 
         //execute a command. We don't really care what the command is, just something that generates output
@@ -81,33 +70,6 @@ that's likely to change over time. This version executes the command via GradleP
 
         verifyLiveOutputObtained( executionInteraction );
     }
-
-    /**
-This executes 'build' on the java multiproject sample. We want to make sure that
-we do get live output from gradle. We're not concerned with what it is, because
-that's likely to change over time. This version executes the command via GradleRunner.
-*/
-    @Test
-    public void liveOutputObtainedViaGradleRunner() {
-        File multiProjectDirectory = sample.getDir();
-        Assert.assertTrue(multiProjectDirectory.exists()); //make sure things are setup the way we expect
-
-        GradleRunner gradleRunner = new GradleRunner( multiProjectDirectory, distribution.gradleHomeDir, null );
-
-        TestExecutionInteraction executionInteraction = new TestExecutionInteraction();
-
-        //execute a command. We don't really care what the command is, just something that generates output
-        def cl = new ExtraTestCommandLineOptionsListener(executer.gradleUserHomeDir).getAdditionalCommandLineArguments('') + ' tasks'
-        gradleRunner.executeCommand(cl, org.gradle.api.logging.LogLevel.LIFECYCLE,
-                                            ShowStacktrace.INTERNAL_EXCEPTIONS,
-                                            executionInteraction);
-
-        executionInteraction.waitForCompletion(100, TimeUnit.SECONDS)
-
-        verifyLiveOutputObtained( executionInteraction );
-    }
-
-
 
    /**
   This verifies that it has live output. It also checks that we received some final output as well

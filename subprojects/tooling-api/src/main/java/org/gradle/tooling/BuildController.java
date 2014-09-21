@@ -39,13 +39,15 @@ public interface BuildController {
      *     <li>{@link GradleBuild}</li>
      *     <li>{@link org.gradle.tooling.model.build.BuildEnvironment}</li>
      *     <li>{@link org.gradle.tooling.model.GradleProject}</li>
+     *     <li>{@link org.gradle.tooling.model.gradle.BuildInvocations}</li>
+     *     <li>{@link org.gradle.tooling.model.gradle.ProjectPublications}</li>
      *     <li>{@link org.gradle.tooling.model.idea.IdeaProject}</li>
      *     <li>{@link org.gradle.tooling.model.idea.BasicIdeaProject}</li>
      *     <li>{@link org.gradle.tooling.model.eclipse.EclipseProject}</li>
      *     <li>{@link org.gradle.tooling.model.eclipse.HierarchicalEclipseProject}</li>
      * </ul>
      *
-     * <p>A build may also expose additional custom tooling models.
+     * <p>A build may also expose additional custom tooling models. You can use this method to query these models.
      *
      * @param modelType The model type.
      * @param <T> The model type.

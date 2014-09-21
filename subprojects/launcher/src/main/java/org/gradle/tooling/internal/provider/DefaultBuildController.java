@@ -16,11 +16,14 @@
 
 package org.gradle.tooling.internal.provider;
 
+import org.gradle.api.BuildCancelledException;
 import org.gradle.api.internal.GradleInternal;
 import org.gradle.api.internal.project.ProjectInternal;
+import org.gradle.initialization.BuildCancellationToken;
 import org.gradle.tooling.internal.gradle.GradleProjectIdentity;
 import org.gradle.tooling.internal.protocol.*;
 import org.gradle.tooling.internal.provider.connection.ProviderBuildResult;
+import org.gradle.tooling.model.internal.ProjectSensitiveToolingModelBuilder;
 import org.gradle.tooling.provider.model.ToolingModelBuilder;
 import org.gradle.tooling.provider.model.ToolingModelBuilderRegistry;
 import org.gradle.tooling.provider.model.UnknownModelException;
@@ -37,13 +40,20 @@ class DefaultBuildController implements InternalBuildController {
     }
 
     public BuildResult<?> getModel(Object target, ModelIdentifier modelIdentifier) throws BuildExceptionVersion1, InternalUnsupportedModelException {
+        BuildCancellationToken cancellationToken = gradle.getServices().get(BuildCancellationToken.class);
+        if (cancellationToken.isCancellationRequested()) {
+            throw new BuildCancelledException(String.format("Could not build '%s' model. Build cancelled.", modelIdentifier.getName()));
+        }
         ToolingModelBuilderRegistry modelBuilderRegistry;
         ProjectInternal project;
+        boolean isImplicitProject;
         if (target == null) {
             project = gradle.getDefaultProject();
+            isImplicitProject = true;
         } else if (target instanceof GradleProjectIdentity) {
             GradleProjectIdentity gradleProject = (GradleProjectIdentity) target;
             project = gradle.getRootProject().project(gradleProject.getPath());
+            isImplicitProject = false;
         } else {
             throw new IllegalArgumentException("Don't know how to build models for " + target);
         }
@@ -55,7 +65,12 @@ class DefaultBuildController implements InternalBuildController {
         } catch (UnknownModelException e) {
             throw (InternalUnsupportedModelException) (new InternalUnsupportedModelException()).initCause(e);
         }
-        Object model = builder.buildAll(modelIdentifier.getName(), project);
+        Object model;
+        if (builder instanceof ProjectSensitiveToolingModelBuilder) {
+            model = ((ProjectSensitiveToolingModelBuilder) builder).buildAll(modelIdentifier.getName(), project, isImplicitProject);
+        } else {
+            model = builder.buildAll(modelIdentifier.getName(), project);
+        }
         return new ProviderBuildResult<Object>(model);
     }
 }

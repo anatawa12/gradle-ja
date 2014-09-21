@@ -21,19 +21,18 @@ import org.gradle.tooling.internal.consumer.async.AsyncConsumerActionExecutor;
 import org.gradle.tooling.internal.consumer.connection.ConsumerAction;
 import org.gradle.tooling.internal.consumer.connection.ConsumerConnection;
 import org.gradle.tooling.internal.consumer.parameters.ConsumerOperationParameters;
+import org.gradle.tooling.model.Launchable;
 import org.gradle.tooling.model.Task;
 
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.List;
 
 class DefaultBuildLauncher extends AbstractLongRunningOperation<DefaultBuildLauncher> implements BuildLauncher {
     private final AsyncConsumerActionExecutor connection;
 
     public DefaultBuildLauncher(AsyncConsumerActionExecutor connection, ConnectionParameters parameters) {
-        super(new ConsumerOperationParameters(parameters));
-        operationParameters.setTasks(Collections.<String>emptyList());
+        super(parameters);
+        operationParamsBuilder.setTasks(Collections.<String>emptyList());
         this.connection = connection;
     }
 
@@ -43,7 +42,7 @@ class DefaultBuildLauncher extends AbstractLongRunningOperation<DefaultBuildLaun
     }
 
     public BuildLauncher forTasks(String... tasks) {
-        operationParameters.setTasks(Arrays.asList(tasks));
+        operationParamsBuilder.setTasks(Arrays.asList(tasks));
         return this;
     }
 
@@ -53,11 +52,16 @@ class DefaultBuildLauncher extends AbstractLongRunningOperation<DefaultBuildLaun
     }
 
     public BuildLauncher forTasks(Iterable<? extends Task> tasks) {
-        List<String> taskPaths = new ArrayList<String>();
-        for (Task task : tasks) {
-            taskPaths.add(task.getPath());
-        }
-        operationParameters.setTasks(taskPaths);
+        operationParamsBuilder.setLaunchables(tasks);
+        return this;
+    }
+
+    public BuildLauncher forLaunchables(Launchable... launchables) {
+        return forLaunchables(Arrays.asList(launchables));
+    }
+
+    public BuildLauncher forLaunchables(Iterable<? extends Launchable> launchables) {
+        operationParamsBuilder.setLaunchables(launchables);
         return this;
     }
 
@@ -68,6 +72,7 @@ class DefaultBuildLauncher extends AbstractLongRunningOperation<DefaultBuildLaun
     }
 
     public void run(final ResultHandler<? super Void> handler) {
+        final ConsumerOperationParameters operationParameters = operationParamsBuilder.setParameters(connectionParameters).build();
         connection.run(new ConsumerAction<Void>() {
             public ConsumerOperationParameters getParameters() {
                 return operationParameters;

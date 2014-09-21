@@ -16,7 +16,7 @@
 package org.gradle.api.internal.file.copy;
 
 import org.gradle.api.tasks.WorkResult;
-import org.gradle.internal.nativeplatform.filesystem.FileSystem;
+import org.gradle.internal.nativeintegration.filesystem.FileSystem;
 import org.gradle.internal.reflect.Instantiator;
 
 public class CopyActionExecuter {
@@ -31,7 +31,7 @@ public class CopyActionExecuter {
 
     public WorkResult execute(final CopySpecInternal spec, CopyAction action) {
         final CopyAction effectiveVisitor = new DuplicateHandlingCopyActionDecorator(
-                new NormalizingCopyActionDecorator(action)
+                new NormalizingCopyActionDecorator(action, fileSystem)
         );
 
         CopyActionProcessingStream processingStream = new CopySpecBackedCopyActionProcessingStream(spec, instantiator, fileSystem);

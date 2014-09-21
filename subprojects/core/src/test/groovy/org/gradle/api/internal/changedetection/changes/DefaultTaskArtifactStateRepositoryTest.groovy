@@ -15,7 +15,7 @@
  */
 
 package org.gradle.api.internal.changedetection.changes
-import org.gradle.CacheUsage
+
 import org.gradle.api.Action
 import org.gradle.api.DefaultTask
 import org.gradle.api.internal.TaskInternal
@@ -24,9 +24,12 @@ import org.gradle.api.internal.changedetection.state.*
 import org.gradle.api.internal.hash.DefaultHasher
 import org.gradle.api.tasks.incremental.InputFileDetails
 import org.gradle.cache.CacheRepository
+import org.gradle.cache.internal.CacheScopeMapping
 import org.gradle.cache.internal.DefaultCacheRepository
 import org.gradle.internal.id.RandomLongIdGenerator
 import org.gradle.internal.reflect.DirectInstantiator
+import org.gradle.messaging.serialize.DefaultSerializerRegistry
+import org.gradle.messaging.serialize.SerializerRegistry
 import org.gradle.test.fixtures.file.TestFile
 import org.gradle.test.fixtures.file.TestNameTestDirectoryProvider
 import org.gradle.testfixtures.internal.InMemoryCacheFactory
@@ -57,14 +60,22 @@ public class DefaultTaskArtifactStateRepositoryTest extends Specification {
     final outputFiles = toSet(outputFile, outputDir, emptyOutputDir, missingOutputFile)
     final createFiles = toSet(outputFile, outputDirFile, outputDirFile2)
     TaskInternal task = builder.task()
+    def mapping = Stub(CacheScopeMapping) {
+        getBaseDirectory(_, _, _) >> {
+            return tmpDir.createDir("history-cache")
+        }
+    }
     DefaultTaskArtifactStateRepository repository
 
     def setup() {
-        CacheRepository cacheRepository = new DefaultCacheRepository(tmpDir.createDir("user-home"), null, CacheUsage.ON, new InMemoryCacheFactory())
-        TaskArtifactStateCacheAccess cacheAccess = new DefaultTaskArtifactStateCacheAccess(gradle, cacheRepository, new NoOpInMemoryPersistentCacheDecoratorFactory())
-        FileSnapshotter inputFilesSnapshotter = new DefaultFileSnapshotter(new DefaultHasher(), cacheAccess)
-        FileSnapshotter outputFilesSnapshotter = new OutputFilesSnapshotter(inputFilesSnapshotter, new RandomLongIdGenerator(), cacheAccess)
-        TaskHistoryRepository taskHistoryRepository = new CacheBackedTaskHistoryRepository(cacheAccess, new CacheBackedFileSnapshotRepository(cacheAccess, new RandomLongIdGenerator()))
+        CacheRepository cacheRepository = new DefaultCacheRepository(mapping, new InMemoryCacheFactory())
+        TaskArtifactStateCacheAccess cacheAccess = new DefaultTaskArtifactStateCacheAccess(gradle, cacheRepository, new NoOpDecorator())
+        FileCollectionSnapshotter inputFilesSnapshotter = new DefaultFileCollectionSnapshotter(new CachingFileSnapshotter(new DefaultHasher(), cacheAccess), cacheAccess)
+        FileCollectionSnapshotter outputFilesSnapshotter = new OutputFilesCollectionSnapshotter(inputFilesSnapshotter, new RandomLongIdGenerator(), cacheAccess)
+        SerializerRegistry<FileCollectionSnapshot> serializerRegistry = new DefaultSerializerRegistry<FileCollectionSnapshot>();
+        inputFilesSnapshotter.registerSerializers(serializerRegistry);
+        outputFilesSnapshotter.registerSerializers(serializerRegistry);
+        TaskHistoryRepository taskHistoryRepository = new CacheBackedTaskHistoryRepository(cacheAccess, new CacheBackedFileSnapshotRepository(cacheAccess, serializerRegistry.build(), new RandomLongIdGenerator()))
         repository = new DefaultTaskArtifactStateRepository(taskHistoryRepository, new DirectInstantiator(), outputFilesSnapshotter, inputFilesSnapshotter)
     }
 

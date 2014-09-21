@@ -18,6 +18,7 @@ package org.gradle.api.tasks.wrapper;
 
 import org.gradle.api.DefaultTask;
 import org.gradle.api.GradleException;
+import org.gradle.api.internal.file.FileLookup;
 import org.gradle.api.internal.file.FileResolver;
 import org.gradle.api.internal.plugins.StartScriptGenerator;
 import org.gradle.api.tasks.Input;
@@ -28,6 +29,7 @@ import org.gradle.wrapper.GradleWrapperMain;
 import org.gradle.wrapper.Install;
 import org.gradle.wrapper.WrapperExecutor;
 
+import javax.inject.Inject;
 import java.io.File;
 import java.net.URL;
 import java.util.Properties;
@@ -83,11 +85,16 @@ public class Wrapper extends DefaultTask {
         gradleVersion = GradleVersion.current();
     }
 
+    @Inject
+    protected FileLookup getFileLookup() {
+        throw new UnsupportedOperationException();
+    }
+
     @TaskAction
     void generate() {
         File jarFileDestination = getJarFile();
         File unixScript = getScriptFile();
-        FileResolver resolver = getServices().get(FileResolver.class).withBaseDir(unixScript.getParentFile());
+        FileResolver resolver = getFileLookup().getFileResolver(unixScript.getParentFile());
         String jarFileRelativePath = resolver.resolveAsRelativePath(jarFileDestination);
 
         writeProperties(getPropertiesFile());

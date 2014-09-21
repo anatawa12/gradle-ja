@@ -16,6 +16,7 @@
 package org.gradle.integtests.fixtures.executer;
 
 import groovy.lang.Closure;
+import groovy.lang.DelegatesTo;
 import org.gradle.api.Action;
 import org.gradle.launcher.daemon.registry.DaemonRegistry;
 import org.gradle.test.fixtures.file.TestDirectoryProvider;
@@ -24,6 +25,7 @@ import org.gradle.test.fixtures.file.TestFile;
 import java.io.File;
 import java.io.InputStream;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 
 public interface GradleExecuter {
@@ -76,8 +78,6 @@ public interface GradleExecuter {
     GradleExecuter usingSettingsFile(File settingsFile);
 
     GradleExecuter usingInitScript(File initScript);
-
-    GradleExecuter alwaysUsingInitScript(File initScript);
 
     /**
      * Uses the given project directory
@@ -172,6 +172,15 @@ public interface GradleExecuter {
     GradleExecuter withDefaultCharacterEncoding(String defaultCharacterEncoding);
 
     /**
+     * Sets the default locale to use.
+     *
+     * Only makes sense for forking executers.
+     *
+     * @return this executer
+     */
+    GradleExecuter withDefaultLocale(Locale defaultLocale);
+
+    /**
      * Set the number of seconds an idle daemon should live for.
      *
      * @param secs
@@ -204,7 +213,7 @@ public interface GradleExecuter {
     /**
      * Adds an action to be called immediately before execution, to allow extra configuration to be injected.
      */
-    void beforeExecute(Closure action);
+    void beforeExecute(@DelegatesTo(GradleExecuter.class) Closure action);
 
     /**
      * Adds an action to be called immediately after execution
@@ -214,7 +223,7 @@ public interface GradleExecuter {
     /**
      * Adds an action to be called immediately after execution
      */
-    void afterExecute(Closure action);
+    void afterExecute(@DelegatesTo(GradleExecuter.class) Closure action);
 
     /**
      * The directory that the executer will use for any test specific storage.
@@ -227,6 +236,11 @@ public interface GradleExecuter {
      * Disables asserting that the execution did not trigger any deprecation warnings.
      */
     GradleExecuter withDeprecationChecksDisabled();
+
+    /**
+     * Disables asserting that class loaders were not eagerly created, potentially leading to performance problems.
+     */
+    GradleExecuter withEagerClassLoaderCreationCheckDisabled();
 
     /**
      * Disables asserting that no unexpected stacktraces are present in the output.

@@ -18,7 +18,7 @@ package org.gradle.api.internal.plugins;
 
 import org.gradle.api.InvalidUserDataException;
 import org.gradle.api.Plugin;
-import org.gradle.api.internal.initialization.ScriptCompileScope;
+import org.gradle.api.internal.initialization.ClassLoaderScope;
 import org.gradle.api.plugins.PluginInstantiationException;
 import org.gradle.api.plugins.UnknownPluginException;
 import org.gradle.internal.Factories;
@@ -27,37 +27,39 @@ import org.gradle.internal.reflect.Instantiator;
 import org.gradle.internal.reflect.ObjectInstantiationException;
 import org.gradle.util.GUtil;
 
-import java.net.URL;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Properties;
 
 public class DefaultPluginRegistry implements PluginRegistry {
-    private final Map<String, Class<? extends Plugin>> idMappings = new HashMap<String, Class<? extends Plugin>>();
+    private final Map<String, Class<? extends Plugin<?>>> idMappings = new HashMap<String, Class<? extends Plugin<?>>>();
     private final DefaultPluginRegistry parent;
-    private final Factory<ClassLoader> classLoaderFactory;
+    private final Factory<? extends ClassLoader> classLoaderFactory;
     private final Instantiator instantiator;
 
-    public DefaultPluginRegistry(ClassLoader classLoaderFactory, Instantiator instantiator) {
-        this(null, Factories.constant(classLoaderFactory), instantiator);
+    public DefaultPluginRegistry(ClassLoader classLoader, Instantiator instantiator) {
+        this(Factories.constant(classLoader), instantiator);
     }
 
-    private DefaultPluginRegistry(DefaultPluginRegistry parent, Factory<ClassLoader> classLoaderFactory, Instantiator instantiator) {
+    public DefaultPluginRegistry(Factory<? extends ClassLoader> classLoaderFactory, Instantiator instantiator) {
+        this(null, classLoaderFactory, instantiator);
+    }
+
+    private DefaultPluginRegistry(DefaultPluginRegistry parent, Factory<? extends ClassLoader> classLoaderFactory, Instantiator instantiator) {
         this.parent = parent;
         this.classLoaderFactory = classLoaderFactory;
         this.instantiator = instantiator;
     }
 
-    public PluginRegistry createChild(final ScriptCompileScope lookupScope, Instantiator instantiator) {
+    public PluginRegistry createChild(final ClassLoaderScope lookupScope, Instantiator instantiator) {
         Factory<ClassLoader> classLoaderFactory = new Factory<ClassLoader>() {
             public ClassLoader create() {
-                return lookupScope.getScriptCompileClassLoader();
+                return lookupScope.getLocalClassLoader();
             }
         };
         return new DefaultPluginRegistry(this, classLoaderFactory, instantiator);
     }
 
-    public <T extends Plugin> T loadPlugin(Class<T> pluginClass) {
+    public <T extends Plugin<?>> T loadPlugin(Class<T> pluginClass) {
         if (!Plugin.class.isAssignableFrom(pluginClass)) {
             throw new InvalidUserDataException(String.format(
                     "Cannot create plugin of type '%s' as it does not implement the Plugin interface.",
@@ -71,7 +73,7 @@ public class DefaultPluginRegistry implements PluginRegistry {
         }
     }
 
-    public Class<? extends Plugin> getTypeForId(String pluginId) {
+    public Class<? extends Plugin<?>> getTypeForId(String pluginId) {
         if (parent != null) {
             try {
                 return parent.getTypeForId(pluginId);
@@ -80,39 +82,44 @@ public class DefaultPluginRegistry implements PluginRegistry {
             }
         }
 
-        Class<? extends Plugin> implClass = idMappings.get(pluginId);
+        Class<? extends Plugin<?>> implClass = idMappings.get(pluginId);
         if (implClass != null) {
             return implClass;
         }
 
         ClassLoader classLoader = this.classLoaderFactory.create();
 
-        URL resource = classLoader.getResource(String.format("META-INF/gradle-plugins/%s.properties", pluginId));
-        if (resource == null) {
+        PluginDescriptor pluginDescriptor = findPluginDescriptor(pluginId, classLoader);
+        if (pluginDescriptor == null) {
             throw new UnknownPluginException("Plugin with id '" + pluginId + "' not found.");
         }
 
-        Properties properties = GUtil.loadProperties(resource);
-        String implClassName = properties.getProperty("implementation-class");
+        String implClassName = pluginDescriptor.getImplementationClassName();
         if (!GUtil.isTrue(implClassName)) {
             throw new PluginInstantiationException(String.format(
-                    "No implementation class specified for plugin '%s' in %s.", pluginId, resource));
+                    "No implementation class specified for plugin '%s' in %s.", pluginId, pluginDescriptor));
         }
 
         try {
             Class<?> rawClass = classLoader.loadClass(implClassName);
             if (!Plugin.class.isAssignableFrom(rawClass)) {
                 throw new PluginInstantiationException(String.format("Implementation class '%s' specified for plugin '%s' does not implement the Plugin interface. Specified in %s.",
-                        implClassName, pluginId, resource));
+                        implClassName, pluginId, pluginDescriptor));
             }
-            implClass = rawClass.asSubclass(Plugin.class);
+            @SuppressWarnings("unchecked") Class<Plugin<?>> cast = (Class<Plugin<?>>) rawClass.asSubclass(Plugin.class);
+            implClass = cast;
         } catch (ClassNotFoundException e) {
             throw new PluginInstantiationException(String.format(
                     "Could not find implementation class '%s' for plugin '%s' specified in %s.", implClassName, pluginId,
-                    resource), e);
+                    pluginDescriptor), e);
         }
 
         idMappings.put(pluginId, implClass);
         return implClass;
+    }
+
+    protected PluginDescriptor findPluginDescriptor(String pluginId, ClassLoader classLoader) {
+        PluginDescriptorLocator pluginDescriptorLocator = new ClassloaderBackedPluginDescriptorLocator(classLoader);
+        return pluginDescriptorLocator.findPluginDescriptor(pluginId);
     }
 }

@@ -136,6 +136,30 @@
             <tr>
                 <td>
                     <link linkend='nativeBinaries'>
+                        <literal>objective-c</literal>
+                    </link>
+                </td>
+                <td>-</td>
+                <td>-</td>
+                <td>
+                    <para>Adds Objective-C source compilation capabilities to a project.</para>
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    <link linkend='nativeBinaries'>
+                        <literal>objective-cpp</literal>
+                    </link>
+                </td>
+                <td>-</td>
+                <td>-</td>
+                <td>
+                    <para>Adds Objective-C++ source compilation capabilities to a project.</para>
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    <link linkend='nativeBinaries'>
                         <literal>windows-resources</literal>
                     </link>
                 </td>
@@ -604,6 +628,19 @@
             </tr>
             <tr>
                 <td>
+                    <link linkend="nativeBinaries">
+                        <literal>cunit</literal>
+                    </link>
+                </td>
+                <td>-</td>
+                <td>-</td>
+                <td>
+                    <para>Adds support for running <ulink url="http://cunit.sourceforge.net">CUnit</ulink> tests.
+                    </para>
+                </td>
+            </tr>
+            <tr>
+                <td>
                     <link linkend='jacoco_plugin'>
                         <literal>jacoco</literal>
                     </link>
@@ -628,9 +665,21 @@
                 <td>
                     <para role="original">Provides integration with the
                         <ulink url="http://www.sonarsource.org">Sonar</ulink>
-                        code quality platform. Superceeds the <link linkend='sonar_plugin'><literal>sonar</literal></link> plugin.
+                        code quality platform. Supersedes the <link linkend='sonar_plugin'><literal>sonar</literal></link> plugin.
                     </para>
                     <para><ulink url="http://www.sonarsource.org">Sonar</ulink>コード品質プラットフォームとの連携機能を提供します。<link linkend='sonar_plugin'><literal>sonar</literal></link>プラグインの後継プラグインです。</para>
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    <link linkend="nativeBinaries">
+                        <literal>visual-studio</literal>
+                    </link>
+                </td>
+                <td>-</td>
+                <td>native language plugins</td>
+                <td>
+                    <para>Adds integration with Visual Studio.</para>
                 </td>
             </tr>
             <tr>
@@ -644,6 +693,18 @@
                 <td>
                     <para>Adds a <apilink class="org.gradle.api.tasks.wrapper.Wrapper"/> task for generating Gradle wrapper files.
                     </para>
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    <link linkend="javaGradle_plugin">
+                        <literal>java-gradle-plugin</literal>
+                    </link>
+                </td>
+                <td>java</td>
+                <td></td>
+                <td>
+                    <para>Assists with development of Gradle plugins by providing standard plugin build configuration and validation.</para>
                 </td>
             </tr>
         </table>
@@ -737,9 +798,7 @@
     </section>
     <section>
         <title>サードパーティプラグイン<phrase role="original">Third party plugins</phrase></title>
-        <para role="original">You can find a list of external plugins on the
-            <ulink url="http://wiki.gradle.org/display/GRADLE/Plugins">wiki</ulink>.
-        </para>
-        <para>サードパーティ製のプラグインは<ulink url="http://wiki.gradle.org/display/GRADLE/Plugins">wiki</ulink>で見つけることができます。</para>
+        <para role="original">You can find a list of external plugins at the <ulink url="http://plugins.gradle.org/">Gradle Plugins site</ulink>.</para>
+        <para>サードパーティ製のプラグインは<ulink url="http://plugins.gradle.org/">Gradleプラグインポータル</ulink>で見つけることができます。</para>
     </section>
 </chapter>

@@ -1,4 +1,4 @@
-﻿<!--
+<!--
   ~ Copyright 2009 the original author or authors.
   ~
   ~ Licensed under the Apache License, Version 2.0 (the "License");
@@ -24,7 +24,7 @@
 
     <section>
         <title>使用方法<phrase role="original">Usage</phrase></title>
-        <para role="original">To use the Maven plugin, include in your build script:</para>
+        <para role="original">To use the Maven plugin, include the following in your build script:</para>
         <para>Mavenプラグインを使うには、ビルドスクリプトに以下を含めます:</para>
         <sample id="useMavenPlugin" dir="maven/quickstart" title="Mavenプラグインの利用 / Using the Maven plugin">
             <sourcefile file="build.gradle" snippet="use-plugin"/>
@@ -195,16 +195,16 @@
                 <literal>uploadArchives</literal>タスクを呼び出すことでPOMが生成され、
                 アーティファクトとPOMが指定されたリポジトリにデプロイされます。
             </para>
-            <para role="original">There is some more work to do if you need support for other protocols than <literal>file</literal>. In
-                this case the native Maven code we delegate to needs additional libraries. Which libraries depend on the
-                protocol you need. The available protocols and the corresponding libraries are listed in <xref
-                        linkend='wagonLibs'/> (those libraries have again transitive dependencies which have transitive
+            <para role="original">There is more work to do if you need support for other protocols other than <literal>file</literal>. In
+                this case the native Maven code we delegate to needs additional libraries. Which libraries are needed depends on what
+                protocol you plan to use. The available protocols and the corresponding libraries are listed in <xref
+                        linkend='wagonLibs'/> (those libraries have transitive dependencies which have transitive
                 dependencies).
                 <footnote>
                     <para role="original">It is planned for a future release to provide out-of-the-box support for this
                     </para>
                 </footnote>
-                For example to use the ssh protocol you can do:
+                For example, to use the ssh protocol you can do:
             </para>
             <para><literal>file</literal>以外のプロトコルをサポートする必要があるなら、他にも少しやるべきことがあります。
                 この場合、処理を委譲するネィティブMavenコードが追加のライブラリを必要とします。
@@ -222,9 +222,9 @@
             </sample>
             <para role="original">There are many configuration options for the Maven deployer. The configuration is done via a Groovy builder.
                 All the elements of this tree are Java beans. To configure the simple attributes you pass a map to the bean
-                elements. To add another bean elements to its parent, you use a closure. In the example above <emphasis>repository</emphasis>
+                elements. To add bean elements to its parent, you use a closure. In the example above <emphasis>repository</emphasis>
                 and <emphasis>authentication</emphasis> are such bean elements. <xref linkend='deployerConfig'/>
-                lists the available bean elements and a link to the javadoc of the corresponding class. In the javadoc you
+                lists the available bean elements and a link to the Javadoc of the corresponding class. In the Javadoc you
                 can see the possible attributes you can set for a particular element.
             </para>
             <para>Mavenデプロイヤーには多くのコンフィグレーションオプションがあります。
@@ -407,7 +407,7 @@
             </para>
             <note>
                 <para role="original">
-                    When you set <literal>archiveTask.baseName</literal> to a value other than the default, make sure to set
+                    When you set the “<literal>archiveTask.baseName</literal>” property to a value other than the default, you'll also have to set
                     <literal>uploadTask.repositories.mavenDeployer.pom.artifactId</literal> to the same value. Otherwise, the project at hand may
                     be referenced with the wrong artifact ID from generated POMs for other projects in the same build.
                 </para>
@@ -445,7 +445,7 @@
             <sample id="pomBuilder" dir="maven/pomGeneration" title="自動生成された内容を変更する / Modifying auto-generated content">
                 <sourcefile file="build.gradle" snippet="when-configured"/>
             </sample>
-            <para role="original">If you have more than one artifact to publish, things work a little bit differently. See<xref
+            <para role="original">If you have more than one artifact to publish, things work a little bit differently. See <xref
                         linkend="sub:multiple_artifacts_per_project"/>.
             </para>
             <para>2つ以上のアーティファクトを公開したい場合は、すこし難しくなります。<xref linkend="sub:multiple_artifacts_per_project"/>を参照してください。</para>
@@ -491,7 +491,7 @@
                     Java and War plugin and the Maven scopes. Most
                     of the time you don't need to touch this and you can safely skip this section. The mapping
                     works like the following. You can map a configuration to one and only one scope. Different
-                    configurations can be mapped to one or different scopes. One can assign also a priority to a particular
+                    configurations can be mapped to one or different scopes. You can also assign a priority to a particular
                     configuration-to-scope mapping. Have a look at
                     <apilink class="org.gradle.api.artifacts.maven.Conf2ScopeMappingContainer"/>
                     to learn more. To access the mapping configuration you can say:

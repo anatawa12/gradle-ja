@@ -9,7 +9,7 @@
 
     <section>
         <title>使用方法<phrase role="original">Usage</phrase></title>
-        <para role="original">To use the Checkstyle plugin, include in your build script:</para>
+        <para role="original">To use the Checkstyle plugin, include the following in your build script:</para>
         <para>Checkstyleプラグインを使うためには、ビルドスクリプトに下記を含めます：</para>
         <sample id="useCheckstylePlugin" dir="codeQuality" title="Checkstyleプラグインの使用 / Using the Checkstyle plugin">
             <sourcefile file="build.gradle" snippet="use-checkstyle-plugin"/>
@@ -116,7 +116,7 @@
 
     <section>
         <title>設定<para role="original">Configuration</para></title>
-        <para role="original">See <apilink class="org.gradle.api.plugins.quality.CheckstyleExtension"/>.</para>
+        <para role="original">See the <apilink class="org.gradle.api.plugins.quality.CheckstyleExtension"/> class in the API documentation.</para>
         <para><apilink class="org.gradle.api.plugins.quality.CheckstyleExtension"/>を参照。</para>
     </section>
 

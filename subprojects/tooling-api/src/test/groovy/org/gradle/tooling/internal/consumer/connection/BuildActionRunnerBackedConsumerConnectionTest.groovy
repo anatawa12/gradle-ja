@@ -20,7 +20,7 @@ import org.gradle.tooling.BuildAction
 import org.gradle.tooling.UnknownModelException
 import org.gradle.tooling.UnsupportedVersionException
 import org.gradle.tooling.internal.adapter.ProtocolToModelAdapter
-import org.gradle.tooling.internal.consumer.parameters.ConsumerConnectionParameters
+import org.gradle.tooling.internal.consumer.ConnectionParameters
 import org.gradle.tooling.internal.consumer.parameters.ConsumerOperationParameters
 import org.gradle.tooling.internal.consumer.versioning.CustomModel
 import org.gradle.tooling.internal.consumer.versioning.ModelMapping
@@ -29,6 +29,7 @@ import org.gradle.tooling.model.GradleProject
 import org.gradle.tooling.model.build.BuildEnvironment
 import org.gradle.tooling.model.eclipse.EclipseProject
 import org.gradle.tooling.model.eclipse.HierarchicalEclipseProject
+import org.gradle.tooling.model.gradle.BuildInvocations
 import org.gradle.tooling.model.gradle.GradleBuild
 import org.gradle.tooling.model.idea.BasicIdeaProject
 import org.gradle.tooling.model.idea.IdeaProject
@@ -52,24 +53,27 @@ class BuildActionRunnerBackedConsumerConnectionTest extends Specification {
         def details = connection.versionDetails
 
         expect:
-        details.supportsGradleProjectModel()
+        !details.supportsTaskDisplayName()
+        !details.supportsCancellation()
 
         and:
-        details.isModelSupported(HierarchicalEclipseProject)
-        details.isModelSupported(EclipseProject)
-        details.isModelSupported(IdeaProject)
-        details.isModelSupported(BasicIdeaProject)
-        details.isModelSupported(GradleProject)
-        details.isModelSupported(BuildEnvironment)
-        details.isModelSupported(ProjectOutcomes)
-        details.isModelSupported(Void)
+        details.maySupportModel(HierarchicalEclipseProject)
+        details.maySupportModel(EclipseProject)
+        details.maySupportModel(IdeaProject)
+        details.maySupportModel(BasicIdeaProject)
+        details.maySupportModel(GradleProject)
+        details.maySupportModel(BuildEnvironment)
+        details.maySupportModel(ProjectOutcomes)
+        details.maySupportModel(Void)
 
         and:
-        !details.isModelSupported(CustomModel)
+        !details.maySupportModel(GradleBuild)
+        !details.maySupportModel(BuildInvocations)
+        !details.maySupportModel(CustomModel)
     }
 
     def "configures connection"() {
-        def parameters = new ConsumerConnectionParameters(false)
+        def parameters = Stub(ConnectionParameters)
 
         when:
         connection.configure(parameters)
@@ -93,7 +97,7 @@ class BuildActionRunnerBackedConsumerConnectionTest extends Specification {
         _ * modelMapping.getProtocolType(GradleProject.class) >> Integer.class
         1 * target.run(Integer.class, parameters) >> result
         _ * result.model >> 12
-        1 * adapter.adapt(GradleProject.class, 12) >> adapted
+        1 * adapter.adapt(GradleProject.class, 12, _) >> adapted
         0 * target._
     }
 
@@ -111,7 +115,7 @@ class BuildActionRunnerBackedConsumerConnectionTest extends Specification {
         _ * modelMapping.getProtocolType(GradleProject.class) >> GradleProject.class
         1 * target.run(GradleProject.class, parameters) >> result
         _ * result.model >> Stub(GradleProject.class)
-        1 * adapter.adapt(GradleProject.class, _) >> adapted
+        1 * adapter.adapt(GradleProject.class, _, _) >> adapted
         1 * adapter.adapt(GradleBuild.class, _) >> adaptedGradleBuild
         0 * target._
     }

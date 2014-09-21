@@ -40,19 +40,21 @@ class TestTaskSpec extends Specification {
     }
 
     def "adds listeners and removes after execution"() {
+        task.setTestNameIncludePattern("Foo")
+
         when:
         task.executeTests()
 
         then:
-        3 * testListenerBroadcaster.add(_)
+        4 * testListenerBroadcaster.add(_)
         2 * testOutputListenerBroadcaster.add(_)
 
         then:
         1 * testExecuter.execute(task, _ as TestResultProcessor)
 
         then:
-        1 * testListenerBroadcaster.removeAll({it.size() == 3})
-        1 * testOutputListenerBroadcaster.removeAll({it.size() == 2})
+        1 * testListenerBroadcaster.removeAll()
+        1 * testOutputListenerBroadcaster.removeAll()
     }
 
     def "removes listeners even if execution fails"() {
@@ -66,7 +68,7 @@ class TestTaskSpec extends Specification {
         ex.message == "Boo!"
 
         and:
-        1 * testListenerBroadcaster.removeAll({it.size() == 3})
-        1 * testOutputListenerBroadcaster.removeAll({it.size() == 2})
+        1 * testListenerBroadcaster.removeAll()
+        1 * testOutputListenerBroadcaster.removeAll()
     }
 }

@@ -16,7 +16,7 @@
 <chapter id='gradle_wrapper' xml:lang="ja">
     <title>Gradleラッパー <phrase role="original">The Gradle Wrapper</phrase></title>
     <para role="original">
-        The Gradle Wrapper (henceforth referred to as the “wrapper) is the preferred way of starting a Gradle build. The wrapper
+        The Gradle Wrapper (henceforth referred to as the “wrapper”) is the preferred way of starting a Gradle build. The wrapper
         is a batch script on Windows, and a shell script for other operating systems. When you start a Gradle build via the wrapper,
         Gradle will be automatically downloaded and used to run the build. 
     </para>
@@ -70,8 +70,8 @@
         <command>gradlew</command>コマンドは、<command>gradle</command>コマンドと<emphasis>全く</emphasis>同じように使うことができます。
     </para>
     <para role="original">If you want to switch to a new version of Gradle you don't need to rerun the wrapper task. It is good enough
-        to change the respective entry in the <literal>gradle-wrapper.properties</literal> file. But if there is for
-        example an improvement in the gradle-wrapper functionality you need to regenerate the wrapper files.
+        to change the respective entry in the <literal>gradle-wrapper.properties</literal> file, but if you want to take
+        advantage of new functionality in the Gradle wrapper, then you would need to regenerate the wrapper files.
     </para>
     <para>Gradleを新しいバージョンに変更する場合でも、wrapperタスクを再実行する必要はありません。
         <literal>gradle-wrapper.properties</literal> ファイルの、関係するエントリを変更するだけです。
@@ -80,9 +80,9 @@
     <section id='sec:configuration'>
         <title>設定<phrase role="original">Configuration</phrase></title>
         <para role="original">If you run Gradle with <command>gradlew</command>, the wrapper checks if a Gradle distribution for the wrapper
-            is available. If not it tries to download it, otherwise it delegates to the <command>gradle</command>
+            is available. If so, it delegates to the <command>gradle</command>
             command of this distribution with all the arguments passed originally to the <command>gradlew</command>
-            command.
+            command.  If it didn't find a Gradle distribution, it will download it first.
         </para>
         <para><command>gradlew</command>を実行すると、ラッパーはまず、指定されたディストリビューションが利用できるかどうか確認します。
             利用できなければディストリビューションを新しくダウンロードし、利用可能なら<command>gradlew</command>コマンドに指定された引数を、そのディストリビューションの<command>gradle</command>コマンドにそのまま渡して実行します。
@@ -92,7 +92,7 @@
             command will download the appropriate distribution from the Gradle repository.
             Alternatively, you can specify the download URL of the Gradle distribution. The <command>gradlew</command> command will use this URL to download
             the distribution.
-            If you specify neither a Gradle version or download URL, the <command>gradlew</command> command will by default download whichever version
+            If you specified neither a Gradle version nor download URL, the <command>gradlew</command> command will download whichever version
             of Gradle was used to generate the wrapper files.
         </para>
         <para>
@@ -100,10 +100,12 @@
             または、GradleのディストリビューションをダウンロードするURLを直接指定することもできます。この場合は、<command>gradlew</command>コマンドはディストリビューションのダウンロードにそのURLを使用します。
             Gradleのバージョンもダウンロード先も指定しなかった場合は、ラッパーファイルを作成したGradleのバージョンがダウンロードするGradleのバージョンに使用されます。
         </para>
+        <para>For the details on how to configure the wrapper, see the <apilink class="org.gradle.api.tasks.wrapper.Wrapper"/> class in the API documentation.
+        </para>
         <para role="original">For the details on how to configure the wrapper, see <apilink class="org.gradle.api.tasks.wrapper.Wrapper"/>
         </para>
         <para>ラッパーの詳細な設定方法については<apilink class="org.gradle.api.tasks.wrapper.Wrapper"/>を参照してください。</para>
-        <para role="original">If you don't want any download to happen when your project is build via <command>gradlew</command>, simply add the Gradle
+        <para role="original">If you don't want any download to happen when your project is built via <command>gradlew</command>, simply add the Gradle
             distribution zip to your version control at the location specified by your wrapper configuration.
             A relative URL is supported - you can specify a distribution file relative to the location of <literal>gradle-wrapper.properties</literal> file.
         </para>
@@ -116,9 +118,9 @@
     </section>
     <section id='sec:unix_file_permissions'>
         <title>Unixファイルパーミッション <phrase role="original">Unix file permissions</phrase></title>
-        <para role="original">The Wrapper task adds appropriate file permissions to allow the execution for the gradlew *NIX command.
+        <para role="original">The Wrapper task adds appropriate file permissions to allow the execution of the <literal>gradlew</literal> *NIX command.
             Subversion preserves this file permission. We are not sure how other version control systems deal with this.
-            What should always work is to execute <literal>sh gradlew</literal>.
+            What should always work is to execute “<literal>sh gradlew</literal>”.
         </para>
         <para>Wrapperタスクは、生成したgradlew *NIXコマンドを実行できるよう、適切なファイルパーミッションを追加します。
             Subversionはちゃんとこのファイルパーミッションを保存してくれますが、他のバージョン管理システムではどのように扱われるのかわかりません。

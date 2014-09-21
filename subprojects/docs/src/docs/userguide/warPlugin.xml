@@ -24,7 +24,7 @@
 
     <section>
         <title>使用方法<phrase role="original">Usage</phrase></title>
-        <para role="original">To use the War plugin, include in your build script:</para>
+        <para role="original">To use the War plugin, include the following in your build script:</para>
         <para>War プラグインを使うためには、ビルドスクリプトに下記を含めます：</para>
         <sample id="useWarPlugin" dir="webApplication/quickstart" title="Using the War plugin">
             <sourcefile file="build.gradle" snippet="use-war-plugin"/>
@@ -98,14 +98,14 @@
 
     <section>
         <title>依存関係の管理<phrase role="original">Dependency management</phrase></title>
-        <para role="original">The War plugin adds two dependency configurations: <literal>providedCompile</literal> and
-            <literal>providedRuntime</literal>. Those configurations have the same scope as the respective
+        <para role="original">The War plugin adds two dependency configurations named <literal>providedCompile</literal> and
+            <literal>providedRuntime</literal>. Those two configurations have the same scope as the respective
             <literal>compile</literal> and <literal>runtime</literal> configurations, except that they are not added to
             the WAR archive. It is important to note that those <literal>provided</literal> configurations work
             transitively. Let's say you add <literal>commons-httpclient:commons-httpclient:3.0</literal> to any of the
             provided configurations. This dependency has a dependency on <literal>commons-codec</literal>.
-            This means neither <literal>httpclient</literal> nor <literal>commons-codec</literal> is added to your
-            WAR, even if <literal>commons-codec</literal> were an explicit dependency of your <literal>compile</literal>
+            Because this is a “provided” configuration, this means that neither of these dependencies will be added to your
+            WAR, even if the <literal>commons-codec</literal> library is an explicit dependency of your <literal>compile</literal>
             configuration. If you don't want this transitive behavior, simply declare your <literal>provided</literal>
             dependencies like <literal>commons-httpclient:commons-httpclient:3.0@jar</literal>.
         </para>
@@ -178,7 +178,7 @@
 
         <para role="original">>The default behavior of the War task is to copy the content of <literal>src/main/webapp</literal>
             to the root of the archive. Your <literal>webapp</literal> directory may of course contain a
-            <literal>WEB-INF</literal> sub-directory, which again may contain a <literal>web.xml</literal> file.
+            <literal>WEB-INF</literal> sub-directory, which may contain a <literal>web.xml</literal> file.
             Your compiled classes are compiled to <literal>WEB-INF/classes</literal>. All the dependencies of the
             <literal>runtime</literal>
             <footnote>
@@ -190,17 +190,7 @@
                 </para>
             </footnote>
             configuration are copied to <literal>WEB-INF/lib</literal>.</para>
-         <para>War タスクは デフォルトでは <literal>src/main/webapp</literal> 配下のコンテンツを WAR アーカイブのルートにコピーします。
-            <literal>webapp</literal> ディレクトリには 当然 <literal>WEB-INF</literal> サブディレクトリが含まれるかもしれませんし、
-            更にその配下には <literal>web.xml</literal> ファイルが含まれるかもしれません。
-            クラスファイルは <literal>WEB-INF/classes</literal> にコンパイルされます。
-            <literal>runtime</literal>
-            <footnote>
-                <para><literal>runtime</literal> 構成は <literal>compile</literal> 構成を拡張したものです。</para>
-            </footnote>
-            構成の依存ライブラリは全て <literal>WEB-INF/lib</literal> にコピーされます。</para>
-        <para role="original">Have also a look at <apilink class="org.gradle.api.tasks.bundling.War"/>.</para>
-        <para><apilink class="org.gradle.api.tasks.bundling.War"/> も見てみてください。</para>
+        <para>The <apilink class="org.gradle.api.tasks.bundling.War"/> class in the API documentation has additional useful information.</para>
     </section>
     <section id='sec:customizing'>
         <title>カスタマイズ<phrase role="original">Customizing</phrase></title>

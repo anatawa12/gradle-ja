@@ -37,6 +37,7 @@
 
         <para role="original">Then, you can run the application by running <userinput>gradle run</userinput>. Gradle will take care of building the application classes,
             along with their runtime dependencies, and starting the application with the correct classpath.
+            You can launch the application in debug mode with <userinput>gradle run --debug-jvm</userinput> (see <apilink class="org.gradle.api.tasks.JavaExec" method="setDebug(boolean)" />).
         </para>
         <para>あとは <userinput>gradle run</userinput> を実行するだけで、アプリケーションを実行することができます。
             Gradle は アプリケーションクラスのビルドから 実行時の依存解決、 適切なクラスパスでのアプリケーションの起動まで全て面倒みてくれます。
@@ -54,6 +55,15 @@
             アプリケーションイメージを生成することができます。
             <userinput>gradle distZip</userinput> で ディストリビューションを含む ZIP ファイルを生成することができます。
         </para>
+
+        <para>
+            If your Java application requires a specific set of JVM settings or system properties, you can configure the <literal>applicationDefaultJvmArgs</literal> property.
+            These JVM arguments are applied to the <literal>run</literal> task and also considered in the generated start scripts of your distribution.
+        </para>
+        <sample id="configureApplicationDefaultJvmArgs" dir="application" title="Configure default JVM settings">
+            <sourcefile file="build.gradle" snippet="application-defaultjvmargs"/>
+        </sample>
+
     </section>
 
     <section>
@@ -113,7 +123,7 @@
                 <td>実行ライブラリと OS 依存スクリプトを含んだ 完全なディストリビューション ZIP アーカイブを生成します。
                     <phrase role="original">Creates a full distribution ZIP archive including runtime libraries and OS specific scripts.</phrase></td>
             </tr>
-	        <tr>
+            <tr>
                 <td>
                     <literal>distTar</literal>
                 </td>
@@ -134,13 +144,13 @@
             <para>アプリケーション プラグインは いくつかのプロパティをプロジェクトに追加します。そのプロパティを設定すれば挙動が変えられます。詳しくは <apilink class="org.gradle.api.Project"/> を参照してください。
             </para>
     </section>
-    
+
     <section id="application_distribution_resources">
             <title>ディストリビューションに他のリソースを含める <phrase role="original">Including other resources in the distribution</phrase></title>
             <para role="original">
                 One of the convention properties added by the plugin is <literal>applicationDistribution</literal> which is a <apilink class="org.gradle.api.file.CopySpec"/>.
                 This specification is used by the <literal>installApp</literal> and <literal>distZip</literal> tasks as the specification of what is to be 
-                include in the distribution. Above copying the starting scripts to the <filename>bin</filename> dir and necessary jars to <filename>lib</filename> 
+                included in the distribution. In addition to copying the start scripts to the <filename>bin</filename> dir and necessary jars to <filename>lib</filename> 
                 in the distribution, all of the files from the <filename>src/dist</filename> directory are also copied. To include any static files in the 
                 distribution, simply arrange them in the <filename>src/dist</filename> directory.
             </para>

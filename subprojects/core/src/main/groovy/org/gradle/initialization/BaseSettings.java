@@ -22,12 +22,16 @@ import org.gradle.api.initialization.Settings;
 import org.gradle.api.internal.GradleInternal;
 import org.gradle.api.internal.SettingsInternal;
 import org.gradle.api.internal.file.FileResolver;
+import org.gradle.api.internal.initialization.ClassLoaderScope;
+import org.gradle.api.internal.initialization.ScriptHandlerFactory;
+import org.gradle.api.internal.plugins.DefaultObjectConfigurationAction;
 import org.gradle.api.internal.project.AbstractPluginAware;
 import org.gradle.api.internal.project.ProjectRegistry;
-import org.gradle.internal.service.scopes.ServiceRegistryFactory;
 import org.gradle.api.plugins.PluginContainer;
 import org.gradle.configuration.ScriptPluginFactory;
 import org.gradle.groovy.scripts.ScriptSource;
+import org.gradle.internal.service.ServiceRegistry;
+import org.gradle.internal.service.scopes.ServiceRegistryFactory;
 
 import java.io.File;
 
@@ -38,36 +42,39 @@ public class BaseSettings extends AbstractPluginAware implements SettingsInterna
 
     private StartParameter startParameter;
 
-    private ClassLoader classloader;
-
     private File settingsDir;
 
     private DefaultProjectDescriptor rootProjectDescriptor;
+
+    private ProjectDescriptor defaultProjectDescriptor;
 
     private GradleInternal gradle;
 
     private ProjectDescriptorRegistry projectDescriptorRegistry;
 
-    private  ServiceRegistryFactory services;
-
     private PluginContainer plugins;
 
     private FileResolver fileResolver;
 
-    private ScriptPluginFactory scriptPluginFactory;
+    private final ScriptPluginFactory scriptPluginFactory;
+    private final ScriptHandlerFactory scriptHandlerFactory;
+    private final ClassLoaderScope classLoaderScope;
+    private final ClassLoaderScope rootClassLoaderScope;
 
     public BaseSettings(ServiceRegistryFactory serviceRegistryFactory, GradleInternal gradle,
-                        ClassLoader classloader, File settingsDir, ScriptSource settingsScript,
-                        StartParameter startParameter) {
+                        ClassLoaderScope classLoaderScope, ClassLoaderScope rootClassLoaderScope, File settingsDir,
+                        ScriptSource settingsScript, StartParameter startParameter) {
         this.gradle = gradle;
+        this.rootClassLoaderScope = rootClassLoaderScope;
         this.settingsDir = settingsDir;
         this.settingsScript = settingsScript;
         this.startParameter = startParameter;
-        this.classloader = classloader;
-        this.services = serviceRegistryFactory.createFor(this);
+        this.classLoaderScope = classLoaderScope;
+        ServiceRegistry services = serviceRegistryFactory.createFor(this);
         this.plugins = services.get(PluginContainer.class);
         this.fileResolver = services.get(FileResolver.class);
         this.scriptPluginFactory = services.get(ScriptPluginFactory.class);
+        this.scriptHandlerFactory = services.get(ScriptHandlerFactory.class);
         this.projectDescriptorRegistry = services.get(ProjectDescriptorRegistry.class);
         rootProjectDescriptor = createProjectDescriptor(null, settingsDir.getName(), settingsDir);
     }
@@ -144,16 +151,20 @@ public class BaseSettings extends AbstractPluginAware implements SettingsInterna
         return projectPath;
     }
 
-    public ClassLoader getClassLoader() {
-        return classloader;
-    }
-
     public ProjectDescriptor getRootProject() {
         return rootProjectDescriptor;
     }
 
     public void setRootProjectDescriptor(DefaultProjectDescriptor rootProjectDescriptor) {
         this.rootProjectDescriptor = rootProjectDescriptor;
+    }
+
+    public ProjectDescriptor getDefaultProject() {
+        return defaultProjectDescriptor;
+    }
+
+    public void setDefaultProject(ProjectDescriptor defaultProjectDescriptor) {
+        this.defaultProjectDescriptor = defaultProjectDescriptor;
     }
 
     public File getRootDir() {
@@ -200,14 +211,17 @@ public class BaseSettings extends AbstractPluginAware implements SettingsInterna
         return plugins;
     }
 
-
     @Override
-    protected FileResolver getFileResolver() {
-        return fileResolver;
+    protected DefaultObjectConfigurationAction createObjectConfigurationAction() {
+        return new DefaultObjectConfigurationAction(fileResolver, scriptPluginFactory, scriptHandlerFactory, getRootClassLoaderScope(), this);
     }
 
-    @Override
-    protected ScriptPluginFactory getScriptPluginFactory() {
-        return scriptPluginFactory;
+    public ClassLoaderScope getRootClassLoaderScope() {
+        return rootClassLoaderScope;
     }
+
+    public ClassLoaderScope getClassLoaderScope() {
+        return classLoaderScope;
+    }
+
 }

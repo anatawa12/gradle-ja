@@ -21,7 +21,7 @@ import org.gradle.api.internal.TaskOutputsInternal;
 import org.gradle.api.internal.project.ProjectInternal;
 import org.gradle.api.internal.tasks.DefaultTaskInputs;
 import org.gradle.api.internal.tasks.DefaultTaskOutputs;
-import org.gradle.api.internal.tasks.TaskStatusNagger;
+import org.gradle.api.internal.tasks.TaskMutator;
 import org.gradle.api.tasks.TaskInputs;
 import org.gradle.internal.service.DefaultServiceRegistry;
 import org.gradle.internal.service.ServiceRegistry;
@@ -30,7 +30,7 @@ import org.gradle.logging.LoggingManagerInternal;
 /**
  * Contains the services for a given task.
  */
-public class TaskScopeServices extends DefaultServiceRegistry implements ServiceRegistryFactory {
+public class TaskScopeServices extends DefaultServiceRegistry {
     private final ProjectInternal project;
     private final TaskInternal taskInternal;
 
@@ -41,22 +41,18 @@ public class TaskScopeServices extends DefaultServiceRegistry implements Service
     }
 
     protected TaskInputs createTaskInputs() {
-        return new DefaultTaskInputs(project.getFileResolver(), taskInternal, get(TaskStatusNagger.class));
+        return new DefaultTaskInputs(project.getFileResolver(), taskInternal, get(TaskMutator.class));
     }
 
     protected TaskOutputsInternal createTaskOutputs() {
-        return new DefaultTaskOutputs(project.getFileResolver(), taskInternal, get(TaskStatusNagger.class));
+        return new DefaultTaskOutputs(project.getFileResolver(), taskInternal, get(TaskMutator.class));
     }
 
-    protected TaskStatusNagger createTaskStatusNagger() {
-        return new TaskStatusNagger(taskInternal);
+    protected TaskMutator createTaskStatusNagger() {
+        return new TaskMutator(taskInternal);
     }
 
     protected LoggingManagerInternal createLoggingManager() {
         return getFactory(LoggingManagerInternal.class).create();
-    }
-
-    public ServiceRegistryFactory createFor(Object domainObject) {
-        throw new UnsupportedOperationException();
     }
 }

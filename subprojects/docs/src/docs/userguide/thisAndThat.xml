@@ -1,4 +1,4 @@
-﻿<!--
+<!--
   ~ Copyright 2009 the original author or authors.
   ~
   ~ Licensed under the Apache License, Version 2.0 (the "License");
@@ -17,13 +17,12 @@
     <title>色々なチュートリアル <phrase role="original">Tutorial - 'This and That'</phrase></title>
     <section id='sec:directory_creation'>
         <title>ディレクトリの作成 <phrase role="original">Directory creation</phrase></title>
-        <para role="original">There is a common situation, that multiple tasks depend on the existence of a directory. Of course you can
+        <para role="original">There is a common situation where multiple tasks depend on the existence of a directory. Of course you can
             deal with this by adding a
             <literal>mkdir</literal>
-            to the beginning of those tasks. But this is kind of bloated. There is a better solution (works only if the
-            tasks that need the directory have a
-            <emphasis>dependsOn</emphasis>
-            relationship):
+            to the beginning of those tasks, but it's almost always a bad idea to repeat a sequence of code
+            that you only need once (Look up the <firstterm>DRY</firstterm> principle). A better solution would use the
+            <emphasis>dependsOn</emphasis> relationship between tasks to reuse the task to create the directory:
         </para>
         <para>
         複数のタスクが、ある一つのディレクトリが存在していることを前提としている、ということがよくあります。
@@ -42,44 +41,64 @@
             <command>gradle</command> command has the same effect as the <option>-D</option> option of the
             <command>java</command> command.
         </para>
-        <para>Gradleでは、さまざまな方法でビルドにプロパティ値を渡すことができます。<option>-D</option>オプションを使えばGradleを実行しているJVMにシステムプロパティを渡すことができます。<command>gradle</command>コマンドは<option>-D</option>オプションを<command>java</command>コマンドへの<option>-D</option>オプションと同じように処理します。</para>
+        <para>Gradleでは、さまざまな方法でビルドにプロパティ値を渡すことができます。
+            <option>-D</option>オプションを使えばGradleを実行しているJVMにシステムプロパティを渡すことができます。
+            <command>gradle</command>コマンドは<option>-D</option>オプションを<command>java</command>コマンドへの<option>-D</option>オプションと同じように処理します。
+        </para>
         <para role="original">You can also directly add properties to your project objects using properties files. You can place a
-            <filename>gradle.properties</filename> file in the Gradle user home directory (defaults to
+            <filename>gradle.properties</filename> file in the Gradle user home directory (defined by the
+            “<literal>GRADLE_USER_HOME</literal>” environment variable, which if not set defaults to
             <filename><replaceable>USER_HOME</replaceable>/.gradle</filename>) or in your project directory. For
             multi-project builds you can place <filename>gradle.properties</filename> files in any subproject directory.
-            The properties of the <filename>gradle.properties</filename> can be accessed via the project object. The
+            The properties set in a <filename>gradle.properties</filename> file can be accessed via the project object. The
             properties file in the user's home directory has precedence over property files in the project directories.
         </para>
-        <para>propertiesファイルを記述することで、projectオブジェクトに直接プロパティを追加することもできます。このプロパティファイル<filename>gradle.properties</filename>はGradleのホームディレクトリ(デフォルトでは<filename><replaceable>USER_HOME</replaceable>/.gradle</filename>)かプロジェクトディレクトリに作成します。マルチプロジェクトの場合、gradle.properteisはすべてのサブプロジェクトディレクトリに置くことができます。<filename>gradle.properties</filename>に記述されたプロパティはprojectオブジェクトからアクセスすることができます。なお、ホームディレクトリの<filename>gradle.properties</filename>は、プロジェクトディレクトリの<filename>gradle.properties</filename>の定義を上書きし、優先的に使用されます。</para>
-        <para role="original">You can also add properties directly to your project object via the <option>-P</option>
-            command line option. For more exotic use cases you can even pass properties <emphasis>directly</emphasis>
-            to the project object via system and environment properties. For example if you run a build on a continuous
-            integration server where you have no admin rights for the <emphasis>machine</emphasis>. Your build script
-            needs properties which values should not be seen by others. Therefore you can't use the <option>-P</option>
-            option. In this case you can add an environment property in the project administration section (invisible to
-            normal users).
+        <para>propertiesファイルを記述することで、projectオブジェクトに直接プロパティを追加することもできます。
+            このプロパティファイル<filename>gradle.properties</filename>はGradleのホームディレクトリ
+            (デフォルトでは<filename><replaceable>USER_HOME</replaceable>/.gradle</filename>)かプロジェクトディレクトリに作成します。
+            マルチプロジェクトの場合、gradle.properteisはすべてのサブプロジェクトディレクトリに置くことができます。
+            <filename>gradle.properties</filename>に記述されたプロパティはprojectオブジェクトからアクセスすることができます。
+            なお、ホームディレクトリの<filename>gradle.properties</filename>は、プロジェクトディレクトリの<filename>gradle.properties</filename>の定義を上書きし、優先的に使用されます。
+        </para>
+        <para role="original">You can also add properties directly to your project object via the <option>-P</option> command line option.
+        </para>
+        <para>projectオブジェクトに追加するプロパティは、コマンドラインオプションの<option>-P</option>オプションで直接設定することもできます。
+        </para>
+        <para>Gradle can also set project properties when it sees specially-named system properties or
+            environment variables. This feature is very useful when you don't have admin rights to a continuous integration
+            server and you need to set property values that should not be easily visible, typically for security reasons.
+            In that situation, you can't use the <option>-P</option> option, and you can't change the system-level
+            configuration files.  The correct strategy is to change the configuration of your continuous integration
+            build job, adding an environment variable setting that matches an expected pattern.  This won't be visible
+            to normal users on the system.
             <footnote>
                 <para role="original">
-                    <emphasis>Teamcity</emphasis> or <emphasis>Bamboo</emphasis> are for example CI servers which
-                    offer this functionality.
+                    <emphasis>Jenkins</emphasis>, <emphasis>Teamcity</emphasis>, or <emphasis>Bamboo</emphasis> are some CI servers which offer this functionality.
                 </para>
             </footnote>
-            If the environment property follows the pattern
-            <literal>ORG_GRADLE_PROJECT_<replaceable>propertyName</replaceable>=somevalue</literal>,
-            <literal>propertyName</literal> is added to your project object. We also support the same mechanism for
-            system properties. The only difference is the pattern, which is
-            <literal>org.gradle.project.<replaceable>propertyName</replaceable></literal>.
         </para>
         <para>projectオブジェクトに追加するプロパティは、コマンドラインオプションの<option>-P</option>オプションで設定することもできます。また、さらにエキゾチックな使い方に備えて、環境変数やシステムプロパティからプロパティを<emphasis>直接</emphasis>取り込む機能もあります。たとえば、管理権限のないマシン上のCIサーバーで継続的なビルドを行う場合について考えてみましょう。自分のビルドスクリプトに、他人から見られたくない値をプロパティとして設定する必要がある場合、<option>-P</option>オプションは使えません。このときは、プロジェクトの管理者のみアクセスできるようなCIサーバー上のページで環境変数を設定することで、ビルドスクリプトにプロパティを渡すことができます。
             <footnote>
                 <para><emphasis>Teamcity</emphasis>や<emphasis>Bamboo</emphasis>といったCIサーバーがこの機能を持っています。</para>
             </footnote>
             ここで設定する環境変数名にはあるパターンがあり、<literal>ORG_GRADLE_PROJECT_<replaceable>propertyName</replaceable>=somevalue</literal>という環境変数を設定した場合<literal>propertyName</literal>というプロパティがプロジェクトに設定されます。また、システムプロパティでも同様のメカニズムを実装しています。パターンが<literal>org.gradle.project.<replaceable>propertyName</replaceable></literal>となっていること以外は環境変数の場合と同じです。</para>
-        <para role="original">With the <filename>gradle.properties</filename> files you can also set system properties. If a property
-            in such a file has the prefix <literal>systemProp.</literal> the property and its value are added to the 
-            system properties, without the prefix.
+        <para>
+            If the environment variable name looks like
+            <literal>ORG_GRADLE_PROJECT_<replaceable>prop</replaceable>=somevalue</literal>,
+            then Gradle will set a <literal>prop</literal> property on your project object, with the value
+            of <literal>somevalue</literal>. Gradle also supports this for
+            system properties, but with a different naming pattern, which looks like
+            <literal>org.gradle.project.<replaceable>prop</replaceable></literal>.
         </para>
-        <para><filename>gradle.properties</filename>ファイルでもシステムプロパティを設定することができます。ファイル内でプレフィックスに<literal>systemProp</literal>をつけてプロパティを設定することで、プレフィックス部分をのぞいたプロパティ名でシステムプロパティに追加されます。</para>
+        <para>You can also set system properties in the <filename>gradle.properties</filename> file. If a property
+            name in such a file has the prefix “<literal>systemProp.</literal>”, like “<literal>systemProp.propName</literal>”,
+            then the property and its value will be set as a system property, without the prefix. In a multi project
+            build, “<literal>systemProp.</literal>” properties set in any project except the root will be ignored.
+            That is, only the root project's <filename>gradle.properties</filename> file will be checked for
+            properties that begin with the “<literal>systemProp.</literal>” prefix.
+        </para>
+        <para><filename>gradle.properties</filename>ファイルでもシステムプロパティを設定することができます。
+            ファイル内でプレフィックスに<literal>systemProp</literal>をつけてプロパティを設定することで、プレフィックス部分をのぞいたプロパティ名でシステムプロパティに追加されます。</para>
         <sample id="properties" dir="userguide/tutorial/properties" title="gradle.propertiesでプロパティを設定する / Setting properties with a gradle.properties file">
             <sourcefile file="gradle.properties"/>
             <sourcefile file="build.gradle"/>
@@ -88,9 +107,9 @@
         <section id='sub:checking_for_project_properties'>
             <title>プロジェクトプロパティの確認<phrase role="original">Checking for project properties</phrase></title>
             <para role="original">You can access a project property in your build script simply by using its name as you would use a
-                variable. In case this property does not exists, an exception is thrown and the build fails. If your
-                build script relies on optional properties the user might set for example in a gradle.properties file,
-                you need to check for existence before you can access them. You can do this by using the method
+                variable. If this property does not exist, an exception will be thrown and the build will fail. If your
+                build script relies on optional properties the user might set, perhaps in a <literal>gradle.properties</literal> file,
+                you need to check for existence before you access them. You can do this by using the method
                 <literal>hasProperty('propertyName')</literal>
                 which returns
                 <literal>true</literal>

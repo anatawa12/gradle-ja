@@ -62,9 +62,7 @@ class FindBugsPlugin extends AbstractCodeQualityPlugin<FindBugs> {
     @Override
     protected CodeQualityExtension createExtension() {
         extension = project.extensions.create("findbugs", FindBugsExtension)
-        extension.with {
-            toolVersion = "2.0.1"
-        }
+        extension.toolVersion = "3.0.0"
         return extension
     }
 
@@ -73,16 +71,14 @@ class FindBugsPlugin extends AbstractCodeQualityPlugin<FindBugs> {
         task.with {
             pluginClasspath = project.configurations['findbugsPlugins']
         }
-        task.conventionMapping.with {
-            findbugsClasspath = {
-                def config = project.configurations['findbugs']
-                if (config.dependencies.empty) {
-                    project.dependencies {
-                        findbugs("com.google.code.findbugs:findbugs:$extension.toolVersion")
-                    }
-                }
-                config
+        def config = project.configurations['findbugs']
+        config.incoming.beforeResolve {
+            if (config.dependencies.empty) {
+                config.dependencies.add(project.dependencies.create("com.google.code.findbugs:findbugs:$extension.toolVersion"))
             }
+        }
+        task.conventionMapping.with {
+            findbugsClasspath = { config }
             ignoreFailures = { extension.ignoreFailures }
             effort = { extension.effort }
             reportLevel = { extension.reportLevel }

@@ -21,6 +21,8 @@ import org.gradle.api.internal.classpath.DefaultModuleRegistry;
 import org.gradle.api.internal.classpath.DefaultPluginModuleRegistry;
 import org.gradle.api.internal.classpath.ModuleRegistry;
 import org.gradle.api.internal.classpath.PluginModuleRegistry;
+import org.gradle.api.internal.file.DefaultFileLookup;
+import org.gradle.api.internal.file.FileLookup;
 import org.gradle.api.internal.file.FileResolver;
 import org.gradle.api.internal.file.IdentityFileResolver;
 import org.gradle.cache.internal.CacheFactory;
@@ -29,11 +31,13 @@ import org.gradle.cache.internal.DefaultFileLockManager;
 import org.gradle.cache.internal.FileLockManager;
 import org.gradle.cli.CommandLineConverter;
 import org.gradle.initialization.*;
+import org.gradle.internal.classloader.ClassLoaderFactory;
+import org.gradle.internal.classloader.DefaultClassLoaderFactory;
 import org.gradle.internal.concurrent.DefaultExecutorFactory;
 import org.gradle.internal.concurrent.ExecutorFactory;
-import org.gradle.internal.nativeplatform.ProcessEnvironment;
-import org.gradle.internal.nativeplatform.filesystem.FileSystem;
-import org.gradle.internal.nativeplatform.services.NativeServices;
+import org.gradle.internal.nativeintegration.ProcessEnvironment;
+import org.gradle.internal.nativeintegration.filesystem.FileSystem;
+import org.gradle.internal.nativeintegration.services.NativeServices;
 import org.gradle.internal.service.DefaultServiceRegistry;
 import org.gradle.internal.service.ServiceRegistry;
 import org.gradle.listener.DefaultListenerManager;
@@ -44,8 +48,6 @@ import org.gradle.logging.ProgressLoggerFactory;
 import org.gradle.logging.internal.DefaultLoggingManagerFactory;
 import org.gradle.logging.internal.DefaultProgressLoggerFactory;
 import org.gradle.messaging.remote.MessagingServer;
-import org.gradle.internal.classloader.ClassLoaderFactory;
-import org.gradle.internal.classloader.DefaultClassLoaderFactory;
 import org.junit.Test;
 import spock.lang.Shared;
 
@@ -55,7 +57,7 @@ import static org.junit.Assert.assertThat;
 
 public class GlobalScopeServicesTest {
     @Shared
-    private final ServiceRegistry registry = new DefaultServiceRegistry(LoggingServiceRegistry.newEmbeddableLogging(), NativeServices.getInstance()).addProvider(new GlobalScopeServices());
+    private final ServiceRegistry registry = new DefaultServiceRegistry(LoggingServiceRegistry.newEmbeddableLogging(), NativeServices.getInstance()).addProvider(new GlobalScopeServices(false));
 
     @Test
     public void providesAGradleLauncherFactory() {
@@ -69,8 +71,8 @@ public class GlobalScopeServicesTest {
     }
 
     @Test
-    public void providesACacheFactoryFactory() {
-        assertThat(registry.getFactory(CacheFactory.class), instanceOf(DefaultCacheFactory.class));
+    public void providesACacheFactory() {
+        assertThat(registry.get(CacheFactory.class), instanceOf(DefaultCacheFactory.class));
     }
 
     @Test
@@ -156,6 +158,11 @@ public class GlobalScopeServicesTest {
     @Test
     public void providesAFileResolver() {
         assertThat(registry.get(FileResolver.class), instanceOf(IdentityFileResolver.class));
+    }
+
+    @Test
+    public void providesAFileLookup() {
+        assertThat(registry.get(FileLookup.class), instanceOf(DefaultFileLookup.class));
     }
 
     @Test

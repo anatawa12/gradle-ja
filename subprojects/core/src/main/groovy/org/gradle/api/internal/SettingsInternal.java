@@ -17,17 +17,31 @@
 package org.gradle.api.internal;
 
 import org.gradle.StartParameter;
+import org.gradle.api.initialization.ProjectDescriptor;
 import org.gradle.api.initialization.Settings;
+import org.gradle.api.internal.initialization.ClassLoaderScope;
 import org.gradle.api.internal.project.ProjectRegistry;
 import org.gradle.groovy.scripts.ScriptSource;
 import org.gradle.initialization.DefaultProjectDescriptor;
 
 public interface SettingsInternal extends Settings {
-    ClassLoader getClassLoader();
+    /**
+     * Returns the scope containing classes that should be visible to all settings and build scripts invoked by this build.
+     */
+    ClassLoaderScope getRootClassLoaderScope();
+
+    /**
+     * Returns the scope into which the main settings script should define classes, and from which plugins applied to this settings object should be resolved.
+     */
+    ClassLoaderScope getClassLoaderScope();
 
     StartParameter getStartParameter();
 
     ScriptSource getSettingsScript();
 
     ProjectRegistry<DefaultProjectDescriptor> getProjectRegistry();
+
+    ProjectDescriptor getDefaultProject();
+
+    void setDefaultProject(ProjectDescriptor defaultProject);
 }

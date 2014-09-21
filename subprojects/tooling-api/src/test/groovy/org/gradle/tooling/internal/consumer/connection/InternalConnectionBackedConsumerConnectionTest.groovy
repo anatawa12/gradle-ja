@@ -29,6 +29,7 @@ import org.gradle.tooling.model.GradleProject
 import org.gradle.tooling.model.build.BuildEnvironment
 import org.gradle.tooling.model.eclipse.EclipseProject
 import org.gradle.tooling.model.eclipse.HierarchicalEclipseProject
+import org.gradle.tooling.model.gradle.BuildInvocations
 import org.gradle.tooling.model.gradle.GradleBuild
 import org.gradle.tooling.model.idea.BasicIdeaProject
 import org.gradle.tooling.model.idea.IdeaProject
@@ -52,21 +53,23 @@ class InternalConnectionBackedConsumerConnectionTest extends Specification {
         def details = connection.versionDetails
 
         expect:
-        details.supportsGradleProjectModel()
+        !details.supportsTaskDisplayName()
+        !details.supportsCancellation()
 
         and:
-        details.isModelSupported(HierarchicalEclipseProject)
-        details.isModelSupported(EclipseProject)
-        details.isModelSupported(IdeaProject)
-        details.isModelSupported(BasicIdeaProject)
-        details.isModelSupported(GradleProject)
-        details.isModelSupported(BuildEnvironment)
-        details.isModelSupported(Void)
+        details.maySupportModel(HierarchicalEclipseProject)
+        details.maySupportModel(EclipseProject)
+        details.maySupportModel(IdeaProject)
+        details.maySupportModel(BasicIdeaProject)
+        details.maySupportModel(GradleProject)
+        details.maySupportModel(BuildEnvironment)
+        details.maySupportModel(Void)
 
         and:
-        !details.isModelSupported(ProjectOutcomes)
-        !details.isModelSupported(CustomModel)
-        !details.isModelSupported(GradleBuild)
+        !details.maySupportModel(ProjectOutcomes)
+        !details.maySupportModel(CustomModel)
+        !details.maySupportModel(GradleBuild)
+        !details.maySupportModel(BuildInvocations)
     }
 
     def "builds GradleBuild model by converting GradleProject"() {
@@ -80,7 +83,7 @@ class InternalConnectionBackedConsumerConnectionTest extends Specification {
         _ * modelMapping.getProtocolType(GradleProject.class) >> GradleProject.class
 
         1 * target.getTheModel(GradleProject.class, parameters) >> gradleProject
-        1 * adapter.adapt(GradleProject.class, gradleProject) >> gradleProject
+        1 * adapter.adapt(GradleProject.class, gradleProject, _) >> gradleProject
         1 * adapter.adapt(GradleBuild.class, _) >> model
         0 * target._
     }
@@ -97,7 +100,7 @@ class InternalConnectionBackedConsumerConnectionTest extends Specification {
         and:
         _ * modelMapping.getProtocolType(GradleProject.class) >> Integer.class
         1 * target.getTheModel(Integer.class, parameters) >> 12
-        1 * adapter.adapt(GradleProject.class, 12) >> model
+        1 * adapter.adapt(GradleProject.class, 12, _) >> model
         0 * target._
     }
 

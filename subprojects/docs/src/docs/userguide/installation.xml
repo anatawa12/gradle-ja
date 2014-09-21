@@ -1,4 +1,4 @@
-﻿<!--
+<!--
   ~ Copyright 2010 the original author or authors.
   ~
   ~ Licensed under the Apache License, Version 2.0 (the "License");
@@ -20,15 +20,17 @@
 <section>
     <title>必要環境<phrase role="original">Prerequisites</phrase></title>
 
-    <para role="original">Gradle requires a Java JDK to be installed. Gradle requires a JDK 1.5 or higher. Gradle ships with its own
-        Groovy library, therefore no Groovy needs to be installed. Any existing Groovy installation is ignored by Gradle.
+    <para role="original">Gradle requires a Java JDK or JRE to be installed, version 6 or higher (to check, use <userinput>java -version</userinput>).
+        Gradle ships with its own Groovy library, therefore Groovy does noot need to be installed. Any existing Groovy installation is ignored by Gradle.
     </para>
-    <para>Gradleを使用するには、バージョン1.5以上のJava JDKが必要です。GradleにはGroovyライブラリが同梱されているので、別途Groovyをインストールする必要はありません。すでにインストールされていたとしても、Gradleでは既存のGroovyは使用されません。</para>
-    <para role="original">Gradle uses whichever JDK it finds in your path (to check, use <userinput>java -version</userinput>).
-        Alternatively, you can set the <envar>JAVA_HOME</envar> environment variable to point to the install directory
+    <para>Gradleを使用するには、バージョン6以上のJava JDKもしくはJREが必要です(<userinput>java -version</userinput>で確認してください)。
+        GradleにはGroovyライブラリが同梱されているので、別途Groovyをインストールする必要はありません。すでにインストールされていたとしても、Gradleでは既存のGroovyは使用されません。</para>
+    <para role="original">Gradle uses whatever JDK it finds in your path.
+        Alternatively, you can set the <envar>JAVA_HOME</envar> environment variable to point to the installation directory
         of the desired JDK.
     </para>
-    <para>Gradleは、システムのパス上にあるJDKを使用します(<userinput>java -version</userinput>でチェックできます)。パス上のJDKの代わりに、環境変数<envar>JAVA_HOME</envar>にJDKをインストールしたディレクトリをセットして、使用したいJDKを指定することもできます。</para>
+    <para>Gradleは、システムのパス上にあるJDKを使用します。
+        パス上のJDKの代わりに、環境変数<envar>JAVA_HOME</envar>にJDKをインストールしたディレクトリをセットして、使用したいJDKを指定することもできます。</para>
 </section>
 
 <section>
@@ -50,7 +52,7 @@
     <listitem><para role="original">The API documentation (Javadoc and Groovydoc).</para><para>APIドキュメント(JavadocとGroovydoc)</para></listitem>
     <listitem>
         <para role="original">Extensive samples, including the examples referenced in the user guide, along with some complete and more
-            complex builds you can use the starting point for your own build.
+            complex builds you can use as a starting point for your own build.
         </para>
         <para>ユーザーガイドから参照されているサンプルを含め、大量のサンプルが同梱されています。複雑なビルドのサンプルが完全な形で置かれており、自分自身のビルドを記述するためのとっかかりとすることができます。</para>
     </listitem>
@@ -76,8 +78,8 @@
     <title>正しくインストールされたことをテストする<phrase role="original">Running and testing your installation</phrase></title>
 
 <para role="original">You run Gradle via the <command>gradle</command> command. To check if Gradle is properly installed just type
-<command>gradle -v</command>. The output shows Gradle version and also local environment configuration (groovy and jvm version, etc.).
-    The displayed gradle version should match the distribution you have downloaded.
+<command>gradle -v</command>. The output shows the Gradle version and also the local environment configuration (Groovy, JVM version, OS, etc.).
+    The displayed Gradle version should match the distribution you have downloaded.
 </para>
 <para>
 Gradleは、<command>gradle</command>コマンドで実行します。Gradleが正しくインストールされていることを確認するには、<command>gradle -v</command>と入力してください。Gradleのバージョンとローカルの実行環境(groovyやjvmのバージョンなど)が表示されます。表示されたgradleのバージョンが、ダウンロードした配布物のバージョンと一致していることを確認してください。
@@ -87,14 +89,18 @@ Gradleは、<command>gradle</command>コマンドで実行します。Gradleが�
 <section>
     <title>JVMオプション<phrase role="original">JVM options</phrase></title>
 
-<para role="original">JVM options for running Gradle can be set via environment variables. You can use <envar>GRADLE_OPTS</envar>
-or <envar>JAVA_OPTS</envar>. Those variables can be used together. <envar>JAVA_OPTS</envar> is by convention an environment
+<para role="original">JVM options for running Gradle can be set via environment variables. You can use either <envar>GRADLE_OPTS</envar>
+or <envar>JAVA_OPTS</envar>, or both. <envar>JAVA_OPTS</envar> is by convention an environment
 variable shared by many Java applications. A typical use case would be to set the HTTP proxy in <envar>JAVA_OPTS</envar>
 and the memory options in <envar>GRADLE_OPTS</envar>. Those variables can also be set at the beginning
 of the <command>gradle</command> or <command>gradlew</command> script.
 </para>
-<para>Gradle実行時に引き渡すJVMオプションは、環境変数<envar>GRADLE_OPTS</envar>と<envar>JAVA_OPTS</envar>で設定します。両方一緒に使うこともできます。<envar>JAVA_OPTS</envar>に設定したオプションは、慣習により多くのJavaアプリケーションで共有されるものです。典型的な例で言えば、HTTPプロキシは<envar>JAVA_OPTS</envar>に設定し、使用メモリに関する設定は<envar>GRADLE_OPTS</envar>にセットする、といった使い分けが考えられるでしょう。これらの設定は<command>gradle</command>や<command>gradlew</command>スクリプトの頭に記述することもできます。</para>
-
+<para>Gradle実行時に引き渡すJVMオプションは、環境変数<envar>GRADLE_OPTS</envar>と<envar>JAVA_OPTS</envar>で設定します。両方一緒に使うこともできます。
+<envar>JAVA_OPTS</envar>に設定したオプションは、慣習により多くのJavaアプリケーションで共有されるものです。
+典型的な例で言えば、HTTPプロキシは<envar>JAVA_OPTS</envar>に設定し、使用メモリに関する設定は<envar>GRADLE_OPTS</envar>にセットする、といった使い分けが考えられるでしょう。
+これらの設定は<command>gradle</command>や<command>gradlew</command>スクリプトの頭に記述することもできます。
+</para>
+<para>Note that it's not currently possible to set JVM options for Gradle on the command line.</para>
 </section>
 
 <section condition="standalone">

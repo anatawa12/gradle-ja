@@ -1,4 +1,4 @@
-﻿<!--
+<!--
   ~ Copyright 2009 the original author or authors.
   ~
   ~ Licensed under the Apache License, Version 2.0 (the "License");
@@ -17,7 +17,7 @@
     <title>ビルドのライフサイクル<phrase role="original">The Build Lifecycle</phrase></title>
     <para role="original">We said earlier, that the core of Gradle is a language for dependency based programming. In Gradle terms this
         means that you can define tasks and dependencies between tasks. Gradle guarantees that these tasks are executed
-        in the order of their dependencies, and that each task is executed only once. Those tasks form a
+        in the order of their dependencies, and that each task is executed only once. These tasks form a
         <ulink url='http://en.wikipedia.org/wiki/Directed_acyclic_graph'>Directed Acyclic Graph</ulink>. There are
         build tools that build up such a dependency graph as they execute their tasks. Gradle builds the complete
         dependency graph <emphasis>before</emphasis> any task is executed. This lies at the heart of Gradle and makes
@@ -49,7 +49,7 @@
                 <listitem>
                     <para role="original">During this phase the project objects are configured.
                         The build scripts of <emphasis>all</emphasis> projects which are part of the build are
-                        executed. Gradle 1.4 introduces an <link linkend="feature_lifecycle">incubating</link> opt-in feature called <firstterm>configuration on demand</firstterm>.
+                        executed. Gradle 1.4 introduced an <link linkend="feature_lifecycle">incubating</link> opt-in feature called <firstterm>configuration on demand</firstterm>.
                         In this mode, Gradle configures only relevant projects (see <xref linkend="sec:configuration_on_demand"/>).
                     </para>
                     <para>プロジェクトのオブジェクトが設定されるフェーズです。ビルドに含まれる<emphasis>すべて</emphasis>のプロジェクトのビルドスクリプトが実行されます。
@@ -78,12 +78,12 @@
             this chapter we explain how Gradle looks for a settings file.
         </para>
         <para>ビルドスクリプトの他、Gradleではビルドの「設定ファイル」を作成することができます。設定ファイルの場所はGradleの規約により決定され、デフォルトではプロジェクトディレクトリの<filename>settings.gradle</filename>です。この設定ファイルをGradleがどのように探すのかについては、後ほど解説します。</para>
-        <para role="original">The settings file gets executed during the initialization phase. A multiproject build must have a
+        <para role="original">The settings file is executed during the initialization phase. A multiproject build must have a
             <filename>settings.gradle</filename>
-            file in the root project of the multiproject hierarchy. It is required because in the
-            settings file it is defined, which projects are taking part in the multi-project build (see
+            file in the root project of the multiproject hierarchy. It is required because the
+            settings file defines which projects are taking part in the multi-project build (see
             <xref linkend='multi_project_builds'/>). For a single-project build, a settings file is optional.
-            You might need it for example, to add libraries to your build script classpath (see <xref
+            Besides defining the included projects, you might need it to add libraries to your build script classpath (see <xref
                     linkend='organizing_build_logic'/>). Let's first do some introspection with a single project
             build:
         </para>
@@ -91,11 +91,11 @@
         <sample id="buildlifecycle" dir="userguide/buildlifecycle/basic" title="シングルプロジェクトのビルド / Single project build">
             <sourcefile file="settings.gradle"/>
             <sourcefile file="build.gradle"/>
-            <output args="test"/>
+            <output args="test testBoth"/>
         </sample>
         <para role="original">For a build script, the property access and method calls are delegated to a project object. Similarly
-            property access and method calls within the settings file is delegated to a settings object. Have a look at
-            <apilink class='org.gradle.api.initialization.Settings'/>.
+            property access and method calls within the settings file is delegated to a settings object. Look at
+            <apilink class='org.gradle.api.initialization.Settings'/> class in the API documentation for more information.
         </para>
         <para>ビルドスクリプト内でのプロパティアクセスやメソッド呼び出しは、Projectインスタンスに委譲されますが、それと同様に設定ファイル内でのプロパティアクセス、メソッド呼び出しはsettingsインスタンスに委譲されます。<apilink class='org.gradle.api.initialization.Settings'>Settings</apilink>をご参照ください。</para>
     </section>
@@ -111,7 +111,7 @@
             <title>プロジェクトの配置<phrase role="original">Project locations</phrase></title>
             <para role="original">Multi-project builds are always represented by a tree with a single root. Each element in the tree
                 represents a project. A project has a path which denotes the position
-                of the project in the multi-project build tree. In majority of cases the project path is consistent with
+                of the project in the multi-project build tree. In most cases the project path is consistent with
                 the physical location of the project in the file system. However, this behavior is configurable.
                 The project tree is created in the <filename>settings.gradle</filename> file.
                 By default it is assumed that the location of the settings
@@ -140,9 +140,9 @@
                 </sample>
                 <para role="original">The <literal>include</literal> method takes project paths as arguments.
                     The project path is assumed to be equal to the relative physical file system path.
-                    For example a path 'services:api' by default is mapped to a folder 'services/api'
-                    (relative from the project root). You only need to specify the leafs of the tree.
-                    This means that the inclusion of path 'services:hotels:api' will result in creating 3 projects:
+                    For example, a path 'services:api' is mapped by default to a folder 'services/api'
+                    (relative from the project root). You only need to specify the leaves of the tree.
+                    This means that the inclusion of the path 'services:hotels:api' will result in creating 3 projects:
                     'services', 'services:hotels' and 'services:hotels:api'.
                 </para>
                 <para>
@@ -158,8 +158,8 @@
                 <sample id="standardLayouts" dir="userguide/multiproject/standardLayouts" title="フラットなレイアウト / Flat layout">
                     <sourcefile file="settings.gradle" snippet="flat-layout"/>
                 </sample>
-                <para role="original">The <literal>includeFlat</literal> method takes directory names as an argument. Those directories
-                    need to exist as siblings of the root project directory. The location of those directories
+                <para role="original">The <literal>includeFlat</literal> method takes directory names as an argument. These directories
+                    need to exist as siblings of the root project directory. The location of these directories
                     are considered as child projects of the root project in the multi-project tree.
                 </para>
                 <para><literal>includeFlat</literal>メソッドは、ディレクトリ名を引数にとります。これらのディレクトリは、ルートプロジェクトのディレクトリと同じ階層にある隣接ディレクトリでなければなりませんが、マルチプロジェクト・ツリーにおいてはルートプロジェクトの子プロジェクトに設定されます。</para>
@@ -180,21 +180,21 @@
             <sample id="customLayout" dir="userguide/multiproject/customLayout" title="プロジェクトツリーの属性を変更する / Modification of elements of the project tree">
                 <sourcefile file="settings.gradle" snippet="change-project"/>
             </sample>
-            <para role="original">Have a look at <apilink class="org.gradle.api.initialization.ProjectDescriptor"/> for more details.</para>
+            <para role="original">Look at the <apilink class="org.gradle.api.initialization.ProjectDescriptor"/>  class in the API documentation for more information.</para>
             詳細については<apilink class="org.gradle.api.initialization.ProjectDescriptor"/>をご参照ください。
         </section>
     </section>
     <section id='sec:initialization'>
         <title>初期化<phrase role="original">Initialization</phrase></title>
         <para role="original">How does Gradle know whether to do a single or multiproject build? If you trigger a multiproject build
-            from the directory where the settings file is, things are easy. But Gradle also allows you to execute the
+            from a directory with a settings file is, things are easy. But Gradle also allows you to execute the
             build from within any subproject taking part in the build.
             <footnote>
                 <para role="original">Gradle supports partial multiproject builds (see <xref linkend='multi_project_builds'/>).
                 </para>
             </footnote>
-            If you execute Gradle from within a project that has no <filename>settings.gradle</filename> file,
-            Gradle does the following:
+            If you execute Gradle from within a project with no <filename>settings.gradle</filename> file,
+            Gradle looks for a <filename>settings.gradle</filename> file in the following way:
         </para>
         <para>Gradleは、現在ビルドしているものがマルチプロジェクトかシングルプロジェクトか、どうやって知るのでしょう。マルチプロジェクトのビルドを、設定ファイルのあるディレクトリから起動しているなら話は簡単ですが、Gradleはサブプロジェクトのディレクトリからビルドを実行することもできるようになっています。
             <footnote>
@@ -204,21 +204,20 @@
         </para>
         <itemizedlist>
             <listitem>
-                <para role="original">It searches for a <filename>settings.gradle</filename> in a directory called <filename>master</filename>
-                    which has the same nesting level as the current dir.
+                <para role="original">It looks in a directory called <filename>master</filename> which has the same nesting level
+                as the current dir.
                 </para>
-                <para>カレントディレクトリと同階層のディレクトリから<filename>master</filename>という名前のディレクトリを探し、<filename>settings.gradle</filename>があるかどうか確認する。</para>
+                <para>カレントディレクトリと同階層のディレクトリから<filename>master</filename>という名前のディレクトリを探す。</para>
             </listitem>
             <listitem>
-                <para role="original">If no <filename>settings.gradle</filename> is found, it searches the parent directories for the existence of a
-                    <filename>settings.gradle</filename> file.
+                <para role="original">If not found yet, it searches parent directories.
                 </para>
-                <para><filename>settings.gradle</filename>が見つからなければ、親階層のディレクトリをたどっていって<filename>settings.gradle</filename>がないか確認する。</para>
+                <para>見つからなければ、親階層のディレクトリをたどっていって探す。</para>
             </listitem>
             <listitem>
-                <para role="original">If no <filename>settings.gradle</filename> file is found, the build is executed as a single project build.
+                <para role="original">If not found yet, the build is executed as a single project build.
                 </para>
-                <para><filename>settings.gradle</filename>が見つからなければ、シングルプロジェクトとしてビルドする。</para>
+                <para>見つからなければ、シングルプロジェクトとしてビルドする。</para>
             </listitem>
             <listitem>
                 <para role="original">If a <filename>settings.gradle</filename> file is found, Gradle checks if the current project is part of the
@@ -228,12 +227,12 @@
                 <para><filename>settings.gradle</filename>が見つかれば、Gradleはビルドを実行したプロジェクトがマルチプロジェクトに参加するよう宣言されているかどうか確認する。宣言が確認できればマルチプロジェクトとしてビルドするが、確認できなければ、現在のプロジェクトをシングルプロジェクトとしてビルドする。</para>
             </listitem>
         </itemizedlist>
-        <para role="original">What is the purpose of this behavior? Somehow Gradle has to find out, whether the project you are into, is
+        <para role="original">What is the purpose of this behavior? Gradle needs to determine whether the project you are in is
             a subproject of a multiproject build or not. Of course, if it is a subproject, only the subproject and its
-            dependent projects are build. But Gradle needs to create the build configuration for the whole multiproject
-            build (see <xref linkend='multi_project_builds'/>). Via the <option>-u</option>
-            command line option, you can tell Gradle not to look in the parent hierarchy for a <filename>settings.gradle</filename> file. The
-            current project is then always build as a single project build. If the current project contains a
+            dependent projects are built, but Gradle needs to create the build configuration for the whole multiproject
+            build (see <xref linkend='multi_project_builds'/>). You can use the <option>-u</option>
+            command line option to tell Gradle not to look in the parent hierarchy for a <filename>settings.gradle</filename> file. The
+            current project is then always built as a single project build. If the current project contains a
             <filename>settings.gradle</filename> file, the <option>-u</option> option has no meaning. Such a build is always executed as:
         </para>
         <para>なんのためにこのような振る舞いをするのでしょう。今からビルドするプロジェクトは、マルチプロジェクトのうちの一サブプロジェクトでしょうか。それとも、単なるシングルプロジェクトなのでしょうか。Gradleは、それを何とか決定しなくてはなりません。サブプロジェクトだった場合、Gradleはプロジェクト・ツリー全体の設定情報を作成する必要があるからです。ビルド対象がそのサブプロジェクトのみだったとしてもです(<xref linkend="multi_project_builds"/>参照)。<option>-u</option>オプションをつけてGradleを実行すれば、親階層をたどって<filename>settings.gradle</filename>を探しに行くことはありません。つまり、(settings.gradleのない)現在ビルドしているプロジェクトは、常にシングルプロジェクトだと認識されるわけです。現在のプロジェクトに<filename>settings.gradle</filename>がある場合は、<option>-u</option>をつけても意味はありません。settings.gradleをもつプロジェクトは以下のように処理されます。</para>
@@ -249,19 +248,21 @@
                 <para><filename>settings.gradle</filename>がマルチプロジェクト・ツリーを定義している場合は、マルチプロジェクトとしてビルド</para>
             </listitem>
         </itemizedlist>
-        <para role="original">The auto search for a settings file does only work for multi-project builds with a physical hierarchical
-            or flat layout. For a flat layout you must additionally obey to the naming convention described above.
-            Gradle supports arbitrary physical layouts for a multiproject build. But for such arbitrary layouts you need
-            to execute the build from the directory where the settings file is located. For how to run partial builds
-            from the root see <xref linkend='sec:running_partial_build_from_the_root'/>. In our next release we want to
-            enable partial builds from subprojects by specifying the location of the settings file as a command line
-            parameter. Gradle creates Project objects for every project taking part in the build. For a single
-            project build this is only one project. For a multi-project build these are the projects specified in
-            Settings object (plus the root project). Each project object has by default a name equals to the name of its
-            top level directory. Every project except the root project has a parent project and might have child projects.
+        <para role="original">The automatic search for a <filename>settings.gradle</filename> file only works for multi-project
+        builds with a physical hierarchical or flat layout. For a flat layout you must additionally follow the
+        naming convention described above (“<literal>master</literal>”). Gradle supports arbitrary physical layouts
+        for a multiproject build, but for such arbitrary layouts you need to execute the build from the directory
+        where the settings file is located. For information on how to run partial builds from the root see
+        <xref linkend='sec:running_partial_build_from_the_root'/>.
         </para>
         <para>この設定ファイルの探索処理は、プロジェクトのディレクトリ構造が前述した階層レイアウトとフラットレイアウトのどちらかであることを想定したものです。さらに、フラットなレイアウトを採用した場合は、前述したような命名規約(settings.gradleをmasterディレクトリに配置する)に従う必要があります。マルチプロジェクト・ツリーはどんなディレクトリ構造からでも構築できますが、その場合は設定ファイルがあるディレクトリでGradleを実行しなければなりません。ルートプロジェクトからでも、一部のプロジェクトのみビルドすることは可能です。<xref linkend="sec:running_partial_build_from_the_root"/>をご参照ください。次のリリースでは、コマンドラインから設定ファイルの場所を指定してやることで、サブプロジェクトからの部分ビルドをサポートする予定です。</para>
         <para>初期化フェーズでは、ビルドに参加しているすべてのプロジェクトについてProjectオブジェクトが作成されます。シングルプロジェクトの場合はひとつだけ作成され、マルチプロジェクトの場合はSettingsオブジェクトで指定されているすべてのプロジェクトと、ルートプロジェクトのProjectオブジェクトが作成されるのです。作成されたProjectオブジェクトはそれぞれ名前を持っています。デフォルトではプロジェクトのディレクトリ名です。また、ルートプロジェクトをのぞく全てのプロジェクトは親プロジェクトを持っていますし、場合によっては子プロジェクトも設定されているかもしれません。</para>
+        <para>
+        Gradle creates a Project object for every project taking part in the build.
+        For a multi-project build these are the projects specified in the Settings object (plus the root
+        project). Each project object has by default a name equal to the name of its top level directory,
+        and every project except the root project has a parent project. Any project may have child projects.
+        </para>
     </section>
     <section id='sec:configuration_and_execution_of_a_single_project_build'>
         <title>シングルプロジェクトの設定と実行<phrase role="original">Configuration and execution of a single project build</phrase></title>
@@ -277,7 +278,7 @@
         <title>ライフサイクルからの通知に応答する<phrase role="original">Responding to the lifecycle in the build script</phrase></title>
 
         <para role="original">Your build script can receive notifications as the build progresses through its lifecycle. These
-            notifications generally take 2 forms: You can either implement a particular listener interface, or you can
+            notifications generally take two forms: You can either implement a particular listener interface, or you can
             provide a closure to execute when the notification is fired. The examples below use closures. For details on
             how to use the listener interfaces, refer to the API documentation.
         </para>
@@ -289,7 +290,7 @@
                 been applied, or for some custom logging or profiling.
             </para>
             <para role="original">Below is an example which adds a <literal>test</literal> task to each project with the
-                <literal>hasTests</literal> property set to true.
+                <literal>hasTests</literal> property value of true.
             </para>
             <para>プロジェクトが評価される前またはされた後すぐに通知を受け取ることができます。これは、ビルドスクリプトが一通り評価された後、さらに追加の設定処理を行ったり、ロギング処理のカスタマイズやプロファイリングなどで使用されます。</para>
             <para>以下の例は、<literal>test</literal>タスクを<literal>hasTests</literal>プロパティを持つすべてのプロジェクトに追加するものです。</para>

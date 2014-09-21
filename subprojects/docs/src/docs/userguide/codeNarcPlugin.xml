@@ -9,7 +9,7 @@
 
     <section>
         <title>使用方法<phrase role="original">Usage</phrase></title>
-        <para role="original">To use the CodeNarc plugin, include in your build script:</para>
+        <para role="original">To use the CodeNarc plugin, include the following in your build script:</para>
         <para>CodeNarcプラグインを使うためには、ビルドスクリプトに下記を含めます：</para>
         <sample id="useCodeNarcPlugin" dir="codeQuality" title="CodeNarcプラグインの使用 / Using the CodeNarc plugin">
             <sourcefile file="build.gradle" snippet="use-codenarc-plugin"/>
@@ -118,7 +118,7 @@
 
     <section>
         <title>設定<para role="original">Configuration</para></title>
-        <para role="original">See <apilink class="org.gradle.api.plugins.quality.CodeNarcExtension"/>.</para>
+        <para role="original">See the <apilink class="org.gradle.api.plugins.quality.CodeNarcExtension"/> class in the API documentation.</para>
         <para><apilink class="org.gradle.api.plugins.quality.CodeNarcExtension"/>を参照。</para>
     </section>
 

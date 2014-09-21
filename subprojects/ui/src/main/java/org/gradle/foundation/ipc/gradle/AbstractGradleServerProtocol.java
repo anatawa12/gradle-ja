@@ -117,7 +117,7 @@ public abstract class AbstractGradleServerProtocol implements ProcessLauncherSer
     }
 
     /**
-     * Notification that a message has been received. If we just connected, we'll do a quick handshake to verify the client, then we just pass the rest on our our output panel.
+     * Notification that a message has been received. If we just connected, we'll do a quick handshake to verify the client, then we just pass the rest on our output panel.
      *
      * @param message the message that was received.
      */
@@ -311,7 +311,7 @@ public abstract class AbstractGradleServerProtocol implements ProcessLauncherSer
     }
 
     /**
-     * Notification that the client has shutdown. Note: this can occur before communciations has ever started. You SHOULD get this notification before receiving serverExited, even if the client fails
+     * Notification that the client has shutdown. Note: this can occur before communications has ever started. You SHOULD get this notification before receiving serverExited, even if the client fails
      * to launch or locks up.
      *
      * @param returnCode the return code of the client application
