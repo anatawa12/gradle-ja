@@ -44,12 +44,6 @@ repositories {
     maven { url 'https://repo.gradle.org/gradle/gradle-build-internal' }
 }
 
-repositories {
-    maven {
-        url "https://maven.atlassian.com/repository/public"
-    }
-}
-
 configurations {
     groovydocGroovy {}
     userGuideStyleSheets
@@ -61,7 +55,7 @@ configurations {
 
 dependencies {
     userGuideTask 'xalan:xalan:2.7.1', libraries.xerces
-    userGuideTask module('org.xhtmlrenderer:xhtmlrenderer:8.4-atlassian') {
+    userGuideTask module('xhtmlrenderer:xhtmlrenderer:R8rc1') {
         dependency 'itext:itext:2.0.8@jar'
     }
     userGuideTask 'xslthl:xslthl:2.0.1@jar'

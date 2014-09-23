@@ -801,8 +801,7 @@
         </para>
         <para>
             これらのプロパティは、<apilink class="org.gradle.api.plugins.JavaPluginConvention"/>、
-            <apilink class="org.gradle.api.plugins.BasePluginConvention"/>、
-            <apilink class="org.gradle.api.plugins.ReportingBasePluginConvention"/>などの型の規約オブジェクトによって提供されます。
+            <apilink class="org.gradle.api.plugins.BasePluginConvention"/>などの型の規約オブジェクトによって提供されます。
         </para>
     </section>
 
