@@ -17,7 +17,6 @@
 package org.gradle.model.dsl.internal
 
 import org.gradle.model.internal.core.*
-import org.gradle.model.internal.core.rule.describe.SimpleModelRuleDescriptor
 import org.gradle.model.internal.registry.DefaultModelRegistry
 import spock.lang.Specification
 
@@ -27,9 +26,7 @@ class NonTransformedModelDslBackingTest extends Specification {
     def modelDsl = new NonTransformedModelDslBacking(getModelRegistry())
 
     void register(String pathString, Object element) {
-        def path = new ModelPath(pathString)
-        def type = ModelType.of(element.class)
-        modelRegistry.create(InstanceBackedModelCreator.of(ModelReference.of(path, type), new SimpleModelRuleDescriptor("register"), element))
+        modelRegistry.create(ModelCreators.of(ModelReference.of(pathString, element.class), element).simpleDescriptor("register").build())
     }
 
     def "can add rules via dsl"() {

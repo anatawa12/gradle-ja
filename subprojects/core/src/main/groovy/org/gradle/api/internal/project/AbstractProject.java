@@ -17,7 +17,6 @@
 package org.gradle.api.internal.project;
 
 import groovy.lang.Closure;
-import groovy.lang.DelegatesTo;
 import groovy.lang.MissingPropertyException;
 import org.gradle.api.*;
 import org.gradle.api.artifacts.ConfigurationContainer;
@@ -60,12 +59,9 @@ import org.gradle.listener.ClosureBackedMethodInvocationDispatch;
 import org.gradle.listener.ListenerBroadcast;
 import org.gradle.logging.LoggingManagerInternal;
 import org.gradle.logging.StandardOutputCapture;
-import org.gradle.model.dsl.ModelDsl;
 import org.gradle.model.dsl.internal.NonTransformedModelDslBacking;
 import org.gradle.model.dsl.internal.TransformedModelDslBacking;
 import org.gradle.model.internal.core.*;
-import org.gradle.model.internal.core.rule.describe.ModelRuleDescriptor;
-import org.gradle.model.internal.core.rule.describe.SimpleModelRuleDescriptor;
 import org.gradle.model.internal.registry.ModelRegistry;
 import org.gradle.process.ExecResult;
 import org.gradle.process.ExecSpec;
@@ -176,63 +172,43 @@ public abstract class AbstractProject extends AbstractPluginAware implements Pro
 
         final ModelRegistry modelRegistry = services.get(ModelRegistry.class);
 
-        modelRegistry.create(InstanceBackedModelCreator.of(
-                ModelReference.of("serviceRegistry", ServiceRegistry.class),
-                new SimpleModelRuleDescriptor("Project.<init>.serviceRegistry()"),
-                services
-        ));
+        modelRegistry.create(
+                ModelCreators.of(ModelReference.of("serviceRegistry", ServiceRegistry.class), services)
+                        .simpleDescriptor("Project.<init>.serviceRegistry()")
+                        .build()
+        );
 
-        modelRegistry.create(InstanceBackedModelCreator.of(
-                ModelReference.of("buildDir", File.class),
-                new SimpleModelRuleDescriptor("Project.<init>.buildDir()"),
-                new Factory<File>() {
+        modelRegistry.create(
+                ModelCreators.of(ModelReference.of("buildDir", File.class), new Factory<File>() {
                     public File create() {
                         return getBuildDir();
                     }
-                }
-        ));
+                })
+                        .simpleDescriptor("Project.<init>.buildDir()")
+                        .build()
+        );
 
-        modelRegistry.create(InstanceBackedModelCreator.of(
-                ModelReference.of("projectIdentifier", ProjectIdentifier.class),
-                new SimpleModelRuleDescriptor("Project.<init>.projectIdentifier()"),
-                this
-        ));
+        modelRegistry.create(
+                ModelCreators.of(ModelReference.of("projectIdentifier", ProjectIdentifier.class), this)
+                        .simpleDescriptor("Project.<init>.projectIdentifier()")
+                        .build()
+        );
 
-        modelRegistry.create(InstanceBackedModelCreator.of(
-                ModelReference.of("extensions", ExtensionContainer.class),
-                new SimpleModelRuleDescriptor("Project.<init>.extensions()"),
-                new Factory<ExtensionContainer>() {
+        modelRegistry.create(
+                ModelCreators.of(ModelReference.of("extensions", ExtensionContainer.class), new Factory<ExtensionContainer>() {
                     public ExtensionContainer create() {
                         return getExtensions();
                     }
-                }
-        ));
-
-        final PolymorphicDomainObjectContainerModelAdapter<Task, TaskContainerInternal> tasksModelAdapter = new PolymorphicDomainObjectContainerModelAdapter<Task, TaskContainerInternal>(
-                getTasks(), ModelType.of(TaskContainer.class), Task.class
+                })
+                        .simpleDescriptor("Project.<init>.extensions()")
+                        .build()
         );
 
-        modelRegistry.create(new ModelCreator() {
-            public ModelPath getPath() {
-                return TaskContainerInternal.MODEL_PATH;
-            }
-
-            public ModelPromise getPromise() {
-                return tasksModelAdapter.asPromise();
-            }
-
-            public ModelAdapter create(Inputs inputs) {
-                return tasksModelAdapter;
-            }
-
-            public List<ModelReference<?>> getInputs() {
-                return Collections.emptyList();
-            }
-
-            public ModelRuleDescriptor getDescriptor() {
-                return new SimpleModelRuleDescriptor("Project.<init>.tasks()");
-            }
-        });
+        modelRegistry.create(
+                ModelCreators.of(ModelReference.of(TaskContainerInternal.MODEL_PATH, ModelType.of(TaskContainer.class)), taskContainer)
+                        .simpleDescriptor("Project.<init>.tasks()")
+                        .withProjection(new PolymorphicDomainObjectContainerModelProjection<TaskContainerInternal, Task>(taskContainer, Task.class))
+                        .build());
 
         taskContainer.all(new Action<Task>() {
             public void execute(final Task task) {
@@ -241,11 +217,11 @@ public abstract class AbstractProject extends AbstractPluginAware implements Pro
 
                 ModelState state = modelRegistry.state(modelPath);
                 if (state == null || state.getStatus() != ModelState.Status.IN_CREATION) {
-                    modelRegistry.create(InstanceBackedModelCreator.of(
-                            ModelReference.of(modelPath, ModelType.typeOf(task)),
-                            new SimpleModelRuleDescriptor("Project.<init>.tasks." + name + "()"),
-                            task
-                    ));
+                    modelRegistry.create(
+                            ModelCreators.of(ModelReference.of(modelPath, ModelType.typeOf(task)), task)
+                                    .simpleDescriptor("Project.<init>.tasks." + name + "()")
+                                    .build()
+                    );
                 }
             }
         });
@@ -972,10 +948,9 @@ public abstract class AbstractProject extends AbstractPluginAware implements Pro
     }
 
 
-    // TODO longer term, this method shouldn't be here, so there's no way for a user to call it with a general closure
-    public void model(@DelegatesTo(ModelDsl.class) Closure<?> modelRules) {
+    public void model(Closure<?> modelRules) {
         if (TransformedModelDslBacking.isTransformedBlock(modelRules)) {
-            new ClosureBackedAction<ModelDsl>(modelRules).execute(new TransformedModelDslBacking(getModelRegistry()));
+            ClosureBackedAction.execute(new TransformedModelDslBacking(getModelRegistry(), modelRules.getOwner(), modelRules.getThisObject()), modelRules);
         } else {
             new NonTransformedModelDslBacking(getModelRegistry()).configure(modelRules);
         }

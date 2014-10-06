@@ -33,6 +33,7 @@ import spock.lang.Unroll
 
 import static org.gradle.util.TestUtil.createChildProject
 import static org.gradle.util.TestUtil.createRootProject
+import static org.gradle.util.TextUtil.toPlatformLineSeparators
 import static org.gradle.util.WrapUtil.toList
 
 public class DefaultTaskExecutionPlanTest extends Specification {
@@ -358,6 +359,25 @@ public class DefaultTaskExecutionPlanTest extends Specification {
         executes(finalized, f2, d, f1)
     }
 
+    @Issue("GRADLE-2957")
+    def "task with a dependency and a finalizer both having a common finalizer"() {
+        // Finalizer task
+        Task finalTask = task('finalTask')
+
+        // Task with this finalizer
+        Task dependency = task('dependency', finalizedBy: [finalTask])
+        Task finalizer = task('finalizer', finalizedBy: [finalTask])
+
+        // Task to call, with the same finalizer than one of its dependencies
+        Task requestedTask = task('requestedTask', dependsOn: [dependency], finalizedBy: [finalizer])
+
+        when:
+        addToGraphAndPopulate([requestedTask])
+
+        then:
+        executes(dependency, requestedTask, finalizer, finalTask)
+    }
+
     @Issue("GRADLE-2983")
     def "multiple finalizer tasks with relationships via other tasks scheduled from multiple tasks"() {
         //finalizers with a relationship via a dependency
@@ -509,6 +529,29 @@ public class DefaultTaskExecutionPlanTest extends Specification {
 
         then:
         executedTasks == [a, b, c]
+    }
+
+    @Issue("GRADLE-3127")
+    def "circular dependency detected with shouldRunAfter dependencies in the graph"() {
+        Task a = createTask("a")
+        Task b = task("b")
+        Task c = createTask("c")
+        Task d = task("d", dependsOn: [a, b, c])
+        relationships(a, shouldRunAfter: [b])
+        relationships(c, dependsOn: [d])
+
+        when:
+        addToGraphAndPopulate([d])
+
+        then:
+        CircularReferenceException e = thrown()
+        e.message == toPlatformLineSeparators("""Circular dependency between the following tasks:
+:c
+\\--- :d
+     \\--- :c (*)
+
+(*) - details omitted (listed previously)
+""")
     }
 
     def "stops returning tasks on task execution failure"() {

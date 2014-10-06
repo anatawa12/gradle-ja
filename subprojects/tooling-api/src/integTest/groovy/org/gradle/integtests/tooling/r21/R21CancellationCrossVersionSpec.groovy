@@ -29,8 +29,6 @@ class R21CancellationCrossVersionSpec extends ToolingApiSpecification {
     @Rule CyclicBarrierHttpServer server = new CyclicBarrierHttpServer()
 
     def setup() {
-        // in-process call does not support cancelling (yet)
-        toolingApi.isEmbedded = false
         settingsFile << '''
 rootProject.name = 'cancelling'
 '''
@@ -167,6 +165,9 @@ task hang << {
     }
 
     def "can cancel build through forced stop"() {
+        // in-process call does not support forced stop
+        toolingApi.isEmbedded = false
+
         buildFile << """
 task hang << {
     new URL("${server.uri}").text
@@ -188,8 +189,9 @@ task hang << {
             resultHandler.finished(20)
         }
         then:
-        resultHandler.failure.cause.class.name == 'org.gradle.api.BuildCancelledException'
         resultHandler.failure instanceof GradleConnectionException
+        resultHandler.failure.cause.class.name == 'org.gradle.api.BuildCancelledException'
+        resultHandler.failure.cause.message == 'Build cancelled.'
     }
 
     def "can cancel action"() {

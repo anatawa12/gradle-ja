@@ -15,22 +15,19 @@
  */
 package org.gradle.nativeplatform.internal;
 
+import com.google.common.collect.Lists;
 import org.gradle.api.InvalidUserDataException;
 import org.gradle.api.Named;
 import org.gradle.language.base.FunctionalSourceSet;
 import org.gradle.nativeplatform.BuildType;
 import org.gradle.nativeplatform.Flavor;
-import org.gradle.nativeplatform.platform.NativePlatform;
 import org.gradle.platform.base.ComponentSpecIdentifier;
 
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.LinkedHashSet;
-import java.util.Set;
+import java.util.*;
 
 public abstract class AbstractTargetedNativeComponentSpec extends AbstractNativeComponentSpec implements TargetedNativeComponentInternal {
 
-    private final Set<String> targetPlatforms = new HashSet<String>();
+    private final Set<String> targetPlatforms = new LinkedHashSet<String>();
     private final Set<String> buildTypes = new HashSet<String>();
     private final Set<String> flavors = new HashSet<String>();
 
@@ -38,12 +35,16 @@ public abstract class AbstractTargetedNativeComponentSpec extends AbstractNative
         super(id, sourceSet);
     }
 
-    public void targetFlavors(String... flavorSelectors) {
-        Collections.addAll(flavors, flavorSelectors);
+    public List<String> getTargetPlatforms() {
+        return Lists.newArrayList(targetPlatforms);
     }
 
-    public void targetPlatforms(String... platformSelectors) {
+    public void targetPlatform(String... platformSelectors) {
         Collections.addAll(targetPlatforms, platformSelectors);
+    }
+
+    public void targetFlavors(String... flavorSelectors) {
+        Collections.addAll(flavors, flavorSelectors);
     }
 
     public void targetBuildTypes(String... buildTypeSelectors) {
@@ -58,11 +59,7 @@ public abstract class AbstractTargetedNativeComponentSpec extends AbstractNative
         return chooseElements(BuildType.class, candidates, buildTypes);
     }
 
-    public Set<NativePlatform> choosePlatforms(Set<? extends NativePlatform> candidates) {
-        return chooseElements(NativePlatform.class, candidates, targetPlatforms);
-    }
-
-    private <T extends Named> Set<T> chooseElements(Class<T> type, Set<? extends T> candidates, final Set<String> names) {
+    protected <T extends Named> Set<T> chooseElements(Class<T> type, Set<? extends T> candidates, Set<String> names) {
         if (names.isEmpty()) {
             return new LinkedHashSet<T>(candidates);
         }

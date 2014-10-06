@@ -17,10 +17,19 @@
 package org.gradle.platform.base;
 
 import org.gradle.api.Incubating;
+import org.gradle.api.Named;
+import org.gradle.internal.HasInternalProtocol;
 
 /**
  * A set of compilers that are used together to construct binaries.
  */
 @Incubating
-public interface ToolChain {
+@HasInternalProtocol
+public interface ToolChain extends Named {
+    /**
+     * Returns a human consumable name for this tool chain.
+     *
+     * @since 1.11
+     */
+    String getDisplayName();
 }

@@ -24,7 +24,7 @@ import org.gradle.nativeplatform.platform.internal.ArchitectureInternal;
 import org.gradle.nativeplatform.platform.internal.NativePlatformInternal;
 import org.gradle.nativeplatform.toolchain.GccCompatibleToolChain;
 import org.gradle.nativeplatform.toolchain.GccPlatformToolChain;
-import org.gradle.nativeplatform.toolchain.PlatformToolChain;
+import org.gradle.nativeplatform.toolchain.NativePlatformToolChain;
 import org.gradle.nativeplatform.toolchain.internal.*;
 import org.gradle.nativeplatform.toolchain.internal.gcc.version.CompilerMetaDataProvider;
 import org.gradle.nativeplatform.toolchain.internal.gcc.version.GccVersionResult;
@@ -32,6 +32,7 @@ import org.gradle.nativeplatform.toolchain.internal.tools.CommandLineToolSearchR
 import org.gradle.nativeplatform.toolchain.internal.tools.DefaultGccCommandLineToolConfiguration;
 import org.gradle.nativeplatform.toolchain.internal.tools.GccCommandLineToolConfigurationInternal;
 import org.gradle.nativeplatform.toolchain.internal.tools.ToolSearchPath;
+import org.gradle.platform.base.internal.toolchain.ToolChainAvailability;
 import org.gradle.process.internal.ExecActionFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -91,7 +92,7 @@ public abstract class AbstractGccCompatibleToolChain extends ExtendableToolChain
     }
 
     public void target(String platformName) {
-        target(platformName, Actions.<PlatformToolChain>doNothing());
+        target(platformName, Actions.<NativePlatformToolChain>doNothing());
     }
 
     public void target(String platformName, Action<? super GccPlatformToolChain> action) {

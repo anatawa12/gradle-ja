@@ -32,14 +32,14 @@ class InstanceBackedModelCreatorTest extends Specification {
         def descriptor = new SimpleModelRuleDescriptor("foo")
 
         def fooList = []
-        def fooCreator = InstanceBackedModelCreator.of(foo, descriptor, fooList)
+        def fooCreator = ModelCreators.of(foo, fooList).descriptor(descriptor).build()
         registry.create(fooCreator)
 
         def barList = []
         def factory = Mock(org.gradle.internal.Factory) {
             1 * create() >> barList
         }
-        def barCreator = InstanceBackedModelCreator.of(bar, descriptor, factory)
+        def barCreator = ModelCreators.of(bar, factory).descriptor(descriptor).build()
         registry.create(barCreator)
 
         then:

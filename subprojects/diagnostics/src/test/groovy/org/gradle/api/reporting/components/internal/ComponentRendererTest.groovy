@@ -17,8 +17,8 @@
 
 
 package org.gradle.api.reporting.components.internal
-
 import org.gradle.api.Project
+import org.gradle.api.Task
 import org.gradle.api.internal.DefaultDomainObjectSet
 import org.gradle.api.internal.file.FileResolver
 import org.gradle.api.tasks.diagnostics.internal.text.DefaultTextReportBuilder
@@ -73,4 +73,38 @@ class ComponentRendererTest extends Specification {
         output.value.contains("No binaries")
     }
 
+    def "renders component binaries ordered by name"() {
+        def component = Stub(ComponentSpec)
+        def binaries = new DefaultDomainObjectSet<BinarySpec>(BinarySpec)
+        binaries.add(binary("cBinary"))
+        binaries.add(binary("aBinary"))
+        binaries.add(binary("bBinary"))
+        binaries.add(binary("dBinary"))
+        component.binaries >> binaries
+
+        when:
+        renderer.render(component, builder)
+
+        then:
+        output.value.contains("""Binaries
+    ABinary Display Name (not buildable)
+        build using task: aBinaryTask
+    BBinary Display Name (not buildable)
+        build using task: bBinaryTask
+    CBinary Display Name (not buildable)
+        build using task: cBinaryTask
+    DBinary Display Name (not buildable)
+        build using task: dBinaryTask""")
+    }
+
+    def binary(String name) {
+        Mock(BinarySpec){
+            _ * getDisplayName() >> "$name Display Name"
+            _ * getName() >> name
+            def buildTask = Mock(Task)
+            _ * buildTask.getPath() >> "${name}Task"
+            _ * getBuildTask() >> buildTask
+        }
+
+    }
 }

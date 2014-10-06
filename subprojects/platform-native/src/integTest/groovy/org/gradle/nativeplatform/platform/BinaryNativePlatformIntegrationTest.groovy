@@ -47,13 +47,18 @@ class BinaryNativePlatformIntegrationTest extends AbstractInstalledToolChainInte
         testApp.writeSources(file("src/main"))
     }
 
-    def "build binary for a default target platform"() {
-        given:
+    def currentArch() {
         def arch =  [name: "x86_64", altName: "amd64"]
         // Tool chains on Windows currently build for i386 by default, even on amd64
         if (OperatingSystem.current().windows || Native.get(SystemInfo).architecture == SystemInfo.Architecture.i386) {
             arch = [name: "x86", altName: "i386"]
         }
+        return arch;
+    }
+
+    def "build binary for a default target platform"() {
+        given:
+        def arch = currentArch();
 
         when:
         succeeds "mainExecutable"
@@ -70,6 +75,9 @@ class BinaryNativePlatformIntegrationTest extends AbstractInstalledToolChainInte
         buildFile << """
             model {
                 platforms {
+                    sparc {
+                        architecture "sparc"
+                    }
                     x86 {
                         architecture "x86"
                     }
@@ -78,7 +86,56 @@ class BinaryNativePlatformIntegrationTest extends AbstractInstalledToolChainInte
                     }
                 }
             }
-            executables.main.targetPlatforms "x86"
+            executables.main.targetPlatform "x86"
+"""
+
+        and:
+        succeeds "assemble"
+
+        then:
+        // Platform dimension is flattened since there is only one possible value
+        executedAndNotSkipped(":mainExecutable")
+        executable("build/binaries/mainExecutable/main").binaryInfo.arch.name == "x86"
+        executable("build/binaries/mainExecutable/main").exec().out == "i386 ${os.familyName}" * 2
+    }
+
+
+    def "use platform as default when only one platform is defined"() {
+        when:
+        buildFile << """
+            model {
+                platforms {
+                    x86_64 {
+                        architecture "x86_64"
+                    }
+                }
+            }
+"""
+
+        and:
+        succeeds "assemble"
+
+        then:
+        // Platform dimension is flattened since there is only one possible value
+        executedAndNotSkipped(":mainExecutable")
+        executable("build/binaries/mainExecutable/main").binaryInfo.arch.name == "x86_64"
+        executable("build/binaries/mainExecutable/main").exec().out == "amd64 ${os.familyName}" * 2
+    }
+
+    // TODO:DAZ This isn't doing what it appears: is actually selecting the first platform alphabetically...
+    def "defaults to first platform if no target platforms are defined"() {
+        when:
+        buildFile << """
+            model {
+                platforms {
+                    x86 {
+                        architecture "x86"
+                    }
+                    x86_64 {
+                        architecture "x86_64"
+                    }
+                }
+            }
 """
 
         and:
@@ -99,6 +156,9 @@ class BinaryNativePlatformIntegrationTest extends AbstractInstalledToolChainInte
         buildFile << """
             model {
                 platforms {
+                    sparc {
+                        architecture "sparc"
+                    }
                     x86 {
                         architecture "x86"
                     }
@@ -108,15 +168,18 @@ class BinaryNativePlatformIntegrationTest extends AbstractInstalledToolChainInte
                 }
             }
             executables {
-                exe {}
+                exe {
+                    targetPlatform "x86"
+                }
             }
             libraries {
-                hello {}
+                hello {
+                    targetPlatform "x86"
+                }
             }
             sources {
                 exe.cpp.lib libraries.hello.static
             }
-            executables.exe.targetPlatforms "x86"
 """
 
         and:
@@ -148,6 +211,8 @@ class BinaryNativePlatformIntegrationTest extends AbstractInstalledToolChainInte
                     }
                 }
             }
+
+            executables.main.targetPlatform "x86", "x86_64", "itanium", "arm"
 """
 
         and:
@@ -185,18 +250,29 @@ class BinaryNativePlatformIntegrationTest extends AbstractInstalledToolChainInte
     }
 
     def "can configure binary for multiple target operating systems"() {
+        String currentOs
+        if (os.windows) {
+            currentOs = "windows"
+        } else if (os.linux) {
+            currentOs = "linux"
+        } else if (os.macOsX) {
+            currentOs = "osx"
+        } else {
+            throw new AssertionError("Unexpected operating system")
+        }
+
         when:
         buildFile << """
             model {
                 platforms {
+                    osx {
+                        operatingSystem "osx"
+                    }
                     windows {
                         operatingSystem "windows"
                     }
                     linux {
                         operatingSystem "linux"
-                    }
-                    osx {
-                        operatingSystem "osx"
                     }
                 }
             }
@@ -204,18 +280,19 @@ class BinaryNativePlatformIntegrationTest extends AbstractInstalledToolChainInte
             binaries.matching({ it.targetPlatform.operatingSystem.windows }).all {
                 cppCompiler.define "FRENCH"
             }
-        """
 
+            executables.main.targetPlatform "$currentOs"
+        """
         and:
         succeeds "assemble"
 
         then:
         if (os.windows) {
-            executable("build/binaries/mainExecutable/windows/main").exec().out == "amd64 windows" * 2
+            executable("build/binaries/mainExecutable/main").exec().out == "amd64 windows" * 2
         } else if (os.linux) {
-            executable("build/binaries/mainExecutable/linux/main").exec().out == "amd64 linux" * 2
+            executable("build/binaries/mainExecutable/main").exec().out == "amd64 linux" * 2
         } else if (os.macOsX) {
-            executable("build/binaries/mainExecutable/osx/main").exec().out == "amd64 os x" * 2
+            executable("build/binaries/mainExecutable/main").exec().out == "amd64 os x" * 2
         } else {
             throw new AssertionError("Unexpected operating system")
         }
@@ -284,7 +361,7 @@ class BinaryNativePlatformIntegrationTest extends AbstractInstalledToolChainInte
                     main
                 }
             }
-            executables.main.targetPlatforms "unknown"
+            executables.main.targetPlatform "unknown"
 """
 
         and:
@@ -292,7 +369,7 @@ class BinaryNativePlatformIntegrationTest extends AbstractInstalledToolChainInte
 
         then:
         failure.assertHasDescription("A problem occurred configuring root project 'bad-platform'.")
-        failure.assertHasCause("Invalid NativePlatform: 'unknown'")
+        failure.assertHasCause("Invalid NativePlatform: unknown")
     }
 
     def "fails with reasonable error message when depended on library has no variant with matching platform"() {
@@ -308,18 +385,20 @@ class BinaryNativePlatformIntegrationTest extends AbstractInstalledToolChainInte
             }
             libraries {
                 hello {
-                    targetPlatforms "two"
+                    targetPlatform "two"
                 }
             }
+
             sources {
                 main.cpp.lib libraries.hello
             }
 """
 
         and:
-        fails "oneMainExecutable"
+        fails "mainExecutable" //TODO freekh: changed from oneMainExecutable because we target the first platform and choose it as default now if none is described. Unsure whether that is good.
 
         then:
+        //TODO freekh: This error message is not particularly descriptive: it is hard to understand what to do and how to fix it.
         failure.assertHasDescription("No shared library binary available for library 'hello' with [flavor: 'default', platform: 'one', buildType: 'debug']")
     }
 

@@ -143,7 +143,7 @@ Combining jvm-java and native (multi-lang) libraries in single project
 - Can combine old and new JVM plugins in the same project
     - `gradle assemble` builds both jars
 
-#### Open issues
+### Open issues
 
 - `BinarySpec` hierarchy
     - No general way to navigate to the owning component (if any).
@@ -157,8 +157,6 @@ Combining jvm-java and native (multi-lang) libraries in single project
     - `JvmBinarySpec` assumes binary is built from intermediate classes and resources.
     - `JarBinarySpec` assumes binary belongs to a library.
     - `ClassDirectoryBinarySpec` assumes binary belongs to a library.
-    - `ClassDirectoryBinarySpec` is in package `org.gradle.api.jvm`.
-    - `JvmLibraryBinarySpec` has a mutable targetPlatform, should also be on `JvmBinarySpec`.
 - `ComponentSpec` hierarchy
     - `ComponentSpec` assumes component is built from source.
     - `ComponentSpec` assumes component produces binaries.
@@ -171,7 +169,6 @@ Combining jvm-java and native (multi-lang) libraries in single project
 - `Component` hierarchy
     - `Component` is in `org.gradle.api.component` package.
     - `PrebuiltLibrary` is actually a prebuilt native library.
-- Should rename `ResourceSet` to `JvmResourceSet`
 - Java lang plugin is called `JavaLanguagePlugin`, other language plugins are called, for example, `CLangPlugin`.
 - Java compilation options per binary.
 - `LanguageRegistration.applyToBinary()` should be replaced, instead use the output file types for the language and input file types for the binary.
@@ -180,7 +177,6 @@ Combining jvm-java and native (multi-lang) libraries in single project
     - For windows resources source files, the output type is `res`.
     - Fail if windows resources are input to a component for which there are no windows binaries.
 - `PolymorphicDomainObjectContainer.containerWithType()` should instead override `withType()`.
-- Source sets are in the wrong package `org.gradle.nativeplatform.sourceset`
 
 ## Feature: Plugin defines a custom library type
 
@@ -424,24 +420,16 @@ Running `gradle assemble` will execute lifecycle task for each binary.
 
 #### Test cases
 
-- Can create binaries via rules that declare these as input:
-    - `CollectionBuilder<BinarySpec>`
-    - `CollectionBuilder<SampleBinary>`
-    - `CollectionBuilder<SampleBinarySubType>`
-- Can execute lifecycle task of each created binary, individually and via 'assemble' task
-- Can access lifecycle task of binary via BinarySpec.buildTask
+- ~~Can create binaries via rules that declare these as input:~~
+   - ~~`CollectionBuilder<BinarySpec>`~~
+   - ~~`CollectionBuilder<SampleBinary>`~~
+   - ~~`CollectionBuilder<SampleBinarySubType>`~~
+- ~~Can execute lifecycle task of each created binary, individually and via 'assemble' task~~
+- ~~Can access lifecycle task of binary via BinarySpec.buildTask~~
 - Friendly error message when annotated binary rule method:
-    - Does not have a single parameter of type BinaryTypeBuilder
-    - Parameter does not have a generic type
-    - Has a non-void return value
-- Friendly error message when supplied binary type:
-    - Does not extend `LibraryBinarySpec`
-    - Equals `LibraryBinarySpec`
-- Friendly error message when supplied binary implementation:
-    - Does not have a public no-arg constructor
-    - Does not implement binary type
-    - Does not extend `DefaultLibraryBinarySpec`
-- Friendly error message when attempting to register the same binary type with different implementations
+    - ~~Does not have a single parameter of type CollectionBuilder~~
+    - ~~Parameter does not have a generic type~~
+    - ~~Has a non-void return value~~
 
 #### Open issues
 
@@ -480,6 +468,18 @@ Running `gradle assemble` will execute tasks for each library binary.
     - Any created tasks should be added to the binary.tasks for this binary, and the binary will be `builtBy` those tasks
 - The task-creation rule will be executed for each binary when closing the TaskContainer.
 - Document in the user guide how to define a component, binaries and tasks for a custom model. Include some samples.
+
+#### Tests
+#### Test cases
+
+- Friendly error message when annotated binary rule method:
+    - ~~Does not have any parameters
+    - ~~CollectionBuilder Parameter does not have a generic type~~
+    - ~~Has a non-void return value~~
+    - Has no Binary parameter
+
+- Can create tasks via BinaryTask rules that declare these as input:
+   - `CollectionBuilder<Task>`, SampleBinary
 
 #### Open issues
 
@@ -816,27 +816,77 @@ Add a sample to show a JVM library built for multiple Java versions.
     - native plugin registers factory for `NativePlatform`, and makes this the default type as well
     - JVM plugin registers factory for `JvmPlatform`, and adds instance for every known JVM.
 - Add `PlatformAwareComponentSpec`
-    - Move `JvmLibrary.target()` up onto this interface as `targetPlatform`, with String[] input.
-    - Replace `TargetedNativeComponentSpec.targetPlatforms()` with `targetPlatform`
-- Change `NativeComponentSpecInitializer` to build only for chosen platforms, or default/current platform if none defined
-    - Fix tests that build for multiple platforms by explicitly targeting those platforms
-- The `BinarySpec.buildable` flag should be `false` when a particular JVM binary cannot be built by the current JVM.
-- Configuration of the build should not fail when a JVM binary cannot be built. Instead the appropriate compilation task
-should fail.
-- The implementation should delegate to the JavaToolChain to determine if a binary is buildable.
+    - Common superclass of `JvmLibrary` and `TargetedNativeComponent`
+    - Add `PlatformAwareComponentSpec.targetPlatform(String[])`
+- Remove `JvmLibrary.target()` (replaced by this method)
+         - Remove `TargetedNativeComponent.targetPlatforms()` (replaced by this method)
+    - Add `List<String> PlatformAwareComponentSpec.getTargetPlatforms()`
+         - (Later this will return a list of 'platform requirement' instances, so we don't need to rely on platform name)
+         - Should return an empty list if no target platforms are explicitly configured.
+         - Replace `TargetedNativeComponentInternal.choosePlatforms()` with code that uses this new method
+         - In `JvmComponentPlugin.Rules.createBinaries()` need to select matching `JvmPlatform`s from the `PlatformContainer`
+               - `PlatformContainer` will be a rule input
 - Use a consistent DSL for declaring the target platforms of all platform aware component types.
-- Mention breaking change in release notes.
+- Change `NativeComponentSpecInitializer` to build binaries only for targeted platforms
+    - If `getTargetPlatforms()` is empty, choose the 'current' platform from the `PlatformContainer` and create binary for that platform
+    - If one or more platforms is targeted, get each from the PlatformContainer and create a binary for that platform.
+    - Fix tests that build for multiple platforms by explicitly targeting those platforms
+- Introduce `JvmComponentSpecInitializer` to mirror `NativeComponentSpecInitializer`
+    - Extracted out of `JvmComponentPlugin.Rules.createBinaries()`
+    - If `JvmLibrary.getTargetPlatforms()` is empty, select the 'current' platform from PlatformContainer and create binary for that platform.
+    - If one or more platforms is targeted, get each from the PlatformContainer and create a binary for that platform.
+- Rename the canned `JvmPlatform` instances: use 'java6', 'java7', etc
+    - Add `JvmPlatform.targetCompatibility(String)` to configure the target compatibility
+    - When creating JvmPlatforms for each JavaVersion, add an action to configure the target compatibility.
+- Mention breaking changes in release notes.
+
+#### Test coverage
+
+- For both JVM and native
+    - Fails gracefully when attempting to target an unknown platform
+    - Fails gracefully when any one of a set of a target platforms is not known: reports the name of the invalid platform
+    - Fails gracefully when attempting to target a JVM platform for a native component, and vice-versa
+- When multiple native platforms are defined but none are targeted, attempts to build for sensible default platform
+- When no JVM platform is targeted, attempts to build for current JVM
+
+#### Open issues
+
+- Add factory methods for common platforms to match those used for the Java runtime.
+- Add infrastructure to coerce string to platform, architecture or operating system types.
+- Populate the platform container with `NativePlatform` instances for all known OS/arch combinations
+- Remove the 'default' platform/os/arch combinations: instead we should determine the current architecture to use for default.
+
+### Story: Use a consistent approach for native and JVM tool chains
+
+Given a binary for a platform, Gradle requires a `ToolChain`, that can produce a `ToolProvider` to provide any tools
+required to compile the sources and link them into a binary.
+In the native domain, the `ToolProvider` obtained for a platform is already configured to build for the target platform, so additional tool arguments
+are not required.
+
+This story will extract common infrastructure for defining tool chains and obtaining a tool provider to build a binary.
+
+#### User visible changes
+
+- Verify the java version of the tool chain, rather than assuming current
+
+#### Implementation
+
+- Extract `ToolChainRegistry` and `ToolChainRegistryInternal` into 'platform-base'
+    - Will provide a `ToolChain` given a `Platform`, or an 'unavailable' tool chain if none can target the platform
+- Extract `ToolChainInternal` out of `NativeToolChainInternal`: `NativeToolChainInternal` and `JavaToolChainInternal` extend this
+    - Will produce a `ToolProvider` given a `Platform`, or throws an exception for 'unavailable' tool chain.
+- Delegate to the JavaToolChain to determine if a binary is buildable.
 
 #### Test cases
 
+- The 'current' JDK will be available as a tool chain in `ToolChainRegistry`
+- The `BinarySpec.buildable` flag should be `false` when a particular JVM binary cannot be built by any available JVM.
+- Configuration of the build should not fail when a JVM binary cannot be built. Instead the appropriate compilation task should fail.
 - Running `gradle components` on a build which cannot be built with the current JVM should not fail, and should indicate that
 the binary is not buildable.
 
 #### Open issues
 
-- Add factory methods for common platforms to match those used for the Java runtime.
-- Replace or reuse `platforms` container.
-- Add infrastructure to coerce string to platform, architecture or operating system types.
 - Turn what is `ToolChain` into a tool chain locator or factory.
 - Turn what is `PlatformToolChain` into an immutable tool chain. Resolve the tool chain during configuration, and use this as input for incremental build.
 - Treat Java tool chain as input for incremental build.

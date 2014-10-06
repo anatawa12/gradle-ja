@@ -122,9 +122,14 @@ public abstract class Transformers {
         };
     }
 
-    /**
-     * Converts an {@link Action} to a {@link Transformer} that runs the action against the input value and returns {@code null}.
-     */
+    public static <R> Transformer<R, Object> toTransformer(final Factory<R> factory) {
+        return new Transformer<R, Object>() {
+            public R transform(Object original) {
+                return factory.create();
+            }
+        };
+    }
+
     public static <R, I> Transformer<R, I> toTransformer(final Action<? super I> action) {
         return new Transformer<R, I>() {
             public R transform(I original) {

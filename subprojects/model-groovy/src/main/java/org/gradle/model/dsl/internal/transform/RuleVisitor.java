@@ -31,11 +31,10 @@ import org.codehaus.groovy.syntax.Token;
 import org.codehaus.groovy.syntax.Types;
 import org.gradle.groovy.scripts.internal.AstUtils;
 import org.gradle.internal.SystemProperties;
-import org.gradle.model.dsl.RuleInputAccess;
+import org.gradle.model.dsl.internal.inputs.RuleInputAccess;
 import org.gradle.model.dsl.internal.inputs.RuleInputAccessBacking;
 import org.gradle.model.internal.core.ModelPath;
 
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
@@ -48,6 +47,7 @@ public class RuleVisitor extends CodeVisitorSupport {
     public static final String AST_NODE_METADATA_LOCATION_KEY = RuleVisitor.class.getName() + ".location";
 
     private static final String DOLLAR = "$";
+    private static final String INPUT = "input";
     private static final ClassNode ANNOTATION_CLASS_NODE = new ClassNode(RuleMetadata.class);
     private static final ClassNode CONTEXTUAL_INPUT_TYPE = new ClassNode(RuleInputAccessBacking.class);
     private static final ClassNode ACCESS_API_TYPE = new ClassNode(RuleInputAccess.class);
@@ -67,21 +67,27 @@ public class RuleVisitor extends CodeVisitorSupport {
     public static void visitGeneratedClosure(ClassNode node) {
         MethodNode method = AstUtils.getGeneratedClosureImplMethod(node);
         Statement closureCode = method.getCode();
-        ClosureBackedRuleLocation ruleLocation = closureCode.getNodeMetaData(AST_NODE_METADATA_LOCATION_KEY);
-        if (ruleLocation != null) {
-            ListMultimap<String, Integer> inputs = closureCode.getNodeMetaData(AST_NODE_METADATA_INPUTS_KEY);
+        SourceLocation sourceLocation = closureCode.getNodeMetaData(AST_NODE_METADATA_LOCATION_KEY);
+        if (sourceLocation != null) {
             AnnotationNode metadataAnnotation = new AnnotationNode(ANNOTATION_CLASS_NODE);
-            List<Expression> pathValues = inputs.isEmpty() ? Collections.<Expression>emptyList() : Lists.<Expression>newArrayListWithCapacity(inputs.size());
-            List<Expression> lineNumberValues = inputs.isEmpty() ? Collections.<Expression>emptyList() : Lists.<Expression>newArrayListWithCapacity(inputs.size());
-            for (Map.Entry<String, List<Integer>> input : Multimaps.asMap(inputs).entrySet()) {
-                pathValues.add(new ConstantExpression(input.getKey()));
-                lineNumberValues.add(new ConstantExpression(input.getValue().get(0)));
+
+            metadataAnnotation.addMember("scriptSourceDescription", new ConstantExpression(sourceLocation.getScriptSourceDescription()));
+            metadataAnnotation.addMember("lineNumber", new ConstantExpression(sourceLocation.getLineNumber()));
+            metadataAnnotation.addMember("columnNumber", new ConstantExpression(sourceLocation.getColumnNumber()));
+
+            ListMultimap<String, Integer> inputs = closureCode.getNodeMetaData(AST_NODE_METADATA_INPUTS_KEY);
+            if (!inputs.isEmpty()) {
+                List<Expression> pathValues = Lists.newArrayListWithCapacity(inputs.size());
+                List<Expression> lineNumberValues = Lists.newArrayListWithCapacity(inputs.size());
+                for (Map.Entry<String, List<Integer>> input : Multimaps.asMap(inputs).entrySet()) {
+                    pathValues.add(new ConstantExpression(input.getKey()));
+                    lineNumberValues.add(new ConstantExpression(input.getValue().get(0)));
+                }
+
+                metadataAnnotation.addMember("inputPaths", new ListExpression(pathValues));
+                metadataAnnotation.addMember("inputLineNumbers", new ListExpression(lineNumberValues));
             }
-            metadataAnnotation.addMember("inputPaths", new ListExpression(pathValues));
-            metadataAnnotation.addMember("inputLineNumbers", new ListExpression(lineNumberValues));
-            metadataAnnotation.addMember("scriptSourceDescription", new ConstantExpression(ruleLocation.getScriptSourceDescription()));
-            metadataAnnotation.addMember("lineNumber", new ConstantExpression(ruleLocation.getLineNumber()));
-            metadataAnnotation.addMember("columnNumber", new ConstantExpression(ruleLocation.getColumnNumber()));
+
             node.addAnnotation(metadataAnnotation);
         }
     }
@@ -150,6 +156,7 @@ public class RuleVisitor extends CodeVisitorSupport {
 
             inputs.put(modelPath, call.getLineNumber());
             call.setObjectExpression(new VariableExpression(accessVariable));
+            call.setMethod(new ConstantExpression(INPUT));
         }
     }
 

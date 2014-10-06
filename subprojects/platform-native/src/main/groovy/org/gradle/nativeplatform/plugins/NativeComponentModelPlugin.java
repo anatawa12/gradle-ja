@@ -16,34 +16,40 @@
 package org.gradle.nativeplatform.plugins;
 
 import org.gradle.api.*;
+import org.gradle.api.artifacts.repositories.ArtifactRepository;
 import org.gradle.api.file.SourceDirectorySet;
+import org.gradle.api.internal.DefaultPolymorphicDomainObjectContainer;
 import org.gradle.api.internal.file.FileResolver;
 import org.gradle.api.internal.project.ProjectInternal;
 import org.gradle.api.plugins.ExtensionContainer;
 import org.gradle.internal.Actions;
 import org.gradle.internal.reflect.Instantiator;
 import org.gradle.internal.service.ServiceRegistry;
-import org.gradle.nativeplatform.platform.internal.NativePlatformInternal;
-import org.gradle.nativeplatform.sourceset.HeaderExportingSourceSet;
 import org.gradle.language.base.FunctionalSourceSet;
 import org.gradle.language.base.ProjectSourceSet;
 import org.gradle.language.base.internal.LanguageRegistry;
 import org.gradle.language.base.internal.LanguageSourceSetInternal;
 import org.gradle.language.base.plugins.ComponentModelBasePlugin;
+import org.gradle.language.nativeplatform.HeaderExportingSourceSet;
 import org.gradle.model.*;
 import org.gradle.nativeplatform.*;
 import org.gradle.nativeplatform.internal.*;
 import org.gradle.nativeplatform.internal.configure.*;
+import org.gradle.nativeplatform.internal.prebuilt.DefaultPrebuiltLibraries;
+import org.gradle.nativeplatform.internal.prebuilt.PrebuiltLibraryInitializer;
 import org.gradle.nativeplatform.internal.resolve.NativeDependencyResolver;
-import org.gradle.nativeplatform.platform.PlatformContainer;
-import org.gradle.nativeplatform.platform.internal.DefaultPlatformContainer;
-import org.gradle.nativeplatform.toolchain.internal.DefaultToolChainRegistry;
+import org.gradle.nativeplatform.platform.NativePlatform;
+import org.gradle.nativeplatform.platform.internal.DefaultNativePlatform;
+import org.gradle.nativeplatform.platform.internal.NativePlatformInternal;
+import org.gradle.nativeplatform.toolchain.internal.DefaultNativeToolChainRegistry;
 import org.gradle.nativeplatform.toolchain.internal.NativeToolChainInternal;
-import org.gradle.nativeplatform.toolchain.internal.ToolChainRegistryInternal;
+import org.gradle.nativeplatform.toolchain.internal.NativeToolChainRegistryInternal;
 import org.gradle.platform.base.BinaryContainer;
 import org.gradle.platform.base.ComponentSpecContainer;
+import org.gradle.platform.base.PlatformContainer;
 import org.gradle.platform.base.internal.BinaryNamingSchemeBuilder;
 import org.gradle.platform.base.internal.DefaultBinaryNamingSchemeBuilder;
+import org.gradle.platform.base.internal.DefaultPlatformContainer;
 
 import javax.inject.Inject;
 import java.io.File;
@@ -55,18 +61,14 @@ import java.io.File;
 public class NativeComponentModelPlugin implements Plugin<ProjectInternal> {
 
     private final Instantiator instantiator;
-    private final FileResolver fileResolver;
 
     @Inject
-    public NativeComponentModelPlugin(Instantiator instantiator, FileResolver fileResolver) {
+    public NativeComponentModelPlugin(Instantiator instantiator) {
         this.instantiator = instantiator;
-        this.fileResolver = fileResolver;
     }
 
     public void apply(final ProjectInternal project) {
         project.getPlugins().apply(ComponentModelBasePlugin.class);
-
-        project.getModelRegistry().create(new RepositoriesFactory("repositories", instantiator, fileResolver));
 
         ProjectSourceSet sources = project.getExtensions().getByType(ProjectSourceSet.class);
         ComponentSpecContainer components = project.getExtensions().getByType(ComponentSpecContainer.class);
@@ -92,15 +94,17 @@ public class NativeComponentModelPlugin implements Plugin<ProjectInternal> {
     public static class Rules {
 
         @Model
-        ToolChainRegistryInternal toolChains(ServiceRegistry serviceRegistry) {
+        Repositories repositories(ServiceRegistry serviceRegistry, FlavorContainer flavors, PlatformContainer platforms, BuildTypeContainer buildTypes) {
             Instantiator instantiator = serviceRegistry.get(Instantiator.class);
-            return instantiator.newInstance(DefaultToolChainRegistry.class, instantiator);
+            FileResolver fileResolver = serviceRegistry.get(FileResolver.class);
+            Action<PrebuiltLibrary> initializer = new PrebuiltLibraryInitializer(instantiator, platforms.withType(NativePlatform.class), buildTypes, flavors);
+            return new DefaultRepositories(instantiator, fileResolver, initializer);
         }
 
         @Model
-        PlatformContainer platforms(ServiceRegistry serviceRegistry) {
+        NativeToolChainRegistryInternal toolChains(ServiceRegistry serviceRegistry) {
             Instantiator instantiator = serviceRegistry.get(Instantiator.class);
-            return instantiator.newInstance(DefaultPlatformContainer.class, instantiator);
+            return instantiator.newInstance(DefaultNativeToolChainRegistry.class, instantiator);
         }
 
         @Model
@@ -121,21 +125,35 @@ public class NativeComponentModelPlugin implements Plugin<ProjectInternal> {
         }
 
         @Mutate
-        public void registerExtensions(ExtensionContainer extensions, PlatformContainer platforms, BuildTypeContainer buildTypes, FlavorContainer flavors) {
-            extensions.add("platforms", platforms);
+        public void registerExtensions(ExtensionContainer extensions, BuildTypeContainer buildTypes, FlavorContainer flavors) {
             extensions.add("buildTypes", buildTypes);
             extensions.add("flavors", flavors);
         }
 
         @Mutate
+        public void registerNativePlatformFactory(PlatformContainer platforms, ServiceRegistry serviceRegistry) {
+            final Instantiator instantiator = serviceRegistry.get(Instantiator.class);
+            NamedDomainObjectFactory<NativePlatform> nativePlatformFactory = new NamedDomainObjectFactory<NativePlatform>() {
+                public NativePlatform create(String name) {
+                    return instantiator.newInstance(DefaultNativePlatform.class, name);
+                }
+            };
+
+            //TODO freekh: remove cast/this comment when registerDefault exists on interface
+            ((DefaultPlatformContainer) platforms).registerDefaultFactory(nativePlatformFactory);
+            platforms.registerFactory(NativePlatform.class, nativePlatformFactory);
+        }
+
+        @Mutate
         public void createNativeBinaries(BinaryContainer binaries, NamedDomainObjectSet<NativeComponentSpec> nativeComponents,
-                                         LanguageRegistry languages, ToolChainRegistryInternal toolChains,
+                                         LanguageRegistry languages, NativeToolChainRegistryInternal toolChains,
                                          PlatformContainer platforms, BuildTypeContainer buildTypes, FlavorContainer flavors,
                                          ServiceRegistry serviceRegistry, @Path("buildDir") File buildDir) {
             Instantiator instantiator = serviceRegistry.get(Instantiator.class);
             NativeDependencyResolver resolver = serviceRegistry.get(NativeDependencyResolver.class);
             Action<NativeBinarySpec> configureBinaryAction = new NativeBinarySpecInitializer(buildDir);
             Action<NativeBinarySpec> setToolsAction = new ToolSettingNativeBinaryInitializer(languages);
+            Action<NativeBinarySpec> setDefaultTargetsAction = new ToolSettingNativeBinaryInitializer(languages);
             @SuppressWarnings("unchecked") Action<NativeBinarySpec> initAction = Actions.composite(configureBinaryAction, setToolsAction, new MarkBinariesBuildable());
             NativeBinariesFactory factory = new DefaultNativeBinariesFactory(instantiator, initAction, resolver);
             BinaryNamingSchemeBuilder namingSchemeBuilder = new DefaultBinaryNamingSchemeBuilder();
@@ -149,21 +167,22 @@ public class NativeComponentModelPlugin implements Plugin<ProjectInternal> {
         }
 
         @Finalize
-        public void createDefaultToolChain(ToolChainRegistryInternal toolChains) {
+        public void createDefaultPlatforms(PlatformContainer platforms) {
+            if (platforms.withType(NativePlatform.class).isEmpty()) {
+                // TODO:DAZ Create a set of known platforms, rather than a single 'default'
+                NativePlatform defaultPlatform = platforms.create(NativePlatform.DEFAULT_NAME, NativePlatform.class);
+            }
+        }
+
+        @Finalize
+        public void createDefaultToolChain(NativeToolChainRegistryInternal toolChains) {
             if (toolChains.isEmpty()) {
                 toolChains.addDefaultToolChains();
             }
         }
 
         @Finalize
-        public void createDefaultPlatforms(PlatformContainer platforms) {
-            if (platforms.isEmpty()) {
-                platforms.create("current");
-            }
-        }
-
-        @Finalize
-        public void createDefaultPlatforms(BuildTypeContainer buildTypes) {
+        public void createDefaultBuildTypes(BuildTypeContainer buildTypes) {
             if (buildTypes.isEmpty()) {
                 buildTypes.create("debug");
             }
@@ -221,6 +240,23 @@ public class NativeComponentModelPlugin implements Plugin<ProjectInternal> {
             NativeToolChainInternal toolChainInternal = (NativeToolChainInternal) nativeBinarySpec.getToolChain();
             boolean canBuild = toolChainInternal.select((NativePlatformInternal) nativeBinarySpec.getTargetPlatform()).isAvailable();
             ((NativeBinarySpecInternal) nativeBinarySpec).setBuildable(canBuild);
+        }
+    }
+
+    private static class DefaultRepositories extends DefaultPolymorphicDomainObjectContainer<ArtifactRepository> implements Repositories {
+        private DefaultRepositories(final Instantiator instantiator, final FileResolver fileResolver, final Action<PrebuiltLibrary> binaryFactory) {
+            super(ArtifactRepository.class, instantiator, new ArtifactRepositoryNamer());
+            registerFactory(PrebuiltLibraries.class, new NamedDomainObjectFactory<PrebuiltLibraries>() {
+                public PrebuiltLibraries create(String name) {
+                    return instantiator.newInstance(DefaultPrebuiltLibraries.class, name, instantiator, fileResolver, binaryFactory);
+                }
+            });
+        }
+    }
+
+    private static class ArtifactRepositoryNamer implements Namer<ArtifactRepository> {
+        public String determineName(ArtifactRepository object) {
+            return object.getName();
         }
     }
 }

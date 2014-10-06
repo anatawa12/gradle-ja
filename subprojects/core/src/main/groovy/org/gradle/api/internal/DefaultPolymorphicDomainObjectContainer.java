@@ -30,13 +30,13 @@ import java.util.Set;
 
 public class DefaultPolymorphicDomainObjectContainer<T> extends AbstractPolymorphicDomainObjectContainer<T>
         implements ExtensiblePolymorphicDomainObjectContainer<T> {
-    private final Map<Class<? extends T>, NamedDomainObjectFactory<? extends T>> factories = Maps.newHashMap();
+    protected final Map<Class<? extends T>, NamedDomainObjectFactory<? extends T>> factories = Maps.newHashMap();
 
-    public DefaultPolymorphicDomainObjectContainer(Class<T> type, Instantiator instantiator, Namer<? super T> namer) {
+    public DefaultPolymorphicDomainObjectContainer(Class<? extends T> type, Instantiator instantiator, Namer<? super T> namer) {
         super(type, instantiator, namer);
     }
 
-    public DefaultPolymorphicDomainObjectContainer(Class<T> type, Instantiator instantiator) {
+    public DefaultPolymorphicDomainObjectContainer(Class<? extends T> type, Instantiator instantiator) {
         this(type, instantiator, Named.Namer.forType(type));
     }
 
@@ -60,7 +60,7 @@ public class DefaultPolymorphicDomainObjectContainer<T> extends AbstractPolymorp
         return factory.create(name);
     }
 
-    public void registerDefaultFactory(NamedDomainObjectFactory<? extends T> factory) {
+    public <U extends T> void registerDefaultFactory(NamedDomainObjectFactory<U> factory) {
         factories.put(getType(), factory);
     }
 

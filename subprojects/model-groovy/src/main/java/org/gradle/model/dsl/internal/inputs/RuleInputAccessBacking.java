@@ -17,7 +17,6 @@
 package org.gradle.model.dsl.internal.inputs;
 
 import com.google.common.collect.ImmutableMap;
-import org.gradle.model.dsl.RuleInputAccess;
 import org.gradle.model.internal.core.Inputs;
 import org.gradle.model.internal.core.ModelRuleInput;
 
@@ -47,7 +46,7 @@ public abstract class RuleInputAccessBacking {
     public static RuleInputAccess getAccess() {
         final ImmutableMap<String, Object> inputs = INPUT.get();
         return new RuleInputAccess() {
-            public Object $(String modelPath) {
+            public Object input(String modelPath) {
                 return inputs.get(modelPath);
             }
         };

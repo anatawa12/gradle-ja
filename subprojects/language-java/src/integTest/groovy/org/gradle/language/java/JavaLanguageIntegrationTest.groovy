@@ -15,7 +15,6 @@
  */
 
 package org.gradle.language.java
-
 import org.gradle.api.JavaVersion
 import org.gradle.integtests.fixtures.AbstractIntegrationSpec
 import org.gradle.language.fixtures.BadJavaLibrary
@@ -230,7 +229,6 @@ class JavaLanguageIntegrationTest extends AbstractIntegrationSpec {
 
     @Requires(TestPrecondition.JDK6_OR_LATER)
     def "target should produce in the correct bytecode"() {
-        JavaVersion target = JavaVersion.VERSION_1_6
         when:
         def java6App = new TestJavaLibrary()
         java6App.sources*.writeToDir(file("src/myLib/java"))
@@ -243,7 +241,7 @@ class JavaLanguageIntegrationTest extends AbstractIntegrationSpec {
     jvm {
         libraries {
             myLib {
-                target java("$target")
+                targetPlatform "java6"
             }
         }
     }
@@ -252,18 +250,13 @@ class JavaLanguageIntegrationTest extends AbstractIntegrationSpec {
         succeeds "assemble"
 
         and:
-        jarFile("build/jars/myLibJar/myLib.jar").getJavaVersion() == target
+        jarFile("build/jars/myLibJar/myLib.jar").getJavaVersion() == JavaVersion.VERSION_1_6
         and:
         jarFile("build/jars/myLibJar/myLib.jar").hasDescendants(java6App.sources*.classFile.fullPath as String[])
     }
 
-
     @Requires(TestPrecondition.JDK8_OR_LATER)
     def "multiple targets should produce in the correct bytecode"() {
-        JavaVersion target1 = JavaVersion.VERSION_1_5
-        JavaVersion target2 = JavaVersion.VERSION_1_6
-        JavaVersion target3 = JavaVersion.VERSION_1_7
-        JavaVersion target4 = JavaVersion.VERSION_1_8
         when:
         def javaApp = new TestJavaLibrary()
         javaApp.sources*.writeToDir(file("src/myLib/java"))
@@ -276,10 +269,7 @@ class JavaLanguageIntegrationTest extends AbstractIntegrationSpec {
     jvm {
         libraries {
             myLib {
-                target java("$target1")
-                target java("$target2")
-                target java("$target3")
-                target java("$target4")
+                targetPlatform "java5", "java6", "java7", "java8"
             }
         }
     }
@@ -288,17 +278,17 @@ class JavaLanguageIntegrationTest extends AbstractIntegrationSpec {
         succeeds "assemble"
 
         and:
-        jarFile("build/jars/myLibJar/jdk$target1/myLib.jar").getJavaVersion() == target1
+        jarFile("build/jars/myLibJar/java5/myLib.jar").javaVersion == JavaVersion.VERSION_1_5
         and:
-        jarFile("build/jars/myLibJar/jdk$target2/myLib.jar").getJavaVersion() == target2
+        jarFile("build/jars/myLibJar/java6/myLib.jar").javaVersion == JavaVersion.VERSION_1_6
         and:
-        jarFile("build/jars/myLibJar/jdk$target3/myLib.jar").getJavaVersion() == target3
+        jarFile("build/jars/myLibJar/java7/myLib.jar").javaVersion == JavaVersion.VERSION_1_7
         and:
-        jarFile("build/jars/myLibJar/jdk$target4/myLib.jar").getJavaVersion() == target4
+        jarFile("build/jars/myLibJar/java8/myLib.jar").javaVersion == JavaVersion.VERSION_1_8
     }
 
     def "erroneous target should produce reasonable error message"() {
-        String badTarget = "200";
+        String badName = "bornYesterday";
         when:
         def badApp = new BadJavaLibrary()
         badApp.sources*.writeToDir(file("src/myLib/java"))
@@ -311,7 +301,7 @@ class JavaLanguageIntegrationTest extends AbstractIntegrationSpec {
     jvm {
         libraries {
             myLib {
-                target java("$badTarget")
+                targetPlatform "$badName"
             }
         }
     }
@@ -320,15 +310,13 @@ class JavaLanguageIntegrationTest extends AbstractIntegrationSpec {
         fails "assemble"
 
         and:
-        assert failure.assertHasCause("Could not determine java version from '$badTarget'")
+        assert failure.assertHasCause("Invalid JavaPlatform: $badName")
     }
 
     @Requires(TestPrecondition.JDK8_OR_EARLIER)
     def "too high JDK target should produce reasonable error message"() {
-        String badTarget = "1.9";
         when:
-        def badApp = new BadJavaLibrary()
-        badApp.sources*.writeToDir(file("src/myLib/java"))
+        app.sources*.writeToDir(file("src/myLib/java"))
 
         and:
         buildFile << """
@@ -338,16 +326,17 @@ class JavaLanguageIntegrationTest extends AbstractIntegrationSpec {
     jvm {
         libraries {
             myLib {
-                target java("$badTarget")
+                targetPlatform "java9"
             }
         }
     }
 """
         then:
-        fails "assemble"
+        // TODO:DAZ Would like to use 'assemble' here, but it currently ignores non-buildable binaries
+        fails "myLibJar"
 
         and:
-        assert failure.assertHasCause("Could not use target JVM platform: '$badTarget' when using JDK: '${JavaVersion.current()}'. Change to a lower target.")
+        assert failure.assertHasCause("Could not target platform: 'Java SE 9' using tool chain: 'JDK ${JavaVersion.current().majorVersion} (${JavaVersion.current()})'")
     }
 
     private JarTestFixture jarFile(String s) {

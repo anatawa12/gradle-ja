@@ -27,7 +27,7 @@ import org.gradle.internal.HasInternalProtocol;
  * or rejected by rule.  Components that are neither accepted or rejected will be subject to
  * the default version matching strategies.
  *
- * <pre>
+ * <pre autoTested=''>
  *     configurations {
  *         conf {
  *             resolutionStrategy {
@@ -44,7 +44,7 @@ import org.gradle.internal.HasInternalProtocol;
  *                             }
  *                         }
  *                     }
- *                     module("org.sample:api") { ComponentSelection selection ->
+ *                     withModule("org.sample:api") { ComponentSelection selection ->
  *                         if (selection.candidate.version == "1.1") {
  *                             selection.reject("known bad version")
  *                         }
@@ -82,6 +82,23 @@ public interface ComponentSelectionRules {
     public ComponentSelectionRules all(Closure<?> closure);
 
     /**
+     * Adds a rule-source backed component selection rule that will apply to all resolved components.
+     *
+     * The ruleSource provides the rule as exactly one rule method annotated with {@link org.gradle.model.Mutate}.
+     *
+     * This rule method:
+     * <ul>
+     *     <li>must return void.</li>
+     *     <li>must have {@link org.gradle.api.artifacts.ComponentSelection} as the first parameter.</li>
+     *     <li>may have additional parameters of type {@link org.gradle.api.artifacts.ComponentMetadata} and/or {@link org.gradle.api.artifacts.ivy.IvyModuleDescriptor}.</li>
+     * </ul>
+     *
+     * @param ruleSource an instance providing a rule implementation
+     * @return this
+     */
+    public ComponentSelectionRules all(Object ruleSource);
+
+    /**
      * Adds a component selection rule that will apply to the specified module.
      * Each rule will receive a {@link ComponentSelection} object as an argument.
      *
@@ -89,7 +106,7 @@ public interface ComponentSelectionRules {
      * @param selectionAction the Action that implements a rule to be applied
      * @return this
      */
-    public ComponentSelectionRules module(Object id, Action<? super ComponentSelection> selectionAction);
+    public ComponentSelectionRules withModule(Object id, Action<? super ComponentSelection> selectionAction);
 
     /**
      * Adds a component selection rule that will apply to the specified module.
@@ -104,5 +121,23 @@ public interface ComponentSelectionRules {
      * @param closure the Closure that implements a rule to be applied
      * @return this
      */
-    public ComponentSelectionRules module(Object id, Closure<?> closure);
+    public ComponentSelectionRules withModule(Object id, Closure<?> closure);
+
+    /**
+     * Adds a rule-source backed component selection rule that will apply to the specified module.
+     *
+     * The ruleSource provides the rule as exactly one rule method annotated with {@link org.gradle.model.Mutate}.
+     *
+     * This rule method:
+     * <ul>
+     *     <li>must return void.</li>
+     *     <li>must have {@link org.gradle.api.artifacts.ComponentSelection} as the first parameter.</li>
+     *     <li>may have additional parameters of type {@link org.gradle.api.artifacts.ComponentMetadata} and/or {@link org.gradle.api.artifacts.ivy.IvyModuleDescriptor}.</li>
+     * </ul>
+     *
+     * @param id the module to apply this rule to in "group:module" format or as a {@link org.gradle.api.artifacts.ModuleIdentifier}
+     * @param ruleSource an instance providing a rule implementation
+     * @return this
+     */
+    public ComponentSelectionRules withModule(Object id, Object ruleSource);
 }

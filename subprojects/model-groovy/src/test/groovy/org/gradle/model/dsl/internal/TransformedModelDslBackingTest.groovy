@@ -18,9 +18,11 @@ package org.gradle.model.dsl.internal
 
 import org.gradle.api.Transformer
 import org.gradle.model.dsl.internal.inputs.RuleInputAccessBacking
-import org.gradle.model.dsl.internal.transform.ClosureBackedRuleLocation
-import org.gradle.model.internal.core.*
-import org.gradle.model.internal.core.rule.describe.SimpleModelRuleDescriptor
+import org.gradle.model.dsl.internal.transform.SourceLocation
+import org.gradle.model.internal.core.ModelCreators
+import org.gradle.model.internal.core.ModelPath
+import org.gradle.model.internal.core.ModelReference
+import org.gradle.model.internal.core.ModelType
 import org.gradle.model.internal.registry.DefaultModelRegistry
 import spock.lang.Specification
 
@@ -28,13 +30,12 @@ class TransformedModelDslBackingTest extends Specification {
 
     def modelRegistry = new DefaultModelRegistry()
     Transformer<List<ModelReference<?>>, Closure<?>> referenceExtractor = Mock()
-    Transformer<ClosureBackedRuleLocation, Closure<?>> locationExtractor = Mock()
-    def modelDsl = new TransformedModelDslBacking(getModelRegistry(), referenceExtractor, locationExtractor)
+    Transformer<SourceLocation, Closure<?>> locationExtractor = Mock()
+    def blockOwner = new Object()
+    def modelDsl = new TransformedModelDslBacking(getModelRegistry(), this, blockOwner, referenceExtractor, locationExtractor)
 
     void register(String pathString, Object element) {
-        def path = new ModelPath(pathString)
-        def type = ModelType.of(element.class)
-        modelRegistry.create(InstanceBackedModelCreator.of(ModelReference.of(path, type), new SimpleModelRuleDescriptor("register"), element))
+        modelRegistry.create(ModelCreators.of(ModelReference.of(pathString, element.class), element).simpleDescriptor("register").build())
     }
 
     def "can add rules via dsl"() {
@@ -43,7 +44,10 @@ class TransformedModelDslBackingTest extends Specification {
         referenceExtractor.transform(_) >> []
 
         when:
-        modelDsl.configure("foo") { add 1 }
+        modelDsl.configure("foo") {
+            assert owner.is(this.blockOwner)
+            add 1
+        }
 
         then:
         modelRegistry.get(ModelPath.path("foo"), ModelType.of(List)) == [1]
@@ -59,7 +63,7 @@ class TransformedModelDslBackingTest extends Specification {
         modelDsl.with {
             configure("foo.bar") {
                 // this is effectively what it gets transformed to
-                add RuleInputAccessBacking.access.$("value")
+                add RuleInputAccessBacking.access.input("value")
             }
         }
 

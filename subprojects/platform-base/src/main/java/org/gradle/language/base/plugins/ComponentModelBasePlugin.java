@@ -15,13 +15,14 @@
  */
 package org.gradle.language.base.plugins;
 
+import com.google.common.reflect.TypeToken;
 import org.gradle.api.*;
-import org.gradle.api.internal.PolymorphicDomainObjectContainerModelAdapter;
 import org.gradle.api.internal.file.FileResolver;
 import org.gradle.api.internal.project.ProjectInternal;
 import org.gradle.api.plugins.ExtensionContainer;
 import org.gradle.api.tasks.TaskContainer;
 import org.gradle.internal.reflect.Instantiator;
+import org.gradle.internal.service.ServiceRegistry;
 import org.gradle.language.base.FunctionalSourceSet;
 import org.gradle.language.base.LanguageSourceSet;
 import org.gradle.language.base.ProjectSourceSet;
@@ -34,20 +35,17 @@ import org.gradle.model.Model;
 import org.gradle.model.Mutate;
 import org.gradle.model.RuleSource;
 import org.gradle.model.collection.CollectionBuilder;
-import org.gradle.model.internal.core.*;
-import org.gradle.model.internal.core.rule.describe.ModelRuleDescriptor;
-import org.gradle.model.internal.core.rule.describe.SimpleModelRuleDescriptor;
+import org.gradle.model.internal.core.ModelCreators;
+import org.gradle.model.internal.core.ModelReference;
+import org.gradle.model.internal.core.PolymorphicDomainObjectContainerModelProjection;
 import org.gradle.model.internal.registry.ModelRegistry;
-import org.gradle.platform.base.BinaryContainer;
-import org.gradle.platform.base.ComponentSpec;
-import org.gradle.platform.base.ComponentSpecContainer;
+import org.gradle.platform.base.*;
 import org.gradle.platform.base.internal.BinarySpecInternal;
 import org.gradle.platform.base.internal.ComponentSpecInternal;
 import org.gradle.platform.base.internal.DefaultComponentSpecContainer;
+import org.gradle.platform.base.internal.DefaultPlatformContainer;
 
 import javax.inject.Inject;
-import java.util.Collections;
-import java.util.List;
 
 /**
  * Base plugin for language support.
@@ -69,6 +67,7 @@ public class ComponentModelBasePlugin implements Plugin<ProjectInternal> {
         this.modelRegistry = modelRegistry;
     }
 
+
     public void apply(final ProjectInternal project) {
         project.getPlugins().apply(LanguageBasePlugin.class);
 
@@ -76,31 +75,13 @@ public class ComponentModelBasePlugin implements Plugin<ProjectInternal> {
         ProjectSourceSet sources = project.getExtensions().getByType(ProjectSourceSet.class);
 
         DefaultComponentSpecContainer components = project.getExtensions().create("componentSpecs", DefaultComponentSpecContainer.class, instantiator);
-        final PolymorphicDomainObjectContainerModelAdapter<ComponentSpec, DefaultComponentSpecContainer> componentSpecContainerAdapter = new PolymorphicDomainObjectContainerModelAdapter<ComponentSpec, DefaultComponentSpecContainer>(
-                components, ModelType.of(ComponentSpecContainer.class), ComponentSpec.class
-        );
-
-        modelRegistry.create(new ModelCreator() {
-            public ModelPath getPath() {
-                return ModelPath.path("componentSpecs");
-            }
-
-            public ModelPromise getPromise() {
-                return componentSpecContainerAdapter.asPromise();
-            }
-
-            public ModelAdapter create(Inputs inputs) {
-                return componentSpecContainerAdapter;
-            }
-
-            public List<ModelReference<?>> getInputs() {
-                return Collections.emptyList();
-            }
-
-            public ModelRuleDescriptor getDescriptor() {
-                return new SimpleModelRuleDescriptor("Project.<init>.componentSpecs()");
-            }
-        });
+        @SuppressWarnings("unchecked") Class<ComponentSpec<?>> componentSpecClass = (Class<ComponentSpec<?>>) new TypeToken<ComponentSpec<?>>(){}.getRawType();
+        modelRegistry.create(
+                ModelCreators.of(ModelReference.of("componentSpecs", DefaultComponentSpecContainer.class), components)
+                        .simpleDescriptor("Project.<init>.componentSpecs()")
+                        .withProjection(new PolymorphicDomainObjectContainerModelProjection<DefaultComponentSpecContainer, ComponentSpec<?>>(components, componentSpecClass))
+                        .build()
+                        );
 
         // TODO:DAZ Convert to model rules
         createLanguageSourceSets(sources, components, languageRegistry, project.getFileResolver());
@@ -115,6 +96,7 @@ public class ComponentModelBasePlugin implements Plugin<ProjectInternal> {
         });
     }
 
+    @SuppressWarnings("rawtypes")
     private <U extends LanguageSourceSet> void createDefaultSourceSetForComponents(final LanguageRegistration<U> languageRegistration, ComponentSpecContainer components) {
         components.withType(ComponentSpecInternal.class).all(new Action<ComponentSpecInternal>() {
             public void execute(final ComponentSpecInternal componentSpecInternal) {
@@ -184,5 +166,17 @@ public class ComponentModelBasePlugin implements Plugin<ProjectInternal> {
         void closeSourcesForBinaries(BinaryContainer binaries, ProjectSourceSet sources) {
             // Only required because sources aren't fully integrated into model
         }
+
+        @Model
+        PlatformContainer platforms(ServiceRegistry serviceRegistry) {
+            Instantiator instantiator = serviceRegistry.get(Instantiator.class);
+            return instantiator.newInstance(DefaultPlatformContainer.class, Platform.class, instantiator);
+        }
+
+        @Mutate
+        void registerPlatformExtension(ExtensionContainer extensions, PlatformContainer platforms) {
+            extensions.add("platforms", platforms);
+        }
+
     }
 }

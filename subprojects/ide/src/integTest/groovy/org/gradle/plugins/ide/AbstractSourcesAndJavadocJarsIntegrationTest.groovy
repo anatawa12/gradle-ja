@@ -15,11 +15,7 @@
  */
 package org.gradle.plugins.ide
 
-import org.gradle.test.fixtures.server.http.IvyHttpModule
-import org.gradle.test.fixtures.server.http.IvyHttpRepository
-import org.gradle.test.fixtures.server.http.HttpArtifact
-import org.gradle.test.fixtures.server.http.MavenHttpRepository
-import org.gradle.test.fixtures.server.http.HttpServer
+import org.gradle.test.fixtures.server.http.*
 import org.junit.Rule
 
 abstract class AbstractSourcesAndJavadocJarsIntegrationTest extends AbstractIdeIntegrationSpec {
@@ -213,6 +209,69 @@ abstract class AbstractSourcesAndJavadocJarsIntegrationTest extends AbstractIdeI
         ideFileContainsSourcesAndJavadocEntry("sources", "javadoc")
     }
 
+    def "sources and javadoc jars resolved from maven repo are attached to all artifacts with same base name"() {
+        def repo = mavenHttpRepo
+        def module = repo.module("some", "module", "1.0")
+        def api = module.artifact(classifier: "api")
+        def tests = module.artifact(classifier:"tests")
+        def sources = module.artifact(classifier:"sources")
+        def javadoc = module.artifact(classifier:"javadoc")
+        module.publish()
+
+        when:
+        useMavenRepo(repo)
+
+        and:
+        buildFile << """
+dependencies {
+    compile 'some:module:1.0:api'
+    testCompile 'some:module:1.0:tests'
+}"""
+
+        and:
+        module.pom.expectGet()
+        module.artifact.expectGet()
+        api.expectGet()
+        tests.expectGet()
+        javadoc.expectGet()
+        javadoc.expectHead()
+        sources.expectGet()
+        sources.expectHead()
+
+        then:
+        succeeds ideTask
+
+        and:
+        ideFileContainsSourcesAndJavadocEntryForEachLib()
+    }
+
+    def "sources and javadoc jars resolved from ivy repo are attached to all artifacts with same base name"() {
+        def repo = ivyHttpRepo
+        def module = repo.module("some", "module", "1.0")
+        addCompleteConfigurations(module)
+        module.configuration("api")
+        module.configuration("tests")
+        module.artifact(type: "api", classifier: "api", ext: "jar", conf: "api")
+        module.artifact(type: "tests", classifier: "tests", ext: "jar", conf: "tests")
+
+        module.publish()
+        module.allowAll()
+
+        when:
+        useIvyRepo(repo)
+        buildFile << """
+dependencies {
+    compile 'some:module:1.0:api'
+    testCompile 'some:module:1.0:tests'
+}"""
+
+        succeeds ideTask
+
+        then:
+        ideFileContainsSourcesAndJavadocEntryForEachLib("my-sources", "my-javadoc")
+    }
+
+
     def "sources and javadoc jars from flatdir repositories are resolved and attached"() {
         file("repo/module-1.0.jar").createFile()
         file("repo/module-1.0-sources.jar").createFile()
@@ -279,4 +338,5 @@ task resolve << {
     abstract void ideFileContainsNoSourcesAndJavadocEntry()
     abstract void expectBehaviorAfterBrokenMavenArtifact(HttpArtifact httpArtifact)
     abstract void expectBehaviorAfterBrokenIvyArtifact(HttpArtifact httpArtifact)
+    abstract void ideFileContainsSourcesAndJavadocEntryForEachLib(String sourcesClassifier, String javadocClassifier)
 }

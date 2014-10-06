@@ -17,7 +17,6 @@
 package org.gradle.nativeplatform.platform;
 
 import org.gradle.api.Incubating;
-import org.gradle.api.Named;
 import org.gradle.internal.HasInternalProtocol;
 import org.gradle.platform.base.Platform;
 
@@ -38,11 +37,8 @@ import org.gradle.platform.base.Platform;
  */
 @Incubating
 @HasInternalProtocol
-public interface NativePlatform extends Platform, Named {
-    /**
-     * Returns a human-consumable display name for this platform.
-     */
-    String getDisplayName();
+public interface NativePlatform extends Platform {
+    String DEFAULT_NAME = "current";
 
     /**
      * The cpu architecture being targeted. Defaults to the default architecture produced by the tool chain.
@@ -122,5 +118,4 @@ public interface NativePlatform extends Platform, Named {
      * </table>
      */
     void operatingSystem(Object notation);
-
 }

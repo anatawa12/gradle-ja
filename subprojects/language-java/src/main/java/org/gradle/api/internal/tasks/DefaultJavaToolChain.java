@@ -17,16 +17,18 @@
 package org.gradle.api.internal.tasks;
 
 import org.gradle.api.JavaVersion;
-import org.gradle.api.platform.jvm.JvmPlatform;
 import org.gradle.api.internal.tasks.compile.JavaCompileSpec;
 import org.gradle.api.internal.tasks.compile.JavaCompilerFactory;
 import org.gradle.api.tasks.compile.CompileOptions;
 import org.gradle.api.tasks.javadoc.internal.JavadocGenerator;
 import org.gradle.api.tasks.javadoc.internal.JavadocSpec;
+import org.gradle.jvm.internal.toolchain.JavaToolChainInternal;
+import org.gradle.jvm.platform.JavaPlatform;
 import org.gradle.language.base.internal.compile.CompileSpec;
 import org.gradle.language.base.internal.compile.Compiler;
+import org.gradle.platform.base.internal.toolchain.ToolProvider;
 import org.gradle.process.internal.ExecActionFactory;
-import org.gradle.jvm.internal.toolchain.JavaToolChainInternal;
+import org.gradle.util.TreeVisitor;
 
 public class DefaultJavaToolChain implements JavaToolChainInternal {
     private final JavaCompilerFactory compilerFactory;
@@ -36,11 +38,15 @@ public class DefaultJavaToolChain implements JavaToolChainInternal {
     public DefaultJavaToolChain(JavaCompilerFactory compilerFactory, ExecActionFactory execActionFactory) {
         this.compilerFactory = compilerFactory;
         this.execActionFactory = execActionFactory;
-        this.javaVersion = JavaVersion.current(); //TODO: freekh verify that this is true in all cases (if the java compiler is forked for example?)
+        this.javaVersion = JavaVersion.current();
+    }
+
+    public String getName() {
+        return String.format("JDK%s", javaVersion);
     }
 
     public String getDisplayName() {
-        return String.format("current JDK (%s)", javaVersion);
+        return String.format("JDK %s (%s)", javaVersion.getMajorVersion(), javaVersion);
     }
 
     @Override
@@ -48,27 +54,58 @@ public class DefaultJavaToolChain implements JavaToolChainInternal {
         return getDisplayName();
     }
 
-    public <T extends CompileSpec> Compiler<T> newCompiler(T spec) {
-        if (spec instanceof JavaCompileSpec) {
-            CompileOptions options = ((JavaCompileSpec) spec).getCompileOptions();
-            @SuppressWarnings("unchecked") Compiler<T> compiler = (Compiler<T>) compilerFactory.create(options);
-            return compiler;
+    public ToolProvider select(JavaPlatform targetPlatform) {
+        // TODO:DAZ Remove all of the calls to this method with null platform
+        if (targetPlatform != null && targetPlatform.getTargetCompatibility().compareTo(javaVersion) > 0) {
+            return new UnavailableToolProvider(targetPlatform);
         }
-        if (spec instanceof JavadocSpec) {
-            @SuppressWarnings("unchecked") Compiler<T> compiler = (Compiler<T>) new JavadocGenerator(execActionFactory);
-            return compiler;
-        }
-
-        throw new IllegalArgumentException(String.format("Don't know how to compile using spec of type %s.", spec.getClass().getSimpleName()));
+        return new JavaToolProvider();
     }
 
-    public JavaVersion getJavaVersion() {
-        return javaVersion;
+    private class JavaToolProvider implements ToolProvider {
+        public <T extends CompileSpec> Compiler<T> newCompiler(T spec) {
+            if (spec instanceof JavaCompileSpec) {
+                CompileOptions options = ((JavaCompileSpec) spec).getCompileOptions();
+                @SuppressWarnings("unchecked") Compiler<T> compiler = (Compiler<T>) compilerFactory.create(options);
+                return compiler;
+            }
+            if (spec instanceof JavadocSpec) {
+                @SuppressWarnings("unchecked") Compiler<T> compiler = (Compiler<T>) new JavadocGenerator(execActionFactory);
+                return compiler;
+            }
+
+            throw new IllegalArgumentException(String.format("Don't know how to compile using spec of type %s.", spec.getClass().getSimpleName()));
+        }
+
+        public boolean isAvailable() {
+            return true;
+        }
+
+        public void explain(TreeVisitor<? super String> visitor) {
+        }
     }
 
-    public void assertValidPlatform(JvmPlatform platform) {
-        if (platform.getTargetCompatibility().compareTo(getJavaVersion()) > 0) {
-            throw new IllegalArgumentException(String.format("Could not use target JVM platform: '"+platform.getTargetCompatibility()+"' when using JDK: '"+getJavaVersion()+"'. Change to a lower target."));
+    private class UnavailableToolProvider implements ToolProvider {
+        private final JavaPlatform targetPlatform;
+
+        private UnavailableToolProvider(JavaPlatform targetPlatform) {
+            this.targetPlatform = targetPlatform;
+        }
+
+        public <T extends CompileSpec> Compiler<T> newCompiler(T spec) {
+            throw new IllegalArgumentException(getMessage());
+        }
+
+        public boolean isAvailable() {
+            return false;
+        }
+
+        public void explain(TreeVisitor<? super String> visitor) {
+            visitor.node(getMessage());
+        }
+
+        private String getMessage() {
+            return String.format("Could not target platform: '%s' using tool chain: '%s'.", targetPlatform.getDisplayName(), DefaultJavaToolChain.this.getDisplayName());
         }
     }
 }

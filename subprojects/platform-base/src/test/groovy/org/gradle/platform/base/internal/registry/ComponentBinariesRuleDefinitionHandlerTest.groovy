@@ -24,16 +24,13 @@ import org.gradle.model.internal.inspect.MethodRuleDefinition
 import org.gradle.model.internal.inspect.RuleSourceDependencies
 import org.gradle.model.internal.registry.ModelRegistry
 import org.gradle.platform.base.*
-import org.gradle.platform.base.binary.BaseBinarySpec
 import org.gradle.testfixtures.ProjectBuilder
-import spock.lang.Specification
 import spock.lang.Unroll
 
+import java.lang.annotation.Annotation
 import java.lang.reflect.Method
-/**
- * Created by Rene on 05/09/14.
- */
-class ComponentBinariesRuleDefinitionHandlerTest extends Specification {
+
+class ComponentBinariesRuleDefinitionHandlerTest extends AbstractAnnotationRuleDefinitionHandlerTest {
 
     def ruleDefinition = Mock(MethodRuleDefinition)
     def modelRegistry = Mock(ModelRegistry)
@@ -41,24 +38,32 @@ class ComponentBinariesRuleDefinitionHandlerTest extends Specification {
 
     ComponentBinariesRuleDefinitionHandler ruleHandler = new ComponentBinariesRuleDefinitionHandler()
 
-    def "handles methods annotated with @ComponentBinaries"() {
-        when:
-        1 * ruleDefinition.getAnnotation(ComponentBinaries) >> null
-
-        then:
-        !ruleHandler.spec.isSatisfiedBy(ruleDefinition)
-
-
-        when:
-        1 * ruleDefinition.getAnnotation(ComponentBinaries) >> Mock(ComponentBinaries)
-
-        then:
-        ruleHandler.spec.isSatisfiedBy(ruleDefinition)
+    @Override
+    Class<? extends Annotation> getAnnotation() {
+        return ComponentBinaries
     }
 
-    def "applies ComponentModelBasePlugin and creates componentBinary rule"() {
+    @Unroll
+    def "applies ComponentModelBasePlugin and creates componentBinary rule #descr"() {
         when:
-        ruleHandler.register(ruleDefinitionForMethod("validTypeRule"), modelRegistry, ruleDependencies)
+        ruleHandler.register(ruleDefinitionForMethod(ruleName), modelRegistry, ruleDependencies)
+
+        then:
+        1 * ruleDependencies.add(ComponentModelBasePlugin)
+
+        and:
+        1 * modelRegistry.mutate(_)
+
+        where:
+        ruleName          |  descr
+        "rawBinarySpec"   |  "for plain BinarySpec"
+        "validTypeRule"   |  "for plain sample binary"
+        "librarySubType"  |  "for library sub types"
+    }
+
+    def "can use plain BinarySpec"() {
+        when:
+        ruleHandler.register(ruleDefinitionForMethod("rawBinarySpec"), modelRegistry, ruleDependencies)
 
         then:
         1 * ruleDependencies.add(ComponentModelBasePlugin)
@@ -93,10 +98,12 @@ class ComponentBinariesRuleDefinitionHandlerTest extends Specification {
         where:
         methodName                  | expectedMessage                                                                                                               | descr
         "noParams"                  | "ComponentBinaries method must have a parameter of type '${CollectionBuilder.name}'."                                         | "no CollectionBuilder parameter"
+        "wrongSubject"              | "ComponentBinaries method first parameter must be of type '${CollectionBuilder.name}'."                                       | "wrong rule subject type"
         "multipileComponentSpecs"   | "ComponentBinaries method must have one parameter extending ComponentSpec. Found multiple parameter extending ComponentSpec." | "additional component spec parameter"
         "noComponentSpec"           | "ComponentBinaries method must have one parameter extending ComponentSpec. Found no parameter extending ComponentSpec."       | "no component spec parameter"
         "missmatchingComponentSpec" | "ComponentBinaries method parameter of type SomeOtherLibrary does not support binaries of type SomeBinarySpec."               | "non matching CompnentSpec type"
         "returnValue"               | "ComponentBinaries method must not have a return value."                                                                      | "non void method"
+        "rawCollectionBuilder"      | "Parameter of type 'CollectionBuilder' must declare a type parameter extending 'BinarySpec'."                                 | "non typed CollectionBuilder parameter"
     }
 
     def getStringDescription(MethodRuleDefinition ruleDefinition) {
@@ -121,26 +128,32 @@ class ComponentBinariesRuleDefinitionHandlerTest extends Specification {
     interface SomeOtherBinarySpec extends BinarySpec {}
     interface SomeLibrary extends ComponentSpec<SomeBinarySpec>{}
     interface SomeOtherLibrary extends ComponentSpec<SomeOtherBinarySpec>{}
+    interface RawLibrary extends ComponentSpec<BinarySpec>{}
+    interface SomeBinarySubType extends SomeBinarySpec{}
 
-
-    static class SomeBinarySpecImpl extends BaseBinarySpec implements SomeBinarySpec {}
-
-    static class SomeBinarySpecOtherImpl extends SomeBinarySpecImpl {}
-
-    interface NotBinarySpec {}
-
-    static class NotImplementingCustomBinary extends BaseBinarySpec implements BinarySpec {}
-
-    abstract static class NotExtendingBaseBinarySpec implements BinaryTypeRuleDefinitionHandlerTest.SomeBinarySpec {}
-
-    static class NoDefaultConstructor extends BaseBinarySpec implements SomeBinarySpec {
-        NoDefaultConstructor(String arg) {
-        }
-    }
 
     static class Rules {
         @ComponentBinaries
+        static void noParams() {
+        }
+
+        @ComponentBinaries
         static void validTypeRule(CollectionBuilder<SomeBinarySpec> binaries, SomeLibrary library) {
+            binaries.create("${library.name}Binary", library)
+        }
+
+        @ComponentBinaries
+        static void rawBinarySpec(CollectionBuilder<BinarySpec> binaries, RawLibrary library) {
+            binaries.create("${library.name}Binary", library)
+        }
+
+        @ComponentBinaries
+        static void rawCollectionBuilder(CollectionBuilder binaries, RawLibrary library) {
+            binaries.create("${library.name}Binary", library)
+        }
+
+        @ComponentBinaries
+        static void librarySubType(CollectionBuilder<SomeBinarySubType> binaries, SomeLibrary library) {
             binaries.create("${library.name}Binary", library)
         }
 
@@ -150,12 +163,12 @@ class ComponentBinariesRuleDefinitionHandlerTest extends Specification {
         }
 
         @ComponentBinaries
-        static void multipileComponentSpecs(CollectionBuilder<SomeBinarySpec> binaries, SomeLibrary library, SomeLibrary otherLibrary) {
-            binaries.create("${library.name}Binary", library)
+        static void wrongSubject(SomeLibrary library) {
         }
 
         @ComponentBinaries
-        static void noParams() {
+        static void multipileComponentSpecs(CollectionBuilder<SomeBinarySpec> binaries, SomeLibrary library, SomeLibrary otherLibrary) {
+            binaries.create("${library.name}Binary", library)
         }
 
         @ComponentBinaries

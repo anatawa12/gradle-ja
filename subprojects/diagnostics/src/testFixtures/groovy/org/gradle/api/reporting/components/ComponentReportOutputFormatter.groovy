@@ -15,8 +15,6 @@
  */
 
 package org.gradle.api.reporting.components
-
-import org.gradle.api.JavaVersion
 import org.gradle.api.Transformer
 import org.gradle.internal.SystemProperties
 import org.gradle.internal.os.OperatingSystem
@@ -36,8 +34,6 @@ class ComponentReportOutputFormatter implements Transformer<String, String> {
     @Override
     String transform(String original) {
         return original
-                .replace("platform: target JDK 1.7", "platform: target JDK ${JavaVersion.current()}")
-                .replace("current JDK (1.7)", "current JDK (${JavaVersion.current()})")
                 .replace("Tool chain 'clang' (Clang)", toolChain.instanceDisplayName)
                 .replace("\n", SystemProperties.lineSeparator)
                 .replaceAll('(?m)(build/binaries/.+/)lib(\\w+).dylib$') { it[1] + OperatingSystem.current().getSharedLibraryName(it[2]) }
