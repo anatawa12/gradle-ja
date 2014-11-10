@@ -20,7 +20,9 @@ import org.gradle.initialization.GradleLauncherFactory;
 import org.gradle.internal.Factory;
 import org.gradle.internal.concurrent.ExecutorFactory;
 import org.gradle.internal.nativeintegration.ProcessEnvironment;
+import org.gradle.internal.nativeintegration.services.NativeServices;
 import org.gradle.internal.service.ServiceRegistry;
+import org.gradle.internal.service.ServiceRegistryBuilder;
 import org.gradle.internal.service.scopes.GlobalScopeServices;
 import org.gradle.launcher.daemon.configuration.DaemonParameters;
 import org.gradle.launcher.daemon.context.DaemonContext;
@@ -34,11 +36,14 @@ import org.gradle.launcher.daemon.server.DaemonTcpServerConnector;
 import org.gradle.launcher.daemon.server.exec.DaemonCommandExecuter;
 import org.gradle.launcher.daemon.server.exec.DefaultDaemonCommandExecuter;
 import org.gradle.launcher.daemon.server.exec.NoOpDaemonCommandAction;
+import org.gradle.launcher.daemon.server.exec.StopHandlingCommandExecuter;
 import org.gradle.launcher.exec.InProcessBuildActionExecuter;
 import org.gradle.logging.LoggingManagerInternal;
 import org.gradle.logging.LoggingServiceRegistry;
 import org.gradle.logging.internal.OutputEvent;
 import org.gradle.logging.internal.OutputEventListener;
+import org.gradle.messaging.remote.internal.MessagingServices;
+import org.gradle.messaging.remote.internal.inet.InetAddressFactory;
 
 import java.io.File;
 import java.util.UUID;
@@ -66,12 +71,18 @@ public class EmbeddedDaemonClientServices extends DaemonClientServicesSupport {
 
     protected DaemonCommandExecuter createDaemonCommandExecuter() {
         LoggingManagerInternal mgr = newInstance(LoggingManagerInternal.class);
-        return new DefaultDaemonCommandExecuter(new InProcessBuildActionExecuter(get(GradleLauncherFactory.class)),
-                get(ProcessEnvironment.class), mgr, new File("dummy"), new NoOpDaemonCommandAction());
+        return new StopHandlingCommandExecuter(
+                new DefaultDaemonCommandExecuter(
+                        new InProcessBuildActionExecuter(
+                                get(GradleLauncherFactory.class)),
+                        get(ProcessEnvironment.class),
+                        mgr,
+                        new File("dummy"),
+                        new NoOpDaemonCommandAction()));
     }
 
     public EmbeddedDaemonClientServices(ServiceRegistry loggingServices) {
-        super(loggingServices, System.in);
+        super(ServiceRegistryBuilder.builder().parent(loggingServices).parent(NativeServices.getInstance()).build(), System.in);
         addProvider(new GlobalScopeServices(false));
         add(EmbeddedDaemonFactory.class, new EmbeddedDaemonFactory());
     }
@@ -91,7 +102,7 @@ public class EmbeddedDaemonClientServices extends DaemonClientServicesSupport {
     }
 
     protected DaemonServerConnector createDaemonServerConnector() {
-        return new DaemonTcpServerConnector();
+        return new DaemonTcpServerConnector(get(ExecutorFactory.class), get(MessagingServices.class).get(InetAddressFactory.class));
     }
 
     protected DaemonStarter createDaemonStarter() {

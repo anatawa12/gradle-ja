@@ -32,8 +32,11 @@ import org.gradle.launcher.daemon.registry.DaemonRegistry;
 import org.gradle.launcher.daemon.registry.DaemonRegistryServices;
 import org.gradle.launcher.daemon.server.exec.DaemonHygieneAction;
 import org.gradle.launcher.daemon.server.exec.DefaultDaemonCommandExecuter;
+import org.gradle.launcher.daemon.server.exec.StopHandlingCommandExecuter;
 import org.gradle.launcher.exec.InProcessBuildActionExecuter;
 import org.gradle.logging.LoggingManagerInternal;
+import org.gradle.messaging.remote.internal.MessagingServices;
+import org.gradle.messaging.remote.internal.inet.InetAddressFactory;
 
 import java.io.File;
 import java.util.UUID;
@@ -77,15 +80,20 @@ public class DaemonServices extends DefaultServiceRegistry {
 
     protected Daemon createDaemon() {
         return new Daemon(
-                new DaemonTcpServerConnector(),
+                new DaemonTcpServerConnector(
+                    get(ExecutorFactory.class),
+                    get(MessagingServices.class).get(InetAddressFactory.class)),
                 get(DaemonRegistry.class),
                 get(DaemonContext.class),
                 "password",
-                new DefaultDaemonCommandExecuter(
-                        new InProcessBuildActionExecuter(get(GradleLauncherFactory.class)),
-                        get(ProcessEnvironment.class),
-                        loggingManager,
-                        getDaemonLogFile(), new DaemonHygieneAction()),
+                new StopHandlingCommandExecuter(
+                        new DefaultDaemonCommandExecuter(
+                                new InProcessBuildActionExecuter(
+                                        get(GradleLauncherFactory.class)),
+                                get(ProcessEnvironment.class),
+                                loggingManager,
+                                getDaemonLogFile(),
+                                new DaemonHygieneAction())),
                 get(ExecutorFactory.class));
     }
 
