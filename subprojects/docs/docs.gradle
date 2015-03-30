@@ -32,6 +32,10 @@ apply plugin: 'javascript-base'
 repositories {
     javaScript.googleApis()
 
+    maven {
+        url "https://maven.atlassian.com/repository/public"
+    }
+
     ivy {
         name "Google Fonts"
         url "http://themes.googleusercontent.com/static/fonts/"
@@ -55,8 +59,8 @@ configurations {
 
 dependencies {
     userGuideTask 'xalan:xalan:2.7.1', libraries.xerces
-    userGuideTask module('xhtmlrenderer:xhtmlrenderer:R8rc1') {
-        dependency 'itext:itext:2.0.8@jar'
+    userGuideTask module('org.xhtmlrenderer:xhtmlrenderer:8.5-atlassian') {
+        dependency 'com.lowagie:itext:2.1.7@jar'
     }
     userGuideTask 'xslthl:xslthl:2.0.1@jar'
 
