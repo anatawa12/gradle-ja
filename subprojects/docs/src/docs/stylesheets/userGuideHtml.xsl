@@ -29,6 +29,10 @@
     <xsl:template name="header.navigation">
         <xsl:param name="next"/>
         <xsl:param name="prev"/>
+        <p style="border-radius: 5px; padding: 0.8em; line-height: 1.3;background-color: #FFC107;">
+            この翻訳はGradle バージョン2.2時点のものです。2020年10月時点でもGradleの最新版はバージョン5.7であり、
+            その間に数多く仕様変更がありました。そのため最新情報は公式ドキュメントを確認してください。
+        </p>
         <xsl:if test=". != /book">
             <div class='navheader'>
                 <xsl:call-template name="navlinks">
